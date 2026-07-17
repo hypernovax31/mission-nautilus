@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Nautilus — Embarquement</title>
+  <style>
+    :root{--fnac:#f5b027;--black:#111;--white:#fff;--muted:#666;--ok:#128a5a;--bad:#b8322b;--warn:#fff2d4;--warnb:#e8c05f;--dangerbg:#fff0ee;--dangerb:#efb2ac;--successbg:#effff7;--successb:#aee5ca}
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#fafafa,#e9e9e9);color:#111;min-height:100vh}header{background:#111;color:#fff;padding:24px 28px 18px;border-bottom:12px solid var(--fnac)}.brand{color:var(--fnac);font-weight:900;letter-spacing:.08em;font-size:24px}h1{margin:8px 0 0;font-size:34px;line-height:1.08}header p{margin:8px 0 0;color:#ddd;line-height:1.35}main{max-width:1160px;margin:28px auto 60px;padding:0 18px;display:grid;gap:20px}.card{background:#fff;border:1px solid #ddd;border-radius:24px;box-shadow:0 18px 35px rgba(0,0,0,.12);overflow:hidden}.card h2{margin:0;background:#222;color:#fff;padding:18px 22px;font-size:22px}.body{padding:22px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){.grid{grid-template-columns:1fr}}label{display:block;font-weight:900;margin:12px 0 8px}input,select{width:100%;padding:13px 14px;border:2px solid #ddd;border-radius:14px;font:inherit;background:#fff}#teamCodeInput{text-transform:uppercase}.uppercase{text-transform:uppercase;letter-spacing:.04em}button{border:0;border-radius:15px;padding:13px 17px;font:inherit;font-weight:900;cursor:pointer;margin:4px 4px 4px 0;transition:.15s filter,.15s transform}button:hover{filter:brightness(1.03);transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}.primary{background:var(--fnac);color:#111}.secondary{background:#eee;color:#111}.danger{background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac}.notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.45;margin:0 0 14px}.hero-card{background:radial-gradient(circle at top left,#fff4cf,#fff 54%)}.hero-notice{font-size:18px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:var(--muted);line-height:1.45}.small{font-size:12px;color:#777;line-height:1.35}.pill{display:inline-block;background:#111;color:var(--fnac);border-radius:999px;padding:6px 10px;font-weight:900}.code{font-family:Consolas,"Courier New",monospace;font-weight:900;background:#fff;border:1px dashed #999;border-radius:10px;padding:7px 9px;display:inline-block;user-select:all}.teamlist{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}@media(max-width:820px){.teamlist{grid-template-columns:1fr}}.team{border:1px solid #e2e2e2;border-radius:18px;padding:16px;background:#fafafa}.team h3{margin:0 0 8px;font-size:18px}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900}.stepbox{border:2px dashed #ddd;border-radius:18px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#eee;margin:18px 0}.progress{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.dot{padding:5px 9px;border-radius:999px;background:#eee;font-size:12px;font-weight:800;color:#555}.dot.doneDot{background:#e5fff2;color:#08633e;border:1px solid #aee5ca}.dot.currentDot{background:#111;color:var(--fnac)}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">FNAC LABÈGE</div>
+  <h1>Mission Nautilus</h1>
+  <p>Un signal venu des profondeurs traverse la Fnac Labège. Rejoins ton équipage et pars sur les traces du Nautilus.</p>
+</header>
+<main>
+  <section class="card hero-card">
+    <div class="body">
+      <div class="notice hero-notice">
+        <b>⚓ Transmission reçue.</b><br>
+        Le capitaine Nemo recrute de nouveaux équipages. Des QR codes mystérieux dorment dans les rayons, des mini-jeux verrouillent la route, et le Nautilus n’attend plus que vous pour replonger.
+      </div>
+      <div class="grid">
+        <div>
+          <h2 style="background:none;color:#111;padding:0;margin:0 0 8px">Rejoins l’expédition</h2>
+          <p class="muted">Inscris-toi, embarque avec ton service, et découvre l’équipage qui t’accompagnera dans les profondeurs du magasin.</p>
+        </div>
+        <div>
+          <h2 style="background:none;color:#111;padding:0;margin:0 0 8px">Objectif</h2>
+          <p class="muted">Résoudre les transmissions, ouvrir les QR cachés et atteindre le dernier niveau avant les autres équipages.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>⚓ Embarquement collaborateur</h2>
+    <div class="body">
+      <div class="grid">
+        <div><label>Ton nom</label><input id="memberName" placeholder="Ex. Camille Dupont" autocomplete="off"></div>
+        <div><label>Ton service</label><select id="memberService"><option>PE</option><option>PT</option><option>SAV</option><option>LOG</option><option>CAI</option><option>GAD</option><option>CODIR</option></select></div>
+      </div>
+      <button class="primary" id="registerBtn">Monter à bord</button>
+      <div id="registerMsg"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🧭 Retrouver son équipage</h2>
+    <div class="body">
+      <div class="grid">
+        <div><label>Code équipage</label><input id="teamCodeInput" placeholder="Ex. NEMO" autocomplete="off"></div>
+        <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
+      </div>
+      <p class="small">Un équipage ne laisse jamais un marin derrière lui. Entre le code et retrouve la trace du Nautilus.</p>
+      <div id="joinMsg"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🌊 Équipages en mer</h2>
+    <div class="body"><div id="teamsBox" class="teamlist">Ouverture du hublot…</div></div>
+  </section>
+
+  <section class="card">
+    <h2>🗺️ Carnet de bord</h2>
+    <div class="body" id="gameBox"><div class="notice">Choisis ton équipage. Le Nautilus affichera alors votre position dans l’aventure.</div></div>
+  </section>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
+    authDomain: "mission-nautilus.firebaseapp.com",
+    projectId: "mission-nautilus",
+    storageBucket: "mission-nautilus.firebasestorage.app",
+    messagingSenderId: "444670686419",
+    appId: "1:444670686419:web:00d186940a2fb8c8c29026"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const TEAM_DEFS = [
+    { code:"NEMO", name:"Équipe Nemo" },
+    { code:"NAUTILUS", name:"Équipe Nautilus" },
+    { code:"ARONNAX", name:"Équipe Aronnax" },
+    { code:"NED LAND", name:"Équipe Ned Land" },
+    { code:"CALAMAR", name:"Équipe Calamar" }
+  ];
+  const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
+
+  const STEPS = {
+    start:{label:"Niveau 0 — En attente du QR de lancement",next:"livres",time:0,errors:0,description:"Le hublot s’ouvre. Le premier signal attend son équipage."},
+    livres:{label:"Niveau 1 — QR Livres / première transmission",next:"son",time:180,errors:6,description:"Une trace d’encre, un auteur visionnaire, et peut-être le premier secret du capitaine Nemo."},
+    son:{label:"Niveau 2 — QR Son / transmission audio",next:"zone51",time:300,errors:2,description:"Un signal brouillé remonte des profondeurs. Il faudra l’écouter autrement."},
+    zone51:{label:"Niveau 3 — Zone 51 / jeux vidéo",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
+    occasion:{label:"Niveau 4 — QR Occasion / seconde vie",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
+    papeterie:{label:"Niveau 5 — QR Papeterie / code couleur",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
+    drone:{label:"Niveau 6 — QR Photo-Drone / observation",next:"final",time:300,errors:3,description:"Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol."},
+    final:{label:"Niveau final — validation de mission",next:null,time:0,errors:1,description:"Dernier sas. Si vous êtes ici, le Nautilus n’est plus très loin de refaire surface."}
+  };
+
+  let currentTeam=null;
+  let heartbeatTimer=null;
+  const CLIENT_ID = localStorage.getItem('nautilusClientId') || ('P-' + Math.random().toString(36).slice(2,10).toUpperCase());
+  localStorage.setItem('nautilusClientId', CLIENT_ID);
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const normalize=s=>String(s||'').trim().toUpperCase();
+  const memberKey=name=>normalize(String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]/gi,''));
+  const simple=s=>normalize(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+  function teamCodeFromInput(value){const wanted=simple(value);const found=TEAM_DEFS.find(t=>simple(t.code)===wanted||simple(t.name)===wanted);return found?found.code:String(value||'').trim();}
+
+  function getLockHours(failCount){return Math.min(24, Math.pow(2, failCount));}
+  function getLockedUntilISO(failCount){const d=new Date();d.setHours(d.getHours()+getLockHours(failCount));return d.toISOString();}
+  function isLocked(team){return team?.status==='blocked'&&team.lockedUntil&&new Date(team.lockedUntil).getTime()>Date.now();}
+  function formatDate(iso){return iso?new Date(iso).toLocaleString('fr-FR'):'—';}
+  function lockRuleText(){return `1er échec : 2h · 2e : 4h · 3e : 8h · 4e : 16h · 5e et suivants : 24h`;}
+  function onlineCount(team){
+    const now = Date.now();
+    const online = team.onlinePlayers || {};
+    return Object.values(online).filter(ts => now - new Date(ts).getTime() < 2 * 60 * 1000).length;
+  }
+  async function heartbeat(){
+    if(!currentTeam) return;
+    const onlinePlayers = { ...(currentTeam.onlinePlayers || {}), [CLIENT_ID]: new Date().toISOString() };
+    try{
+      await updateDoc(doc(db,'teams',currentTeam.teamCode), { onlinePlayers, updatedAt:new Date().toISOString() });
+      currentTeam = { ...currentTeam, onlinePlayers };
+    }catch(e){}
+  }
+  function startHeartbeat(){
+    if(heartbeatTimer) clearInterval(heartbeatTimer);
+    heartbeat();
+    heartbeatTimer = setInterval(heartbeat, 30000);
+  }
+
+  function progressHtml(team){const completed=team.completedSteps||[];return `<div class="progress">${Object.keys(STEPS).map(id=>`<span class="dot ${completed.includes(id)?'doneDot':(id===team.currentStep?'currentDot':'')}">${esc(STEPS[id].label)}</span>`).join('')}</div>`;}
+
+  async function ensureTeams(){
+    const codes=[];
+    for(const t of TEAM_DEFS){
+      codes.push(t.code);
+      const ref=doc(db,'teams',t.code);
+      const snap=await getDoc(ref);
+      if(!snap.exists()){
+        await setDoc(ref,{teamCode:t.code,teamName:t.name,currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],members:[],onlinePlayers:{},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+      }else{
+        const data=snap.data();
+        const patch={teamName:t.name,updatedAt:new Date().toISOString()};
+        if(!Array.isArray(data.members)) patch.members=[];
+        if(!data.onlinePlayers) patch.onlinePlayers={};
+        if(data.failCount===undefined) patch.failCount=0;
+        if(!data.currentStep) patch.currentStep='start';
+        if(!data.status) patch.status='active';
+        await updateDoc(ref,patch).catch(()=>{});
+      }
+    }
+    await setDoc(doc(db,'game','config'),{activeTeamCodes:codes,updatedAt:new Date().toISOString()});
+  }
+
+  async function getTeam(code){const snap=await getDoc(doc(db,'teams',teamCodeFromInput(code)));return snap.exists()?snap.data():null;}
+  async function saveTeam(team,patch){const updated={...patch,updatedAt:new Date().toISOString()};await updateDoc(doc(db,'teams',team.teamCode),updated);currentTeam={...team,...updated};return currentTeam;}
+  async function addEvent(team,type,data={}){await addDoc(collection(db,'events'),{teamCode:team.teamCode,teamName:team.teamName,type,...data,createdAt:serverTimestamp()});}
+
+  async function autoUnlockIfNeeded(team){
+    if(team?.status==='blocked'&&!isLocked(team)){
+      const unlocked=await saveTeam(team,{status:'active',lockedUntil:null,lastUnlockMessageAt:new Date().toISOString()});
+      await addEvent(unlocked,'unblocked',{step:unlocked.currentStep});
+      return {team:unlocked,justUnlocked:true};
+    }
+    return {team,justUnlocked:false};
+  }
+
+  async function loadTeams(){
+    const box=$('teamsBox');box.innerHTML='Ouverture du hublot…';
+    try{
+      await ensureTeams();
+      const teams=[];
+      for(const t of TEAM_DEFS){const team=await getTeam(t.code);if(team)teams.push(team);}
+      box.innerHTML=teams.map(t=>{
+        const members=t.members||[];
+        const online=onlineCount(t);
+        return `<div class="team"><h3>${esc(t.teamName)}</h3><div>Code équipage : <span class="code uppercase">${esc(t.teamCode)}</span></div><div class="small">Membres : ${members.length}</div><div class="small">Étape : ${esc(STEPS[t.currentStep]?.label||t.currentStep)}</div><div class="small">${online} joueur(s) en ligne</div><div class="small">Échecs : ${Number(t.failCount||0)}</div>${isLocked(t)?`<div class="small" style="color:var(--bad)">Bloquée jusqu’à ${formatDate(t.lockedUntil)}</div>`:''}<div class="hr"></div>${members.length?members.map(m=>`<div>${esc(m.name)} <span class="service">${esc(m.service)}</span></div>`).join(''):'<div class="small">Équipage en attente de volontaires</div>'}</div>`;
+      }).join('');
+    }catch(err){box.innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.</div>`;}
+  }
+
+
+  function pickBalancedTeam(teams, service){
+    const scored=teams.map(team=>{
+      const members=team.members||[];
+      const total=members.length;
+      const sameService=members.filter(m=>m.service===service).length;
+      return {team,score:sameService*100+total*10+Math.random()};
+    }).sort((a,b)=>a.score-b.score);
+    const bestScore=Math.floor(scored[0].score);
+    const best=scored.filter(x=>Math.floor(x.score)===bestScore);
+    return best[Math.floor(Math.random()*best.length)].team;
+  }
+
+  async function registerMember(){
+    const name=$('memberName').value.trim();
+    const service=$('memberService').value;
+    if(!name){alert('Le Nautilus a besoin de connaître ton nom avant d’ouvrir l’écoutille.');return;}
+    $('registerBtn').disabled=true;
+    try{
+      await ensureTeams();
+      const key=memberKey(name);
+      const allTeams=[];
+      for(const t of TEAM_DEFS){const team=await getTeam(t.code);if(team)allTeams.push(team);}
+      const already=allTeams.find(team=>(team.members||[]).some(m=>m.memberKey===key));
+      if(already){
+        $('registerMsg').innerHTML=`<div class="notice warning"><b>${esc(name)}</b> a déjà embarqué avec <b>${esc(already.teamName)}</b>. Code équipage : <span class="code uppercase">${esc(already.teamCode)}</span></div>`;
+        currentTeam=already;localStorage.setItem('nautilusCurrentTeam',already.teamCode);startHeartbeat();renderGame();return;
+      }
+      const chosen=pickBalancedTeam(allTeams,service);
+      const member={name,service,memberKey:key,registeredAt:new Date().toISOString()};
+      const members=[...(chosen.members||[]),member];
+      await updateDoc(doc(db,'teams',chosen.teamCode),{members,updatedAt:new Date().toISOString()});
+      await addDoc(collection(db,'members'),{...member,teamCode:chosen.teamCode,teamName:chosen.teamName,createdAt:serverTimestamp()});
+      await addEvent(chosen,'member_registered',{memberName:name,service});
+      const updated=await getTeam(chosen.teamCode);
+      currentTeam=updated;localStorage.setItem('nautilusCurrentTeam',updated.teamCode);$('teamCodeInput').value=updated.teamCode;startHeartbeat();
+      $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>. Code équipage : <span class="code uppercase">${esc(updated.teamCode)}</span></div>`;
+      $('memberName').value='';renderGame();await loadTeams();
+    }catch(err){$('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.</div>`;}
+    finally{$('registerBtn').disabled=false;}
+  }
+
+  async function joinTeam(codeFromButton){
+    const code=teamCodeFromInput(codeFromButton||$('teamCodeInput').value);
+    if(!code){alert('Entre le code de ton équipage pour rallumer le sonar.');return;}
+    try{
+      let team=await getTeam(code);
+      if(!team){$('joinMsg').innerHTML=`<div class="notice warning">Aucun sous-marin ne répond à ce code.</div>`;return;}
+      currentTeam=team;
+      const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;
+      localStorage.setItem('nautilusCurrentTeam',currentTeam.teamCode);$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();
+      $('joinMsg').innerHTML=`<div class="notice success">Équipage retrouvé : <b>${esc(currentTeam.teamName)}</b></div>`;
+      renderGame(unlock.justUnlocked);await loadTeams();
+    }catch(err){$('joinMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.</div>`;}
+  }
+
+  async function blockTeam(reason){
+    if(!currentTeam)return;
+    const nextFailCount=Number(currentTeam.failCount||0)+1;
+    const lockHours=getLockHours(nextFailCount);
+    const lockedUntil=getLockedUntilISO(nextFailCount);
+    await saveTeam(currentTeam,{status:'blocked',failCount:nextFailCount,lastLockHours:lockHours,lockedUntil});
+    await addEvent(currentTeam,'blocked',{step:currentTeam.currentStep,reason,failCount:nextFailCount,lockHours,lockedUntil});
+    renderGame();await loadTeams();
+  }
+
+  async function completeStep(){
+    if(!currentTeam)return;
+    const stepId=currentTeam.currentStep;const step=STEPS[stepId];const completed=Array.from(new Set([...(currentTeam.completedSteps||[]),stepId]));const next=step?.next;
+    if(next){await saveTeam(currentTeam,{status:'active',lockedUntil:null,completedSteps:completed,currentStep:next});await addEvent(currentTeam,'step_completed',{step:stepId,nextStep:next});}
+    else{const finishedAt=new Date().toISOString();await saveTeam(currentTeam,{status:'finished',lockedUntil:null,completedSteps:completed,finishedAt});await addDoc(collection(db,'arrivals'),{teamCode:currentTeam.teamCode,teamName:currentTeam.teamName,arrivedAt:serverTimestamp()});await addEvent(currentTeam,'finished',{finishedAt});}
+    renderGame();await loadTeams();
+  }
+
+  async function resetCurrentTeamProgress(){
+    if(!currentTeam)return;if(!confirm(`Réinitialiser la progression de ${currentTeam.teamName} ?`))return;
+    await saveTeam(currentTeam,{currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],finishedAt:null});await addEvent(currentTeam,'team_reset',{});renderGame();await loadTeams();
+  }
+
+  function renderGame(justUnlocked=false){
+    const box=$('gameBox');
+    if(!currentTeam){box.innerHTML=`<div class="notice">Choisis ton équipage. Le Nautilus affichera alors votre position dans l’aventure.</div>`;return;}
+    const step=STEPS[currentTeam.currentStep]||STEPS.start;
+    const members=currentTeam.members||[];
+    if(currentTeam.status==='finished'){
+      box.innerHTML=`<div class="stepbox done"><h3>Mission accomplie</h3><p><b>${esc(currentTeam.teamName)}</b> a atteint le dernier signal du Nautilus.</p><p>Le carnet de bord est scellé. L’équipage peut savourer sa remontée.</p></div>`;
+      return;
+    }
+    if(isLocked(currentTeam)){
+      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : <span class="code uppercase">${esc(currentTeam.teamCode)}</span></p><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p><button class="secondary" id="refreshCurrent">Scanner le sonar</button></div>`;
+      $('refreshCurrent').onclick=async()=>{currentTeam=await getTeam(currentTeam.teamCode);const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;renderGame(unlock.justUnlocked);await loadTeams();};return;
+    }
+    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : <span class="code uppercase">${esc(currentTeam.teamCode)}</span></p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">Gardez les yeux ouverts : le prochain QR peut dormir dans un rayon, derrière une étiquette, entre deux pages ou au fond d’une cachette que seul un vrai équipage saura repérer.</p><button class="secondary" id="reloadBtn">Scanner le sonar</button></div>`;
+    $('reloadBtn').onclick=async()=>{currentTeam=await getTeam(currentTeam.teamCode);const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;renderGame(unlock.justUnlocked);await loadTeams();};
+  }
+
+  $('registerBtn').addEventListener('click',registerMember);
+  $('memberName').addEventListener('keydown',e=>{if(e.key==='Enter')registerMember();});
+  $('joinBtn').addEventListener('click',()=>joinTeam());
+  $('teamCodeInput').addEventListener('keydown',e=>{if(e.key==='Enter')joinTeam();});
+
+  setInterval(()=>loadTeams(), 60000);
+
+  (async function init(){
+    await loadTeams();
+    const last=localStorage.getItem('nautilusCurrentTeam');
+    if(last){const team=await getTeam(last).catch(()=>null);if(team){currentTeam=team;const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();renderGame(unlock.justUnlocked);}}
+  })();
+</script>
+</body>
+</html>
