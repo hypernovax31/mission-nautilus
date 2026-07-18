@@ -96,14 +96,14 @@
   const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
 
   const STEPS = {
-    start:{label:"Niveau 0 — En attente du QR de lancement",next:"livres",time:0,errors:0,description:"Le hublot s’ouvre. Le premier signal attend son équipage."},
-    livres:{label:"Niveau 1 — QR Livres / première transmission",next:"son",time:180,errors:6,description:"Une trace d’encre, un auteur visionnaire, et peut-être le premier secret du capitaine Nemo."},
-    son:{label:"Niveau 2 — QR Son / transmission audio",next:"zone51",time:300,errors:2,description:"Un signal brouillé remonte des profondeurs. Il faudra l’écouter autrement."},
-    zone51:{label:"Niveau 3 — Zone 51 / jeux vidéo",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
-    occasion:{label:"Niveau 4 — QR Occasion / seconde vie",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
-    papeterie:{label:"Niveau 5 — QR Papeterie / code couleur",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
-    drone:{label:"Niveau 6 — QR Photo-Drone / observation",next:"final",time:300,errors:3,description:"Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol."},
-    final:{label:"Niveau final — validation de mission",next:null,time:0,errors:1,description:"Dernier sas. Si vous êtes ici, le Nautilus n’est plus très loin de refaire surface."}
+    start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le hublot s’ouvre. Le premier signal attend son équipage."},
+    livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Une trace d’encre, un auteur visionnaire, et peut-être le premier secret du capitaine Nemo."},
+    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Un signal brouillé remonte des profondeurs. Il faudra l’écouter autrement."},
+    zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
+    occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
+    papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
+    drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol."},
+    final:{label:"Palier final",next:null,time:0,errors:1,description:"Dernier sas. Si vous êtes ici, le Nautilus n’est plus très loin de refaire surface."}
   };
 
   let currentTeam=null;
@@ -301,5 +301,5 @@
     if(last){const team=await getTeam(last).catch(()=>null);if(team){currentTeam=team;const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();renderGame(unlock.justUnlocked);}}
   })();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1cd41d629b2154c',t:'MTc4NDMzMzM2MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
