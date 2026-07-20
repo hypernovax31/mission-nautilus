@@ -182,7 +182,7 @@
     button{border:0;border-radius:15px;padding:14px 18px;font:inherit;font-weight:900;cursor:pointer;margin:12px 8px 0 0;transition:.15s filter,.15s transform;min-height:48px}
     button:hover{filter:brightness(1.03);transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}.primary{background:var(--fnac);color:#111;box-shadow:0 10px 18px rgba(245,176,39,.26)}.secondary{background:#eaf0f4;color:#111}.danger{background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac}
     .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:12px;color:#6e7a84;line-height:1.38}.pill{display:inline-block;background:#111;color:var(--fnac);border-radius:999px;padding:6px 10px;font-weight:900}.code{font-family:Consolas,"Courier New",monospace;font-weight:900;background:#fff;border:1px dashed #999;border-radius:10px;padding:7px 9px;display:inline-block;user-select:all}.teamlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;margin-top:3px}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}.progress{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.dot{padding:6px 10px;border-radius:999px;background:#eef2f5;font-size:12px;font-weight:800;color:#52606a}.dot.doneDot{background:#e5fff2;color:#08633e;border:1px solid #aee5ca}.dot.currentDot{background:#111;color:var(--fnac)}
-    .hero-cta{position:relative;z-index:2;margin-top:24px;background:var(--fnac);color:#111;border:0;border-radius:999px;padding:16px 24px;font-weight:1000;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(245,176,39,.28);width:auto;min-width:210px}
+    .hero-actions{position:relative;z-index:2;display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}.hero-cta{position:relative;z-index:2;margin-top:0;background:var(--fnac);color:#111;border:0;border-radius:999px;padding:16px 24px;font-weight:1000;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(245,176,39,.28);width:auto;min-width:210px}.hero-cta.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(245,176,39,.55);box-shadow:none}
     .hero-cta.red{background:linear-gradient(135deg,#ff4b3e,#9b1111);color:#fff;box-shadow:0 0 30px rgba(255,55,55,.25)}
     .ocean-wallpaper{position:absolute;top:0;left:0;right:0;bottom:0;min-height:100%;z-index:0;pointer-events:none;overflow:hidden;background:linear-gradient(180deg,rgba(2,8,18,.10),rgba(2,8,18,.30) 38%,rgba(2,8,18,.58) 100%),url('assets/fond-nautilus.jpg') center top / 100% 100% no-repeat;background-attachment:scroll;}.ocean-wallpaper>*{display:none!important}.water-surface{position:absolute;left:-5%;right:-5%;top:0;height:110px;background:linear-gradient(180deg,rgba(142,231,255,.36),rgba(142,231,255,.08),transparent);filter:blur(.2px)}.water-surface:after{content:"";position:absolute;left:0;right:0;bottom:10px;height:22px;background:repeating-radial-gradient(ellipse at center,rgba(255,255,255,.28) 0 2px,transparent 3px 20px);opacity:.35}.submarine{position:absolute;right:9%;top:145px;width:190px;height:58px;border-radius:60% 45% 45% 60%;background:linear-gradient(180deg,#29475a,#0d2232);border:3px solid rgba(245,176,39,.45);opacity:.34;box-shadow:0 18px 38px rgba(0,0,0,.28)}.submarine:before{content:"";position:absolute;left:32px;top:-24px;width:62px;height:28px;border-radius:18px 18px 0 0;background:#10293b;border:2px solid rgba(245,176,39,.35)}.submarine span{position:absolute;right:38px;top:17px;width:24px;height:24px;border-radius:50%;border:3px solid rgba(245,176,39,.6);box-shadow:inset 0 0 12px rgba(142,231,255,.45)}.sonar-ring{position:absolute;border:1px solid rgba(142,231,255,.26);border-radius:50%;opacity:.28;animation:sonarPulse 5.5s infinite ease-out}.r1{right:14%;top:180px;width:80px;height:80px}.r2{right:12%;top:160px;width:130px;height:130px;animation-delay:1.2s}.r3{right:10%;top:140px;width:190px;height:190px;animation-delay:2.4s}@keyframes sonarPulse{0%{transform:scale(.65);opacity:.38}100%{transform:scale(1.35);opacity:0}}
     .bubble{position:absolute;border-radius:50%;background:rgba(220,250,255,.4);box-shadow:inset 0 0 8px rgba(255,255,255,.6);animation:bubbleRise 12s infinite linear}.b1{left:8%;bottom:12%;width:14px;height:14px}.b2{left:18%;bottom:28%;width:9px;height:9px;animation-delay:3s}.b3{left:82%;bottom:22%;width:12px;height:12px;animation-delay:5s}.b4{left:70%;bottom:46%;width:8px;height:8px;animation-delay:1s}.b5{left:42%;bottom:18%;width:10px;height:10px;animation-delay:7s}@keyframes bubbleRise{0%{transform:translateY(0);opacity:0}10%{opacity:.55}90%{opacity:.3}100%{transform:translateY(-560px);opacity:0}}
@@ -215,7 +215,7 @@
   <h1 class="hero-title">Mission<br>Nautilus</h1>
   <div class="hero-line">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</div>
   <p class="hero-subtitle">Des transmissions ont refait surface dans le magasin. Rejoignez un équipage, explorez les rayons, décryptez les mini-jeux et ouvrez les QR verrouillés avant que l’oxygène ne manque.</p>
-  <button class="hero-cta" id="launchMissionBtn">Lancer la Mission</button>
+  <div class="hero-actions"><button class="hero-cta" id="launchMissionBtn">Lancer la Mission</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la mission</button></div>
 </header>
 <main>
   <section class="card intro-card">
@@ -229,7 +229,6 @@
         <button type="button" class="mission-step" data-rule="survive"><span class="num">4</span><b>Survivez</b></button>
       </div>
       <div class="rule-detail" id="ruleDetail" aria-live="polite"></div>
-      <div class="quote">« Règle d’or : le mini-jeu donne la clé, le rayon cache la porte. »</div>
     </div>
   </section>
 
@@ -262,12 +261,12 @@
         <div><label>Code équipage</label><input id="teamCodeInput" placeholder="Ex. NEMO" autocomplete="off"></div>
         <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
       </div>
-      <p class="small">Un équipage ne laisse jamais un marin derrière lui. Entre le code et retrouve la trace du Nautilus.</p>
+      <p class="small">Déjà à bord ? Repère ton équipage dans la liste “Équipages en mer”, copie son code de navigation, puis saisis-le ici pour rallumer le sonar et reprendre la plongée au bon palier.</p>
       <div id="joinMsg"></div>
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" id="equipagesEnMer">
     <h2>🌊 Équipages en mer</h2>
     <div class="body"><div id="teamsBox" class="teamlist">Ouverture du hublot…</div></div>
   </section>
@@ -590,6 +589,10 @@
   }
   $('launchMissionBtn')?.addEventListener('click', launchMission);
   $('finalLaunchBtn')?.addEventListener('click', launchMission);
+  $('resumeMissionBtn')?.addEventListener('click', () => {
+    startOceanAudio();
+    document.getElementById('equipagesEnMer')?.scrollIntoView({behavior:'smooth', block:'start'});
+  });
 
   $('registerBtn').addEventListener('click',registerMember);
   $('memberName').addEventListener('keydown',e=>{if(e.key==='Enter')registerMember();});
@@ -604,5 +607,5 @@
     if(last){const team=await getTeam(last).catch(()=>null);if(team){currentTeam=team;const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();renderGame(unlock.justUnlocked);}}
   })();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e506b10fc6eca1',t:'MTc4NDU4MjU5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
