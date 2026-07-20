@@ -401,7 +401,7 @@
       box.innerHTML=teams.map(t=>{
         const members=t.members||[];
         const online=onlineCount(t);
-        return `<div class="team"><h3>${esc(t.teamName)}</h3><div>Code à saisir : <span class="code uppercase">${esc(t.teamCode)}</span></div><div class="small">Membres : ${members.length}</div><div class="small">Étape : ${esc(STEPS[t.currentStep]?.label||t.currentStep)}</div><div class="small">${online} joueur(s) en ligne</div><div class="small">Échecs : ${Number(t.failCount||0)}</div>${isLocked(t)?`<div class="small" style="color:var(--bad)">Bloquée jusqu’à ${formatDate(t.lockedUntil)}</div>`:''}<div class="hr"></div>${members.length?members.map(m=>`<div>${esc(m.name)} <span class="service">${esc(m.service)}</span></div>`).join(''):'<div class="small">Équipage en attente de volontaires</div>'}</div>`;
+        return `<div class="team"><h3>${esc(t.teamName)}</h3><div>Code équipage : « <span class="code uppercase">${esc(t.teamCode)}</span> »</div><div class="small">Membres : ${members.length}</div><div class="small">Étape : ${esc(STEPS[t.currentStep]?.label||t.currentStep)}</div><div class="small">${online} joueur(s) en ligne</div><div class="small">Échecs : ${Number(t.failCount||0)}</div>${isLocked(t)?`<div class="small" style="color:var(--bad)">Bloquée jusqu’à ${formatDate(t.lockedUntil)}</div>`:''}<div class="hr"></div>${members.length?members.map(m=>`<div>${esc(m.name)} <span class="service">${esc(m.service)}</span></div>`).join(''):'<div class="small">Équipage en attente de volontaires</div>'}</div>`;
       }).join('');
     }catch(err){console.error('NAUTILUS loadTeams error:', err);box.innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
   }
@@ -431,7 +431,7 @@
       for(const t of TEAM_DEFS){const team=await getTeam(t.code);if(team)allTeams.push(team);}
       const already=allTeams.find(team=>(team.members||[]).some(m=>m.memberKey===key));
       if(already){
-        $('registerMsg').innerHTML=`<div class="notice warning"><b>${esc(name)}</b> a déjà embarqué avec <b>${esc(already.teamName)}</b>. Code à saisir : <span class="code uppercase">${esc(already.teamCode)}</span></div>`;
+        $('registerMsg').innerHTML=`<div class="notice warning"><b>${esc(name)}</b> a déjà embarqué avec <b>${esc(already.teamName)}</b>. Code équipage : « <span class="code uppercase">${esc(already.teamCode)}</span> »</div>`;
         currentTeam=already;localStorage.setItem('nautilusCurrentTeam',already.teamCode);startHeartbeat();renderGame();return;
       }
       const chosen=pickBalancedTeam(allTeams,service);
@@ -442,7 +442,7 @@
       await addEvent(chosen,'member_registered',{memberName:name,service});
       const updated=await getTeam(chosen.teamCode);
       currentTeam=updated;localStorage.setItem('nautilusCurrentTeam',updated.teamCode);$('teamCodeInput').value=updated.teamCode;startHeartbeat();
-      $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>. Code à saisir : <span class="code uppercase">${esc(updated.teamCode)}</span></div>`;
+      $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>. Code équipage : « <span class="code uppercase">${esc(updated.teamCode)}</span> »</div>`;
       $('memberName').value='';renderGame();await loadTeams();updateOceanWallpaperHeight();
     }catch(err){console.error('NAUTILUS register error:', err);$('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
     finally{$('registerBtn').disabled=false;}
@@ -495,10 +495,10 @@
       return;
     }
     if(isLocked(currentTeam)){
-      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><p>Code à saisir : <span class="code uppercase">${esc(currentTeam.teamCode)}</span></p><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p></div>`;
+      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p></div>`;
       return;
     }
-    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code à saisir : <span class="code uppercase">${esc(currentTeam.teamCode)}</span></p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">Gardez les yeux ouverts : le prochain QR peut dormir dans un rayon, derrière une étiquette, entre deux pages ou au fond d’une cachette que seul un vrai équipage saura repérer.</p></div>`;
+    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">Gardez les yeux ouverts : le prochain QR peut dormir dans un rayon, derrière une étiquette, entre deux pages ou au fond d’une cachette que seul un vrai équipage saura repérer.</p></div>`;
   }
 
   const RULES = {
