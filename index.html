@@ -156,7 +156,7 @@
       line-height:1.18;
     }
     .body{padding:clamp(18px,3vw,28px)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:end}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.grid>div{display:flex;flex-direction:column;justify-content:flex-end}
     .intro-card{background:linear-gradient(135deg,rgba(255,255,255,.99),rgba(235,249,255,.97))}
     .intro-layout{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(320px,.88fr);gap:28px;align-items:start}
     .intro-title{font-size:clamp(32px,4.7vw,56px);line-height:1.02;margin:0 0 16px;letter-spacing:-.045em;color:#101820}
@@ -176,12 +176,12 @@
     .rule-detail ul{margin:10px 0 0;padding-left:18px}
     .rule-detail li{margin:6px 0;line-height:1.4}
     label{display:block;font-weight:900;margin:0 0 9px;color:#1a2834}
-    input,select{width:100%;min-height:48px;padding:13px 14px;border:2px solid #d8e0e6;border-radius:15px;font:inherit;background:#fff;color:#111}
+    input,select{width:100%;height:52px;min-height:52px;padding:13px 14px;border:2px solid #d8e0e6;border-radius:15px;font:inherit;background:#fff;color:#111;line-height:1.2}
     input:focus,select:focus{outline:none;border-color:var(--fnac);box-shadow:0 0 0 4px rgba(245,176,39,.22)}
     #teamCodeInput{text-transform:uppercase}.uppercase{text-transform:uppercase;letter-spacing:.04em}
     button{border:0;border-radius:15px;padding:14px 18px;font:inherit;font-weight:900;cursor:pointer;margin:12px 8px 0 0;transition:.15s filter,.15s transform;min-height:48px}
     button:hover{filter:brightness(1.03);transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}.primary{background:var(--fnac);color:#111;box-shadow:0 10px 18px rgba(245,176,39,.26)}.secondary{background:#eaf0f4;color:#111}.danger{background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac}
-    .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:12px;color:#6e7a84;line-height:1.38}.pill{display:inline-block;background:#111;color:var(--fnac);border-radius:999px;padding:6px 10px;font-weight:900}.code{font-family:Consolas,"Courier New",monospace;font-weight:900;background:#fff;border:1px dashed #999;border-radius:10px;padding:7px 9px;display:inline-block;user-select:all}.teamlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;margin-top:3px}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}.progress{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.dot{padding:6px 10px;border-radius:999px;background:#eef2f5;font-size:12px;font-weight:800;color:#52606a}.dot.doneDot{background:#e5fff2;color:#08633e;border:1px solid #aee5ca}.dot.currentDot{background:#111;color:var(--fnac)}
+    .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:12px;color:#6e7a84;line-height:1.38}.pill{display:inline-block;background:#111;color:var(--fnac);border-radius:999px;padding:6px 10px;font-weight:900}.code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111;color:var(--fnac);border:2px solid var(--fnac);border-radius:12px;padding:8px 12px;display:inline-block;user-select:all;font-size:16px;box-shadow:0 6px 14px rgba(0,0,0,.12)}.teamlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;margin-top:3px}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}.progress{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.dot{padding:6px 10px;border-radius:999px;background:#eef2f5;font-size:12px;font-weight:800;color:#52606a}.dot.doneDot{background:#e5fff2;color:#08633e;border:1px solid #aee5ca}.dot.currentDot{background:#111;color:var(--fnac)}
     .hero-actions{position:relative;z-index:2;display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}.hero-cta{position:relative;z-index:2;margin-top:0;background:var(--fnac);color:#111;border:0;border-radius:999px;padding:16px 24px;font-weight:1000;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(245,176,39,.28);width:auto;min-width:210px}.hero-cta.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(245,176,39,.55);box-shadow:none}
     .hero-cta.red{background:linear-gradient(135deg,#ff4b3e,#9b1111);color:#fff;box-shadow:0 0 30px rgba(255,55,55,.25)}
     .ocean-wallpaper{position:absolute;top:0;left:0;right:0;bottom:0;min-height:100%;z-index:0;pointer-events:none;overflow:hidden;background:linear-gradient(180deg,rgba(2,8,18,.10),rgba(2,8,18,.30) 38%,rgba(2,8,18,.58) 100%),url('assets/fond-nautilus.jpg') center top / 100% 100% no-repeat;background-attachment:scroll;}.ocean-wallpaper>*{display:none!important}.water-surface{position:absolute;left:-5%;right:-5%;top:0;height:110px;background:linear-gradient(180deg,rgba(142,231,255,.36),rgba(142,231,255,.08),transparent);filter:blur(.2px)}.water-surface:after{content:"";position:absolute;left:0;right:0;bottom:10px;height:22px;background:repeating-radial-gradient(ellipse at center,rgba(255,255,255,.28) 0 2px,transparent 3px 20px);opacity:.35}.submarine{position:absolute;right:9%;top:145px;width:190px;height:58px;border-radius:60% 45% 45% 60%;background:linear-gradient(180deg,#29475a,#0d2232);border:3px solid rgba(245,176,39,.45);opacity:.34;box-shadow:0 18px 38px rgba(0,0,0,.28)}.submarine:before{content:"";position:absolute;left:32px;top:-24px;width:62px;height:28px;border-radius:18px 18px 0 0;background:#10293b;border:2px solid rgba(245,176,39,.35)}.submarine span{position:absolute;right:38px;top:17px;width:24px;height:24px;border-radius:50%;border:3px solid rgba(245,176,39,.6);box-shadow:inset 0 0 12px rgba(142,231,255,.45)}.sonar-ring{position:absolute;border:1px solid rgba(142,231,255,.26);border-radius:50%;opacity:.28;animation:sonarPulse 5.5s infinite ease-out}.r1{right:14%;top:180px;width:80px;height:80px}.r2{right:12%;top:160px;width:130px;height:130px;animation-delay:1.2s}.r3{right:10%;top:140px;width:190px;height:190px;animation-delay:2.4s}@keyframes sonarPulse{0%{transform:scale(.65);opacity:.38}100%{transform:scale(1.35);opacity:0}}
@@ -191,7 +191,7 @@
     .countdown-card{background:linear-gradient(135deg,rgba(6,21,36,.98),rgba(11,61,92,.96));color:#fff;border-color:rgba(142,231,255,.18)}.countdown-layout{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}.count-title{background:none!important;color:#fff!important;padding:0!important;margin:0 0 8px!important}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(30px,5vw,58px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap}.final-cta{background:linear-gradient(135deg,#080b10,#270909 55%,#090d12);color:#fff;border-color:rgba(255,55,55,.22);text-align:center}.final-cta h2{background:none!important;color:#fff!important;font-size:clamp(30px,5vw,56px);padding:0!important;margin:0 0 10px!important}.final-cta p{color:#ffd6d6;font-size:18px;line-height:1.45}
 
     @media(max-width:900px){header{min-height:auto;padding-bottom:42px}header:before,header:after{opacity:.12}.intro-layout{grid-template-columns:1fr}.mission-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.teamlist{grid-template-columns:1fr}.countdown-layout{grid-template-columns:1fr}.countdown{white-space:normal}}
-    @media(max-width:640px){header{padding:26px 18px 36px}.hero-title{font-size:46px}.hero-kicker{font-size:11px;line-height:1.25;align-items:flex-start}main{padding:18px 12px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.intro-title span{white-space:normal}.mission-steps{grid-template-columns:1fr}.mission-step{min-height:auto}button{width:100%;margin-right:0}.team{padding:14px}}
+    @media(max-width:640px){header{padding:26px 18px 36px}.hero-title{font-size:46px}.hero-kicker{font-size:11px;line-height:1.25;align-items:flex-start}main{padding:18px 12px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}.intro-title span{white-space:normal}.mission-steps{grid-template-columns:1fr}.mission-step{min-height:auto}button{width:100%;margin-right:0}.team{padding:14px}}
   </style>
 </head>
 <body>
@@ -221,7 +221,7 @@
   <section class="card intro-card">
     <div class="body">
       <h2 class="intro-title">Comment fonctionne la mission&nbsp;?</h2>
-      <p class="intro-text">Le principe est simple : votre équipage avance de palier en palier. Cliquez sur une étape pour afficher les règles exactes.</p>
+      <p class="intro-text">Votre équipage suit une chaîne de défis : résoudre un mini-jeu, obtenir un mot de passe, trouver le QR caché, puis ouvrir le palier suivant.</p>
       <div class="mission-steps" id="ruleCards">
         <button type="button" class="mission-step active" data-rule="embark"><span class="num">1</span><b>Embarquez</b></button>
         <button type="button" class="mission-step" data-rule="solve"><span class="num">2</span><b>Décryptez</b></button>
@@ -242,8 +242,8 @@
     </div>
   </section>
 
-  <section class="card">
-    <h2>⚓ Embarquement collaborateur</h2>
+  <section class="card" id="embarquementMatelot">
+    <h2>⚓ Embarquement matelot</h2>
     <div class="body">
       <div class="grid">
         <div><label>Ton nom</label><input id="memberName" placeholder="Ex. Camille Dupont" autocomplete="off"></div>
@@ -261,19 +261,19 @@
         <div><label>Code équipage</label><input id="teamCodeInput" placeholder="Ex. NEMO" autocomplete="off"></div>
         <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
       </div>
-      <p class="small">Déjà à bord ? Repère ton équipage dans la liste “Équipages en mer”, copie son code de navigation, puis saisis-le ici pour rallumer le sonar et reprendre la plongée au bon palier.</p>
+      <p class="small">Déjà à bord ? Repère ton équipage dans la liste “Équipages en plongeon”, copie son code de navigation, puis saisis-le ici pour rallumer le sonar et reprendre la plongée au bon palier.</p>
       <div id="joinMsg"></div>
     </div>
   </section>
 
   <section class="card" id="equipagesEnMer">
-    <h2>🌊 Équipages en mer</h2>
-    <div class="body"><div id="teamsBox" class="teamlist">Ouverture du hublot…</div></div>
+    <h2>🌊 Équipages en plongeon</h2>
+    <div class="body"><div id="teamsBox" class="teamlist">Ouverture de l’écoutille...</div></div>
   </section>
 
   <section class="card">
-    <h2>🗺️ Carnet de bord</h2>
-    <div class="body" id="gameBox"><div class="notice">Choisis ton équipage. Le Nautilus affichera alors votre position dans l’aventure.</div></div>
+    <h2>⚙️ Chambre de pilotage</h2>
+    <div class="body" id="gameBox"><div class="notice">Carnet de bord des équipes. Le Nautilus affichera les données au cours de l’aventure.</div></div>
   </section>
   <section class="final-cta card">
     <div class="body">
@@ -393,7 +393,7 @@
   }
 
   async function loadTeams(){
-    const box=$('teamsBox');box.innerHTML='Ouverture du hublot…';
+    const box=$('teamsBox');box.innerHTML='Ouverture de l’écoutille...';
     try{
       await ensureTeams();
       const teams=[];
@@ -401,7 +401,7 @@
       box.innerHTML=teams.map(t=>{
         const members=t.members||[];
         const online=onlineCount(t);
-        return `<div class="team"><h3>${esc(t.teamName)}</h3><div>Code équipage : <span class="code uppercase">${esc(t.teamCode)}</span></div><div class="small">Membres : ${members.length}</div><div class="small">Étape : ${esc(STEPS[t.currentStep]?.label||t.currentStep)}</div><div class="small">${online} joueur(s) en ligne</div><div class="small">Échecs : ${Number(t.failCount||0)}</div>${isLocked(t)?`<div class="small" style="color:var(--bad)">Bloquée jusqu’à ${formatDate(t.lockedUntil)}</div>`:''}<div class="hr"></div>${members.length?members.map(m=>`<div>${esc(m.name)} <span class="service">${esc(m.service)}</span></div>`).join(''):'<div class="small">Équipage en attente de volontaires</div>'}</div>`;
+        return `<div class="team"><h3>${esc(t.teamName)}</h3><div>Code à saisir : <span class="code uppercase">${esc(t.teamCode)}</span></div><div class="small">Membres : ${members.length}</div><div class="small">Étape : ${esc(STEPS[t.currentStep]?.label||t.currentStep)}</div><div class="small">${online} joueur(s) en ligne</div><div class="small">Échecs : ${Number(t.failCount||0)}</div>${isLocked(t)?`<div class="small" style="color:var(--bad)">Bloquée jusqu’à ${formatDate(t.lockedUntil)}</div>`:''}<div class="hr"></div>${members.length?members.map(m=>`<div>${esc(m.name)} <span class="service">${esc(m.service)}</span></div>`).join(''):'<div class="small">Équipage en attente de volontaires</div>'}</div>`;
       }).join('');
     }catch(err){box.innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.</div>`;}
   }
@@ -431,7 +431,7 @@
       for(const t of TEAM_DEFS){const team=await getTeam(t.code);if(team)allTeams.push(team);}
       const already=allTeams.find(team=>(team.members||[]).some(m=>m.memberKey===key));
       if(already){
-        $('registerMsg').innerHTML=`<div class="notice warning"><b>${esc(name)}</b> a déjà embarqué avec <b>${esc(already.teamName)}</b>. Code équipage : <span class="code uppercase">${esc(already.teamCode)}</span></div>`;
+        $('registerMsg').innerHTML=`<div class="notice warning"><b>${esc(name)}</b> a déjà embarqué avec <b>${esc(already.teamName)}</b>. Code à saisir : <span class="code uppercase">${esc(already.teamCode)}</span></div>`;
         currentTeam=already;localStorage.setItem('nautilusCurrentTeam',already.teamCode);startHeartbeat();renderGame();return;
       }
       const chosen=pickBalancedTeam(allTeams,service);
@@ -442,7 +442,7 @@
       await addEvent(chosen,'member_registered',{memberName:name,service});
       const updated=await getTeam(chosen.teamCode);
       currentTeam=updated;localStorage.setItem('nautilusCurrentTeam',updated.teamCode);$('teamCodeInput').value=updated.teamCode;startHeartbeat();
-      $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>. Code équipage : <span class="code uppercase">${esc(updated.teamCode)}</span></div>`;
+      $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>. Code à saisir : <span class="code uppercase">${esc(updated.teamCode)}</span></div>`;
       $('memberName').value='';renderGame();await loadTeams();updateOceanWallpaperHeight();
     }catch(err){$('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.</div>`;}
     finally{$('registerBtn').disabled=false;}
@@ -487,7 +487,7 @@
 
   function renderGame(justUnlocked=false){
     const box=$('gameBox');
-    if(!currentTeam){box.innerHTML=`<div class="notice">Choisis ton équipage. Le Nautilus affichera alors votre position dans l’aventure.</div>`;return;}
+    if(!currentTeam){box.innerHTML=`<div class="notice">Carnet de bord des équipes. Le Nautilus affichera les données au cours de l’aventure.</div>`;return;}
     const step=STEPS[currentTeam.currentStep]||STEPS.start;
     const members=currentTeam.members||[];
     if(currentTeam.status==='finished'){
@@ -495,32 +495,31 @@
       return;
     }
     if(isLocked(currentTeam)){
-      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : <span class="code uppercase">${esc(currentTeam.teamCode)}</span></p><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p><button class="secondary" id="refreshCurrent">Scanner le sonar</button></div>`;
-      $('refreshCurrent').onclick=async()=>{currentTeam=await getTeam(currentTeam.teamCode);const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;renderGame(unlock.justUnlocked);await loadTeams();updateOceanWallpaperHeight();};return;
+      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><p>Code à saisir : <span class="code uppercase">${esc(currentTeam.teamCode)}</span></p><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p></div>`;
+      return;
     }
-    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : <span class="code uppercase">${esc(currentTeam.teamCode)}</span></p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">Gardez les yeux ouverts : le prochain QR peut dormir dans un rayon, derrière une étiquette, entre deux pages ou au fond d’une cachette que seul un vrai équipage saura repérer.</p><button class="secondary" id="reloadBtn">Scanner le sonar</button></div>`;
-    $('reloadBtn').onclick=async()=>{currentTeam=await getTeam(currentTeam.teamCode);const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;renderGame(unlock.justUnlocked);await loadTeams();updateOceanWallpaperHeight();};
+    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code à saisir : <span class="code uppercase">${esc(currentTeam.teamCode)}</span></p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">Gardez les yeux ouverts : le prochain QR peut dormir dans un rayon, derrière une étiquette, entre deux pages ou au fond d’une cachette que seul un vrai équipage saura repérer.</p></div>`;
   }
 
   const RULES = {
     embark: {
       title: '1 — Embarquez',
-      text: 'Inscrivez votre nom et votre service. Le Nautilus vous affecte à un équipage déjà en mer : Nemo, Nautilus, Aronnax, Ned Land ou Calamar.',
-      bullets: ['Un seul objectif : progresser ensemble.', 'Chaque équipage partage le même code.', 'Tout membre peut reprendre l’aventure avec ce code.']
+      text: 'Inscrivez votre nom et votre service. Vous rejoignez automatiquement un équipage : Nemo, Nautilus, Aronnax, Ned Land ou Calamar.',
+      bullets: ['Notez le code de votre équipage.', 'Ce code permet de reprendre la mission sur n’importe quel appareil.', 'Tous les membres avancent sur la même progression.']
     },
     solve: {
-      title: '2 — Résolvez',
-      text: 'Chaque palier ouvre un mini-jeu. Il peut demander de réfléchir, écouter, observer, calculer ou fouiller un indice dans le magasin.',
-      bullets: ['Les mini-jeux sont chronométrés.', 'Les erreurs sont limitées.', 'Réussir donne le mot de passe du QR suivant.']
+      title: '2 — Décryptez',
+      text: 'À chaque palier, un mini-jeu chronométré apparaît. En cas de réussite, il révèle le mot de passe du prochain QR.',
+      bullets: ['Lisez bien la consigne avant de lancer.', 'Le temps et les erreurs sont limités.', 'Le mot de passe obtenu sert au QR suivant.']
     },
     scan: {
       title: '3 — Scannez',
-      text: 'Le mini-jeu donne aussi une piste. Cette piste mène à une cachette physique dans un rayon : livre, meuble, boîte, support étiquette, mur ou présentoir.',
-      bullets: ['Trouvez le QR caché.', 'Entrez le mot de passe gagné au palier précédent.', 'Le palier suivant se déverrouille.']
+      text: 'Après le mini-jeu, suivez l’indice de cachette dans le magasin. Le QR suivant peut être dans un rayon, une boîte, un livre, un meuble ou derrière une étiquette.',
+      bullets: ['Trouvez physiquement le QR.', 'Scannez-le.', 'Entrez le mot de passe gagné juste avant.']
     },
     survive: {
       title: '4 — Et la suite...',
-      text: 'Si le temps est dépassé ou si trop d’erreurs sont commises, le Nautilus replonge. Plus un équipage échoue, plus le blocage dure longtemps.',
+      text: 'Si l’équipage échoue, la mission se bloque temporairement. Plus les échecs s’accumulent, plus le Nautilus met du temps à remonter.',
       bullets: ['1er échec : 2h.', '2e : 4h, 3e : 8h, 4e : 16h.', 'À partir du 5e : 24h.']
     }
   };
@@ -584,8 +583,8 @@
 
   function launchMission(){
     startOceanAudio();
-    document.getElementById('memberName')?.scrollIntoView({behavior:'smooth', block:'center'});
-    setTimeout(()=>$('memberName')?.focus(), 500);
+    document.getElementById('embarquementMatelot')?.scrollIntoView({behavior:'smooth', block:'start'});
+    setTimeout(()=>$('memberName')?.focus(), 650);
   }
   $('launchMissionBtn')?.addEventListener('click', launchMission);
   $('finalLaunchBtn')?.addEventListener('click', launchMission);
@@ -607,5 +606,5 @@
     if(last){const team=await getTeam(last).catch(()=>null);if(team){currentTeam=team;const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();renderGame(unlock.justUnlocked);}}
   })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e506b10fc6eca1',t:'MTc4NDU4MjU5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
