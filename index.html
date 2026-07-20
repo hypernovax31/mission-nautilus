@@ -563,34 +563,158 @@
     if(!AudioContext) return;
     audioStarted = true;
     audioCtx = new AudioContext();
+
     const master = audioCtx.createGain();
-    master.gain.value = 0.045;
+    master.gain.value = 0.075;
     master.connect(audioCtx.destination);
 
-    const hum = audioCtx.createOscillator();
-    const humGain = audioCtx.createGain();
-    hum.type = 'sine'; hum.frequency.value = 48;
-    humGain.gain.value = 0.55;
-    hum.connect(humGain); humGain.connect(master); hum.start();
+    // Chaîne d'écho sonar très marquée.
+    const echoDelay = audioCtx.createDelay(2.5);
+    echoDelay.delayTime.value = 0.48;
+    const echoFeedback = audioCtx.createGain();
+    echoFeedback.gain.value = 0.62;
+    const echoFilter = audioCtx.createBiquadFilter();
+    echoFilter.type = 'lowpass';
+    echoFilter.frequency.value = 1800;
+    echoDelay.connect(echoFilter);
+    echoFilter.connect(echoFeedback);
+    echoFeedback.connect(echoDelay);
+    echoDelay.connect(master);
 
-    const hum2 = audioCtx.createOscillator();
-    const hum2Gain = audioCtx.createGain();
-    hum2.type = 'triangle'; hum2.frequency.value = 92;
-    hum2Gain.gain.value = 0.12;
-    hum2.connect(hum2Gain); hum2Gain.connect(master); hum2.start();
+    // Ambiance moteur grave de sous-marin.
+    const engine = audioCtx.createOscillator();
+    const engineGain = audioCtx.createGain();
+    const engineFilter = audioCtx.createBiquadFilter();
+    engine.type = 'sawtooth';
+    engine.frequency.value = 34;
+    engineFilter.type = 'lowpass';
+    engineFilter.frequency.value = 105;
+    engineGain.gain.value = 0.34;
+    engine.connect(engineFilter);
+    engineFilter.connect(engineGain);
+    engineGain.connect(master);
+    engine.start();
 
-    function ping(){
+    // Deuxième vibration lente, façon coque / machinerie.
+    const hull = audioCtx.createOscillator();
+    const hullGain = audioCtx.createGain();
+    hull.type = 'sine';
+    hull.frequency.value = 63;
+    hullGain.gain.value = 0.20;
+    hull.connect(hullGain);
+    hullGain.connect(master);
+    hull.start();
+
+    // Bruit sourd filtré, comme l'eau contre la coque.
+    const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 3, audioCtx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for(let i=0;i<data.length;i++) data[i] = (Math.random() * 2 - 1) * 0.35;
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    noise.loop = true;
+    const noiseFilter = audioCtx.createBiquadFilter();
+    const noiseGain = audioCtx.createGain();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = 145;
+    noiseFilter.Q.value = 0.8;
+    noiseGain.gain.value = 0.12;
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(master);
+    noise.start();
+
+    // LFO pour donner une sensation de pression / profondeur.
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+    lfo.frequency.value = 0.075;
+    lfoGain.gain.value = 0.06;
+    lfo.connect(lfoGain);
+    lfoGain.connect(engineGain.gain);
+    lfo.start();
+
+    function sonarPing(){
       if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = 'sine'; osc.frequency.setValueAtTime(820, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.9, audioCtx.currentTime + 0.025);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.55);
-      osc.connect(gain); gain.connect(master); osc.start(); osc.stop(audioCtx.currentTime + 0.58);
+      const filter = audioCtx.createBiquadFilter();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1180, now);
+      osc.frequency.exponentialRampToValueAtTime(690, now + 0.34);
+      filter.type = 'bandpass';
+      filter.frequency.value = 980;
+      filter.Q.value = 9;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(1.15, now + 0.018);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.72);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(master);
+      gain.connect(echoDelay);
+      osc.start(now);
+      osc.stop(now + 0.76);
+
+      // Double écho proche, typique sonar dramatique.
+      [0.18, 0.34].forEach((offset, idx) => {
+        const echoOsc = audioCtx.createOscillator();
+        const echoGain = audioCtx.createGain();
+        echoOsc.type = 'sine';
+        echoOsc.frequency.setValueAtTime(idx ? 760 : 840, now + offset);
+        echoGain.gain.setValueAtTime(0.0001, now + offset);
+        echoGain.gain.exponentialRampToValueAtTime(idx ? 0.34 : 0.48, now + offset + 0.012);
+        echoGain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.42);
+        echoOsc.connect(echoGain);
+        echoGain.connect(echoDelay);
+        echoOsc.start(now + offset);
+        echoOsc.stop(now + offset + 0.45);
+      });
     }
-    ping();
-    setInterval(ping, 4200);
+
+    function metalCreak(){
+      if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(210, now);
+      osc.frequency.exponentialRampToValueAtTime(96, now + 1.1);
+      filter.type = 'lowpass';
+      filter.frequency.value = 520;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.20, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.35);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(master);
+      gain.connect(echoDelay);
+      osc.start(now);
+      osc.stop(now + 1.4);
+    }
+
+    function distantAlarm(){
+      if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+      for(let i=0;i<2;i++){
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = 392;
+        gain.gain.setValueAtTime(0.0001, now + i*0.42);
+        gain.gain.exponentialRampToValueAtTime(0.10, now + i*0.42 + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i*0.42 + 0.28);
+        osc.connect(gain);
+        gain.connect(echoDelay);
+        osc.start(now + i*0.42);
+        osc.stop(now + i*0.42 + 0.3);
+      }
+    }
+
+    sonarPing();
+    setInterval(sonarPing, 5200);
+    setInterval(metalCreak, 11700);
+    setInterval(distantAlarm, 18500);
   }
 
   function launchMission(){
