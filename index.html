@@ -258,7 +258,7 @@
     <h2>🧭 Retrouver son équipage</h2>
     <div class="body">
       <div class="grid">
-        <div><label>Code équipage</label><input id="teamCodeInput" placeholder="Ex. NEMO" autocomplete="off"></div>
+        <div><label>Code équipage</label><input id="teamCodeInput" placeholder="Ex. CAPITAINE" autocomplete="off"></div>
         <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
       </div>
       <p class="small">Déjà à bord ? Repère ton équipage dans la liste “Équipages en plongeon”, copie son code de navigation, puis saisis-le ici pour rallumer le sonar et reprendre la plongée au bon palier.</p>
@@ -301,11 +301,11 @@
   const db = getFirestore(app);
 
   const TEAM_DEFS = [
-    { code:"NEMO", name:"Nemo" },
-    { code:"NAUTILUS", name:"Nautilus" },
-    { code:"ARONNAX", name:"Aronnax" },
-    { code:"NED LAND", name:"Ned Land" },
-    { code:"CALAMAR", name:"Calamar" }
+    { code:"CAPITAINE", name:"Nemo" },
+    { code:"SOUSMARIN", name:"Nautilus" },
+    { code:"DOCTEUR", name:"Aronnax" },
+    { code:"BALEINE", name:"Ned Land" },
+    { code:"GEANT", name:"Calamar" }
   ];
   const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
 
