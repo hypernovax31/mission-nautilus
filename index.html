@@ -178,7 +178,7 @@
     label{display:block;font-weight:900;margin:0 0 9px;color:#1a2834}
     input,select{width:100%;height:52px;min-height:52px;padding:13px 14px;border:2px solid #d8e0e6;border-radius:15px;font:inherit;background:#fff;color:#111;line-height:1.2}
     input:focus,select:focus{outline:none;border-color:var(--fnac);box-shadow:0 0 0 4px rgba(245,176,39,.22)}
-    #teamCodeInput{text-transform:uppercase}.uppercase{text-transform:uppercase;letter-spacing:.04em}
+    #teamCodeInput,#memberName{text-transform:uppercase}.uppercase{text-transform:uppercase;letter-spacing:.04em}
     button{border:0;border-radius:15px;padding:14px 18px;font:inherit;font-weight:900;cursor:pointer;margin:12px 8px 0 0;transition:.15s filter,.15s transform;min-height:48px}
     button:hover{filter:brightness(1.03);transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}.primary{background:var(--fnac);color:#111;box-shadow:0 10px 18px rgba(245,176,39,.26)}.secondary{background:#eaf0f4;color:#111}.danger{background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac}
     .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:12px;color:#6e7a84;line-height:1.38}.pill{display:inline-block;background:#111;color:var(--fnac);border-radius:999px;padding:6px 10px;font-weight:900}.code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111;color:var(--fnac);border:2px solid var(--fnac);border-radius:12px;padding:8px 12px;display:inline-block;user-select:all;font-size:16px;box-shadow:0 6px 14px rgba(0,0,0,.12)}.teamlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;margin-top:3px}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}.progress{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.dot{padding:6px 10px;border-radius:999px;background:#eef2f5;font-size:12px;font-weight:800;color:#52606a}.dot.doneDot{background:#e5fff2;color:#08633e;border:1px solid #aee5ca}.dot.currentDot{background:#111;color:var(--fnac)}
@@ -310,7 +310,7 @@
   const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
 
   const STEPS = {
-    start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le hublot s’ouvre. Le premier signal attend son équipage."},
+    start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le Nautilus est prêt à plonger. Votre équipage attend le signal de départ pour naviguer vers le Palier 1."},
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Une trace d’encre, un auteur visionnaire, et peut-être le premier secret du capitaine Nemo."},
     son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Un signal brouillé remonte des profondeurs. Il faudra l’écouter autrement."},
     zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
@@ -401,7 +401,7 @@
       box.innerHTML=teams.map(t=>{
         const members=t.members||[];
         const online=onlineCount(t);
-        return `<div class="team"><h3>${esc(t.teamName)}</h3><div>Code équipage : « <span class="code uppercase">${esc(t.teamCode)}</span> »</div><div class="small">Membres : ${members.length}</div><div class="small">Étape : ${esc(STEPS[t.currentStep]?.label||t.currentStep)}</div><div class="small">${online} joueur(s) en ligne</div><div class="small">Échecs : ${Number(t.failCount||0)}</div>${isLocked(t)?`<div class="small" style="color:var(--bad)">Bloquée jusqu’à ${formatDate(t.lockedUntil)}</div>`:''}<div class="hr"></div>${members.length?members.map(m=>`<div>${esc(m.name)} <span class="service">${esc(m.service)}</span></div>`).join(''):'<div class="small">Équipage en attente de volontaires</div>'}</div>`;
+        return `<div class="team"><h3>${esc(t.teamName)}</h3><div class="small">Membres : ${members.length}</div><div class="small">Étape : ${esc(STEPS[t.currentStep]?.label||t.currentStep)}</div><div class="small">${online} joueur(s) en ligne</div><div class="small">Échecs : ${Number(t.failCount||0)}</div>${isLocked(t)?`<div class="small" style="color:var(--bad)">Bloquée jusqu’à ${formatDate(t.lockedUntil)}</div>`:''}<div class="hr"></div>${members.length?members.map(m=>`<div>${esc(m.name)} <span class="service">${esc(m.service)}</span></div>`).join(''):'<div class="small">Équipage en attente de volontaires</div>'}</div>`;
       }).join('');
     }catch(err){console.error('NAUTILUS loadTeams error:', err);box.innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
   }
@@ -420,7 +420,7 @@
   }
 
   async function registerMember(){
-    const name=$('memberName').value.trim();
+    const name=$('memberName').value.trim().toUpperCase();
     const service=$('memberService').value;
     if(!name){alert('Le Nautilus a besoin de connaître ton nom avant d’ouvrir l’écoutille.');return;}
     $('registerBtn').disabled=true;
@@ -431,7 +431,7 @@
       for(const t of TEAM_DEFS){const team=await getTeam(t.code);if(team)allTeams.push(team);}
       const already=allTeams.find(team=>(team.members||[]).some(m=>m.memberKey===key));
       if(already){
-        $('registerMsg').innerHTML=`<div class="notice warning"><b>${esc(name)}</b> a déjà embarqué avec <b>${esc(already.teamName)}</b>. Code équipage : « <span class="code uppercase">${esc(already.teamCode)}</span> »</div>`;
+        $('registerMsg').innerHTML=`<div class="notice warning"><b>${esc(name)}</b> a déjà embarqué avec <b>${esc(already.teamName)}</b>. Le code équipage n’est pas réaffiché : récupère-le auprès de ton équipage.</div>`;
         currentTeam=already;localStorage.setItem('nautilusCurrentTeam',already.teamCode);startHeartbeat();renderGame();return;
       }
       const chosen=pickBalancedTeam(allTeams,service);
@@ -442,7 +442,7 @@
       await addEvent(chosen,'member_registered',{memberName:name,service});
       const updated=await getTeam(chosen.teamCode);
       currentTeam=updated;localStorage.setItem('nautilusCurrentTeam',updated.teamCode);$('teamCodeInput').value=updated.teamCode;startHeartbeat();
-      $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>. Code équipage : « <span class="code uppercase">${esc(updated.teamCode)}</span> »</div>`;
+      $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>.<br><br>CODE ÉQUIPAGE À NOTER IMPÉRATIVEMENT : « <span class="code uppercase">${esc(updated.teamCode)}</span> »<br><span class="small">Conservez-le précieusement : il ne sera plus divulgué dans la liste des équipages.</span></div>`;
       $('memberName').value='';renderGame();await loadTeams();updateOceanWallpaperHeight();
     }catch(err){console.error('NAUTILUS register error:', err);$('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
     finally{$('registerBtn').disabled=false;}
@@ -453,7 +453,7 @@
     if(!code){alert('Entre le code de ton équipage pour rallumer le sonar.');return;}
     try{
       let team=await getTeam(code);
-      if(!team){$('joinMsg').innerHTML=`<div class="notice warning">Aucun sous-marin ne répond à ce code.</div>`;return;}
+      if(!team){$('joinMsg').innerHTML=`<div class="notice warning">Aucun équipage ne répond à ce code.</div>`;return;}
       currentTeam=team;
       const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;
       localStorage.setItem('nautilusCurrentTeam',currentTeam.teamCode);$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();
