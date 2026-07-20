@@ -367,7 +367,7 @@
         await setDoc(ref,{teamCode:t.code,teamName:t.name,currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],members:[],onlinePlayers:{},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
       }else{
         const data=snap.data();
-        const patch={teamName:t.name,updatedAt:new Date().toISOString()};
+        const patch={teamCode:t.code,teamName:t.name,updatedAt:new Date().toISOString()};
         if(!Array.isArray(data.members)) patch.members=[];
         if(!data.onlinePlayers) patch.onlinePlayers={};
         if(data.failCount===undefined) patch.failCount=0;
@@ -379,8 +379,8 @@
     await setDoc(doc(db,'game','config'),{activeTeamCodes:codes,updatedAt:new Date().toISOString()});
   }
 
-  async function getTeam(code){const snap=await getDoc(doc(db,'teams',teamCodeFromInput(code)));return snap.exists()?snap.data():null;}
-  async function saveTeam(team,patch){const updated={...patch,updatedAt:new Date().toISOString()};await updateDoc(doc(db,'teams',team.teamCode),updated);currentTeam={...team,...updated};return currentTeam;}
+  async function getTeam(code){const cleanCode=teamCodeFromInput(code);const snap=await getDoc(doc(db,'teams',cleanCode));return snap.exists()?{teamCode:cleanCode,...snap.data()}:null;}
+  async function saveTeam(team,patch){if(!team||!team.teamCode) throw new Error('Code équipage manquant. Recharge la page.');const updated={...patch,updatedAt:new Date().toISOString()};await updateDoc(doc(db,'teams',team.teamCode),updated);currentTeam={...team,...updated};return currentTeam;}
   async function addEvent(team,type,data={}){await addDoc(collection(db,'events'),{teamCode:team.teamCode,teamName:team.teamName,type,...data,createdAt:serverTimestamp()});}
 
   async function autoUnlockIfNeeded(team){
@@ -606,5 +606,5 @@
     if(last){const team=await getTeam(last).catch(()=>null);if(team){currentTeam=team;const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();renderGame(unlock.justUnlocked);}}
   })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e5576979c9b444',t:'MTc4NDU4NTkwMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e560f7c8a5b444',t:'MTc4NDU4NjI5NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
