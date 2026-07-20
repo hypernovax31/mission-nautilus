@@ -403,7 +403,7 @@
         const online=onlineCount(t);
         return `<div class="team"><h3>${esc(t.teamName)}</h3><div>Code à saisir : <span class="code uppercase">${esc(t.teamCode)}</span></div><div class="small">Membres : ${members.length}</div><div class="small">Étape : ${esc(STEPS[t.currentStep]?.label||t.currentStep)}</div><div class="small">${online} joueur(s) en ligne</div><div class="small">Échecs : ${Number(t.failCount||0)}</div>${isLocked(t)?`<div class="small" style="color:var(--bad)">Bloquée jusqu’à ${formatDate(t.lockedUntil)}</div>`:''}<div class="hr"></div>${members.length?members.map(m=>`<div>${esc(m.name)} <span class="service">${esc(m.service)}</span></div>`).join(''):'<div class="small">Équipage en attente de volontaires</div>'}</div>`;
       }).join('');
-    }catch(err){box.innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.</div>`;}
+    }catch(err){console.error('NAUTILUS loadTeams error:', err);box.innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
   }
 
 
@@ -444,7 +444,7 @@
       currentTeam=updated;localStorage.setItem('nautilusCurrentTeam',updated.teamCode);$('teamCodeInput').value=updated.teamCode;startHeartbeat();
       $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>. Code à saisir : <span class="code uppercase">${esc(updated.teamCode)}</span></div>`;
       $('memberName').value='';renderGame();await loadTeams();updateOceanWallpaperHeight();
-    }catch(err){$('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.</div>`;}
+    }catch(err){console.error('NAUTILUS register error:', err);$('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
     finally{$('registerBtn').disabled=false;}
   }
 
@@ -459,7 +459,7 @@
       localStorage.setItem('nautilusCurrentTeam',currentTeam.teamCode);$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();
       $('joinMsg').innerHTML=`<div class="notice success">Équipage retrouvé : <b>${esc(currentTeam.teamName)}</b></div>`;
       renderGame(unlock.justUnlocked);await loadTeams();updateOceanWallpaperHeight();
-    }catch(err){$('joinMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.</div>`;}
+    }catch(err){console.error('NAUTILUS join error:', err);$('joinMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
   }
 
   async function blockTeam(reason){
@@ -606,5 +606,5 @@
     if(last){const team=await getTeam(last).catch(()=>null);if(team){currentTeam=team;const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();renderGame(unlock.justUnlocked);}}
   })();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e5576979c9b444',t:'MTc4NDU4NTkwMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
