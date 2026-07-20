@@ -254,7 +254,7 @@
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" id="retrouverEquipage">
     <h2>🧭 Retrouver son équipage</h2>
     <div class="body">
       <div class="grid">
@@ -590,7 +590,7 @@
   $('finalLaunchBtn')?.addEventListener('click', launchMission);
   $('resumeMissionBtn')?.addEventListener('click', () => {
     startOceanAudio();
-    document.getElementById('equipagesEnMer')?.scrollIntoView({behavior:'smooth', block:'start'});
+    document.getElementById('retrouverEquipage')?.scrollIntoView({behavior:'smooth', block:'start'});
   });
 
   $('registerBtn').addEventListener('click',registerMember);
@@ -606,5 +606,5 @@
     if(last){const team=await getTeam(last).catch(()=>null);if(team){currentTeam=team;const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();renderGame(unlock.justUnlocked);}}
   })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e560f7c8a5b444',t:'MTc4NDU4NjI5NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
