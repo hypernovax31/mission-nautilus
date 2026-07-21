@@ -733,19 +733,40 @@
   // Ambiance sonore synthétique : démarrage après interaction utilisateur.
   let audioCtx = null;
   let audioStarted = false;
+  function setSonarButtonState(isActive){
+    const btn = document.getElementById('sonarToggleBtn');
+    if(!btn) return;
+    btn.textContent = isActive ? 'Sonar activé' : 'Activer le sonar';
+    btn.classList.toggle('active', isActive);
+  }
+
   function startOceanAudio(){
     const ambianceAudio = document.getElementById("ambianceAudio");
     if(!ambianceAudio) return;
     ambianceAudio.volume = 0.42;
     ambianceAudio.play().then(() => {
-      const btn = document.getElementById('sonarToggleBtn');
-      if(btn){ btn.textContent = 'Sonar activé'; btn.classList.add('active'); }
+      setSonarButtonState(true);
     }).catch(() => {
       console.log("Lecture audio bloquée par le navigateur jusqu’à une interaction utilisateur.");
     });
   }
 
-  $('sonarToggleBtn')?.addEventListener('click', startOceanAudio);
+  function toggleOceanAudio(){
+    const ambianceAudio = document.getElementById("ambianceAudio");
+    if(!ambianceAudio) return;
+    if(!ambianceAudio.paused){
+      ambianceAudio.pause();
+      setSonarButtonState(false);
+    }else{
+      startOceanAudio();
+    }
+  }
+
+  $('sonarToggleBtn')?.addEventListener('click', toggleOceanAudio);
+
+  const ambianceAudioElement = document.getElementById("ambianceAudio");
+  ambianceAudioElement?.addEventListener('pause', () => setSonarButtonState(false));
+  ambianceAudioElement?.addEventListener('play', () => setSonarButtonState(true));
 
   function activateAudioFromNavigation(){
     startOceanAudio();
@@ -795,5 +816,5 @@
     renderGame(false);
   })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1edee1efe838ce7',t:'MTc4NDY3NTk2Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
