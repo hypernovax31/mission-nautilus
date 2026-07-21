@@ -188,9 +188,9 @@
     .bubble{position:absolute;border-radius:50%;background:rgba(220,250,255,.4);box-shadow:inset 0 0 8px rgba(255,255,255,.6);animation:bubbleRise 12s infinite linear}.b1{left:8%;bottom:12%;width:14px;height:14px}.b2{left:18%;bottom:28%;width:9px;height:9px;animation-delay:3s}.b3{left:82%;bottom:22%;width:12px;height:12px;animation-delay:5s}.b4{left:70%;bottom:46%;width:8px;height:8px;animation-delay:1s}.b5{left:42%;bottom:18%;width:10px;height:10px;animation-delay:7s}@keyframes bubbleRise{0%{transform:translateY(0);opacity:0}10%{opacity:.55}90%{opacity:.3}100%{transform:translateY(-560px);opacity:0}}
     .alarm{position:absolute;width:18px;height:18px;border-radius:50%;background:#ff2c22;box-shadow:0 0 18px #ff2c22;opacity:.28;animation:alarmBlink 1.2s infinite alternate}.a1{left:12%;top:34%}.a2{right:18%;top:64%;animation-delay:.5s}@keyframes alarmBlink{to{opacity:.05;box-shadow:none}}
     .seabed{position:absolute;left:-5%;right:-5%;bottom:-10px;height:170px;background:linear-gradient(180deg,transparent,#07121b 34%,#03070c 100%)}.seabed:before{content:"";position:absolute;left:0;right:0;top:10px;height:90px;background:radial-gradient(ellipse at 20% 80%,#2b2418 0 12%,transparent 13%),radial-gradient(ellipse at 50% 60%,#45351d 0 18%,transparent 19%),radial-gradient(ellipse at 82% 80%,#2e271b 0 15%,transparent 16%);opacity:.55}.wreck{position:absolute;right:11%;bottom:72px;width:250px;height:62px;border-radius:10px;background:linear-gradient(135deg,#2b2017,#0f0d0a);transform:rotate(-8deg);opacity:.34}.wreck:before{content:"";position:absolute;left:28px;top:-34px;width:74px;height:44px;border:4px solid #2b2017;border-bottom:0;border-radius:40px 40px 0 0}.anchor{position:absolute;left:7%;bottom:70px;width:44px;height:80px;border:5px solid rgba(245,176,39,.25);border-top:0;border-radius:0 0 40px 40px;opacity:.45}.anchor:before{content:"";position:absolute;left:12px;top:-32px;width:12px;height:38px;background:rgba(245,176,39,.25)}.coral{position:absolute;bottom:54px;width:70px;height:70px;opacity:.36}.coral:before,.coral:after{content:"";position:absolute;bottom:0;width:12px;height:58px;border-radius:10px;background:#d06b5b}.c1{left:20%}.c2{right:28%;transform:scale(.8)}.coral:after{left:24px;height:44px;transform:rotate(28deg)}.tentacle{position:absolute;bottom:35px;width:28px;height:160px;border-radius:50% 50% 0 0;background:linear-gradient(90deg,#351b3f,#8a326e,#351b3f);opacity:.2;transform-origin:bottom}.t1{left:55%;transform:rotate(-18deg)}.t2{left:59%;height:210px;transform:rotate(10deg)}.t3{left:63%;height:145px;transform:rotate(24deg)}
-    .countdown-card{background:linear-gradient(135deg,rgba(6,21,36,.98),rgba(11,61,92,.96));color:#fff;border-color:rgba(142,231,255,.18)}.countdown-layout{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}.count-title{background:none!important;color:#fff!important;padding:0!important;margin:0 0 8px!important}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(30px,5vw,58px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap}.final-cta{background:linear-gradient(135deg,#080b10,#270909 55%,#090d12);color:#fff;border-color:rgba(255,55,55,.22);text-align:center}.final-cta h2{background:none!important;color:#fff!important;font-size:clamp(30px,5vw,56px);padding:0!important;margin:0 0 10px!important}.final-cta p{color:#ffd6d6;font-size:18px;line-height:1.45}
+    .countdown-card{background:linear-gradient(135deg,rgba(5,16,28,.98),rgba(8,48,72,.97));color:#fff;border-color:rgba(142,231,255,.18);position:relative;overflow:hidden}.countdown-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(142,231,255,.06) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.05) 1px,transparent 1px);background-size:34px 34px;opacity:.35;pointer-events:none}.oxygen-dashboard{position:relative;z-index:1}.oxygen-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:20px}.oxygen-kicker{display:inline-block;color:#8ee7ff;text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:900;margin-bottom:8px}.count-title{background:none!important;color:#fff!important;padding:0!important;margin:0 0 8px!important}.oxygen-percent{font-family:Consolas,"Courier New",monospace;font-size:clamp(34px,6vw,74px);font-weight:1000;color:#8ee7ff;line-height:.9;text-shadow:0 0 24px rgba(142,231,255,.35);white-space:nowrap}.oxygen-main{display:grid;grid-template-columns:96px 1fr;gap:22px;align-items:center}.oxygen-tank{position:relative;width:88px;height:196px;border:4px solid rgba(220,250,255,.9);border-radius:32px 32px 24px 24px;background:rgba(255,255,255,.075);overflow:hidden;box-shadow:inset 0 0 20px rgba(255,255,255,.18),0 0 26px rgba(142,231,255,.16)}.oxygen-tank-cap{position:absolute;top:-2px;left:27px;width:28px;height:16px;border-radius:0 0 9px 9px;background:rgba(220,250,255,.9);box-shadow:0 0 12px rgba(142,231,255,.35)}.oxygen-fill{position:absolute;left:0;right:0;bottom:0;height:100%;background:linear-gradient(180deg,#b8f4ff,#26b8ff 48%,#0669a8);box-shadow:0 -10px 26px rgba(142,231,255,.72);transition:height .6s ease;overflow:hidden}.oxygen-fill:before{content:"";position:absolute;left:-20%;right:-20%;top:-12px;height:24px;background:radial-gradient(ellipse at center,rgba(255,255,255,.7),rgba(255,255,255,0) 62%);animation:oxygenWave 2.8s ease-in-out infinite}.oxygen-fill:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);transform:translateX(-100%);animation:oxygenShimmer 3.6s infinite}.oxygen-tank-shine{position:absolute;top:22px;left:17px;width:10px;height:138px;border-radius:999px;background:rgba(255,255,255,.38);filter:blur(.4px)}.oxygen-data{min-width:0}.countdown-label{text-transform:uppercase;letter-spacing:.11em;color:#b7d9e8;font-size:12px;font-weight:900;margin-bottom:8px}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(28px,5vw,60px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap;line-height:1}.oxygen-bar{margin-top:16px;height:16px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(220,250,255,.25);overflow:hidden}.oxygen-bar span{display:block;height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#0b78c2,#28c5ff,#b8f4ff);background-size:220% 100%;box-shadow:0 0 18px rgba(142,231,255,.48);transition:width .6s ease;animation:oxygenFlow 4s linear infinite}@keyframes oxygenWave{0%,100%{transform:translateY(0) scaleX(1)}50%{transform:translateY(5px) scaleX(1.08)}}@keyframes oxygenShimmer{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}@keyframes oxygenFlow{0%{background-position:0% 50%}100%{background-position:220% 50%}}.nautilus-alarm{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(130,0,0,.38);animation:alarmScreen .55s infinite alternate}.nautilus-alarm.show{display:flex}.alarm-panel{max-width:720px;margin:20px;padding:28px;border:3px solid #ff352e;border-radius:24px;background:linear-gradient(135deg,rgba(20,0,0,.94),rgba(80,0,0,.92));color:#fff;text-align:center;box-shadow:0 0 45px rgba(255,0,0,.5)}.alarm-title{font-size:clamp(34px,6vw,70px);font-weight:1000;color:#ff4b3e;text-shadow:0 0 20px rgba(255,0,0,.55);letter-spacing:-.04em}.alarm-panel p{font-size:clamp(18px,2.5vw,26px);font-weight:900;line-height:1.25}@keyframes alarmScreen{from{box-shadow:inset 0 0 0 rgba(255,0,0,0)}to{box-shadow:inset 0 0 120px rgba(255,0,0,.95)}}.final-cta{background:linear-gradient(135deg,#080b10,#270909 55%,#090d12);color:#fff;border-color:rgba(255,55,55,.22);text-align:center}.final-cta h2{background:none!important;color:#fff!important;font-size:clamp(30px,5vw,56px);padding:0!important;margin:0 0 10px!important}.final-cta p{color:#ffd6d6;font-size:18px;line-height:1.45}
 
-    @media(max-width:900px){header{min-height:auto;padding-bottom:42px}header:before,header:after{opacity:.12}.intro-layout{grid-template-columns:1fr}.mission-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.teamlist{grid-template-columns:1fr}.countdown-layout{grid-template-columns:1fr}.countdown{white-space:normal}}
+    @media(max-width:900px){header{min-height:auto;padding-bottom:42px}header:before,header:after{opacity:.12}.intro-layout{grid-template-columns:1fr}.mission-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.teamlist{grid-template-columns:1fr}.oxygen-head{flex-direction:column}.oxygen-main{grid-template-columns:1fr}.oxygen-tank{width:100%;height:62px;border-radius:22px}.oxygen-tank-cap{display:none}.oxygen-tank-shine{display:none}.countdown{white-space:normal}}
     @media(max-width:640px){header{padding:26px 18px 36px}.hero-title{font-size:46px}.hero-kicker{font-size:11px;line-height:1.25;align-items:flex-start}main{padding:18px 12px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}.intro-title span{white-space:normal}.mission-steps{grid-template-columns:1fr}.mission-step{min-height:auto}button{width:100%;margin-right:0}.team{padding:14px}}
   </style>
 </head>
@@ -198,6 +198,13 @@
 <audio id="ambianceAudio" loop preload="auto">
   <source src="assets/ambiance-sonar.mp3" type="audio/mpeg">
 </audio>
+<div class="nautilus-alarm" id="nautilusAlarm" aria-live="assertive">
+  <div class="alarm-panel">
+    <div class="alarm-title">ALERTE NAUTILUS</div>
+    <p>Le signal vient d’être détecté.</p>
+    <p>La chasse est ouverte : ne laissez pas un autre équipage vous doubler dans les abysses.</p>
+  </div>
+</div>
 <div class="ocean-wallpaper" aria-hidden="true">
   <div class="water-surface"></div>
   <div class="submarine"><span></span></div>
@@ -215,7 +222,7 @@
   <h1 class="hero-title">Mission<br>Nautilus</h1>
   <div class="hero-line">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</div>
   <p class="hero-subtitle">Des transmissions ont refait surface dans le magasin. Rejoignez un équipage, explorez les rayons, décryptez les mini-jeux et ouvrez les QR verrouillés avant que l’oxygène ne manque.</p>
-  <div class="hero-actions"><button class="hero-cta" id="launchMissionBtn">Lancer la Mission</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la mission</button></div>
+  <div class="hero-actions"><button class="hero-cta" id="launchMissionBtn">Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la mission</button></div>
 </header>
 <main>
   <section class="card intro-card">
@@ -232,13 +239,28 @@
     </div>
   </section>
 
-  <section class="card countdown-card">
-    <div class="body countdown-layout">
-      <div>
-        <h2 class="count-title">Oxygène disponible</h2>
-        <p class="muted">Le Nautilus ne restera pas éternellement à portée de signal. Le compte à rebours est lancé.</p>
+  <section class="card countdown-card" id="oxygenPanel">
+    <div class="body oxygen-dashboard">
+      <div class="oxygen-head">
+        <div>
+          <span class="oxygen-kicker">Réserve vitale</span>
+          <h2 class="count-title">Oxygène disponible</h2>
+          <p class="muted" id="oxygenStatus">En attente du premier signal…</p>
+        </div>
+        <div class="oxygen-percent" id="oxygenPercent">100%</div>
       </div>
-      <div class="countdown" id="oxygenCountdown">7J 00h00m00s</div>
+      <div class="oxygen-main">
+        <div class="oxygen-tank" aria-hidden="true">
+          <div class="oxygen-fill" id="oxygenFill"></div>
+          <div class="oxygen-tank-shine"></div>
+          <div class="oxygen-tank-cap"></div>
+        </div>
+        <div class="oxygen-data">
+          <div class="countdown-label">Temps de mission restant</div>
+          <div class="countdown" id="oxygenCountdown">SIGNAL EN ATTENTE</div>
+          <div class="oxygen-bar"><span id="oxygenBar"></span></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -246,7 +268,7 @@
     <h2>⚓ Embarquement matelot</h2>
     <div class="body">
       <div class="grid">
-        <div><label>Ton nom</label><input id="memberName" placeholder="Ex. Camille Dupont" autocomplete="off"></div>
+        <div><label>Ton nom</label><input id="memberName" placeholder="Ex. JULES VERNE" autocomplete="off"></div>
         <div><label>Ton service</label><select id="memberService"><option>PE</option><option>PT</option><option>SAV</option><option>LOG</option><option>CAI</option><option>GAD</option><option>CODIR</option></select></div>
       </div>
       <button class="primary" id="registerBtn">Monter à bord</button>
@@ -258,7 +280,7 @@
     <h2>🧭 Retrouver son équipage</h2>
     <div class="body">
       <div class="grid">
-        <div><label>Code équipage</label><input id="teamCodeInput" placeholder="Ex. CAPITAINE" autocomplete="off"></div>
+        <div><label>Code équipage</label><input id="teamCodeInput" placeholder="" autocomplete="off"></div>
         <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
       </div>
       <p class="small">Déjà à bord ? Repère ton équipage dans la liste “Équipages en plongeon”, copie son code de navigation, puis saisis-le ici pour rallumer le sonar et reprendre la plongée au bon palier.</p>
@@ -278,7 +300,7 @@
   <section class="final-cta card">
     <div class="body">
       <h2>Les abysses ne pardonnent pas.</h2>
-      <p>L’équipage qui hésite reste à quai. Celui qui ose ouvre le prochain sas.</p>
+      <p>Au premier lancement, l’alarme retentit, les lumières virent au rouge et la course commence pour tous les équipages.</p>
       <button class="hero-cta red" id="finalLaunchBtn">Lancez la mission</button>
     </div>
   </section>
@@ -321,6 +343,7 @@
   };
 
   let currentTeam=null;
+  let missionConfig=null;
   let heartbeatTimer=null;
   const CLIENT_ID = localStorage.getItem('nautilusClientId') || ('P-' + Math.random().toString(36).slice(2,10).toUpperCase());
   localStorage.setItem('nautilusClientId', CLIENT_ID);
@@ -376,7 +399,7 @@
         await updateDoc(ref,patch).catch(()=>{});
       }
     }
-    await setDoc(doc(db,'game','config'),{activeTeamCodes:codes,updatedAt:new Date().toISOString()});
+    await setDoc(doc(db,'game','config'),{activeTeamCodes:codes,updatedAt:new Date().toISOString()},{merge:true});
   }
 
   async function getTeam(code){const cleanCode=teamCodeFromInput(code);const snap=await getDoc(doc(db,'teams',cleanCode));return snap.exists()?{teamCode:cleanCode,...snap.data()}:null;}
@@ -498,7 +521,9 @@
       box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p></div>`;
       return;
     }
-    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">Gardez les yeux ouverts : le prochain QR peut dormir dans un rayon, derrière une étiquette, entre deux pages ou au fond d’une cachette que seul un vrai équipage saura repérer.</p></div>`;
+    const firstPalierButton = currentTeam.currentStep === 'start' ? `<button class="primary" id="startFirstPalierBtn">Lancer le premier mini-jeu</button>` : '';
+    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">Gardez les yeux ouverts : le prochain QR peut dormir dans un rayon, derrière une étiquette, entre deux pages ou au fond d’une cachette que seul un vrai équipage saura repérer.</p>${firstPalierButton}</div>`;
+    $('startFirstPalierBtn')?.addEventListener('click', startMissionOfficial);
   }
 
   const RULES = {
@@ -549,25 +574,126 @@
   window.addEventListener('resize', updateOceanWallpaperHeight);
   setInterval(updateOceanWallpaperHeight, 1500);
 
-  // Compte à rebours d'ambiance : 7 jours à partir de la première ouverture sur l'appareil.
-  const countdownKey = 'nautilusOxygenDeadline';
-  let deadline = localStorage.getItem(countdownKey);
-  if(!deadline){
-    deadline = String(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    localStorage.setItem(countdownKey, deadline);
+  const MISSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+  async function loadMissionConfig(){
+    const snap = await getDoc(doc(db,'game','config'));
+    missionConfig = snap.exists() ? snap.data() : {};
+    return missionConfig;
   }
+
   function updateCountdown(){
     const el = $('oxygenCountdown');
-    if(!el) return;
-    let diff = Math.max(0, Number(deadline) - Date.now());
+    const status = $('oxygenStatus');
+    const fill = $('oxygenFill');
+    const pctEl = $('oxygenPercent');
+    const bar = $('oxygenBar');
+    if(!el || !status || !fill) return;
+
+    const startedAt = missionConfig?.missionStartedAt;
+    if(!startedAt){
+      el.textContent = '100 %';
+      status.textContent = 'En attente du premier signal…';
+      fill.style.height = '100%';
+      if(pctEl) pctEl.textContent = '100%';
+      if(bar) bar.style.width = '100%';
+      return;
+    }
+
+    const start = new Date(startedAt).getTime();
+    const end = start + MISSION_DURATION_MS;
+    let diff = Math.max(0, end - Date.now());
+    const percent = Math.max(0, Math.min(100, Math.round((diff / MISSION_DURATION_MS) * 100)));
+
     const d = Math.floor(diff / 86400000); diff -= d * 86400000;
     const h = Math.floor(diff / 3600000); diff -= h * 3600000;
     const m = Math.floor(diff / 60000); diff -= m * 60000;
     const sec = Math.floor(diff / 1000);
+
     el.textContent = `${d}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(sec).padStart(2,'0')}s`;
+    status.textContent = `Signal actif — tous les équipages sont en course.`;
+    fill.style.height = percent + '%';
+    if(pctEl) pctEl.textContent = percent + '%';
+    if(bar) bar.style.width = percent + '%';
   }
+
+  async function refreshMissionConfig(){
+    const before = missionConfig?.missionStartedAt || null;
+    await loadMissionConfig();
+    const after = missionConfig?.missionStartedAt || null;
+    updateCountdown();
+    if(after && after !== before && localStorage.getItem('nautilusSeenStart') !== after){
+      showNautilusAlarm(after);
+    }
+  }
+
+  async function startMissionOfficial(){
+    startOceanAudio();
+    if(!currentTeam){
+      const box = $('gameBox');
+      if(box){
+        box.innerHTML = `<div class="notice warning"><b>Équipage requis.</b><br>Avant de lancer le premier mini-jeu, embarquez un matelot ou reprenez un équipage existant.</div>`;
+      }
+      document.getElementById('embarquementMatelot')?.scrollIntoView({behavior:'smooth', block:'start'});
+      return;
+    }
+    await loadMissionConfig();
+    if(!missionConfig?.missionStartedAt){
+      const startedAt = new Date().toISOString();
+      await setDoc(doc(db,'game','config'), {
+        missionStartedAt: startedAt,
+        missionStartedByTeam: currentTeam?.teamCode || null,
+        missionStartedByTeamName: currentTeam?.teamName || null,
+        updatedAt: new Date().toISOString()
+      }, {merge:true});
+      missionConfig = { ...(missionConfig||{}), missionStartedAt };
+      if(currentTeam) await addEvent(currentTeam, 'mission_started', { startedAt });
+      updateCountdown();
+      showNautilusAlarm(startedAt);
+    }else{
+      updateCountdown();
+    }
+  }
+
+  function showNautilusAlarm(startedAt){
+    localStorage.setItem('nautilusSeenStart', startedAt);
+    const alarm = $('nautilusAlarm');
+    if(!alarm) return;
+    alarm.classList.add('show');
+    playSubmarineAlarm();
+    setTimeout(()=>alarm.classList.remove('show'), 9500);
+  }
+
+  function playSubmarineAlarm(){
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContext) return;
+    const ctx = audioCtx || new AudioContext();
+    audioCtx = ctx;
+    const master = ctx.createGain();
+    master.gain.value = 0.12;
+    master.connect(ctx.destination);
+    const delay = ctx.createDelay(1.2);
+    delay.delayTime.value = 0.28;
+    const fb = ctx.createGain();
+    fb.gain.value = 0.42;
+    delay.connect(fb); fb.connect(delay); delay.connect(master);
+    const now = ctx.currentTime;
+    for(let i=0;i<8;i++){
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = i % 2 ? 330 : 440;
+      gain.gain.setValueAtTime(0.0001, now + i*0.45);
+      gain.gain.exponentialRampToValueAtTime(0.75, now + i*0.45 + 0.035);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i*0.45 + 0.30);
+      osc.connect(gain); gain.connect(master); gain.connect(delay);
+      osc.start(now + i*0.45); osc.stop(now + i*0.45 + 0.32);
+    }
+  }
+
   setInterval(updateCountdown, 1000);
-  updateCountdown();
+  setInterval(refreshMissionConfig, 10000);
+
 
   // Ambiance sonore synthétique : démarrage après interaction utilisateur.
   let audioCtx = null;
@@ -587,7 +713,7 @@
     setTimeout(()=>$('memberName')?.focus(), 650);
   }
   $('launchMissionBtn')?.addEventListener('click', launchMission);
-  $('finalLaunchBtn')?.addEventListener('click', launchMission);
+  $('finalLaunchBtn')?.addEventListener('click', startMissionOfficial);
   $('resumeMissionBtn')?.addEventListener('click', () => {
     startOceanAudio();
     document.getElementById('retrouverEquipage')?.scrollIntoView({behavior:'smooth', block:'start'});
@@ -601,6 +727,11 @@
   setInterval(()=>loadTeams(), 60000);
 
   (async function init(){
+    await loadMissionConfig();
+    updateCountdown();
+    if(missionConfig?.missionStartedAt && localStorage.getItem('nautilusSeenStart') !== missionConfig.missionStartedAt){
+      showNautilusAlarm(missionConfig.missionStartedAt);
+    }
     await loadTeams();
     const last=localStorage.getItem('nautilusCurrentTeam');
     if(last){const team=await getTeam(last).catch(()=>null);if(team){currentTeam=team;const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();renderGame(unlock.justUnlocked);}}
