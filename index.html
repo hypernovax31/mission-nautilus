@@ -85,6 +85,7 @@
       border:4px solid rgba(245,176,39,.46);
       opacity:.26;
     }
+    .sonar-toggle{position:fixed;top:14px;right:14px;z-index:10000;background:rgba(0,0,0,.42);color:rgba(255,255,255,.82);border:1px solid rgba(245,176,39,.45);border-radius:999px;padding:8px 11px;font-size:11px;font-weight:800;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
     .brand{
       position:relative;
       z-index:1;
@@ -203,6 +204,7 @@
 <audio id="ambianceAudio" loop preload="auto">
   <source src="assets/ambiance-sonar.mp3" type="audio/mpeg">
 </audio>
+<button id="sonarToggleBtn" class="sonar-toggle" type="button">Activer le sonar</button>
 <div class="nautilus-alarm" id="nautilusAlarm" aria-live="assertive">
   <div class="alarm-panel">
     <div class="alarm-title">ALERTE NAUTILUS</div>
@@ -735,10 +737,27 @@
     const ambianceAudio = document.getElementById("ambianceAudio");
     if(!ambianceAudio) return;
     ambianceAudio.volume = 0.42;
-    ambianceAudio.play().catch(() => {
+    ambianceAudio.play().then(() => {
+      const btn = document.getElementById('sonarToggleBtn');
+      if(btn){ btn.textContent = 'Sonar activé'; btn.classList.add('active'); }
+    }).catch(() => {
       console.log("Lecture audio bloquée par le navigateur jusqu’à une interaction utilisateur.");
     });
   }
+
+  $('sonarToggleBtn')?.addEventListener('click', startOceanAudio);
+
+  function activateAudioFromNavigation(){
+    startOceanAudio();
+    window.removeEventListener('scroll', activateAudioFromNavigation);
+    window.removeEventListener('wheel', activateAudioFromNavigation);
+    window.removeEventListener('touchstart', activateAudioFromNavigation);
+    window.removeEventListener('keydown', activateAudioFromNavigation);
+  }
+  window.addEventListener('scroll', activateAudioFromNavigation, { once:true, passive:true });
+  window.addEventListener('wheel', activateAudioFromNavigation, { once:true, passive:true });
+  window.addEventListener('touchstart', activateAudioFromNavigation, { once:true, passive:true });
+  window.addEventListener('keydown', activateAudioFromNavigation, { once:true });
 
   function launchMission(){
     startOceanAudio();
@@ -776,5 +795,5 @@
     renderGame(false);
   })();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1edee1efe838ce7',t:'MTc4NDY3NTk2Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
