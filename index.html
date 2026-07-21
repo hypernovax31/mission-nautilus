@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mission Nautilus — Fnac Labège</title>
+  <title>Mission Nautilus — Embarquement</title>
   <style>
     :root{
       --fnac:#f5b027;
@@ -172,7 +172,7 @@
       line-height:1.18;
     }
     .body{padding:clamp(18px,3vw,28px)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.grid>div{display:flex;flex-direction:column;justify-content:flex-end}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.grid>div{display:flex;flex-direction:column;justify-content:flex-end}.boarding-grid{display:grid;grid-template-columns:50fr 15fr 35fr;gap:18px;align-items:end}.boarding-grid>div{min-width:0}.boarding-action button{width:100%;margin:0;height:52px}
     .intro-card{background:linear-gradient(135deg,rgba(5,16,28,.97),rgba(12,53,77,.95));border:1px solid rgba(245,176,39,.28);color:#eaf8ff;position:relative;overflow:hidden}
     .intro-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 20%,rgba(142,231,255,.18),transparent 26%),radial-gradient(circle at 82% 70%,rgba(245,176,39,.14),transparent 22%),linear-gradient(90deg,rgba(142,231,255,.05) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.045) 1px,transparent 1px);background-size:auto,auto,38px 38px,38px 38px;pointer-events:none;opacity:.85}
     .intro-card .body{position:relative;z-index:1}.intro-title{font-size:clamp(34px,5vw,64px);line-height:.95;margin:0 0 18px;letter-spacing:-.045em;color:var(--fnac);text-transform:uppercase;text-shadow:0 0 22px rgba(245,176,39,.20)}
@@ -195,8 +195,8 @@
     .seabed{position:absolute;left:-5%;right:-5%;bottom:-10px;height:170px;background:linear-gradient(180deg,transparent,#07121b 34%,#03070c 100%)}.seabed:before{content:"";position:absolute;left:0;right:0;top:10px;height:90px;background:radial-gradient(ellipse at 20% 80%,#2b2418 0 12%,transparent 13%),radial-gradient(ellipse at 50% 60%,#45351d 0 18%,transparent 19%),radial-gradient(ellipse at 82% 80%,#2e271b 0 15%,transparent 16%);opacity:.55}.wreck{position:absolute;right:11%;bottom:72px;width:250px;height:62px;border-radius:10px;background:linear-gradient(135deg,#2b2017,#0f0d0a);transform:rotate(-8deg);opacity:.34}.wreck:before{content:"";position:absolute;left:28px;top:-34px;width:74px;height:44px;border:4px solid #2b2017;border-bottom:0;border-radius:40px 40px 0 0}.anchor{position:absolute;left:7%;bottom:70px;width:44px;height:80px;border:5px solid rgba(245,176,39,.25);border-top:0;border-radius:0 0 40px 40px;opacity:.45}.anchor:before{content:"";position:absolute;left:12px;top:-32px;width:12px;height:38px;background:rgba(245,176,39,.25)}.coral{position:absolute;bottom:54px;width:70px;height:70px;opacity:.36}.coral:before,.coral:after{content:"";position:absolute;bottom:0;width:12px;height:58px;border-radius:10px;background:#d06b5b}.c1{left:20%}.c2{right:28%;transform:scale(.8)}.coral:after{left:24px;height:44px;transform:rotate(28deg)}.tentacle{position:absolute;bottom:35px;width:28px;height:160px;border-radius:50% 50% 0 0;background:linear-gradient(90deg,#351b3f,#8a326e,#351b3f);opacity:.2;transform-origin:bottom}.t1{left:55%;transform:rotate(-18deg)}.t2{left:59%;height:210px;transform:rotate(10deg)}.t3{left:63%;height:145px;transform:rotate(24deg)}
     .countdown-card{background:linear-gradient(135deg,rgba(5,16,28,.98),rgba(8,48,72,.97));color:#fff;border-color:rgba(142,231,255,.18);position:relative;overflow:hidden}.countdown-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(142,231,255,.06) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.05) 1px,transparent 1px);background-size:34px 34px;opacity:.35;pointer-events:none}.oxygen-dashboard{position:relative;z-index:1}.oxygen-meter{background:linear-gradient(135deg,#061524,#0b2d44);border:1px solid rgba(142,231,255,.25);border-radius:24px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 18px 35px rgba(0,0,0,.25)}.oxygen-meter-top{display:flex;justify-content:space-between;align-items:center;gap:14px;color:#dff6ff;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:13px;margin-bottom:10px}.oxygen-meter-top span{font-size:clamp(22px,3.2vw,42px);line-height:1;letter-spacing:.04em}.oxygen-meter-top strong{font-family:Consolas,"Courier New",monospace;font-size:clamp(34px,6vw,72px);line-height:.9;color:#8ee7ff;text-shadow:0 0 18px rgba(142,231,255,.6);white-space:nowrap}.oxygen-status{margin:0 0 16px;color:#b7d9e8;font-weight:800;line-height:1.4}.oxygen-tube{position:relative;height:38px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),#020812;border:2px solid rgba(220,250,255,.45);box-shadow:inset 0 0 18px rgba(0,0,0,.85),0 0 18px rgba(142,231,255,.12)}.oxygen-liquid{position:relative;height:100%;width:100%;border-radius:999px;overflow:hidden;background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);background-size:220% 100%;transition:width .7s ease,filter .3s ease;box-shadow:0 0 22px rgba(142,231,255,.65),inset 0 0 18px rgba(255,255,255,.28)}.oxygen-liquid:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(255,255,255,.62) 0 2px,transparent 3px),radial-gradient(circle at 55% 45%,rgba(255,255,255,.48) 0 2px,transparent 3px),radial-gradient(circle at 80% 55%,rgba(255,255,255,.42) 0 1px,transparent 2px);background-size:90px 100%;animation:bubblesMove 5s linear infinite;opacity:.65}.oxygen-liquid:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.38) 45%,transparent 60%);transform:translateX(-100%);animation:glassSweep 3.8s ease-in-out infinite}.oxygen-liquid.warning-level{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}.oxygen-liquid.critical{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c);animation:criticalPulse .6s infinite alternate}.oxygen-scale{display:flex;justify-content:space-between;color:rgba(223,246,255,.65);font-family:Consolas,"Courier New",monospace;font-size:11px;margin-top:8px}.oxygen-bottom{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap}.oxygen-state{display:inline-flex;padding:7px 11px;border-radius:999px;font-weight:900;font-size:12px;letter-spacing:.06em;background:rgba(142,231,255,.12);color:#8ee7ff;border:1px solid rgba(142,231,255,.35);text-transform:uppercase}.oxygen-state.warning{background:rgba(245,176,39,.13);color:#ffd36c;border-color:rgba(245,176,39,.45)}.oxygen-state.critical{background:rgba(255,75,62,.16);color:#ff7b72;border-color:rgba(255,75,62,.55);animation:criticalText .7s infinite alternate}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,4vw,44px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap;line-height:1}@keyframes oxygenFlow{from{background-position:0% 50%}to{background-position:220% 50%}}@keyframes bubblesMove{from{background-position:0 0}to{background-position:180px 0}}@keyframes glassSweep{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}@keyframes criticalPulse{from{filter:brightness(.9)}to{filter:brightness(1.45)}}@keyframes criticalText{from{opacity:.7}to{opacity:1}}.nautilus-alarm{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(130,0,0,.38);animation:alarmScreen .55s infinite alternate}.nautilus-alarm.show{display:flex}.alarm-panel{max-width:720px;margin:20px;padding:28px;border:3px solid #ff352e;border-radius:24px;background:linear-gradient(135deg,rgba(20,0,0,.94),rgba(80,0,0,.92));color:#fff;text-align:center;box-shadow:0 0 45px rgba(255,0,0,.5)}.alarm-title{font-size:clamp(34px,6vw,70px);font-weight:1000;color:#ff4b3e;text-shadow:0 0 20px rgba(255,0,0,.55);letter-spacing:-.04em}.alarm-panel p{font-size:clamp(18px,2.5vw,26px);font-weight:900;line-height:1.25}@keyframes alarmScreen{from{box-shadow:inset 0 0 0 rgba(255,0,0,0)}to{box-shadow:inset 0 0 120px rgba(255,0,0,.95)}}.final-cta{background:linear-gradient(135deg,#080b10,#270909 55%,#090d12);color:#fff;border-color:rgba(255,55,55,.22);text-align:center}.final-cta h2{background:none!important;color:#fff!important;font-size:clamp(30px,5vw,56px);padding:0!important;margin:0 0 10px!important}.final-cta p{color:#ffd6d6;font-size:18px;line-height:1.45}
 
-    @media(max-width:900px){header{min-height:auto;padding-bottom:42px}header:before,header:after{opacity:.12}.intro-layout{grid-template-columns:1fr}.oxygen-meter-top{align-items:flex-start;flex-direction:column}.oxygen-bottom{align-items:flex-start}.countdown{white-space:normal}}
-    @media(max-width:640px){header{padding:26px 14px 36px}.hero-title{font-size:clamp(42px,13vw,64px);line-height:1.04;-webkit-text-stroke:2px #050505}.hero-line{margin-top:18px;font-size:clamp(20px,6vw,30px);line-height:1.22}.hero-kicker{font-size:11px;line-height:1.25;align-items:flex-start}main{padding:18px 10px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}.intro-title span{white-space:normal}.intro-text{min-height:120px}.mission-steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mission-step{min-height:auto;border-width:6px;padding:12px}button{width:100%;margin-right:0}.team{padding:14px}}
+    @media(max-width:900px){.boarding-grid{grid-template-columns:1fr 180px}.boarding-action{grid-column:1/-1}header{min-height:auto;padding-bottom:42px}header:before,header:after{opacity:.12}.intro-layout{grid-template-columns:1fr}.oxygen-meter-top{align-items:flex-start;flex-direction:column}.oxygen-bottom{align-items:flex-start}.countdown{white-space:normal}}
+    @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:26px 14px 36px}.hero-title{font-size:clamp(42px,13vw,64px);line-height:1.04;-webkit-text-stroke:2px #050505}.hero-line{margin-top:18px;font-size:clamp(20px,6vw,30px);line-height:1.22}.hero-kicker{font-size:11px;line-height:1.25;align-items:flex-start}main{padding:18px 10px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}.intro-title span{white-space:normal}.intro-text{min-height:120px}.mission-steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mission-step{min-height:auto;border-width:6px;padding:12px}button{width:100%;margin-right:0}.team{padding:14px}}
   </style>
 </head>
 <body>
@@ -267,11 +267,11 @@
   <section class="card" id="embarquementMatelot">
     <h2>⚓ Embarquement matelot</h2>
     <div class="body">
-      <div class="grid">
+      <div class="boarding-grid">
         <div><label>Ton nom</label><input id="memberName" placeholder="Ex. JULES VERNE" autocomplete="off"></div>
         <div><label>Ton service</label><select id="memberService"><option>PE</option><option>PT</option><option>SAV</option><option>LOG</option><option>CAI</option><option>GAD</option><option>CODIR</option></select></div>
+        <div class="boarding-action"><button class="primary" id="registerBtn">Monter à bord</button></div>
       </div>
-      <button class="primary" id="registerBtn">Monter à bord</button>
       <div id="registerMsg"></div>
     </div>
   </section>
@@ -283,7 +283,7 @@
         <div><label>Code équipage</label><input id="teamCodeInput" placeholder="" autocomplete="off"></div>
         <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
       </div>
-      <p class="small">Déjà à bord ? Repère ton équipage dans la liste “Équipages en plongeon”, copie son code de navigation, puis saisis-le ici pour rallumer le sonar et reprendre la plongée au bon palier.</p>
+      <p class="small">Déjà à bord ? Entre ton « code équipage », puis reprends la mission là où votre équipe s’est arrêtée.</p>
       <div id="joinMsg"></div>
     </div>
   </section>
@@ -295,7 +295,7 @@
 
   <section class="card">
     <h2>⚙️ Chambre de pilotage</h2>
-    <div class="body" id="gameBox"><div class="notice">Carnet de bord des équipes. Le Nautilus affichera les données au cours de l’aventure.</div></div>
+    <div class="body" id="gameBox"><div class="notice">Le carnet de bord du Nautilus affichera les données de ton équipe au cours de l’aventure.</div></div>
   </section>
   <section class="final-cta card">
     <div class="body">
@@ -345,6 +345,7 @@
   let currentTeam=null;
   let missionConfig=null;
   let heartbeatTimer=null;
+  let lastTeamsHtml="";
   const CLIENT_ID = localStorage.getItem('nautilusClientId') || ('P-' + Math.random().toString(36).slice(2,10).toUpperCase());
   localStorage.setItem('nautilusClientId', CLIENT_ID);
   const $=id=>document.getElementById(id);
@@ -416,16 +417,21 @@
   }
 
   async function loadTeams(){
-    const box=$('teamsBox');box.innerHTML='Ouverture de l’écoutille...';
+    const box=$('teamsBox');if(!lastTeamsHtml) box.innerHTML='Ouverture de l’écoutille...';
     try{
       await ensureTeams();
       const teams=[];
       for(const t of TEAM_DEFS){const team=await getTeam(t.code);if(team)teams.push(team);}
-      box.innerHTML=teams.map(t=>{
+      const nextTeamsHtml=teams.map(t=>{
         const members=t.members||[];
         const online=onlineCount(t);
         return `<div class="team"><h3>${esc(t.teamName)}</h3><div class="small">Membres : ${members.length}</div><div class="small">Étape : ${esc(STEPS[t.currentStep]?.label||t.currentStep)}</div><div class="small">${online} joueur(s) en ligne</div><div class="small">Échecs : ${Number(t.failCount||0)}</div>${isLocked(t)?`<div class="small" style="color:var(--bad)">Bloquée jusqu’à ${formatDate(t.lockedUntil)}</div>`:''}<div class="hr"></div>${members.length?members.map(m=>`<div>${esc(m.name)} <span class="service">${esc(m.service)}</span></div>`).join(''):'<div class="small">Équipage en attente de volontaires</div>'}</div>`;
       }).join('');
+      if(nextTeamsHtml!==lastTeamsHtml){
+        box.innerHTML=nextTeamsHtml;
+        lastTeamsHtml=nextTeamsHtml;
+        updateOceanWallpaperHeight();
+      }
     }catch(err){console.error('NAUTILUS loadTeams error:', err);box.innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
   }
 
@@ -510,7 +516,7 @@
 
   function renderGame(justUnlocked=false){
     const box=$('gameBox');
-    if(!currentTeam){box.innerHTML=`<div class="notice">Carnet de bord des équipes. Le Nautilus affichera les données au cours de l’aventure.</div>`;return;}
+    if(!currentTeam){box.innerHTML=`<div class="notice">Le carnet de bord du Nautilus affichera les données de ton équipe au cours de l’aventure.</div>`;return;}
     const step=STEPS[currentTeam.currentStep]||STEPS.start;
     const members=currentTeam.members||[];
     if(currentTeam.status==='finished'){
@@ -754,15 +760,21 @@
   setInterval(()=>loadTeams(), 60000);
 
   (async function init(){
+    // À chaque chargement de la page principale : aucun équipage pré-sélectionné.
+    // La Chambre de pilotage reste vierge et les champs restent à remplir.
+    currentTeam = null;
+    localStorage.removeItem('nautilusCurrentTeam');
+    if($('memberName')) $('memberName').value = '';
+    if($('teamCodeInput')) $('teamCodeInput').value = '';
+
     await loadMissionConfig();
     updateCountdown();
     if(missionConfig?.missionStartedAt && localStorage.getItem('nautilusSeenStart') !== missionConfig.missionStartedAt){
       showNautilusAlarm(missionConfig.missionStartedAt);
     }
     await loadTeams();
-    const last=localStorage.getItem('nautilusCurrentTeam');
-    if(last){const team=await getTeam(last).catch(()=>null);if(team){currentTeam=team;const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();renderGame(unlock.justUnlocked);}}
+    renderGame(false);
   })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1ed58688cb71546',t:'MTc4NDY2OTgzMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
