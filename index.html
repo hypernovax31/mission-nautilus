@@ -693,19 +693,22 @@
   }
 
   function playSubmarineAlarm(){
-    const alarmAudio = document.getElementById("alarmAudio");
+    const alarmAudio = document.getElementById('alarmAudio');
     if(!alarmAudio) return;
 
-    let loopsPlayed = 0;
     alarmAudio.pause();
     alarmAudio.currentTime = 0;
-    alarmAudio.volume = 0.78;
+    alarmAudio.volume = 0.82;
+    alarmAudio.dataset.loopCount = '0';
 
     alarmAudio.onended = () => {
-      loopsPlayed++;
-      if(loopsPlayed < 3){
+      const count = Number(alarmAudio.dataset.loopCount || '0') + 1;
+      alarmAudio.dataset.loopCount = String(count);
+      if(count < 3){
         alarmAudio.currentTime = 0;
         alarmAudio.play().catch(() => {});
+      }else{
+        alarmAudio.onended = null;
       }
     };
 
@@ -713,6 +716,60 @@
       console.log("Lecture de l’alarme bloquée par le navigateur.");
     });
   }
+
+  setInterval(updateCountdown, 1000);
+  setInterval(refreshMissionConfig, 10000);
+
+
+  // Ambiance sonore : démarrage après interaction utilisateur.
+  let audioCtx = null;
+  let audioStarted = false;
+  function setSonarButtonState(isActive){
+    const btn = document.getElementById('sonarToggleBtn');
+    if(!btn) return;
+    btn.textContent = isActive ? 'Sonar activé' : 'Activer le sonar';
+    btn.classList.toggle('active', isActive);
+  }
+
+  function startOceanAudio(){
+    const ambianceAudio = document.getElementById("ambianceAudio");
+    if(!ambianceAudio) return;
+    ambianceAudio.volume = 0.42;
+    ambianceAudio.play().then(() => {
+      setSonarButtonState(true);
+    }).catch(() => {
+      console.log("Lecture audio bloquée par le navigateur jusqu’à une interaction utilisateur.");
+    });
+  }
+
+  function toggleOceanAudio(){
+    const ambianceAudio = document.getElementById("ambianceAudio");
+    if(!ambianceAudio) return;
+    if(!ambianceAudio.paused){
+      ambianceAudio.pause();
+      setSonarButtonState(false);
+    }else{
+      startOceanAudio();
+    }
+  }
+
+  $('sonarToggleBtn')?.addEventListener('click', toggleOceanAudio);
+
+  const ambianceAudioElement = document.getElementById("ambianceAudio");
+  ambianceAudioElement?.addEventListener('pause', () => setSonarButtonState(false));
+  ambianceAudioElement?.addEventListener('play', () => setSonarButtonState(true));
+
+  function activateAudioFromNavigation(){
+    startOceanAudio();
+    window.removeEventListener('scroll', activateAudioFromNavigation);
+    window.removeEventListener('wheel', activateAudioFromNavigation);
+    window.removeEventListener('touchstart', activateAudioFromNavigation);
+    window.removeEventListener('keydown', activateAudioFromNavigation);
+  }
+  window.addEventListener('scroll', activateAudioFromNavigation, { once:true, passive:true });
+  window.addEventListener('wheel', activateAudioFromNavigation, { once:true, passive:true });
+  window.addEventListener('touchstart', activateAudioFromNavigation, { once:true, passive:true });
+  window.addEventListener('keydown', activateAudioFromNavigation, { once:true });
 
   function launchMission(){
     startOceanAudio();
@@ -755,5 +812,5 @@
     renderGame(false);
   })();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1fe75721f44d081',t:'MTc4NDg0OTI3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
