@@ -362,6 +362,69 @@
       button.mission-step b{font-size:clamp(10px,3vw,13px) !important;max-width:92% !important;}
     }
 
+
+
+    /* Hublots — répartition symétrique maximale selon la largeur visible */
+    .mission-steps{
+      width:100% !important;
+      display:grid !important;
+      grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+      gap:clamp(14px,2.2vw,34px) !important;
+      justify-items:center !important;
+      align-items:center !important;
+      margin-top:clamp(18px,2.4vw,30px) !important;
+    }
+    button.mission-step{
+      width:min(100%,clamp(150px,16vw,230px)) !important;
+      height:min(100%,clamp(150px,16vw,230px)) !important;
+      max-width:230px !important;
+      max-height:230px !important;
+      margin:0 auto !important;
+    }
+    @media(max-width:980px){
+      .mission-steps{
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+        gap:clamp(16px,4vw,34px) !important;
+      }
+      button.mission-step{
+        width:min(40vw,220px) !important;
+        height:min(40vw,220px) !important;
+      }
+    }
+    @media(max-width:520px){
+      .mission-steps{
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+        gap:clamp(10px,3.2vw,16px) !important;
+      }
+      button.mission-step{
+        width:min(42vw,165px) !important;
+        height:min(42vw,165px) !important;
+      }
+    }
+    @media(max-width:360px){
+      button.mission-step{
+        width:min(41vw,145px) !important;
+        height:min(41vw,145px) !important;
+      }
+    }
+
+
+
+    /* Transition cinéma : ALERTE CALAMAR */
+    .cinematic-transition{position:fixed;inset:0;z-index:9998;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at center,rgba(6,35,55,.72),rgba(0,0,0,.94) 62%),rgba(0,0,0,.92);overflow:hidden;color:#fff;pointer-events:none}
+    .cinematic-transition.show{display:flex;animation:cinematicShake 4.8s ease-in-out both}
+    .cinematic-flash{position:absolute;inset:0;background:rgba(160,0,0,.0);animation:cinematicRedFlash .62s alternate infinite}
+    .cinematic-porthole{position:absolute;width:min(58vw,520px);height:min(58vw,520px);max-width:520px;max-height:520px;border-radius:50%;border:16px solid #5c4630;box-shadow:inset 0 0 0 8px rgba(245,176,39,.38),0 0 55px rgba(142,231,255,.22),0 0 0 999px rgba(0,0,0,.18);display:grid;place-items:center;animation:portholeIn 4.8s ease both}
+    .porthole-glass{position:absolute;inset:18px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 38% 30%,rgba(142,231,255,.28),rgba(5,30,48,.86) 48%,rgba(1,8,16,.95));box-shadow:inset 0 0 60px rgba(142,231,255,.24)}
+    .porthole-glass:after{content:"";position:absolute;inset:0;background:linear-gradient(130deg,rgba(255,255,255,.28),transparent 28%,transparent 70%,rgba(255,255,255,.08));border-radius:50%}
+    .cinematic-sonar{position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:#8ee7ff;box-shadow:0 0 28px #8ee7ff;transform:translate(-50%,-50%)}
+    .cinematic-sonar:before,.cinematic-sonar:after{content:"";position:absolute;left:50%;top:50%;width:80px;height:80px;border:2px solid rgba(142,231,255,.55);border-radius:50%;transform:translate(-50%,-50%);animation:cinematicSonar 1.6s infinite ease-out}.cinematic-sonar:after{animation-delay:.55s}
+    .cinematic-bubbles span{position:absolute;bottom:15%;width:10px;height:10px;border-radius:50%;background:rgba(230,250,255,.55);animation:cinematicBubble 2.8s infinite linear}.cinematic-bubbles span:nth-child(1){left:30%;animation-delay:.1s}.cinematic-bubbles span:nth-child(2){left:42%;animation-delay:.7s;width:7px;height:7px}.cinematic-bubbles span:nth-child(3){left:61%;animation-delay:1.2s}.cinematic-bubbles span:nth-child(4){left:72%;animation-delay:1.8s;width:6px;height:6px}
+    .tentacle{position:absolute;width:90px;height:520px;border-radius:70% 70% 45% 45%;background:linear-gradient(90deg,#160817,#8b1f5d 48%,#210b24);filter:drop-shadow(0 0 18px rgba(0,0,0,.8));opacity:.92}.tentacle-left{left:-130px;top:12%;transform:rotate(62deg);animation:tentacleLeft 4.8s ease both}.tentacle-right{right:-150px;top:4%;transform:rotate(-58deg);animation:tentacleRight 4.8s ease both}.tentacle-bottom{bottom:-250px;left:52%;height:560px;transform:rotate(4deg);animation:tentacleBottom 4.8s ease both}
+    .cinematic-text{position:relative;z-index:3;text-align:center;max-width:min(900px,92vw);padding:24px;margin-top:min(48vh,420px);animation:textIn 4.8s ease both}.cinematic-kicker{display:inline-block;color:#ff4b3e;border:1px solid rgba(255,75,62,.7);border-radius:999px;padding:7px 12px;font-weight:1000;letter-spacing:.12em;font-size:12px;background:rgba(0,0,0,.42)}.cinematic-title{margin-top:12px;font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;font-size:clamp(42px,8vw,96px);line-height:.92;text-transform:uppercase;color:#fff;text-shadow:0 0 24px rgba(255,0,0,.45),5px 5px 0 #000}.cinematic-subtitle{margin:14px auto 0;color:#ffd6d6;font-size:clamp(16px,2.4vw,26px);font-weight:900;line-height:1.25;max-width:780px}
+    @keyframes cinematicRedFlash{from{background:rgba(120,0,0,.08)}to{background:rgba(210,0,0,.34)}}@keyframes portholeIn{0%{transform:scale(.65);opacity:0}16%{transform:scale(1.03);opacity:1}78%{transform:scale(1)}100%{transform:scale(1.16);opacity:0}}@keyframes cinematicSonar{0%{width:40px;height:40px;opacity:.8}100%{width:420px;height:420px;opacity:0}}@keyframes cinematicBubble{0%{transform:translateY(0);opacity:0}20%{opacity:.85}100%{transform:translateY(-280px);opacity:0}}@keyframes tentacleLeft{0%{transform:translateX(-260px) rotate(62deg)}25%,78%{transform:translateX(160px) rotate(62deg)}100%{transform:translateX(-260px) rotate(62deg)}}@keyframes tentacleRight{0%{transform:translateX(280px) rotate(-58deg)}30%,82%{transform:translateX(-160px) rotate(-58deg)}100%{transform:translateX(280px) rotate(-58deg)}}@keyframes tentacleBottom{0%{transform:translateY(280px) rotate(4deg)}25%,72%{transform:translateY(-110px) rotate(4deg)}100%{transform:translateY(300px) rotate(4deg)}}@keyframes textIn{0%{opacity:0;transform:translateY(28px)}18%,78%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-24px)}}@keyframes cinematicShake{0%,100%{transform:translate(0,0)}10%{transform:translate(2px,-2px)}22%{transform:translate(-3px,2px)}34%{transform:translate(3px,1px)}48%{transform:translate(-2px,-2px)}62%{transform:translate(2px,2px)}76%{transform:translate(-1px,2px)}}
+    @media(max-width:640px){.cinematic-porthole{width:82vw;height:82vw;border-width:10px}.porthole-glass{inset:12px}.cinematic-text{margin-top:52vh}.tentacle{width:62px}.cinematic-title{font-size:clamp(38px,13vw,70px)}}
+
   </style>
 </head>
 <body>
@@ -377,6 +440,23 @@
     <div class="alarm-title">ALERTE NAUTILUS</div>
     <p>Le signal vient d’être détecté.</p>
     <p>La chasse est ouverte : ne laissez pas un autre équipage vous doubler dans les abysses.</p>
+  </div>
+</div>
+<div class="cinematic-transition" id="cinematicTransition" aria-hidden="true">
+  <div class="cinematic-flash"></div>
+  <div class="tentacle tentacle-left"></div>
+  <div class="tentacle tentacle-right"></div>
+  <div class="tentacle tentacle-bottom"></div>
+  <div class="cinematic-porthole">
+    <div class="porthole-glass">
+      <div class="cinematic-sonar"></div>
+      <div class="cinematic-bubbles"><span></span><span></span><span></span><span></span></div>
+    </div>
+  </div>
+  <div class="cinematic-text">
+    <div class="cinematic-kicker" id="cinematicKicker">ALERTE CALAMAR</div>
+    <div class="cinematic-title" id="cinematicTitle">PLONGÉE D’URGENCE</div>
+    <div class="cinematic-subtitle" id="cinematicSubtitle">Une présence massive approche. Le Nautilus verrouille les sas.</div>
   </div>
 </div>
 <div class="ocean-wallpaper" aria-hidden="true"></div>
@@ -823,9 +903,9 @@
     }
   }
 
-  async function startMissionOfficial(){
+  async function startMissionOfficial(skipAlarm=false){
     startOceanAudio();
-    showNautilusAlarm('launch-' + Date.now());
+    if(!skipAlarm) showNautilusAlarm('launch-' + Date.now());
     if(!currentTeam){
       const box = $('gameBox');
       if(box){
@@ -943,6 +1023,33 @@
   window.addEventListener('mousemove', activateAudioFromNavigation, { once:true, passive:true });
   window.addEventListener('keydown', activateAudioFromNavigation, { once:true });
 
+  function showCinematicTransition(mode='launch'){
+    return new Promise(resolve => {
+      const overlay = $('cinematicTransition');
+      const kicker = $('cinematicKicker');
+      const title = $('cinematicTitle');
+      const subtitle = $('cinematicSubtitle');
+      if(!overlay){ resolve(); return; }
+      if(mode === 'resume'){
+        if(kicker) kicker.textContent = 'ALERTE CALAMAR';
+        if(title) title.textContent = 'REPRISE DE PLONGÉE';
+        if(subtitle) subtitle.textContent = 'Le signal de votre équipage a été retrouvé. Le Nautilus reprend sa route.';
+      }else{
+        if(kicker) kicker.textContent = 'ALERTE CALAMAR';
+        if(title) title.textContent = 'PLONGÉE D’URGENCE';
+        if(subtitle) subtitle.textContent = 'Une présence massive approche. Le Nautilus verrouille les sas.';
+      }
+      overlay.classList.remove('show');
+      void overlay.offsetWidth;
+      overlay.classList.add('show');
+      playSubmarineAlarm();
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        resolve();
+      }, 4800);
+    });
+  }
+
   function updateFinalMissionButton(){
     const btn = $('cockpitMissionBtn');
     if(!btn) return;
@@ -958,10 +1065,12 @@
       document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
       return;
     }
+    startOceanAudio();
     if(currentTeam.currentStep === 'start'){
-      await startMissionOfficial();
+      await showCinematicTransition('launch');
+      await startMissionOfficial(true);
     }else{
-      startOceanAudio();
+      await showCinematicTransition('resume');
       palierLaunchNotice = true;
       renderGame(false);
       document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
@@ -1010,5 +1119,5 @@
     renderGame(false);
   })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2063c6e8f00e182',t:'MTc4NDkzMDgyOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2065f66ac14d0ba',t:'MTc4NDkzMjI2MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
