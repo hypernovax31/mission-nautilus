@@ -411,6 +411,86 @@
       }
     }
 
+
+
+    /* Transition cinéma : zoom dans le hublot vers les abysses */
+    .iris-transition.show{
+      background:
+        radial-gradient(circle at center,rgba(11,70,105,.72),rgba(0,0,0,.98) 62%),
+        linear-gradient(180deg,#02070d,#000);
+    }
+    .iris-transition.show:after{
+      content:"";
+      position:absolute;
+      inset:-20%;
+      background:
+        radial-gradient(circle at 50% 50%,transparent 0 18%,rgba(142,231,255,.08) 19%,transparent 28%),
+        repeating-radial-gradient(circle at 50% 50%,rgba(255,255,255,.06) 0 1px,transparent 2px 28px);
+      animation:abyssTunnel 5.6s cubic-bezier(.16,.84,.28,1) forwards;
+      pointer-events:none;
+      opacity:.55;
+    }
+    .iris-transition.show .iris-hublot{
+      animation:hublotGrandZoom 5.6s cubic-bezier(.13,.86,.22,1) forwards !important;
+      box-shadow:
+        0 0 0 9px rgba(245,176,39,.26),
+        0 0 95px rgba(142,231,255,.34),
+        0 0 160px rgba(0,0,0,.95),
+        inset 0 0 55px rgba(0,0,0,.75);
+    }
+    .iris-transition.show .iris-glass{
+      background:
+        radial-gradient(circle at 50% 50%,rgba(167,241,255,.38) 0 5%,rgba(15,90,125,.32) 18%,rgba(3,22,38,.74) 46%,rgba(0,0,0,.95) 72%),
+        repeating-radial-gradient(circle at 50% 50%,rgba(142,231,255,.18) 0 1px,transparent 2px 26px);
+      animation:glassAbyssZoom 5.6s cubic-bezier(.13,.86,.22,1) forwards !important;
+    }
+    .iris-transition.show .iris-blades{
+      transform:scale(1.55) rotate(0deg);
+      opacity:.98;
+      animation:irisOpenAndVanish 5.6s cubic-bezier(.2,.8,.18,1) forwards !important;
+      background:conic-gradient(from 0deg,#020202 0 31deg,transparent 33deg 58deg,#020202 60deg 91deg,transparent 93deg 118deg,#020202 120deg 151deg,transparent 153deg 178deg,#020202 180deg 211deg,transparent 213deg 238deg,#020202 240deg 271deg,transparent 273deg 298deg,#020202 300deg 331deg,transparent 333deg 360deg);
+    }
+    .iris-transition.show .iris-title{
+      animation:irisTitleZoom 5.6s ease forwards;
+    }
+    .iris-transition.show .iris-subtitle{
+      animation:irisSubtitleZoom 5.6s ease forwards;
+    }
+    @keyframes irisOpenAndVanish{
+      0%{transform:scale(1.55) rotate(0deg);opacity:1}
+      24%{transform:scale(.18) rotate(34deg);opacity:.96}
+      42%{transform:scale(0) rotate(48deg);opacity:0}
+      100%{transform:scale(0) rotate(48deg);opacity:0}
+    }
+    @keyframes hublotGrandZoom{
+      0%{transform:scale(.56);opacity:0;filter:brightness(.7)}
+      12%{transform:scale(1);opacity:1;filter:brightness(1.15)}
+      46%{transform:scale(1.08);opacity:1;filter:brightness(1)}
+      78%{transform:scale(3.15);opacity:1;filter:brightness(1.25) blur(.2px)}
+      100%{transform:scale(7.2);opacity:0;filter:brightness(1.8) blur(2px)}
+    }
+    @keyframes glassAbyssZoom{
+      0%{filter:brightness(.8) saturate(1);transform:scale(1)}
+      34%{filter:brightness(1.15) saturate(1.2);transform:scale(1.04)}
+      72%{filter:brightness(1.45) saturate(1.35);transform:scale(1.8)}
+      100%{filter:brightness(2) saturate(1.5);transform:scale(3.8)}
+    }
+    @keyframes abyssTunnel{
+      0%{transform:scale(.55) rotate(0deg);opacity:.18}
+      28%{opacity:.45}
+      100%{transform:scale(2.7) rotate(18deg);opacity:0}
+    }
+    @keyframes irisTitleZoom{
+      0%,22%{opacity:0;transform:translateY(16px) scale(.92)}
+      30%,58%{opacity:1;transform:translateY(0) scale(1)}
+      76%,100%{opacity:0;transform:translateY(-22px) scale(1.25)}
+    }
+    @keyframes irisSubtitleZoom{
+      0%,30%{opacity:0;transform:translateY(12px)}
+      38%,60%{opacity:1;transform:translateY(0)}
+      78%,100%{opacity:0;transform:translateY(-18px)}
+    }
+
   </style>
 </head>
 <body>
@@ -891,13 +971,62 @@
     const subtitle = $('irisSubtitle');
     if(mode === 'resume'){
       if(title) title.textContent = 'REPRISE DE PLONGÉE';
-      if(subtitle) subtitle.textContent = 'Palier retrouvé. Le Nautilus reprend sa route…';
+      if(subtitle) subtitle.textContent = 'Zoom hublot : retour vers le palier en cours…';
     }else{
-      if(title) title.textContent = 'PLONGÉE D’URGENCE';
-      if(subtitle) subtitle.textContent = 'Alerte Nautilus. Fermeture du hublot…';
+      if(title) title.textContent = 'DESCENTE VERS LES ABYSSES';
+      if(subtitle) subtitle.textContent = 'Iris mécanique ouvert. Le Nautilus plonge…';
     }
+    playIrisMechanism();
     overlay.classList.add('show');
-    return wait(4900).then(()=>overlay.classList.remove('show'));
+    return wait(5600).then(()=>overlay.classList.remove('show'));
+  }
+
+  function playIrisMechanism(){
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContext) return;
+    const ctx = audioCtx || new AudioContext();
+    audioCtx = ctx;
+    const master = ctx.createGain();
+    master.gain.value = 0.16;
+    master.connect(ctx.destination);
+    const now = ctx.currentTime;
+
+    // Grincement mécanique grave + cliquetis d'engrenages.
+    const grind = ctx.createOscillator();
+    const grindGain = ctx.createGain();
+    const grindFilter = ctx.createBiquadFilter();
+    grind.type = 'sawtooth';
+    grind.frequency.setValueAtTime(82, now);
+    grind.frequency.exponentialRampToValueAtTime(38, now + 1.25);
+    grindFilter.type = 'lowpass';
+    grindFilter.frequency.value = 520;
+    grindGain.gain.setValueAtTime(0.0001, now);
+    grindGain.gain.exponentialRampToValueAtTime(0.55, now + 0.08);
+    grindGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.45);
+    grind.connect(grindFilter); grindFilter.connect(grindGain); grindGain.connect(master);
+    grind.start(now); grind.stop(now + 1.5);
+
+    for(let i=0;i<9;i++){
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = 180 + i*22;
+      const t = now + 0.12 + i*0.105;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.24, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      osc.connect(gain); gain.connect(master);
+      osc.start(t); osc.stop(t + 0.08);
+    }
+
+    const boom = ctx.createOscillator();
+    const boomGain = ctx.createGain();
+    boom.type = 'sine'; boom.frequency.value = 46;
+    boomGain.gain.setValueAtTime(0.0001, now + 1.15);
+    boomGain.gain.exponentialRampToValueAtTime(0.75, now + 1.20);
+    boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.05);
+    boom.connect(boomGain); boomGain.connect(master);
+    boom.start(now + 1.15); boom.stop(now + 2.1);
   }
 
   async function startMissionOfficial(withAlarm=true){
@@ -1096,5 +1225,5 @@
     renderGame(false);
   })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a20681f4ff0ad14e',t:'MTc4NDkzMzY3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
