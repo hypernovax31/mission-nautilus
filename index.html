@@ -237,7 +237,7 @@
   </section>
 
   <section class="card countdown-card" id="oxygenPanel">
-    <h2>Réserve O₂</h2>
+    <h2>RÉSERVE O₂</h2>
     <div class="body oxygen-dashboard">
       <div class="oxygen-meter">
         <div class="oxygen-meter-top">
@@ -251,7 +251,7 @@
         <div class="oxygen-scale"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
         <div class="oxygen-bottom">
           <div class="oxygen-state" id="oxygenState">PRESSION STABLE</div>
-          <div class="countdown" id="oxygenCountdown">SIGNAL EN ATTENTE</div>
+          <div class="countdown" id="oxygenCountdown">07J 00h00m00s</div>
         </div>
       </div>
     </div>
@@ -286,7 +286,7 @@
     <div class="body"><div id="teamsBox" class="teamlist"><div class="sonar-loader"><div class="sonar-screen"><span class="sonar-dot d1"></span><span class="sonar-dot d2"></span><span class="sonar-dot d3"></span><span class="sonar-dot d4"></span><span class="sonar-sweep"></span></div><div class="sonar-text">Recherche de tous les équipages</div></div></div></div>
   </section>
 
-  <section class="card">
+  <section class="card" id="gameCard">
     <h2>⚙️ Chambre de pilotage</h2>
     <div class="body" id="gameBox"><div class="notice">Le carnet de bord du Nautilus affichera les données de ton équipe au cours de l’aventure.</div></div>
   </section>
@@ -336,6 +336,7 @@
   };
 
   let currentTeam=null;
+  let palierLaunchNotice=false;
   let missionConfig=null;
   let heartbeatTimer=null;
   let lastTeamsHtml="";
@@ -459,7 +460,7 @@
       const already=allTeams.find(team=>(team.members||[]).some(m=>m.memberKey===key));
       if(already){
         $('registerMsg').innerHTML=`<div class="notice warning"><b>${esc(name)}</b> a déjà embarqué avec <b>${esc(already.teamName)}</b>. Le code équipage n’est pas réaffiché : récupère-le auprès de ton équipage.</div>`;
-        currentTeam=already;localStorage.setItem('nautilusCurrentTeam',already.teamCode);startHeartbeat();renderGame();return;
+        currentTeam=already;localStorage.setItem('nautilusCurrentTeam',already.teamCode);startHeartbeat();updateFinalMissionButton();renderGame();return;
       }
       const chosen=pickBalancedTeam(allTeams,service);
       const member={name,service,memberKey:key,registeredAt:new Date().toISOString()};
@@ -468,7 +469,7 @@
       await addDoc(collection(db,'members'),{...member,teamCode:chosen.teamCode,teamName:chosen.teamName,createdAt:serverTimestamp()});
       await addEvent(chosen,'member_registered',{memberName:name,service});
       const updated=await getTeam(chosen.teamCode);
-      currentTeam=updated;localStorage.setItem('nautilusCurrentTeam',updated.teamCode);$('teamCodeInput').value=updated.teamCode;startHeartbeat();
+      currentTeam=updated;localStorage.setItem('nautilusCurrentTeam',updated.teamCode);$('teamCodeInput').value=updated.teamCode;startHeartbeat();updateFinalMissionButton();
       $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>.<br><br>CODE ÉQUIPAGE À NOTER IMPÉRATIVEMENT : « <span class="code uppercase">${esc(updated.teamCode)}</span> »<br><span class="small">Conservez-le précieusement : il ne sera plus divulgué dans la liste des équipages.</span></div>`;
       $('memberName').value='';renderGame();await loadTeams();updateOceanWallpaperHeight();
     }catch(err){console.error('NAUTILUS register error:', err);$('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
@@ -483,7 +484,7 @@
       if(!team){$('joinMsg').innerHTML=`<div class="notice warning">Aucun équipage ne répond à ce code.</div>`;return;}
       currentTeam=team;
       const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;
-      localStorage.setItem('nautilusCurrentTeam',currentTeam.teamCode);$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();
+      localStorage.setItem('nautilusCurrentTeam',currentTeam.teamCode);$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();updateFinalMissionButton();
       $('joinMsg').innerHTML=`<div class="notice success">Équipage retrouvé : <b>${esc(currentTeam.teamName)}</b></div>`;
       renderGame(unlock.justUnlocked);await loadTeams();updateOceanWallpaperHeight();
     }catch(err){console.error('NAUTILUS join error:', err);$('joinMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
@@ -514,7 +515,7 @@
 
   function renderGame(justUnlocked=false){
     const box=$('gameBox');
-    if(!currentTeam){box.innerHTML=`<div class="notice">Le carnet de bord du Nautilus affichera les données de ton équipe au cours de l’aventure.</div>`;return;}
+    if(!currentTeam){updateFinalMissionButton();box.innerHTML=`<div class="notice">Le carnet de bord du Nautilus affichera les données de ton équipe au cours de l’aventure.</div>`;return;}
     const step=STEPS[currentTeam.currentStep]||STEPS.start;
     const members=currentTeam.members||[];
     if(currentTeam.status==='finished'){
@@ -525,7 +526,9 @@
       box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p></div>`;
       return;
     }
-    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">Gardez les yeux ouverts : le prochain QR peut dormir dans un rayon, derrière une étiquette, entre deux pages ou au fond d’une cachette que seul un vrai équipage saura repérer.</p></div>`;
+    const launchNotice = palierLaunchNotice ? `<div class="notice success"><b>${esc(step.label)} chargé.</b><br>Le Nautilus reprend la navigation là où votre équipage s’est arrêté.</div>` : '';
+    palierLaunchNotice = false;
+    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}${launchNotice}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">Gardez les yeux ouverts : le prochain QR peut dormir dans un rayon, derrière une étiquette, entre deux pages ou au fond d’une cachette que seul un vrai équipage saura repérer.</p></div>`;
   }
 
   const RULES = {
@@ -619,7 +622,7 @@
 
     const startedAt = missionConfig?.missionStartedAt;
     if(!startedAt){
-      el.textContent = '100 %';
+      el.textContent = '07J 00h00m00s';
       status.textContent = 'En attente du premier signal…';
       bar.style.width = '100%';
       bar.classList.remove('warning-level','critical');
@@ -777,13 +780,40 @@
   window.addEventListener('touchstart', activateAudioFromNavigation, { once:true, passive:true });
   window.addEventListener('keydown', activateAudioFromNavigation, { once:true });
 
+  function updateFinalMissionButton(){
+    const btn = $('finalLaunchBtn');
+    if(!btn) return;
+    btn.textContent = currentTeam ? 'REPRENDRE LA MISSION' : 'LANCER LA MISSION';
+  }
+
+  async function launchSelectedPalier(){
+    if(!currentTeam){
+      await startMissionOfficial();
+      updateFinalMissionButton();
+      return;
+    }
+    if(currentTeam.status === 'blocked'){
+      document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+      return;
+    }
+    if(currentTeam.currentStep === 'start'){
+      await startMissionOfficial();
+    }else{
+      startOceanAudio();
+      palierLaunchNotice = true;
+      renderGame(false);
+      document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    updateFinalMissionButton();
+  }
+
   function launchMission(){
     startOceanAudio();
     document.getElementById('embarquementMatelot')?.scrollIntoView({behavior:'smooth', block:'start'});
     setTimeout(()=>$('memberName')?.focus(), 650);
   }
   $('launchMissionBtn')?.addEventListener('click', launchMission);
-  $('finalLaunchBtn')?.addEventListener('click', startMissionOfficial);
+  $('finalLaunchBtn')?.addEventListener('click', launchSelectedPalier);
   $('resumeMissionBtn')?.addEventListener('click', () => {
     startOceanAudio();
     document.getElementById('retrouverEquipage')?.scrollIntoView({behavior:'smooth', block:'start'});
@@ -805,6 +835,7 @@
 
   (async function init(){
     currentTeam = null;
+    updateFinalMissionButton();
     localStorage.removeItem('nautilusCurrentTeam');
     if($('memberName')) $('memberName').value = '';
     if($('teamCodeInput')) $('teamCodeInput').value = '';
