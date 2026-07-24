@@ -252,6 +252,116 @@
       .sonar-screen{width:96px;height:96px;min-width:96px;flex-basis:96px}
     }
 
+
+
+    /* Correction hublots : cercles parfaitement ronds + contenu centré */
+    .mission-steps{
+      grid-template-columns:repeat(auto-fit,minmax(170px,220px)) !important;
+      justify-content:center !important;
+      justify-items:center !important;
+      align-items:center !important;
+    }
+    button.mission-step{
+      width:clamp(170px,18vw,220px) !important;
+      height:clamp(170px,18vw,220px) !important;
+      min-width:0 !important;
+      min-height:0 !important;
+      max-width:300px !important;
+      max-height:300px !important;
+      aspect-ratio:1/1 !important;
+      border-radius:50% !important;
+      display:flex !important;
+      flex-direction:column !important;
+      align-items:center !important;
+      justify-content:center !important;
+      padding:18px !important;
+      gap:10px !important;
+      margin:0 auto !important;
+      overflow:hidden !important;
+      line-height:1 !important;
+    }
+    button.mission-step .num{
+      position:relative !important;
+      width:34px !important;
+      height:34px !important;
+      min-width:34px !important;
+      min-height:34px !important;
+      flex:0 0 34px !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      margin:0 auto !important;
+      padding:0 !important;
+      line-height:1 !important;
+      text-align:center !important;
+      transform:none !important;
+    }
+    button.mission-step b{
+      position:relative !important;
+      display:block !important;
+      width:100% !important;
+      max-width:76% !important;
+      margin:0 auto !important;
+      padding:0 !important;
+      text-align:center !important;
+      line-height:1.05 !important;
+      white-space:normal !important;
+      overflow-wrap:break-word !important;
+    }
+    @media(max-width:640px){
+      .mission-steps{
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+        gap:12px !important;
+      }
+      button.mission-step{
+        width:min(42vw,170px) !important;
+        height:min(42vw,170px) !important;
+        padding:12px !important;
+        border-width:5px !important;
+      }
+      button.mission-step .num{
+        width:28px !important;
+        height:28px !important;
+        min-width:28px !important;
+        min-height:28px !important;
+        flex-basis:28px !important;
+        font-size:13px !important;
+      }
+      button.mission-step b{
+        max-width:80% !important;
+        font-size:clamp(11px,3.1vw,15px) !important;
+      }
+    }
+    @media(max-width:360px){
+      button.mission-step{
+        width:min(41vw,150px) !important;
+        height:min(41vw,150px) !important;
+      }
+      button.mission-step b{font-size:11px !important;}
+    }
+
+
+
+    /* Alignement hublots : une ligne si l’écran le permet, texte sur une seule ligne */
+    .mission-steps{
+      grid-template-columns:repeat(4,minmax(150px,220px)) !important;
+      justify-content:center !important;
+    }
+    button.mission-step b{
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      max-width:88% !important;
+      font-size:clamp(12px,1.55vw,18px) !important;
+    }
+    @media(max-width:920px){
+      .mission-steps{grid-template-columns:repeat(2,minmax(150px,200px)) !important;}
+    }
+    @media(max-width:420px){
+      .mission-steps{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+      button.mission-step b{font-size:clamp(10px,3vw,13px) !important;max-width:92% !important;}
+    }
+
   </style>
 </head>
 <body>
@@ -624,7 +734,7 @@
     detail.innerHTML = `<h3>${esc(rule.title)}</h3><p>${esc(rule.text)}</p><ul>${rule.bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`;
     document.querySelectorAll('.mission-step').forEach(btn => btn.classList.toggle('active', btn.dataset.rule === key));
     if(shouldScroll){
-      setTimeout(() => detail.scrollIntoView({behavior:'smooth', block:'center'}), 80);
+      setTimeout(() => document.getElementById('ruleCards')?.scrollIntoView({behavior:'smooth', block:'start'}), 80);
     }
   }
 
@@ -822,11 +932,15 @@
     window.removeEventListener('scroll', activateAudioFromNavigation);
     window.removeEventListener('wheel', activateAudioFromNavigation);
     window.removeEventListener('touchstart', activateAudioFromNavigation);
+    window.removeEventListener('pointerdown', activateAudioFromNavigation);
+    window.removeEventListener('mousemove', activateAudioFromNavigation);
     window.removeEventListener('keydown', activateAudioFromNavigation);
   }
   window.addEventListener('scroll', activateAudioFromNavigation, { once:true, passive:true });
   window.addEventListener('wheel', activateAudioFromNavigation, { once:true, passive:true });
   window.addEventListener('touchstart', activateAudioFromNavigation, { once:true, passive:true });
+  window.addEventListener('pointerdown', activateAudioFromNavigation, { once:true, passive:true });
+  window.addEventListener('mousemove', activateAudioFromNavigation, { once:true, passive:true });
   window.addEventListener('keydown', activateAudioFromNavigation, { once:true });
 
   function updateFinalMissionButton(){
@@ -896,5 +1010,5 @@
     renderGame(false);
   })();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2063c6e8f00e182',t:'MTc4NDkzMDgyOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
