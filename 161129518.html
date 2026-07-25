@@ -631,10 +631,11 @@
     /* Vérifier qu'il n'y a pas déjà une session active (race condition possible) */
     const current = await N.getSession(state.teamCode);
     if (current && current.state === 'playing') {
-      N.showToast('Un autre matelot est déjà en plongée. Patiente.', 'warning');
+      N.showToast('Un autre matelot est déjà aux commandes. Patiente.', 'warning');
       return;
     }
-    /* Choisir un mot et démarrer */
+    /* Choisir un mot et démarrer. Chaque mot a son indice géographique associé
+       (où se trouve le QR du palier 2 dans le magasin). */
     const entry = N.pickWord();
     state.word = entry.w;
     await N.createSession(state.teamCode, {
@@ -649,6 +650,7 @@
       maxErrors: 3,
       timeLimit: 210,        /* 3 min 30 */
       startedWordHint: entry.h,
+      qrHint: entry.qr || null,  /* Indice de cachette pour le QR du palier 2 */
       hintsRevealed: [false, false, false],
       lastEvent: 'session_started'
     });
@@ -830,7 +832,12 @@
       return;
     }
     if (guess === target.toUpperCase()) {
-      await N.updateSession(state.teamCode, { state: 'won', endReason: 'solved', lastEvent: 'solved' });
+      await N.updateSession(state.teamCode, {
+        state: 'won',
+        endReason: 'solved',
+        lastEvent: 'solved',
+        revealedWord: target  /* stocké en clair sur la session pour l'écran de victoire uniquement */
+      });
       N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe Morse ! L'épreuve du sonar est validée.`, 'success');
       N.showToast('Mot de passe Morse déchiffré !', 'success');
       /* Avance le palier côté équipe */
@@ -1058,17 +1065,28 @@
         <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">
           L'équipage a remporté le Palier 1.<br>Le mot de passe Morse a été noté en lieu sûr par <b>${esc(s.startedByName || 'un matelot')}</b>.
         </p>
+
         <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Thème de l'épreuve :</div>
         <div style="color:#fff;font-size:18px;font-weight:900;line-height:1.4;max-width:480px;margin:0 auto 12px;">
           🌊 <b>Décodage Morse en mer</b> — le capitaine Nemo a intercepté un signal sous-marin qu'il fallait retranscrire.
         </div>
-        <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Mot de passe :</div>
+
+        <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Mot de passe Morse :</div>
         <div class="reveal-code">${esc(s.revealedWord || s.wordHash || '— —')}</div>
+
+        <div style="margin:24px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">📍 Où chercher le QR du Palier 2 :</div>
+        <div class="qr-hint" style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:16px;padding:16px 20px;max-width:520px;margin:0 auto 18px;color:#ffe2a0;font-size:15px;line-height:1.5;font-weight:800;">
+          <div style="color:#fff;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-weight:900;">Indice de cachette</div>
+          <div id="qrHintText">
+            ${s.qrHint ? esc(s.qrHint) : '<span style="color:#9bc4d4;font-style:italic;">L’indice sera communiqué par l’animateur.</span>'}
+          </div>
+        </div>
+
         <p class="next-step-hint">
-          🔎 <b>Prochaine étape</b> : trouve le QR du <b>Palier 2</b> dans le magasin et entre le code de palier qui y est inscrit.
+          🔎 <b>Prochaine étape</b> : rends-toi à l’endroit indiqué ci-dessus, scanne le QR du <b>Palier 2</b>, et entre le code à 6 chiffres qui y est inscrit sur la page du Palier 2.
         </p>
         <div style="margin-top:18px;">
-          <a href="1721310619.html" style="display:inline-block;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(142,231,255,.45);border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir le Palier 2</a>
+          <a href="1721310619.html" style="display:inline-block;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(142,231,255,.45);border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir la page du Palier 2</a>
         </div>
       </div>
     `;
@@ -1110,16 +1128,25 @@
     const nextStep = t.currentStep;
     const nextLabel = N.STEPS[nextStep]?.label || '?';
     const nextCode = N.getStepCode(nextStep);
+    /* Récupère l'indice géographique depuis la dernière session */
+    const s = state.session;
+    const qrHint = s?.qrHint || null;
     return `
       <div class="status-banner success">
         ✅ <b>Palier 1 terminé.</b> L'équipage est prêt à passer au <b>${esc(nextLabel)}</b>.
       </div>
       <div class="stepbox" style="border-color:rgba(91,255,156,.45);background:rgba(91,255,156,.08);">
         <h3 style="color:#5be09b;margin:0 0 10px;">🔎 Prochaine étape</h3>
-        <p style="color:#dff6ff;line-height:1.5;margin:0 0 12px;">Rends-toi dans le rayon indiqué par le QR que tu as scanné. Le QR du <b>${esc(nextLabel)}</b> affichera un <b>code de palier</b> à 6 chiffres.</p>
+        ${qrHint ? `
+          <p style="color:#dff6ff;line-height:1.5;margin:0 0 8px;"><b>📍 Direction</b> :</p>
+          <div style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:14px;padding:12px 16px;margin:0 0 14px;color:#ffe2a0;font-size:14px;line-height:1.5;font-weight:800;">
+            ${esc(qrHint)}
+          </div>
+        ` : ''}
+        <p style="color:#dff6ff;line-height:1.5;margin:0 0 12px;">Scanne le QR du <b>${esc(nextLabel)}</b> à l'endroit indiqué. Il affichera un <b>code de palier</b> à 6 chiffres.</p>
         <p style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 12px;">Saisis ce code sur la page du <b>${esc(nextLabel)}</b> pour débloquer la partie.</p>
         <p style="color:#9bc4d4;font-size:12px;letter-spacing:.04em;margin:0 0 14px;">Indice (code du ${esc(nextLabel)}) : <b style="color:var(--fnac);font-family:Consolas,monospace;letter-spacing:.15em;">${nextCode}</b></p>
-        <a href="1721310619.html" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir le ${esc(nextLabel)}</a>
+        <a href="1721310619.html" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir la page du ${esc(nextLabel)}</a>
       </div>
     `;
   }
