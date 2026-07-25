@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
+  <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
   <style>
     :root{
       --fnac:#f5b027;
@@ -344,10 +345,10 @@
 
   <!-- Zone de jeu -->
   <section class="card" id="gameCard" style="display:none;">
-    <h2>📡 TRANSMISSION SONAR</h2>
+    <h2>🧪 ÉPREUVE DU PALIER</h2>
     <div class="body" id="gameBody">
       <div class="notice" style="background:rgba(11,52,78,.6);border:1px solid rgba(142,231,255,.3);color:#dff6ff;">
-        En attente d'un matelot pour prendre la barre du sonar…
+        En attente d'un matelot pour rejoindre le protocole…
       </div>
     </div>
   </section>
@@ -595,27 +596,28 @@
   function renderIdleScreen(t, me) {
     return `
       <div class="status-banner info">
-        📋 Aucun signal n'est en cours d'écoute.<br>
-        Un seul matelot peut être en plongée à la fois. Si un autre équipier est déjà en cours, le sonar t'en empêchera et tu pourras l'aider via les indices.
+        📋 <b>Aucun protocole en cours.</b><br>
+        Un seul matelot peut être aux commandes à la fois. Si un co-équipier est déjà lancé, le système t'en empêchera et tu pourras l'aider en lui transmettant un indice.
       </div>
       <div class="morse-stepbox">
         <div class="morse-header">
-          <h3>📡 TRANSMISSION SONAR</h3>
+          <h3>🧪 ÉPREUVE DU PALIER</h3>
           <div class="morse-timer-wrap">
-            <span class="morse-timer-label">Limite</span>
-            <span class="morse-timer" style="color:#9bc4d4;">03:00</span>
+            <span class="morse-timer-label">Temps imparti</span>
+            <span class="morse-timer" style="color:#9bc4d4;">03:30</span>
           </div>
         </div>
         <p class="morse-brief">
-          🛰️ Le sonar du Nautilus capte un signal en provenance des profondeurs. Un matelot de l'équipage doit prendre la barre du récepteur et retranscrire le message.
+          ⚓ <b>Briefing du capitaine Nemo — confidentiel :</b>
           <br><br>
-          ⏱️ <b>Temps imparti</b> : 3 minutes 30 secondes.<br>
-          🔁 <b>Écoutes possibles</b> : 3 maximum.<br>
-          ❌ <b>Erreurs tolérées</b> : 3 avant que l'équipage ne soit repoussé en surface.<br>
-          🆘 <b>Indices</b> : 1 bouton t'envoie un indice — soit à un co-équipier, soit visible 5s (puis tu seras bloqué 24h).
+          L'équipage doit transmettre un <b>code de sept lettres ou plus</b> au tableau de bord du sas. Le mot est connu du capitaine seul — à toi de le recevoir et de le retranscrire.
+          <br><br>
+          ⏱️ <b>Temps imparti</b> : 3 minutes 30.<br>
+          ❌ <b>Trois erreurs</b> et l'équipage tout entier est repoussé en surface.<br>
+          🆘 <b>Indice</b> : un seul bouton t'est accordé. Si tu as un co-équipier, l'indice lui parviendra. Sinon, il sera visible 5s sur ton écran — mais tu seras bloqué 24h pour ce palier.
         </p>
         <div class="morse-actions">
-          <button class="primary" id="takeLeadBtn" style="flex:1 1 100%;">⚓ PRENDRE LA BARRE DU SONAR</button>
+          <button class="primary" id="takeLeadBtn" style="flex:1 1 100%;">⚓ PRENDRE LES COMMANDES</button>
         </div>
       </div>
     `;
@@ -651,7 +653,7 @@
       lastEvent: 'session_started'
     });
     await N.addEvent(state.team, 'morse_session_started', { by: state.me.name });
-    N.addLogEntry(`📡 ${state.me.name} a pris la barre du sonar. Transmission en cours…`, 'info');
+    N.addLogEntry(`⚓ ${state.me.name} a pris les commandes du protocole. Épreuve en cours…`, 'info');
   }
 
   /* === ÉCRAN : joueur actif === */
@@ -666,26 +668,26 @@
     const maxErrors = s.maxErrors ?? 3;
 
     const hintCards = [
-      { label: '📜 UIT-R M.1677-1', body: 'Recommandation officielle de l\'UIT pour le Morse international (accents inclus).' },
-      { label: '🔤 Longueur du mot', body: `Ce mot contient <b>${s.hintsRevealed[0] ? wordLength + ' lettres' : '—'}</b>.` },
-      { label: '💡 Première lettre',  body: s.hintsRevealed[2] ? `La première lettre est <b>${esc(s.firstLetter || '?')}</b>.` : '—' }
+      { label: '🧭 Cap nº1', body: 'Une <b>recommandation officielle</b> sera transmise à ton co-équipier (ou affichée 5s sur ton écran).' },
+      { label: '🧭 Cap nº2', body: s.hintsRevealed[1] ? `Le mot de passe contient <b>${wordLength} caractères</b>.` : 'Le capitaine connaît la <b>longueur du message</b>.' },
+      { label: '🧭 Cap nº3', body: s.hintsRevealed[2] ? `La première lettre du mot de passe est <b>${esc(s.firstLetter || '?')}</b>.` : 'La <b>première lettre</b> t\'aidera à démarrer.' }
     ];
-    const hintBtnText = s.hintsRevealed.every(Boolean) ? '🔓 Tous les indices révélés' : '🆘 DEMANDER UN INDICE';
+    const hintBtnText = s.hintsRevealed.every(Boolean) ? '🔓 Tous les caps relevés' : '🆘 DEMANDER UN CAP';
     const hintBtnDisabled = s.hintsRevealed.every(Boolean);
 
     return `
       <div class="status-banner info">
-        🧭 <b>${esc(me.name)}</b>, tu es seul maître à bord du sonar. Les autres matelots voient ton activité en direct mais ne peuvent pas intervenir — ils peuvent juste t'envoyer un indice.
+        🧭 <b>${esc(me.name)}</b>, tu es seul maître à bord du protocole. Les autres matelots voient ton activité en direct mais ne peuvent pas intervenir — ils peuvent juste t'envoyer un indice.
       </div>
       <div class="morse-stepbox">
         <div class="morse-header">
-          <h3>📡 TRANSMISSION SONAR</h3>
+          <h3>🧪 PROTOCOLE EN COURS</h3>
           <div class="morse-timer-wrap">
             <span class="morse-timer-label">Temps restant</span>
             <span class="morse-timer" id="morseTimer">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</span>
           </div>
         </div>
-        <p class="morse-brief">Écoute la séquence, puis traduis-la en clair (sans espace, sans accent requis en sortie). Le mot fait <b>${wordLength} lettres</b>.</p>
+        <p class="morse-brief">Reçois le signal et retranscris-le en clair. Le mot de passe fait <b>${wordLength} lettres</b>. Trois écoutes sont autorisées, trois erreurs sont tolérées. Au-delà, l'équipage est repoussé en surface.</p>
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
             <div class="morse-sweep"></div>
@@ -693,14 +695,14 @@
           </div>
           <div class="morse-controls">
             <button class="morse-listen-btn" id="morseListenBtn" ${listensLeft <= 0 ? 'disabled' : ''}>
-              ${listensLeft > 0 ? '▶️ Écouter la transmission' : '🔇 Transmission épuisée'}
+              ${listensLeft > 0 ? '▶️ Recevoir le signal' : '🔇 Plus de réception possible'}
             </button>
-            <div class="morse-counter">Écoutes restantes : <b id="morseCounter">${listensLeft}</b> / 3</div>
+            <div class="morse-counter">Réceptions : <b id="morseCounter">${listensLeft}</b> / 3</div>
             <div class="morse-counter" style="color:#9bc4d4;">Erreurs : <b style="color:${errors >= maxErrors - 1 ? '#ff7b72' : '#8ee7ff'};">${errors}</b> / ${maxErrors}</div>
           </div>
         </div>
         <div class="morse-answer-zone">
-          <label class="morse-answer-label">Ta traduction (le mot complet)</label>
+          <label class="morse-answer-label">Traduction (le mot complet, sans espace)</label>
           <div class="morse-slots" id="morseSlots">${slots}</div>
           <div class="morse-keypad" id="morseKeypad">
             ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l =>
@@ -788,7 +790,7 @@
     if (!state.session || state.session.listensLeft <= 0) return;
     if (!state.word) {
       /* Récupère le mot depuis le client (n'est connu que de celui qui a lancé la session) */
-      N.showToast('Mot non disponible localement.', 'danger');
+      N.showToast('Session inaccessible. Recharge la page.', 'danger');
       return;
     }
     _isPlaying = true;
@@ -800,7 +802,7 @@
     master.connect(ctx.destination);
     /* Décrémente le compteur côté Firestore */
     await N.updateSession(state.teamCode, { listensLeft: state.session.listensLeft - 1, lastEvent: 'listen' });
-    N.addLogEntry(`🔊 ${state.me.name} écoute la transmission (${state.session.listensLeft - 1}/3 restantes).`, 'info');
+    N.addLogEntry(`🔊 ${state.me.name} reçoit le signal (${state.session.listensLeft - 1}/3 restantes).`, 'info');
     const visual = $('morseVisual');
     const setVisual = (on) => { if (visual) visual.classList.toggle('on', on); };
     setVisual(true);
@@ -829,8 +831,8 @@
     }
     if (guess === target.toUpperCase()) {
       await N.updateSession(state.teamCode, { state: 'won', endReason: 'solved', lastEvent: 'solved' });
-      N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe !`, 'success');
-      N.showToast('Mot de passe trouvé !', 'success');
+      N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe Morse ! L'épreuve du sonar est validée.`, 'success');
+      N.showToast('Mot de passe Morse déchiffré !', 'success');
       /* Avance le palier côté équipe */
       await advanceTeam();
     } else {
@@ -860,7 +862,7 @@
     if (!state.session) return;
     if (state.session.state !== 'playing') return;
     await N.updateSession(state.teamCode, { state: 'lost', endReason: 'timeout', lastEvent: 'timeout' });
-    N.addLogEntry(`⏳ Le temps est écoulé. Le signal s'est évanoui dans les abysses.`, 'danger');
+    N.addLogEntry(`⏳ Le temps est écoulé. L'épreuve a échoué.`, 'danger');
     await blockTeam('morse_timeout');
   }
 
@@ -911,11 +913,11 @@
     await N.updateSession(state.teamCode, { hintsRevealed: newHints, lastEvent: 'hint_solo' });
     /* Récupérer le contenu de l'indice pour l'afficher 5s */
     const hintContent = buildHintContent(idx);
-    N.addLogEntry(`🆘 ${state.me.name} a demandé un indice (équipage seul). L'indice est visible 5s.`, 'warning');
+      N.addLogEntry(`🆘 ${state.me.name} a demandé un cap (équipage seul). Visible 5s.`, 'warning');
     showFloatingHint(hintContent, 5000);
     /* Après 5s : auto-blocage 24h sur l'auteur */
     setTimeout(async () => {
-      N.addLogEntry(`🚫 L'indice a disparu. ${state.me.name} est bloqué 24h pour ce palier.`, 'danger');
+      N.addLogEntry(`🚫 Le cap a disparu. ${state.me.name} est bloqué 24h pour ce palier.`, 'danger');
       /* Blocage ciblé : on stocke une entrée dans team.members[].personalLocks */
       const memberKey = state.me.memberKey;
       const until = new Date(Date.now() + 24*60*60*1000).toISOString();
@@ -936,15 +938,15 @@
       lastHintTargetName: target.name,
       lastHintType: idx
     });
-    N.addLogEntry(`🆘 ${state.me.name} a envoyé un indice à <b>${esc(target.name)}</b>.`, 'info');
-    N.showToast(`Indice envoyé à ${target.name}.`, 'info');
+      N.addLogEntry(`🆘 ${state.me.name} a envoyé un cap à <b>${esc(target.name)}</b>.`, 'info');
+      N.showToast(`Cap envoyé à ${target.name}.`, 'info');
   }
 
   function buildHintContent(idx) {
     const s = state.session;
     if (!s) return '';
-    if (idx === 0) return '📜 Recommandation UIT-R M.1677-1 (Morse international, accents inclus).';
-    if (idx === 1) return `🔤 Le mot contient ${s.wordLength} lettres.`;
+    if (idx === 0) return '📜 Une recommandation officielle sera consultable (UIT-R M.1677-1) — Morse international, accents inclus.';
+    if (idx === 1) return `🔤 Le mot de passe contient ${s.wordLength} lettres.`;
     if (idx === 2) return `💡 Première lettre : ${state.word ? state.word[0] : '?'}`;
     return '';
   }
@@ -966,24 +968,24 @@
     const playerName = s.startedByName || 'un matelot';
     return `
       <div class="status-banner warning">
-        👀 <b>${esc(me.name)}</b>, tu ne peux pas jouer : <b>${esc(playerName)}</b> est en plongée. Tu peux uniquement l'aider en lui envoyant un indice depuis ton journal de bord.
+        👀 <b>${esc(me.name)}</b>, tu ne peux pas jouer : <b>${esc(playerName)}</b> est aux commandes du protocole en cours. Tu peux uniquement l'aider en lui transmettant un cap depuis ton journal de bord.
       </div>
       <div class="morse-stepbox">
         <div class="morse-header">
-          <h3>📡 ${esc(playerName)} est à l'écoute…</h3>
+          <h3>🧪 ${esc(playerName)} est en mission…</h3>
           <div class="morse-timer-wrap">
             <span class="morse-timer-label">Temps restant</span>
             <span class="morse-timer" id="morseTimer">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</span>
           </div>
         </div>
-        <p class="morse-brief">Le sonar retransmet le signal Morse. <b>${esc(playerName)}</b> doit le déchiffrer. Patience — chaque mauvaise traduction rapproche l'équipage de la surface.</p>
+        <p class="morse-brief">Un protocole secret est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — chaque mauvaise traduction rapproche l'équipage de la surface.</p>
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
             <div class="morse-sweep"></div>
             <div class="morse-signal-light" id="morseVisual"></div>
           </div>
           <div class="morse-controls">
-            <div class="morse-counter">Écoutes : <b>${s.listensLeft ?? 0}</b> / 3</div>
+            <div class="morse-counter">Réceptions : <b>${s.listensLeft ?? 0}</b> / 3</div>
             <div class="morse-counter">Erreurs : <b style="color:${(s.errors||0) >= (s.maxErrors||3) - 1 ? '#ff7b72' : '#8ee7ff'};">${s.errors || 0}</b> / ${s.maxErrors || 3}</div>
             <div class="morse-counter">Tentatives : ${s.attempts || 0}</div>
           </div>
@@ -998,17 +1000,17 @@
         <div class="morse-hints-zone">
           <div class="morse-hint-target">
             <div class="morse-hint-target-info">
-              🆘 <b>Aider ${esc(playerName)}</b> — un indice lui sera envoyé automatiquement.
+              🆘 <b>Aider ${esc(playerName)}</b> — un cap lui sera envoyé automatiquement.
             </div>
             <button class="morse-hint-btn" id="spectatorHintBtn" ${(s.hintsRevealed||[]).every(Boolean) ? 'disabled' : ''}>
-              ${(s.hintsRevealed||[]).every(Boolean) ? '🔓 Indices épuisés' : '🆘 ENVOYER UN INDICE'}
+              ${(s.hintsRevealed||[]).every(Boolean) ? '🔓 Caps épuisés' : '🆘 ENVOYER UN CAP'}
             </button>
           </div>
           <div class="morse-hints-grid">
             ${[
-              { label: '📜 UIT-R M.1677-1', body: s.hintsRevealed?.[0] ? 'Recommandation officielle Morse international (accents inclus).' : '— non révélé —' },
-              { label: '🔤 Longueur du mot', body: s.hintsRevealed?.[1] ? `Le mot contient <b>${wordLength} lettres</b>.` : '— non révélé —' },
-              { label: '💡 Première lettre',  body: s.hintsRevealed?.[2] ? `Première lettre : <b>${esc(s.firstLetter || '?')}</b>.` : '— non révélé —' }
+              { label: '🧭 Cap nº1', body: s.hintsRevealed?.[0] ? 'Une recommandation officielle a été révélée.' : '— non révélé —' },
+              { label: '🧭 Cap nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${wordLength} caractères</b>.` : '— non révélé —' },
+              { label: '🧭 Cap nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(s.firstLetter || '?')}</b>.` : '— non révélé —' }
             ].map((h, i) => `
               <div class="morse-hint-card ${s.hintsRevealed?.[i] ? 'morse-hint-revealed' : ''}">
                 <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed?.[i] ? '✓' : ''}</div>
@@ -1044,25 +1046,29 @@
       lastEvent: 'hint_from_spectator',
       lastHintType: idx
     });
-    N.addLogEntry(`🆘 <b>${esc(state.me.name)}</b> a envoyé un indice au joueur en plongée.`, 'info');
-    N.showToast('Indice envoyé au joueur.', 'success');
+    N.addLogEntry(`🆘 <b>${esc(state.me.name)}</b> a envoyé un cap au matelot en mission.`, 'info');
+    N.showToast('Cap envoyé au matelot en mission.', 'success');
   }
 
   /* === ÉCRAN : victoire === */
   function renderWonScreen(s, t) {
     return `
       <div class="won-screen">
-        <h2>🏆 Signal déchiffré !</h2>
+        <h2>🏆 Épreuve du sonar validée !</h2>
         <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">
-          L'équipage a remporté le Palier 1.<br>Le mot de passe a été noté en lieu sûr par <b>${esc(s.startedByName || 'un matelot')}</b>.
+          L'équipage a remporté le Palier 1.<br>Le mot de passe Morse a été noté en lieu sûr par <b>${esc(s.startedByName || 'un matelot')}</b>.
         </p>
+        <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Thème de l'épreuve :</div>
+        <div style="color:#fff;font-size:18px;font-weight:900;line-height:1.4;max-width:480px;margin:0 auto 12px;">
+          🌊 <b>Décodage Morse en mer</b> — le capitaine Nemo a intercepté un signal sous-marin qu'il fallait retranscrire.
+        </div>
         <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Mot de passe :</div>
         <div class="reveal-code">${esc(s.revealedWord || s.wordHash || '— —')}</div>
         <p class="next-step-hint">
           🔎 <b>Prochaine étape</b> : trouve le QR du <b>Palier 2</b> dans le magasin et entre le code de palier qui y est inscrit.
         </p>
         <div style="margin-top:18px;">
-          <a href="palier2.html" style="display:inline-block;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(142,231,255,.45);border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir le Palier 2</a>
+          <a href="1721310619.html" style="display:inline-block;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(142,231,255,.45);border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir le Palier 2</a>
         </div>
       </div>
     `;
@@ -1072,12 +1078,12 @@
   function renderLostScreen(s, t) {
     const reason = s.endReason || 'lost';
     const reasonText = reason === 'timeout' ? "⏳ Le temps s'est écoulé." :
-                       reason === 'too_many_errors' ? "❌ Trop d'erreurs de traduction." : '💀 Session perdue.';
+                       reason === 'too_many_errors' ? "❌ Trop d'erreurs de traduction." : '💀 Épreuve perdue.';
     return `
       <div class="lock-screen">
         <h2>${reasonText}</h2>
         <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0 18px;">
-          L'équipage n'a pas réussi à décoder la transmission. Tous les matelots sont repoussés en surface.
+          L'équipage n'a pas validé l'épreuve. Tous les matelots sont repoussés en surface.
         </p>
         <p class="lock-rule">⏱️ Reprise possible le <b>${esc(N.formatDate(t.lockedUntil))}</b></p>
         <p class="lock-rule" style="margin-top:8px;">Échecs cumulés : <b>${t.failCount || 0}</b> · 1er 2h, 2e 4h, 3e 8h, 4e 16h, 5e+ 24h</p>
@@ -1091,7 +1097,7 @@
     return `
       <div class="lock-screen">
         <h2>🔒 Équipage en surface</h2>
-        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">Tous les matelots sont en attente. La transmission ne peut pas être tentée.</p>
+        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">Tous les matelots sont en attente. L'épreuve ne peut pas être tentée pour le moment.</p>
         <div class="countdown-big">${esc(N.formatDate(t.lockedUntil))}</div>
         <p class="lock-rule">⏳ Reprise du Palier 1 possible à cette heure.</p>
         <p class="lock-rule" style="margin-top:8px;">Échecs cumulés : <b>${t.failCount || 0}</b></p>
@@ -1113,7 +1119,7 @@
         <p style="color:#dff6ff;line-height:1.5;margin:0 0 12px;">Rends-toi dans le rayon indiqué par le QR que tu as scanné. Le QR du <b>${esc(nextLabel)}</b> affichera un <b>code de palier</b> à 6 chiffres.</p>
         <p style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 12px;">Saisis ce code sur la page du <b>${esc(nextLabel)}</b> pour débloquer la partie.</p>
         <p style="color:#9bc4d4;font-size:12px;letter-spacing:.04em;margin:0 0 14px;">Indice (code du ${esc(nextLabel)}) : <b style="color:var(--fnac);font-family:Consolas,monospace;letter-spacing:.15em;">${nextCode}</b></p>
-        <a href="palier2.html" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir le ${esc(nextLabel)}</a>
+        <a href="1721310619.html" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir le ${esc(nextLabel)}</a>
       </div>
     `;
   }
