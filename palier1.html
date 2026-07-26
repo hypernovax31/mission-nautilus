@@ -307,21 +307,8 @@
     </div>
   </section>
 
-  <!-- Code de palier (accès) -->
-  <section class="card" id="accessCard" style="display:none;">
-    <h2>🔐 ACCÈS AU PALIER 1</h2>
-    <div class="body">
-      <div class="step-access">
-        <h3>Code de palier requis</h3>
-        <p>L'accès à cette page est protégé. Renseigne le <b>code de palier</b> inscrit sur le QR caché dans le magasin pour rejoindre l'équipage et commencer la partie.</p>
-        <div class="code-form">
-          <input id="stepCodeInput" placeholder="6 chiffres" maxlength="6" inputmode="numeric" autocomplete="off" />
-          <button id="stepCodeBtn">Déverrouiller</button>
-        </div>
-        <div id="stepCodeMsg" style="margin-top:10px;"></div>
-      </div>
-    </div>
-  </section>
+  <!-- Pas de garde-fou d'URL : la sécurité est gérée par Firestore
+       (session liée à l'équipe + identification matelot obligatoire). -->
 
   <!-- Statut équipe -->
   <section class="card" id="teamCard" style="display:none;">
@@ -393,18 +380,7 @@
 
   /* === Boot === */
   (async function init() {
-    /* 1) Vérifier code d'accès (URL) */
-    const urlCode = new URLSearchParams(location.search).get('access');
-    if (!urlCode || N.getStepIdFromCode(urlCode) !== 'start') {
-      $('accessCard').style.display = 'block';
-      $('identityCard').style.display = 'none';
-      $('stepCodeBtn').addEventListener('click', validateAccessCode);
-      $('stepCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') validateAccessCode(); });
-      return;
-    }
-    $('accessCard').style.display = 'none';
-
-    /* 2) Vérifier équipe */
+    /* 1) Vérifier équipe */
     if (!state.teamCode) {
       $('identifyMsg').innerHTML = `<div class="status-banner warning">⚠️ Aucun équipage détecté. <a href="index.html" style="color:var(--fnac);text-decoration:underline;">Retourne à l'accueil pour embarquer</a>.</div>`;
       $('identifyBtn').disabled = true;
@@ -423,20 +399,7 @@
     }
   })();
 
-  function validateAccessCode() {
-    const code = $('stepCodeInput').value.replace(/[\s.-]/g, '');
-    const stepId = N.getStepIdFromCode(code);
-    if (!stepId) {
-      $('stepCodeMsg').innerHTML = `<div class="status-banner danger">❌ Code invalide. Vérifie les chiffres sur le QR du magasin.</div>`;
-      return;
-    }
-    /* Recharge la page avec le bon code d'accès */
-    const team = N.getCurrentTeamCode() || '';
-    const url = new URL(location.href);
-    url.searchParams.set('access', code);
-    if (team) url.searchParams.set('code', team);
-    location.href = url.toString();
-  }
+  // Ancienne fonction validateAccessCode supprimée (plus de garde-fou d'URL).
 
   /* === Identification joueur === */
   async function identify() {
@@ -1074,18 +1037,26 @@
         <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Mot de passe Morse :</div>
         <div class="reveal-code">${esc(s.revealedWord || s.wordHash || '— —')}</div>
 
-        <div style="margin:24px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">📍 Où chercher le QR du Palier 2 :</div>
-        <div class="qr-hint" style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:16px;padding:16px 20px;max-width:520px;margin:0 auto 18px;color:#ffe2a0;font-size:15px;line-height:1.5;font-weight:800;">
-          <div style="color:#fff;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-weight:900;">Indice de cachette</div>
-          <div id="qrHintText">
-            ${s.qrHint ? esc(s.qrHint) : '<span style="color:#9bc4d4;font-style:italic;">L’indice sera communiqué par l’animateur.</span>'}
+        <div class="qr-hint-block" style="margin:24px 0 0;padding:18px 20px;background:linear-gradient(135deg,rgba(245,176,39,.12),rgba(245,176,39,.06));border:2px solid rgba(245,176,39,.55);border-radius:18px;max-width:540px;margin-left:auto;margin-right:auto;text-align:left;">
+          <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Indice de cachette</div>
+          <div style="color:#fff;font-size:15px;line-height:1.5;font-weight:700;margin-bottom:14px;">
+            ${s.qrHint ? esc(s.qrHint) : '<span style="color:#9bc4d4;font-style:italic;font-weight:500;">(L’indice de cachette sera communiqué par l’animateur.)</span>'}
+          </div>
+          <div style="border-top:1px dashed rgba(245,176,39,.4);padding-top:14px;margin-top:6px;">
+            <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📷 Action</div>
+            <div style="color:#fff;font-size:15px;line-height:1.5;font-weight:700;">
+              Scanne le QR pour découvrir le numéro secret.
+            </div>
+            <div style="color:#9bc4d4;font-size:13px;line-height:1.5;margin-top:6px;">
+              Tu auras besoin de ce numéro pour accéder au Palier 2.
+            </div>
           </div>
         </div>
 
-        <p class="next-step-hint">
-          🔎 <b>Prochaine étape</b> : rends-toi à l’endroit indiqué ci-dessus, scanne le QR du <b>Palier 2</b>, et entre le code à 6 chiffres qui y est inscrit sur la page du Palier 2.
+        <p class="next-step-hint" style="margin-top:20px;">
+          ⏭️ Une fois le numéro secret en main, ouvre la page du <b>Palier 2</b> et saisis-le.
         </p>
-        <div style="margin-top:18px;">
+        <div style="margin-top:14px;">
           <a href="1721310619.html" style="display:inline-block;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(142,231,255,.45);border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir la page du Palier 2</a>
         </div>
       </div>
@@ -1138,14 +1109,17 @@
       <div class="stepbox" style="border-color:rgba(91,255,156,.45);background:rgba(91,255,156,.08);">
         <h3 style="color:#5be09b;margin:0 0 10px;">🔎 Prochaine étape</h3>
         ${qrHint ? `
-          <p style="color:#dff6ff;line-height:1.5;margin:0 0 8px;"><b>📍 Direction</b> :</p>
-          <div style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:14px;padding:12px 16px;margin:0 0 14px;color:#ffe2a0;font-size:14px;line-height:1.5;font-weight:800;">
+          <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Indice de cachette</div>
+          <div style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:14px;padding:12px 16px;margin:0 0 14px;color:#fff;font-size:14px;line-height:1.5;font-weight:800;">
             ${esc(qrHint)}
           </div>
         ` : ''}
-        <p style="color:#dff6ff;line-height:1.5;margin:0 0 12px;">Scanne le QR du <b>${esc(nextLabel)}</b> à l'endroit indiqué. Il affichera un <b>code de palier</b> à 6 chiffres.</p>
-        <p style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 12px;">Saisis ce code sur la page du <b>${esc(nextLabel)}</b> pour débloquer la partie.</p>
-        <p style="color:#9bc4d4;font-size:12px;letter-spacing:.04em;margin:0 0 14px;">Indice (code du ${esc(nextLabel)}) : <b style="color:var(--fnac);font-family:Consolas,monospace;letter-spacing:.15em;">${nextCode}</b></p>
+        <div style="color:#dff6ff;line-height:1.5;margin:0 0 10px;font-size:15px;">
+          📷 <b>Scanne le QR pour découvrir le numéro secret.</b>
+        </div>
+        <div style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 14px;">
+          Tu auras besoin de ce numéro pour accéder au <b>${esc(nextLabel)}</b>.
+        </div>
         <a href="1721310619.html" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir la page du ${esc(nextLabel)}</a>
       </div>
     `;
