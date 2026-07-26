@@ -95,6 +95,16 @@
     .top-bar>*{margin:0}
     .sonar-toggle{position:static;background:rgba(0,0,0,.42);color:rgba(255,255,255,.82);border:1px solid rgba(245,176,39,.45);border-radius:999px;padding:8px 11px;font-size:11px;font-weight:800;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
     .install-pwa-btn{position:static;background:rgba(245,176,39,.92);color:#111;border:1px solid rgba(245,176,39,.65);border-radius:999px;padding:8px 12px;font-size:11px;font-weight:900;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:4px;animation:pwaBtnPulse 2.4s ease-in-out infinite}
+    /* Banniere d'onboarding iOS : invitation persistante en bas */
+    .ios-install-banner{position:fixed;left:12px;right:12px;bottom:12px;z-index:9998;background:linear-gradient(135deg,#0a2a40,#061524);border:1px solid rgba(245,176,39,.55);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 18px 36px rgba(0,0,0,.5);color:#e9f7ff;font-size:13px;line-height:1.45;backdrop-filter:blur(8px);animation:bannerSlideUp .45s cubic-bezier(.2,.9,.3,1.2)}
+    .ios-install-banner .b-ico{font-size:24px;flex:0 0 24px}
+    .ios-install-banner .b-text{flex:1;min-width:0}
+    .ios-install-banner .b-text b{color:#ffe2a0}
+    .ios-install-banner .b-actions{display:flex;gap:6px;flex:0 0 auto}
+    .ios-install-banner button{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:900;font-size:12px;padding:8px 12px;border-radius:10px;min-height:auto;margin:0;letter-spacing:.02em}
+    .ios-install-banner .b-help{background:#f5b027;color:#111}
+    .ios-install-banner .b-close{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3)}
+    @keyframes bannerSlideUp{from{transform:translateY(140%);opacity:0}to{transform:translateY(0);opacity:1}}
     .install-pwa-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
     .install-pwa-btn.installed{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3);animation:none}
     @keyframes pwaBtnPulse{0%,100%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 8px rgba(245,176,39,.35)}}
@@ -839,6 +849,17 @@
 <div class="top-bar">
   <button id="installPwaBtn" class="install-pwa-btn" type="button" title="Installer l'app sur mon écran d'accueil">📲 Installer l'app</button>
   <button id="sonarToggleBtn" class="sonar-toggle" type="button">Activer le sonar</button>
+</div>
+<div id="iosInstallBanner" class="ios-install-banner" style="display:none" role="dialog" aria-live="polite">
+  <div class="b-ico">📲</div>
+  <div class="b-text">
+    <b>Installe l'app sur ton iPhone</b> pour y acceder comme une vraie application, meme hors ligne.<br>
+    <span style="opacity:.75;font-size:12px">Bouton <b>Partager ⎙</b> → <b>Sur l'écran d'accueil</b></span>
+  </div>
+  <div class="b-actions">
+    <button class="b-help" id="iosBannerHelp" type="button">Comment ?</button>
+    <button class="b-close" id="iosBannerClose" type="button" aria-label="Fermer">✕</button>
+  </div>
 </div>
 <div class="nautilus-alarm" id="nautilusAlarm" aria-live="assertive">
   <div class="alarm-panel">
@@ -3267,10 +3288,11 @@
   $('adminAddTeamBtn')?.addEventListener('click', adminAddTeam);
 
   /* =====================================================================
-     PWA - Installation + bouton d'installation
+     PWA - Installation automatique Android + banniere iOS
      ===================================================================== */
   let _deferredInstallPrompt = null;
   let _pwaInstalled = false;
+  let _iosBannerShown = false;
 
   // Capture l'event beforeinstallprompt
   window.addEventListener('beforeinstallprompt', (e) => {
@@ -3293,12 +3315,61 @@
     showToast('✅ Mission Nautilus installee sur ton ecran d\'accueil', 'linear-gradient(135deg,#075c39,#0a8a5a)');
   });
 
-  // Si lance en mode standalone (deja installee) : cache le bouton
-  if(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true){
+  // Detection plateforme
+  const _isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const _isAndroid = /Android/i.test(navigator.userAgent);
+  const _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  // Si lance en mode standalone (deja installee) : cache le bouton + la banniere
+  if(_isStandalone){
     _pwaInstalled = true;
     const btn = $('installPwaBtn');
     if(btn) btn.style.display = 'none';
+    const ban = $('iosInstallBanner');
+    if(ban) ban.style.display = 'none';
+  }else if(_isIOS && !sessionStorage.getItem('iosInstallBannerDismissed')){
+    // iOS : on affiche la banniere persistante (cliquable pour ouvrir la modale)
+    setTimeout(() => {
+      const ban = $('iosInstallBanner');
+      if(ban && !_iosBannerShown && !_isStandalone){
+        ban.style.display = 'flex';
+        _iosBannerShown = true;
+        // Astuce : pulse sur le bouton "Comment ?"
+        const helpBtn = $('iosBannerHelp');
+        if(helpBtn) helpBtn.style.animation = 'pwaBtnPulse 2s ease-in-out infinite';
+      }
+    }, 2500); // petit delai pour pas gener l'utilisateur
+  }else if(_isAndroid && _deferredInstallPrompt){
+    // Android : declenche automatiquement le prompt 4s apres le load
+    // (Chrome affiche la banniere native en bas automatiquement,
+    //  on attend un peu pour pas etre intrusif)
+    setTimeout(() => {
+      if(!_isStandalone && _deferredInstallPrompt){
+        try{
+          _deferredInstallPrompt.prompt();
+          _deferredInstallPrompt.userChoice.then((choice) => {
+            if(choice.outcome === 'accepted'){
+              showToast('✅ Installation lancee...', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+            }else{
+              showToast('Installation annulee. Tu peux la reessayer plus tard.', 'linear-gradient(135deg,#52606a,#3a4a5a)');
+            }
+            _deferredInstallPrompt = null;
+          }).catch(() => {});
+        }catch(e){}
+      }
+    }, 4000);
   }
+
+  // iOS : clic sur "Comment ?" de la banniere -> ouvre la modale d'instructions
+  $('iosBannerHelp')?.addEventListener('click', () => {
+    showModalInstallInstructions();
+  });
+  // iOS : clic sur "X" de la banniere -> la cache (sessionStorage pour pas reafficher)
+  $('iosBannerClose')?.addEventListener('click', () => {
+    const ban = $('iosInstallBanner');
+    if(ban) ban.style.display = 'none';
+    try{ sessionStorage.setItem('iosInstallBannerDismissed', '1'); }catch(e){}
+  });
 
   // Clic sur "Installer l'app"
   $('installPwaBtn')?.addEventListener('click', async () => {
@@ -3334,18 +3405,28 @@
     overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:20px';
     let body = '';
     if(isIOS){
+      // Detection iOS 26+ : la barre d'URL a change
+      // Sur iOS 26, l'icone Partager est dans la barre d'URL en haut (a cote de l'URL)
+      // Sur iOS 17/18, elle est en bas
+      // On utilise une regle qui couvre les 2 cas
+      const isIOS26 = /OS 2[6-9]/.test(navigator.userAgent) || /OS 3[0-9]/.test(navigator.userAgent);
+      const shareLocation = isIOS26 ? 'dans la <b>barre d\'adresse en haut</b>' : 'en <b>bas de l\'ecran</b>';
       body =
         '<div style="text-align:center;color:#fff;max-width:min(92vw,440px)">' +
           '<div style="font-size:60px;margin-bottom:8px">📲</div>' +
           '<h2 style="margin:0 0 12px;font-size:22px;color:#ffe2a0">Installe l\'app sur iPhone / iPad</h2>' +
-          '<ol style="text-align:left;line-height:1.7;font-size:15px;padding-left:20px">' +
-            '<li>Appuie sur le bouton <b>Partager</b> ' + (navigator.userAgent.includes('iPad') ? '' : '(en bas de Safari)') + ' <span style="background:#8ee7ff;color:#000;padding:1px 6px;border-radius:4px">⎙</span></li>' +
-            '<li>Selectionne <b>Sur l\'ecran d\'accueil</b> <span style="font-size:18px">➕</span></li>' +
-            '<li>Appuie sur <b>Ajouter</b> en haut a droite</li>' +
+          '<p style="font-size:13px;opacity:.8;margin:0 0 14px">iOS ne permet pas l\'installation automatique : tu dois ajouter l\'app a ton ecran d\'accueil en 3 clics.</p>' +
+          '<ol style="text-align:left;line-height:1.7;font-size:15px;padding-left:20px;margin:0 0 14px">' +
+            '<li>Appuie sur le bouton <b>Partager</b> ' + shareLocation + ' de Safari.<br><span style="display:inline-block;margin-top:4px;background:#8ee7ff;color:#000;padding:2px 8px;border-radius:6px;font-size:18px">⎙</span> <span style="font-size:12px;opacity:.7;margin-left:6px">carre avec fleche vers le haut</span></li>' +
+            '<li>Dans le menu qui s\'ouvre, fais defiler et selectionne <b>Sur l\'ecran d\'accueil</b> <span style="font-size:18px">➕</span></li>' +
+            '<li>Appuie sur <b>Ajouter</b> en haut a droite.</li>' +
           '</ol>' +
-          '<p style="margin-top:18px;font-size:13px;opacity:.75">Tu pourras ensuite lancer Mission Nautilus comme une vraie app, meme hors ligne.</p>' +
-          '<button type="button" id="closeInstallHelp" style="margin-top:18px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
+          '<div style="background:rgba(142,231,255,.12);border:1px solid rgba(142,231,255,.32);border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.5;text-align:left;margin:14px 0">' +
+            '<b>💡 Astuce :</b> l\'app apparait ensuite sur ton ecran d\'accueil avec l\'icone Nautilus. Tu peux la lancer comme une vraie app, meme hors ligne.' +
+          '</div>' +
+          '<button type="button" id="closeInstallHelp" style="margin-top:14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
         '</div>';
+    }else if(/Android/i.test(navigator.userAgent)){
     }else if(/Android/i.test(navigator.userAgent)){
       body =
         '<div style="text-align:center;color:#fff;max-width:min(92vw,440px)">' +
