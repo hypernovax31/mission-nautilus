@@ -91,8 +91,10 @@
       border:4px solid rgba(245,176,39,.46);
       opacity:.26;
     }
-    .sonar-toggle{position:fixed;top:14px;right:14px;z-index:10000;background:rgba(0,0,0,.42);color:rgba(255,255,255,.82);border:1px solid rgba(245,176,39,.45);border-radius:999px;padding:8px 11px;font-size:11px;font-weight:800;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
-    .install-pwa-btn{position:fixed;top:14px;right:170px;z-index:10000;background:rgba(245,176,39,.92);color:#111;border:1px solid rgba(245,176,39,.65);border-radius:999px;padding:8px 12px;font-size:11px;font-weight:900;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:4px;animation:pwaBtnPulse 2.4s ease-in-out infinite}
+    .top-bar{position:fixed;top:14px;right:14px;z-index:10000;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 28px)}
+    .top-bar>*{margin:0}
+    .sonar-toggle{position:static;background:rgba(0,0,0,.42);color:rgba(255,255,255,.82);border:1px solid rgba(245,176,39,.45);border-radius:999px;padding:8px 11px;font-size:11px;font-weight:800;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
+    .install-pwa-btn{position:static;background:rgba(245,176,39,.92);color:#111;border:1px solid rgba(245,176,39,.65);border-radius:999px;padding:8px 12px;font-size:11px;font-weight:900;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:4px;animation:pwaBtnPulse 2.4s ease-in-out infinite}
     .install-pwa-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
     .install-pwa-btn.installed{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3);animation:none}
     @keyframes pwaBtnPulse{0%,100%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 8px rgba(245,176,39,.35)}}
@@ -100,7 +102,7 @@
     @keyframes heroCtaPulse{0%,100%{box-shadow:0 14px 30px rgba(245,176,39,.28),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 14px 30px rgba(245,176,39,.28),0 0 0 18px rgba(245,176,39,.42)}}
     .hero-cta.pulse-engage{animation:heroCtaPulse 2.4s ease-in-out infinite}
     @media(max-width:520px){
-      .install-pwa-btn{right:160px;font-size:10px;padding:6px 9px}
+      .install-pwa-btn{font-size:10px;padding:6px 9px}
       .install-pwa-btn span{font-size:10px}
     }
     /* Modale QR plein ecran avec bouton "Partager ce QR" pour mobile */
@@ -834,8 +836,10 @@
 <audio id="alarmAudio" preload="auto">
   <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
 </audio>
-<button id="sonarToggleBtn" class="sonar-toggle" type="button">Activer le sonar</button>
-<button id="installPwaBtn" class="install-pwa-btn" type="button" title="Installer l'app sur mon écran d'accueil">📲 Installer l'app</button>
+<div class="top-bar">
+  <button id="installPwaBtn" class="install-pwa-btn" type="button" title="Installer l'app sur mon écran d'accueil">📲 Installer l'app</button>
+  <button id="sonarToggleBtn" class="sonar-toggle" type="button">Activer le sonar</button>
+</div>
 <div class="nautilus-alarm" id="nautilusAlarm" aria-live="assertive">
   <div class="alarm-panel">
     <div class="alarm-title">ALERTE NAUTILUS</div>
