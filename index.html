@@ -1487,6 +1487,153 @@
     return s;
   }
 
+  /**
+   * Genere la carte QR + boutons d'action (Notes, presse-papier, voir en grand)
+   * pour un matelot venant d'etre inscrit.
+   */
+  function matelotQrCardHtml(code, name, teamName, qrUrl, resumeLink){
+    return '<div class="matelot-qr-card" style="margin:16px 0 6px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center">' +
+      '<div class="matelot-qr-thumb" data-qr-url="' + esc(qrUrl) + '" data-qr-code="' + esc(code) + '" style="width:120px;height:120px;flex:0 0 120px;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);cursor:pointer;display:flex;align-items:center;justify-content:center" title="Cliquer pour agrandir le QR">' +
+        '<img src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:100%;height:100%;display:block;image-rendering:pixelated" loading="eager" onerror="this.parentElement.innerHTML=\'<div style=&quot;font-size:11px;color:#9b1111;text-align:center;padding:6px&quot;>QR indisponible<br>(hors ligne)</div>\'">' +
+      '</div>' +
+      '<div style="flex:1;min-width:200px;text-align:left">' +
+        '<div class="small" style="margin-bottom:4px"><b>Scannez pour reprendre la mission</b></div>' +
+        '<div class="small" style="margin-bottom:8px;color:#52606a">Le QR contient un lien direct vers la page avec ton code pr\u00e9- rempli.</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+          '<button type="button" class="matelot-action-notes" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="background:#f5b027;color:#111;border:0;border-radius:10px;padding:8px 12px;font-weight:900;font-size:12px;cursor:pointer;min-height:34px;margin:0">&#x1F4DD; Notes</button>' +
+          '<button type="button" class="matelot-action-copy" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="background:#fff;color:#075c39;border:1px solid #aee5ca;border-radius:10px;padding:8px 12px;font-weight:900;font-size:12px;cursor:pointer;min-height:34px;margin:0">&#x1F4CB; Copier</button>' +
+          '<button type="button" class="matelot-action-viewqr" data-qr-url="' + esc(qrUrl) + '" data-code="' + esc(code) + '" style="background:#fff;color:#0b3a2b;border:1px solid #cbd7df;border-radius:10px;padding:8px 12px;font-weight:900;font-size:12px;cursor:pointer;min-height:34px;margin:0">&#x1F50D; Agrandir</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  /**
+   * Construit le contenu textuel de la note (nom + code + equipe + lien).
+   */
+  function buildNoteText(name, code, teamName, link){
+    return 'MISSION NAUTILUS\n' +
+      '=================\n' +
+      'Matelot : ' + name + '\n' +
+      'Equipage : ' + teamName + '\n' +
+      'Code Matelot : ' + code + '\n' +
+      'Lien de reprise : ' + link + '\n\n' +
+      'Pour reprendre la mission sur n\'importe quel appareil :\n' +
+      '1. Ouvre le lien ci-dessus, OU\n' +
+      '2. Va sur la page Mission Nautilus et entre ton code dans "Reprendre ta mission".';
+  }
+
+  /**
+   * Tente d'ouvrir l'app Notes avec une nouvelle note contenant le code matelot.
+   * 1) Web Share API avec un fichier text/plain (ouvre Notes sur iOS si app par defaut)
+   * 2) Fallback : clipboard + lien data: (le telechargement ouvre Notes)
+   */
+  async function openMatelotInNotes(name, code, teamName, link){
+    const text = buildNoteText(name, code, teamName, link);
+    const fileName = 'Mission-Nautilus-' + code + '.txt';
+
+    // 1) Web Share API (mobile moderne)
+    try{
+      if(navigator.canShare){
+        const file = new File([text], fileName, { type: 'text/plain' });
+        if(navigator.canShare({ files: [file] })){
+          await navigator.share({
+            files: [file],
+            title: 'Code Matelot - Mission Nautilus',
+            text: text
+          });
+          return { ok: true, method: 'share-api' };
+        }
+      }
+      if(navigator.share){
+        await navigator.share({
+          title: 'Code Matelot - Mission Nautilus',
+          text: text
+        });
+        return { ok: true, method: 'share-text' };
+      }
+    }catch(err){
+      // L'utilisateur a annule ou erreur -> on tente le fallback
+      if(err && err.name === 'AbortError') return { ok: false, reason: 'cancelled' };
+    }
+
+    // 2) Fallback : clipboard + lien telechargeable
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return { ok: true, method: 'clipboard' };
+      }
+    }catch(e){}
+
+    // 3) Dernier recours : lien data: qui telecharge le .txt
+    try{
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName; a.style.display = 'none';
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+      return { ok: true, method: 'download' };
+    }catch(e){
+      return { ok: false, reason: 'unsupported' };
+    }
+  }
+
+  async function copyMatelotToClipboard(name, code, teamName, link){
+    const text = buildNoteText(name, code, teamName, link);
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch(e){}
+    // Fallback : textarea + execCommand
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }catch(e){
+      return false;
+    }
+  }
+
+  /**
+   * Ouvre le QR en grand dans une modale plein ecran.
+   */
+  function viewMatelotQr(qrUrl, code){
+    const overlay = document.createElement('div');
+    overlay.className = 'qr-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;cursor:zoom-out';
+    overlay.innerHTML =
+      '<div style="text-align:center;color:#fff;max-width:min(92vw,500px)">' +
+        '<div style="font-weight:1000;letter-spacing:.06em;font-size:14px;margin-bottom:8px;color:#ffe2a0">SCANNE CE QR AVEC TON APPAREIL PHOTO</div>' +
+        '<div style="background:#fff;padding:18px;border-radius:18px;display:inline-block;box-shadow:0 0 60px rgba(245,176,39,.4)">' +
+          '<img src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:min(70vw,420px);height:min(70vw,420px);display:block;image-rendering:pixelated">' +
+        '</div>' +
+        '<div style="font-family:Consolas,monospace;font-size:24px;font-weight:1000;letter-spacing:.08em;margin-top:18px;color:#fff;background:rgba(0,0,0,.5);padding:10px 18px;border-radius:10px;border:2px solid rgba(245,176,39,.55)">' + esc(code) + '</div>' +
+        '<div style="margin-top:18px;font-size:12px;opacity:.7">Clique n\'importe o&ugrave; pour fermer</div>' +
+      '</div>';
+    overlay.addEventListener('click', () => document.body.removeChild(overlay));
+    document.body.appendChild(overlay);
+  }
+
+  /**
+   * Toast simple (notification ephemere).
+   */
+  function showToast(msg, color){
+    try{
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;right:20px;bottom:90px;z-index:10004;background:' + (color || 'linear-gradient(135deg,#075c39,#0a8a5a)') + ';color:#fff;padding:14px 18px;border-radius:14px;font-weight:900;box-shadow:0 14px 28px rgba(0,0,0,.32);font-size:13px;max-width:min(90vw,360px);border:1px solid rgba(255,255,255,.18);transition:opacity .4s';
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; }, 3200);
+      setTimeout(() => t.remove(), 3700);
+    }catch(e){}
+  }
+
   async function registerMember(){
     const name=$('memberName').value.trim().toUpperCase();
     const service=$('memberService').value;
@@ -1558,16 +1705,19 @@
       startHeartbeat();
       updateFinalMissionButton();
 
-      // 8) Affiche le Code Matelot (usage unique)
+      // 8) Affiche le Code Matelot (usage unique) + QR code + boutons Notes/Clipboard
+      const resumeLink = location.origin + location.pathname.replace(/index\.html$/, '') + '?matelot=' + encodeURIComponent(matelotCode);
+      const qrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=' + encodeURIComponent(resumeLink) + '&choe=UTF-8';
       $('registerMsg').innerHTML =
         '<div class="notice success" style="padding:18px 20px">' +
           '<b>' + esc(name) + '</b> embarque a bord du <b>Nautilus</b> avec l\'equipe <b>' + esc(chosen.teamName) + '</b>.<br><br>' +
           '<div style="text-align:center;margin:14px 0 10px">' +
             '<div class="small" style="margin-bottom:6px;color:#5d6d78;letter-spacing:.04em">&#x2693; TON CODE MATELOT (A NOTER IMPERATIVEMENT) &#x2693;</div>' +
-            '<div class="code uppercase" style="font-size:22px;padding:14px 22px">' + esc(matelotCode) + '</div>' +
+            '<div class="code uppercase" id="matelotCodeDisplay" style="font-size:22px;padding:14px 22px">' + esc(matelotCode) + '</div>' +
             '<div class="small" style="margin-top:8px;color:#9b1111;font-weight:900">&#x26A0; Ce code est <b>personnel</b> et a <b>usage unique</b>. Il ne te sera plus jamais affiche.<br>Note-le sur ton QR ou dans un endroit sur.</div>' +
           '</div>' +
-          '<div class="small" style="margin-top:10px">Pour <b>reprendre la mission</b>, entre uniquement ce Code Matelot (pas le nom d\'equipe).</div>' +
+          matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
+          '<div class="small" style="margin-top:10px">Pour <b>reprendre la mission</b>, scanne le QR ou entre le Code Matelot dans la zone <b>Reprendre ta mission</b>.</div>' +
         '</div>';
       $('memberName').value = '';
       renderGame(false);
@@ -2130,6 +2280,61 @@
         input.select();
       }
     }, 700);
+  });
+
+
+  /* Delegation globale pour les boutons QR / Notes / Copier du dernier matelot inscrit */
+  document.addEventListener('click', async (e) => {
+    const notesBtn = e.target.closest('.matelot-action-notes');
+    if(notesBtn){
+      e.preventDefault();
+      const code = notesBtn.dataset.code;
+      const name = notesBtn.dataset.name;
+      const team = notesBtn.dataset.team;
+      const link = notesBtn.dataset.link;
+      const res = await openMatelotInNotes(name, code, team, link);
+      if(res.ok){
+        if(res.method === 'clipboard'){
+          showToast('📋 Note copiée dans le presse-papier — colle-la dans l\'app Notes', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }else if(res.method === 'download'){
+          showToast('📁 Fichier .txt téléchargé — ouvre-le avec l\'app Notes', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }else if(res.method === 'share-api' || res.method === 'share-text'){
+          showToast('✅ Note ouverte dans l\'app', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }
+      }else if(res.reason === 'cancelled'){
+        // l'utilisateur a annule, on ne fait rien
+      }else{
+        showToast('❌ Impossible d\'ouvrir l\'app Notes — utilise Copier', 'linear-gradient(135deg,#9b1111,#b8322b)');
+      }
+      return;
+    }
+    const copyBtn = e.target.closest('.matelot-action-copy');
+    if(copyBtn){
+      e.preventDefault();
+      const code = copyBtn.dataset.code;
+      const name = copyBtn.dataset.name;
+      const team = copyBtn.dataset.team;
+      const link = copyBtn.dataset.link;
+      const ok = await copyMatelotToClipboard(name, code, team, link);
+      if(ok){
+        showToast('📋 Code copié dans le presse-papier — colle-le dans l\'app Notes de ton appareil', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      }else{
+        showToast('❌ Copie impossible', 'linear-gradient(135deg,#9b1111,#b8322b)');
+      }
+      return;
+    }
+    const viewBtn = e.target.closest('.matelot-action-viewqr');
+    if(viewBtn){
+      e.preventDefault();
+      viewMatelotQr(viewBtn.dataset.qrUrl, viewBtn.dataset.code);
+      return;
+    }
+    const thumb = e.target.closest('.matelot-qr-thumb');
+    if(thumb){
+      e.preventDefault();
+      viewMatelotQr(thumb.dataset.qrUrl, thumb.dataset.code);
+      return;
+    }
   });
 
   $('registerBtn').addEventListener('click',registerMember);
