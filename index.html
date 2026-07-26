@@ -863,7 +863,7 @@
   <section class="card intro-card">
     <h2>ORDRE DE MISSION</h2>
     <div class="body">
-      <p class="intro-text typewriter" id="missionOrderText" data-text="Votre équipage suit une chaîne de défis : résoudre un mini-jeu, obtenir un mot de passe, trouver le QR caché, puis passer le palier suivant."></p>
+      <p class="intro-text typewriter" id="missionOrderText" data-text="Plongez dans les abysses du magasin : votre equipage et vous devez suivre la trace du capitaine Nemo. Decodez les transmissions, trouvez les QR caches dans le magasin, et faites remonter le Nautilus avant que l\'oxygene ne manque. Chaque palier revele le suivant."></p>
       <div class="mission-steps" id="ruleCards">
         <button type="button" class="mission-step active" data-rule="embark"><span class="num">1</span><b>Embarquez</b></button>
         <button type="button" class="mission-step" data-rule="solve"><span class="num">2</span><b>Décryptez</b></button>
@@ -2072,19 +2072,46 @@
   document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => showRule(btn.dataset.rule, true)));
   showRule('embark', false);
 
+  /**
+   * Anime l'apparition du texte d'ordre de mission, SANS modifier la hauteur du bloc.
+   * Technique :
+   * 1. On fixe la hauteur du container a la taille du texte complet des le depart
+   *    (en injectant le texte en opacity:0 dans un placeholder qui reserve la place).
+   * 2. On anime les mots un par un au-dessus (z-index superieur) en changeant
+   *    uniquement l'opacite, pas le contenu.
+   * => Pas de decalage de scroll, pas de saccade.
+   */
   function startMissionOrderTypewriter(){
     const el = $('missionOrderText');
     if(!el || el.dataset.typed === 'true') return;
     const text = el.dataset.text || '';
     el.dataset.typed = 'true';
-    el.textContent = '';
-    let i = 0;
-    const speed = 24;
-    const tick = () => {
-      el.textContent = text.slice(0, i++);
-      if(i <= text.length) setTimeout(tick, speed);
+
+    // 1) Reserver la place : injecter tout le texte en invisible
+    el.style.position = 'relative';
+    el.textContent = text;
+    el.style.color = 'transparent'; // invisible mais reserve l'espace
+
+    // 2) Creer l'overlay qui va afficher le texte progressivement
+    const overlay = document.createElement('span');
+    overlay.style.cssText = 'position:absolute;inset:0;color:var(--cyan);white-space:pre-wrap;word-wrap:break-word;overflow:hidden';
+    el.appendChild(overlay);
+
+    // 3) Animer les mots un par un
+    const words = text.split(/(\s+)/); // garde les separateurs (espaces)
+    overlay.textContent = '';
+    let idx = 0;
+    const revealNext = () => {
+      if(idx >= words.length) return;
+      overlay.textContent = words.slice(0, idx + 1).join('');
+      idx++;
+      // Delai adapte : 30ms par mot, plus long sur les longs mots
+      const w = words[idx - 1] || '';
+      const delay = w.trim() ? Math.max(20, Math.min(80, w.length * 6)) : 10;
+      setTimeout(revealNext, delay);
     };
-    tick();
+    // Petit delai initial pour eviter le flash
+    setTimeout(revealNext, 80);
   }
 
   const orderObserver = new IntersectionObserver((entries) => {
