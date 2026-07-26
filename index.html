@@ -202,9 +202,8 @@
 
 
     /* Admin FAB + tabs */
-    /* Footer ancré (pas fixed) : l'engrenage scrolle avec la page */
-    .site-footer{margin-top:24px;padding:18px 14px 28px;display:flex;align-items:center;justify-content:flex-end;gap:14px;color:rgba(160,175,190,.45);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;transition:opacity .2s;position:relative}
-    .site-footer::before{content:"FNAC Labège · Mission Nautilus";position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(160,175,190,.45);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+    /* Footer ancré (pas fixed) : l'engrenage scrolle avec la page, en bas à droite */
+    .site-footer{margin-top:24px;padding:18px 18px 28px;display:flex;align-items:center;justify-content:flex-end;transition:opacity .2s}
     .site-footer.admin-open{opacity:0;pointer-events:none;height:0;padding:0;margin:0;overflow:hidden}
     #adminFabBtn{position:static;width:32px;height:32px;border-radius:50%;background:transparent;color:rgba(120,140,160,.45);border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none;backdrop-filter:none;transition:.25s color,.25s background,.25s border-color,.25s opacity;padding:0;opacity:.55;-webkit-tap-highlight-color:transparent;user-select:none;flex:0 0 auto}
     #adminFabBtn svg{width:14px;height:14px;transition:transform .4s cubic-bezier(.4,1.4,.6,1)}
@@ -731,7 +730,6 @@
 
 <!-- Pied de page ancré : l'engrenage scrolle avec la page -->
 <footer class="site-footer" role="contentinfo">
-  <span>FNAC Labège · Mission Nautilus</span>
   <button id="adminFabBtn" type="button" aria-label="Maintenance" title="Maintenance">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
   </button>
@@ -1523,13 +1521,14 @@
     $('adminFabBtn')?.classList.add('active');
     // Cache le footer (l'engrenage ne doit pas rester visible pendant qu'on tape le code)
     document.querySelector('.site-footer')?.classList.add('admin-open');
-    if(isAdminUnlocked()){
-      showAdminWorkspace();
-    }else{
-      $('adminLocked').style.display = '';
-      $('adminWorkspace').style.display = 'none';
-      setTimeout(() => $('adminCodeInput')?.focus(), 80);
-    }
+    // TOUJOURS demander le code à chaque clic sur l'engrenage.
+    // Pas de session persistante : le code doit être retapé à chaque ouverture.
+    $('adminLocked').style.display = '';
+    $('adminWorkspace').style.display = 'none';
+    wipeAdminCode();
+    const msg = $('adminUnlockMsg');
+    if(msg){ msg.textContent = ''; msg.style.color = ''; }
+    setTimeout(() => $('adminCodeInput')?.focus(), 80);
     panel.scrollIntoView({behavior:'smooth', block:'start'});
   }
   function closeAdminPanel(){
