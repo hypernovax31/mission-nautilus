@@ -20,11 +20,11 @@ const firebaseConfig = {
 };
 
 const TEAM_DEFS = [
-  { code: "CAPITAINE", name: "Nemo" },
-  { code: "SOUSMARIN", name: "Nautilus" },
-  { code: "DOCTEUR",   name: "Aronnax" },
-  { code: "BALEINE",   name: "Ned Land" },
-  { code: "GEANT",     name: "Calamar" }
+  { code: "NEMO",     name: "Nemo" },
+  { code: "NAUTILUS", name: "Nautilus" },
+  { code: "ARONNAX",  name: "Aronnax" },
+  { code: "NEDLAND",  name: "Ned Land" },
+  { code: "CALAMAR",  name: "Calamar" }
 ];
 
 /* Définition officielle UIT-R M.1677-1 (caractères accentués inclus) */
