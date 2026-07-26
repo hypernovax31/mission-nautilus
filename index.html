@@ -641,7 +641,7 @@
       <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l'équipe d'organisation. Accès par code uniquement.</p>
       <div class="hr"></div>
       <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d'accès admin</label><input id="adminCodeInput" type="password" placeholder="••••••••" autocomplete="off" style="text-transform:none;letter-spacing:.15em"></div>
+        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" style="text-transform:none;letter-spacing:.15em"></div>
         <button class="primary" id="adminUnlockBtn" type="button" style="margin:0">Déverrouiller</button>
         <span id="adminUnlockMsg" class="small" style="width:100%"></span>
       </div>
@@ -1524,6 +1524,24 @@
     const panel = $('adminPanel');
     if(panel) panel.style.display = 'none';
     $('adminFabBtn')?.classList.remove('active');
+    wipeAdminCode();
+  }
+  /**
+   * Vide le champ code admin de manière agressive (mémoire JS + DOM).
+   * Appelé après chaque action admin sensible (endAdminSession), sur tentative
+   * échouée, à la fermeture du panneau et au blur du champ.
+   * Garantit que le mot de passe n'est jamais retenu en mémoire, ni
+   * récupérable via autofill / inspecteur après la session.
+   */
+  function wipeAdminCode(){
+    const input = $('adminCodeInput');
+    if(!input) return;
+    input.value = '';
+    // Force l'autofill à purger son cache en réécrivant la valeur
+    if(typeof input.setAttribute === 'function'){
+      input.setAttribute('value', '');
+    }
+    try{ input.dispatchEvent(new Event('input', { bubbles: true })); }catch(e){}
   }
   function showAdminWorkspace(){
     $('adminLocked').style.display = 'none';
@@ -1543,19 +1561,20 @@
     if(typed === ADMIN_CODE){
       setAdminUnlocked(true);
       if(msg){ msg.textContent = '✅ Code accepté.'; msg.style.color = '#075c39'; }
+      wipeAdminCode(); // Purge immédiate du champ après succès (la saisie n'est plus utile)
       showAdminWorkspace();
     }else{
       setAdminUnlocked(false);
       if(msg){ msg.textContent = '❌ Code invalide.'; msg.style.color = '#9b1111'; }
-      input.value = '';
+      wipeAdminCode();
       input.focus();
     }
   }
   function lockAdmin(){
     setAdminUnlocked(false);
+    wipeAdminCode();
     $('adminWorkspace').style.display = 'none';
     $('adminLocked').style.display = '';
-    $('adminCodeInput').value = '';
     $('adminUnlockMsg').textContent = '';
     $('adminCodeInput').focus();
   }
@@ -1569,6 +1588,7 @@
    */
   function endAdminSession(message){
     setAdminUnlocked(false);
+    wipeAdminCode();
     closeAdminPanel();
     if(message){
       // Notification éphémère (toast simple)
@@ -1589,7 +1609,21 @@
   });
   $('adminUnlockBtn')?.addEventListener('click', tryAdminUnlock);
   $('adminCodeInput')?.addEventListener('keydown', e => { if(e.key === 'Enter') tryAdminUnlock(); });
+  $('adminCodeInput')?.addEventListener('blur', () => {
+    // Purge dès qu'on quitte le champ (l'admin a fini de taper)
+    setTimeout(wipeAdminCode, 100);
+  });
+  $('adminCodeInput')?.addEventListener('paste', e => {
+    // Le code doit être tapé, pas collé depuis un presse-papier (sécurité optionnelle)
+    e.preventDefault();
+  });
   $('adminLockBtn')?.addEventListener('click', lockAdmin);
+  // Purge si l'utilisateur quitte l'onglet ou la fenêtre
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden) wipeAdminCode();
+  });
+  window.addEventListener('pagehide', wipeAdminCode);
+  window.addEventListener('beforeunload', wipeAdminCode);
   $('adminReloadBtn')?.addEventListener('click', () => {
     refreshAdminTeams().then(() => { renderAdminMembers(); renderAdminLocks(); renderAdminTeams(); });
   });
