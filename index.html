@@ -226,7 +226,9 @@
     @media(max-width:480px){
       .member-edit-row,.team-edit-row{grid-template-columns:1fr !important;gap:8px}
       .member-edit-row .me-team{grid-column:auto}
-      .member-edit-row .me-save,.member-edit-row .me-del,.team-edit-row .tt-save,.team-edit-row .tt-del{justify-self:stretch;width:100%}
+      .me-sub,.tt-sub{grid-template-columns:1fr !important;gap:6px}
+      .me-actions,.tt-actions{justify-self:stretch;width:100%}
+      .me-actions .me-save,.me-actions .me-del,.tt-actions .tt-save,.tt-actions .tt-del{flex:1}
     }
 
     /* Mobile très petit : l'input mot de passe garde une largeur saine */
@@ -247,7 +249,7 @@
     #adminFabBtn.active svg{transform:rotate(90deg)}
 
     /* Admin — panneau compact & responsive */
-    #adminPanel{max-width:min(720px,96vw);margin:24px auto 0;padding:0;border:1px solid rgba(255,75,62,.45);border-radius:18px;background:rgba(255,75,62,.04);box-shadow:0 18px 40px rgba(0,0,0,.28);overflow:hidden}
+    #adminPanel{max-width:min(960px,98vw);margin:24px auto 0;padding:0;border:1px solid rgba(255,75,62,.45);border-radius:18px;background:rgba(255,75,62,.04);box-shadow:0 18px 40px rgba(0,0,0,.28);overflow:hidden}
     #adminPanel>div.body, #adminPanel .body{padding:14px 16px}
     #adminPanel>div>h2, #adminPanel h2{margin:0;background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;padding:12px 14px !important;font-size:14px !important;line-height:1.2;letter-spacing:.04em;display:flex;align-items:center;gap:10px;justify-content:space-between}
     #adminPanel>div>h2>span, #adminPanel h2>span{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -274,11 +276,13 @@
     /* Panes */
     .admin-pane{background:rgba(255,255,255,.7);border:1px solid #dfe8ee;border-radius:10px;padding:12px}
 
-    /* Rows compactes — single-line par item, 1 bouton save/trash */
-    .member-edit-row,.team-edit-row{display:grid;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
-    .member-edit-row{grid-template-columns:minmax(0,1.2fr) minmax(0,.7fr) minmax(0,1fr) auto auto}
-    .team-edit-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+    /* Rows compactes — utilise la largeur (2 sub-grilles + boutons) */
+    .member-edit-row,.team-edit-row{display:grid;gap:6px;align-items:center;padding:10px 0;border-bottom:1px solid #e8eef2}
+    .member-edit-row{grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,1.1fr) auto}
+    .team-edit-row{grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) auto}
     .member-edit-row:last-child,.team-edit-row:last-child{border-bottom:0}
+    /* Sous-grille 2 colonnes (service + team) pour optimiser la largeur */
+    .me-sub,.tt-sub{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-width:0}
     /* Inputs / selects : taille compacte, jamais de débordement */
     .member-edit-row input,.member-edit-row select,.team-edit-row input{
       height:32px !important;min-height:32px;padding:4px 8px !important;
@@ -295,6 +299,9 @@
     .me-save:hover,.me-del:hover,.lk-save:hover,.lk-unlock:hover,.tt-save:hover,.tt-del:hover{
       transform:none !important
     }
+    /* Stack vertical pour les boutons sur la 4e colonne */
+    .me-actions,.tt-actions{display:flex;flex-direction:row;gap:4px;align-items:center;justify-content:flex-end}
+    .me-actions .me-save,.me-actions .me-del,.tt-actions .tt-save,.tt-actions .tt-del{margin:0}
     .admin-pane .team{border:1px solid #dfe8ee;border-radius:12px;padding:10px;background:#fff;margin-bottom:10px}
     .admin-pane .team:last-child{margin-bottom:0}
     .admin-pane .team h3{font-size:14px;margin:0 0 6px}
@@ -302,14 +309,26 @@
 
     /* Tab O2 : champs alignés compact */
     #adminO2Date,#adminO2Days,#adminO2Hours{height:34px !important;min-height:34px;padding:6px 8px !important;font-size:12px !important}
-    /* Grille 2 colonnes label/input propre pour onglets O2 et Blocages */
-    .admin-form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:10px 12px;align-items:center}
-    .admin-form-grid>label{margin:0;font-size:11px !important;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#52606a;text-align:right;padding-right:4px}
+    /* Grille 2 colonnes label/input propre pour onglets O2 et Blocages — utilise la largeur */
+    .admin-form-grid{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.4fr) minmax(0,.6fr) minmax(0,1.1fr);gap:8px 12px;align-items:center}
+    .admin-form-grid>label{margin:0;font-size:11px !important;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#52606a;text-align:right;padding-right:4px;white-space:nowrap}
     .admin-form-grid>input,.admin-form-grid>select{height:36px !important;min-height:36px;padding:6px 10px !important;font-size:13px !important;border-radius:8px;min-width:0;width:100%;box-sizing:border-box;margin:0 !important}
     .admin-form-grid>.full{grid-column:1 / -1}
+    /* Variante 6 colonnes pour O2 (3 paires label/input sur 1 ligne) */
+    .admin-form-grid-6{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,1fr) minmax(0,.7fr)}
+    @media(max-width:720px){
+      .admin-form-grid-6{grid-template-columns:1fr 1fr;gap:8px}
+      .admin-form-grid-6>label{text-align:left;padding-right:0}
+    }
+    @media(max-width:560px){
+      .admin-form-grid-6{grid-template-columns:1fr;gap:8px}
+    }
+    @media(max-width:720px){
+      .admin-form-grid{grid-template-columns:1fr 1fr;gap:8px}
+      .admin-form-grid>label{text-align:left;padding-right:0}
+    }
     @media(max-width:560px){
       .admin-form-grid{grid-template-columns:1fr;gap:8px}
-      .admin-form-grid>label{text-align:left;padding-right:0}
     }
     .admin-actions-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
     .admin-actions-row>button{flex:1 1 180px;min-width:0;margin:0 !important;padding:8px 12px !important;font-size:12px !important;min-height:36px !important;border-radius:8px;width:auto}
@@ -795,7 +814,7 @@
               <div class="countdown" id="adminO2Countdown" style="color:#ff8a82">—</div>
             </div>
           </div>
-          <div class="admin-form-grid">
+          <div class="admin-form-grid admin-form-grid-6">
             <label for="adminO2Date">Date de départ</label>
             <input id="adminO2Date" type="datetime-local">
             <label for="adminO2Days">Durée (jours)</label>
@@ -1844,10 +1863,14 @@
         ${allMembers.map((m, idx) => `
           <div class="member-edit-row" data-key="${esc(m.memberKey || '')}" data-team="${esc(m._teamCode)}">
             <input type="text" class="me-name" value="${esc(m.name || '')}" placeholder="Nom">
-            <select class="me-svc">${serviceOptions.replace(`value="${esc(m.service)}"`, `value="${esc(m.service)}" selected`)}</select>
-            <select class="me-team">${teamOptions.replace(`value="${esc(m._teamCode)}"`, `value="${esc(m._teamCode)}" selected`)}</select>
-            <button class="primary mini me-save" type="button" style="background:var(--fnac);color:#111">💾</button>
-            <button class="danger mini me-del" type="button">🗑</button>
+            <div class="me-sub">
+              <select class="me-svc">${serviceOptions.replace(`value="${esc(m.service)}"`, `value="${esc(m.service)}" selected`)}</select>
+              <select class="me-team">${teamOptions.replace(`value="${esc(m._teamCode)}"`, `value="${esc(m._teamCode)}" selected`)}</select>
+            </div>
+            <div class="me-actions">
+              <button class="primary mini me-save" type="button" style="background:var(--fnac);color:#111">💾</button>
+              <button class="danger mini me-del" type="button">🗑</button>
+            </div>
           </div>
         `).join('')}
       </div>`;
@@ -2162,14 +2185,16 @@
           <h3>${esc(t.name)} <span class="small" style="color:var(--muted)">(${esc(t.code)})${isCustom ? ' <span style="color:#075c39">[custom]</span>' : ''}</span></h3>
           <div class="hr"></div>
           <div class="team-edit-row">
-            <input type="text" class="tt-name" value="${esc(t.name)}" maxlength="32">
-            <input type="text" class="tt-code" value="${esc(t.code)}" maxlength="12" style="text-transform:uppercase" disabled>
-            <button class="primary mini tt-save" type="button" style="background:var(--fnac);color:#111">💾 Renommer</button>
+            <input type="text" class="tt-name" value="${esc(t.name)}" maxlength="32" placeholder="Nom de l'équipe">
+            <div class="tt-sub">
+              <input type="text" class="tt-code" value="${esc(t.code)}" maxlength="12" style="text-transform:uppercase" disabled>
+            </div>
+            <div class="tt-actions">
+              <button class="primary mini tt-save" type="button" style="background:var(--fnac);color:#111">💾 Renommer</button>
+              <button class="danger mini tt-del" type="button">🗑</button>
+            </div>
           </div>
-          <div class="row" style="margin-top:8px">
-            <button class="danger mini tt-del" type="button" style="margin:0">🗑 Supprimer l'équipe</button>
-            ${isCustom ? '' : '<span class="small" style="color:var(--muted)">équipe par défaut — suppression interdite (défavoriserait les utilisateurs)</span>'}
-          </div>
+          ${isCustom ? '' : '<div class="small" style="color:var(--muted);margin-top:4px">⚠️ Équipe par défaut — suppression interdite</div>'}
         </div>`;
       }).join('');
       box.querySelectorAll('.team').forEach(teamEl => {
