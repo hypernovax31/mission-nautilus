@@ -221,12 +221,10 @@
     #adminPanel input,#adminPanel select{min-width:0;max-width:100%;box-sizing:border-box}
     #adminLocked input{min-width:0}
 
-    /* Sur mobile, les rows du panneau passent en 1 colonne pour éviter
-       tout chevauchement de select/input/bouton */
-    @media(max-width:480px){
-      .member-edit-row,.team-edit-row{grid-template-columns:1fr !important;gap:8px}
-      .member-edit-row .me-team{grid-column:auto}
-      .me-sub,.tt-sub{grid-template-columns:1fr !important;gap:6px}
+    /* Sur mobile (<640px), les rows sont déjà en 1 colonne (cf. @media ci-dessus).
+       On force juste la sous-grille et les boutons à s'étendre. */
+    @media(max-width:639px){
+      .me-sub{grid-template-columns:1fr !important;gap:6px}
       .me-actions,.tt-actions{justify-self:stretch;width:100%}
       .me-actions .me-save,.me-actions .me-del,.tt-actions .tt-save,.tt-actions .tt-del{flex:1}
     }
@@ -248,8 +246,27 @@
     #adminFabBtn.active{background:transparent;color:rgba(255,75,62,.7);border-color:transparent;box-shadow:none;opacity:1}
     #adminFabBtn.active svg{transform:rotate(90deg)}
 
-    /* Admin — panneau compact & responsive */
-    #adminPanel{max-width:min(960px,98vw);margin:24px auto 0;padding:0;border:1px solid rgba(255,75,62,.45);border-radius:18px;background:rgba(255,75,62,.04);box-shadow:0 18px 40px rgba(0,0,0,.28);overflow:hidden}
+    /* Admin — panneau large, s'adapte à la fenêtre visible */
+    #adminPanel{
+      /* Grand écran : quasi pleine largeur, marges latérales respirantes */
+      max-width:min(1400px,calc(100vw - 32px));
+      width:100%;
+      margin:24px auto 0;
+      padding:0;
+      border:1px solid rgba(255,75,62,.45);
+      border-radius:18px;
+      background:rgba(255,75,62,.04);
+      box-shadow:0 18px 40px rgba(0,0,0,.28);
+      overflow:hidden
+    }
+    /* Tablette : un peu plus serré */
+    @media(max-width:1100px){
+      #adminPanel{max-width:calc(100vw - 24px);margin:20px 12px 0}
+    }
+    /* Mobile : plein écran sans bordure */
+    @media(max-width:640px){
+      #adminPanel{max-width:100vw;margin:12px 0 0;border-radius:14px;border-left:0;border-right:0}
+    }
     #adminPanel>div.body, #adminPanel .body{padding:14px 16px}
     #adminPanel>div>h2, #adminPanel h2{margin:0;background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;padding:12px 14px !important;font-size:14px !important;line-height:1.2;letter-spacing:.04em;display:flex;align-items:center;gap:10px;justify-content:space-between}
     #adminPanel>div>h2>span, #adminPanel h2>span{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -276,59 +293,64 @@
     /* Panes */
     .admin-pane{background:rgba(255,255,255,.7);border:1px solid #dfe8ee;border-radius:10px;padding:12px}
 
-    /* Rows compactes — utilise la largeur (2 sub-grilles + boutons) */
-    .member-edit-row,.team-edit-row{display:grid;gap:6px;align-items:center;padding:10px 0;border-bottom:1px solid #e8eef2}
-    .member-edit-row{grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,1.1fr) auto}
-    .team-edit-row{grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) auto}
+    /* Rows compactes — grille flexible qui s'adapte à la largeur du panneau */
+    .member-edit-row,.team-edit-row{display:grid;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #e8eef2}
+    /* Desktop large (>=1200px) : 5 colonnes larges [Nom | Svc | Equipe | Vide | Actions] */
+    @media(min-width:1200px){
+      .member-edit-row{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.6fr) auto}
+      .team-edit-row{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto}
+    }
+    /* Tablette/desktop (640-1200px) : 4 colonnes [Nom | Svc+Equipe | Vide | Actions] */
+    @media(min-width:640px) and (max-width:1199px){
+      .member-edit-row{grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) minmax(0,.6fr) auto}
+      .team-edit-row{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto}
+    }
+    /* Mobile : tout en 1 colonne */
+    @media(max-width:639px){
+      .member-edit-row,.team-edit-row{grid-template-columns:1fr !important;gap:8px}
+    }
     .member-edit-row:last-child,.team-edit-row:last-child{border-bottom:0}
-    /* Sous-grille 2 colonnes (service + team) pour optimiser la largeur */
-    .me-sub,.tt-sub{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-width:0}
+    /* Sous-grille 2 colonnes (service + team) — optimisée pour tablette/mobile */
+    .me-sub{display:grid;grid-template-columns:1fr 1fr;gap:6px;min-width:0}
     /* Inputs / selects : taille compacte, jamais de débordement */
     .member-edit-row input,.member-edit-row select,.team-edit-row input{
-      height:32px !important;min-height:32px;padding:4px 8px !important;
-      font-size:12px !important;border-radius:6px;width:100%;min-width:0;box-sizing:border-box;
+      height:34px !important;min-height:34px;padding:6px 10px !important;
+      font-size:13px !important;border-radius:6px;width:100%;min-width:0;box-sizing:border-box;
       margin:0 !important
     }
     /* Boutons compacts (save/delete/unlock) — ne PAS hériter du button global 48px */
     .me-save,.me-del,.lk-save,.lk-unlock,.tt-save,.tt-del{
-      width:auto !important;min-width:32px !important;height:28px !important;
-      min-height:28px !important;padding:0 8px !important;margin:0 !important;
+      width:auto !important;min-width:32px !important;height:30px !important;
+      min-height:30px !important;padding:0 10px !important;margin:0 !important;
       font-size:14px !important;line-height:1;border-radius:6px;
       display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto
     }
     .me-save:hover,.me-del:hover,.lk-save:hover,.lk-unlock:hover,.tt-save:hover,.tt-del:hover{
       transform:none !important
     }
-    /* Stack vertical pour les boutons sur la 4e colonne */
-    .me-actions,.tt-actions{display:flex;flex-direction:row;gap:4px;align-items:center;justify-content:flex-end}
-    .me-actions .me-save,.me-actions .me-del,.tt-actions .tt-save,.tt-actions .tt-del{margin:0}
-    .admin-pane .team{border:1px solid #dfe8ee;border-radius:12px;padding:10px;background:#fff;margin-bottom:10px}
+    /* Stack horizontal pour les boutons */
+    .me-actions,.tt-actions{display:flex;flex-direction:row;gap:6px;align-items:center;justify-content:flex-end}
+    .admin-pane .team{border:1px solid #dfe8ee;border-radius:12px;padding:12px;background:#fff;margin-bottom:10px}
     .admin-pane .team:last-child{margin-bottom:0}
-    .admin-pane .team h3{font-size:14px;margin:0 0 6px}
+    .admin-pane .team h3{font-size:14px;margin:0 0 8px}
     .admin-pane .team h3 .small{font-size:10px;font-weight:600}
 
     /* Tab O2 : champs alignés compact */
     #adminO2Date,#adminO2Days,#adminO2Hours{height:34px !important;min-height:34px;padding:6px 8px !important;font-size:12px !important}
-    /* Grille 2 colonnes label/input propre pour onglets O2 et Blocages — utilise la largeur */
-    .admin-form-grid{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.4fr) minmax(0,.6fr) minmax(0,1.1fr);gap:8px 12px;align-items:center}
+    /* Grille 4 colonnes (Statut | Reprise | Échecs | Vide) sur Blocages,
+       s'adapte à la largeur du panneau */
+    .admin-form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.4fr);gap:8px 14px;align-items:center}
     .admin-form-grid>label{margin:0;font-size:11px !important;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#52606a;text-align:right;padding-right:4px;white-space:nowrap}
     .admin-form-grid>input,.admin-form-grid>select{height:36px !important;min-height:36px;padding:6px 10px !important;font-size:13px !important;border-radius:8px;min-width:0;width:100%;box-sizing:border-box;margin:0 !important}
     .admin-form-grid>.full{grid-column:1 / -1}
     /* Variante 6 colonnes pour O2 (3 paires label/input sur 1 ligne) */
-    .admin-form-grid-6{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,1fr) minmax(0,.7fr)}
+    .admin-form-grid-6{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)}
     @media(max-width:720px){
-      .admin-form-grid-6{grid-template-columns:1fr 1fr;gap:8px}
-      .admin-form-grid-6>label{text-align:left;padding-right:0}
+      .admin-form-grid,.admin-form-grid-6{grid-template-columns:1fr 1fr;gap:8px}
+      .admin-form-grid>label,.admin-form-grid-6>label{text-align:left;padding-right:0}
     }
     @media(max-width:560px){
-      .admin-form-grid-6{grid-template-columns:1fr;gap:8px}
-    }
-    @media(max-width:720px){
-      .admin-form-grid{grid-template-columns:1fr 1fr;gap:8px}
-      .admin-form-grid>label{text-align:left;padding-right:0}
-    }
-    @media(max-width:560px){
-      .admin-form-grid{grid-template-columns:1fr;gap:8px}
+      .admin-form-grid,.admin-form-grid-6{grid-template-columns:1fr;gap:8px}
     }
     .admin-actions-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
     .admin-actions-row>button{flex:1 1 180px;min-width:0;margin:0 !important;padding:8px 12px !important;font-size:12px !important;min-height:36px !important;border-radius:8px;width:auto}
