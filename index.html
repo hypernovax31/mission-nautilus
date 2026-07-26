@@ -833,7 +833,6 @@
 </audio>
 <button id="sonarToggleBtn" class="sonar-toggle" type="button">Activer le sonar</button>
 <button id="installPwaBtn" class="install-pwa-btn" type="button" style="display:none" title="Installer l'app sur mon écran d'accueil">📲 Installer l'app</button>
-<button id="openRecapBtn" class="install-pwa-btn" type="button" style="display:inline-flex" title="Voir le récapitulatif complet du jeu">📋 Récap</button>
 <div class="nautilus-alarm" id="nautilusAlarm" aria-live="assertive">
   <div class="alarm-panel">
     <div class="alarm-title">ALERTE NAUTILUS</div>
@@ -3206,7 +3205,7 @@
   $('adminAddTeamBtn')?.addEventListener('click', adminAddTeam);
 
   /* =====================================================================
-     PWA - Installation + bouton d'installation + ouverture du recap
+     PWA - Installation + bouton d'installation
      ===================================================================== */
   let _deferredInstallPrompt = null;
   let _pwaInstalled = false;
@@ -3305,11 +3304,7 @@
     document.body.appendChild(overlay);
   }
 
-  // Ouvre la page recap dans un nouvel onglet
-  $('openRecapBtn')?.addEventListener('click', () => {
-    const w = window.open('recap.html', '_blank', 'noopener');
-    if(!w) showToast('Pop-up bloquee : autorise les pop-ups pour ce site', 'linear-gradient(135deg,#9b1111,#b8322b)');
-  });
+  // (recap.html supprime)
 
   // Enregistrement du service worker (PWA)
   if('serviceWorker' in navigator){
