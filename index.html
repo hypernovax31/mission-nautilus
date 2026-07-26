@@ -1516,11 +1516,11 @@
       '=================\n' +
       'Matelot : ' + name + '\n' +
       'Equipage : ' + teamName + '\n' +
-      'Code Matelot : ' + code + '\n' +
-      'Lien de reprise : ' + link + '\n\n' +
-      'Pour reprendre la mission sur n\'importe quel appareil :\n' +
-      '1. Ouvre le lien ci-dessus, OU\n' +
-      '2. Va sur la page Mission Nautilus et entre ton code dans "Reprendre ta mission".';
+      'Code Matelot : ' + code + '\n\n' +
+      'ASTUCE : scanne le QR de la page web avec l\'app camera de ton telephone.\n' +
+      'Le code apparaitra en clair, il suffira de le copier et de le coller\n' +
+      'dans la zone "Reprendre ta mission" de la page Mission Nautilus.\n\n' +
+      'Le code est personnel et a usage unique.';
   }
 
   /**
@@ -1706,7 +1706,12 @@
       updateFinalMissionButton();
 
       // 8) Affiche le Code Matelot (usage unique) + QR code + boutons Notes/Clipboard
-      const resumeLink = location.origin + location.pathname.replace(/index\.html$/, '') + '?matelot=' + encodeURIComponent(matelotCode);
+      // Le QR encode UNIQUEMENT le code matelot en clair (texte simple).
+      // Pourquoi : le collaborateur scanne avec l'app camera de SON PROPRE telephone.
+      // Sa camera reconnait le texte et le copie dans le presse-papier (iOS 16+/Android 10+)
+      // OU il le tape a la main. Le lien web n'est pas utilisable car il ouvrirait la page
+      // sur le MEME telephone, ce qui est exactement ce qu'il fait deja.
+      const resumeLink = matelotCode;
       const qrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=' + encodeURIComponent(resumeLink) + '&choe=UTF-8';
       $('registerMsg').innerHTML =
         '<div class="notice success" style="padding:18px 20px">' +
@@ -1717,7 +1722,7 @@
             '<div class="small" style="margin-top:8px;color:#9b1111;font-weight:900">&#x26A0; Ce code est <b>personnel</b> et a <b>usage unique</b>. Il ne te sera plus jamais affiche.<br>Note-le sur ton QR ou dans un endroit sur.</div>' +
           '</div>' +
           matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
-          '<div class="small" style="margin-top:10px">Pour <b>reprendre la mission</b>, scanne le QR ou entre le Code Matelot dans la zone <b>Reprendre ta mission</b>.</div>' +
+          '<div class="small" style="margin-top:10px;line-height:1.5">Pour <b>reprendre la mission</b> :<br>1. Scanne le QR avec l\'app <b>camera</b> de ton telephone (le code apparait en clair)<br>2. <b>Copie-le</b> et <b>colle-le</b> dans la zone <b>Reprendre ta mission</b><br>3. Ou tape simplement le code <b>' + esc(code) + '</b> a la main.</div>' +
         '</div>';
       $('memberName').value = '';
       renderGame(false);
@@ -3118,6 +3123,35 @@
     }
     await loadTeams();
     renderGame(false);
+
+    /* Si l'URL contient ?m=CODE (depuis un QR scanne), on pre-remplit
+       et on lance la reprise automatiquement. */
+    try{
+      const urlParams = new URLSearchParams(window.location.search);
+      const m = urlParams.get('m') || urlParams.get('matelot');
+      if(m){
+        const code = m.trim().toUpperCase();
+        // On cache l'URL pour eviter de rejouer en boucle si l'user rafraichit
+        history.replaceState(null, '', window.location.pathname);
+        // Feedback visuel : on indique qu'on scanne un QR
+        showNautilusAlarm('qr-scan-' + Date.now());
+        // On remplit l'input et on attend un peu pour que la scene se stabilise
+        $('matelotCodeInput').value = code;
+        await new Promise(r => setTimeout(r, 1500));
+        // Scroll vers la zone de reprise
+        document.getElementById('retrouverEquipage')?.scrollIntoView({behavior:'smooth', block:'start'});
+        await new Promise(r => setTimeout(r, 700));
+        // Lance la reprise
+        await joinTeam();
+        // Si succes : scroll vers la chambre de pilotage
+        setTimeout(() => {
+          const t = $('gameBox');
+          if(t && t.querySelector('.stepbox') && !t.querySelector('.stepbox.locked')){
+            document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+          }
+        }, 500);
+      }
+    }catch(e){ console.warn('auto-resume from URL:', e); }
   })();
 
   /* Redirection du cockpit vers la page palier dédiée. */
