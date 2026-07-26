@@ -589,7 +589,14 @@
 
   <section class="card sonar-loading" id="equipagesEnMer">
     <h2>🌊 ÉQUIPAGES EN PLONGEON</h2>
-    <div class="body"><div id="teamsBox" class="teamlist"><div class="sonar-loader"><div class="sonar-screen"><span class="sonar-dot d1"></span><span class="sonar-dot d2"></span><span class="sonar-dot d3"></span><span class="sonar-dot d4"></span><span class="sonar-sweep"></span></div><div class="sonar-text">Recherche de tous les équipages</div></div></div></div>
+    <div class="body">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:rgba(255,75,62,.08);border:1px solid rgba(255,75,62,.32);border-radius:14px">
+        <span style="font-size:13px;font-weight:900;color:#9b1111;letter-spacing:.04em;text-transform:uppercase">⚠️ ADMIN</span>
+        <span class="small" style="flex:1;min-width:200px">Vider tous les matelots des 5 équipes (la progression est conservée).</span>
+        <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0;padding:8px 14px;font-size:12px">🗑️ Reset des membres</button>
+      </div>
+      <div id="teamsBox" class="teamlist"><div class="sonar-loader"><div class="sonar-screen"><span class="sonar-dot d1"></span><span class="sonar-dot d2"></span><span class="sonar-dot d3"></span><span class="sonar-dot d4"></span><span class="sonar-sweep"></span></div><div class="sonar-text">Recherche de tous les équipages</div></div></div>
+    </div>
   </section>
 
   <section class="card" id="gameCard">
@@ -608,7 +615,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   /* Codes d'équipe obsolètes à nettoyer dans Firestore (migration).
      Ces docs sont des restes d'anciennes versions du jeu où les codes
@@ -838,6 +845,37 @@
   async function resetCurrentTeamProgress(){
     if(!currentTeam)return;if(!confirm(`Réinitialiser la progression de ${currentTeam.teamName} ?`))return;
     await saveTeam(currentTeam,{currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],finishedAt:null});await addEvent(currentTeam,'team_reset',{});renderGame();await loadTeams();
+  }
+
+  /**
+   * Réinitialise TOUS les membres des 5 équipes actives.
+   * Vide la collection `members` (Firestore) + champ `members` de chaque équipe.
+   * Conserve la progression (palier, failCount, etc.) — seul l'équipage est purgé.
+   * Double confirmation obligatoire (action irréversible).
+   */
+  async function resetAllMembers(){
+    const ok1 = confirm("⚠️ Action irréversible : vider l'équipage des 5 équipes ?\n\nCela supprimera tous les noms de matelots inscrits (NEMO, NAUTILUS, ARONNAX, NEDLAND, CALAMAR).\nLa progression et le blocage des équipes ne sont PAS affectés.");
+    if(!ok1) return;
+    const ok2 = confirm("Confirme une seconde fois : tu veux vraiment purger TOUS les membres ?");
+    if(!ok2) return;
+    try{
+      for(const t of TEAM_DEFS){
+        const teamRef = doc(db,'teams',t.code);
+        const snap = await getDoc(teamRef);
+        if(snap.exists()){
+          await updateDoc(teamRef, { members: [], updatedAt: new Date().toISOString() });
+        }
+      }
+      const membersSnap = await getDocs(collection(db,'members'));
+      const deletions = membersSnap.docs.map(d => deleteDoc(d.ref));
+      await Promise.all(deletions);
+      await addEvent({ teamCode:'ALL', teamName:'Toutes les équipes' }, 'members_reset', { count: membersSnap.size, at: new Date().toISOString() });
+      alert(`✅ Équipages vidés avec succès (${membersSnap.size} matelot(s) supprimé(s)).`);
+      await loadTeams();
+    }catch(err){
+      console.error('NAUTILUS resetAllMembers error:', err);
+      alert(`❌ Échec du reset : ${err.message || err}`);
+    }
   }
 
   function renderGame(justUnlocked=false){
@@ -1227,6 +1265,7 @@
   $('memberName').addEventListener('keydown',e=>{if(e.key==='Enter')registerMember();});
   $('joinBtn').addEventListener('click',()=>joinTeam());
   $('teamCodeInput').addEventListener('keydown',e=>{if(e.key==='Enter')joinTeam();});
+  $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
 
   document.addEventListener('contextmenu', e => e.preventDefault());
   document.addEventListener('selectstart', e => {
