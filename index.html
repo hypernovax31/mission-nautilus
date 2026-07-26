@@ -1193,6 +1193,14 @@
   $('resumeMissionBtn')?.addEventListener('click', () => {
     startOceanAudio();
     document.getElementById('retrouverEquipage')?.scrollIntoView({behavior:'smooth', block:'start'});
+    /* Focus auto sur l'input après le scroll pour faciliter la saisie */
+    setTimeout(() => {
+      const input = $('teamCodeInput');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 700);
   });
 
   $('registerBtn').addEventListener('click',registerMember);
