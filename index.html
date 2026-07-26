@@ -1060,6 +1060,40 @@
     }
     .im-cta:hover{filter:brightness(1.1);transform:translateY(-1px)}
     .im-cta-primary{background:linear-gradient(135deg,#f5b027,#d89020);color:#111;box-shadow:0 6px 14px rgba(245,176,39,.4)}
+
+    /* ===== Modale d'installation PWA ===== */
+    .pwa-modal{position:fixed;inset:0;z-index:10005;background:rgba(2,8,18,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px;animation:pwaFadeIn .25s ease}
+    .pwa-modal-out{animation:pwaFadeOut .25s ease forwards}
+    @keyframes pwaFadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes pwaFadeOut{from{opacity:1}to{opacity:0}}
+    .pwa-modal-card{position:relative;background:linear-gradient(160deg,#0a2a40 0%,#061524 60%,#020812 100%);border:2px solid rgba(245,176,39,.6);border-radius:24px;padding:28px 24px 24px;max-width:min(94vw,460px);width:100%;color:#e9f7ff;box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.05);animation:pwaSlideIn .4s cubic-bezier(.2,.9,.3,1.2);max-height:90vh;overflow-y:auto}
+    @keyframes pwaSlideIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .pwa-modal-close{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);font-size:16px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;margin:0}
+    .pwa-modal-close:hover{background:rgba(255,75,62,.5);transform:rotate(90deg)}
+    .pwa-modal-emoji{font-size:64px;text-align:center;line-height:1;margin:0 0 12px;animation:pwaEmojiBounce 1.6s ease-in-out infinite}
+    @keyframes pwaEmojiBounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.05)}}
+    .pwa-modal-title{margin:0 0 6px;text-align:center;font-size:20px;font-weight:1000;color:#fff;letter-spacing:.01em;line-height:1.25}
+    .pwa-modal-subtitle{margin:0 0 18px;text-align:center;font-size:14px;color:#b7d9e8;line-height:1.4}
+    .pwa-modal-steps{list-style:none;padding:0;margin:0 0 18px;counter-reset:none}
+    .pwa-modal-steps li{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;transition:.2s}
+    .pwa-modal-steps li:hover{background:rgba(245,176,39,.08);border-color:rgba(245,176,39,.3);transform:translateX(2px)}
+    .pwa-step-num{flex:0 0 28px;height:28px;width:28px;border-radius:50%;background:linear-gradient(135deg,#f5b027,#d89020);color:#111;font-weight:1000;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(245,176,39,.4)}
+    .pwa-step-body{flex:1;min-width:0}
+    .pwa-step-text{font-size:14px;line-height:1.45;color:#e9f7ff}
+    .pwa-step-text b{color:#ffe2a0}
+    .pwa-step-hint{margin-top:3px;font-size:12px;color:#7d92a8;font-style:italic}
+    .emoji-key{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:1px 6px;font-family:Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif;font-size:14px;line-height:1;margin:0 1px;vertical-align:middle}
+    .pwa-modal-tip{background:rgba(91,229,164,.08);border:1px solid rgba(91,229,164,.25);border-radius:12px;padding:10px 12px;font-size:13px;color:#b9f5d5;line-height:1.45;margin-bottom:18px;text-align:center}
+    .pwa-modal-cta{width:100%;background:linear-gradient(135deg,#f5b027,#d89020);color:#111;border:0;border-radius:14px;padding:14px;font-size:15px;font-weight:1000;letter-spacing:.04em;cursor:pointer;text-transform:uppercase;box-shadow:0 8px 20px rgba(245,176,39,.35);transition:.15s;margin:0}
+    .pwa-modal-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .pwa-modal-cta:active{transform:translateY(0)}
+    @media(max-width:480px){
+      .pwa-modal-card{padding:24px 18px 18px;border-radius:20px}
+      .pwa-modal-emoji{font-size:54px}
+      .pwa-modal-title{font-size:18px}
+      .pwa-modal-steps li{padding:10px 12px;gap:10px}
+      .pwa-step-num{flex-basis:26px;height:26px;width:26px;font-size:13px}
+    }
   </style>
 </head>
 <body>
@@ -3510,272 +3544,6 @@
   }
   $('adminAddTeamBtn')?.addEventListener('click', adminAddTeam);
 
-  /* =====================================================================
-     PWA - Installation simplifiee
-     Un seul bouton "📲 Installer l'app" visible en permanence.
-     Au clic : modale avec instructions visuelles pour chaque OS.
-     ===================================================================== */
-  let _deferredInstallPrompt = null;
-  let _pwaInstalled = false;
-  const _isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-
-  // Capture le prompt natif Android (Chrome, Samsung Internet moderne)
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    _deferredInstallPrompt = e;
-    console.log("[PWA] beforeinstallprompt captured");
-  });
-
-  // App deja installee
-  window.addEventListener("appinstalled", () => {
-    _pwaInstalled = true;
-    _deferredInstallPrompt = null;
-    showToast("✅ Mission Nautilus installee !", "linear-gradient(135deg,#075c39,#0a8a5a)");
-  });
-
-  // Clic sur le bouton Installer l'app : TOUJOURS ouvrir la modale
-  // + declencher le prompt natif Android si dispo
-  $("installPwaBtn")?.addEventListener("click", async (e) => {
-    e.preventDefault();
-    console.log("[PWA] Install button clicked");
-    // 1) Declenche le prompt natif Android EN PARALLELE (si dispo)
-    if(_deferredInstallPrompt){
-      try{
-        await _deferredInstallPrompt.prompt();
-        const choice = await _deferredInstallPrompt.userChoice;
-        if(choice.outcome === "accepted"){
-          showToast("✅ Installation lancee", "linear-gradient(135deg,#075c39,#0a8a5a)");
-        }else{
-          showToast("❌ Annule. Tu peux reessayer.", "linear-gradient(135deg,#52606a,#3a4a5a)");
-        }
-        _deferredInstallPrompt = null;
-      }catch(err){
-        console.warn("[PWA] prompt error:", err);
-      }
-    }
-    // 2) Dans tous les cas, ouvrir la modale
-    showInstallModal();
-  });
-
-  /**
-   * Modale d'installation avec instructions visuelles pour chaque OS.
-   */
-  function showInstallModal(){
-    const ua = navigator.userAgent;
-    const isIOS = /iPhone|iPad|iPod/.test(ua) && !window.MSStream;
-    const isMac = /Macintosh|Mac OS X/.test(ua) && !/iPhone|iPad/.test(ua);
-    const isAndroid = /Android/i.test(ua);
-    const isWindows = /Windows/i.test(ua);
-    const isLinux = /Linux/i.test(ua) && !isAndroid;
-    const pageUrl = location.origin + location.pathname;
-    const qrUrl = "https://chart.googleapis.com/chart?cht=qr&chs=240x240&chl=" + encodeURIComponent(pageUrl) + "&choe=UTF-8";
-
-    let title = "📲 Installe l\'app";
-    let subtitle = "Accede a Mission Nautilus comme une vraie application.";
-    let osIcon = "📱";
-    let visualSteps = "";
-
-    if(isIOS){
-      title = "📲 Installe sur iPhone / iPad";
-      subtitle = "Safari ne peut pas le faire automatiquement. 2 gestes :";
-      osIcon = "🍎";
-      visualSteps = `
-        <div class="im-visual">
-          <div class="im-safari-mock">
-            <div class="im-safari-bar">
-              <div class="im-url">mission-nautilus</div>
-              <div class="im-share-btn" title="Bouton Partager">⎙</div>
-            </div>
-            <div class="im-content-mock"></div>
-          </div>
-          <div class="im-arrow">↓</div>
-          <div class="im-sheet-mock">
-            <div class="im-sheet-title">Partager</div>
-            <div class="im-sheet-grid">
-              <div class="im-sheet-item"><div class="im-sheet-ico">💬</div><span>Messages</span></div>
-              <div class="im-sheet-item im-highlight"><div class="im-sheet-ico">➕</div><span>Ecran accueil</span></div>
-              <div class="im-sheet-item"><div class="im-sheet-ico">📧</div><span>Mail</span></div>
-              <div class="im-sheet-item"><div class="im-sheet-ico">📋</div><span>Copier</span></div>
-            </div>
-          </div>
-        </div>
-        <ol class="im-steps-list">
-          <li>Appuie sur le bouton <b>⎙ Partager</b> (en bas de Safari)</li>
-          <li>Selectionne <b>"Sur l'ecran d'accueil" ➕</b></li>
-          <li>Appuie sur <b>Ajouter</b> en haut a droite</li>
-        </ol>`;
-    }else if(isAndroid){
-      title = "📲 Installe sur Android";
-      subtitle = "3 methodes selon ton navigateur :";
-      osIcon = "🤖";
-      visualSteps = `
-        <ol class="im-steps-list">
-          <li><b>Chrome / Samsung Internet :</b> menu <b>⋮</b> puis <b>Ajouter a l'ecran d'accueil</b></li>
-          <li><b>Firefox :</b> menu <b>⋮</b> puis <b>Installer</b></li>
-          <li><b>Opera :</b> menu <b>⋮</b> puis <b>Ajouter a l'ecran d'accueil</b></li>
-        </ol>
-        <p class="im-tip">✅ Si une banniere apparait en bas de l'ecran, appuie dessus !</p>`;
-    }else if(isMac){
-      title = "💻 Installe sur Mac (Safari)";
-      subtitle = "Pour avoir l'app dans le Dock :";
-      osIcon = "🍎";
-      visualSteps = `
-        <ol class="im-steps-list">
-          <li>Ouvre le menu <b>Fichier</b> (en haut)</li>
-          <li>Selectionne <b>Ajouter au Dock...</b></li>
-          <li>Confirme avec <b>Ajouter</b></li>
-        </ol>
-        <p class="im-tip">L'icone du sous-marin NAUTILUS apparaitra dans ton Dock.</p>`;
-    }else if(isWindows){
-      title = "💻 Installe sur Windows";
-      subtitle = "3 methodes :";
-      osIcon = "🪟";
-      visualSteps = `
-        <ol class="im-steps-list">
-          <li><b>Microsoft Edge :</b> menu <b>⋯</b> puis <b>Applications</b> > <b>Installer ce site en tant qu'application</b></li>
-          <li><b>Chrome :</b> menu <b>⋮</b> puis <b>Installer Mission Nautilus</b> (si disponible)</li>
-          <li>Ou telecharge un <b>raccourci Windows</b> ci-dessous</li>
-        </ol>`;
-    }else if(isLinux){
-      title = "🐧 Installe sur Linux";
-      subtitle = "2 methodes :";
-      osIcon = "🐧";
-      visualSteps = `
-        <ol class="im-steps-list">
-          <li><b>Chrome / Chromium :</b> menu <b>⋮</b> puis <b>Installer Mission Nautilus</b></li>
-          <li>Ou telecharge un <b>raccourci .desktop</b> ci-dessous</li>
-        </ol>`;
-    }else{
-      visualSteps = `
-        <ol class="im-steps-list">
-          <li>Ajoute cette page a tes favoris (<b>Ctrl+D</b> / <b>Cmd+D</b>)</li>
-          <li>Pour un raccourci sur le bureau, utilise l'option de ton navigateur</li>
-        </ol>`;
-    }
-
-    const overlay = document.createElement("div");
-    overlay.className = "qr-modal install-modal";
-    overlay.style.cssText = "position:fixed;inset:0;z-index:10002;background:radial-gradient(circle at 50% 30%,rgba(5,30,48,.96),rgba(0,0,0,.98));display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto";
-    overlay.innerHTML = `
-      <div class="install-modal-card">
-        <div class="im-header">
-          <div class="im-icon-big">${osIcon}</div>
-          <h2>${title}</h2>
-          <p class="im-subtitle">${subtitle}</p>
-        </div>
-        ${visualSteps}
-        <div class="im-divider"></div>
-        <div class="im-grid-2">
-          <div class="im-block">
-            <h3>📱 Scan depuis un autre telephone</h3>
-            <p class="small">Ouvre cette page sur ton mobile :</p>
-            <img src="${qrUrl}" alt="QR" class="im-qr" />
-          </div>
-          <div class="im-block">
-            <h3>🖱️ Creer un raccourci</h3>
-            <p class="small">Telecharge un raccourci sur ton bureau :</p>
-            <div class="im-shortcut-btns">
-              <button id="dlWinShortcut" class="im-shortcut-btn">🪟 Windows (.url)</button>
-              <button id="dlLinuxShortcut" class="im-shortcut-btn">🐧 Linux (.desktop)</button>
-              <button id="dlMacShortcut" class="im-shortcut-btn">🍎 Mac (webloc)</button>
-              <button id="dlIcsShortcut" class="im-shortcut-btn">📅 Calendrier (.ics)</button>
-            </div>
-            <p class="im-tip">✅ Le raccourci ouvre l'app dans ton navigateur par defaut</p>
-          </div>
-        </div>
-        <div class="im-divider"></div>
-        <div class="im-block">
-          <h3>📤 Partager le lien</h3>
-          <div class="im-share-row">
-            <input type="text" readonly value="${esc(pageUrl)}" id="imPageUrl" class="im-url-input" onclick="this.select()">
-            <button id="imCopyBtn" class="im-btn-primary">📋 Copier</button>
-            <button id="imShareBtn" class="im-btn-primary">📤 Partager</button>
-          </div>
-        </div>
-        <button type="button" class="im-close-btn" id="imCloseBtn">✕ Fermer</button>
-      </div>
-    `;
-
-    overlay.addEventListener("click", (ev) => {
-      if(ev.target === overlay || ev.target.id === "imCloseBtn"){
-        document.body.removeChild(overlay);
-      }
-    });
-
-    document.body.appendChild(overlay);
-
-    $("imCopyBtn")?.addEventListener("click", () => {
-      try{
-        navigator.clipboard.writeText(pageUrl);
-        showToast("📋 Lien copie dans le presse-papier", "linear-gradient(135deg,#075c39,#0a8a5a)");
-      }catch(e){}
-    });
-    $("imShareBtn")?.addEventListener("click", async () => {
-      try{
-        if(navigator.share){
-          await navigator.share({ title: "Mission Nautilus", text: "Rejoins la mission !", url: pageUrl });
-        }else{
-          await navigator.clipboard.writeText(pageUrl);
-          showToast("📋 Lien copie", "linear-gradient(135deg,#075c39,#0a8a5a)");
-        }
-      }catch(e){}
-    });
-
-    const baseUrl = location.origin + location.pathname.replace(/index\.html$/, "");
-    $("dlWinShortcut")?.addEventListener("click", () => {
-      const content = "[InternetShortcut]\nURL=" + pageUrl + "\nIconIndex=0\nIconFile=" + baseUrl + "assets/icon-512.png";
-      downloadFile("Mission Nautilus.url", content, "application/internet-shortcut");
-      showToast("✅ Raccourci Windows telecharge ! Place-le sur ton bureau", "linear-gradient(135deg,#075c39,#0a8a5a)");
-    });
-    $("dlLinuxShortcut")?.addEventListener("click", () => {
-      const content = "[Desktop Entry]\nVersion=1.0\nName=Mission Nautilus\nComment=20 000 lieues sous les mers (Fnac Labege)\nExec=xdg-open \"" + pageUrl + "\"\nIcon=" + baseUrl + "assets/icon-512.png\nTerminal=false\nType=Application\nCategories=Game;\nStartupWMClass=Mission-Nautilus\n";
-      downloadFile("mission-nautilus.desktop", content, "application/x-desktop");
-      showToast("✅ Raccourci Linux telecharge ! Place-le dans ~/.local/share/applications/", "linear-gradient(135deg,#075c39,#0a8a5a)");
-    });
-    $("dlMacShortcut")?.addEventListener("click", () => {
-      const content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<plist version=\"1.0\">\n<dict>\n  <key>URL</key>\n  <string>" + pageUrl + "</string>\n</dict>\n</plist>";
-      downloadFile("Mission Nautilus.webloc", content, "application/x-plist");
-      showToast("✅ Raccourci Mac telecharge ! Glisse-le dans le Dock", "linear-gradient(135deg,#075c39,#0a8a5a)");
-    });
-    $("dlIcsShortcut")?.addEventListener("click", () => {
-      const now = new Date();
-      const end = new Date(now.getTime() + 60*60*1000);
-      const fmt = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\..*/, "");
-      const content = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "PRODID:-//Mission Nautilus//FR",
-        "BEGIN:VEVENT",
-        "UID:" + Date.now() + "@mission-nautilus",
-        "DTSTAMP:" + fmt(now),
-        "DTSTART:" + fmt(now),
-        "DTEND:" + fmt(end),
-        "SUMMARY:Mission Nautilus - 20 000 lieues sous les mers",
-        "DESCRIPTION:Rejoins l'equipage : " + pageUrl,
-        "LOCATION:Fnac Labege",
-        "END:VEVENT",
-        "END:VCALENDAR"
-      ].join("\r\n");
-      downloadFile("Mission-Nautilus.ics", content, "text/calendar");
-      showToast("✅ Evenement telecharge ! Ouvre-le pour ajouter au calendrier", "linear-gradient(135deg,#075c39,#0a8a5a)");
-    });
-  }
-
-  /**
-   * Telecharge un fichier cote client.
-   */
-  function downloadFile(filename, content, mimeType){
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-  }
-
   // (recap.html supprime)
 
   // Enregistrement du service worker (PWA)
@@ -3886,5 +3654,7 @@
     updateFinalMissionButton();
   };
 </script>
+
+<script type="module" src="pwa-install.js"></script>
 </body>
 </html>
