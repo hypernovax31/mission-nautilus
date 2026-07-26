@@ -832,7 +832,7 @@
   <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
 </audio>
 <button id="sonarToggleBtn" class="sonar-toggle" type="button">Activer le sonar</button>
-<button id="installPwaBtn" class="install-pwa-btn" type="button" style="display:none" title="Installer l'app sur mon écran d'accueil">📲 Installer l'app</button>
+<button id="installPwaBtn" class="install-pwa-btn" type="button" title="Installer l'app sur mon écran d'accueil">📲 Installer l'app</button>
 <div class="nautilus-alarm" id="nautilusAlarm" aria-live="assertive">
   <div class="alarm-panel">
     <div class="alarm-title">ALERTE NAUTILUS</div>
@@ -3339,16 +3339,32 @@
           '<p style="margin-top:18px;font-size:13px;opacity:.75">Tu pourras ensuite lancer Mission Nautilus comme une vraie app, meme hors ligne.</p>' +
           '<button type="button" id="closeInstallHelp" style="margin-top:18px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
         '</div>';
-    }else{
+    }else if(/Android/i.test(navigator.userAgent)){
       body =
         '<div style="text-align:center;color:#fff;max-width:min(92vw,440px)">' +
           '<div style="font-size:60px;margin-bottom:8px">📲</div>' +
           '<h2 style="margin:0 0 12px;font-size:22px;color:#ffe2a0">Installe l\'app sur ton telephone</h2>' +
           '<p style="text-align:left;font-size:14px;line-height:1.6">' +
-            'Sur <b>Android (Chrome)</b> : menu ⋮ puis <b>Ajouter a l\'ecran d\'accueil</b>.<br>' +
-            'Sur <b>Samsung Internet</b> : menu ☰ puis <b>Ajouter a l\'accueil</b>.<br>' +
-            'Sur <b>iPhone / iPad</b> : voir les instructions iOS ci-dessous.' +
+            'Sur <b>Chrome Android</b> : menu ⋮ puis <b>Ajouter a l\'ecran d\'accueil</b>.<br>' +
+            'Sur <b>Samsung Internet</b> : menu ☰ puis <b>Ajouter a l\'accueil</b>.' +
           '</p>' +
+          '<p style="margin-top:14px;font-size:13px;opacity:.75">L\'app sera ensuite accessible comme une vraie application, meme hors ligne.</p>' +
+          '<button type="button" id="closeInstallHelp" style="margin-top:18px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
+        '</div>';
+    }else{
+      // Desktop
+      body =
+        '<div style="text-align:center;color:#fff;max-width:min(92vw,440px)">' +
+          '<div style="font-size:60px;margin-bottom:8px">💻</div>' +
+          '<h2 style="margin:0 0 12px;font-size:22px;color:#ffe2a0">Installe l\'app sur ton mobile</h2>' +
+          '<p style="text-align:left;font-size:14px;line-height:1.6">' +
+            'L\'installation PWA n\'est disponible que sur <b>mobile</b> (Android ou iOS).' +
+          '</p>' +
+          '<p style="text-align:left;font-size:14px;line-height:1.6;margin-top:10px">' +
+            '👉 <b>Ouvre cette page sur ton telephone</b> pour installer l\'app :<br>' +
+            '<code style="display:inline-block;margin-top:8px;padding:8px 12px;background:rgba(0,0,0,.4);border-radius:8px;font-family:Consolas,monospace;font-size:12px;word-break:break-all">' + esc(location.href) + '</code>' +
+          '</p>' +
+          '<p style="margin-top:14px;font-size:13px;opacity:.75">Sur desktop, tu peux aussi ajouter cette page a tes favoris (Ctrl+D / Cmd+D).</p>' +
           '<button type="button" id="closeInstallHelp" style="margin-top:18px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
         '</div>';
     }
