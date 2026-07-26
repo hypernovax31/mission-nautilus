@@ -1236,12 +1236,9 @@
       document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
       return;
     }
-    /* Si on est au palier 1 (start), on redirige vers la page dédiée palier1.html.
-       L'accès à cette page est protégé par un code numérique issu du QR du magasin. */
+    /* Si on est au palier 1 (start), on redirige vers la page dédiée.
+       L'URL publique est /161129518.html (URL masquée, voir README). */
     if(currentTeam.currentStep === 'start'){
-      /* L'accès au palier 1 requiert le code de palier (issu du QR du magasin) :
-         161129518 (= concaténation des positions de "PALIER" = 16,1,12,9,5,18).
-         On l'envoie dans l'URL pour que la page palier soit directement accessible. */
       const teamCode = currentTeam.teamCode;
       const url = `161129518.html?code=${encodeURIComponent(teamCode)}`;
       location.href = url;
