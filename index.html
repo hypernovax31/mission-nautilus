@@ -590,11 +590,6 @@
   <section class="card sonar-loading" id="equipagesEnMer">
     <h2>🌊 ÉQUIPAGES EN PLONGEON</h2>
     <div class="body">
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:rgba(255,75,62,.08);border:1px solid rgba(255,75,62,.32);border-radius:14px">
-        <span style="font-size:13px;font-weight:900;color:#9b1111;letter-spacing:.04em;text-transform:uppercase">⚠️ ADMIN</span>
-        <span class="small" style="flex:1;min-width:200px">Vider tous les matelots des 5 équipes (la progression est conservée).</span>
-        <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0;padding:8px 14px;font-size:12px">🗑️ Reset des membres</button>
-      </div>
       <div id="teamsBox" class="teamlist"><div class="sonar-loader"><div class="sonar-screen"><span class="sonar-dot d1"></span><span class="sonar-dot d2"></span><span class="sonar-dot d3"></span><span class="sonar-dot d4"></span><span class="sonar-sweep"></span></div><div class="sonar-text">Recherche de tous les équipages</div></div></div>
     </div>
   </section>
@@ -611,6 +606,37 @@
       <p class="abyss-bottom">la course est lancée pour tous les équipages.</p>
     </div>
   </section>
+
+  <section class="card" id="adminPanel" style="display:none;margin-top:24px;border:2px dashed rgba(255,75,62,.45);background:rgba(255,75,62,.04)">
+    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad">⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</h2>
+    <div class="body">
+      <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l'équipe d'organisation. Accès par code uniquement.</p>
+      <div class="hr"></div>
+      <div style="display:grid;gap:14px;grid-template-columns:1fr;align-items:end">
+        <div>
+          <label for="adminCodeInput">Code d'accès admin</label>
+          <input id="adminCodeInput" type="password" placeholder="••••••••" autocomplete="off" style="text-transform:none;letter-spacing:.15em">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="primary" id="adminUnlockBtn" type="button" style="margin:0">Déverrouiller</button>
+          <span id="adminUnlockMsg" class="small"></span>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div id="adminActions" style="display:none">
+        <p style="margin:0 0 12px;font-weight:900;color:#9b1111">⚠️ Zone sensible — actions irréversibles</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (5 équipes)</button>
+          <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset de la progression (5 équipes)</button>
+        </div>
+        <p class="small" style="margin-top:12px">Le reset des membres vide les équipages sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, sans échec, sans blocage).</p>
+      </div>
+    </div>
+  </section>
+
+  <div style="text-align:center;padding:34px 0 14px">
+    <button id="adminTriggerBtn" type="button" style="background:transparent;border:0;color:rgba(120,140,160,.32);font-size:11px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;padding:8px 14px;margin:0;font-weight:800">· maintenance ·</button>
+  </div>
 </main>
 
 <script type="module">
@@ -874,6 +900,43 @@
       await loadTeams();
     }catch(err){
       console.error('NAUTILUS resetAllMembers error:', err);
+      alert(`❌ Échec du reset : ${err.message || err}`);
+    }
+  }
+
+  /**
+   * Réinitialise la PROGRESSION des 5 équipes (palier 1, 0 échec, non bloqué).
+   * Ne vide PAS les membres. Action irréversible — double confirmation.
+   */
+  async function resetAllProgress(){
+    const ok1 = confirm("⚠️ Action irréversible : remettre la progression des 5 équipes à zéro ?\n\n(NEMO, NAUTILUS, ARONNAX, NEDLAND, CALAMAR)\n→ currentStep=start, failCount=0, lockedUntil=null, completedSteps=[]\n\nLes membres inscrits sont conservés.");
+    if(!ok1) return;
+    const ok2 = confirm("Confirme une seconde fois : reset complet de la progression des 5 équipes ?");
+    if(!ok2) return;
+    try{
+      for(const t of TEAM_DEFS){
+        const teamRef = doc(db,'teams',t.code);
+        await updateDoc(teamRef, {
+          currentStep: 'start',
+          status: 'active',
+          lockedUntil: null,
+          failCount: 0,
+          lastLockHours: 0,
+          completedSteps: [],
+          finishedAt: null,
+          updatedAt: new Date().toISOString()
+        });
+      }
+      await addEvent({ teamCode:'ALL', teamName:'Toutes les équipes' }, 'progress_reset', { at: new Date().toISOString() });
+      alert("✅ Progression des 5 équipes remise à zéro.");
+      if(currentTeam){
+        const fresh = await getTeam(currentTeam.teamCode);
+        if(fresh) currentTeam = fresh;
+      }
+      renderGame();
+      await loadTeams();
+    }catch(err){
+      console.error('NAUTILUS resetAllProgress error:', err);
       alert(`❌ Échec du reset : ${err.message || err}`);
     }
   }
@@ -1266,6 +1329,92 @@
   $('joinBtn').addEventListener('click',()=>joinTeam());
   $('teamCodeInput').addEventListener('keydown',e=>{if(e.key==='Enter')joinTeam();});
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
+  $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
+
+  /**
+   * Panneau admin caché : activé via le bouton "· maintenance ·" en pied de page.
+   * Le code d'accès est saisi dans le panneau — simple sécurité par obscurité côté client
+   * (le code vit dans ce bundle JS, mais il n'est pas visible à l'œil nu sur la page).
+   */
+  const ADMIN_CODE = 'NEMO-2025';
+  const ADMIN_SESSION_KEY = 'nautilusAdminUnlocked';
+  const ADMIN_SESSION_TTL = 30 * 60 * 1000; // 30 min
+
+  function isAdminUnlocked(){
+    try{
+      const raw = sessionStorage.getItem(ADMIN_SESSION_KEY);
+      if(!raw) return false;
+      const ts = Number(raw);
+      return ts && (Date.now() - ts) < ADMIN_SESSION_TTL;
+    }catch(e){ return false; }
+  }
+
+  function setAdminUnlocked(unlocked){
+    try{
+      if(unlocked) sessionStorage.setItem(ADMIN_SESSION_KEY, String(Date.now()));
+      else sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    }catch(e){}
+  }
+
+  function showAdminPanel(){
+    const panel = $('adminPanel');
+    if(!panel) return;
+    panel.style.display = '';
+    if(isAdminUnlocked()){
+      $('adminActions').style.display = '';
+      $('adminCodeInput').value = ADMIN_CODE;
+      const msg = $('adminUnlockMsg');
+      if(msg){ msg.textContent = '✅ Session admin active (30 min).'; msg.style.color = '#075c39'; }
+    }else{
+      $('adminActions').style.display = 'none';
+      setTimeout(() => $('adminCodeInput')?.focus(), 80);
+    }
+  }
+
+  function hideAdminPanel(){
+    const panel = $('adminPanel');
+    if(panel) panel.style.display = 'none';
+  }
+
+  $('adminTriggerBtn')?.addEventListener('click', () => {
+    if($('adminPanel')?.style.display === 'none' || !$('adminPanel')?.style.display){
+      showAdminPanel();
+    }else{
+      hideAdminPanel();
+    }
+  });
+
+  function tryAdminUnlock(){
+    const input = $('adminCodeInput');
+    const msg = $('adminUnlockMsg');
+    if(!input) return;
+    const typed = String(input.value || '').trim();
+    if(typed === ADMIN_CODE){
+      setAdminUnlocked(true);
+      $('adminActions').style.display = '';
+      if(msg){ msg.textContent = '✅ Code accepté. Actions admin déverrouillées.'; msg.style.color = '#075c39'; }
+    }else{
+      setAdminUnlocked(false);
+      $('adminActions').style.display = 'none';
+      if(msg){ msg.textContent = '❌ Code invalide.'; msg.style.color = '#9b1111'; }
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  $('adminUnlockBtn')?.addEventListener('click', tryAdminUnlock);
+  $('adminCodeInput')?.addEventListener('keydown', e => { if(e.key === 'Enter') tryAdminUnlock(); });
+
+  // Raccourci secret : Ctrl+Alt+A pour ouvrir/fermer le panneau admin
+  document.addEventListener('keydown', e => {
+    if(e.ctrlKey && e.altKey && (e.key === 'A' || e.key === 'a')){
+      e.preventDefault();
+      const panel = $('adminPanel');
+      if(!panel) return;
+      if(panel.style.display === 'none' || !panel.style.display) showAdminPanel();
+      else hideAdminPanel();
+    }
+  });
 
   document.addEventListener('contextmenu', e => e.preventDefault());
   document.addEventListener('selectstart', e => {
