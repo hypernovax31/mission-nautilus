@@ -1530,37 +1530,29 @@
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
 
   /* =====================================================================
-     PANNEAU ADMIN — bouton flottant (engrenage) en bas-droite
+     PANNEAU ADMIN — bouton engrenage en bas-gauche
      Code d'accès : NEMO2026
-     - Onglet MEMBRES  : liste, modifier nom/service, supprimer, déplacer d'équipe
-     - Onglet BLOCAGES : activer/désactiver, modifier date de reprise
-     - Onglet O2       : reset + modifier date de départ et durée
-     - Onglet ÉQUIPES  : ajouter, renommer, supprimer
-     - Onglet DANGER   : reset global membres / progression
-     Session admin : 30 min, persistée en sessionStorage.
+     - AUCUNE session persistante. À chaque clic sur l'engrenage,
+       le code est RE-DEMANDÉ. La validation ouvre le panneau pour
+       une seule séquence d'actions ; la moindre fermeture
+       (✕, engrenage, succès d'action) invalide l'accès.
+     - Flag en mémoire JS pure (`adminSessionOpen`), jamais écrit
+       dans sessionStorage / localStorage. Volatil : un refresh
+       de page = nouveau prompt obligatoire.
      ===================================================================== */
   const ADMIN_CODE = 'NEMO2026';
-  const ADMIN_SESSION_KEY = 'nautilusAdminUnlocked';
-  const ADMIN_SESSION_TTL = 30 * 60 * 1000;
+  let adminSessionOpen = false;
+
+  function isAdminUnlocked(){ return adminSessionOpen === true; }
+  function openAdminSession(){ adminSessionOpen = true; }
+  function closeAdminSession(){
+    adminSessionOpen = false;
+    wipeAdminCode();
+  }
 
   /* Liste effective des équipes (initiale + ajoutées via admin).
      On relit `customTeams` dans `game/config` à chaque ouverture du panneau. */
   let effectiveTeams = TEAM_DEFS.slice();
-
-  function isAdminUnlocked(){
-    try{
-      const raw = sessionStorage.getItem(ADMIN_SESSION_KEY);
-      if(!raw) return false;
-      const ts = Number(raw);
-      return ts && (Date.now() - ts) < ADMIN_SESSION_TTL;
-    }catch(e){ return false; }
-  }
-  function setAdminUnlocked(unlocked){
-    try{
-      if(unlocked) sessionStorage.setItem(ADMIN_SESSION_KEY, String(Date.now()));
-      else sessionStorage.removeItem(ADMIN_SESSION_KEY);
-    }catch(e){}
-  }
 
   function openAdminPanel(){
     const panel = $('adminPanel');
@@ -1584,7 +1576,8 @@
     if(panel) panel.style.display = 'none';
     $('adminFabBtn')?.classList.remove('active');
     document.querySelector('.site-footer')?.classList.remove('admin-open');
-    wipeAdminCode();
+    // Toujours purger la session à la fermeture (volatil, pas de 30 min)
+    closeAdminSession();
   }
   /**
    * Vide le champ code admin de manière agressive (mémoire JS + DOM).
@@ -1671,19 +1664,19 @@
     // Comparaison sur la valeur en mémoire (jamais écrite dans le DOM)
     const typed = String(adminCodeBuffer || '').trim();
     if(typed === ADMIN_CODE){
-      setAdminUnlocked(true);
+      openAdminSession();
       if(msg){ msg.textContent = '✅ Code accepté.'; msg.style.color = '#075c39'; }
       wipeAdminCode(); // Purge immédiate du champ après succès
       showAdminWorkspace();
     }else{
-      setAdminUnlocked(false);
+      closeAdminSession();
       if(msg){ msg.textContent = '❌ Code invalide.'; msg.style.color = '#9b1111'; }
       wipeAdminCode();
       input.focus();
     }
   }
   function lockAdmin(){
-    setAdminUnlocked(false);
+    closeAdminSession();
     wipeAdminCode();
     $('adminWorkspace').style.display = 'none';
     $('adminLocked').style.display = '';
@@ -1699,7 +1692,7 @@
    * Appelée à la fin de chaque modification / ajout / suppression.
    */
   function endAdminSession(message){
-    setAdminUnlocked(false);
+    closeAdminSession();
     wipeAdminCode();
     closeAdminPanel();
     if(message){
