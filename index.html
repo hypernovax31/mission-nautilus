@@ -1237,10 +1237,10 @@
       return;
     }
     /* Si on est au palier 1 (start), on redirige vers la page dédiée.
-       L'URL publique est /161129518.html (URL masquée, voir README). */
+       (URL publique : /palier1.html — bundle standalone CSS+JS+HTML). */
     if(currentTeam.currentStep === 'start'){
       const teamCode = currentTeam.teamCode;
-      const url = `161129518.html?code=${encodeURIComponent(teamCode)}`;
+      const url = `palier1.html?code=${encodeURIComponent(teamCode)}`;
       location.href = url;
       return;
     }
