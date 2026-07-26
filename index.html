@@ -201,41 +201,70 @@
     @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:26px 14px 36px}.hero-title{font-size:clamp(42px,13vw,64px);line-height:1.04;-webkit-text-stroke:2px #050505}.hero-line{margin-top:18px;font-size:clamp(20px,6vw,30px);line-height:1.22}.hero-kicker{font-size:11px;line-height:1.25;align-items:flex-start}main{padding:18px 10px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}.intro-text{min-height:120px}.mission-steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mission-step{min-height:auto;border-width:6px;padding:12px}button{width:100%;margin-right:0}.mission-step{width:min(100%,300px)!important;margin:0 auto!important}.team{padding:14px}}
 
 
-    /* Admin FAB + tabs */
-    /* Footer ancré (pas fixed) : l'engrenage scrolle avec la page, en bas à droite */
-    .site-footer{margin-top:24px;padding:18px 18px 28px;display:flex;align-items:center;justify-content:flex-end;transition:opacity .2s}
-    .site-footer.admin-open{opacity:0;pointer-events:none;height:0;padding:0;margin:0;overflow:hidden}
-    #adminFabBtn{position:static;width:32px;height:32px;border-radius:50%;background:transparent;color:rgba(120,140,160,.45);border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none;backdrop-filter:none;transition:.25s color,.25s background,.25s border-color,.25s opacity;padding:0;opacity:.55;-webkit-tap-highlight-color:transparent;user-select:none;flex:0 0 auto}
-    #adminFabBtn svg{width:14px;height:14px;transition:transform .4s cubic-bezier(.4,1.4,.6,1)}
-    #adminFabBtn:hover{background:transparent;color:rgba(120,140,160,.8);border-color:transparent;transform:none;opacity:1}
-    #adminFabBtn:hover svg{transform:rotate(45deg)}
-    #adminFabBtn:focus-visible{outline:2px solid rgba(120,140,160,.6);outline-offset:3px}
-    #adminFabBtn.active{background:transparent;color:rgba(255,75,62,.78);border-color:transparent;box-shadow:none;opacity:1}
-    #adminFabBtn.active svg{transform:rotate(90deg)}
-    /* Bouton ✕ du panneau admin */
-    #adminCloseBtn:hover{background:rgba(255,75,62,.42);color:#fff;transform:rotate(90deg)}
-    #adminCloseBtn:focus-visible{outline:2px solid rgba(255,180,173,.7);outline-offset:2px}
-    .admin-tab{background:#eef0f4;color:#1a2834;border:1px solid #cbd7df;border-radius:10px;padding:8px 12px;font-weight:900;font-size:12px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;margin:0;min-height:auto;width:auto}
+    /* Admin — panneau compact & responsive */
+    #adminPanel{max-width:min(720px,96vw);margin:24px auto 0;padding:0;border:1px solid rgba(255,75,62,.45);border-radius:18px;background:rgba(255,75,62,.04);box-shadow:0 18px 40px rgba(0,0,0,.28);overflow:hidden}
+    #adminPanel>div.body, #adminPanel .body{padding:14px 16px}
+    #adminPanel>div>h2, #adminPanel h2{margin:0;background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;padding:12px 14px !important;font-size:14px !important;line-height:1.2;letter-spacing:.04em;display:flex;align-items:center;gap:10px;justify-content:space-between}
+    #adminPanel>div>h2>span, #adminPanel h2>span{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #adminPanel p.small{font-size:11px;line-height:1.35;margin:0 0 10px}
+    #adminPanel .hr{margin:12px 0}
+    #adminPanel .notice{padding:10px 12px;margin:0 0 12px;line-height:1.4;font-size:12px}
+    #adminPanel label{font-size:11px;margin:0 0 4px}
+    #adminPanel input,#adminPanel select{height:38px !important;min-height:38px;padding:8px 10px !important;border-radius:8px;font-size:13px}
+    #adminPanel button{font-size:12px;padding:8px 12px !important;min-height:34px;border-radius:8px;letter-spacing:.02em}
+
+    /* Tabs : icônes seules sur mobile, libellé + icône sur desktop */
+    .admin-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+    .admin-tab{background:#eef0f4;color:#1a2834;border:1px solid #cbd7df;border-radius:8px;padding:6px 10px;font-weight:900;font-size:11px;letter-spacing:.02em;text-transform:uppercase;cursor:pointer;margin:0;min-height:30px;width:auto;transition:.15s}
     .admin-tab:hover{filter:brightness(1.05)}
     .admin-tab.active{background:linear-gradient(135deg,#1a2834,#2a4258);color:var(--fnac);border-color:rgba(245,176,39,.6);box-shadow:inset 0 0 0 1px rgba(245,176,39,.35)}
-    .admin-pane{background:rgba(255,255,255,.6);border:1px solid #dfe8ee;border-radius:14px;padding:14px}
-    .member-edit-row{display:grid;grid-template-columns:1.4fr .8fr 1.1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
-    .member-edit-row:last-child{border-bottom:0}
-    .member-edit-row input,.member-edit-row select{height:38px;min-height:38px;padding:6px 8px;font-size:13px;border-radius:8px}
-    .member-edit-row .mini{font-size:11px;padding:6px 8px;margin:0;min-height:34px;width:auto}
-    .lock-edit-row{display:grid;grid-template-columns:1fr;gap:10px;align-items:stretch;padding:12px 0;border-bottom:1px solid #e8eef2}
-    .lock-edit-row:last-child{border-bottom:0}
-    .lock-edit-row input,.lock-edit-row select{height:42px;min-height:42px;padding:8px 10px;font-size:14px;border-radius:10px;border:2px solid #d8e0e6;background:#fff;color:#13202b;width:100%}
-    .lock-edit-row .mini{font-size:12px;padding:8px 10px;margin:0;min-height:38px;width:auto}
-    .lock-edit-row label{display:block;font-weight:900;margin:0 0 6px;font-size:11px;color:#52606a;text-transform:uppercase;letter-spacing:.04em}
-    .team-edit-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
-    .team-edit-row:last-child{border-bottom:0}
-    .team-edit-row input{height:38px;min-height:38px;padding:6px 8px;font-size:13px;border-radius:8px}
-    .team-edit-row .mini{font-size:11px;padding:6px 8px;margin:0;min-height:34px;width:auto}
+    .admin-tab .lbl-desktop{display:inline}
+    .admin-tab .lbl-mobile{display:none}
+    @media(max-width:560px){
+      .admin-tab{padding:6px 8px;font-size:13px}
+      .admin-tab .lbl-desktop{display:none}
+      .admin-tab .lbl-mobile{display:inline}
+    }
+
+    /* Panes */
+    .admin-pane{background:rgba(255,255,255,.7);border:1px solid #dfe8ee;border-radius:10px;padding:12px}
+
+    /* Rows compactes — single-line par item, 1 bouton save/trash */
+    .member-edit-row,.lock-edit-row,.team-edit-row{display:grid;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
+    .member-edit-row{grid-template-columns:1.2fr .7fr 1fr auto auto}
+    .lock-edit-row{grid-template-columns:1fr 1.1fr .6fr auto}
+    .team-edit-row{grid-template-columns:1fr 1fr auto}
+    .member-edit-row:last-child,.lock-edit-row:last-child,.team-edit-row:last-child{border-bottom:0}
+    .member-edit-row input,.member-edit-row select,.lock-edit-row input,.lock-edit-row select,.team-edit-row input{height:32px !important;min-height:32px;padding:4px 8px !important;font-size:12px !important;border-radius:6px}
+    .lock-edit-row label{display:block;font-weight:900;margin:0 0 3px;font-size:10px;color:#52606a;text-transform:uppercase;letter-spacing:.04em}
+    .member-edit-row .mini,.lock-edit-row .mini,.team-edit-row .mini{font-size:10px;padding:4px 6px !important;margin:0;min-height:28px !important;width:auto;border-radius:6px}
+    .admin-pane .team{border:1px solid #dfe8ee;border-radius:12px;padding:10px;background:#fff;margin-bottom:10px}
+    .admin-pane .team:last-child{margin-bottom:0}
+    .admin-pane .team h3{font-size:14px;margin:0 0 6px}
+    .admin-pane .team h3 .small{font-size:10px;font-weight:600}
+
+    /* Tab O2 : champs alignés compact */
+    #adminO2Date,#adminO2Days,#adminO2Hours{height:34px !important;min-height:34px;padding:6px 8px !important;font-size:12px !important}
+
+    /* Locked zone : code admin input */
+    #adminLocked{align-items:stretch !important}
+    #adminLocked>div{flex:1;min-width:160px}
+    #adminLocked input{height:38px !important;min-height:38px;padding:8px 10px !important;font-size:14px !important;letter-spacing:.15em}
+
+    /* Bouton ✕ */
+    #adminCloseBtn{width:28px;height:28px;min-height:28px;font-size:16px;border-radius:50%;background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;flex:0 0 auto;transition:.18s}
+    #adminCloseBtn:hover{background:rgba(255,75,62,.42);color:#fff;transform:rotate(90deg)}
+    #adminCloseBtn:focus-visible{outline:2px solid rgba(255,180,173,.7);outline-offset:2px}
+
+    /* Responsive : < 640px → 2 colonnes pour les rows */
     @media(max-width:640px){
+      #adminPanel{border-radius:14px;margin:16px 8px 0}
+      #adminPanel>div.body, #adminPanel .body{padding:10px 12px}
       .member-edit-row{grid-template-columns:1fr 1fr}
       .lock-edit-row{grid-template-columns:1fr 1fr}
       .team-edit-row{grid-template-columns:1fr 1fr}
+      .member-edit-row .me-team{grid-column:1 / -1}
+      .member-edit-row .me-save,.member-edit-row .me-del{justify-self:end}
     }
 
     /* Responsive global : desktop, tablette, mobile et mode paysage */
@@ -644,7 +673,7 @@
     </div>
   </section>
 
-  <section class="card" id="adminPanel" style="display:none;margin-top:24px;border:2px dashed rgba(255,75,62,.45);background:rgba(255,75,62,.04)">
+  <section class="card" id="adminPanel" style="display:none;padding:0;border:0;background:transparent;box-shadow:none">
     <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">
       <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>
       <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">
@@ -665,12 +694,12 @@
           <button class="secondary" id="adminLockBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">🔒 Reverrouiller</button>
         </div>
 
-        <div class="admin-tabs" role="tablist" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-          <button class="admin-tab active" data-tab="members" type="button" role="tab">👥 Membres</button>
-          <button class="admin-tab" data-tab="locks" type="button" role="tab">🔒 Blocages</button>
-          <button class="admin-tab" data-tab="oxygen" type="button" role="tab">⏱️ O₂</button>
-          <button class="admin-tab" data-tab="teams" type="button" role="tab">🚢 Équipes</button>
-          <button class="admin-tab" data-tab="danger" type="button" role="tab">⚠️ Danger</button>
+        <div class="admin-tabs" role="tablist">
+          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Membres</span><span class="lbl-mobile" aria-label="Membres">👥</span></button>
+          <button class="admin-tab" data-tab="locks" type="button" role="tab"><span class="lbl-desktop">🔒 Blocages</span><span class="lbl-mobile" aria-label="Blocages">🔒</span></button>
+          <button class="admin-tab" data-tab="oxygen" type="button" role="tab"><span class="lbl-desktop">⏱️ O₂</span><span class="lbl-mobile" aria-label="O₂">⏱️</span></button>
+          <button class="admin-tab" data-tab="teams" type="button" role="tab"><span class="lbl-desktop">🚢 Équipes</span><span class="lbl-mobile" aria-label="Équipes">🚢</span></button>
+          <button class="admin-tab" data-tab="danger" type="button" role="tab"><span class="lbl-desktop">⚠️ Danger</span><span class="lbl-mobile" aria-label="Danger">⚠️</span></button>
         </div>
 
         <!-- TAB: MEMBRES -->
