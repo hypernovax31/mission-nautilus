@@ -203,8 +203,8 @@
 
     /* Admin FAB + tabs */
     /* Footer ancré (pas fixed) : l'engrenage scrolle avec la page */
-    .site-footer{margin-top:24px;padding:18px 14px 28px;display:flex;align-items:center;justify-content:center;gap:14px;color:rgba(160,175,190,.45);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;transition:opacity .2s}
-    .site-footer::before,.site-footer::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(160,175,190,.25),transparent);max-width:120px}
+    .site-footer{margin-top:24px;padding:18px 14px 28px;display:flex;align-items:center;justify-content:flex-end;gap:14px;color:rgba(160,175,190,.45);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;transition:opacity .2s;position:relative}
+    .site-footer::before{content:"FNAC Labège · Mission Nautilus";position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(160,175,190,.45);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
     .site-footer.admin-open{opacity:0;pointer-events:none;height:0;padding:0;margin:0;overflow:hidden}
     #adminFabBtn{position:static;width:32px;height:32px;border-radius:50%;background:transparent;color:rgba(120,140,160,.45);border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none;backdrop-filter:none;transition:.25s color,.25s background,.25s border-color,.25s opacity;padding:0;opacity:.55;-webkit-tap-highlight-color:transparent;user-select:none;flex:0 0 auto}
     #adminFabBtn svg{width:14px;height:14px;transition:transform .4s cubic-bezier(.4,1.4,.6,1)}
