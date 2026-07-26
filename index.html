@@ -213,10 +213,11 @@
     .member-edit-row:last-child{border-bottom:0}
     .member-edit-row input,.member-edit-row select{height:38px;min-height:38px;padding:6px 8px;font-size:13px;border-radius:8px}
     .member-edit-row .mini{font-size:11px;padding:6px 8px;margin:0;min-height:34px;width:auto}
-    .lock-edit-row{display:grid;grid-template-columns:1.2fr 1fr 1.2fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
+    .lock-edit-row{display:grid;grid-template-columns:1fr;gap:10px;align-items:stretch;padding:12px 0;border-bottom:1px solid #e8eef2}
     .lock-edit-row:last-child{border-bottom:0}
-    .lock-edit-row input{height:38px;min-height:38px;padding:6px 8px;font-size:13px;border-radius:8px}
-    .lock-edit-row .mini{font-size:11px;padding:6px 8px;margin:0;min-height:34px;width:auto}
+    .lock-edit-row input,.lock-edit-row select{height:42px;min-height:42px;padding:8px 10px;font-size:14px;border-radius:10px;border:2px solid #d8e0e6;background:#fff;color:#13202b;width:100%}
+    .lock-edit-row .mini{font-size:12px;padding:8px 10px;margin:0;min-height:38px;width:auto}
+    .lock-edit-row label{display:block;font-weight:900;margin:0 0 6px;font-size:11px;color:#52606a;text-transform:uppercase;letter-spacing:.04em}
     .team-edit-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
     .team-edit-row:last-child{border-bottom:0}
     .team-edit-row input{height:38px;min-height:38px;padding:6px 8px;font-size:13px;border-radius:8px}
@@ -1029,7 +1030,7 @@
       const deletions = membersSnap.docs.map(d => deleteDoc(d.ref));
       await Promise.all(deletions);
       await addEvent({ teamCode:'ALL', teamName:'Toutes les équipes' }, 'members_reset', { count: membersSnap.size, at: new Date().toISOString() });
-      alert(`✅ Équipages vidés avec succès (${membersSnap.size} matelot(s) supprimé(s)).`);
+      endAdminSession(`✅ ${membersSnap.size} matelot(s) supprimé(s) · session fermée`);
       await loadTeams();
     }catch(err){
       console.error('NAUTILUS resetAllMembers error:', err);
@@ -1061,7 +1062,7 @@
         });
       }
       await addEvent({ teamCode:'ALL', teamName:'Toutes les équipes' }, 'progress_reset', { at: new Date().toISOString() });
-      alert("✅ Progression des 5 équipes remise à zéro.");
+      endAdminSession("✅ Progression des équipes remise à zéro · session fermée");
       if(currentTeam){
         const fresh = await getTeam(currentTeam.teamCode);
         if(fresh) currentTeam = fresh;
@@ -1558,6 +1559,29 @@
     $('adminCodeInput').focus();
   }
 
+  /**
+   * Termine DÉFINITIVEMENT la session admin après une action sensible.
+   * - Supprime le flag de session (annule les 30 min)
+   * - Ferme le panneau admin
+   * - Le prochain accès exigera une nouvelle saisie du code
+   * Appelée à la fin de chaque modification / ajout / suppression.
+   */
+  function endAdminSession(message){
+    setAdminUnlocked(false);
+    closeAdminPanel();
+    if(message){
+      // Notification éphémère (toast simple)
+      try{
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = 'position:fixed;right:20px;bottom:80px;z-index:10003;background:linear-gradient(135deg,#075c39,#0a8a5a);color:#fff;padding:14px 18px;border-radius:14px;font-weight:900;box-shadow:0 14px 28px rgba(0,0,0,.32);font-size:13px;max-width:min(90vw,360px);border:1px solid rgba(255,255,255,.18)';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.style.opacity = '0', 2200);
+        setTimeout(() => toast.remove(), 2700);
+      }catch(e){}
+    }
+  }
+
   $('adminFabBtn')?.addEventListener('click', () => {
     if($('adminPanel')?.style.display === 'none' || !$('adminPanel')?.style.display) openAdminPanel();
     else closeAdminPanel();
@@ -1661,7 +1685,7 @@
         ...member,
         ...patch,
         name: (patch.name || member.name).toUpperCase(),
-        memberKey: memberKeyFn(patch.name || member.name),
+        memberKey: memberKey(patch.name || member.name),
         updatedAt: new Date().toISOString()
       };
       if(fromTeamCode === toTeamCode){
@@ -1688,6 +1712,7 @@
       await addEvent(fromTeam, 'member_updated', { memberName: updatedMember.name });
       await renderAdminMembers();
       await loadTeams();
+      endAdminSession(`✅ Membre ${updatedMember.name} mis à jour · session fermée`);
     }catch(err){
       console.error('adminMoveOrRenameMember:', err);
       alert(`❌ Échec modification : ${err.message || err}`);
@@ -1706,6 +1731,7 @@
       await addEvent(team, 'member_deleted', { memberKey });
       await renderAdminMembers();
       await loadTeams();
+      endAdminSession(`✅ Membre supprimé · session fermée`);
     }catch(err){
       console.error('adminDeleteMember:', err);
       alert(`❌ Échec suppression : ${err.message || err}`);
@@ -1731,19 +1757,27 @@
           : '';
         return `<div class="team" style="background:#fff" data-team="${esc(t.teamCode)}">
           <h3>${esc(t.teamName)} <span class="small" style="color:var(--muted)">(${esc(t.teamCode)})</span></h3>
-          <div class="small">Statut actuel : <b style="color:${locked ? 'var(--bad)' : '#075c39'}">${locked ? 'BLOQUÉE' : 'ACTIVE'}</b> · échecs : <b>${Number(t.failCount||0)}</b></div>
-          <div class="hr"></div>
+          <div class="small" style="margin-bottom:8px">Statut actuel : <b style="color:${locked ? 'var(--bad)' : '#075c39'}">${locked ? 'BLOQUÉE' : 'ACTIVE'}</b> · échecs : <b>${Number(t.failCount||0)}</b></div>
           <div class="lock-edit-row">
-            <select class="lk-status">
-              <option value="active" ${t.status !== 'blocked' ? 'selected' : ''}>🟢 Active (non bloquée)</option>
-              <option value="blocked" ${t.status === 'blocked' ? 'selected' : ''}>🔴 Bloquée (verrouillée)</option>
-            </select>
-            <input type="datetime-local" class="lk-until" value="${dtLocal}">
-            <input type="number" class="lk-fails" min="0" value="${Number(t.failCount||0)}" placeholder="Échecs">
-            <button class="primary mini lk-save" type="button" style="background:var(--fnac);color:#111">💾 Appliquer</button>
-          </div>
-          <div class="row" style="margin-top:8px">
-            <button class="secondary mini lk-unlock" type="button" style="margin:0">🔓 Débloquer maintenant</button>
+            <div>
+              <label>Statut de l'équipe</label>
+              <select class="lk-status">
+                <option value="active" ${t.status !== 'blocked' ? 'selected' : ''}>🟢 Active (non bloquée)</option>
+                <option value="blocked" ${t.status === 'blocked' ? 'selected' : ''}>🔴 Bloquée (verrouillée)</option>
+              </select>
+            </div>
+            <div>
+              <label>Date/heure de reprise autorisée</label>
+              <input type="datetime-local" class="lk-until" value="${dtLocal}">
+            </div>
+            <div>
+              <label>Nombre d'échecs cumulés</label>
+              <input type="number" class="lk-fails" min="0" step="1" value="${Number(t.failCount||0)}" placeholder="Échecs">
+            </div>
+            <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:4px">
+              <button class="primary lk-save" type="button" style="margin:0;flex:1;min-width:140px">💾 Appliquer</button>
+              <button class="secondary lk-unlock" type="button" style="margin:0;flex:1;min-width:140px">🔓 Débloquer maintenant</button>
+            </div>
           </div>
         </div>`;
       }).join('');
@@ -1791,6 +1825,7 @@
       await addEvent(team, 'lock_updated', { updates });
       await renderAdminLocks();
       await loadTeams();
+      endAdminSession(`✅ Blocage de ${team.teamName} mis à jour · session fermée`);
     }catch(err){
       console.error('adminUpdateLock:', err);
       alert(`❌ Échec blocage : ${err.message || err}`);
@@ -1801,13 +1836,15 @@
     if(!isAdminUnlocked()) return;
     try{
       const ref = doc(db,'teams',teamCode);
-      await updateDoc(ref, { status:'active', lockedUntil:null, updatedAt:new Date().toISOString(), lastUnlockAt:new Date().toISOString() });
       const snap = await getDoc(ref);
+      const teamName = snap.exists() ? snap.data().teamName : teamCode;
+      await updateDoc(ref, { status:'active', lockedUntil:null, updatedAt:new Date().toISOString(), lastUnlockAt:new Date().toISOString() });
       if(snap.exists()){
-        await addEvent({ teamCode, teamName: snap.data().teamName }, 'admin_unlocked', {});
+        await addEvent({ teamCode, teamName }, 'admin_unlocked', {});
       }
       await renderAdminLocks();
       await loadTeams();
+      endAdminSession(`✅ ${teamName} débloquée · session fermée`);
     }catch(err){
       console.error('adminUnlockTeam:', err);
       alert(`❌ Échec déblocage : ${err.message || err}`);
@@ -1876,7 +1913,7 @@
       if(currentTeam) await addEvent(currentTeam, 'oxygen_reset', { startedAt, durationMs, by: 'admin' });
       updateCountdown();
       renderAdminOxygen();
-      alert('✅ Réserve O₂ mise à jour.');
+      endAdminSession('✅ Réserve O₂ mise à jour · session fermée');
     }catch(err){
       console.error('adminApplyOxygen:', err);
       alert(`❌ Échec : ${err.message || err}`);
@@ -1894,6 +1931,7 @@
     if(currentTeam) await addEvent(currentTeam, 'oxygen_reset', { startedAt, by: 'admin' });
     updateCountdown();
     renderAdminOxygen();
+    endAdminSession('✅ O₂ reset à maintenant (7j) · session fermée');
   }
   async function adminClearOxygen(){
     if(!isAdminUnlocked()) return;
@@ -1907,6 +1945,7 @@
     if(currentTeam) await addEvent(currentTeam, 'oxygen_cleared', { by: 'admin' });
     updateCountdown();
     renderAdminOxygen();
+    endAdminSession('✅ Mission arrêtée (O₂ cleared) · session fermée');
   }
   $('adminO2Apply')?.addEventListener('click', adminApplyOxygen);
   $('adminO2Reset')?.addEventListener('click', adminResetOxygenToNow);
@@ -1938,21 +1977,20 @@
       }).join('');
       box.querySelectorAll('.team').forEach(teamEl => {
         const code = teamEl.dataset.team;
-        const isCustom = !TEAM_DEFS.some(d => d.code === code);
+        const isDefault = TEAM_DEFS.some(d => d.code === code);
         teamEl.querySelector('.tt-save').addEventListener('click', async () => {
           const newName = teamEl.querySelector('.tt-name').value.trim();
           if(!newName){ alert('Nom requis.'); return; }
           await adminRenameTeam(code, newName);
         });
-        const delBtn = teamEl.querySelector('.tt-del');
-        if(isCustom){
-          delBtn.addEventListener('click', async () => {
-            if(!confirm(`Supprimer DÉFINITIVEMENT l'équipe ${code} ?\n\n• Doc Firestore teams/${code} supprimé\n• Ajoutée à la liste des codes obsolètes (nettoyés à chaque init)\n• Membres de cette équipe seront également supprimés`)) return;
-            await adminDeleteTeam(code);
-          });
-        }else{
-          delBtn.disabled = true;
-        }
+        teamEl.querySelector('.tt-del').addEventListener('click', async () => {
+          if(isDefault){
+            if(!confirm(`⚠️ Supprimer l'équipe PAR DÉFAUT ${code} ?\n\n• Doc Firestore teams/${code} supprimé\n• Ajoutée à obsoleteTeams (nettoyée à chaque init)\n• Ne sera PLUS recréée (les nouveaux utilisateurs ne pourront plus s'inscrire à ${code})\n• Membres de cette équipe supprimés\n• Pour confirmer, il faudra aussi retaper "${code}" dans la fenêtre suivante.`)) return;
+          }else{
+            if(!confirm(`Supprimer DÉFINITIVEMENT l'équipe custom ${code} ?\n\n• Doc Firestore teams/${code} supprimé\n• Ajoutée à obsoleteTeams\n• Membres de cette équipe supprimés`)) return;
+          }
+          await adminDeleteTeam(code, isDefault);
+        });
       });
     }catch(err){
       console.error('renderAdminTeams:', err);
@@ -1968,6 +2006,7 @@
       await refreshAdminTeams();
       await renderAdminTeams();
       await loadTeams();
+      endAdminSession(`✅ ${code} renommée en "${newName}" · session fermée`);
     }catch(err){
       console.error('adminRenameTeam:', err);
       alert(`❌ Échec renommage : ${err.message || err}`);
@@ -2004,35 +2043,39 @@
       await refreshAdminTeams();
       await renderAdminTeams();
       await loadTeams();
-      alert(`✅ Équipe ${codeRaw} créée.`);
+      endAdminSession(`✅ Équipe ${codeRaw} créée · session fermée`);
     }catch(err){
       console.error('adminAddTeam:', err);
       alert(`❌ Échec création : ${err.message || err}`);
     }
   }
-  async function adminDeleteTeam(code){
+  async function adminDeleteTeam(code, isDefault){
     if(!isAdminUnlocked()) return;
     try{
+      // Confirmation supplémentaire pour une équipe par défaut
+      if(isDefault){
+        const typed = prompt(`⚠️ Tu supprimes une équipe PAR DÉFAUT (${code}).\n\nPour confirmer, tape exactement le code de l'équipe (${code}) en MAJUSCULES :`);
+        if(typed !== code){ alert('Confirmation annulée.'); return; }
+      }
       // Supprimer le doc + les membres globaux liés
       await deleteDoc(doc(db,'teams',code));
       const membersSnap = await getDocs(collection(db,'members'));
       const deletions = membersSnap.docs.filter(d => d.data().teamCode === code).map(d => deleteDoc(d.ref));
       await Promise.all(deletions);
-      // Retirer de customTeams
+      // Config : retirer des customTeams et ajouter aux obsolètes
       const cfgRef = doc(db,'game','config');
       const cfgSnap = await getDoc(cfgRef);
       const cfg = cfgSnap.exists() ? cfgSnap.data() : {};
       const customs = (cfg.customTeams || []).filter(t => t.code !== code);
-      // Ajouter à obsoleteTeams pour que le cleanup le vérifie aussi à l'avenir
       const obsolete = Array.isArray(cfg.obsoleteTeams) ? cfg.obsoleteTeams : [];
       if(!obsolete.includes(code)) obsolete.push(code);
       await setDoc(cfgRef, { customTeams: customs, obsoleteTeams: obsolete, updatedAt:new Date().toISOString() }, {merge:true});
-      await addEvent({ teamCode:code, teamName:code }, 'team_deleted', { by: 'admin' });
+      await addEvent({ teamCode:code, teamName:code }, 'team_deleted', { by: 'admin', wasDefault: !!isDefault });
       await refreshAdminTeams();
       await renderAdminTeams();
       await renderAdminMembers();
       await loadTeams();
-      alert(`✅ Équipe ${code} supprimée.`);
+      endAdminSession(`✅ Équipe ${code} supprimée · session fermée`);
     }catch(err){
       console.error('adminDeleteTeam:', err);
       alert(`❌ Échec suppression : ${err.message || err}`);
