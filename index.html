@@ -212,6 +212,9 @@
     #adminFabBtn:focus-visible{outline:2px solid rgba(120,140,160,.6);outline-offset:3px}
     #adminFabBtn.active{background:transparent;color:rgba(255,75,62,.78);border-color:transparent;box-shadow:none;opacity:1}
     #adminFabBtn.active svg{transform:rotate(90deg)}
+    /* Bouton ✕ du panneau admin */
+    #adminCloseBtn:hover{background:rgba(255,75,62,.42);color:#fff;transform:rotate(90deg)}
+    #adminCloseBtn:focus-visible{outline:2px solid rgba(255,180,173,.7);outline-offset:2px}
     .admin-tab{background:#eef0f4;color:#1a2834;border:1px solid #cbd7df;border-radius:10px;padding:8px 12px;font-weight:900;font-size:12px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;margin:0;min-height:auto;width:auto}
     .admin-tab:hover{filter:brightness(1.05)}
     .admin-tab.active{background:linear-gradient(135deg,#1a2834,#2a4258);color:var(--fnac);border-color:rgba(245,176,39,.6);box-shadow:inset 0 0 0 1px rgba(245,176,39,.35)}
@@ -642,7 +645,12 @@
   </section>
 
   <section class="card" id="adminPanel" style="display:none;margin-top:24px;border:2px dashed rgba(255,75,62,.45);background:rgba(255,75,62,.04)">
-    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad">⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</h2>
+    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">
+      <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>
+      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
+      </button>
+    </h2>
     <div class="body">
       <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l'équipe d'organisation. Accès par code uniquement.</p>
       <div class="hr"></div>
@@ -1637,6 +1645,7 @@
     e.preventDefault();
   });
   $('adminLockBtn')?.addEventListener('click', lockAdmin);
+  $('adminCloseBtn')?.addEventListener('click', closeAdminPanel);
   // Purge si l'utilisateur quitte l'onglet ou la fenêtre
   document.addEventListener('visibilitychange', () => {
     if(document.hidden) wipeAdminCode();
