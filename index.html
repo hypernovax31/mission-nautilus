@@ -1874,29 +1874,30 @@
     }
   }
 
-  async function adminMoveOrRenameMember(fromTeamCode, memberKey, patch, toTeamCode){
+  async function adminMoveOrRenameMember(fromTeamCode, oldMemberKey, patch, toTeamCode){
     if(!isAdminUnlocked()) return;
     try{
       const fromRef = doc(db,'teams',fromTeamCode);
       const fromSnap = await getDoc(fromRef);
       if(!fromSnap.exists()) throw new Error(`Équipe source ${fromTeamCode} introuvable.`);
       const fromTeam = { teamCode: fromTeamCode, ...fromSnap.data() };
-      const member = (fromTeam.members || []).find(m => m.memberKey === memberKey);
+      const member = (fromTeam.members || []).find(m => m.memberKey === oldMemberKey);
       if(!member) throw new Error('Membre introuvable dans l\'équipe source.');
+      const newKey = memberKey(patch.name || member.name);
       const updatedMember = {
         ...member,
         ...patch,
         name: (patch.name || member.name).toUpperCase(),
-        memberKey: memberKey(patch.name || member.name),
+        memberKey: newKey,
         updatedAt: new Date().toISOString()
       };
       if(fromTeamCode === toTeamCode){
         // Juste modifier
-        const newMembers = fromTeam.members.map(m => m.memberKey === memberKey ? updatedMember : m);
+        const newMembers = fromTeam.members.map(m => m.memberKey === oldMemberKey ? updatedMember : m);
         await updateDoc(fromRef, { members: newMembers, updatedAt: new Date().toISOString() });
       }else{
         // Déplacer : retirer de from, ajouter à to
-        const fromMembers = fromTeam.members.filter(m => m.memberKey !== memberKey);
+        const fromMembers = fromTeam.members.filter(m => m.memberKey !== oldMemberKey);
         await updateDoc(fromRef, { members: fromMembers, updatedAt: new Date().toISOString() });
 
         const toRef = doc(db,'teams',toTeamCode);
@@ -1904,9 +1905,9 @@
         if(!toSnap.exists()) throw new Error(`Équipe destination ${toTeamCode} introuvable.`);
         const toTeam = { teamCode: toTeamCode, ...toSnap.data() };
         // Vérifier collision de memberKey dans la destination
-        const collision = (toTeam.members || []).find(m => m.memberKey === updatedMember.memberKey);
+        const collision = (toTeam.members || []).find(m => m.memberKey === newKey);
         const toMembers = collision
-          ? toTeam.members.map(m => m.memberKey === updatedMember.memberKey ? updatedMember : m)
+          ? toTeam.members.map(m => m.memberKey === newKey ? updatedMember : m)
           : [...(toTeam.members || []), updatedMember];
         await updateDoc(toRef, { members: toMembers, updatedAt: new Date().toISOString() });
         await addEvent(toTeam, 'member_moved', { memberName: updatedMember.name, from: fromTeamCode, to: toTeamCode });
@@ -1921,16 +1922,16 @@
     }
   }
 
-  async function adminDeleteMember(teamCode, memberKey){
+  async function adminDeleteMember(teamCode, targetMemberKey){
     if(!isAdminUnlocked()) return;
     try{
       const ref = doc(db,'teams',teamCode);
       const snap = await getDoc(ref);
       if(!snap.exists()) throw new Error(`Équipe ${teamCode} introuvable.`);
       const team = { teamCode, ...snap.data() };
-      const newMembers = (team.members || []).filter(m => m.memberKey !== memberKey);
+      const newMembers = (team.members || []).filter(m => m.memberKey !== targetMemberKey);
       await updateDoc(ref, { members: newMembers, updatedAt: new Date().toISOString() });
-      await addEvent(team, 'member_deleted', { memberKey });
+      await addEvent(team, 'member_deleted', { memberKey: targetMemberKey });
       await renderAdminMembers();
       await loadTeams();
       endAdminSession(`✅ Membre supprimé · session fermée`);
