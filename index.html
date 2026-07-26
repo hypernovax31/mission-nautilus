@@ -733,9 +733,8 @@
         <span id="adminUnlockMsg" class="small" style="width:100%"></span>
       </div>
       <div id="adminWorkspace" style="display:none">
-        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
-          <span class="small" style="color:#075c39;font-weight:900">✅ Session admin active (30 min)</span>
-          <button class="secondary" id="adminLockBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">🔒 Reverrouiller</button>
+        <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">
+          <span class="small" style="color:#075c39;font-weight:900">✅ Session admin active</span>
         </div>
 
         <div class="admin-tabs" role="tablist">
@@ -1708,14 +1707,6 @@
       input.focus();
     }
   }
-  function lockAdmin(){
-    closeAdminSession();
-    wipeAdminCode();
-    $('adminWorkspace').style.display = 'none';
-    $('adminLocked').style.display = '';
-    $('adminUnlockMsg').textContent = '';
-    $('adminCodeInput').focus();
-  }
 
   /**
    * Termine DÉFINITIVEMENT la session admin après une action sensible.
@@ -1765,7 +1756,6 @@
     // Le code doit être tapé, pas collé depuis un presse-papier (sécurité optionnelle)
     e.preventDefault();
   });
-  $('adminLockBtn')?.addEventListener('click', lockAdmin);
   $('adminCloseBtn')?.addEventListener('click', closeAdminPanel);
   // Purge si l'utilisateur quitte l'onglet ou la fenêtre
   document.addEventListener('visibilitychange', () => {
