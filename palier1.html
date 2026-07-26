@@ -765,9 +765,13 @@ window.Nautilus = {
 
 
 /* === 161129518.html script (inlined) === */
-/* nautilus-core.js inliné ci-dessous */
+/* nautilus-core.js inliné ci-dessus (définit $, esc, N via window.Nautilus).
+   On wrap le code palier dans une IIFE pour éviter les conflits de noms
+   avec les helpers du core ($ et esc). */
+(() => {
   const N = window.Nautilus;
-  const { $, esc } = N;
+  const $$ = N.$;
+  const esc = N.esc;
 
   /* === État global === */
   const state = {
@@ -1550,6 +1554,8 @@ window.Nautilus = {
     if (state.timerHandle) clearInterval(state.timerHandle);
     if (state._heartbeatInterval) clearInterval(state._heartbeatInterval);
   });
+
+})(); // Fin de l'IIFE du code palier
 
 </script>
 </body>
