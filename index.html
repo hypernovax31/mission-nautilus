@@ -892,7 +892,7 @@
      Ces docs sont des restes d'anciennes versions du jeu où les codes
      étaient cryptiques. On les supprime pour ne garder que les 5
      équipes actives : NEMO, NAUTILUS, ARONNAX, NEDLAND, CALAMAR. */
-  const OBSOLETE_TEAM_CODES = ['CAPITAINE', 'SOUSMARIN', 'DOCTEUR', 'BALEINE', 'GEANT'];
+  const OBSOLETE_TEAM_CODES = ['NEMO', 'NAUTILUS', 'ARONNAX', 'NEDLAND', 'CALAMAR', 'BALEINE', 'GEANT'];
   async function cleanupObsoleteTeams(){
     // 1) hard-coded legacy
     for(const code of OBSOLETE_TEAM_CODES){
@@ -941,11 +941,11 @@
   const db = getFirestore(app);
 
   const TEAM_DEFS = [
-    { code:"NEMO",     name:"Nemo" },
-    { code:"NAUTILUS", name:"Nautilus" },
-    { code:"ARONNAX",  name:"Aronnax" },
-    { code:"NEDLAND",  name:"Ned Land" },
-    { code:"CALAMAR",  name:"Calamar" }
+    { code:"CAPITAINE", name:"Nemo" },
+    { code:"SOUSMARIN", name:"Nautilus" },
+    { code:"DOCTEUR",   name:"Aronnax" },
+    { code:"HARPON",    name:"Ned Land" },
+    { code:"TENTACULE", name:"Calamar" }
   ];
   const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
 
