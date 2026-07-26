@@ -730,7 +730,6 @@
       <div class="hr"></div>
       <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>
-        <button class="primary" id="adminUnlockBtn" type="button" style="margin:0">Déverrouiller</button>
         <span id="adminUnlockMsg" class="small" style="width:100%"></span>
       </div>
       <div id="adminWorkspace" style="display:none">
@@ -1753,7 +1752,6 @@
       closeAdminPanel();
     }
   });
-  $('adminUnlockBtn')?.addEventListener('click', tryAdminUnlock);
   $('adminCodeInput')?.addEventListener('keydown', e => { if(e.key === 'Enter') tryAdminUnlock(); });
   $('adminCodeInput')?.addEventListener('input', maskAdminInput);
   // Bloque la composition IME (sinon le user voit ses caractères avant masquage)
