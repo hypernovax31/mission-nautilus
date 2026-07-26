@@ -201,6 +201,32 @@
     @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:26px 14px 36px}.hero-title{font-size:clamp(42px,13vw,64px);line-height:1.04;-webkit-text-stroke:2px #050505}.hero-line{margin-top:18px;font-size:clamp(20px,6vw,30px);line-height:1.22}.hero-kicker{font-size:11px;line-height:1.25;align-items:flex-start}main{padding:18px 10px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}.intro-text{min-height:120px}.mission-steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mission-step{min-height:auto;border-width:6px;padding:12px}button{width:100%;margin-right:0}.mission-step{width:min(100%,300px)!important;margin:0 auto!important}.team{padding:14px}}
 
 
+    /* Admin FAB + tabs */
+    #adminFabBtn{position:fixed;right:18px;bottom:18px;z-index:10002;width:48px;height:48px;border-radius:50%;background:rgba(7,12,18,.78);color:rgba(245,176,39,.78);border:1px solid rgba(245,176,39,.42);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 12px 24px rgba(0,0,0,.32);backdrop-filter:blur(8px);transition:.18s transform,.18s background,.18s color;padding:0}
+    #adminFabBtn:hover{background:rgba(245,176,39,.95);color:#111;transform:scale(1.06)}
+    #adminFabBtn.active{background:rgba(255,75,62,.95);color:#fff;border-color:rgba(255,75,62,.6);box-shadow:0 0 0 4px rgba(255,75,62,.22),0 14px 28px rgba(0,0,0,.42)}
+    .admin-tab{background:#eef0f4;color:#1a2834;border:1px solid #cbd7df;border-radius:10px;padding:8px 12px;font-weight:900;font-size:12px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;margin:0;min-height:auto;width:auto}
+    .admin-tab:hover{filter:brightness(1.05)}
+    .admin-tab.active{background:linear-gradient(135deg,#1a2834,#2a4258);color:var(--fnac);border-color:rgba(245,176,39,.6);box-shadow:inset 0 0 0 1px rgba(245,176,39,.35)}
+    .admin-pane{background:rgba(255,255,255,.6);border:1px solid #dfe8ee;border-radius:14px;padding:14px}
+    .member-edit-row{display:grid;grid-template-columns:1.4fr .8fr 1.1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
+    .member-edit-row:last-child{border-bottom:0}
+    .member-edit-row input,.member-edit-row select{height:38px;min-height:38px;padding:6px 8px;font-size:13px;border-radius:8px}
+    .member-edit-row .mini{font-size:11px;padding:6px 8px;margin:0;min-height:34px;width:auto}
+    .lock-edit-row{display:grid;grid-template-columns:1.2fr 1fr 1.2fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
+    .lock-edit-row:last-child{border-bottom:0}
+    .lock-edit-row input{height:38px;min-height:38px;padding:6px 8px;font-size:13px;border-radius:8px}
+    .lock-edit-row .mini{font-size:11px;padding:6px 8px;margin:0;min-height:34px;width:auto}
+    .team-edit-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
+    .team-edit-row:last-child{border-bottom:0}
+    .team-edit-row input{height:38px;min-height:38px;padding:6px 8px;font-size:13px;border-radius:8px}
+    .team-edit-row .mini{font-size:11px;padding:6px 8px;margin:0;min-height:34px;width:auto}
+    @media(max-width:640px){
+      .member-edit-row{grid-template-columns:1fr 1fr}
+      .lock-edit-row{grid-template-columns:1fr 1fr}
+      .team-edit-row{grid-template-columns:1fr 1fr}
+    }
+
     /* Responsive global : desktop, tablette, mobile et mode paysage */
     img, video, audio { max-width:100%; }
     .card, .stepbox, .team, .oxygen-meter, .rule-detail { max-width:100%; }
@@ -612,32 +638,92 @@
     <div class="body">
       <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l'équipe d'organisation. Accès par code uniquement.</p>
       <div class="hr"></div>
-      <div style="display:grid;gap:14px;grid-template-columns:1fr;align-items:end">
-        <div>
-          <label for="adminCodeInput">Code d'accès admin</label>
-          <input id="adminCodeInput" type="password" placeholder="••••••••" autocomplete="off" style="text-transform:none;letter-spacing:.15em">
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <button class="primary" id="adminUnlockBtn" type="button" style="margin:0">Déverrouiller</button>
-          <span id="adminUnlockMsg" class="small"></span>
-        </div>
+      <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d'accès admin</label><input id="adminCodeInput" type="password" placeholder="••••••••" autocomplete="off" style="text-transform:none;letter-spacing:.15em"></div>
+        <button class="primary" id="adminUnlockBtn" type="button" style="margin:0">Déverrouiller</button>
+        <span id="adminUnlockMsg" class="small" style="width:100%"></span>
       </div>
-      <div class="hr"></div>
-      <div id="adminActions" style="display:none">
-        <p style="margin:0 0 12px;font-weight:900;color:#9b1111">⚠️ Zone sensible — actions irréversibles</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (5 équipes)</button>
-          <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset de la progression (5 équipes)</button>
+      <div id="adminWorkspace" style="display:none">
+        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span class="small" style="color:#075c39;font-weight:900">✅ Session admin active (30 min)</span>
+          <button class="secondary" id="adminLockBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">🔒 Reverrouiller</button>
         </div>
-        <p class="small" style="margin-top:12px">Le reset des membres vide les équipages sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, sans échec, sans blocage).</p>
+
+        <div class="admin-tabs" role="tablist" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="admin-tab active" data-tab="members" type="button" role="tab">👥 Membres</button>
+          <button class="admin-tab" data-tab="locks" type="button" role="tab">🔒 Blocages</button>
+          <button class="admin-tab" data-tab="oxygen" type="button" role="tab">⏱️ O₂</button>
+          <button class="admin-tab" data-tab="teams" type="button" role="tab">🚢 Équipes</button>
+          <button class="admin-tab" data-tab="danger" type="button" role="tab">⚠️ Danger</button>
+        </div>
+
+        <!-- TAB: MEMBRES -->
+        <div class="admin-pane" data-pane="members">
+          <div class="row" style="margin-bottom:10px;align-items:center">
+            <span class="small" style="flex:1">Modifie le nom, le service ou l'équipage d'un matelot, ou supprime-le.</span>
+            <button class="secondary" id="adminReloadBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">↻ Recharger</button>
+          </div>
+          <div id="adminMembersBox" class="teamlist"></div>
+        </div>
+
+        <!-- TAB: BLOCAGES -->
+        <div class="admin-pane" data-pane="locks" style="display:none">
+          <p class="small" style="margin-bottom:10px">Pour chaque équipe : activer/désactiver le blocage, ou modifier la date/heure de reprise autorisée.</p>
+          <div id="adminLocksBox" class="teamlist"></div>
+        </div>
+
+        <!-- TAB: O2 -->
+        <div class="admin-pane" data-pane="oxygen" style="display:none">
+          <p class="small" style="margin-bottom:10px">Le compte à rebours de la réserve O₂ (durée de la mission) peut être réinitialisé, ou décalé en modifiant la date/heure de départ.</p>
+          <div class="oxygen-meter" style="background:linear-gradient(135deg,#240808,#3d0a0a);border-color:rgba(255,75,62,.45);margin-bottom:14px">
+            <div class="oxygen-meter-top" style="color:#ffd1cd"><span>État actuel</span><strong id="adminO2Now">—</strong></div>
+            <div class="oxygen-bottom">
+              <div class="oxygen-state" id="adminO2State">—</div>
+              <div class="countdown" id="adminO2Countdown" style="color:#ff8a82">—</div>
+            </div>
+          </div>
+          <div class="row" style="gap:14px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:1;min-width:180px"><label for="adminO2Date">Date de départ</label><input id="adminO2Date" type="datetime-local"></div>
+            <div style="flex:1;min-width:140px"><label for="adminO2Days">Durée (jours)</label><input id="adminO2Days" type="number" min="0" step="1" value="7"></div>
+            <div style="flex:1;min-width:140px"><label for="adminO2Hours">Durée (heures)</label><input id="adminO2Hours" type="number" min="0" max="23" step="1" value="0"></div>
+          </div>
+          <div class="row" style="margin-top:14px;flex-wrap:wrap">
+            <button class="primary" id="adminO2Apply" type="button" style="margin:0">💾 Appliquer la modification</button>
+            <button class="secondary" id="adminO2Reset" type="button" style="margin:0">♻️ Reset à maintenant (7 jours)</button>
+            <button class="danger" id="adminO2Clear" type="button" style="margin:0">🛑 Arrêter la mission (clear)</button>
+          </div>
+        </div>
+
+        <!-- TAB: EQUIPES -->
+        <div class="admin-pane" data-pane="teams" style="display:none">
+          <p class="small" style="margin-bottom:10px">Ajoute, renomme ou supprime une équipe. La suppression purge le doc Firestore correspondant et l'ajoute à la liste des codes obsolètes (nettoyés à chaque init).</p>
+          <div id="adminTeamsBox" class="teamlist"></div>
+          <div class="hr"></div>
+          <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:1;min-width:160px"><label for="adminNewTeamCode">Code nouvelle équipe (4-12 lettres majuscules)</label><input id="adminNewTeamCode" placeholder="EX: MOBYDICK" maxlength="12" autocomplete="off"></div>
+            <div style="flex:1;min-width:160px"><label for="adminNewTeamName">Nom affiché</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" autocomplete="off"></div>
+            <button class="primary" id="adminAddTeamBtn" type="button" style="margin:0">➕ Ajouter</button>
+          </div>
+        </div>
+
+        <!-- TAB: DANGER -->
+        <div class="admin-pane" data-pane="danger" style="display:none">
+          <p style="margin:0 0 12px;font-weight:900;color:#9b1111">⚠️ Zone sensible — actions irréversibles</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>
+            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>
+          </div>
+          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).</p>
+        </div>
       </div>
     </div>
   </section>
-
-  <div style="text-align:center;padding:34px 0 14px">
-    <button id="adminTriggerBtn" type="button" style="background:transparent;border:0;color:rgba(120,140,160,.32);font-size:11px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;padding:8px 14px;margin:0;font-weight:800">· maintenance ·</button>
-  </div>
 </main>
+
+<!-- Bouton flottant maintenance (caché, bas-droite) -->
+<button id="adminFabBtn" type="button" aria-label="Maintenance" title="Maintenance">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+</button>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -649,6 +735,7 @@
      équipes actives : NEMO, NAUTILUS, ARONNAX, NEDLAND, CALAMAR. */
   const OBSOLETE_TEAM_CODES = ['CAPITAINE', 'SOUSMARIN', 'DOCTEUR', 'BALEINE', 'GEANT'];
   async function cleanupObsoleteTeams(){
+    // 1) hard-coded legacy
     for(const code of OBSOLETE_TEAM_CODES){
       try{
         const ref = doc(db, 'teams', code);
@@ -660,6 +747,25 @@
       } catch(err){
         console.warn(`[Migration] Échec suppression ${code} :`, err);
       }
+    }
+    // 2) custom obsolete (équipes supprimées via panneau admin)
+    try{
+      const cfgSnap = await getDoc(doc(db,'game','config'));
+      if(cfgSnap.exists()){
+        const cfg = cfgSnap.data();
+        const obsolete = Array.isArray(cfg.obsoleteTeams) ? cfg.obsoleteTeams : [];
+        for(const code of obsolete){
+          if(OBSOLETE_TEAM_CODES.includes(code)) continue; // déjà fait
+          const ref = doc(db, 'teams', code);
+          const snap = await getDoc(ref);
+          if(snap.exists()){
+            await deleteDoc(ref);
+            console.log(`[Migration] Supprimé équipe custom obsolète : ${code}`);
+          }
+        }
+      }
+    }catch(err){
+      console.warn('[Migration] obsoleteTeams custom:', err);
     }
   }
 
@@ -736,8 +842,20 @@
   function progressHtml(team){const completed=team.completedSteps||[];return `<div class="progress">${Object.keys(STEPS).map(id=>`<span class="dot ${completed.includes(id)?'doneDot':(id===team.currentStep?'currentDot':'')}">${esc(STEPS[id].label)}</span>`).join('')}</div>`;}
 
   async function ensureTeams(){
+    // Charger la config pour récupérer les customTeams (sans les écraser)
+    let cfgData = {};
+    try{
+      const cfgSnap = await getDoc(doc(db,'game','config'));
+      cfgData = cfgSnap.exists() ? cfgSnap.data() : {};
+    }catch(e){}
+    const customs = Array.isArray(cfgData.customTeams) ? cfgData.customTeams : [];
+    const obsolete = Array.isArray(cfgData.obsoleteTeams) ? cfgData.obsoleteTeams : [];
+    const allDefs = [...TEAM_DEFS, ...customs.filter(c => !TEAM_DEFS.some(d => d.code === c.code))];
+
     const codes=[];
-    for(const t of TEAM_DEFS){
+    for(const t of allDefs){
+      // Ne pas (re)créer les équipes marquées comme obsolètes
+      if(obsolete.includes(t.code)) continue;
       codes.push(t.code);
       const ref=doc(db,'teams',t.code);
       const snap=await getDoc(ref);
@@ -778,8 +896,16 @@
     const box=$('teamsBox');if(!lastTeamsHtml){document.getElementById('equipagesEnMer')?.classList.add('sonar-loading');box.innerHTML=sonarLoaderHtml();}
     try{
       await ensureTeams();
+      // Récupère aussi les équipes custom persistées dans game/config
+      let cfgData = {};
+      try{
+        const cfgSnap = await getDoc(doc(db,'game','config'));
+        cfgData = cfgSnap.exists() ? cfgSnap.data() : {};
+      }catch(e){}
+      const customs = Array.isArray(cfgData.customTeams) ? cfgData.customTeams : [];
+      const allDefs = [...TEAM_DEFS, ...customs.filter(c => !TEAM_DEFS.some(d => d.code === c.code))];
       const teams=[];
-      for(const t of TEAM_DEFS){const team=await getTeam(t.code);if(team)teams.push(team);}
+      for(const t of allDefs){const team=await getTeam(t.code);if(team)teams.push(team);}
       const nextTeamsHtml=teams.map(t=>{
         const members=t.members||[];
         const online=onlineCount(t);
@@ -816,7 +942,14 @@
       await ensureTeams();
       const key=memberKey(name);
       const allTeams=[];
-      for(const t of TEAM_DEFS){const team=await getTeam(t.code);if(team)allTeams.push(team);}
+      let cfgData = {};
+      try{
+        const cfgSnap = await getDoc(doc(db,'game','config'));
+        cfgData = cfgSnap.exists() ? cfgSnap.data() : {};
+      }catch(e){}
+      const customs = Array.isArray(cfgData.customTeams) ? cfgData.customTeams : [];
+      const allDefs = [...TEAM_DEFS, ...customs.filter(c => !TEAM_DEFS.some(d => d.code === c.code))];
+      for(const t of allDefs){const team=await getTeam(t.code);if(team)allTeams.push(team);}
       const already=allTeams.find(team=>(team.members||[]).some(m=>m.memberKey===key));
       if(already){
         $('registerMsg').innerHTML=`<div class="notice warning"><b>${esc(name)}</b> a déjà embarqué avec <b>${esc(already.teamName)}</b>. Le code équipage n’est pas réaffiché : récupère-le auprès de ton équipage.</div>`;
@@ -1023,7 +1156,13 @@
   }, {threshold: .35});
   if($('missionOrderText')) orderObserver.observe($('missionOrderText'));
 
-  const MISSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+  const MISSION_DURATION_MS_DEFAULT = 7 * 24 * 60 * 60 * 1000;
+  function getMissionDurationMs(){
+    const v = missionConfig?.missionDurationMs;
+    return (typeof v === 'number' && v > 0) ? v : MISSION_DURATION_MS_DEFAULT;
+  }
+  /* Alias historique pour ne pas casser les références existantes. */
+  const MISSION_DURATION_MS = MISSION_DURATION_MS_DEFAULT;
 
   async function loadMissionConfig(){
     const snap = await getDoc(doc(db,'game','config'));
@@ -1051,9 +1190,10 @@
     }
 
     const start = new Date(startedAt).getTime();
-    const end = start + MISSION_DURATION_MS;
+    const durationMs = getMissionDurationMs();
+    const end = start + durationMs;
     let diff = Math.max(0, end - Date.now());
-    const percent = Math.max(0, Math.min(100, Math.round((diff / MISSION_DURATION_MS) * 100)));
+    const percent = Math.max(0, Math.min(100, Math.round((diff / durationMs) * 100)));
 
     const d = Math.floor(diff / 86400000); diff -= d * 86400000;
     const h = Math.floor(diff / 3600000); diff -= h * 3600000;
@@ -1331,14 +1471,23 @@
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
 
-  /**
-   * Panneau admin caché : activé via le bouton "· maintenance ·" en pied de page.
-   * Le code d'accès est saisi dans le panneau — simple sécurité par obscurité côté client
-   * (le code vit dans ce bundle JS, mais il n'est pas visible à l'œil nu sur la page).
-   */
-  const ADMIN_CODE = 'NEMO-2025';
+  /* =====================================================================
+     PANNEAU ADMIN — bouton flottant (engrenage) en bas-droite
+     Code d'accès : NEMO2026
+     - Onglet MEMBRES  : liste, modifier nom/service, supprimer, déplacer d'équipe
+     - Onglet BLOCAGES : activer/désactiver, modifier date de reprise
+     - Onglet O2       : reset + modifier date de départ et durée
+     - Onglet ÉQUIPES  : ajouter, renommer, supprimer
+     - Onglet DANGER   : reset global membres / progression
+     Session admin : 30 min, persistée en sessionStorage.
+     ===================================================================== */
+  const ADMIN_CODE = 'NEMO2026';
   const ADMIN_SESSION_KEY = 'nautilusAdminUnlocked';
-  const ADMIN_SESSION_TTL = 30 * 60 * 1000; // 30 min
+  const ADMIN_SESSION_TTL = 30 * 60 * 1000;
+
+  /* Liste effective des équipes (initiale + ajoutées via admin).
+     On relit `customTeams` dans `game/config` à chaque ouverture du panneau. */
+  let effectiveTeams = TEAM_DEFS.slice();
 
   function isAdminUnlocked(){
     try{
@@ -1348,7 +1497,6 @@
       return ts && (Date.now() - ts) < ADMIN_SESSION_TTL;
     }catch(e){ return false; }
   }
-
   function setAdminUnlocked(unlocked){
     try{
       if(unlocked) sessionStorage.setItem(ADMIN_SESSION_KEY, String(Date.now()));
@@ -1356,34 +1504,35 @@
     }catch(e){}
   }
 
-  function showAdminPanel(){
+  function openAdminPanel(){
     const panel = $('adminPanel');
     if(!panel) return;
     panel.style.display = '';
+    $('adminFabBtn')?.classList.add('active');
     if(isAdminUnlocked()){
-      $('adminActions').style.display = '';
-      $('adminCodeInput').value = ADMIN_CODE;
-      const msg = $('adminUnlockMsg');
-      if(msg){ msg.textContent = '✅ Session admin active (30 min).'; msg.style.color = '#075c39'; }
+      showAdminWorkspace();
     }else{
-      $('adminActions').style.display = 'none';
+      $('adminLocked').style.display = '';
+      $('adminWorkspace').style.display = 'none';
       setTimeout(() => $('adminCodeInput')?.focus(), 80);
     }
+    panel.scrollIntoView({behavior:'smooth', block:'start'});
   }
-
-  function hideAdminPanel(){
+  function closeAdminPanel(){
     const panel = $('adminPanel');
     if(panel) panel.style.display = 'none';
+    $('adminFabBtn')?.classList.remove('active');
   }
-
-  $('adminTriggerBtn')?.addEventListener('click', () => {
-    if($('adminPanel')?.style.display === 'none' || !$('adminPanel')?.style.display){
-      showAdminPanel();
-    }else{
-      hideAdminPanel();
-    }
-  });
-
+  function showAdminWorkspace(){
+    $('adminLocked').style.display = 'none';
+    $('adminWorkspace').style.display = '';
+    switchAdminTab('members');
+    refreshAdminTeams();
+    renderAdminMembers();
+    renderAdminLocks();
+    renderAdminOxygen();
+    renderAdminTeams();
+  }
   function tryAdminUnlock(){
     const input = $('adminCodeInput');
     const msg = $('adminUnlockMsg');
@@ -1391,28 +1540,512 @@
     const typed = String(input.value || '').trim();
     if(typed === ADMIN_CODE){
       setAdminUnlocked(true);
-      $('adminActions').style.display = '';
-      if(msg){ msg.textContent = '✅ Code accepté. Actions admin déverrouillées.'; msg.style.color = '#075c39'; }
+      if(msg){ msg.textContent = '✅ Code accepté.'; msg.style.color = '#075c39'; }
+      showAdminWorkspace();
     }else{
       setAdminUnlocked(false);
-      $('adminActions').style.display = 'none';
       if(msg){ msg.textContent = '❌ Code invalide.'; msg.style.color = '#9b1111'; }
       input.value = '';
       input.focus();
     }
   }
+  function lockAdmin(){
+    setAdminUnlocked(false);
+    $('adminWorkspace').style.display = 'none';
+    $('adminLocked').style.display = '';
+    $('adminCodeInput').value = '';
+    $('adminUnlockMsg').textContent = '';
+    $('adminCodeInput').focus();
+  }
 
+  $('adminFabBtn')?.addEventListener('click', () => {
+    if($('adminPanel')?.style.display === 'none' || !$('adminPanel')?.style.display) openAdminPanel();
+    else closeAdminPanel();
+  });
   $('adminUnlockBtn')?.addEventListener('click', tryAdminUnlock);
   $('adminCodeInput')?.addEventListener('keydown', e => { if(e.key === 'Enter') tryAdminUnlock(); });
+  $('adminLockBtn')?.addEventListener('click', lockAdmin);
+  $('adminReloadBtn')?.addEventListener('click', () => {
+    refreshAdminTeams().then(() => { renderAdminMembers(); renderAdminLocks(); renderAdminTeams(); });
+  });
 
-  // Raccourci secret : Ctrl+Alt+A pour ouvrir/fermer le panneau admin
+  /* Onglets */
+  function switchAdminTab(tab){
+    document.querySelectorAll('.admin-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.admin-pane').forEach(p => p.style.display = (p.dataset.pane === tab ? '' : 'none'));
+    if(tab === 'oxygen') renderAdminOxygen();
+  }
+  document.querySelectorAll('.admin-tab').forEach(b => b.addEventListener('click', () => switchAdminTab(b.dataset.tab)));
+
+  /* Rafraîchit effectiveTeams depuis Firestore (TEAM_DEFS initiaux + customTeams). */
+  async function refreshAdminTeams(){
+    try{
+      const cfg = await getDoc(doc(db,'game','config'));
+      const data = cfg.exists() ? cfg.data() : {};
+      const customs = Array.isArray(data.customTeams) ? data.customTeams : [];
+      effectiveTeams = [...TEAM_DEFS, ...customs];
+    }catch(e){
+      console.warn('refreshAdminTeams:', e);
+      effectiveTeams = TEAM_DEFS.slice();
+    }
+  }
+
+  /* ---------- TAB : MEMBRES ---------- */
+  async function renderAdminMembers(){
+    if(!isAdminUnlocked()) return;
+    const box = $('adminMembersBox');
+    if(!box) return;
+    box.innerHTML = '<div class="small">Chargement…</div>';
+    try{
+      await refreshAdminTeams();
+      const teams = [];
+      for(const t of effectiveTeams){ const team = await getTeam(t.code); if(team) teams.push(team); }
+      const allMembers = [];
+      for(const t of teams){
+        for(const m of (t.members || [])){
+          allMembers.push({ ...m, _teamCode: t.teamCode, _teamName: t.teamName });
+        }
+      }
+      if(!allMembers.length){
+        box.innerHTML = '<div class="small">Aucun matelot inscrit pour le moment.</div>';
+        return;
+      }
+      const teamOptions = effectiveTeams.map(t => `<option value="${esc(t.code)}">${esc(t.name)} (${esc(t.code)})</option>`).join('');
+      const serviceOptions = SERVICES.map(s => `<option value="${s}">${s}</option>`).join('');
+      box.innerHTML = `<div class="team" style="background:#fff">
+        <h3>${allMembers.length} matelot(s) inscrit(s)</h3>
+        <div class="hr"></div>
+        ${allMembers.map((m, idx) => `
+          <div class="member-edit-row" data-key="${esc(m.memberKey || '')}" data-team="${esc(m._teamCode)}">
+            <input type="text" class="me-name" value="${esc(m.name || '')}" placeholder="Nom">
+            <select class="me-svc">${serviceOptions.replace(`value="${esc(m.service)}"`, `value="${esc(m.service)}" selected`)}</select>
+            <select class="me-team">${teamOptions.replace(`value="${esc(m._teamCode)}"`, `value="${esc(m._teamCode)}" selected`)}</select>
+            <button class="primary mini me-save" type="button" style="background:var(--fnac);color:#111">💾</button>
+            <button class="danger mini me-del" type="button">🗑</button>
+          </div>
+        `).join('')}
+      </div>`;
+
+      // Bind save/delete
+      box.querySelectorAll('.member-edit-row').forEach(row => {
+        const key = row.dataset.key;
+        const oldTeam = row.dataset.team;
+        row.querySelector('.me-save').addEventListener('click', async () => {
+          const newName = row.querySelector('.me-name').value.trim().toUpperCase();
+          const newSvc = row.querySelector('.me-svc').value;
+          const newTeamCode = row.querySelector('.me-team').value;
+          if(!newName){ alert('Le nom ne peut pas être vide.'); return; }
+          await adminMoveOrRenameMember(oldTeam, key, { name: newName, service: newSvc }, newTeamCode);
+        });
+        row.querySelector('.me-del').addEventListener('click', async () => {
+          if(!confirm(`Supprimer définitivement ce matelot de l'équipe ?`)) return;
+          await adminDeleteMember(oldTeam, key);
+        });
+      });
+    }catch(err){
+      console.error('renderAdminMembers:', err);
+      box.innerHTML = `<div class="notice warning">Erreur : ${esc(err.message || err)}</div>`;
+    }
+  }
+
+  async function adminMoveOrRenameMember(fromTeamCode, memberKey, patch, toTeamCode){
+    if(!isAdminUnlocked()) return;
+    try{
+      const fromRef = doc(db,'teams',fromTeamCode);
+      const fromSnap = await getDoc(fromRef);
+      if(!fromSnap.exists()) throw new Error(`Équipe source ${fromTeamCode} introuvable.`);
+      const fromTeam = { teamCode: fromTeamCode, ...fromSnap.data() };
+      const member = (fromTeam.members || []).find(m => m.memberKey === memberKey);
+      if(!member) throw new Error('Membre introuvable dans l\'équipe source.');
+      const updatedMember = {
+        ...member,
+        ...patch,
+        name: (patch.name || member.name).toUpperCase(),
+        memberKey: memberKeyFn(patch.name || member.name),
+        updatedAt: new Date().toISOString()
+      };
+      if(fromTeamCode === toTeamCode){
+        // Juste modifier
+        const newMembers = fromTeam.members.map(m => m.memberKey === memberKey ? updatedMember : m);
+        await updateDoc(fromRef, { members: newMembers, updatedAt: new Date().toISOString() });
+      }else{
+        // Déplacer : retirer de from, ajouter à to
+        const fromMembers = fromTeam.members.filter(m => m.memberKey !== memberKey);
+        await updateDoc(fromRef, { members: fromMembers, updatedAt: new Date().toISOString() });
+
+        const toRef = doc(db,'teams',toTeamCode);
+        const toSnap = await getDoc(toRef);
+        if(!toSnap.exists()) throw new Error(`Équipe destination ${toTeamCode} introuvable.`);
+        const toTeam = { teamCode: toTeamCode, ...toSnap.data() };
+        // Vérifier collision de memberKey dans la destination
+        const collision = (toTeam.members || []).find(m => m.memberKey === updatedMember.memberKey);
+        const toMembers = collision
+          ? toTeam.members.map(m => m.memberKey === updatedMember.memberKey ? updatedMember : m)
+          : [...(toTeam.members || []), updatedMember];
+        await updateDoc(toRef, { members: toMembers, updatedAt: new Date().toISOString() });
+        await addEvent(toTeam, 'member_moved', { memberName: updatedMember.name, from: fromTeamCode, to: toTeamCode });
+      }
+      await addEvent(fromTeam, 'member_updated', { memberName: updatedMember.name });
+      await renderAdminMembers();
+      await loadTeams();
+    }catch(err){
+      console.error('adminMoveOrRenameMember:', err);
+      alert(`❌ Échec modification : ${err.message || err}`);
+    }
+  }
+
+  async function adminDeleteMember(teamCode, memberKey){
+    if(!isAdminUnlocked()) return;
+    try{
+      const ref = doc(db,'teams',teamCode);
+      const snap = await getDoc(ref);
+      if(!snap.exists()) throw new Error(`Équipe ${teamCode} introuvable.`);
+      const team = { teamCode, ...snap.data() };
+      const newMembers = (team.members || []).filter(m => m.memberKey !== memberKey);
+      await updateDoc(ref, { members: newMembers, updatedAt: new Date().toISOString() });
+      await addEvent(team, 'member_deleted', { memberKey });
+      await renderAdminMembers();
+      await loadTeams();
+    }catch(err){
+      console.error('adminDeleteMember:', err);
+      alert(`❌ Échec suppression : ${err.message || err}`);
+    }
+  }
+
+  /* ---------- TAB : BLOCAGES ---------- */
+  async function renderAdminLocks(){
+    if(!isAdminUnlocked()) return;
+    const box = $('adminLocksBox');
+    if(!box) return;
+    box.innerHTML = '<div class="small">Chargement…</div>';
+    try{
+      await refreshAdminTeams();
+      const teams = [];
+      for(const t of effectiveTeams){ const team = await getTeam(t.code); if(team) teams.push(team); }
+      box.innerHTML = teams.map(t => {
+        const locked = isLocked(t);
+        const lu = t.lockedUntil ? new Date(t.lockedUntil) : null;
+        const pad = n => String(n).padStart(2, '0');
+        const dtLocal = lu
+          ? `${lu.getFullYear()}-${pad(lu.getMonth()+1)}-${pad(lu.getDate())}T${pad(lu.getHours())}:${pad(lu.getMinutes())}`
+          : '';
+        return `<div class="team" style="background:#fff" data-team="${esc(t.teamCode)}">
+          <h3>${esc(t.teamName)} <span class="small" style="color:var(--muted)">(${esc(t.teamCode)})</span></h3>
+          <div class="small">Statut actuel : <b style="color:${locked ? 'var(--bad)' : '#075c39'}">${locked ? 'BLOQUÉE' : 'ACTIVE'}</b> · échecs : <b>${Number(t.failCount||0)}</b></div>
+          <div class="hr"></div>
+          <div class="lock-edit-row">
+            <select class="lk-status">
+              <option value="active" ${t.status !== 'blocked' ? 'selected' : ''}>🟢 Active (non bloquée)</option>
+              <option value="blocked" ${t.status === 'blocked' ? 'selected' : ''}>🔴 Bloquée (verrouillée)</option>
+            </select>
+            <input type="datetime-local" class="lk-until" value="${dtLocal}">
+            <input type="number" class="lk-fails" min="0" value="${Number(t.failCount||0)}" placeholder="Échecs">
+            <button class="primary mini lk-save" type="button" style="background:var(--fnac);color:#111">💾 Appliquer</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="secondary mini lk-unlock" type="button" style="margin:0">🔓 Débloquer maintenant</button>
+          </div>
+        </div>`;
+      }).join('');
+      box.querySelectorAll('.team').forEach(teamEl => {
+        const code = teamEl.dataset.team;
+        teamEl.querySelector('.lk-save').addEventListener('click', async () => {
+          const status = teamEl.querySelector('.lk-status').value;
+          const dtVal = teamEl.querySelector('.lk-until').value;
+          const fails = Number(teamEl.querySelector('.lk-fails').value || 0);
+          await adminUpdateLock(code, { status, lockedUntil: dtVal, failCount: fails });
+        });
+        teamEl.querySelector('.lk-unlock').addEventListener('click', () => adminUnlockTeam(code));
+      });
+    }catch(err){
+      console.error('renderAdminLocks:', err);
+      box.innerHTML = `<div class="notice warning">Erreur : ${esc(err.message || err)}</div>`;
+    }
+  }
+
+  async function adminUpdateLock(teamCode, patch){
+    if(!isAdminUnlocked()) return;
+    try{
+      const ref = doc(db,'teams',teamCode);
+      const snap = await getDoc(ref);
+      if(!snap.exists()) throw new Error(`Équipe ${teamCode} introuvable.`);
+      const team = { teamCode, ...snap.data() };
+      const updates = { updatedAt: new Date().toISOString() };
+      if(patch.status === 'active'){
+        updates.status = 'active';
+        updates.lockedUntil = null;
+        updates.lastUnlockAt = new Date().toISOString();
+      }else{
+        updates.status = 'blocked';
+        if(patch.lockedUntil){
+          // datetime-local est en local time, on convertit en ISO UTC
+          const d = new Date(patch.lockedUntil);
+          if(!isNaN(d.getTime())) updates.lockedUntil = d.toISOString();
+        }else{
+          updates.lockedUntil = getLockedUntilISO(patch.failCount ?? 0);
+        }
+        updates.lastLockHours = getLockHours(patch.failCount ?? 0);
+      }
+      if(Number.isFinite(patch.failCount)) updates.failCount = Math.max(0, Math.floor(patch.failCount));
+      await updateDoc(ref, updates);
+      await addEvent(team, 'lock_updated', { updates });
+      await renderAdminLocks();
+      await loadTeams();
+    }catch(err){
+      console.error('adminUpdateLock:', err);
+      alert(`❌ Échec blocage : ${err.message || err}`);
+    }
+  }
+
+  async function adminUnlockTeam(teamCode){
+    if(!isAdminUnlocked()) return;
+    try{
+      const ref = doc(db,'teams',teamCode);
+      await updateDoc(ref, { status:'active', lockedUntil:null, updatedAt:new Date().toISOString(), lastUnlockAt:new Date().toISOString() });
+      const snap = await getDoc(ref);
+      if(snap.exists()){
+        await addEvent({ teamCode, teamName: snap.data().teamName }, 'admin_unlocked', {});
+      }
+      await renderAdminLocks();
+      await loadTeams();
+    }catch(err){
+      console.error('adminUnlockTeam:', err);
+      alert(`❌ Échec déblocage : ${err.message || err}`);
+    }
+  }
+
+  /* ---------- TAB : O2 ---------- */
+  function renderAdminOxygen(){
+    if(!isAdminUnlocked()) return;
+    const startedAt = missionConfig?.missionStartedAt;
+    const now = Date.now();
+    if(!startedAt){
+      $('adminO2Now').textContent = 'Non démarrée';
+      $('adminO2State').textContent = 'EN ATTENTE';
+      $('adminO2State').className = 'oxygen-state';
+      $('adminO2Countdown').textContent = '07J 00h00m00s';
+      $('adminO2Date').value = '';
+      $('adminO2Days').value = 7;
+      $('adminO2Hours').value = 0;
+      return;
+    }
+    const start = new Date(startedAt);
+    const end = start.getTime() + MISSION_DURATION_MS;
+    let diff = Math.max(0, end - now);
+    const percent = Math.max(0, Math.min(100, Math.round((diff / MISSION_DURATION_MS) * 100)));
+    const d = Math.floor(diff / 86400000); diff -= d * 86400000;
+    const h = Math.floor(diff / 3600000); diff -= h * 3600000;
+    const m = Math.floor(diff / 60000); diff -= m * 60000;
+    const sec = Math.floor(diff / 1000);
+    $('adminO2Now').textContent = percent + '%';
+    $('adminO2Countdown').textContent = `${d}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(sec).padStart(2,'0')}s`;
+    $('adminO2State').textContent = percent <= 20 ? 'CRITIQUE' : (percent <= 50 ? 'EN BAISSE' : 'STABLE');
+    $('adminO2State').className = 'oxygen-state' + (percent <= 20 ? ' critical' : (percent <= 50 ? ' warning' : ''));
+    const pad = n => String(n).padStart(2,'0');
+    $('adminO2Date').value = `${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}T${pad(start.getHours())}:${pad(start.getMinutes())}`;
+    // Durée restante déduite
+    const totalRemainingDays = (end - now) / 86400000;
+    $('adminO2Days').value = Math.max(0, Math.floor(totalRemainingDays));
+    $('adminO2Hours').value = Math.max(0, Math.floor((totalRemainingDays - $('adminO2Days').value) * 24));
+  }
+  async function adminApplyOxygen(){
+    if(!isAdminUnlocked()) return;
+    try{
+      const dateVal = $('adminO2Date').value;
+      const days = Math.max(0, Number($('adminO2Days').value || 0));
+      const hours = Math.max(0, Math.min(23, Number($('adminO2Hours').value || 0)));
+      let startedAt;
+      if(dateVal){
+        const d = new Date(dateVal);
+        if(isNaN(d.getTime())){ alert('Date invalide.'); return; }
+        startedAt = d.toISOString();
+      }else{
+        startedAt = new Date().toISOString();
+      }
+      // MISSION_DURATION_MS est `const` — on ne peut pas la modifier globalement sans recompiler.
+      // On stocke donc une override `missionDurationMs` dans game/config.
+      const durationMs = ((days * 24) + hours) * 60 * 60 * 1000;
+      await setDoc(doc(db,'game','config'), {
+        missionStartedAt: startedAt,
+        missionDurationMs: durationMs,
+        missionStartedByTeam: currentTeam?.teamCode || missionConfig?.missionStartedByTeam || null,
+        missionStartedByTeamName: currentTeam?.teamName || missionConfig?.missionStartedByTeamName || null,
+        updatedAt: new Date().toISOString()
+      }, {merge:true});
+      missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: durationMs };
+      if(currentTeam) await addEvent(currentTeam, 'oxygen_reset', { startedAt, durationMs, by: 'admin' });
+      updateCountdown();
+      renderAdminOxygen();
+      alert('✅ Réserve O₂ mise à jour.');
+    }catch(err){
+      console.error('adminApplyOxygen:', err);
+      alert(`❌ Échec : ${err.message || err}`);
+    }
+  }
+  async function adminResetOxygenToNow(){
+    if(!isAdminUnlocked()) return;
+    const startedAt = new Date().toISOString();
+    await setDoc(doc(db,'game','config'), {
+      missionStartedAt: startedAt,
+      missionDurationMs: 7 * 24 * 60 * 60 * 1000,
+      updatedAt: new Date().toISOString()
+    }, {merge:true});
+    missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: 7 * 24 * 60 * 60 * 1000 };
+    if(currentTeam) await addEvent(currentTeam, 'oxygen_reset', { startedAt, by: 'admin' });
+    updateCountdown();
+    renderAdminOxygen();
+  }
+  async function adminClearOxygen(){
+    if(!isAdminUnlocked()) return;
+    if(!confirm('Arrêter la mission (clear du compteur O₂) ?')) return;
+    await setDoc(doc(db,'game','config'), {
+      missionStartedAt: null,
+      missionDurationMs: null,
+      updatedAt: new Date().toISOString()
+    }, {merge:true});
+    missionConfig = { ...(missionConfig||{}), missionStartedAt: null, missionDurationMs: null };
+    if(currentTeam) await addEvent(currentTeam, 'oxygen_cleared', { by: 'admin' });
+    updateCountdown();
+    renderAdminOxygen();
+  }
+  $('adminO2Apply')?.addEventListener('click', adminApplyOxygen);
+  $('adminO2Reset')?.addEventListener('click', adminResetOxygenToNow);
+  $('adminO2Clear')?.addEventListener('click', adminClearOxygen);
+
+  /* ---------- TAB : ÉQUIPES ---------- */
+  async function renderAdminTeams(){
+    if(!isAdminUnlocked()) return;
+    const box = $('adminTeamsBox');
+    if(!box) return;
+    box.innerHTML = '<div class="small">Chargement…</div>';
+    try{
+      await refreshAdminTeams();
+      box.innerHTML = effectiveTeams.map(t => {
+        const isCustom = !TEAM_DEFS.some(d => d.code === t.code);
+        return `<div class="team" style="background:#fff" data-team="${esc(t.code)}">
+          <h3>${esc(t.name)} <span class="small" style="color:var(--muted)">(${esc(t.code)})${isCustom ? ' <span style="color:#075c39">[custom]</span>' : ''}</span></h3>
+          <div class="hr"></div>
+          <div class="team-edit-row">
+            <input type="text" class="tt-name" value="${esc(t.name)}" maxlength="32">
+            <input type="text" class="tt-code" value="${esc(t.code)}" maxlength="12" style="text-transform:uppercase" disabled>
+            <button class="primary mini tt-save" type="button" style="background:var(--fnac);color:#111">💾 Renommer</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="danger mini tt-del" type="button" style="margin:0">🗑 Supprimer l'équipe</button>
+            ${isCustom ? '' : '<span class="small" style="color:var(--muted)">équipe par défaut — suppression interdite (défavoriserait les utilisateurs)</span>'}
+          </div>
+        </div>`;
+      }).join('');
+      box.querySelectorAll('.team').forEach(teamEl => {
+        const code = teamEl.dataset.team;
+        const isCustom = !TEAM_DEFS.some(d => d.code === code);
+        teamEl.querySelector('.tt-save').addEventListener('click', async () => {
+          const newName = teamEl.querySelector('.tt-name').value.trim();
+          if(!newName){ alert('Nom requis.'); return; }
+          await adminRenameTeam(code, newName);
+        });
+        const delBtn = teamEl.querySelector('.tt-del');
+        if(isCustom){
+          delBtn.addEventListener('click', async () => {
+            if(!confirm(`Supprimer DÉFINITIVEMENT l'équipe ${code} ?\n\n• Doc Firestore teams/${code} supprimé\n• Ajoutée à la liste des codes obsolètes (nettoyés à chaque init)\n• Membres de cette équipe seront également supprimés`)) return;
+            await adminDeleteTeam(code);
+          });
+        }else{
+          delBtn.disabled = true;
+        }
+      });
+    }catch(err){
+      console.error('renderAdminTeams:', err);
+      box.innerHTML = `<div class="notice warning">Erreur : ${esc(err.message || err)}</div>`;
+    }
+  }
+  async function adminRenameTeam(code, newName){
+    if(!isAdminUnlocked()) return;
+    try{
+      await updateDoc(doc(db,'teams',code), { teamName: newName, updatedAt: new Date().toISOString() });
+      const snap = await getDoc(doc(db,'teams',code));
+      if(snap.exists()) await addEvent({ teamCode: code, teamName: snap.data().teamName }, 'team_renamed', { newName });
+      await refreshAdminTeams();
+      await renderAdminTeams();
+      await loadTeams();
+    }catch(err){
+      console.error('adminRenameTeam:', err);
+      alert(`❌ Échec renommage : ${err.message || err}`);
+    }
+  }
+  async function adminAddTeam(){
+    if(!isAdminUnlocked()) return;
+    const codeRaw = ($('adminNewTeamCode').value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const name = ($('adminNewTeamName').value || '').trim();
+    if(!codeRaw || codeRaw.length < 4){ alert('Code équipe : 4 à 12 caractères alphanumériques.'); return; }
+    if(!name){ alert('Nom affiché requis.'); return; }
+    if(effectiveTeams.some(t => t.code === codeRaw)){ alert('Code déjà utilisé.'); return; }
+    try{
+      // 1) créer le doc team
+      await setDoc(doc(db,'teams',codeRaw), {
+        teamCode: codeRaw, teamName: name,
+        currentStep:'start', status:'active', lockedUntil:null,
+        failCount:0, lastLockHours:0, completedSteps:[],
+        members:[], onlinePlayers:{},
+        createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+      });
+      // 2) persister dans customTeams (game/config)
+      const cfgRef = doc(db,'game','config');
+      const cfgSnap = await getDoc(cfgRef);
+      const cfg = cfgSnap.exists() ? cfgSnap.data() : {};
+      const customs = Array.isArray(cfg.customTeams) ? cfg.customTeams : [];
+      if(!customs.some(t => t.code === codeRaw)){
+        customs.push({ code: codeRaw, name });
+      }
+      await setDoc(cfgRef, { customTeams: customs, updatedAt:new Date().toISOString() }, {merge:true});
+      await addEvent({ teamCode:codeRaw, teamName:name }, 'team_added', { by: 'admin' });
+      $('adminNewTeamCode').value = '';
+      $('adminNewTeamName').value = '';
+      await refreshAdminTeams();
+      await renderAdminTeams();
+      await loadTeams();
+      alert(`✅ Équipe ${codeRaw} créée.`);
+    }catch(err){
+      console.error('adminAddTeam:', err);
+      alert(`❌ Échec création : ${err.message || err}`);
+    }
+  }
+  async function adminDeleteTeam(code){
+    if(!isAdminUnlocked()) return;
+    try{
+      // Supprimer le doc + les membres globaux liés
+      await deleteDoc(doc(db,'teams',code));
+      const membersSnap = await getDocs(collection(db,'members'));
+      const deletions = membersSnap.docs.filter(d => d.data().teamCode === code).map(d => deleteDoc(d.ref));
+      await Promise.all(deletions);
+      // Retirer de customTeams
+      const cfgRef = doc(db,'game','config');
+      const cfgSnap = await getDoc(cfgRef);
+      const cfg = cfgSnap.exists() ? cfgSnap.data() : {};
+      const customs = (cfg.customTeams || []).filter(t => t.code !== code);
+      // Ajouter à obsoleteTeams pour que le cleanup le vérifie aussi à l'avenir
+      const obsolete = Array.isArray(cfg.obsoleteTeams) ? cfg.obsoleteTeams : [];
+      if(!obsolete.includes(code)) obsolete.push(code);
+      await setDoc(cfgRef, { customTeams: customs, obsoleteTeams: obsolete, updatedAt:new Date().toISOString() }, {merge:true});
+      await addEvent({ teamCode:code, teamName:code }, 'team_deleted', { by: 'admin' });
+      await refreshAdminTeams();
+      await renderAdminTeams();
+      await renderAdminMembers();
+      await loadTeams();
+      alert(`✅ Équipe ${code} supprimée.`);
+    }catch(err){
+      console.error('adminDeleteTeam:', err);
+      alert(`❌ Échec suppression : ${err.message || err}`);
+    }
+  }
+  $('adminAddTeamBtn')?.addEventListener('click', adminAddTeam);
+
+  /* Raccourci secret : Ctrl+Alt+M pour ouvrir/fermer */
   document.addEventListener('keydown', e => {
-    if(e.ctrlKey && e.altKey && (e.key === 'A' || e.key === 'a')){
+    if(e.ctrlKey && e.altKey && (e.key === 'M' || e.key === 'm')){
       e.preventDefault();
-      const panel = $('adminPanel');
-      if(!panel) return;
-      if(panel.style.display === 'none' || !panel.style.display) showAdminPanel();
-      else hideAdminPanel();
+      if($('adminPanel')?.style.display === 'none' || !$('adminPanel')?.style.display) openAdminPanel();
+      else closeAdminPanel();
     }
   });
 
