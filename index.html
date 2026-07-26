@@ -3295,11 +3295,44 @@
   let _iosBannerShown = false;
 
   // Capture l'event beforeinstallprompt
+  // Declenche l'auto-prompt natif Android apres 4s (si pas deja installe)
+  let _autoPromptTriggered = false;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     _deferredInstallPrompt = e;
     const btn = $('installPwaBtn');
     if(btn) btn.style.display = 'inline-flex';
+
+    // Auto-prompt Android : on attend 4s + une interaction user (scroll/click)
+    if(_isAndroid && !_isStandalone && !_autoPromptTriggered){
+      _autoPromptTriggered = true;
+      const firePrompt = () => {
+        if(_deferredInstallPrompt && !_isStandalone && !_pwaInstalled){
+          try{
+            _deferredInstallPrompt.prompt();
+            _deferredInstallPrompt.userChoice.then((choice) => {
+              if(choice.outcome === 'accepted'){
+                showToast('✅ Installation lancee...', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+              }else{
+                showToast('Installation annulee. Tu peux reessayer via le bouton 📲 Installer l\'app.', 'linear-gradient(135deg,#52606a,#3a4a5a)');
+              }
+              _deferredInstallPrompt = null;
+            }).catch(() => {});
+          }catch(e){}
+        }
+        // Cleanup listeners
+        window.removeEventListener('scroll', firePrompt);
+        window.removeEventListener('click', firePrompt);
+        window.removeEventListener('touchstart', firePrompt);
+        window.removeEventListener('keydown', firePrompt);
+      };
+      // Declenche apres 4s OU a la 1ere interaction user
+      setTimeout(firePrompt, 4000);
+      window.addEventListener('scroll', firePrompt, { once: true, passive: true });
+      window.addEventListener('click', firePrompt, { once: true });
+      window.addEventListener('touchstart', firePrompt, { once: true, passive: true });
+      window.addEventListener('keydown', firePrompt, { once: true });
+    }
   });
 
   // Detecte si l'app est deja installee
@@ -3339,25 +3372,50 @@
         if(helpBtn) helpBtn.style.animation = 'pwaBtnPulse 2s ease-in-out infinite';
       }
     }, 2500); // petit delai pour pas gener l'utilisateur
-  }else if(_isAndroid && _deferredInstallPrompt){
-    // Android : declenche automatiquement le prompt 4s apres le load
-    // (Chrome affiche la banniere native en bas automatiquement,
-    //  on attend un peu pour pas etre intrusif)
+  }else if(_isAndroid && !_isStandalone && !sessionStorage.getItem('androidInstallBannerDismissed')){
+    // Android (sans beforeinstallprompt : Samsung Internet, Firefox, etc.)
+    // Affiche une banniere apres 5s pour proposer l'install manuelle
     setTimeout(() => {
-      if(!_isStandalone && _deferredInstallPrompt){
-        try{
-          _deferredInstallPrompt.prompt();
-          _deferredInstallPrompt.userChoice.then((choice) => {
-            if(choice.outcome === 'accepted'){
-              showToast('✅ Installation lancee...', 'linear-gradient(135deg,#075c39,#0a8a5a)');
-            }else{
-              showToast('Installation annulee. Tu peux la reessayer plus tard.', 'linear-gradient(135deg,#52606a,#3a4a5a)');
-            }
-            _deferredInstallPrompt = null;
-          }).catch(() => {});
-        }catch(e){}
+      // On laisse le beforeinstallprompt se declencher en priorite
+      // (l'auto-prompt natif s'affichera en bas de l'ecran Android)
+      // Si apres 5s pas de prompt, on montre la banniere manuelle
+      if(!_deferredInstallPrompt && !sessionStorage.getItem('androidInstallBannerDismissed')){
+        showAndroidInstallBanner();
       }
-    }, 4000);
+    }, 5000);
+  }
+
+
+
+  // Banniere Android pour les navigateurs sans beforeinstallprompt
+  function showAndroidInstallBanner(){
+    let ban = $('androidInstallBanner');
+    if(!ban){
+      ban = document.createElement('div');
+      ban.id = 'androidInstallBanner';
+      ban.className = 'ios-install-banner';
+      ban.setAttribute('role', 'dialog');
+      ban.setAttribute('aria-live', 'polite');
+      ban.innerHTML =
+        '<div class="b-ico">📲</div>' +
+        '<div class="b-text">' +
+          '<b>Installe l\'app sur ton Android</b> pour y acceder comme une vraie application, meme hors ligne.<br>' +
+          '<span style="opacity:.75;font-size:12px">Menu ⋮ puis <b>Ajouter a l\'ecran d\'accueil</b></span>' +
+        '</div>' +
+        '<div class="b-actions">' +
+          '<button class="b-help" type="button" id="androidBannerHelp">Comment ?</button>' +
+          '<button class="b-close" type="button" id="androidBannerClose" aria-label="Fermer">✕</button>' +
+        '</div>';
+      document.body.appendChild(ban);
+      $('androidBannerHelp')?.addEventListener('click', () => showModalInstallInstructions());
+      $('androidBannerClose')?.addEventListener('click', () => {
+        ban.style.display = 'none';
+        try{ sessionStorage.setItem('androidInstallBannerDismissed', '1'); }catch(e){}
+      });
+    }
+    ban.style.display = 'flex';
+    const helpBtn = $('androidBannerHelp');
+    if(helpBtn) helpBtn.style.animation = 'pwaBtnPulse 2s ease-in-out infinite';
   }
 
   // iOS : clic sur "Comment ?" de la banniere -> ouvre la modale d'instructions
