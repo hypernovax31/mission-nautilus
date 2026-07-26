@@ -96,6 +96,9 @@
     .install-pwa-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
     .install-pwa-btn.installed{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3);animation:none}
     @keyframes pwaBtnPulse{0%,100%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 8px rgba(245,176,39,.35)}}
+    /* Animation identique (plus grande) pour le hero-cta 'Engagez-vous' */
+    @keyframes heroCtaPulse{0%,100%{box-shadow:0 14px 30px rgba(245,176,39,.28),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 14px 30px rgba(245,176,39,.28),0 0 0 18px rgba(245,176,39,.42)}}
+    .hero-cta.pulse-engage{animation:heroCtaPulse 2.4s ease-in-out infinite}
     @media(max-width:520px){
       .install-pwa-btn{right:160px;font-size:10px;padding:6px 9px}
       .install-pwa-btn span{font-size:10px}
@@ -857,7 +860,7 @@
   <h1 class="hero-title">Mission Nautilus</h1>
   <div class="hero-line">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</div>
   <p class="hero-subtitle">Des transmissions ont refait surface dans le magasin. Rejoignez un équipage, explorez les rayons, décryptez les mini-jeux et ouvrez les QR verrouillés avant que l’oxygène ne manque.</p>
-  <div class="hero-actions"><button class="hero-cta" id="launchMissionBtn">Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la mission</button></div>
+  <div class="hero-actions"><button class="hero-cta pulse-engage" id="launchMissionBtn">⚓ Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la mission</button></div>
 </header>
 <main>
   <section class="card intro-card">
