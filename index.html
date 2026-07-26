@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Embarquement</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f5b027">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Nautilus">
+  <link rel="apple-touch-icon" href="assets/icon.svg">
   <style>
     :root{
       --fnac:#f5b027;
@@ -86,6 +92,19 @@
       opacity:.26;
     }
     .sonar-toggle{position:fixed;top:14px;right:14px;z-index:10000;background:rgba(0,0,0,.42);color:rgba(255,255,255,.82);border:1px solid rgba(245,176,39,.45);border-radius:999px;padding:8px 11px;font-size:11px;font-weight:800;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
+    .install-pwa-btn{position:fixed;top:14px;right:170px;z-index:10000;background:rgba(245,176,39,.92);color:#111;border:1px solid rgba(245,176,39,.65);border-radius:999px;padding:8px 12px;font-size:11px;font-weight:900;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px);display:none;align-items:center;gap:4px;animation:pwaBtnPulse 2.4s ease-in-out infinite}
+    .install-pwa-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
+    .install-pwa-btn.installed{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3);animation:none}
+    @keyframes pwaBtnPulse{0%,100%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 8px rgba(245,176,39,.35)}}
+    @media(max-width:520px){
+      .install-pwa-btn{right:160px;font-size:10px;padding:6px 9px}
+      .install-pwa-btn span{font-size:10px}
+    }
+    /* Modale QR plein ecran avec bouton "Partager ce QR" pour mobile */
+    .qr-modal-share{padding:10px 18px;background:linear-gradient(135deg,#075c39,#0a8a5a);color:#fff;border:0;border-radius:999px;font-weight:1000;font-size:14px;margin-top:16px;cursor:pointer;letter-spacing:.04em}
+    .qr-modal-share:hover{filter:brightness(1.1);transform:translateY(-1px)}
+    .qr-tap-hint{margin-top:14px;font-size:13px;opacity:.85}
+    .qr-tap-hint b{color:#ffe2a0}
     .brand{
       position:relative;
       z-index:1;
@@ -813,6 +832,8 @@
   <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
 </audio>
 <button id="sonarToggleBtn" class="sonar-toggle" type="button">Activer le sonar</button>
+<button id="installPwaBtn" class="install-pwa-btn" type="button" style="display:none" title="Installer l'app sur mon écran d'accueil">📲 Installer l'app</button>
+<button id="openRecapBtn" class="install-pwa-btn" type="button" style="display:inline-flex" title="Voir le récapitulatif complet du jeu">📋 Récap</button>
 <div class="nautilus-alarm" id="nautilusAlarm" aria-live="assertive">
   <div class="alarm-panel">
     <div class="alarm-title">ALERTE NAUTILUS</div>
@@ -1602,22 +1623,118 @@
 
   /**
    * Ouvre le QR en grand dans une modale plein ecran.
+   * - Affiche le QR en grand pour scan a la camera d'un autre appareil
+   * - Affiche le code en dessous
+   * - Sur mobile : bouton "Partager" (envoie l'image via Web Share API)
+   * - Bouton "Copier le lien" pour partager autrement
+   * - Bouton "Notes" pour envoyer le tout dans l'app Notes
    */
-  function viewMatelotQr(qrUrl, code){
+  async function viewMatelotQr(qrUrl, code){
+    // Construit le lien de reprise
+    const resumeLink = location.origin + location.pathname.replace(/index\.html$/, '') + '?matelot=' + encodeURIComponent(code);
+
     const overlay = document.createElement('div');
     overlay.className = 'qr-modal';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;cursor:zoom-out';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:radial-gradient(circle at 50% 30%,rgba(5,30,48,.96),rgba(0,0,0,.98));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
     overlay.innerHTML =
-      '<div style="text-align:center;color:#fff;max-width:min(92vw,500px)">' +
-        '<div style="font-weight:1000;letter-spacing:.06em;font-size:14px;margin-bottom:8px;color:#ffe2a0">SCANNE CE QR AVEC TON APPAREIL PHOTO</div>' +
+      '<div style="text-align:center;color:#fff;max-width:min(92vw,500px);width:100%">' +
+        '<div style="font-weight:1000;letter-spacing:.06em;font-size:13px;margin-bottom:10px;color:#ffe2a0;text-transform:uppercase">SCANNE CE QR AVEC TON APPAREIL PHOTO</div>' +
         '<div style="background:#fff;padding:18px;border-radius:18px;display:inline-block;box-shadow:0 0 60px rgba(245,176,39,.4)">' +
-          '<img src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:min(70vw,420px);height:min(70vw,420px);display:block;image-rendering:pixelated">' +
+          '<img id="qrModalImg" src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:min(70vw,380px);height:min(70vw,380px);display:block;image-rendering:pixelated">' +
         '</div>' +
-        '<div style="font-family:Consolas,monospace;font-size:24px;font-weight:1000;letter-spacing:.08em;margin-top:18px;color:#fff;background:rgba(0,0,0,.5);padding:10px 18px;border-radius:10px;border:2px solid rgba(245,176,39,.55)">' + esc(code) + '</div>' +
-        '<div style="margin-top:18px;font-size:12px;opacity:.7">Clique n\'importe o&ugrave; pour fermer</div>' +
+        '<div style="font-family:Consolas,monospace;font-size:22px;font-weight:1000;letter-spacing:.08em;margin-top:14px;color:#fff;background:rgba(0,0,0,.55);padding:10px 18px;border-radius:10px;border:2px solid rgba(245,176,39,.55);display:inline-block">' + esc(code) + '</div>' +
+        '<div class="qr-tap-hint">Lien direct : <b style="word-break:break-all;font-family:Consolas,monospace;font-size:12px">' + esc(resumeLink) + '</b></div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px">' +
+          '<button type="button" id="qrModalShare" class="qr-modal-share">📤 Partager</button>' +
+          '<button type="button" id="qrModalCopy" class="qr-modal-share" style="background:rgba(255,255,255,.12)">📋 Copier le lien</button>' +
+          '<button type="button" id="qrModalNotes" class="qr-modal-share" style="background:linear-gradient(135deg,#075c39,#0a8a5a)">📝 Vers Notes</button>' +
+        '</div>' +
+        '<div style="margin-top:18px;font-size:12px;opacity:.7">Tape en dehors pour fermer</div>' +
       '</div>';
-    overlay.addEventListener('click', () => document.body.removeChild(overlay));
+
+    // Ferme si on tape sur le fond (pas sur les boutons)
+    overlay.addEventListener('click', (e) => {
+      if(e.target === overlay) document.body.removeChild(overlay);
+    });
+
     document.body.appendChild(overlay);
+
+    // Bouton Partager : tente d'envoyer l'image via Web Share API
+    document.getElementById('qrModalShare').addEventListener('click', async () => {
+      try{
+        // Recupere le blob de l'image QR
+        const img = document.getElementById('qrModalImg');
+        const resp = await fetch(qrUrl);
+        const blob = await resp.blob();
+        const file = new File([blob], 'matelot-' + code + '.png', { type: 'image/png' });
+        if(navigator.canShare && navigator.canShare({ files: [file] })){
+          await navigator.share({
+            files: [file],
+            title: 'Code Matelot ' + code,
+            text: 'Mon Code Matelot pour Mission Nautilus : ' + code + '\nLien de reprise : ' + resumeLink
+          });
+          showToast('✅ Partage envoye', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }else if(navigator.share){
+          await navigator.share({
+            title: 'Code Matelot ' + code,
+            text: 'Mon Code Matelot : ' + code + '\nLien : ' + resumeLink
+          });
+        }else{
+          // Fallback : ouvre l'image dans un nouvel onglet
+          window.open(qrUrl, '_blank');
+          showToast('📷 QR ouvert dans un nouvel onglet (appuie longuement pour sauvegarder)', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }
+      }catch(err){
+        if(err && err.name === 'AbortError') return;
+        console.warn('qrShare:', err);
+        // Fallback : clipboard avec le code
+        try{
+          await navigator.clipboard.writeText(code + '\n' + resumeLink);
+          showToast('📋 Code + lien copies dans le presse-papier', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }catch(e2){
+          showToast('❌ Partage impossible', 'linear-gradient(135deg,#9b1111,#b8322b)');
+        }
+      }
+    });
+
+    // Bouton copier
+    document.getElementById('qrModalCopy').addEventListener('click', async () => {
+      const text = 'Code Matelot : ' + code + '\nLien : ' + resumeLink;
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast('📋 Lien copie dans le presse-papier', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      }catch(e){
+        // Fallback prompt
+        window.prompt('Copiez ce lien :', resumeLink);
+      }
+    });
+
+    // Bouton vers Notes
+    document.getElementById('qrModalNotes').addEventListener('click', async () => {
+      const text = buildNoteText(currentMatelot?.name || 'Matelot', code, currentMatelot?.teamName || '?', resumeLink);
+      try{
+        if(navigator.canShare){
+          const file = new File([text], 'Mission-Nautilus-' + code + '.txt', { type: 'text/plain' });
+          if(navigator.canShare({ files: [file] })){
+            await navigator.share({ files: [file], title: 'Code Matelot - Mission Nautilus', text });
+            return;
+          }
+        }
+        if(navigator.share){
+          await navigator.share({ title: 'Code Matelot - Mission Nautilus', text });
+          return;
+        }
+      }catch(err){
+        if(err && err.name === 'AbortError') return;
+      }
+      // Fallback : clipboard
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast('📋 Note copiee — colle-la dans Notes', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      }catch(e){
+        showToast('❌ Impossible d\'ouvrir Notes', 'linear-gradient(135deg,#9b1111,#b8322b)');
+      }
+    });
   }
 
   /**
@@ -3087,6 +3204,123 @@
     }
   }
   $('adminAddTeamBtn')?.addEventListener('click', adminAddTeam);
+
+  /* =====================================================================
+     PWA - Installation + bouton d'installation + ouverture du recap
+     ===================================================================== */
+  let _deferredInstallPrompt = null;
+  let _pwaInstalled = false;
+
+  // Capture l'event beforeinstallprompt
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredInstallPrompt = e;
+    const btn = $('installPwaBtn');
+    if(btn) btn.style.display = 'inline-flex';
+  });
+
+  // Detecte si l'app est deja installee
+  window.addEventListener('appinstalled', () => {
+    _pwaInstalled = true;
+    _deferredInstallPrompt = null;
+    const btn = $('installPwaBtn');
+    if(btn){
+      btn.classList.add('installed');
+      btn.innerHTML = '✅ App installee';
+      setTimeout(() => { btn.style.display = 'none'; }, 4000);
+    }
+    showToast('✅ Mission Nautilus installee sur ton ecran d\'accueil', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+  });
+
+  // Si lance en mode standalone (deja installee) : cache le bouton
+  if(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true){
+    _pwaInstalled = true;
+    const btn = $('installPwaBtn');
+    if(btn) btn.style.display = 'none';
+  }
+
+  // Clic sur "Installer l'app"
+  $('installPwaBtn')?.addEventListener('click', async () => {
+    if(_pwaInstalled){
+      showToast('✅ App deja installee sur ton ecran', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      return;
+    }
+    if(!_deferredInstallPrompt){
+      // Pas de prompt dispo (iOS Safari, ou pas de critere PWA remplis)
+      showModalInstallInstructions();
+      return;
+    }
+    try{
+      _deferredInstallPrompt.prompt();
+      const choice = await _deferredInstallPrompt.userChoice;
+      if(choice.outcome === 'accepted'){
+        showToast('✅ Installation lancee...', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      }else{
+        showToast('❌ Installation annulee', 'linear-gradient(135deg,#9b1111,#b8322b)');
+      }
+    }catch(err){
+      console.warn('installPwa:', err);
+      showModalInstallInstructions();
+    }
+    _deferredInstallPrompt = null;
+  });
+
+  // Instructions manuelles pour iOS / navigateurs sans beforeinstallprompt
+  function showModalInstallInstructions(){
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const overlay = document.createElement('div');
+    overlay.className = 'qr-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:20px';
+    let body = '';
+    if(isIOS){
+      body =
+        '<div style="text-align:center;color:#fff;max-width:min(92vw,440px)">' +
+          '<div style="font-size:60px;margin-bottom:8px">📲</div>' +
+          '<h2 style="margin:0 0 12px;font-size:22px;color:#ffe2a0">Installe l\'app sur iPhone / iPad</h2>' +
+          '<ol style="text-align:left;line-height:1.7;font-size:15px;padding-left:20px">' +
+            '<li>Appuie sur le bouton <b>Partager</b> ' + (navigator.userAgent.includes('iPad') ? '' : '(en bas de Safari)') + ' <span style="background:#8ee7ff;color:#000;padding:1px 6px;border-radius:4px">⎙</span></li>' +
+            '<li>Selectionne <b>Sur l\'ecran d\'accueil</b> <span style="font-size:18px">➕</span></li>' +
+            '<li>Appuie sur <b>Ajouter</b> en haut a droite</li>' +
+          '</ol>' +
+          '<p style="margin-top:18px;font-size:13px;opacity:.75">Tu pourras ensuite lancer Mission Nautilus comme une vraie app, meme hors ligne.</p>' +
+          '<button type="button" id="closeInstallHelp" style="margin-top:18px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
+        '</div>';
+    }else{
+      body =
+        '<div style="text-align:center;color:#fff;max-width:min(92vw,440px)">' +
+          '<div style="font-size:60px;margin-bottom:8px">📲</div>' +
+          '<h2 style="margin:0 0 12px;font-size:22px;color:#ffe2a0">Installe l\'app sur ton telephone</h2>' +
+          '<p style="text-align:left;font-size:14px;line-height:1.6">' +
+            'Sur <b>Android (Chrome)</b> : menu ⋮ puis <b>Ajouter a l\'ecran d\'accueil</b>.<br>' +
+            'Sur <b>Samsung Internet</b> : menu ☰ puis <b>Ajouter a l\'accueil</b>.<br>' +
+            'Sur <b>iPhone / iPad</b> : voir les instructions iOS ci-dessous.' +
+          '</p>' +
+          '<button type="button" id="closeInstallHelp" style="margin-top:18px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
+        '</div>';
+    }
+    overlay.innerHTML = body;
+    overlay.addEventListener('click', (ev) => {
+      if(ev.target === overlay || ev.target.id === 'closeInstallHelp') document.body.removeChild(overlay);
+    });
+    document.body.appendChild(overlay);
+  }
+
+  // Ouvre la page recap dans un nouvel onglet
+  $('openRecapBtn')?.addEventListener('click', () => {
+    const w = window.open('recap.html', '_blank', 'noopener');
+    if(!w) showToast('Pop-up bloquee : autorise les pop-ups pour ce site', 'linear-gradient(135deg,#9b1111,#b8322b)');
+  });
+
+  // Enregistrement du service worker (PWA)
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then((reg) => {
+        console.log('[PWA] Service worker enregistre :', reg.scope);
+      }).catch((err) => {
+        console.warn('[PWA] Echec enregistrement service worker :', err);
+      });
+    });
+  }
 
   /* Raccourci secret : Ctrl+Alt+M pour ouvrir/fermer */
   document.addEventListener('keydown', e => {

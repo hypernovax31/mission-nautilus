@@ -1,0 +1,28 @@
+{
+  "name": "Mission Nautilus",
+  "short_name": "Nautilus",
+  "description": "Mission Nautilus - 20 000 lieues sous les mers (Fnac Labege)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020812",
+  "theme_color": "#f5b027",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "lang": "fr",
+  "dir": "ltr"
+}

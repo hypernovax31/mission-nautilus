@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Nautilus — Récapitulatif</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f5b027">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="assets/icon.svg">
+  <style>
+    :root{
+      --fnac:#f5b027;
+      --bg:#020812;
+      --card:#0f1a2a;
+      --line:#1e3148;
+      --cyan:#8ee7ff;
+      --text:#e9f7ff;
+      --muted:#7d92a8;
+      --bad:#ff7b72;
+      --good:#5be5a4;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;line-height:1.55;min-height:100vh}
+    body{background:
+      radial-gradient(circle at 20% 10%,rgba(142,231,255,.12),transparent 32%),
+      radial-gradient(circle at 80% 90%,rgba(245,176,39,.10),transparent 28%),
+      linear-gradient(180deg,#020812 0%,#061524 60%,#03111f 100%)}
+    .wrap{max-width:780px;margin:0 auto;padding:24px 18px 60px}
+    h1{font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;font-size:clamp(40px,8vw,72px);margin:0 0 6px;color:#fff;letter-spacing:.01em;text-transform:uppercase;text-shadow:3px 3px 0 #000,0 0 18px rgba(245,176,39,.3)}
+    .kicker{display:inline-block;background:rgba(245,176,39,.15);border:1px solid rgba(245,176,39,.5);color:#ffe2a0;padding:6px 12px;border-radius:999px;font-weight:900;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+    .sub{color:var(--cyan);font-size:15px;margin:0 0 22px}
+    .card{background:rgba(15,26,42,.85);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:16px;backdrop-filter:blur(6px)}
+    .card h2{margin:0 0 12px;color:var(--fnac);font-size:20px;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+    .card h2 .ico{font-size:22px}
+    .lead{color:var(--text);font-size:15px;margin:0 0 10px}
+    .muted{color:var(--muted);font-size:13px}
+    ul{margin:8px 0 0;padding-left:20px}
+    li{margin:6px 0}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:560px){.grid-2{grid-template-columns:1fr}}
+    .pill{display:inline-block;background:rgba(142,231,255,.10);color:var(--cyan);border:1px solid rgba(142,231,255,.32);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:900;margin:2px 4px 2px 0}
+    .pill.warn{background:rgba(255,75,62,.12);color:var(--bad);border-color:rgba(255,75,62,.45)}
+    .pill.ok{background:rgba(91,229,164,.12);color:var(--good);border-color:rgba(91,229,164,.45)}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .btn{appearance:none;border:0;border-radius:14px;padding:12px 18px;font:inherit;font-weight:900;cursor:pointer;font-size:14px;letter-spacing:.02em;min-height:48px;display:inline-flex;align-items:center;gap:6px}
+    .btn.primary{background:var(--fnac);color:#111;box-shadow:0 10px 20px rgba(245,176,39,.22)}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.25)}
+    .btn.notes{background:linear-gradient(135deg,#075c39,#0a8a5a);color:#fff;box-shadow:0 10px 20px rgba(7,92,57,.32)}
+    .btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .back{position:fixed;top:14px;left:14px;z-index:10;background:rgba(0,0,0,.42);color:#fff;border:1px solid rgba(245,176,39,.45);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+    .note{background:#fff;color:#111;border-radius:14px;padding:18px;font-family:Consolas,monospace;font-size:13px;white-space:pre-wrap;line-height:1.6;border:2px dashed #cbd7df}
+    .note h3{margin:0 0 8px;font-family:Arial,sans-serif;color:#9b1111;font-size:16px}
+    .qr-box{text-align:center;padding:20px}
+    .qr-box img{max-width:min(70vw,240px);height:auto;display:block;margin:0 auto 12px;border:6px solid #fff;border-radius:14px;box-shadow:0 0 30px rgba(245,176,39,.35)}
+    footer{text-align:center;padding:30px 14px;color:var(--muted);font-size:12px}
+    @media print{
+      body{background:#fff;color:#111}
+      .back,.actions,.no-print{display:none !important}
+      .card{background:#fff;border:1px solid #ccc;color:#111;page-break-inside:avoid}
+      .card h2{color:#9b1111}
+      .muted{color:#555}
+      .note{color:#111;border:1px solid #999}
+    }
+  </style>
+</head>
+<body>
+<a class="back" href="index.html">← Retour</a>
+<div class="wrap">
+  <span class="kicker">📋 Récapitulatif complet</span>
+  <h1>Mission Nautilus</h1>
+  <p class="sub">Toutes les infos du grand jeu en un seul endroit — à garder à portée de main.</p>
+
+  <div class="actions no-print" style="margin-bottom:18px">
+    <button class="btn primary" id="btnInstall">📲 Installer l'app sur mon écran</button>
+    <button class="btn notes" id="btnNotes">📝 Envoyer vers Notes</button>
+    <button class="btn ghost" id="btnPrint">🖨 Imprimer / PDF</button>
+    <button class="btn ghost" id="btnCopy">📋 Copier le récap</button>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">🎯</span> Le pitch</h2>
+    <p class="lead">Des transmissions ont refait surface à la <b>Fnac Labège</b>. Rejoins un équipage, explore les rayons, décrypte les mini-jeux, scanne les QR cachés, et fais remonter le Nautilus avant que l'oxygène ne manque.</p>
+    <p class="muted">5 équipes (CAPITAINE, SOUSMARIN, DOCTEUR, HARPON, TENTACULE) nommées d'après les personnages des <i>20 000 lieues sous les mers</i> de Jules Verne (Nemo, Nautilus, Aronnax, Ned Land, Calamar).</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">⚓</span> Comment embarquer</h2>
+    <ol>
+      <li>Va sur la page <b>Embarquement Matelot</b>.</li>
+      <li>Entre ton <b>nom</b> + <b>service</b>.</li>
+      <li>Tu reçois un <b>Code Matelot</b> <b>personnel</b> et un <b>QR code</b>.</li>
+      <li>Note le code / scanne le QR / <b>envoie-le dans Notes</b> de ton téléphone.</li>
+    </ol>
+    <p class="muted">Le code est à usage unique : il ne te sera plus jamais réaffiché. Garde-le précieusement.</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">🔁</span> Comment reprendre la mission</h2>
+    <ol>
+      <li>Reviens sur la page Mission Nautilus.</li>
+      <li>Section <b>Reprendre ta mission</b> → entre ton Code Matelot.</li>
+      <li>Tu rejoins ton équipe, là où tu t'étais arrêté(e).</li>
+    </ol>
+    <p class="muted">Si tu as sauvegardé le QR dans Notes, scannable-le depuis l'appareil photo de n'importe quel téléphone : il pré-remplit ton code et te ramène direct à la mission.</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">🎮</span> Les paliers</h2>
+    <p class="lead">7 paliers + un palier final. Chaque palier est un mini-jeu chronométré. Une fois réussi, il révèle un mot de passe pour le QR suivant.</p>
+    <div>
+      <span class="pill">Palier 1 — Morse</span>
+      <span class="pill">Palier 2</span>
+      <span class="pill">Palier 3</span>
+      <span class="pill">Palier 4</span>
+      <span class="pill">Palier 5</span>
+      <span class="pill">Palier 6</span>
+      <span class="pill">Palier 7</span>
+      <span class="pill warn">Palier final</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">⏱️</span> Règles d'échec (verrouillage)</h2>
+    <p class="lead">À chaque échec de mini-jeu, ton équipe est bloquée temporairement :</p>
+    <div>
+      <span class="pill warn">1er échec : 2h</span>
+      <span class="pill warn">2e : 4h</span>
+      <span class="pill warn">3e : 8h</span>
+      <span class="pill warn">4e : 16h</span>
+      <span class="pill warn">5e et + : 24h</span>
+    </div>
+    <p class="muted" style="margin-top:10px">Plus vous échouez, plus le Nautilus met de temps à remonter.</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">💨</span> Oxygène</h2>
+    <p class="lead">Toute l'équipe partage la même réserve d'O₂. Une fois la mission lancée, le compteur tourne. Quand il atteint zéro, c'est fini.</p>
+    <p class="muted">Le compteur s'affiche en haut de la page principale. Reste dessus.</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">📍</span> Cachette des QR</h2>
+    <p class="lead">Tous les QR du jeu sont cachés au <b>même endroit physique</b> dans le magasin :</p>
+    <p class="lead" style="background:rgba(245,176,39,.15);border-left:5px solid var(--fnac);padding:12px 14px;border-radius:10px;font-weight:900">📍 Direction la borne d'arcade au fond du magasin, derrière l'écran de démonstration.</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">📱</span> Astuce : installer l'app</h2>
+    <p class="lead">Installe Mission Nautilus sur ton écran d'accueil : tu pourras y accéder comme une vraie appli, même hors ligne.</p>
+    <p class="muted"><b>iPhone/iPad :</b> bouton <b>Partager</b> ⎙ → <b>Sur l'écran d'accueil</b>.<br><b>Android :</b> menu ⋮ → <b>Ajouter à l'écran d'accueil</b>.</p>
+  </div>
+
+  <div class="card qr-box" id="qrSection" style="display:none">
+    <h2><span class="ico">📷</span> QR de la page</h2>
+    <p class="muted">Scanne ce QR depuis l'appareil photo d'un autre téléphone pour ouvrir cette page :</p>
+    <img id="qrImg" alt="QR de la page récap" />
+    <p class="muted" style="margin-top:10px;font-family:Consolas,monospace;font-size:12px" id="pageUrl"></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">📝</span> Note prête à copier</h2>
+    <p class="muted">Ce bloc contient toutes les infos essentielles. Copie-le dans l'app Notes de ton téléphone pour l'avoir toujours avec toi.</p>
+    <div class="note" id="noteBlock">MISSION NAUTILUS
+=================
+Équipage : rejoindre sur la page Embarquement
+Code Matelot : __________ (à remplir à l'inscription)
+Lien de reprise : <span id="noteLink"></span>
+
+Cachette des QR : borne d'arcade au fond du magasin, derrière l'écran de démonstration.
+
+Règles d'échec :
+- 1er : 2h
+- 2e : 4h
+- 3e : 8h
+- 4e : 16h
+- 5e et + : 24h
+
+Oxygène : partagé par toute l'équipe. Une fois lancé, le compteur tourne.
+
+Astuce : installe l'app sur ton écran d'accueil pour l'avoir toujours avec toi (même hors ligne).</div>
+  </div>
+
+  <footer>© Fnac Labège — Mission Nautilus</footer>
+</div>
+
+<script type="module">
+  const pageUrl = location.origin + location.pathname.replace(/recap\.html$/, 'index.html');
+
+  // Injecte l'URL dans la note
+  const noteLink = document.getElementById('noteLink');
+  if(noteLink) noteLink.textContent = pageUrl;
+
+  // QR de la page (utilise Google Charts API)
+  const qrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=' + encodeURIComponent(pageUrl) + '&choe=UTF-8';
+  const qrSection = document.getElementById('qrSection');
+  if(qrSection){
+    qrSection.style.display = 'block';
+    document.getElementById('qrImg').src = qrUrl;
+    document.getElementById('pageUrl').textContent = pageUrl;
+  }
+
+  const noteText = document.getElementById('noteBlock').textContent;
+
+  // Bouton installer
+  let _deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredInstallPrompt = e;
+  });
+  document.getElementById('btnInstall').addEventListener('click', async () => {
+    if(_deferredInstallPrompt){
+      _deferredInstallPrompt.prompt();
+      const choice = await _deferredInstallPrompt.userChoice;
+      if(choice.outcome === 'accepted'){
+        alert('✅ Installation lancée');
+      }
+      _deferredInstallPrompt = null;
+    }else{
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      const msg = isIOS
+        ? 'Sur iPhone/iPad : appuie sur le bouton "Partager" ⎙ puis "Sur l\'écran d\'accueil".'
+        : 'Sur Android : menu ⋮ puis "Ajouter à l\'écran d\'accueil".';
+      alert('📲 Installation manuelle :\n\n' + msg);
+    }
+  });
+
+  // Bouton Notes (Web Share API ou clipboard fallback)
+  document.getElementById('btnNotes').addEventListener('click', async () => {
+    const fileName = 'Mission-Nautilus-recap.txt';
+    try{
+      if(navigator.canShare){
+        const file = new File([noteText], fileName, { type: 'text/plain' });
+        if(navigator.canShare({ files: [file] })){
+          await navigator.share({ files: [file], title: 'Mission Nautilus — Récap', text: noteText });
+          return;
+        }
+      }
+      if(navigator.share){
+        await navigator.share({ title: 'Mission Nautilus — Récap', text: noteText });
+        return;
+      }
+    }catch(err){
+      if(err && err.name === 'AbortError') return;
+    }
+    // Fallback : clipboard
+    try{
+      await navigator.clipboard.writeText(noteText);
+      alert('📋 Récap copié dans le presse-papier — colle-le dans Notes.');
+    }catch(e){
+      const blob = new Blob([noteText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  });
+
+  // Bouton imprimer
+  document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+  // Bouton copier
+  document.getElementById('btnCopy').addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(noteText);
+      const btn = document.getElementById('btnCopy');
+      const orig = btn.textContent;
+      btn.textContent = '✅ Copié !';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    }catch(e){
+      alert('Impossible de copier. Sélectionne manuellement le texte.');
+    }
+  });
+</script>
+</body>
+</html>
