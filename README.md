@@ -18,7 +18,21 @@ nautilus-core.js        ← Module ES partagé (Firebase, audio, helpers)
 …                       ← Autres paliers selon progression
 assets/                 ← Audio ambiance + fond d'écran
 firebase.json           ← Config hosting (rewrite vers index.html)
+build.sh                ← Génère palier1.html standalone (CSS+JS+HTML)
 ```
+
+## Build standalone
+Pour produire un palier en fichier unique (CSS+JS+HTML inline, sans
+dépendance externe) — utile si tu veux héberger ailleurs que sur Firebase :
+
+```bash
+./build.sh
+# Génère palier1.html (73KB) prêt à déployer n'importe où
+```
+
+Le bundle est régénéré à chaque exécution à partir des sources
+(`161129518.html` + `nautilus-core.js`). Si tu modifies le code, relance
+le build avant de déployer le standalone.
 
 ## Codage des URL palier
 Pour éviter les URLs en clair, chaque palier a un identifiant numérique dérivé de "PALIER" :
