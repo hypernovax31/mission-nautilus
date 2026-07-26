@@ -740,6 +740,86 @@
     }
     /* Animation du sweep pour qu'il soit bien visible */
     .radar-sweep-big{filter:drop-shadow(0 0 6px rgba(91,255,156,.7))}
+    /* ==== MODALE INSTALL CROSS-PLATFORM ==== */
+    .install-modal{align-items:flex-start;padding-top:30px}
+    .im-container{position:relative;background:linear-gradient(135deg,#0a1a2a,#061524);border:1px solid rgba(245,176,39,.45);border-radius:20px;padding:24px;max-width:min(94vw,540px);width:100%;color:#fff;box-shadow:0 0 60px rgba(245,176,39,.18),0 24px 48px rgba(0,0,0,.6);max-height:calc(100vh - 60px);overflow-y:auto}
+    .im-close{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);font-size:14px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+    .im-close:hover{background:rgba(255,75,62,.42);color:#fff}
+    .im-title{margin:0 0 16px;font-size:19px;color:#ffe2a0;letter-spacing:.02em}
+    .im-os{color:#8ee7ff;font-weight:900}
+    .im-body{margin-bottom:18px}
+    .im-steps{text-align:left;line-height:1.6;font-size:14px}
+    .im-step{margin:8px 0;display:flex;gap:10px;align-items:flex-start}
+    .im-num{flex:0 0 28px;height:28px;border-radius:50%;background:rgba(245,176,39,.18);color:#ffe2a0;border:1px solid rgba(245,176,39,.5);display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:13px;margin-top:1px}
+    .im-step b{color:#ffe2a0}
+    .im-em{display:inline-block;background:rgba(142,231,255,.18);border:1px solid rgba(142,231,255,.4);border-radius:6px;padding:0 6px;margin:0 2px}
+    .im-tip{background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.32);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;margin-top:12px;color:#baffd2}
+    .im-tip code{background:rgba(0,0,0,.4);padding:1px 6px;border-radius:4px;font-size:11px}
+    .im-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+    .im-dl-btn{background:linear-gradient(135deg,#f5b027,#c8861b);color:#111;border:0;border-radius:12px;padding:12px 18px;font-weight:1000;font-size:13px;cursor:pointer;letter-spacing:.02em;min-height:44px;box-shadow:0 8px 18px rgba(245,176,39,.25);transition:.15s}
+    .im-dl-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .im-divider{margin:18px 0 12px;text-align:center;position:relative;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:900}
+    .im-divider:before,.im-divider:after{content:"";position:absolute;top:50%;width:35%;height:1px;background:rgba(255,255,255,.12)}
+    .im-divider:before{left:0}
+    .im-divider:after{right:10%}
+    .im-divider span{background:rgba(10,26,42,.95);padding:0 10px;position:relative;z-index:1}
+    .im-share-zone{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+    .im-share-grid{display:flex;flex-direction:column;gap:8px;flex:1;min-width:160px}
+    .im-share-btn{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:11px 14px;font-weight:900;font-size:13px;cursor:pointer;transition:.15s;text-align:left}
+    .im-share-btn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3)}
+    .im-share-ico{font-size:20px;flex:0 0 24px;text-align:center}
+    .im-qr{text-align:center;flex:0 0 auto}
+    .im-qr img{display:block;margin:0 auto;box-shadow:0 0 18px rgba(245,176,39,.25)}
+    .im-qr-label{font-size:11px;color:var(--muted);margin-top:6px;max-width:140px;line-height:1.35}
+    .im-url{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;margin-top:14px;word-break:break-all;font-family:Consolas,monospace;font-size:11px;color:#baffd2;text-align:center}
+    /* Illustrations iOS / Android / macOS / Windows / Linux */
+    .im-icos{margin-bottom:16px;display:flex;flex-direction:column;align-items:center;gap:6px}
+    .im-safari{width:min(280px,100%);background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,.4);border:2px solid rgba(0,0,0,.2)}
+    .im-safari-bar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#f2f2f7;border-bottom:1px solid #d1d1d6}
+    .im-url{flex:1;background:#fff;border-radius:8px;padding:4px 8px;font-size:11px;color:#000;font-family:-apple-system,sans-serif;text-align:center}
+    .im-share-btn{width:28px;height:28px;border-radius:6px;background:rgba(0,122,255,.12);color:#007aff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex:0 0 28px}
+    .im-share-btn.highlighted{background:#007aff;color:#fff;box-shadow:0 0 0 3px rgba(0,122,255,.3);animation:imPulse 1.2s ease-in-out infinite}
+    .im-safari-content{height:60px;background:linear-gradient(135deg,#0a2a40,#061524);position:relative}
+    .im-page-preview{position:absolute;left:10px;right:10px;top:10px;bottom:10px;background:rgba(245,176,39,.15);border-radius:6px;border:1px solid rgba(245,176,39,.3)}
+    .im-arrow-down{font-size:24px;color:#ffe2a0;font-weight:900;line-height:1;margin:4px 0;animation:imBounce 1.4s ease-in-out infinite}
+    .im-share-sheet{width:min(280px,100%);background:rgba(255,255,255,.95);border-radius:14px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);color:#000}
+    .im-sheet-title{font-size:13px;font-weight:900;text-align:center;padding-bottom:8px;border-bottom:1px solid #e5e5ea;margin-bottom:10px;color:#000}
+    .im-sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .im-sheet-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:10px;font-size:11px;text-align:center;background:transparent;color:#000;font-weight:600}
+    .im-sheet-item.highlighted{background:rgba(0,122,255,.15);border:2px solid #007aff;box-shadow:0 0 0 3px rgba(0,122,255,.3);animation:imPulse 1.2s ease-in-out infinite}
+    .im-sheet-icon{width:38px;height:38px;background:#e5e5ea;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px}
+    .im-sheet-item.highlighted .im-sheet-icon{background:#007aff;color:#fff}
+    .im-macbar{width:min(280px,100%);background:linear-gradient(180deg,#e8e8ed,#d8d8dd);border-radius:8px 8px 0 0;padding:6px 10px;display:flex;align-items:center;gap:8px;border:1px solid #b8b8bd;border-bottom:none}
+    .im-macdot{width:11px;height:11px;border-radius:50%}
+    .im-macdot-r{background:#ff5f57}
+    .im-macdot-y{background:#ffbd2e}
+    .im-macdot-g{background:#28ca41}
+    .im-macmenu{display:flex;gap:14px;font-size:12px;color:#000;font-weight:600;margin-left:10px}
+    .im-macmenu .highlighted{color:#000;font-weight:900}
+    .im-macmenu-open{width:min(280px,100%);background:rgba(40,40,45,.96);border:1px solid #5a5a5f;border-top:none;border-radius:0 0 8px 8px;padding:4px 0;box-shadow:0 8px 24px rgba(0,0,0,.5);color:#fff}
+    .im-macmenu-item{padding:6px 12px;font-size:12px;color:#fff}
+    .im-macmenu-item.highlighted{background:rgba(0,122,255,.7);animation:imPulse 1.2s ease-in-out infinite}
+    .im-androidbar{width:min(220px,100%);background:linear-gradient(180deg,#3c3c3c,#1c1c1c);border-radius:6px;padding:6px 10px;display:flex;align-items:center;justify-content:flex-end;height:32px}
+    .im-androidmenu{width:24px;height:24px;background:rgba(255,255,255,.08);color:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+    .im-androidmenu.highlighted{background:#0070d2;color:#fff;box-shadow:0 0 0 3px rgba(0,112,210,.4);animation:imPulse 1.2s ease-in-out infinite}
+    .im-androidmenu-open{width:min(220px,100%);background:rgba(40,40,45,.98);border:1px solid #5a5a5f;border-radius:8px;padding:4px 0;box-shadow:0 8px 24px rgba(0,0,0,.5);color:#fff;margin-top:2px}
+    .im-androidmenu-item{padding:8px 12px;font-size:12px;color:#fff}
+    .im-androidmenu-item.highlighted{background:rgba(0,112,210,.7);animation:imPulse 1.2s ease-in-out infinite}
+    .im-windowsbar{width:min(240px,100%);background:#1c1c1c;border-radius:6px 6px 0 0;padding:6px 10px;display:flex;align-items:center;gap:8px;height:32px}
+    .im-windowsbar-icon{width:18px;height:18px;background:#3c3c3c;border-radius:3px}
+    .im-windowsbar-icon.highlighted{background:#0078d4;color:#fff;box-shadow:0 0 0 3px rgba(0,120,212,.4);animation:imPulse 1.2s ease-in-out infinite;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px}
+    .im-winmenu-open{width:min(240px,100%);background:rgba(40,40,45,.98);border:1px solid #5a5a5f;border-radius:0 0 6px 6px;padding:4px 0;box-shadow:0 8px 24px rgba(0,0,0,.5);color:#fff;margin-top:2px}
+    .im-winmenu-item{padding:8px 12px;font-size:12px;color:#fff}
+    .im-winmenu-item.highlighted{background:rgba(0,120,212,.7);animation:imPulse 1.2s ease-in-out infinite}
+    .im-linuxbar{width:min(280px,100%);background:linear-gradient(180deg,#3c3c3c,#1c1c1c);border-radius:6px;padding:6px 12px;display:flex;align-items:center;gap:6px;height:32px}
+    .im-linuxdot{width:10px;height:10px;border-radius:50%;background:#5a5a5a}
+    .im-linuxdot:nth-child(1){background:#ff5f57}
+    .im-linuxdot:nth-child(2){background:#ffbd2e}
+    .im-linuxdot:nth-child(3){background:#28ca41}
+    .im-linuxurl{flex:1;background:rgba(0,0,0,.4);color:#aaa;font-size:11px;padding:2px 8px;border-radius:4px;margin-left:8px;font-family:monospace}
+    @keyframes imPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,122,255,0)}50%{box-shadow:0 0 0 6px rgba(0,122,255,.25)}}
+    @keyframes imBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
     .radar-stage.radar-collapsed .sonar-loader{padding:14px}
     .radar-stage.radar-collapsed .radar-screen-big{width:120px;height:120px;min-width:120px;flex-basis:120px}
     .radar-stage.radar-collapsed .radar-sweep-big{animation-duration:2s}
@@ -3444,95 +3524,275 @@
   });
 
   // Clic sur "Installer l'app"
+  // Strategie :
+  // 1) TOUJOURS ouvrir la modale d'instructions (cross-platform, fiable)
+  // 2) Si un prompt natif est dispo, le declencher en parallele (Android Chrome)
   $('installPwaBtn')?.addEventListener('click', async () => {
     if(_pwaInstalled){
       showToast('✅ App deja installee sur ton ecran', 'linear-gradient(135deg,#075c39,#0a8a5a)');
       return;
     }
-    if(!_deferredInstallPrompt){
-      // Pas de prompt dispo (iOS Safari, ou pas de critere PWA remplis)
-      showModalInstallInstructions();
-      return;
-    }
-    try{
-      _deferredInstallPrompt.prompt();
-      const choice = await _deferredInstallPrompt.userChoice;
-      if(choice.outcome === 'accepted'){
-        showToast('✅ Installation lancee...', 'linear-gradient(135deg,#075c39,#0a8a5a)');
-      }else{
-        showToast('❌ Installation annulee', 'linear-gradient(135deg,#9b1111,#b8322b)');
+    // Ouvre la modale en premier (toujours visible, fiable)
+    showModalInstallInstructions();
+    // En parallele : declenche le prompt natif Android si dispo
+    if(_deferredInstallPrompt){
+      try{
+        _deferredInstallPrompt.prompt();
+        const choice = await _deferredInstallPrompt.userChoice;
+        if(choice.outcome === 'accepted'){
+          showToast('✅ Installation lancee', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }
+        _deferredInstallPrompt = null;
+      }catch(err){
+        console.warn('installPwa:', err);
       }
-    }catch(err){
-      console.warn('installPwa:', err);
-      showModalInstallInstructions();
     }
-    _deferredInstallPrompt = null;
   });
 
-  // Instructions manuelles pour iOS / navigateurs sans beforeinstallprompt
+  /**
+   * Modale d'installation cross-platform.
+   * Propose une option adaptee a chaque systeme :
+   * - iPhone/iPad : etapes detaillees (bouton Partager)
+   * - macOS Safari : "Fichier > Ajouter au Dock"
+   * - Android Chrome : declenche le prompt natif si dispo
+   * - Android autre : instructions
+   * - Windows : telechargement d'un raccourci .url
+   * - Linux : telechargement d'un raccourci .desktop
+   * - Bouton "Partager" pour envoyer l'URL a un autre appareil
+   * - QR code de l'URL pour scan depuis un autre telephone
+   */
   function showModalInstallInstructions(){
-    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const ua = navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/.test(ua) && !window.MSStream;
+    const isMac = /Macintosh|Mac OS X/.test(ua) && !isIOS;
+    const isAndroid = /Android/i.test(ua);
+    const isWindows = /Windows/i.test(ua);
+    const isLinux = /Linux/i.test(ua) && !isAndroid;
+
+    // Detection iOS 26+ : la barre d'URL a change, l'icone Partager est en haut
+    const isIOS26 = /OS 2[6-9]/.test(ua) || /OS 3[0-9]/.test(ua);
+    const shareLocation = isIOS26
+      ? 'dans la <b>barre d\'adresse en haut</b>'
+      : 'en <b>bas de l\'ecran</b>';
+
+    const pageUrl = location.origin + location.pathname;
+
     const overlay = document.createElement('div');
-    overlay.className = 'qr-modal';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:20px';
-    let body = '';
+    overlay.className = 'qr-modal install-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:radial-gradient(circle at 50% 30%,rgba(5,30,48,.96),rgba(0,0,0,.98));display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
+
+    // Determine le contenu principal selon l'OS
+    let mainContent = '';
     if(isIOS){
-      // Detection iOS 26+ : la barre d'URL a change
-      // Sur iOS 26, l'icone Partager est dans la barre d'URL en haut (a cote de l'URL)
-      // Sur iOS 17/18, elle est en bas
-      // On utilise une regle qui couvre les 2 cas
-      const isIOS26 = /OS 2[6-9]/.test(navigator.userAgent) || /OS 3[0-9]/.test(navigator.userAgent);
-      const shareLocation = isIOS26 ? 'dans la <b>barre d\'adresse en haut</b>' : 'en <b>bas de l\'ecran</b>';
-      body =
-        '<div style="text-align:center;color:#fff;max-width:min(92vw,440px)">' +
-          '<div style="font-size:60px;margin-bottom:8px">📲</div>' +
-          '<h2 style="margin:0 0 12px;font-size:22px;color:#ffe2a0">Installe l\'app sur iPhone / iPad</h2>' +
-          '<p style="font-size:13px;opacity:.8;margin:0 0 14px">iOS ne permet pas l\'installation automatique : tu dois ajouter l\'app a ton ecran d\'accueil en 3 clics.</p>' +
-          '<ol style="text-align:left;line-height:1.7;font-size:15px;padding-left:20px;margin:0 0 14px">' +
-            '<li>Appuie sur le bouton <b>Partager</b> ' + shareLocation + ' de Safari.<br><span style="display:inline-block;margin-top:4px;background:#8ee7ff;color:#000;padding:2px 8px;border-radius:6px;font-size:18px">⎙</span> <span style="font-size:12px;opacity:.7;margin-left:6px">carre avec fleche vers le haut</span></li>' +
-            '<li>Dans le menu qui s\'ouvre, fais defiler et selectionne <b>Sur l\'ecran d\'accueil</b> <span style="font-size:18px">➕</span></li>' +
-            '<li>Appuie sur <b>Ajouter</b> en haut a droite.</li>' +
-          '</ol>' +
-          '<div style="background:rgba(142,231,255,.12);border:1px solid rgba(142,231,255,.32);border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.5;text-align:left;margin:14px 0">' +
-            '<b>💡 Astuce :</b> l\'app apparait ensuite sur ton ecran d\'accueil avec l\'icone Nautilus. Tu peux la lancer comme une vraie app, meme hors ligne.' +
-          '</div>' +
-          '<button type="button" id="closeInstallHelp" style="margin-top:14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
-        '</div>';
-    }else if(/Android/i.test(navigator.userAgent)){
-    }else if(/Android/i.test(navigator.userAgent)){
-      body =
-        '<div style="text-align:center;color:#fff;max-width:min(92vw,440px)">' +
-          '<div style="font-size:60px;margin-bottom:8px">📲</div>' +
-          '<h2 style="margin:0 0 12px;font-size:22px;color:#ffe2a0">Installe l\'app sur ton telephone</h2>' +
-          '<p style="text-align:left;font-size:14px;line-height:1.6">' +
-            'Sur <b>Chrome Android</b> : menu ⋮ puis <b>Ajouter a l\'ecran d\'accueil</b>.<br>' +
-            'Sur <b>Samsung Internet</b> : menu ☰ puis <b>Ajouter a l\'accueil</b>.' +
-          '</p>' +
-          '<p style="margin-top:14px;font-size:13px;opacity:.75">L\'app sera ensuite accessible comme une vraie application, meme hors ligne.</p>' +
-          '<button type="button" id="closeInstallHelp" style="margin-top:18px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
-        '</div>';
+      mainContent = `
+        <div class="im-icos">
+          <div class="im-safari">
+            <div class="im-safari-bar">
+              <div class="im-url">mission-nautilus</div>
+              <div class="im-share-btn highlighted">⎙</div>
+            </div>
+            <div class="im-safari-content">
+              <div class="im-page-preview"></div>
+            </div>
+          </div>
+          <div class="im-arrow-down">↓</div>
+          <div class="im-share-sheet">
+            <div class="im-sheet-title">Partager</div>
+            <div class="im-sheet-grid">
+              <div class="im-sheet-item"><div class="im-sheet-icon">💬</div><div>Messages</div></div>
+              <div class="im-sheet-item highlighted"><div class="im-sheet-icon">➕</div><div>Sur l'écran d'accueil</div></div>
+              <div class="im-sheet-item"><div class="im-sheet-icon">📧</div><div>Mail</div></div>
+              <div class="im-sheet-item"><div class="im-sheet-icon">📋</div><div>Copier</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="im-steps">
+          <div class="im-step"><span class="im-num">1</span> Dans Safari, appuie sur <b>⎙</b> ${shareLocation}.</div>
+          <div class="im-step"><span class="im-num">2</span> Sélectionne <b>Sur l'écran d'accueil</b> <span class="im-em">➕</span>.</div>
+          <div class="im-step"><span class="im-num">3</span> Appuie sur <b>Ajouter</b> en haut à droite.</div>
+        </div>`;
+    }else if(isMac){
+      mainContent = `
+        <div class="im-icos">
+          <div class="im-macbar">
+            <div class="im-macdot im-macdot-r"></div>
+            <div class="im-macdot im-macdot-y"></div>
+            <div class="im-macdot im-macdot-g"></div>
+            <div class="im-macmenu">
+              <span class="highlighted"><b>Fichier</b></span>
+              <span>Édition</span>
+              <span>Affichage</span>
+            </div>
+          </div>
+          <div class="im-macmenu-open">
+            <div class="im-macmenu-item highlighted">📌 Ajouter au Dock…</div>
+            <div class="im-macmenu-item">Nouvel onglet</div>
+            <div class="im-macmenu-item">Ouvrir un fichier…</div>
+          </div>
+        </div>
+        <div class="im-steps">
+          <div class="im-step"><span class="im-num">1</span> Ouvre le menu <b>Fichier</b> dans la barre de menu.</div>
+          <div class="im-step"><span class="im-num">2</span> Clique sur <b>Ajouter au Dock…</b>.</div>
+          <div class="im-step"><span class="im-num">3</span> L'icône Nautilus apparaît dans ton Dock.</div>
+        </div>`;
+    }else if(isAndroid){
+      mainContent = `
+        <div class="im-icos">
+          <div class="im-androidbar">
+            <div class="im-androidmenu highlighted">⋮</div>
+          </div>
+          <div class="im-androidmenu-open">
+            <div class="im-androidmenu-item highlighted">➕ Ajouter à l'écran d'accueil</div>
+            <div class="im-androidmenu-item">📤 Partager</div>
+            <div class="im-androidmenu-item">⭐ Favoris</div>
+          </div>
+        </div>
+        <div class="im-steps">
+          <div class="im-step"><span class="im-num">1</span> Sur <b>Chrome Android</b> : appuie sur le menu <b>⋮</b>.</div>
+          <div class="im-step"><span class="im-num">2</span> Choisis <b>Ajouter à l'écran d'accueil</b>.</div>
+          <div class="im-step"><span class="im-num">3</span> Confirme en appuyant sur <b>Ajouter</b>.</div>
+        </div>
+        <div class="im-tip">💡 Sur <b>Samsung Internet</b>, le menu est ☰ au lieu de ⋮.</div>`;
+    }else if(isWindows){
+      mainContent = `
+        <div class="im-steps">
+          <div class="im-step"><span class="im-num">1</span> Clique sur le menu <b>⋮</b> de Chrome (ou ⚙️ d'Edge).</div>
+          <div class="im-step"><span class="im-num">2</span> <b>Enregistrer et partager</b> → <b>Créer un raccourci…</b></div>
+          <div class="im-step"><span class="im-num">3</span> Coche <b>Ouvrir en tant que fenêtre</b> puis clique <b>Créer</b>.</div>
+        </div>
+        <div class="im-tip">💡 L'icône Nautilus apparaît dans le <b>menu Démarrer</b> et le <b>bureau</b>.</div>
+        <div class="im-actions">
+          <button class="im-dl-btn" id="dlWindowsShortcut">⬇️ Télécharger un raccourci Windows (.url)</button>
+        </div>`;
+    }else if(isLinux){
+      mainContent = `
+        <div class="im-steps">
+          <div class="im-step"><span class="im-num">1</span> Ouvre le menu <b>⋮</b> de Chrome/Firefox.</div>
+          <div class="im-step"><span class="im-num">2</span> <b>Plus d'outils</b> → <b>Créer un raccourci…</b></div>
+          <div class="im-step"><span class="im-num">3</span> Coche <b>Ouvrir en tant que fenêtre</b> puis <b>Créer</b>.</div>
+        </div>
+        <div class="im-tip">💡 Tu peux aussi télécharger un fichier <code>.desktop</code> à placer dans ton dossier d'applications.</div>
+        <div class="im-actions">
+          <button class="im-dl-btn" id="dlLinuxShortcut">⬇️ Télécharger un raccourci Linux (.desktop)</button>
+        </div>`;
     }else{
-      // Desktop
-      body =
-        '<div style="text-align:center;color:#fff;max-width:min(92vw,440px)">' +
-          '<div style="font-size:60px;margin-bottom:8px">💻</div>' +
-          '<h2 style="margin:0 0 12px;font-size:22px;color:#ffe2a0">Installe l\'app sur ton mobile</h2>' +
-          '<p style="text-align:left;font-size:14px;line-height:1.6">' +
-            'L\'installation PWA n\'est disponible que sur <b>mobile</b> (Android ou iOS).' +
-          '</p>' +
-          '<p style="text-align:left;font-size:14px;line-height:1.6;margin-top:10px">' +
-            '👉 <b>Ouvre cette page sur ton telephone</b> pour installer l\'app :<br>' +
-            '<code style="display:inline-block;margin-top:8px;padding:8px 12px;background:rgba(0,0,0,.4);border-radius:8px;font-family:Consolas,monospace;font-size:12px;word-break:break-all">' + esc(location.href) + '</code>' +
-          '</p>' +
-          '<p style="margin-top:14px;font-size:13px;opacity:.75">Sur desktop, tu peux aussi ajouter cette page a tes favoris (Ctrl+D / Cmd+D).</p>' +
-          '<button type="button" id="closeInstallHelp" style="margin-top:18px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer">Compris</button>' +
-        '</div>';
+      mainContent = `
+        <div class="im-steps">
+          <div class="im-step">👉 Ouvre cette page sur ton <b>téléphone</b> pour installer l'app.</div>
+        </div>
+        <div class="im-tip">L'installation PWA se fait sur mobile. Sur desktop, tu peux ajouter cette page à tes favoris (Ctrl+D / Cmd+D).</div>`;
     }
-    overlay.innerHTML = body;
+
+    // QR code de l'URL
+    const qrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=' + encodeURIComponent(pageUrl) + '&choe=UTF-8';
+
+    const title = isIOS ? 'iPhone / iPad'
+                : isMac ? 'macOS Safari'
+                : isAndroid ? 'Android'
+                : isWindows ? 'Windows'
+                : isLinux ? 'Linux'
+                : 'Autre appareil';
+
+    const htmlContent = `
+      <div class="im-container">
+        <button class="im-close" type="button" aria-label="Fermer">✕</button>
+        <h2 class="im-title">📲 Installer l'app — <span class="im-os">${title}</span></h2>
+        <div class="im-body">${mainContent}</div>
+
+        <div class="im-divider"><span>OU envoyer vers un autre appareil</span></div>
+
+        <div class="im-share-zone">
+          <div class="im-share-grid">
+            <button class="im-share-btn" id="imShare">
+              <span class="im-share-ico">📤</span>
+              <span>Partager</span>
+            </button>
+            <button class="im-share-btn" id="imCopy">
+              <span class="im-share-ico">📋</span>
+              <span>Copier le lien</span>
+            </button>
+          </div>
+          <div class="im-qr">
+            <img src="${qrUrl}" alt="QR Code" style="width:120px;height:120px;background:#fff;padding:6px;border-radius:10px">
+            <div class="im-qr-label">Scanne avec ton téléphone</div>
+          </div>
+        </div>
+
+        <div class="im-url">
+          <code>${esc(pageUrl)}</code>
+        </div>
+      </div>
+    `;
+
+    overlay.innerHTML = htmlContent;
+
     overlay.addEventListener('click', (ev) => {
-      if(ev.target === overlay || ev.target.id === 'closeInstallHelp') document.body.removeChild(overlay);
+      if(ev.target === overlay || ev.target.classList.contains('im-close')){
+        document.body.removeChild(overlay);
+      }
     });
+
     document.body.appendChild(overlay);
+
+    // Handlers
+    overlay.querySelector('#imShare')?.addEventListener('click', async () => {
+      try{
+        if(navigator.share){
+          await navigator.share({
+            title: 'Mission Nautilus',
+            text: 'Installe Mission Nautilus sur ton telephone',
+            url: pageUrl
+          });
+        }else{
+          await navigator.clipboard.writeText(pageUrl);
+          showToast('📋 Lien copie dans le presse-papier', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }
+      }catch(err){
+        if(err && err.name === 'AbortError') return;
+        try{
+          await navigator.clipboard.writeText(pageUrl);
+          showToast('📋 Lien copie', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }catch(e){}
+      }
+    });
+
+    overlay.querySelector('#imCopy')?.addEventListener('click', async () => {
+      try{
+        await navigator.clipboard.writeText(pageUrl);
+        showToast('📋 Lien copie', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      }catch(e){
+        window.prompt('Copiez ce lien :', pageUrl);
+      }
+    });
+
+    // Raccourci Windows (.url)
+    overlay.querySelector('#dlWindowsShortcut')?.addEventListener('click', () => {
+      const content = '[InternetShortcut]\nURL=' + pageUrl + '\nIconIndex=0\nIconFile=' + location.origin + location.pathname.replace(/[^/]*$/, '') + 'assets/icon-192.png\n';
+      downloadFile('Mission Nautilus.url', content, 'text/plain');
+      showToast('✅ Raccourci Windows telecharge ! Double-clique pour installer.', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+    });
+
+    // Raccourci Linux (.desktop)
+    overlay.querySelector('#dlLinuxShortcut')?.addEventListener('click', () => {
+      const content = '[Desktop Entry]\nVersion=1.0\nName=Mission Nautilus\nComment=20 000 lieues sous les mers (Fnac Labege)\nExec=xdg-open "' + pageUrl + '"\nIcon=' + location.origin + location.pathname.replace(/[^/]*$/, '') + 'assets/icon-512.png\nTerminal=false\nType=Application\nCategories=Game;\nStartupWMClass=Mission-Nautilus\n';
+      downloadFile('mission-nautilus.desktop', content, 'application/x-desktop');
+      showToast('✅ Raccourci Linux telecharge ! Place-le dans ~/.local/share/applications/', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+    });
+  }
+
+  /**
+   * Telecharge un fichier cote client.
+   */
+  function downloadFile(filename, content, mimeType){
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
   }
 
   // (recap.html supprime)
