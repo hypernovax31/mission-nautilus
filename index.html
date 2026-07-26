@@ -682,6 +682,16 @@
       min-height:0;padding:14px 16px;margin-bottom:12px;
       transition:min-height .8s ease,padding .8s ease,margin .8s ease,opacity .6s ease;
     }
+    /* Quand le radar est en mode "veille" (pas d'equipe avec membres) : pulsation douce */
+    .radar-stage.radar-standby{
+      animation:radarStandbyPulse 3.2s ease-in-out infinite;
+    }
+    @keyframes radarStandbyPulse{
+      0%,100%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18),0 0 0 0 rgba(91,255,156,0)}
+      50%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18),0 0 0 8px rgba(91,255,156,.10)}
+    }
+    /* Animation du sweep pour qu'il soit bien visible */
+    .radar-sweep-big{filter:drop-shadow(0 0 6px rgba(91,255,156,.7))}
     .radar-stage.radar-collapsed .sonar-loader{padding:14px}
     .radar-stage.radar-collapsed .radar-screen-big{width:120px;height:120px;min-width:120px;flex-basis:120px}
     .radar-stage.radar-collapsed .radar-sweep-big{animation-duration:2s}
@@ -750,6 +760,7 @@
       filter:drop-shadow(0 0 18px rgba(91,255,156,.45));
       animation:teamGlint 1.1s ease;
     }
+    .team-reveal.out{opacity:0;transform:translateY(-12px) scale(.96);transition:opacity .45s ease,transform .45s ease}
     .team-reveal.empty-team{opacity:1;transform:none;animation:none;filter:none;display:none}
     @keyframes teamGlint{
       0%{filter:drop-shadow(0 0 0 rgba(91,255,156,0)) brightness(1.6)}
@@ -855,7 +866,7 @@
   <section class="card" id="equipagesEnMer">
     <h2>🌊 ÉQUIPAGES EN PLONGEON</h2>
     <div class="body" id="equipagesBody">
-      <div id="radarStage" class="radar-stage">
+      <div id="radarStage" class="radar-stage radar-standby">
         <div class="sonar-loader radar-big">
           <div class="sonar-screen radar-screen-big">
             <div class="radar-grid"></div>
@@ -1206,30 +1217,54 @@
   }
 
   /**
-   * Charge les equipes et anime leur apparition.
-   * Phase 1 (0 - RADAR_DURATION_MS) : balayage radar (deja affiche dans le HTML).
-   * Phase 2 : reduction du radar + revelation progressive des equipes.
-   * Regle : une equipe n'apparait que si elle a au moins 1 membre.
+   * Charge les equipes et gere leur apparition.
+   * COMPORTEMENT :
+   * - Le radar vert tourne EN CONTINU tant qu'aucune equipe n'a de membre.
+   * - Des qu'une equipe a >= 1 matelot : revelation de la carte avec animation.
+   * - Si plusieurs equipes ont des membres, elles apparaissent en cascade.
+   * - Une equipe qui perd tous ses membres disparait apres 1.5s (animation inverse).
+   * - Re-render live : a chaque modification (inscription, suppression, etc.)
+   *   on synchronise sans relancer l'animation radar.
    */
-  const RADAR_DURATION_MS = 2500;
-  const REVEAL_STAGGER_MS = 380;
-  let _radarAnimRunning = false;
+  const REVEAL_STAGGER_MS = 420;
+  const REVEAL_INITIAL_DELAY = 250; // delai avant la 1ere carte (apres 1 tour de radar)
+  let _radarStatusInterval = null;
+  let _knownTeams = {}; // teamCode -> { hasMembers: bool, revealedAt: number }
 
   function setRadarStatus(msg){
     const el = $('radarStatus');
     if(el) el.textContent = msg;
   }
 
-  function collapseRadar(){
-    const stage = $('radarStage');
-    if(stage){
-      stage.classList.add('radar-collapsed');
+  function startRadarStatusLoop(){
+    if(_radarStatusInterval) return; // deja en cours
+    const messages = [
+      'Balayage des fonds marins...',
+      'Detection des signaux en surface...',
+      'Identification des coques...',
+      'Reception des emissions des matelots...',
+      'Compilation des donnees...',
+      'Aucun signal detecte...',
+      'En attente de matelots...'
+    ];
+    let i = 0;
+    _radarStatusInterval = setInterval(() => {
+      i = (i + 1) % messages.length;
+      setRadarStatus(messages[i]);
+    }, 1100);
+  }
+
+  function stopRadarStatusLoop(){
+    if(_radarStatusInterval){
+      clearInterval(_radarStatusInterval);
+      _radarStatusInterval = null;
     }
   }
 
   function fadeOutRadar(){
     const stage = $('radarStage');
     if(!stage) return Promise.resolve();
+    stopRadarStatusLoop();
     return new Promise(resolve => {
       stage.classList.add('radar-fading');
       setTimeout(() => { stage.remove(); resolve(); }, 600);
@@ -1237,7 +1272,7 @@
   }
 
   /**
-   * Genere le HTML d'une carte equipe (utilise apres l'animation).
+   * Genere le HTML d'une carte equipe.
    */
   function teamCardHtml(t){
     const members=t.members||[];
@@ -1261,13 +1296,106 @@
     </div>`;
   }
 
+  /**
+   * Synchronise l'affichage des equipes avec l'etat Firestore.
+   * - Cartes existantes : conserve (si toujours presente)
+   * - Nouvelles equipes avec membres : ajout avec animation
+   * - Equipes qui n'ont plus de membres : retire apres animation inverse
+   * - Radar : reste affiche en permanence tant qu'aucune equipe n'a de membres
+   */
+  function syncTeamsUI(teams){
+    const box = $('teamsBox');
+    if(!box) return;
+    const active = teams.filter(t => (t.members||[]).length > 0);
+    const hasAny = active.length > 0;
+    const stage = $('radarStage');
+
+    // 1) Mise a jour de l'etat connu
+    const newKnown = {};
+    active.forEach(t => { newKnown[t.teamCode] = { hasMembers:true, revealedAt: _knownTeams[t.teamCode]?.revealedAt || Date.now() }; });
+    _knownTeams = newKnown;
+
+    // 2) Gestion du radar
+    if(hasAny){
+      // Au moins 1 equipe avec membres : on reduit le radar (mais il reste affiche en petit)
+      if(stage && stage.classList.contains('radar-standby')){
+        stage.classList.remove('radar-standby');
+      }
+      if(stage && !stage.classList.contains('radar-collapsed')){
+        stage.classList.add('radar-collapsed');
+        stopRadarStatusLoop();
+        setRadarStatus('Signaux detectes...');
+      }
+    }else{
+      // Aucune equipe avec membres : radar en mode "veille" (pulsation continue)
+      if(stage && stage.classList.contains('radar-collapsed')){
+        stage.classList.remove('radar-collapsed');
+        startRadarStatusLoop();
+        setRadarStatus('Balayage des fonds marins...');
+      }else if(stage && !stage.classList.contains('radar-standby')){
+        stage.classList.add('radar-standby');
+      }
+      if(stage && !_radarStatusInterval){
+        startRadarStatusLoop();
+      }
+    }
+
+    // 3) Suppression des cartes qui n'ont plus de membres (animation inverse)
+    const existingCards = box.querySelectorAll('.team-reveal');
+    existingCards.forEach(card => {
+      const code = card.dataset.team;
+      if(!newKnown[code]){
+        card.classList.add('out');
+        setTimeout(() => card.remove(), 500);
+      }
+    });
+
+    // 4) Ajout des nouvelles cartes (avec animation)
+    let revealIndex = 0;
+    active.forEach(t => {
+      const existing = box.querySelector(`[data-team="${t.teamCode}"]`);
+      if(existing){
+        // Met a jour le contenu si necessaire
+        existing.outerHTML = teamCardHtml(t);
+        const newEl = box.querySelector(`[data-team="${t.teamCode}"]`);
+        if(newEl) newEl.classList.add('in');
+      }else{
+        // Nouvelle carte
+        const temp = document.createElement('div');
+        temp.innerHTML = teamCardHtml(t);
+        const el = temp.firstElementChild;
+        box.appendChild(el);
+        // Allume le blip correspondant (Hollywood : blip = bateau detecte)
+        const blipIdx = revealIndex % 5;
+        const blipEl = $('radarBlip' + (blipIdx + 1));
+        if(blipEl){
+          blipEl.classList.add('revealed');
+          // Eteint apres 2.5s (le blip "clignote")
+          setTimeout(() => blipEl.classList.remove('revealed'), 2500);
+        }
+        setTimeout(() => el.classList.add('in'), REVEAL_INITIAL_DELAY + revealIndex * REVEAL_STAGGER_MS);
+        revealIndex++;
+      }
+    });
+  }
+
+  /**
+   * Charge les equipes depuis Firestore et synchronise l'UI.
+   * Premiere execution : lance le radar en mode veille (definit par le HTML).
+   * Executions suivantes : sync incrémental (pas de re-radar).
+   */
+  let _loadTeamsRunning = false;
   async function loadTeams(){
+    if(_loadTeamsRunning){
+      // Debounce : on attend la fin du load en cours, on rejoue apres
+      await new Promise(r => setTimeout(r, 200));
+      return loadTeams();
+    }
+    _loadTeamsRunning = true;
     const box=$('teamsBox');
-    const stage=$('radarStage');
     try{
       await ensureTeams();
       try{ await refreshAdminTeams(); }catch(e){}
-      // Charge toutes les equipes
       let cfgData = {};
       try{
         const cfgSnap = await getDoc(doc(db,'game','config'));
@@ -1278,83 +1406,22 @@
       const teams=[];
       for(const t of allDefs){const team=await getTeam(t.code);if(team)teams.push(team);}
 
-      // Si une animation est deja en cours, on l'annule et on rejoue
-      if(_radarAnimRunning){
-        // Re-render direct sans re-animer le radar (le radar est deja affiche)
-        const revealed = teams.filter(t => (t.members||[]).length > 0);
-        box.innerHTML = revealed.map(teamCardHtml).join('');
-        revealed.forEach((t, i) => {
-          const el = box.querySelector(`[data-team="${t.teamCode}"]`);
-          if(el){
-            el.classList.add('in');
-          }
-        });
-        return;
-      }
+      // Demarre le radar en mode veille (des la 1ere execution)
+      startRadarStatusLoop();
 
-      // Sinon : phase 1 = balayage radar
-      _radarAnimRunning = true;
-      const statusMessages = [
-        'Balayage des fonds marins...',
-        'Detection des signaux en surface...',
-        'Identification des coques...',
-        'Reception des emissions des matelots...',
-        'Compilation des donnees...'
-      ];
-      // Anime le status en boucle
-      let msgIdx = 0;
-      const statusInterval = setInterval(() => {
-        msgIdx = (msgIdx + 1) % statusMessages.length;
-        setRadarStatus(statusMessages[msgIdx]);
-      }, 480);
-
-      // Phase 1 : on laisse le radar balayer RADAR_DURATION_MS
-      await new Promise(r => setTimeout(r, RADAR_DURATION_MS));
-      clearInterval(statusInterval);
-
-      // Phase 2 : reduction du radar + revelation des equipes qui ont des membres
-      setRadarStatus('Signaux localises...');
-      await new Promise(r => setTimeout(r, 350));
-      collapseRadar();
-
-      // Filtrer : on n'affiche que les equipes avec au moins 1 membre
-      const revealed = teams.filter(t => (t.members||[]).length > 0);
-
-      // Inserer le HTML mais avec .team-reveal (donc invisibles au depart)
-      box.innerHTML = revealed.map(teamCardHtml).join('');
-
-      // Allumer les blips sur le radar en parallele (Hollywood)
-      const blipCount = Math.min(5, revealed.length);
-      const blipEls = [$('radarBlip1'),$('radarBlip2'),$('radarBlip3'),$('radarBlip4'),$('radarBlip5')];
-      for(let i=0; i<blipCount; i++){
-        setTimeout(() => {
-          if(blipEls[i]) blipEls[i].classList.add('revealed');
-        }, i * 320);
-      }
-
-      // Revelation progressive des cartes avec delai
-      const cardEls = box.querySelectorAll('.team-reveal');
-      cardEls.forEach((el, idx) => {
-        setTimeout(() => {
-          el.classList.add('in');
-        }, 200 + idx * REVEAL_STAGGER_MS);
-      });
-
-      // Apres toutes les revelations, faire disparaitre le radar definitivement
-      const totalAnimMs = 200 + revealed.length * REVEAL_STAGGER_MS + 700;
-      setTimeout(() => {
-        fadeOutRadar();
-        _radarAnimRunning = false;
-      }, totalAnimMs);
+      // Synchronise l'UI
+      syncTeamsUI(teams);
 
     }catch(err){
-            console.error('NAUTILUS loadTeams error:', err);
-      if($('radarStage')) $('radarStage').remove();
+      console.error('NAUTILUS loadTeams error:', err);
+      const stage = $('radarStage');
+      if(stage) stage.remove();
+      stopRadarStatusLoop();
       box.innerHTML=`<div class="notice warning"><b>Le sonar gresille...</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Detail technique : ${esc(err.code || err.message || err)}</span></div>`;
-      _radarAnimRunning = false;
+    }finally{
+      _loadTeamsRunning = false;
     }
   }
-
 
   function pickBalancedTeam(teams, service){
     const scored=teams.map(team=>{
