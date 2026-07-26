@@ -6,10 +6,18 @@
   <title>Mission Nautilus — Embarquement</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#f5b027">
+  <!-- Favicon : SVG moderne (Chrome/Safari/FF) + PNG fallback + Apple touch -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" sizes="180x180">
+  <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="assets/icon-512.png">
+  <!-- macOS Safari : couleur de la barre + nom de l'app dans le dock -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
-  <link rel="apple-touch-icon" href="assets/icon.svg">
+  <meta name="mobile-web-app-capable" content="yes">
   <style>
     :root{
       --fnac:#f5b027;
@@ -101,6 +109,12 @@
     .ios-install-banner .b-text{flex:1;min-width:0}
     .ios-install-banner .b-text b{color:#ffe2a0}
     .ios-install-banner .b-actions{display:flex;gap:6px;flex:0 0 auto}
+    /* Animation qui attire l'oeil sur la fleche "Partager -> Ajouter" */
+    @keyframes iosShareArrow{0%,100%{opacity:1;transform:translateX(0)}50%{opacity:1;transform:translateX(4px)}}
+    .ios-share-arrow{display:inline-block;animation:iosShareArrow 1.4s ease-in-out infinite;color:#ffe2a0;font-weight:1000}
+    /* Animation "pulse" pour les hublots/icones - attire l'attention utilisateur */
+    .ios-install-banner .b-ico{animation:iosBannerPulse 1.6s ease-in-out infinite;font-size:30px}
+    @keyframes iosBannerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
     .ios-install-banner button{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:900;font-size:12px;padding:8px 12px;border-radius:10px;min-height:auto;margin:0;letter-spacing:.02em}
     .ios-install-banner .b-help{background:#f5b027;color:#111}
     .ios-install-banner .b-close{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3)}
@@ -854,7 +868,7 @@
   <div class="b-ico">📲</div>
   <div class="b-text">
     <b>Installe l'app sur ton iPhone</b> pour y acceder comme une vraie application, meme hors ligne.<br>
-    <span style="opacity:.75;font-size:12px">Bouton <b>Partager ⎙</b> → <b>Sur l'écran d'accueil</b></span>
+    <span style="opacity:.75;font-size:12px">Bouton <b>Partager ⎙</b> <span class="ios-share-arrow">→</span> <b>Ajouter a l'ecran d'accueil ➕</b></span>
   </div>
   <div class="b-actions">
     <button class="b-help" id="iosBannerHelp" type="button">Comment ?</button>
@@ -3360,7 +3374,7 @@
     if(btn) btn.style.display = 'none';
     const ban = $('iosInstallBanner');
     if(ban) ban.style.display = 'none';
-  }else if(_isIOS && !sessionStorage.getItem('iosInstallBannerDismissed')){
+  }else if(_isIOS && (new URLSearchParams(location.search).get('pwa') === 'install' || !sessionStorage.getItem('iosInstallBannerDismissed'))){
     // iOS : on affiche la banniere persistante (cliquable pour ouvrir la modale)
     setTimeout(() => {
       const ban = $('iosInstallBanner');
@@ -3372,7 +3386,7 @@
         if(helpBtn) helpBtn.style.animation = 'pwaBtnPulse 2s ease-in-out infinite';
       }
     }, 2500); // petit delai pour pas gener l'utilisateur
-  }else if(_isAndroid && !_isStandalone && !sessionStorage.getItem('androidInstallBannerDismissed')){
+  }else if(_isAndroid && (new URLSearchParams(location.search).get('pwa') === 'install' || !sessionStorage.getItem('androidInstallBannerDismissed'))){
     // Android (sans beforeinstallprompt : Samsung Internet, Firefox, etc.)
     // Affiche une banniere apres 5s pour proposer l'install manuelle
     setTimeout(() => {
