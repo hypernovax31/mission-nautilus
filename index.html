@@ -684,7 +684,7 @@
       <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l'équipe d'organisation. Accès par code uniquement.</p>
       <div class="hr"></div>
       <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" style="text-transform:none;letter-spacing:.15em"></div>
+        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>
         <button class="primary" id="adminUnlockBtn" type="button" style="margin:0">Déverrouiller</button>
         <span id="adminUnlockMsg" class="small" style="width:100%"></span>
       </div>
@@ -1581,16 +1581,67 @@
    * échouée, à la fermeture du panneau et au blur du champ.
    * Garantit que le mot de passe n'est jamais retenu en mémoire, ni
    * récupérable via autofill / inspecteur après la session.
+   *
+   * Masquage : la vraie valeur n'est jamais écrite dans le DOM (on n'affiche
+   * que des •). La valeur de référence vit dans adminCodeBuffer (mémoire JS
+   * volatile, wiped ici).
    */
+  let adminCodeBuffer = '';
   function wipeAdminCode(){
     const input = $('adminCodeInput');
     if(!input) return;
     input.value = '';
+    adminCodeBuffer = '';
     // Force l'autofill à purger son cache en réécrivant la valeur
     if(typeof input.setAttribute === 'function'){
       input.setAttribute('value', '');
     }
     try{ input.dispatchEvent(new Event('input', { bubbles: true })); }catch(e){}
+  }
+  /**
+   * Listener "input" : capture la frappe, écrit la vraie valeur dans
+   * adminCodeBuffer (mémoire JS uniquement), puis remplace l'affichage par
+   * une chaîne de • de même longueur. Le DOM ne contient jamais la vraie
+   * valeur. La comparaison se fait dans tryAdminUnlock() sur adminCodeBuffer.
+   *
+   * Algorithme :
+   * 1. Quand le DOM contient des caractères non-•, c'est la frappe de l'user
+   *    (lettre, paste, IME). On extrait le delta et on l'ajoute au buffer.
+   * 2. Quand le DOM ne contient que des •, l'user a fait Backspace/Delete :
+   *    on raccourcit le buffer proportionnellement.
+   * 3. On réaffiche toujours des • dans le DOM.
+   */
+  function maskAdminInput(){
+    const input = $('adminCodeInput');
+    if(!input) return;
+    const raw = String(input.value || '');
+    const isOnlyDots = raw === '' || /^•+$/.test(raw);
+
+    if(!isOnlyDots){
+      // Caractères en clair (frappe, paste, IME)
+      // On retire les • existants (qui représentent ce qui est déjà bufferisé)
+      // et on garde le delta.
+      const dotsInRaw = (raw.match(/•/g) || []).length;
+      const clearChars = raw.replace(/•/g, '');
+      // Stratégie : les • correspondent au début du buffer ; les clearChars
+      // sont les nouveaux caractères tapés à la suite. Si l'utilisateur
+      // édite au milieu, on simplifie : on garde clearChars comme nouveau buffer.
+      // (Pour ADMIN_CODE = 8 caractères sans édition complexe, ça suffit.)
+      const baseFromDots = adminCodeBuffer.slice(0, dotsInRaw);
+      adminCodeBuffer = baseFromDots + clearChars;
+    }else if(raw === ''){
+      // Tout effacé
+      adminCodeBuffer = '';
+    }else{
+      // Que des •, longueur diminuée → Backspace
+      adminCodeBuffer = adminCodeBuffer.slice(0, raw.length);
+    }
+
+    // Réaffiche uniquement des •
+    const masked = '•'.repeat(adminCodeBuffer.length);
+    if(input.value !== masked){
+      input.value = masked;
+    }
   }
   function showAdminWorkspace(){
     $('adminLocked').style.display = 'none';
@@ -1606,11 +1657,12 @@
     const input = $('adminCodeInput');
     const msg = $('adminUnlockMsg');
     if(!input) return;
-    const typed = String(input.value || '').trim();
+    // Comparaison sur la valeur en mémoire (jamais écrite dans le DOM)
+    const typed = String(adminCodeBuffer || '').trim();
     if(typed === ADMIN_CODE){
       setAdminUnlocked(true);
       if(msg){ msg.textContent = '✅ Code accepté.'; msg.style.color = '#075c39'; }
-      wipeAdminCode(); // Purge immédiate du champ après succès (la saisie n'est plus utile)
+      wipeAdminCode(); // Purge immédiate du champ après succès
       showAdminWorkspace();
     }else{
       setAdminUnlocked(false);
@@ -1665,6 +1717,10 @@
   });
   $('adminUnlockBtn')?.addEventListener('click', tryAdminUnlock);
   $('adminCodeInput')?.addEventListener('keydown', e => { if(e.key === 'Enter') tryAdminUnlock(); });
+  $('adminCodeInput')?.addEventListener('input', maskAdminInput);
+  // Bloque la composition IME (sinon le user voit ses caractères avant masquage)
+  $('adminCodeInput')?.addEventListener('compositionstart', e => { e.target.dataset.composing = '1'; });
+  $('adminCodeInput')?.addEventListener('compositionend', e => { delete e.target.dataset.composing; maskAdminInput(); });
   $('adminCodeInput')?.addEventListener('blur', () => {
     // Purge dès qu'on quitte le champ (l'admin a fini de taper)
     setTimeout(wipeAdminCode, 100);
