@@ -608,7 +608,27 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  /* Codes d'équipe obsolètes à nettoyer dans Firestore (migration).
+     Ces docs sont des restes d'anciennes versions du jeu où les codes
+     étaient cryptiques. On les supprime pour ne garder que les 5
+     équipes actives : NEMO, NAUTILUS, ARONNAX, NEDLAND, CALAMAR. */
+  const OBSOLETE_TEAM_CODES = ['CAPITAINE', 'SOUSMARIN', 'DOCTEUR', 'BALEINE', 'GEANT'];
+  async function cleanupObsoleteTeams(){
+    for(const code of OBSOLETE_TEAM_CODES){
+      try{
+        const ref = doc(db, 'teams', code);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          await deleteDoc(ref);
+          console.log(`[Migration] Supprimé équipe obsolète : ${code}`);
+        }
+      } catch(err){
+        console.warn(`[Migration] Échec suppression ${code} :`, err);
+      }
+    }
+  }
 
   const firebaseConfig = {
     apiKey: "AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
@@ -1223,6 +1243,9 @@
     localStorage.removeItem('nautilusCurrentTeam');
     if($('memberName')) $('memberName').value = '';
     if($('teamCodeInput')) $('teamCodeInput').value = '';
+
+    /* Nettoyage des anciennes équipes (codes obsolètes) avant tout */
+    try { await cleanupObsoleteTeams(); } catch(e) { console.warn('Migration error:', e); }
 
     await loadMissionConfig();
     updateCountdown();
