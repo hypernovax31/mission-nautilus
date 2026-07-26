@@ -56,53 +56,57 @@ const STEPS = {
 };
 
 /* Banque de mots : 40 mots, 7+ lettres, AVEC accents (UIT-R M.1677-1)
-   Chaque mot a :
-     - w : le mot en majuscules (avec accents)
-     - h : le hint thématique (pour l'aide interne si besoin)
-     - qr : l'indice géographique pour trouver le QR du palier 2 dans le magasin
-            (à compléter par l'organisateur — pour l'instant vide) */
+   Chaque mot a un hint thématique interne (pour le cap nº2 ou pour le log).
+   ATTENTION : ces mots varient l'épreuve (anti-triche par rejouabilité)
+   mais le LIEU DU QR DANS LE MAGASIN est FIXE — voir QR_LOCATION_HINT. */
 const MORSE_WORDS = [
-  { w:"NAUTILE",   h:"Animal marin à coquille spiralée",           qr:"" },
-  { w:"ABYSSES",   h:"Profondeurs inexplorées de l'océan",         qr:"" },
-  { w:"EPAVES",    h:"Épave = navire échoué au fond",              qr:"" },
-  { w:"EQUATEUR",  h:"Ligne imaginaire autour de la Terre",        qr:"" },
-  { w:"OCEANES",   h:"Vastes mers salées",                         qr:"" },
-  { w:"RECIFAL",   h:"Qualifie un récif corallien",                qr:"" },
-  { w:"SOUSMARIN", h:"Bateau qui plonge sous l'eau",               qr:"" },
-  { w:"BARQUES",   h:"Petits bateaux de pêche",                    qr:"" },
-  { w:"PHOQUES",   h:"Mammifères marins à nageoires",              qr:"" },
-  { w:"CETACES",   h:"Famille des baleines et dauphins",           qr:"" },
-  { w:"CORAIL",    h:"Animal qui forme les récifs",                qr:"" },
-  { w:"MEDUSES",   h:"Animaux gélatineux urticants",               qr:"" },
-  { w:"OURSINS",   h:"Petits animaux à piquants",                  qr:"" },
-  { w:"CRUSTACE",  h:"Famille du crabe et de la crevette",         qr:"" },
-  { w:"BALEINES",  h:"Plus grands animaux marins",                 qr:"" },
-  { w:"DAUPHINS",  h:"Cétacés intelligents et joueurs",            qr:"" },
-  { w:"REQUINS",   h:"Prédateurs au sourire de dents",             qr:"" },
-  { w:"ANCHOIS",   h:"Petits poissons bleus en banc",              qr:"" },
-  { w:"SARDINES",  h:"Petits poissons pêchés en boîte",            qr:"" },
-  { w:"MOULES",    h:"Mollusques des rochers",                     qr:"" },
-  { w:"HUITRES",   h:"Mollusques précieux pour leurs perles",      qr:"" },
-  { w:"CREVETTES", h:"Petits crustacés roses",                     qr:"" },
-  { w:"LANGOUSTE", h:"Grand crustacé à longues antennes",          qr:"" },
-  { w:"MAREEES",   h:"Mouvement quotidien de la mer",              qr:"" },
-  { w:"COURANTS",  h:"Flux d'eau continus dans l'océan",           qr:"" },
-  { w:"VAGUES",    h:"Elles roulent vers le rivage",               qr:"" },
-  { w:"ECUMES",    h:"Mousse blanche sur les crêtes",               qr:"" },
-  { w:"ALGUES",    h:"Végétaux marins",                            qr:"" },
-  { w:"MANGROVE",  h:"Forêt des zones côtières tropicales",        qr:"" },
-  { w:"PROMENADE", h:"Chemin le long de la côte",                  qr:"" },
-  { w:"PHARE",     h:"Tour qui guide les navires",                 qr:"" },
-  { w:"MARINIER",  h:"Qui concerne les marins",                    qr:"" },
-  { w:"PIRATES",   h:"Ecumeurs des mers du temps de la voile",     qr:"" },
-  { w:"FLIBUSTIER",h:"Pirate des Antilles",                        qr:"" },
-  { w:"EQUIPAGES", h:"Équipes à bord d'un navire",                 qr:"" },
-  { w:"MATELOTS",  h:"Marins d'équipage",                          qr:"" },
-  { w:"CAPITAINE", h:"Commandant d'un navire",                     qr:"" },
-  { w:"AMIRAUTE",  h:"Commandement supérieur de la marine",        qr:"" },
-  { w:"CHALUTIER", h:"Bateau de pêche au filet",                   qr:"" },
-  { w:"SOUSMARINE",h:"Autre orthographe du sous-marin",            qr:"" }
+  { w:"NAUTILE",   h:"Animal marin à coquille spiralée" },
+  { w:"ABYSSES",   h:"Profondeurs inexplorées de l'océan" },
+  { w:"EPAVES",    h:"Épave = navire échoué au fond" },
+  { w:"EQUATEUR",  h:"Ligne imaginaire autour de la Terre" },
+  { w:"OCEANES",   h:"Vastes mers salées" },
+  { w:"RECIFAL",   h:"Qualifie un récif corallien" },
+  { w:"SOUSMARIN", h:"Bateau qui plonge sous l'eau" },
+  { w:"BARQUES",   h:"Petits bateaux de pêche" },
+  { w:"PHOQUES",   h:"Mammifères marins à nageoires" },
+  { w:"CETACES",   h:"Famille des baleines et dauphins" },
+  { w:"CORAIL",    h:"Animal qui forme les récifs" },
+  { w:"MEDUSES",   h:"Animaux gélatineux urticants" },
+  { w:"OURSINS",   h:"Petits animaux à piquants" },
+  { w:"CRUSTACE",  h:"Famille du crabe et de la crevette" },
+  { w:"BALEINES",  h:"Plus grands animaux marins" },
+  { w:"DAUPHINS",  h:"Cétacés intelligents et joueurs" },
+  { w:"REQUINS",   h:"Prédateurs au sourire de dents" },
+  { w:"ANCHOIS",   h:"Petits poissons bleus en banc" },
+  { w:"SARDINES",  h:"Petits poissons pêchés en boîte" },
+  { w:"MOULES",    h:"Mollusques des rochers" },
+  { w:"HUITRES",   h:"Mollusques précieux pour leurs perles" },
+  { w:"CREVETTES", h:"Petits crustacés roses" },
+  { w:"LANGOUSTE", h:"Grand crustacé à longues antennes" },
+  { w:"MAREEES",   h:"Mouvement quotidien de la mer" },
+  { w:"COURANTS",  h:"Flux d'eau continus dans l'océan" },
+  { w:"VAGUES",    h:"Elles roulent vers le rivage" },
+  { w:"ECUMES",    h:"Mousse blanche sur les crêtes" },
+  { w:"ALGUES",    h:"Végétaux marins" },
+  { w:"MANGROVE",  h:"Forêt des zones côtières tropicales" },
+  { w:"PROMENADE", h:"Chemin le long de la côte" },
+  { w:"PHARE",     h:"Tour qui guide les navires" },
+  { w:"MARINIER",  h:"Qui concerne les marins" },
+  { w:"PIRATES",   h:"Ecumeurs des mers du temps de la voile" },
+  { w:"FLIBUSTIER",h:"Pirate des Antilles" },
+  { w:"EQUIPAGES", h:"Équipes à bord d'un navire" },
+  { w:"MATELOTS",  h:"Marins d'équipage" },
+  { w:"CAPITAINE", h:"Commandant d'un navire" },
+  { w:"AMIRAUTE",  h:"Commandement supérieur de la marine" },
+  { w:"CHALUTIER", h:"Bateau de pêche au filet" },
+  { w:"SOUSMARINE",h:"Autre orthographe du sous-marin" }
 ];
+
+/* Lieu FIXE du QR du palier 2 dans le magasin.
+   Ce texte est identique pour tous les mots tirés (le lieu ne dépend
+   pas du mot Morse trouvé). C'est ici que l'équipe devra scanner
+   le QR pour obtenir le numéro secret du palier 2. */
+const QR_LOCATION_HINT = "📍 Direction la borne d'arcade au fond du magasin, derrière l'écran de démonstration.";
 
 /* ---------- INITIALISATION FIREBASE ---------- */
 const app = initializeApp(firebaseConfig);
@@ -397,7 +401,7 @@ async function heartbeat(teamCode) {
 /* ---------- EXPORT GLOBAL ---------- */
 window.Nautilus = {
   /* Constantes */
-  TEAM_DEFS, MORSE_TABLE, MORSE_WORDS, STEPS,
+  TEAM_DEFS, MORSE_TABLE, MORSE_WORDS, STEPS, QR_LOCATION_HINT,
   /* Firebase */
   db, app,
   /* Helpers */

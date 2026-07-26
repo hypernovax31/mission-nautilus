@@ -613,8 +613,6 @@
       maxErrors: 3,
       timeLimit: 210,        /* 3 min 30 */
       startedWordHint: entry.h,
-      qrHint: entry.qr || null,  /* Indice de cachette pour le QR du palier 2 */
-      hintsRevealed: [false, false, false],
       lastEvent: 'session_started'
     });
     await N.addEvent(state.team, 'morse_session_started', { by: state.me.name });
@@ -1040,7 +1038,7 @@
         <div class="qr-hint-block" style="margin:24px 0 0;padding:18px 20px;background:linear-gradient(135deg,rgba(245,176,39,.12),rgba(245,176,39,.06));border:2px solid rgba(245,176,39,.55);border-radius:18px;max-width:540px;margin-left:auto;margin-right:auto;text-align:left;">
           <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Indice de cachette</div>
           <div style="color:#fff;font-size:15px;line-height:1.5;font-weight:700;margin-bottom:14px;">
-            ${s.qrHint ? esc(s.qrHint) : '<span style="color:#9bc4d4;font-style:italic;font-weight:500;">(L’indice de cachette sera communiqué par l’animateur.)</span>'}
+            ${N.QR_LOCATION_HINT}
           </div>
           <div style="border-top:1px dashed rgba(245,176,39,.4);padding-top:14px;margin-top:6px;">
             <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📷 Action</div>
@@ -1099,21 +1097,16 @@
     const nextStep = t.currentStep;
     const nextLabel = N.STEPS[nextStep]?.label || '?';
     const nextCode = N.getStepCode(nextStep);
-    /* Récupère l'indice géographique depuis la dernière session */
-    const s = state.session;
-    const qrHint = s?.qrHint || null;
     return `
       <div class="status-banner success">
         ✅ <b>Palier 1 terminé.</b> L'équipage est prêt à passer au <b>${esc(nextLabel)}</b>.
       </div>
       <div class="stepbox" style="border-color:rgba(91,255,156,.45);background:rgba(91,255,156,.08);">
         <h3 style="color:#5be09b;margin:0 0 10px;">🔎 Prochaine étape</h3>
-        ${qrHint ? `
-          <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Indice de cachette</div>
-          <div style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:14px;padding:12px 16px;margin:0 0 14px;color:#fff;font-size:14px;line-height:1.5;font-weight:800;">
-            ${esc(qrHint)}
-          </div>
-        ` : ''}
+        <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Indice de cachette</div>
+        <div style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:14px;padding:12px 16px;margin:0 0 14px;color:#fff;font-size:14px;line-height:1.5;font-weight:800;">
+          ${N.QR_LOCATION_HINT}
+        </div>
         <div style="color:#dff6ff;line-height:1.5;margin:0 0 10px;font-size:15px;">
           📷 <b>Scanne le QR pour découvrir le numéro secret.</b>
         </div>
