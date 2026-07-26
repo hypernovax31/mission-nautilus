@@ -14,8 +14,25 @@ s'accumulent, plus l'équipage est bloqué longtemps avant de retenter.
 |---|---|
 | `index.html` | Accueil / embarquement |
 | `palier1.html` | Palier 1 : Morse (CSS+JS+HTML inline, standalone) |
+| `pwa-install.js` | Modale d'installation PWA (instructions par OS) + enregistrement du SW |
+| `manifest.json` | Manifeste PWA (nom, couleurs, icônes) |
+| `sw.js` | Service worker (cache offline) |
 | `firebase.json` | Config hosting |
-| `assets/` | Audio ambiance + fond d'écran |
+| `assets/` | Audio ambiance, fond d'écran et icônes |
+
+## Icônes
+`assets/icon.svg` est **la source unique**. Tous les PNG en sont dérivés :
+
+| Fichier | Usage |
+|---|---|
+| `icon.svg` | Favicon moderne + entrée `manifest` (toutes tailles) |
+| `favicon-16.png` / `favicon-32.png` | Favicon de repli (sans texte, sous-marin zoomé pour rester lisible) |
+| `apple-touch-icon.png` (180px) | Écran d'accueil iOS (fond opaque, iOS ne gère pas la transparence) |
+| `icon-192.png` / `icon-512.png` | Écran d'accueil Android / desktop (`purpose: any`) |
+| `icon-maskable-512.png` | Icône adaptative Android (`purpose: maskable`, contenu dans 78 % centraux) |
+
+Après modification de `icon.svg`, régénérer les PNG (nécessite `sharp`) et bumper
+`CACHE_NAME` dans `sw.js` pour invalider le cache des anciennes icônes.
 
 ## Codage des URL palier
 URLs masquées, dérivées de "PALIER" (positions alphabétiques) :
