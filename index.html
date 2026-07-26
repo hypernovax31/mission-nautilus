@@ -276,13 +276,27 @@
 
     /* Rows compactes — single-line par item, 1 bouton save/trash */
     .member-edit-row,.lock-edit-row,.team-edit-row{display:grid;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid #e8eef2}
-    .member-edit-row{grid-template-columns:1.2fr .7fr 1fr auto auto}
-    .lock-edit-row{grid-template-columns:1fr 1.1fr .6fr auto}
-    .team-edit-row{grid-template-columns:1fr 1fr auto}
+    .member-edit-row{grid-template-columns:minmax(0,1.2fr) minmax(0,.7fr) minmax(0,1fr) auto auto}
+    .lock-edit-row{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,.6fr) auto}
+    .team-edit-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
     .member-edit-row:last-child,.lock-edit-row:last-child,.team-edit-row:last-child{border-bottom:0}
-    .member-edit-row input,.member-edit-row select,.lock-edit-row input,.lock-edit-row select,.team-edit-row input{height:32px !important;min-height:32px;padding:4px 8px !important;font-size:12px !important;border-radius:6px}
+    /* Inputs / selects : taille compacte, jamais de débordement */
+    .member-edit-row input,.member-edit-row select,.lock-edit-row input,.lock-edit-row select,.team-edit-row input{
+      height:32px !important;min-height:32px;padding:4px 8px !important;
+      font-size:12px !important;border-radius:6px;width:100%;min-width:0;box-sizing:border-box;
+      margin:0 !important
+    }
     .lock-edit-row label{display:block;font-weight:900;margin:0 0 3px;font-size:10px;color:#52606a;text-transform:uppercase;letter-spacing:.04em}
-    .member-edit-row .mini,.lock-edit-row .mini,.team-edit-row .mini{font-size:10px;padding:4px 6px !important;margin:0;min-height:28px !important;width:auto;border-radius:6px}
+    /* Boutons compacts (save/delete/unlock) — ne PAS hériter du button global 48px */
+    .me-save,.me-del,.lk-save,.lk-unlock,.tt-save,.tt-del{
+      width:auto !important;min-width:32px !important;height:28px !important;
+      min-height:28px !important;padding:0 8px !important;margin:0 !important;
+      font-size:14px !important;line-height:1;border-radius:6px;
+      display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto
+    }
+    .me-save:hover,.me-del:hover,.lk-save:hover,.lk-unlock:hover,.tt-save:hover,.tt-del:hover{
+      transform:none !important
+    }
     .admin-pane .team{border:1px solid #dfe8ee;border-radius:12px;padding:10px;background:#fff;margin-bottom:10px}
     .admin-pane .team:last-child{margin-bottom:0}
     .admin-pane .team h3{font-size:14px;margin:0 0 6px}
