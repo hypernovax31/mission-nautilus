@@ -972,8 +972,35 @@
   const normalize=s=>String(s||'').trim().toUpperCase();
   const memberKey=name=>normalize(String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]/gi,''));
   const simple=s=>normalize(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''));
-  function teamCodeFromInput(value){const wanted=simple(value);const found=TEAM_DEFS.find(t=>simple(t.code)===wanted||simple(t.name)===wanted);return found?found.code:String(value||'').trim();}
+  /* IMPORTANT : seul le code équipage (CAPITAINE/SOUSMARIN/DOCTEUR/HARPON/TENTACULE)
+     OU un éventuel crewCode permet de reprendre. Le nom affiché (Nemo/Nautilus/...)
+     NE PERMET PAS de rejoindre — c'est juste un label public. */
+  function teamCodeFromInput(value){
+    const raw = String(value||'').trim();
+    if(!raw) return '';
+    const wanted = simple(raw);
+    // 1) match exact sur le code équipe
+    const byCode = TEAM_DEFS.find(t => simple(t.code) === wanted);
+    if(byCode) return byCode.code;
+    // 2) match sur crewCode (codes secrets générés, distincts du code équipe)
+    const byCrew = TEAM_DEFS.find(t => t.crewCode && simple(t.crewCode) === wanted);
+    if(byCrew) return byCrew.code;
+    // 3) sinon, on retourne tel quel (sera testé contre customTeams dans getTeam)
+    return raw;
+  }
 
+  /* Génère un code équipage secret lisible : 4 lettres + tiret + 3 chiffres (ex: NEMO-742).
+     Distinct du code équipe (CAPITAINE/SOUSMARIN/...) qui reste l'identifiant technique.
+     Ici crewCode = code qui sera imprimé sur le QR et que le membre tape pour reprendre. */
+  function generateCrewCode(){
+    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // sans I/O pour éviter confusion
+    const digits = '23456789'; // sans 0/1
+    let s = '';
+    for(let i=0;i<4;i++) s += letters[Math.floor(Math.random()*letters.length)];
+    s += '-';
+    for(let i=0;i<3;i++) s += digits[Math.floor(Math.random()*digits.length)];
+    return s;
+  }
   function getLockHours(failCount){return Math.min(24, Math.pow(2, failCount));}
   function getLockedUntilISO(failCount){const d=new Date();d.setHours(d.getHours()+getLockHours(failCount));return d.toISOString();}
   function isLocked(team){return team?.status==='blocked'&&team.lockedUntil&&new Date(team.lockedUntil).getTime()>Date.now();}
@@ -1019,7 +1046,7 @@
       const ref=doc(db,'teams',t.code);
       const snap=await getDoc(ref);
       if(!snap.exists()){
-        await setDoc(ref,{teamCode:t.code,teamName:t.name,currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],members:[],onlinePlayers:{},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+        await setDoc(ref,{teamCode:t.code,teamName:t.name,crewCode:generateCrewCode(),currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],members:[],onlinePlayers:{},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
       }else{
         const data=snap.data();
         const patch={teamCode:t.code,teamName:t.name,updatedAt:new Date().toISOString()};
@@ -1028,13 +1055,41 @@
         if(data.failCount===undefined) patch.failCount=0;
         if(!data.currentStep) patch.currentStep='start';
         if(!data.status) patch.status='active';
+        // Génère un crewCode si manquant (code secret imprimé sur le QR)
+        if(!data.crewCode){
+          // collision-safe : vérifier qu'aucune autre équipe n'a déjà ce crewCode
+          let candidate, attempts=0;
+          do {
+            candidate = generateCrewCode();
+            attempts++;
+            const dup = allDefs.find(other => other.crewCode === candidate);
+            if(!dup) break;
+          } while(attempts < 20);
+          patch.crewCode = candidate;
+        }
         await updateDoc(ref,patch).catch(()=>{});
       }
     }
     await setDoc(doc(db,'game','config'),{activeTeamCodes:codes,updatedAt:new Date().toISOString()},{merge:true});
   }
 
-  async function getTeam(code){const cleanCode=teamCodeFromInput(code);const snap=await getDoc(doc(db,'teams',cleanCode));return snap.exists()?{teamCode:cleanCode,...snap.data()}:null;}
+  async function getTeam(code){
+    const cleanCode=teamCodeFromInput(code);
+    // 1) essai direct par code équipe
+    let snap=await getDoc(doc(db,'teams',cleanCode));
+    if(snap.exists()) return {teamCode:cleanCode,...snap.data()};
+    // 2) sinon, recherche par crewCode (parcourt toutes les équipes)
+    try{
+      const all = await getDocs(collection(db,'teams'));
+      for(const d of all.docs){
+        const data = d.data();
+        if(data.crewCode && simple(data.crewCode) === simple(cleanCode)){
+          return {teamCode:data.teamCode || d.id, ...data};
+        }
+      }
+    }catch(e){ console.warn('getTeam crewCode lookup:', e); }
+    return null;
+  }
   async function saveTeam(team,patch){if(!team||!team.teamCode) throw new Error('Code équipage manquant. Recharge la page.');const updated={...patch,updatedAt:new Date().toISOString()};await updateDoc(doc(db,'teams',team.teamCode),updated);currentTeam={...team,...updated};return currentTeam;}
   async function addEvent(team,type,data={}){await addDoc(collection(db,'events'),{teamCode:team.teamCode,teamName:team.teamName,type,...data,createdAt:serverTimestamp()});}
 
@@ -1055,6 +1110,8 @@
     const box=$('teamsBox');if(!lastTeamsHtml){document.getElementById('equipagesEnMer')?.classList.add('sonar-loading');box.innerHTML=sonarLoaderHtml();}
     try{
       await ensureTeams();
+      // Tient effectiveTeams à jour (utile pour les messages d'aide "nom d'équipe tapé")
+      try{ await refreshAdminTeams(); }catch(e){}
       // Récupère aussi les équipes custom persistées dans game/config
       let cfgData = {};
       try{
@@ -1122,7 +1179,8 @@
       await addEvent(chosen,'member_registered',{memberName:name,service});
       const updated=await getTeam(chosen.teamCode);
       currentTeam=updated;localStorage.setItem('nautilusCurrentTeam',updated.teamCode);$('teamCodeInput').value=updated.teamCode;startHeartbeat();updateFinalMissionButton();
-      $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>.<br><br>CODE ÉQUIPAGE À NOTER IMPÉRATIVEMENT : « <span class="code uppercase">${esc(updated.teamCode)}</span> »<br><span class="small">Conservez-le précieusement : il ne sera plus divulgué dans la liste des équipages.</span></div>`;
+      const crewCode = updated.crewCode || updated.teamCode; // fallback si ancien doc
+      $('registerMsg').innerHTML=`<div class="notice success"><b>${esc(name)}</b> embarque avec <b>${esc(updated.teamName)}</b>.<br><br>🔐 CODE ÉQUIPAGE À NOTER IMPÉRATIVEMENT : « <span class="code uppercase">${esc(crewCode)}</span> »<br><span class="small">⚠️ Ce code (et <b>uniquement</b> lui) vous permettra de reprendre la mission.<br>Le nom d'équipe « ${esc(updated.teamName)} » ne fonctionne <b>pas</b> pour reprendre.</span></div>`;
       $('memberName').value='';renderGame();await loadTeams();document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
     }catch(err){console.error('NAUTILUS register error:', err);$('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar grésille…</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Détail technique : ${esc(err.code || err.message || err)}</span></div>`;}
     finally{$('registerBtn').disabled=false;}
@@ -1133,7 +1191,16 @@
     if(!code){alert('Entre le code de ton équipage pour rallumer le sonar.');return;}
     try{
       let team=await getTeam(code);
-      if(!team){$('joinMsg').innerHTML=`<div class="notice warning">Aucun équipage ne répond à ce code.</div>`;return;}
+      if(!team){
+        // Indice : si l'utilisateur a tapé un nom d'équipe, on le prévient
+        const typed = ($('teamCodeInput').value || '').trim();
+        const matchedName = effectiveTeams.find(t => simple(t.name) === simple(typed));
+        const hint = matchedName
+          ? `<br><span class="small">⚠️ Tu as tapé le <b>nom</b> d'équipe « ${esc(matchedName.name)} ». Le nom ne sert <b>pas</b> à reprendre. Utilise le <b>code équipage</b> qui t'a été remis à l'inscription (visible sur le QR).</span>`
+          : '';
+        $('joinMsg').innerHTML=`<div class="notice warning">Aucun équipage ne répond à ce code.${hint}</div>`;
+        return;
+      }
       currentTeam=team;
       const unlock=await autoUnlockIfNeeded(currentTeam);currentTeam=unlock.team;
       localStorage.setItem('nautilusCurrentTeam',currentTeam.teamCode);$('teamCodeInput').value=currentTeam.teamCode;startHeartbeat();updateFinalMissionButton();
@@ -2201,8 +2268,16 @@
     box.innerHTML = '<div class="small">Chargement…</div>';
     try{
       await refreshAdminTeams();
+      // Récupère les crewCodes depuis Firestore pour chaque équipe
+      const liveData = {};
+      for(const t of effectiveTeams){
+        const live = await getTeam(t.code);
+        if(live) liveData[t.code] = live;
+      }
       box.innerHTML = effectiveTeams.map(t => {
         const isCustom = !TEAM_DEFS.some(d => d.code === t.code);
+        const live = liveData[t.code] || {};
+        const crew = live.crewCode || '—';
         return `<div class="team" style="background:#fff" data-team="${esc(t.code)}">
           <h3>${esc(t.name)} <span class="small" style="color:var(--muted)">(${esc(t.code)})${isCustom ? ' <span style="color:#075c39">[custom]</span>' : ''}</span></h3>
           <div class="hr"></div>
@@ -2215,6 +2290,11 @@
               <button class="primary mini tt-save" type="button" style="background:var(--fnac);color:#111">💾 Renommer</button>
               <button class="danger mini tt-del" type="button">🗑</button>
             </div>
+          </div>
+          <div class="team-crew-row" style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <span class="small" style="color:var(--muted)">🔐 Code équipage (QR) :</span>
+            <code class="tt-crew" style="font-size:14px;letter-spacing:.06em;color:#0b3a2b;background:#e6f1ec;padding:2px 8px;border-radius:4px">${esc(crew)}</code>
+            <button class="mini tt-regen" type="button" title="Régénérer un nouveau code équipage" style="background:#fff;color:#444;border:1px solid #d6dde3">🔄 Régénérer</button>
           </div>
           ${isCustom ? '' : '<div class="small" style="color:var(--muted);margin-top:4px">⚠️ Équipe par défaut — suppression interdite</div>'}
         </div>`;
@@ -2235,10 +2315,39 @@
           }
           await adminDeleteTeam(code, isDefault);
         });
+        teamEl.querySelector('.tt-regen').addEventListener('click', async () => {
+          if(!confirm(`Régénérer le code équipage de ${code} ?\n\n• L'ancien code ne fonctionnera plus pour reprendre la mission\n• Les membres devront utiliser le nouveau code (ou se réinscrire)\n• Tu devras réimprimer le QR avec le nouveau code`)) return;
+          await adminRegenCrewCode(code);
+        });
       });
     }catch(err){
       console.error('renderAdminTeams:', err);
       box.innerHTML = `<div class="notice warning">Erreur : ${esc(err.message || err)}</div>`;
+    }
+  }
+  async function adminRegenCrewCode(code){
+    if(!isAdminUnlocked()) return;
+    try{
+      // Collision-safe : récupère tous les crewCodes existants
+      const all = await getDocs(collection(db,'teams'));
+      const used = new Set();
+      all.forEach(d => { const c = d.data().crewCode; if(c) used.add(c); });
+      let candidate, attempts=0;
+      do {
+        candidate = generateCrewCode();
+        attempts++;
+        if(!used.has(candidate)) break;
+      } while(attempts < 30);
+      await updateDoc(doc(db,'teams',code), { crewCode: candidate, updatedAt: new Date().toISOString() });
+      const snap = await getDoc(doc(db,'teams',code));
+      if(snap.exists()) await addEvent({ teamCode: code, teamName: snap.data().teamName }, 'crew_code_regenerated', { newCrewCode: candidate });
+      await refreshAdminTeams();
+      await renderAdminTeams();
+      await loadTeams();
+      endAdminSession(`✅ Code équipage ${code} régénéré : ${candidate} · session fermée`);
+    }catch(err){
+      console.error('adminRegenCrewCode:', err);
+      alert(`❌ Échec régénération : ${err.message || err}`);
     }
   }
   async function adminRenameTeam(code, newName){
@@ -2266,7 +2375,7 @@
     try{
       // 1) créer le doc team
       await setDoc(doc(db,'teams',codeRaw), {
-        teamCode: codeRaw, teamName: name,
+        teamCode: codeRaw, teamName: name, crewCode: generateCrewCode(),
         currentStep:'start', status:'active', lockedUntil:null,
         failCount:0, lastLockHours:0, completedSteps:[],
         members:[], onlinePlayers:{},
