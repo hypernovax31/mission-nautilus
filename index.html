@@ -200,6 +200,40 @@
     @media(max-width:520px){.sonar-loader{text-align:center;padding-left:8px;padding-right:8px}.sonar-screen{width:145px;height:145px;min-width:145px;flex-basis:145px}.sonar-text{font-size:clamp(9px,3.4vw,14px);letter-spacing:.015em}}
     @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:26px 14px 36px}.hero-title{font-size:clamp(42px,13vw,64px);line-height:1.04;-webkit-text-stroke:2px #050505}.hero-line{margin-top:18px;font-size:clamp(20px,6vw,30px);line-height:1.22}.hero-kicker{font-size:11px;line-height:1.25;align-items:flex-start}main{padding:18px 10px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}.intro-text{min-height:120px}.mission-steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mission-step{min-height:auto;border-width:6px;padding:12px}button{width:100%;margin-right:0}.mission-step{width:min(100%,300px)!important;margin:0 auto!important}.team{padding:14px}}
 
+    /* ===== Correctifs responsive : anti-chevauchement ===== */
+    /* Le texte des hublots ne déborde jamais de son cercle */
+    button.mission-step{overflow:hidden}
+    button.mission-step b{overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;word-break:break-word}
+
+    /* Header : sur écrans étroits, le titre ne déborde pas */
+    .hero-title{word-break:break-word;overflow-wrap:break-word}
+    .hero-subtitle{font-size:clamp(14px,2.1vw,20px)}
+
+    /* Chrono O2 : ne casse pas sur 320px */
+    .countdown{font-size:clamp(18px,5.5vw,44px);letter-spacing:.01em}
+
+    /* Panneau admin : le h2 (titre + ✕) ne déborde jamais */
+    #adminPanel h2{gap:6px;flex-wrap:nowrap;min-width:0}
+    #adminPanel h2>span{font-size:clamp(11px,2.8vw,14px);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}
+    #adminPanel h2>button{flex:0 0 auto}
+
+    /* Inputs / selects : pas de débordement dans les grilles */
+    #adminPanel input,#adminPanel select{min-width:0;max-width:100%;box-sizing:border-box}
+    #adminLocked input{min-width:0}
+
+    /* Sur mobile, les rows du panneau passent en 1 colonne pour éviter
+       tout chevauchement de select/input/bouton */
+    @media(max-width:480px){
+      .member-edit-row,.lock-edit-row,.team-edit-row{grid-template-columns:1fr !important;gap:8px}
+      .member-edit-row .me-team{grid-column:auto}
+      .member-edit-row .me-save,.member-edit-row .me-del,.lock-edit-row .lk-save,.lock-edit-row .lk-unlock,.team-edit-row .tt-save,.team-edit-row .tt-del{justify-self:stretch;width:100%}
+    }
+
+    /* Mobile très petit : l'input mot de passe garde une largeur saine */
+    @media(max-width:360px){
+      #adminCodeInput{font-size:13px !important;letter-spacing:.1em !important}
+    }
+
 
     /* Footer ancré (pas fixed) : engrenage en bas à gauche, très discret */
     .site-footer{margin-top:24px;padding:14px 18px 22px;display:flex;align-items:center;justify-content:flex-start;transition:opacity .2s}
