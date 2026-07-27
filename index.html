@@ -375,6 +375,8 @@
     .matelot-reveal-code .code{font-size:clamp(19px,4.4vw,27px);padding:14px 18px;margin:0;max-width:100%;
       overflow-wrap:anywhere}
     .matelot-qr-card{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px}
+    .matelot-tip{margin-top:14px;padding:12px 14px;background:#eef7ff;border:1px solid #c8e0f2;border-left:4px solid #2e9fd8;border-radius:12px;font-size:var(--fs-small);line-height:1.5;color:#14384f}
+    .matelot-tip-how{display:inline-block;color:#4a6879}
     .matelot-qr-thumb{width:min(168px,52vw);height:min(168px,52vw);flex:0 0 auto;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
     .matelot-qr-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
     .matelot-qr-actions button{width:auto!important;flex:0 0 auto}
@@ -1437,7 +1439,7 @@
         <div><label for="matelotCodeInput">Code Matelot</label><input id="matelotCodeInput" placeholder="Ex. ABCD-1234" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="9" style="text-transform:uppercase;letter-spacing:.06em"></div>
         <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
       </div>
-      <p class="small">Déjà inscrit(e) ? Entre ton <b>Code Matelot</b> personnel (remis à l'inscription, imprimé sur ton QR) pour reprendre la mission là où tu t'étais arrêté(e).</p>
+      <p class="small">Déjà inscrit(e) ? Entre ton <b>Code Matelot</b> personnel pour reprendre la mission là où tu t'étais arrêté(e). Plus simple : scanne ton QR, la mission repart toute seule.</p>
       <div id="joinMsg"></div>
     </div>
   </section>
@@ -2956,26 +2958,35 @@ function qrDataUri(text, opts){
      Aucune URL n'est incluse, precisement pour eviter ce comportement.
      Limite : 230 caracteres (QR version 9, niveau L). Les valeurs sont
      donc bornees pour qu'un nom tres long ne fasse jamais deborder. */
-  function buildVCard(name, code, teamName){
-    const clean = v => String(v || '')
-      .replace(/[\\;,\r\n]/g, ' ')   // caracteres reserves du format vCard
-      .replace(/\s+/g, ' ').trim();
-    const nom = clean(name).slice(0, 28) || 'Matelot';
-    const eq  = clean(teamName).slice(0, 20) || '-';
-    const cd  = clean(code);
-    // Le code et l'equipage figurent deja dans FN et ORG : les repeter
-    // dans NOTE ferait deborder la capacite sur les noms longs.
-    return 'BEGIN:VCARD\r\nVERSION:3.0\r\n'
-      + 'FN:' + cd + ' - ' + nom + '\r\n'
-      + 'ORG:Mission Nautilus - ' + eq + '\r\n'
-      + 'NOTE:Code personnel a usage unique.\r\n'
-      + 'END:VCARD';
+  /* ===== CONTENU DU QR : le lien personnel de reprise =====
+     Le QR contient desormais l'adresse du jeu suivie du code matelot :
+       https://.../mission-nautilus/?m=CXCL-9396
+     En le scannant avec l'appareil photo, le telephone propose d'ouvrir ce
+     lien. Le site lit alors le parametre ?m=, remplit le code et relance la
+     mission tout seul, sans rien taper.
+
+     Le matelot peut ensuite mettre CETTE page en favori (menu Partager ->
+     Ajouter aux favoris) : le lien memorise contient son code, donc chaque
+     ouverture depuis les favoris reprend sa mission automatiquement.
+
+     Historique : le QR contenait avant une fiche de contact vCard, pour
+     eviter que l'appareil photo n'ouvre le site. C'est exactement l'inverse
+     du besoin actuel — on veut justement qu'il l'ouvre.
+     Longueur : environ 60 caracteres, tres loin de la limite de 230
+     (QR version 9, niveau L). */
+  function buildResumeUrl(code){
+    const cd = String(code || '').trim().toUpperCase();
+    return siteUrl() + '?m=' + encodeURIComponent(cd);
   }
 
+
+
   function buildNoteText(name, code, teamName){
+    /* Le lien inclut le code : l'ouvrir reprend la mission directement,
+       sans rien saisir. C'est ce lien qu'il faut mettre en favori. */
     return 'MISSION NAUTILUS\n' +
       '=================\n\n' +
-      'Lien : ' + siteUrl() + '\n\n' +
+      'Lien de reprise : ' + buildResumeUrl(code) + '\n\n' +
       'Matelot : ' + (name || '—') + '\n\n' +
       'Equipage : ' + (teamName || '—') + '\n\n' +
       'Code Matelot : ' + code + '\n\n' +
@@ -3085,7 +3096,7 @@ function qrDataUri(text, opts){
     const text = buildNoteText(name, code, teamName);
     try{
       if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
-        const qrUri = qrDataUri(buildVCard(name, code, teamName), { ecl: 'L' });
+        const qrUri = qrDataUri(buildResumeUrl(code), { ecl: 'L' });
         const pngBlob = await qrToPngBlob(qrUri, 420);
         const dataUrl = await blobToDataUrl(pngBlob);
         const html = '<div style="font-family:Arial,sans-serif">'
@@ -3206,21 +3217,21 @@ function qrDataUri(text, opts){
         }catch(e){ reject(e); }
       };
       img.onerror = () => reject(new Error('QR illisible'));
-      img.src = qrDataUri(buildVCard(name, code, teamName), { ecl: 'L' });
+      img.src = qrDataUri(buildResumeUrl(code), { ecl: 'L' });
     });
   }
 
   async function viewMatelotQr(qrUrl, code){
-    // Le QR encode le Code Matelot en clair (pas un lien) : la camera du
-    // telephone affiche le code, que le matelot recopie dans "Reprendre ta mission".
-    const resumeLink = code;
+    // Le QR contient le lien personnel de reprise : le scanner ouvre le
+    // jeu et relance la mission automatiquement (voir buildResumeUrl).
+    const resumeLink = buildResumeUrl(code);
 
     const overlay = document.createElement('div');
     overlay.className = 'qr-modal';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:radial-gradient(circle at 50% 30%,rgba(5,30,48,.96),rgba(0,0,0,.98));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
     overlay.innerHTML =
       '<div style="text-align:center;color:#fff;max-width:min(92vw,500px);width:100%">' +
-        '<div style="font-weight:1000;letter-spacing:.04em;font-size:13px;margin-bottom:10px;color:#ffe2a0;line-height:1.4">Scanne ce QR Code avec ton Appareil Photo,<br>cela contient toutes tes données d\'équipage</div>' +
+        '<div style="font-weight:1000;letter-spacing:.04em;font-size:13px;margin-bottom:10px;color:#ffe2a0;line-height:1.4">Scanne ce QR avec ton Appareil Photo : le jeu s\'ouvre<br>et reprend ta mission tout seul.<br><span style="color:#baffd2">Ensuite, ajoute la page à tes favoris pour y revenir en un geste.</span></div>' +
         '<div style="background:#fff;padding:18px;border-radius:18px;display:inline-block;box-shadow:0 0 60px rgba(245,176,39,.4)">' +
           '<img id="qrModalImg" src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:min(70vw,380px);height:min(70vw,380px);display:block;image-rendering:pixelated">' +
         '</div>' +
@@ -3410,7 +3421,7 @@ function qrDataUri(text, opts){
       // page web, et un code seul declenche une recherche Google.
       // Niveau L impose : 211 caracteres ne tiennent pas au-dessus.
       const resumeLink = matelotCode;
-      const qrUrl = qrDataUri(buildVCard(name, matelotCode, chosen.teamName), { ecl: 'L' });
+      const qrUrl = qrDataUri(buildResumeUrl(matelotCode), { ecl: 'L' });
       $('registerMsg').innerHTML =
         '<div class="notice success matelot-card">' +
           '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
@@ -3424,6 +3435,15 @@ function qrDataUri(text, opts){
               '<div class="code uppercase" id="matelotCodeDisplay">' + esc(matelotCode) + '</div>' +
             '</div>' +
             matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
+          '</div>' +
+          /* Le QR ouvre le jeu avec le code deja dedans. On explique le
+             geste a faire ensuite : mettre la page en favori, pour revenir
+             en un tap sans jamais retaper le code. */
+          '<div class="matelot-tip">' +
+            '<b>&#x1F4CC; Astuce :</b> scanne ton QR, le jeu s\'ouvre et reprend ta mission tout seul. ' +
+            'Une fois ouvert, ajoute la page à tes <b>favoris</b> ' +
+            '<span class="matelot-tip-how">(iPhone : bouton Partager <b>&#x2191;</b> &rsaquo; « Ajouter aux favoris » · Android : menu <b>&#8942;</b> &rsaquo; l\'étoile <b>&#9734;</b>)</span> : ' +
+            'ton code y est déjà enregistré.' +
           '</div>' +
         '</div>';
       $('memberName').value = '';
@@ -5392,16 +5412,31 @@ function qrDataUri(text, opts){
       const m = urlParams.get('m') || urlParams.get('matelot');
       if(m){
         const code = m.trim().toUpperCase();
-        // On cache l'URL pour eviter de rejouer en boucle si l'user rafraichit
-        history.replaceState(null, '', window.location.pathname);
-        // Feedback visuel : on indique qu'on scanne un QR
-        showNautilusAlarm('qr-scan-' + Date.now());
+        /* On CONSERVE ?m= dans la barre d'adresse.
+           Auparavant on l'effacait pour eviter de rejouer la sequence a
+           chaque rafraichissement. Mais c'est justement cette adresse que
+           le matelot doit pouvoir mettre en favori : nettoyee, le favori
+           aurait enregistre le site sans son code, et la reprise
+           automatique n'aurait plus fonctionne.
+           La sequence d'accueil (alarme + defilement) n'est donc jouee
+           qu'une fois par session ; les ouvertures suivantes depuis le
+           favori reprennent la mission directement, sans reprise du
+           spectacle. */
+        let alreadyPlayed = false;
+        try{ alreadyPlayed = sessionStorage.getItem('nautilusAutoResume') === code; }
+        catch(e){ /* navigation privee */ }
+        try{ sessionStorage.setItem('nautilusAutoResume', code); }catch(e){ /* ignore */ }
+        // Feedback visuel : uniquement a la premiere ouverture du lien.
+        if(!alreadyPlayed) showNautilusAlarm('qr-scan-' + Date.now());
         // On remplit l'input et on attend un peu pour que la scene se stabilise
         $('matelotCodeInput').value = code;
-        await new Promise(r => setTimeout(r, 1500));
-        // Scroll vers la zone de reprise
-        document.getElementById('retrouverEquipage')?.scrollIntoView({behavior:'smooth', block:'start'});
-        await new Promise(r => setTimeout(r, 700));
+        await new Promise(r => setTimeout(r, alreadyPlayed ? 200 : 1500));
+        // Defilement vers la zone de reprise (inutile si on a deja joue la
+        // sequence : on va directement au resultat).
+        if(!alreadyPlayed){
+          document.getElementById('retrouverEquipage')?.scrollIntoView({behavior:'smooth', block:'start'});
+          await new Promise(r => setTimeout(r, 700));
+        }
         // Lance la reprise
         await joinTeam();
         // Si succes : scroll vers la chambre de pilotage
