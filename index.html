@@ -2078,9 +2078,9 @@
       setBlipHighlight(code, true);
       const card = document.querySelector(`#teamsBox [data-team="${code}"]`);
       if(card) card.scrollIntoView({ behavior:'smooth', block:'center' });
-      // Le halo s'eteint tout seul : c'est un repere, pas un etat.
+      // Le halo s'eteint tout seul apres 1 s : c'est un repere, pas un etat.
       clearTimeout(setBlipHighlight._t);
-      setBlipHighlight._t = setTimeout(() => setBlipHighlight(code, false), 2600);
+      setBlipHighlight._t = setTimeout(() => setBlipHighlight(code, false), 1000);
     });
 
     // Accessibilite : meme comportement au clavier.
