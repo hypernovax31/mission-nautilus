@@ -882,33 +882,14 @@
       box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18);
       min-height:clamp(240px,42vw,330px);
     }
-    .radar-stage.radar-collapsed{
-      min-height:0 !important;padding:14px 16px;margin-bottom:12px;
-      transition:min-height .8s ease,padding .8s ease,margin .8s ease,opacity .6s ease;
-    }
-    /* Quand le radar est en mode "veille" (pas d'equipe avec membres) : pulsation douce */
-    .radar-stage.radar-standby{
-      animation:radarStandbyPulse 10s ease-in-out infinite;
-    }
-    @keyframes radarStandbyPulse{
-      0%,100%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18),0 0 0 0 rgba(91,255,156,0)}
-      50%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18),0 0 0 8px rgba(91,255,156,.10)}
-    }
+    /* SONAR UNIQUE : il n'existe plus qu'une seule apparence de sonar, celle
+       qui sert a reveler les equipages (grand format, points visibles,
+       balayage a 2,8 s). Les anciens modes "veille" (.radar-standby) et
+       "reduit" (.radar-collapsed) ont ete supprimes : le sonar garde
+       exactement la meme taille et la meme mise en forme du debut a la fin,
+       qu'il y ait des equipages ou non. */
     /* Animation du sweep pour qu'il soit bien visible */
     .radar-sweep-big{filter:drop-shadow(0 0 6px rgba(91,255,156,.7))}
-
-    .radar-stage.radar-collapsed .sonar-loader{padding:14px}
-    .radar-stage.radar-collapsed .radar-screen-big{width:140px;height:140px;min-width:140px;flex-basis:140px}
-    .radar-stage.radar-collapsed .radar-sweep-big{animation-duration:2s}
-    .radar-stage.radar-collapsed .radar-blip{display:none}
-    /* Pendant l'annonce d'une equipe : le radar reprend sa taille et
-       les points redeviennent visibles, meme en mode reduit. */
-    .radar-stage.radar-collapsed.radar-scanning{min-height:clamp(240px,42vw,330px) !important;padding:clamp(18px,3.4vw,28px) clamp(14px,3vw,24px)}
-    .radar-stage.radar-collapsed.radar-scanning .radar-screen-big{width:min(62vw,250px);height:min(62vw,250px);min-width:170px;flex-basis:auto}
-    .radar-stage.radar-collapsed.radar-scanning .radar-blip{display:block}
-    .radar-stage.radar-collapsed.radar-scanning .radar-grid{opacity:1}
-    .radar-stage.radar-collapsed.radar-scanning .radar-sweep-big{animation-duration:2.8s}
-    .radar-stage.radar-collapsed .radar-grid{opacity:.3}
     .radar-stage.radar-fading{opacity:0;pointer-events:none}
     .radar-big{padding:0;background:transparent;border:0;box-shadow:none;width:100%}
     .radar-screen-big{
@@ -1123,7 +1104,7 @@
         <button type="button" class="mission-step active" data-rule="embark"><span class="num">1</span><b>Embarquez</b></button>
         <button type="button" class="mission-step" data-rule="solve"><span class="num">2</span><b>Décryptez</b></button>
         <button type="button" class="mission-step" data-rule="scan"><span class="num">3</span><b>Scannez</b></button>
-        <button type="button" class="mission-step" data-rule="survive"><span class="num">4</span><b>Attention</b></button>
+        <button type="button" class="mission-step" data-rule="survive"><span class="num">4</span><b>Survivez</b></button>
       </div>
       <div class="rule-detail" id="ruleDetail" aria-live="polite"></div>
     </div>
@@ -1178,7 +1159,7 @@
   <section class="card" id="equipagesEnMer">
     <h2>🌊 ÉQUIPAGES EN PLONGÉE</h2>
     <div class="body" id="equipagesBody">
-      <div id="radarStage" class="radar-stage radar-standby" role="status" aria-live="polite">
+      <div id="radarStage" class="radar-stage" role="status" aria-live="polite">
         <div class="sonar-loader radar-big">
           <div class="sonar-screen radar-screen-big">
             <div class="radar-grid"></div>
@@ -1190,7 +1171,7 @@
             <div class="radar-blip" id="radarBlip5"></div>
             <div class="radar-center"></div>
           </div>
-          <div class="sonar-text" id="radarStatus"><span class="radar-msg" id="radarMsg">Balayage des fonds marins</span></div>
+          <div class="sonar-text" id="radarStatus"><span class="radar-msg" id="radarMsg">En attente de nouveaux signaux...</span></div>
         </div>
       </div>
       <div id="teamsBox" class="teamlist" style="padding:0 clamp(18px,3vw,28px) clamp(18px,3vw,28px)"></div>
@@ -1488,7 +1469,6 @@
    */
   const REVEAL_STAGGER_MS = 420;
   const REVEAL_INITIAL_DELAY = 250; // delai avant la 1ere carte (apres 1 tour de radar)
-  let _radarStatusInterval = null;
   let _knownTeams = {}; // teamCode -> { hasMembers: bool, revealedAt: number }
   // File de revelation : une equipe est annoncee par cycle d'alarme.
   let _revealQueue = [];        // codes en attente d'annonce
@@ -1664,29 +1644,12 @@
     }, 280);
   }
 
-  function startRadarStatusLoop(){
-    if(_radarStatusInterval) return; // deja en cours
-    const messages = [
-      'Balayage des fonds marins',
-      'Détection des signaux en surface',
-      'Identification des coques',
-      'Réception des émissions des matelots',
-      'Compilation des données',
-      'En attente de matelots'
-    ];
-    let i = 0;
-    _radarStatusInterval = setInterval(() => {
-      i = (i + 1) % messages.length;
-      setRadarStatus(messages[i]);
-    }, 2600);
-  }
-
-  function stopRadarStatusLoop(){
-    if(_radarStatusInterval){
-      clearInterval(_radarStatusInterval);
-      _radarStatusInterval = null;
-    }
-  }
+  /* Message du sonar : il est FIXE ("En attente de nouveaux signaux...")
+     avant comme apres l'arrivee des equipages. Il ne change que le temps
+     d'annoncer un contact, puis revient aussitot a ce texte.
+     L'ancienne boucle de 6 messages qui defilaient toutes les 2,6 s a ete
+     supprimee (c'etait aussi un minuteur permanent en moins). */
+  const RADAR_IDLE_TEXT = 'En attente de nouveaux signaux...';
 
   /**
    * Genere le HTML d'une carte equipe.
@@ -1755,38 +1718,14 @@
     const box = $('teamsBox');
     if(!box) return;
     const active = teams.filter(t => (t.members||[]).length > 0);
-    const hasAny = active.length > 0;
-    const stage = $('radarStage');
 
     // 1) Mise a jour de l'etat connu
     const newKnown = {};
     active.forEach(t => { newKnown[t.teamCode] = { hasMembers:true, revealedAt: _knownTeams[t.teamCode]?.revealedAt || Date.now() }; });
     _knownTeams = newKnown;
 
-    // 2) Gestion du radar
-    if(hasAny){
-      // Au moins 1 equipe avec membres : on reduit le radar (mais il reste affiche en petit)
-      if(stage && stage.classList.contains('radar-standby')){
-        stage.classList.remove('radar-standby');
-      }
-      if(stage && !stage.classList.contains('radar-collapsed')){
-        stage.classList.add('radar-collapsed');
-        stopRadarStatusLoop();
-        setRadarStatus('En attente de nouveaux signaux...');
-      }
-    }else{
-      // Aucune equipe avec membres : radar en mode "veille" (pulsation continue)
-      if(stage && stage.classList.contains('radar-collapsed')){
-        stage.classList.remove('radar-collapsed');
-        startRadarStatusLoop();
-        setRadarStatus('Balayage des fonds marins');
-      }else if(stage && !stage.classList.contains('radar-standby')){
-        stage.classList.add('radar-standby');
-      }
-      if(stage && !_radarStatusInterval){
-        startRadarStatusLoop();
-      }
-    }
+    // 2) Le sonar ne change plus jamais d'apparence ni de message : un seul
+    //    sonar, une seule taille, un seul texte. Rien a faire ici.
 
     // 3) Suppression des cartes qui n'ont plus de membres (animation inverse)
     const existingCards = box.querySelectorAll('.team-reveal');
@@ -1881,7 +1820,6 @@
     // Condition 2 : le bloc est bien a l'ecran a cet instant.
     await waitForRadarVisible();
 
-    const stage = $('radarStage');
     const box = $('teamsBox');
 
     while(_revealQueue.length){
@@ -1890,8 +1828,8 @@
       // L'equipe a disparu entre-temps (membres retires) : on saute.
       if(!team || box.querySelector(`[data-team="${code}"]`)) continue;
 
-      // a) Le radar repasse en grand pour que le point soit bien visible
-      if(stage) stage.classList.add('radar-scanning');
+      // a) Le sonar garde sa taille : seul le message change le temps de
+      //    l'annonce (il n'y a plus qu'une seule apparence de sonar).
       setRadarStatus('Contact sonar : ' + (team.teamName || 'equipage'));
 
       // Si l'utilisateur a scrolle ailleurs, on patiente jusqu'a son retour.
@@ -1926,8 +1864,8 @@
       if(_revealQueue.length) await new Promise(r => setTimeout(r, 420));
     }
 
-    if(stage) stage.classList.remove('radar-scanning');
-    setRadarStatus('En attente de nouveaux signaux...');
+    // Retour au message fixe du sonar.
+    setRadarStatus(RADAR_IDLE_TEXT);
     _revealRunning = false;
   }
 
@@ -1961,9 +1899,6 @@
         return String(a.teamName||'').localeCompare(String(b.teamName||''), 'fr');
       });
 
-      // Demarre le radar en mode veille (des la 1ere execution)
-      startRadarStatusLoop();
-
       // Synchronise l'UI
       syncTeamsUI(teams);
 
@@ -1971,7 +1906,6 @@
       console.error('NAUTILUS loadTeams error:', err);
       const stage = $('radarStage');
       if(stage) stage.remove();
-      stopRadarStatusLoop();
       box.innerHTML=`<div class="notice warning"><b>Le sonar gresille...</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Detail technique : ${esc(err.code || err.message || err)}</span></div>`;
     }finally{
       _loadTeamsRunning = false;
