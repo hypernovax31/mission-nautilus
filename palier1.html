@@ -533,7 +533,7 @@ async function getTeamRealtime(code, callback) {
   });
 }
 async function saveTeam(team, patch) {
-  if (!team || !team.teamCode) throw new Error('Code équipage manquant.');
+  if (!team || !team.teamCode) throw new Error('Équipe introuvable. Recharge la page.');
   const updated = { ...patch, updatedAt: new Date().toISOString() };
   await updateDoc(doc(db, 'teams', team.teamCode), updated);
   return { ...team, ...updated };

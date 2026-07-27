@@ -1333,8 +1333,7 @@
           <div id="adminTeamsBox" class="teamlist"></div>
           <div class="hr"></div>
           <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">
-            <div style="flex:1;min-width:160px"><label for="adminNewTeamCode">Code nouvelle équipe (4-12 lettres majuscules)</label><input id="adminNewTeamCode" placeholder="EX: MOBYDICK" maxlength="12" autocomplete="off"></div>
-            <div style="flex:1;min-width:160px"><label for="adminNewTeamName">Nom affiché</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" autocomplete="off"></div>
+            <div style="flex:1;min-width:220px"><label for="adminNewTeamName">Nom de la nouvelle équipe</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" maxlength="24" autocomplete="off"></div>
             <button class="primary" id="adminAddTeamBtn" type="button" style="margin:0">➕ Ajouter</button>
           </div>
         </div>
@@ -1364,11 +1363,76 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  /* Codes d'équipe obsolètes à nettoyer dans Firestore (migration).
-     Ces docs sont des restes d'anciennes versions du jeu où les codes
-     étaient cryptiques. On les supprime pour ne garder que les 5
-     équipes actives : NEMO, NAUTILUS, ARONNAX, NEDLAND, CALAMAR. */
-  const OBSOLETE_TEAM_CODES = ['NEMO', 'NAUTILUS', 'ARONNAX', 'NEDLAND', 'CALAMAR', 'BALEINE', 'GEANT'];
+  /* Anciens identifiants d'equipe a nettoyer dans Firestore.
+     Depuis l'abandon des codes secrets, l'identifiant d'une equipe est son
+     nom (NEMO, NAUTILUS, ...). Les anciens docs CAPITAINE/SOUSMARIN/... sont
+     supprimes une fois leur contenu migre (voir migrateLegacyTeamCodes). */
+  const OBSOLETE_TEAM_CODES = ['CAPITAINE', 'SOUSMARIN', 'DOCTEUR', 'HARPON', 'TENTACULE', 'BALEINE', 'GEANT'];
+
+  /* Correspondance ancien identifiant -> nouveau (= nom de l'equipe). */
+  const LEGACY_TEAM_MAP = {
+    CAPITAINE: 'NEMO',
+    SOUSMARIN: 'NAUTILUS',
+    DOCTEUR:   'ARONNAX',
+    HARPON:    'NEDLAND',
+    TENTACULE: 'CALAMAR'
+  };
+  /**
+   * Migration : recopie teams/CAPITAINE -> teams/NEMO, etc.
+   * Transfere la progression, les membres, la sous-collection matelots et
+   * remet a jour l'index global matelots/{code}. Idempotente : si la cible
+   * existe deja avec des membres, on ne touche a rien.
+   * L'ancien doc est ensuite supprime par cleanupObsoleteTeams().
+   */
+  async function migrateLegacyTeamCodes(){
+    for(const [oldCode, newCode] of Object.entries(LEGACY_TEAM_MAP)){
+      try{
+        const oldRef = doc(db,'teams',oldCode);
+        const oldSnap = await getDoc(oldRef);
+        if(!oldSnap.exists()) continue;
+
+        const oldData = oldSnap.data();
+        const newRef = doc(db,'teams',newCode);
+        const newSnap = await getDoc(newRef);
+        const target = newSnap.exists() ? newSnap.data() : null;
+
+        // On n'ecrase jamais une equipe cible qui a deja des membres.
+        if(!target || !(target.members || []).length){
+          const def = TEAM_DEFS.find(t => t.code === newCode);
+          await setDoc(newRef, {
+            ...oldData,
+            teamCode: newCode,
+            teamName: def ? def.name : (oldData.teamName || newCode),
+            migratedFrom: oldCode,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+
+          // Sous-collection matelots + index global
+          const mats = await getDocs(collection(db,'teams',oldCode,'matelots'));
+          for(const d of mats.docs){
+            const m = d.data();
+            const codeMatelot = m.codeMatelot || d.id;
+            await setDoc(doc(db,'teams',newCode,'matelots',codeMatelot),
+              { ...m, teamCode: newCode }, { merge: true });
+            await setDoc(doc(db,'matelots',codeMatelot),
+              { teamCode: newCode }, { merge: true }).catch(() => {});
+            await deleteDoc(d.ref).catch(() => {});
+          }
+          // Matelots presents seulement dans members[]
+          for(const m of (oldData.members || [])){
+            if(m.codeMatelot){
+              await setDoc(doc(db,'matelots',m.codeMatelot),
+                { teamCode: newCode }, { merge: true }).catch(() => {});
+            }
+          }
+          console.log(`[Migration] ${oldCode} -> ${newCode}`);
+        }
+      }catch(err){
+        console.warn(`[Migration] Echec ${oldCode} :`, err);
+      }
+    }
+  }
+
   async function cleanupObsoleteTeams(){
     // 1) hard-coded legacy
     for(const code of OBSOLETE_TEAM_CODES){
@@ -1416,12 +1480,15 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  /* L'identifiant d'une equipe EST son nom : plus de code secret separe.
+     Ces valeurs servent de cle Firestore (teams/{id}) et sont identiques
+     a celles de palier1.html. */
   const TEAM_DEFS = [
-    { code:"CAPITAINE", name:"Nemo" },
-    { code:"SOUSMARIN", name:"Nautilus" },
-    { code:"DOCTEUR",   name:"Aronnax" },
-    { code:"HARPON",    name:"Ned Land" },
-    { code:"TENTACULE", name:"Calamar" }
+    { code:"NEMO",     name:"Nemo" },
+    { code:"NAUTILUS", name:"Nautilus" },
+    { code:"ARONNAX",  name:"Aronnax" },
+    { code:"NEDLAND",  name:"Ned Land" },
+    { code:"CALAMAR",  name:"Calamar" }
   ];
   const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
 
@@ -1448,19 +1515,13 @@
   const normalize=s=>String(s||'').trim().toUpperCase();
   const memberKey=name=>normalize(String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]/gi,''));
   const simple=s=>normalize(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''));
-  /* Convertit une saisie en identifiant technique d'equipe.
-     Les joueurs ne saisissent plus de code equipage : ils utilisent leur
-     Code Matelot personnel. Cette fonction ne sert plus qu'en interne
-     (panneau admin, migrations). */
+  /* Identifiant d'equipe a partir d'un nom ou d'un identifiant.
+     Le nom EST l'identifiant (a la casse et aux accents pres). */
   function teamCodeFromInput(value){
-    const raw = String(value||'').trim();
-    if(!raw) return '';
-    const wanted = simple(raw);
-    // 1) match exact sur le code équipe
-    const byCode = TEAM_DEFS.find(t => simple(t.code) === wanted);
-    if(byCode) return byCode.code;
-    // 2) sinon, on retourne tel quel (sera teste contre customTeams dans getTeam)
-    return raw;
+    const wanted = simple(value).replace(/[^A-Z0-9]/g, '');
+    if(!wanted) return '';
+    const found = TEAM_DEFS.find(t => simple(t.code) === wanted || simple(t.name).replace(/[^A-Z0-9]/g, '') === wanted);
+    return found ? found.code : wanted;
   }
 
   function getLockHours(failCount){return Math.min(24, Math.pow(2, failCount));}
@@ -1530,7 +1591,7 @@
     if(snap.exists()) return {teamCode:cleanCode,...snap.data()};
     return null;
   }
-  async function saveTeam(team,patch){if(!team||!team.teamCode) throw new Error('Code Matelot manquant. Recharge la page.');const updated={...patch,updatedAt:new Date().toISOString()};await updateDoc(doc(db,'teams',team.teamCode),updated);currentTeam={...team,...updated};return currentTeam;}
+  async function saveTeam(team,patch){if(!team||!team.teamCode) throw new Error('Équipe introuvable. Recharge la page.');const updated={...patch,updatedAt:new Date().toISOString()};await updateDoc(doc(db,'teams',team.teamCode),updated);currentTeam={...team,...updated};return currentTeam;}
 
   async function autoUnlockIfNeeded(team){
     if(team?.status==='blocked'&&!isLocked(team)){
@@ -3348,7 +3409,7 @@ function qrDataUri(text, opts){
         box.innerHTML = '<div class="small">Aucun matelot inscrit pour le moment.</div>';
         return;
       }
-      const teamOptions = effectiveTeams.map(t => `<option value="${esc(t.code)}">${esc(t.name)} (${esc(t.code)})</option>`).join('');
+      const teamOptions = effectiveTeams.map(t => `<option value="${esc(t.code)}">${esc(t.name)}</option>`).join('');
       const serviceOptions = SERVICES.map(s => `<option value="${s}">${s}</option>`).join('');
       box.innerHTML = `<div class="team" style="background:#fff">
         <h3>${allMembers.length} matelot(s) inscrit(s)</h3>
@@ -3441,7 +3502,7 @@ function qrDataUri(text, opts){
     try{
       const ref = doc(db,'teams',teamCode);
       const snap = await getDoc(ref);
-      if(!snap.exists()) throw new Error(`Équipe ${teamCode} introuvable.`);
+      if(!snap.exists()) throw new Error('Équipe introuvable.');
       const team = { teamCode, ...snap.data() };
       const newMembers = (team.members || []).filter(m => m.memberKey !== targetMemberKey);
       await updateDoc(ref, { members: newMembers, updatedAt: new Date().toISOString() });
@@ -3512,7 +3573,7 @@ function qrDataUri(text, opts){
     try{
       const ref = doc(db,'teams',teamCode);
       const snap = await getDoc(ref);
-      if(!snap.exists()) throw new Error(`Équipe ${teamCode} introuvable.`);
+      if(!snap.exists()) throw new Error('Équipe introuvable.');
       const team = { teamCode, ...snap.data() };
       const updates = { updatedAt: new Date().toISOString() };
       if(patch.status === 'active'){
@@ -3665,13 +3726,10 @@ function qrDataUri(text, opts){
       box.innerHTML = effectiveTeams.map(t => {
         const isCustom = !TEAM_DEFS.some(d => d.code === t.code);
         return `<div class="team" style="background:#fff" data-team="${esc(t.code)}">
-          <h3>${esc(t.name)} <span class="small" style="color:var(--muted)">(${esc(t.code)})${isCustom ? ' <span style="color:#075c39">[custom]</span>' : ''}</span></h3>
+          <h3>${esc(t.name)}${isCustom ? ' <span class="small" style="color:#075c39">[custom]</span>' : ''}</h3>
           <div class="hr"></div>
           <div class="team-edit-row">
             <input type="text" class="tt-name" value="${esc(t.name)}" maxlength="32" placeholder="Nom de l'équipe">
-            <div class="tt-sub">
-              <input type="text" class="tt-code" value="${esc(t.code)}" maxlength="12" style="text-transform:uppercase" disabled>
-            </div>
             <div class="tt-actions">
               <button class="primary mini tt-save" type="button" style="background:var(--fnac);color:#111">💾 Renommer</button>
               <button class="danger mini tt-del" type="button">🗑</button>
@@ -3683,6 +3741,7 @@ function qrDataUri(text, opts){
       box.querySelectorAll('.team').forEach(teamEl => {
         const code = teamEl.dataset.team;
         const isDefault = TEAM_DEFS.some(d => d.code === code);
+        const teamLabel = (effectiveTeams.find(x => x.code === code) || {}).name || code;
         teamEl.querySelector('.tt-save').addEventListener('click', async () => {
           const newName = teamEl.querySelector('.tt-name').value.trim();
           if(!newName){ alert('Nom requis.'); return; }
@@ -3690,9 +3749,9 @@ function qrDataUri(text, opts){
         });
         teamEl.querySelector('.tt-del').addEventListener('click', async () => {
           if(isDefault){
-            if(!confirm(`⚠️ Supprimer l'équipe PAR DÉFAUT ${code} ?\n\n• Doc Firestore teams/${code} supprimé\n• Ajoutée à obsoleteTeams (nettoyée à chaque init)\n• Ne sera PLUS recréée (les nouveaux utilisateurs ne pourront plus s'inscrire à ${code})\n• Membres de cette équipe supprimés\n• Pour confirmer, il faudra aussi retaper "${code}" dans la fenêtre suivante.`)) return;
+            if(!confirm(`⚠️ Supprimer l'équipe ${teamLabel} ?\n\n• Toute sa progression est perdue\n• Ses matelots sont supprimés (leurs codes ne fonctionneront plus)\n• Elle ne sera plus proposée à l'inscription\n• Pour confirmer, il faudra retaper "${teamLabel}" dans la fenêtre suivante.`)) return;
           }else{
-            if(!confirm(`Supprimer DÉFINITIVEMENT l'équipe custom ${code} ?\n\n• Doc Firestore teams/${code} supprimé\n• Ajoutée à obsoleteTeams\n• Membres de cette équipe supprimés`)) return;
+            if(!confirm(`Supprimer définitivement l'équipe ${teamLabel} ?\n\n• Toute sa progression est perdue\n• Ses matelots sont supprimés`)) return;
           }
           await adminDeleteTeam(code, isDefault);
         });
@@ -3706,10 +3765,21 @@ function qrDataUri(text, opts){
     if(!isAdminUnlocked()) return;
     try{
       await updateDoc(doc(db,'teams',code), { teamName: newName, updatedAt: new Date().toISOString() });
+      // Les equipes custom sont listees dans game/config : sans cette mise a
+      // jour, l'ancien nom reapparaissait au rechargement.
+      const cfgRef = doc(db,'game','config');
+      const cfgSnap = await getDoc(cfgRef);
+      const cfg = cfgSnap.exists() ? cfgSnap.data() : {};
+      const customs = Array.isArray(cfg.customTeams) ? cfg.customTeams : [];
+      const idx = customs.findIndex(t => t.code === code);
+      if(idx >= 0){
+        customs[idx] = { ...customs[idx], name: newName };
+        await setDoc(cfgRef, { customTeams: customs, updatedAt: new Date().toISOString() }, { merge: true });
+      }
       await refreshAdminTeams();
       await renderAdminTeams();
       await loadTeams();
-      endAdminSession(`✅ ${code} renommée en "${newName}" · session fermée`);
+      endAdminSession(`✅ Équipe renommée en "${newName}" · session fermée`);
     }catch(err){
       console.error('adminRenameTeam:', err);
       alert(`❌ Échec renommage : ${err.message || err}`);
@@ -3717,11 +3787,13 @@ function qrDataUri(text, opts){
   }
   async function adminAddTeam(){
     if(!isAdminUnlocked()) return;
-    const codeRaw = ($('adminNewTeamCode').value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     const name = ($('adminNewTeamName').value || '').trim();
-    if(!codeRaw || codeRaw.length < 4){ alert('Code équipe : 4 à 12 caractères alphanumériques.'); return; }
-    if(!name){ alert('Nom affiché requis.'); return; }
-    if(effectiveTeams.some(t => t.code === codeRaw)){ alert('Code déjà utilisé.'); return; }
+    if(!name){ alert('Nom de l\'équipe requis.'); return; }
+    // L'identifiant est derive du nom (accents et espaces retires).
+    const codeRaw = simple(name).replace(/[^A-Z0-9]/g, '');
+    if(codeRaw.length < 3){ alert('Nom trop court : 3 caractères minimum.'); return; }
+    if(codeRaw.length > 24){ alert('Nom trop long : 24 caractères maximum.'); return; }
+    if(effectiveTeams.some(t => t.code === codeRaw)){ alert('Cette équipe existe déjà.'); return; }
     try{
       // 1) créer le doc team
       await setDoc(doc(db,'teams',codeRaw), {
@@ -3740,12 +3812,11 @@ function qrDataUri(text, opts){
         customs.push({ code: codeRaw, name });
       }
       await setDoc(cfgRef, { customTeams: customs, updatedAt:new Date().toISOString() }, {merge:true});
-      $('adminNewTeamCode').value = '';
       $('adminNewTeamName').value = '';
       await refreshAdminTeams();
       await renderAdminTeams();
       await loadTeams();
-      endAdminSession(`✅ Équipe ${codeRaw} créée · session fermée`);
+      endAdminSession(`✅ Équipe ${name} créée · session fermée`);
     }catch(err){
       console.error('adminAddTeam:', err);
       alert(`❌ Échec création : ${err.message || err}`);
@@ -3753,11 +3824,12 @@ function qrDataUri(text, opts){
   }
   async function adminDeleteTeam(code, isDefault){
     if(!isAdminUnlocked()) return;
+    const label = (effectiveTeams.find(x => x.code === code) || {}).name || code;
     try{
       // Confirmation supplémentaire pour une équipe par défaut
       if(isDefault){
-        const typed = prompt(`⚠️ Tu supprimes une équipe PAR DÉFAUT (${code}).\n\nPour confirmer, tape exactement le code de l'équipe (${code}) en MAJUSCULES :`);
-        if(typed !== code){ alert('Confirmation annulée.'); return; }
+        const typed = prompt(`⚠️ Tu supprimes l'équipe ${label}.\n\nPour confirmer, retape son nom exactement :`);
+        if(simple(typed || '') !== simple(label)){ alert('Confirmation annulée.'); return; }
       }
       // Purge des matelots (sous-collection + index global) AVANT le doc equipe,
       // sinon les Codes Matelot restent valides et pointent vers une equipe fantome.
@@ -3785,7 +3857,7 @@ function qrDataUri(text, opts){
       await renderAdminTeams();
       await renderAdminMembers();
       await loadTeams();
-      endAdminSession(`✅ Équipe ${code} supprimée · session fermée`);
+      endAdminSession(`✅ Équipe ${label} supprimée · session fermée`);
     }catch(err){
       console.error('adminDeleteTeam:', err);
       alert(`❌ Échec suppression : ${err.message || err}`);
@@ -3835,6 +3907,9 @@ function qrDataUri(text, opts){
     if($('matelotCodeInput')) $('matelotCodeInput').value = '';
 
     /* Nettoyage des anciennes équipes (codes obsolètes) avant tout */
+    // ORDRE IMPORTANT : migrer AVANT de nettoyer, sinon les anciennes
+    // equipes seraient supprimees avec leur contenu.
+    try { await migrateLegacyTeamCodes(); } catch(e) { console.warn('Migration legacy error:', e); }
     try { await cleanupObsoleteTeams(); } catch(e) { console.warn('Migration error:', e); }
 
     await loadMissionConfig();
