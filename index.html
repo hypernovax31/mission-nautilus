@@ -921,7 +921,20 @@
     /* Le sonar occupe toute la largeur de la carte, bord a bord, comme le
        bandeau du bloc "Réserve O₂" : on annule le padding du .body en
        debordant des deux cotes, et on supprime les coins arrondis. */
-    #equipagesBody{padding-top:0;padding-left:0;padding-right:0}
+    /* Le fond sombre du sonar couvre TOUT le bloc, jusqu'au bas : sans cela
+       une bande blanche restait visible sous les cartes d'equipage (le
+       degrade s'arretait au sonar, et le blanc de la carte apparaissait en
+       dessous). Les cartes d'equipage, elles, gardent leur fond blanc :
+       elles ressortent ainsi nettement sur ce fond marin. */
+    #equipagesEnMer{
+      background:linear-gradient(135deg,rgba(5,16,28,.96),rgba(11,52,78,.96));
+    }
+    #equipagesBody{
+      padding-top:0;padding-left:0;padding-right:0;
+      /* le bas conserve une marge, mais sur le fond sombre */
+      padding-bottom:0;
+      background:transparent;
+    }
     .radar-stage{
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       width:100%;box-sizing:border-box;
