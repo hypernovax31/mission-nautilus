@@ -274,7 +274,7 @@
     .matelot-reveal-code .code{font-size:clamp(19px,4.4vw,27px);padding:14px 18px;margin:0;max-width:100%;
       overflow-wrap:anywhere}
     .matelot-qr-card{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px}
-    .matelot-qr-thumb{width:132px;height:132px;flex:0 0 auto;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
+    .matelot-qr-thumb{width:min(168px,52vw);height:min(168px,52vw);flex:0 0 auto;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
     .matelot-qr-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
     .matelot-qr-actions button{width:auto!important;flex:0 0 auto}
     @media(max-width:560px){
@@ -1954,8 +1954,17 @@ const ECB = {
   2: { L: [10, 1, 34], M: [16, 1, 28], Q: [22, 1, 22], H: [28, 1, 16] },
   3: { L: [15, 1, 55], M: [26, 1, 44], Q: [18, 2, 17], H: [22, 2, 13] },
   4: { L: [20, 1, 80], M: [18, 2, 32], Q: [26, 2, 24], H: [16, 4, 9] },
+  // A partir de la version 5, seules les configurations a blocs de taille
+  // UNIFORME sont listees : ce generateur ne gere pas les deux groupes de
+  // tailles differentes prevus par la norme pour les autres niveaux.
+  5: { L: [26, 1, 108], M: [24, 2, 43] },
+  6: { L: [18, 2, 68],  M: [16, 4, 27], Q: [24, 4, 19], H: [28, 4, 15] },
+  7: { L: [20, 2, 78],  M: [18, 4, 31] },
+  8: { L: [24, 2, 97] },
+  9: { L: [30, 2, 116] },
 };
-const ALIGN = { 1: [], 2: [6, 18], 3: [6, 22], 4: [6, 26] };
+const ALIGN = { 1: [], 2: [6, 18], 3: [6, 22], 4: [6, 26], 5: [6, 30],
+  6: [6, 34], 7: [6, 22, 38], 8: [6, 24, 42], 9: [6, 26, 46] };
 const ECL_BITS = { L: 1, M: 0, Q: 3, H: 2 };
 
 /* ---------- GF(256), polynome primitif 0x11D ---------- */
@@ -2076,6 +2085,14 @@ function buildBase(version) {
   }
   set(size - 8, 8, 1);                            // module noir obligatoire
 
+  // Zones reservees a l'information de version (a partir de la v7)
+  if (version >= 7) {
+    for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {
+      if (m[size - 11 + j][i] === -1) { m[size - 11 + j][i] = 0; res[size - 11 + j][i] = 1; }
+      if (m[i][size - 11 + j] === -1) { m[i][size - 11 + j] = 0; res[i][size - 11 + j] = 1; }
+    }
+  }
+
   for (let i = 0; i < 9; i++) {                   // zones reservees au format
     if (m[8][i] === -1) { m[8][i] = 0; res[8][i] = 1; }
     if (m[i][8] === -1) { m[i][8] = 0; res[i][8] = 1; }
@@ -2114,6 +2131,23 @@ const MASKS = [
   (r, c) => (((r * c) % 2) + ((r * c) % 3)) % 2 === 0,
   (r, c) => (((r + c) % 2) + ((r * c) % 3)) % 2 === 0,
 ];
+
+/* Information de version (versions 7 et au-dela).
+   Sans ce bloc, les lecteurs refusent le code : c'est lui qui leur indique
+   la taille reelle du symbole. */
+function applyVersionInfo(m, size, version) {
+  if (version < 7) return;
+  let rem = version;
+  for (let i = 0; i < 12; i++) rem = (rem << 1) ^ (((rem >> 11) & 1) * 0x1f25);
+  const bits = (version << 12) | rem;
+  for (let i = 0; i < 18; i++) {
+    const bit = (bits >> i) & 1;
+    const r = Math.floor(i / 3);
+    const c = i % 3;
+    m[size - 11 + c][r] = bit;   // bloc bas-gauche
+    m[r][size - 11 + c] = bit;   // bloc haut-droite
+  }
+}
 
 function applyFormat(m, size, ecl, mask) {
   let data = (ECL_BITS[ecl] << 3) | mask;
@@ -2173,9 +2207,13 @@ function qrMatrix(text, ecl = 'Q', forcedVersion = null, forcedMask = null) {
   let version = forcedVersion, bits = null;
   if (version) bits = encodeBits(text, version, ecl);
   else {
-    for (let v = 1; v <= 4; v++) { bits = encodeBits(text, v, ecl); if (bits) { version = v; break; } }
+    for (let v = 1; v <= 9; v++) {
+      if (!ECB[v] || !ECB[v][ecl]) continue;   // configuration non geree a ce niveau
+      bits = encodeBits(text, v, ecl);
+      if (bits) { version = v; break; }
+    }
   }
-  if (!bits) throw new Error('Texte trop long pour un QR version 1-4.');
+  if (!bits) throw new Error('Texte trop long pour ce niveau de correction.');
 
   let best = null;
   const masks = forcedMask === null ? [0, 1, 2, 3, 4, 5, 6, 7] : [forcedMask];
@@ -2186,6 +2224,7 @@ function qrMatrix(text, ecl = 'Q', forcedVersion = null, forcedMask = null) {
       if (!res[r][c] && MASKS[mask](r, c)) m[r][c] ^= 1;
     }
     applyFormat(m, size, ecl, mask);
+    applyVersionInfo(m, size, version);
     const score = penalty(m, size);
     if (!best || score < best.score) best = { matrix: m, mask, score, size };
   }
@@ -2408,7 +2447,7 @@ function qrDataUri(text, opts){
     const text = buildNoteText(name, code, teamName);
     try{
       if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
-        const qrUri = qrDataUri(code, { ecl: 'H' });
+        const qrUri = qrDataUri(text, { ecl: 'L' });
         const pngBlob = await qrToPngBlob(qrUri, 420);
         const dataUrl = await blobToDataUrl(pngBlob);
         const html = '<div style="font-family:Arial,sans-serif">'
@@ -2529,7 +2568,7 @@ function qrDataUri(text, opts){
         }catch(e){ reject(e); }
       };
       img.onerror = () => reject(new Error('QR illisible'));
-      img.src = qrDataUri(code, { ecl: 'H' });
+      img.src = qrDataUri(buildNoteText(name, code, teamName), { ecl: 'L' });
     });
   }
 
@@ -2727,12 +2766,14 @@ function qrDataUri(text, opts){
 
       // 8) Affiche le Code Matelot (usage unique) + QR code + boutons Notes/Clipboard
       // Le QR encode UNIQUEMENT le code matelot en clair (texte simple).
-      // Pourquoi : le collaborateur scanne avec l'app camera de SON PROPRE telephone.
-      // Sa camera reconnait le texte et le copie dans le presse-papier (iOS 16+/Android 10+)
-      // OU il le tape a la main. Le lien web n'est pas utilisable car il ouvrirait la page
-      // sur le MEME telephone, ce qui est exactement ce qu'il fait deja.
+      // Le QR contient la FICHE COMPLETE (et non un lien) : scanne avec
+      // l'appareil photo, le telephone affiche le texte et propose de le
+      // copier, le partager ou l'enregistrer. Un lien aurait ouvert une
+      // page web, et un code seul declenche une recherche Google.
+      // Niveau L impose : 211 caracteres ne tiennent pas au-dessus.
       const resumeLink = matelotCode;
-      const qrUrl = qrDataUri(resumeLink, { ecl: 'H' });
+      const qrUrl = qrDataUri(
+        buildNoteText(name, matelotCode, chosen.teamName), { ecl: 'L' });
       $('registerMsg').innerHTML =
         '<div class="notice success matelot-card">' +
           '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
@@ -3282,24 +3323,31 @@ function qrDataUri(text, opts){
     btn.classList.toggle('active', isActive);
   }
 
+  /* Renvoie une promesse : true si la lecture a demarre, false si le
+     navigateur l'a refusee (politique d'autoplay). */
   function startOceanAudio(){
     const ambianceAudio = document.getElementById("ambianceAudio");
-    if(!ambianceAudio) return;
+    if(!ambianceAudio) return Promise.resolve(false);
     ambianceAudio.volume = 0.42;
-    ambianceAudio.play().then(() => {
+    ambianceAudio.muted = false;
+    return ambianceAudio.play().then(() => {
       setSonarButtonState(true);
-    }).catch(() => {
-      console.log("Lecture audio bloquée par le navigateur jusqu’à une interaction utilisateur.");
-    });
+      return true;
+    }).catch(() => false);
   }
 
   function toggleOceanAudio(){
     const ambianceAudio = document.getElementById("ambianceAudio");
     if(!ambianceAudio) return;
     if(!ambianceAudio.paused){
+      // Coupure volontaire : on la memorise pour ne pas relancer le son
+      // tout seul au retour sur l'onglet.
+      ambianceAudio.dataset.userPaused = '1';
       ambianceAudio.pause();
       setSonarButtonState(false);
     }else{
+      ambianceAudio.dataset.userPaused = '0';
+      _audioWakeDone = true;
       startOceanAudio();
     }
   }
@@ -3310,21 +3358,41 @@ function qrDataUri(text, opts){
   ambianceAudioElement?.addEventListener('pause', () => setSonarButtonState(false));
   ambianceAudioElement?.addEventListener('play', () => setSonarButtonState(true));
 
-  function activateAudioFromNavigation(){
-    startOceanAudio();
-    window.removeEventListener('scroll', activateAudioFromNavigation);
-    window.removeEventListener('wheel', activateAudioFromNavigation);
-    window.removeEventListener('touchstart', activateAudioFromNavigation);
-    window.removeEventListener('pointerdown', activateAudioFromNavigation);
-    window.removeEventListener('mousemove', activateAudioFromNavigation);
-    window.removeEventListener('keydown', activateAudioFromNavigation);
+  /* Demarrage de l'ambiance sonore.
+     Les navigateurs bloquent la lecture tant qu'aucun geste reel n'a eu
+     lieu ; un scroll ne suffit pas toujours (Safari iOS notamment).
+     On ecoute donc un large eventail d'evenements et surtout on NE RETIRE
+     les ecouteurs QUE si la lecture a effectivement demarre : avant, ils
+     etaient poses en { once:true } et disparaissaient des la premiere
+     tentative, meme refusee — le son ne repartait alors jamais. */
+  const AUDIO_WAKE_EVENTS = ['pointerdown','touchstart','touchend','mousedown',
+    'click','keydown','scroll','wheel','mousemove'];
+  let _audioWakeDone = false;
+
+  async function activateAudioFromNavigation(){
+    if(_audioWakeDone) return;
+    const started = await startOceanAudio();
+    if(!started) return;          // refuse : on reste a l'ecoute
+    _audioWakeDone = true;
+    AUDIO_WAKE_EVENTS.forEach(evt => {
+      window.removeEventListener(evt, activateAudioFromNavigation);
+      document.removeEventListener(evt, activateAudioFromNavigation);
+    });
   }
-  window.addEventListener('scroll', activateAudioFromNavigation, { once:true, passive:true });
-  window.addEventListener('wheel', activateAudioFromNavigation, { once:true, passive:true });
-  window.addEventListener('touchstart', activateAudioFromNavigation, { once:true, passive:true });
-  window.addEventListener('pointerdown', activateAudioFromNavigation, { once:true, passive:true });
-  window.addEventListener('mousemove', activateAudioFromNavigation, { once:true, passive:true });
-  window.addEventListener('keydown', activateAudioFromNavigation, { once:true });
+
+  AUDIO_WAKE_EVENTS.forEach(evt => {
+    window.addEventListener(evt, activateAudioFromNavigation, { passive:true });
+    // Certains navigateurs mobiles ne propagent pas jusqu'a window :
+    // on double l'ecoute sur document, en phase de capture.
+    document.addEventListener(evt, activateAudioFromNavigation, { passive:true, capture:true });
+  });
+
+  // Retour d'onglet : si l'ambiance etait active, on la relance.
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState !== 'visible' || !_audioWakeDone) return;
+    const a = document.getElementById('ambianceAudio');
+    if(a && a.paused && a.dataset.userPaused !== '1') startOceanAudio();
+  });
 
   /* Bouton de mission affiche DANS le bloc embarquement, une fois le
      matelot inscrit ou reconnecte. Le libelle suit l'avancement reel :
