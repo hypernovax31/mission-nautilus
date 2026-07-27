@@ -121,7 +121,12 @@
        cette meme couleur. Objectif : reconnaitre un equipage d'un coup
        d'oeil, sans avoir a lire son nom. */
     .team.team-reveal{
-      border:2px solid rgba(var(--team-glow,143,164,181),.55);
+      /* Les couleurs de halo ont ete eclaircies pour bien ressortir sur le
+         fond noir du sonar. Sur le fond BLANC des cartes, un trait clair
+         s'efface : on monte donc l'opacite du contour a 85 % pour garder
+         un trait franc. La barre de gauche, elle, garde la teinte sombre
+         d'origine (tint), parfaitement lisible sur blanc. */
+      border:2px solid rgba(var(--team-glow,143,164,181),.85);
       border-left:7px solid var(--team-tint,#dfe8ee);
       box-shadow:
         0 0 0 1px rgba(var(--team-glow,143,164,181),.20),
@@ -159,10 +164,15 @@
        qu'il est hors de l'ecran ou que l'onglet est en arriere-plan, ces
        animations consomment du GPU pour rien : on les met en pause.
        .anim-idle est pose par le script. */
+    /* .anim-idle = le joueur ne regarde plus le sonar : TOUT se fige, y
+       compris les pseudo-elements (onde de choc du point qui vient d'etre
+       detecte). On reprend exactement au meme endroit au retour. */
     .anim-idle .radar-sweep-big,
     .anim-idle .radar-grid,
     .anim-idle .radar-center,
     .anim-idle .radar-blip,
+    .anim-idle .radar-blip::after,
+    .anim-idle .radar-rings,
     .anim-idle.radar-stage{animation-play-state:paused !important}
 
     /* Pause generique : tout bloc marque .offscreen (pose par le script des
@@ -951,25 +961,36 @@
       box-shadow:0 0 0 0 rgba(255,255,255,.85);
       opacity:0;
     }
-    /* Le point reste blanc (lisible sur le fond sombre du sonar) mais son
-       halo prend la couleur de l'equipage : on voit donc d'un coup d'oeil
-       QUEL equipage se trouve a quelle distance du centre. Repli sur le
-       vert du sonar si aucune couleur n'est fournie. */
+    /* Le coeur du point reste blanc (lisible sur le fond sombre) mais tout
+       ce qui l'entoure est a la couleur de l'equipage.
+       PROBLEME CORRIGE : un anneau BLANC etait intercale entre le point et
+       son halo colore. Il delavait la teinte et rendait deux couleurs
+       voisines difficiles a distinguer. Cet anneau blanc est supprime et
+       remplace par un anneau plein de la couleur de l'equipe, en 3 couches :
+         1. un cerne net et opaque, qui donne la couleur franche
+         2. un halo moyen tres dense
+         3. un halo large plus diffus, qui signale la presence de loin
+       Le point est aussi legerement agrandi (14 -> 16 px) pour porter
+       cet anneau sans paraitre etouffe. */
     .radar-blip.revealed{
-      width:14px;height:14px;opacity:1;
+      width:16px;height:16px;opacity:1;
+      background:#fff;
       box-shadow:
-        0 0 22px 6px rgba(var(--blip-glow,91,255,156),.75),
-        0 0 0 3px rgba(255,255,255,.32);
+        0 0 0 4px rgba(var(--blip-glow,91,255,156),1),
+        0 0 12px 5px rgba(var(--blip-glow,91,255,156),.95),
+        0 0 30px 12px rgba(var(--blip-glow,91,255,156),.55);
     }
     /* Le point "pop" : apparition franche puis pulsation, avec onde de choc */
     .radar-blip.blip-pop{
       width:20px;height:20px;background:#fff;
       animation:blipPop .5s cubic-bezier(.2,1.4,.4,1) both, blipPulse 1s ease-in-out .5s infinite;
     }
+    /* L'onde de choc porte elle aussi la couleur de l'equipage : au moment
+       de la detection, c'est le signal le plus visible a l'ecran. */
     .radar-blip.blip-pop::after{
       content:"";position:absolute;left:50%;top:50%;width:20px;height:20px;
       margin:-10px 0 0 -10px;border-radius:50%;
-      border:2px solid rgba(255,255,255,.9);
+      border:3px solid rgba(var(--blip-glow,91,255,156),.95);
       animation:blipWave 1.4s ease-out infinite;pointer-events:none;
     }
     /* Le centrage translate(-50%,-50%) est repris dans chaque etape :
@@ -980,8 +1001,18 @@
       100%{transform:translate(-50%,-50%) scale(1);opacity:1}
     }
     @keyframes blipPulse{
-      0%,100%{box-shadow:0 0 20px 5px rgba(255,255,255,.55),0 0 0 3px rgba(255,255,255,.35)}
-      50%{box-shadow:0 0 34px 12px rgba(255,255,255,.8),0 0 0 6px rgba(255,255,255,.22)}
+      0%,100%{
+        box-shadow:
+          0 0 0 4px rgba(var(--blip-glow,91,255,156),1),
+          0 0 18px 6px rgba(var(--blip-glow,91,255,156),.85),
+          0 0 34px 14px rgba(var(--blip-glow,91,255,156),.45);
+      }
+      50%{
+        box-shadow:
+          0 0 0 6px rgba(var(--blip-glow,91,255,156),1),
+          0 0 30px 12px rgba(var(--blip-glow,91,255,156),1),
+          0 0 52px 22px rgba(var(--blip-glow,91,255,156),.6);
+      }
     }
     @keyframes blipWave{
       0%{transform:scale(1);opacity:.85}
@@ -1578,127 +1609,65 @@
      au repli de playAlarmOnce(). Le declenchement de l'annonce, lui, ne
      depend plus que de la position du bloc a l'ecran (voir plus bas). */
 
-  /* --- Visibilite du bloc "Equipages en plongee" ---
-     Deux notions differentes :
-     1) _radarVisible  : le bloc est a l'ecran (ne serait-ce qu'un peu).
-        Sert a mettre les animations en pause hors ecran et a suspendre
-        l'annonce si l'utilisateur part ailleurs en cours de route.
-     2) _radarArmed    : le HAUT du bloc a atteint le HAUT de l'ecran
-        (l'utilisateur a scrolle/glisse jusqu'a lui). C'est le vrai
-        declencheur du demarrage de l'annonce des equipages. */
+  /* --- Le sonar tourne UNIQUEMENT quand le joueur le regarde -------------
+     Regle unique et simple, remplacant l'ancien systeme a deux conditions
+     ("le bloc est un peu visible" + "le haut du bloc touche le haut de
+     l'ecran"). Cette seconde condition etait la cause du demarrage tardif :
+     si le joueur s'arretait de scroller avant que le bord du bloc n'atteigne
+     le sommet de l'ecran, l'animation n'etait jamais lancee.
+
+     Desormais on observe LE SONAR lui-meme :
+       - il est visible a 45 % ou plus  -> l'animation demarre / reprend
+       - il repasse sous 45 %           -> TOUT se met en pause (rotation du
+         balayage, halos, points, annonce en cours et son de l'alarme)
+     On repart exactement la ou on s'etait arrete, rien n'est perdu. */
   let _radarVisible = false;
   const _visibilityWaiters = [];
+
+  /* Gele ou relance les animations CSS du sonar. */
+  function setRadarPaused(paused){
+    const stage = document.getElementById('radarStage');
+    if(stage) stage.classList.toggle('anim-idle', paused);
+    // L'alarme d'annonce est mise en pause elle aussi : si le joueur revient,
+    // le son reprend ou il en etait au lieu d'avoir joue dans le vide.
+    const a = document.getElementById('revealAlarmAudio');
+    if(a){
+      if(paused){ if(!a.paused) a.pause(); }
+      else if(a.dataset.revealPlaying === '1' && a.paused){ a.play().catch(() => {}); }
+    }
+  }
+
   (function watchRadarVisibility(){
-    const target = document.getElementById('equipagesEnMer');
-    if(!target){ _radarVisible = true; return; }
-    if(typeof IntersectionObserver !== 'function'){ _radarVisible = true; return; }
+    // On surveille le sonar, pas le bloc entier : c'est lui que le joueur
+    // regarde, et le bloc peut etre bien plus haut que l'ecran.
+    const target = document.getElementById('radarStage')
+                || document.getElementById('equipagesEnMer');
+    if(!target || typeof IntersectionObserver !== 'function'){
+      _radarVisible = true;
+      return;
+    }
     const io = new IntersectionObserver(entries => {
       entries.forEach(en => {
-        _radarVisible = en.isIntersecting;
-        // Hors ecran : on met les animations du radar en pause plutot que
-        // de faire tourner le balayage et les halos dans le vide.
-        const stage = document.getElementById('radarStage');
-        if(stage) stage.classList.toggle('anim-idle', !en.isIntersecting);
-        if(_radarVisible){
+        // Un sonar plus haut que l'ecran ne peut jamais atteindre 45 % :
+        // dans ce cas on se contente de le savoir a l'ecran.
+        const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+        const tall = en.boundingClientRect.height > vh * 0.9;
+        const onScreen = tall ? en.isIntersecting : en.intersectionRatio >= 0.45;
+
+        if(onScreen === _radarVisible) return;
+        _radarVisible = onScreen;
+        setRadarPaused(!onScreen);
+        if(onScreen){
           while(_visibilityWaiters.length) _visibilityWaiters.shift()();
         }
       });
-    }, { threshold: 0.01 });
+    }, { threshold: [0, 0.2, 0.45, 0.7, 1] });
     io.observe(target);
   })();
 
   function waitForRadarVisible(){
     if(_radarVisible) return Promise.resolve();
     return new Promise(resolve => _visibilityWaiters.push(resolve));
-  }
-
-  /* --- Declencheur : le haut du bloc touche le haut de l'ecran ---
-     Tant que l'utilisateur n'a pas amene le bloc "Equipages en plongee"
-     en haut de son ecran (par scroll ou glissement), l'annonce attend.
-     Repli : si la page ne peut plus descendre (bloc en bas de page), on
-     considere le bloc comme atteint des qu'il est entierement visible. */
-  let _radarArmed = false;
-  const _armedWaiters = [];
-  (function watchRadarTop(){
-    const target = document.getElementById('equipagesEnMer');
-    if(!target){ _radarArmed = true; return; }
-    const TOL = 6; // petite tolerance en pixels
-    let ticking = false;
-
-    /* Le declencheur doit correspondre a ce que VOIT le joueur : "le sonar
-       est en haut de l'ecran". L'ancienne version exigeait que le haut du
-       bloc touche le pixel 0 ; si on s'arretait de scroller juste avant,
-       l'animation ne partait pas du tout et semblait tres lente a venir.
-       Trois situations declenchent maintenant l'annonce : */
-    function reached(){
-      const r = target.getBoundingClientRect();
-      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-      if(!vh) return false;
-
-      // 1) Le haut du bloc est arrive en haut de l'ecran (avec une marge
-      //    large : le bloc peut s'arreter un peu plus bas, l'intention est
-      //    la meme).
-      if(r.top <= Math.max(TOL, vh * 0.25)) return true;
-
-      // 2) Le sonar lui-meme est bien visible : c'est le vrai repere pour
-      //    le joueur, qui regarde le radar et non les bords du bloc.
-      const radar = document.getElementById('radarStage');
-      if(radar){
-        const rr = radar.getBoundingClientRect();
-        if(rr.height){
-          const visible = Math.min(rr.bottom, vh) - Math.max(rr.top, 0);
-          if(visible / rr.height >= 0.6) return true;
-        }
-      }
-
-      // 3) Bas de page atteint : le bloc ne peut plus monter davantage.
-      const docH = document.documentElement.scrollHeight;
-      const atBottom = (window.scrollY + vh) >= (docH - 2);
-      return atBottom && r.bottom <= vh + TOL;
-    }
-
-    function arm(){
-      if(_radarArmed) return;
-      _radarArmed = true;
-      window.removeEventListener('scroll', onMove);
-      window.removeEventListener('resize', onMove);
-      window.removeEventListener('orientationchange', onMove);
-      while(_armedWaiters.length) _armedWaiters.shift()();
-    }
-
-    function check(){
-      ticking = false;
-      if(reached()) arm();
-    }
-
-    function onMove(){
-      if(ticking) return;
-      ticking = true;
-      requestAnimationFrame(check);
-    }
-
-    window.addEventListener('scroll', onMove, { passive:true });
-    window.addEventListener('resize', onMove, { passive:true });
-    window.addEventListener('orientationchange', onMove, { passive:true });
-
-    /* Filet de securite : le bloc peut arriver en haut de l'ecran sans
-       qu'aucun evenement ne se produise (contenu charge apres coup qui
-       decale la page, image du fond qui finit de se charger, retour
-       arriere du navigateur...). On verifie donc aussi 3 fois par seconde
-       tant que le declencheur n'est pas arme. Le controle est une simple
-       lecture de position, et le minuteur s'arrete des qu'il a servi. */
-    const guard = setInterval(() => {
-      if(_radarArmed){ clearInterval(guard); return; }
-      check();
-    }, 300);
-
-    // Etat de depart (page rechargee deja scrollee, ancre, etc.)
-    requestAnimationFrame(check);
-  })();
-
-  function waitForRadarArmed(){
-    if(_radarArmed) return Promise.resolve();
-    return new Promise(resolve => _armedWaiters.push(resolve));
   }
 
   /* Mesure de l'angle du balayage : getComputedStyle force un recalcul de
@@ -1753,11 +1722,22 @@
     return new Promise(resolve => {
       if(targetDeg == null){ resolve(); return; }
       if(!sweepIsRunning()){ resolve(); return; }   // balayage fige : on n'attend pas
-      const deadline = Date.now() + (timeoutMs || 4000);
+      /* Le delai maximal ne doit compter QUE le temps ou le sonar est
+         visible : sinon il expirerait pendant que le joueur regarde
+         ailleurs, et l'equipage serait annonce hors de sa vue. */
+      let budget = timeoutMs || 4000;
+      let last = performance.now();
       let prev = sweepAngle();
       if(prev == null){ resolve(); return; }
       const tick = () => {
-        if(Date.now() > deadline){ resolve(); return; }
+        const now = performance.now();
+        const dt = now - last;
+        last = now;
+        // Sonar hors ecran : le balayage est gele, on patiente sans
+        // consommer le budget ni comparer des angles figes.
+        if(!_radarVisible){ requestAnimationFrame(tick); return; }
+        budget -= dt;
+        if(budget <= 0){ resolve(); return; }
         const cur = sweepAngle();
         if(cur == null){ resolve(); return; }
         // Distance parcourue depuis la derniere image (gere le passage par 360)
@@ -1807,14 +1787,14 @@
      glow  = meme couleur eclaircie, en R,G,B, pour le halo lumineux
              (un halo de la teinte sombre ne se verrait pas) */
   const TEAM_STYLES = {
-    NEMO:     { glow: '46,159,216',  tint: '#0b3a5a', emblem: 'M100 30a16 16 0 1 1 0 32 16 16 0 0 1 0-32Zm0 40v104M64 88h72M100 174c-30 0-46-20-48-44l14 6-6-18 22 8c-6 18 4 32 18 34Zm0 0c30 0 46-20 48-44l-14 6 6-18-22 8c6 18-4 32-18 34Z' },
-    NAUTILUS: { glow: '31,196,143', tint: '#0f6b52', emblem: 'M100 78c40 0 72 14 72 30s-32 30-72 30-72-14-72-30 32-30 72-30Zm-14-24h28v22H86Zm86 22 22-12v40l-22-12M28 158q22-10 44 0t44 0 44 0' },
-    ARONNAX:  { glow: '217,154,43', tint: '#7a4f14', emblem: 'M86 44a44 44 0 1 1 0 88 44 44 0 0 1 0-88Zm0 14a30 30 0 1 0 0 60 30 30 0 0 0 0-60Zm32 76 46 46' },
-    NEDLAND:  { glow: '224,85,95', tint: '#8c2f39', emblem: 'M100 178V54m0-38 22 38h-44Zm0 60 26 20m-26-20-26 20m26 22 20 16m-20-16-20 16' },
-    CALAMAR:  { glow: '160,111,212', tint: '#5a3a7a', emblem: 'M100 24c20 0 34 18 34 42s-14 38-34 38-34-14-34-38 14-42 34-42Zm-14 34a6 6 0 1 1 0 12 6 6 0 0 1 0-12Zm28 0a6 6 0 1 1 0 12 6 6 0 0 1 0-12ZM74 102q-16 38-40 54m54-48q-10 44-26 62m38-60q0 46 8 64m14-66q10 44 26 60m10-66q16 34 34 46' },
-    BALEINE:  { glow: '52,169,212', tint: '#1c5f7a', emblem: 'M34 108q28-34 62-34t56 30q18-4 30-18-4 22-16 32 12 10 16 28-20-10-34-8-22 28-56 28t-58-30Zm100-18a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z' },
-    TRITON:   { glow: '217,176,46', tint: '#8a6a12', emblem: 'M100 176V56m-30-6 30 34 30-34M62 26v34m76-34v34M100 20v40M52 60h96' },
-    DEFAULT:  { glow: '143,164,181', tint: '#4a5a68', emblem: 'M100 26 118 82l56 18-56 18-18 56-18-56-56-18 56-18Z' }
+    NEMO:     { glow: '56,170,255',  tint: '#0b3a5a', emblem: 'M100 30a16 16 0 1 1 0 32 16 16 0 0 1 0-32Zm0 40v104M64 88h72M100 174c-30 0-46-20-48-44l14 6-6-18 22 8c-6 18 4 32 18 34Zm0 0c30 0 46-20 48-44l-14 6 6-18-22 8c6 18-4 32-18 34Z' },
+    NAUTILUS: { glow: '46,230,150', tint: '#0f6b52', emblem: 'M100 78c40 0 72 14 72 30s-32 30-72 30-72-14-72-30 32-30 72-30Zm-14-24h28v22H86Zm86 22 22-12v40l-22-12M28 158q22-10 44 0t44 0 44 0' },
+    ARONNAX:  { glow: '255,190,40', tint: '#7a4f14', emblem: 'M86 44a44 44 0 1 1 0 88 44 44 0 0 1 0-88Zm0 14a30 30 0 1 0 0 60 30 30 0 0 0 0-60Zm32 76 46 46' },
+    NEDLAND:  { glow: '255,70,90', tint: '#8c2f39', emblem: 'M100 178V54m0-38 22 38h-44Zm0 60 26 20m-26-20-26 20m26 22 20 16m-20-16-20 16' },
+    CALAMAR:  { glow: '186,130,255', tint: '#5a3a7a', emblem: 'M100 24c20 0 34 18 34 42s-14 38-34 38-34-14-34-38 14-42 34-42Zm-14 34a6 6 0 1 1 0 12 6 6 0 0 1 0-12Zm28 0a6 6 0 1 1 0 12 6 6 0 0 1 0-12ZM74 102q-16 38-40 54m54-48q-10 44-26 62m38-60q0 46 8 64m14-66q10 44 26 60m10-66q16 34 34 46' },
+    BALEINE:  { glow: '60,205,255', tint: '#1c5f7a', emblem: 'M34 108q28-34 62-34t56 30q18-4 30-18-4 22-16 32 12 10 16 28-20-10-34-8-22 28-56 28t-58-30Zm100-18a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z' },
+    TRITON:   { glow: '240,205,60', tint: '#8a6a12', emblem: 'M100 176V56m-30-6 30 34 30-34M62 26v34m76-34v34M100 20v40M52 60h96' },
+    DEFAULT:  { glow: '170,190,205', tint: '#4a5a68', emblem: 'M100 26 118 82l56 18-56 18-18 56-18-56-56-18 56-18Z' }
   };
 
   function teamStyle(teamCode){
@@ -1985,17 +1965,28 @@
         if(done) return;
         done = true;
         a.onended = null;
-        clearTimeout(timer);
+        a.dataset.revealPlaying = '0';
+        clearInterval(watchdog);
         resolve();
       };
-      // Filet de securite : si 'ended' ne se declenche pas (onglet en
-      // arriere-plan, lecture bloquee), on enchaine quand meme.
-      const timer = setTimeout(finish, REVEAL_SOUND_FALLBACK_MS + 600);
+      /* Filet de securite : si 'ended' ne se declenche pas (lecture
+         refusee, onglet en arriere-plan), on enchaine quand meme.
+         ATTENTION : ce filet ne doit PAS se declencher pendant que le
+         joueur regarde ailleurs — le son est alors volontairement en
+         pause. On compte donc uniquement le temps ou le sonar est visible,
+         au lieu d'un simple delai fixe. */
+      let waited = 0;
+      const watchdog = setInterval(() => {
+        if(!_radarVisible) return;              // en pause : le temps ne court pas
+        waited += 200;
+        if(waited >= REVEAL_SOUND_FALLBACK_MS + 900) finish();
+      }, 200);
       a.onended = finish;
       try{
         a.pause();
         a.currentTime = 0;
         a.volume = 0.82;
+        a.dataset.revealPlaying = '1';
         a.play().catch(() => finish());
       }catch(e){ finish(); }
     });
@@ -2005,10 +1996,7 @@
     if(_revealRunning || !_revealQueue.length) return;
     _revealRunning = true;
 
-    // Condition 1 : le haut du bloc "Equipages en plongee" a atteint le haut
-    // de l'ecran (l'utilisateur a scrolle ou glisse jusqu'a lui).
-    await waitForRadarArmed();
-    // Condition 2 : le bloc est bien a l'ecran a cet instant.
+    // Unique condition : le sonar est sous les yeux du joueur.
     await waitForRadarVisible();
 
     const box = $('teamsBox');
@@ -3241,7 +3229,11 @@ function qrDataUri(text, opts){
     scan: {
       title: '3 — Scannez',
       text: 'Une fois le lieu repéré, quittez l’écran et fouillez le magasin. Le QR Code peut être glissé dans une TG, agrafé à une PLV, coincé entre deux livres, fixé autour d’un meuble ou caché derrière un objet. Il faudra bien chercher car il ne viendra pas à vous.',
-      bullets: []
+      bullets: [
+        'Cherchez à hauteur d’yeux… mais aussi plus haut et plus bas.',
+        'Scannez le QR trouvé : le palier suivant s’ouvre immédiatement.',
+        'Respectez le magasin, les clients et le travail des équipes : on cherche, on ne dérange pas.'
+      ]
     },
     survive: {
       title: '4 — Survivez',
