@@ -84,6 +84,12 @@
     #adminPanel input,#adminPanel select,#adminPanel textarea{max-width:100%;box-sizing:border-box}
     #adminPanel .admin-pane{min-width:0;overflow-wrap:anywhere}
 
+    /* Panneau admin : formulaire d'ajout manuel d'un matelot */
+    .admin-add-member{background:#f7fbfd;border:1px solid #d6e4ec;border-radius:12px;padding:12px;margin-bottom:12px}
+    .admin-add-title{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#52606a;margin-bottom:10px}
+    .admin-add-member .admin-actions-row{margin-top:10px}
+    #adminAddMemberMsg:not(:empty){margin-top:10px}
+
     /* Les codes sont cliquables : un clic copie dans le presse-papier. */
     .code{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
     .code:hover{box-shadow:0 6px 18px rgba(0,0,0,.22)}
@@ -510,13 +516,20 @@
        s'adapte à la largeur du panneau */
     .admin-form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.4fr);gap:8px 14px;align-items:center}
     .admin-form-grid>label{margin:0;font-size:11px !important;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#52606a;text-align:right;padding-right:4px;white-space:nowrap}
-    .admin-form-grid>input,.admin-form-grid>select{height:36px !important;min-height:36px;padding:6px 10px !important;font-size:13px !important;border-radius:8px;min-width:0;width:100%;box-sizing:border-box;margin:0 !important}
+    .admin-form-grid>input,.admin-form-grid>select{height:36px !important;min-height:36px;max-height:36px;padding:6px 10px !important;font-size:13px !important;line-height:1.2;border-radius:8px;min-width:0;width:100%;max-width:100%;box-sizing:border-box;margin:0 !important;appearance:none;-webkit-appearance:none}
+    /* Le selecteur natif a besoin d'une fleche : on la remet. */
+    .admin-form-grid>select{background-image:linear-gradient(45deg,transparent 50%,#52606a 50%),linear-gradient(135deg,#52606a 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:28px !important}
+    /* Safari iOS agrandit les champs date : on force la meme hauteur. */
+    .admin-form-grid>input[type="datetime-local"],.admin-form-grid>input[type="number"]{min-width:0;font-variant-numeric:tabular-nums}
     .admin-form-grid>.full{grid-column:1 / -1}
     /* Variante 6 colonnes pour O2 (3 paires label/input sur 1 ligne) */
     .admin-form-grid-6{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)}
-    @media(max-width:720px){
-      .admin-form-grid,.admin-form-grid-6{grid-template-columns:1fr 1fr;gap:8px}
-      .admin-form-grid>label,.admin-form-grid-6>label{text-align:left;padding-right:0}
+    /* En dessous de 860px la grille 4 colonnes comprimait les champs
+       datetime-local sous leur largeur utile (~190px) : on bascule en
+       2 colonnes plus tot. */
+    @media(max-width:860px){
+      .admin-form-grid,.admin-form-grid-6{grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:8px 12px}
+      .admin-form-grid>label,.admin-form-grid-6>label{text-align:left;padding-right:0;white-space:normal}
     }
     @media(max-width:560px){
       .admin-form-grid,.admin-form-grid-6{grid-template-columns:1fr;gap:8px}
@@ -1212,6 +1225,21 @@
           <div class="row" style="margin-bottom:10px;align-items:center">
             <span class="small" style="flex:1">Modifie le nom, le service ou l'équipage d'un matelot, ou supprime-le.</span>
             <button class="secondary" id="adminReloadBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">↻ Recharger</button>
+          </div>
+          <div class="admin-add-member">
+            <div class="admin-add-title">➕ Ajouter un matelot</div>
+            <div class="admin-form-grid">
+              <label for="adminNewMemberName">Nom</label>
+              <input id="adminNewMemberName" type="text" maxlength="32" placeholder="Ex. JULES VERNE" autocomplete="off">
+              <label for="adminNewMemberSvc">Service</label>
+              <select id="adminNewMemberSvc"><option value="" selected disabled>Ex. PE</option></select>
+              <label for="adminNewMemberTeam">Équipage</label>
+              <select id="adminNewMemberTeam"><option value="" selected disabled>Choisir…</option></select>
+            </div>
+            <div class="admin-actions-row">
+              <button class="primary" id="adminAddMemberBtn" type="button">➕ Ajouter le matelot</button>
+            </div>
+            <div id="adminAddMemberMsg"></div>
           </div>
           <div id="adminMembersBox" class="teamlist"></div>
         </div>
@@ -3513,7 +3541,11 @@ function qrDataUri(text, opts){
     try{
       const snap = await getDocs(collection(db,'teams'));
       effectiveTeams = snap.docs
-        .map(d => ({ code: d.id, name: (d.data().teamName || d.id) }))
+        .map(d => ({
+          code: d.id,
+          name: (d.data().teamName || d.id),
+          memberCount: (d.data().members || []).length
+        }))
         .sort((a, b) => {
           // Equipes par defaut d'abord, dans l'ordre de TEAM_DEFS, puis les autres
           const ia = TEAM_DEFS.findIndex(t => t.code === a.code);
@@ -3537,6 +3569,7 @@ function qrDataUri(text, opts){
     box.innerHTML = '<div class="small">Chargement…</div>';
     try{
       await refreshAdminTeams();
+      fillAddMemberSelects();
       const teams = [];
       for(const t of effectiveTeams){ const team = await getTeam(t.code); if(team) teams.push(team); }
       const allMembers = [];
@@ -3855,6 +3888,101 @@ function qrDataUri(text, opts){
   $('adminO2Reset')?.addEventListener('click', adminResetOxygenToNow);
   $('adminO2Clear')?.addEventListener('click', adminClearOxygen);
 
+  /* Remplit les listes deroulantes du formulaire d'ajout manuel. */
+  function fillAddMemberSelects(){
+    const svc = $('adminNewMemberSvc');
+    const team = $('adminNewMemberTeam');
+    if(svc){
+      svc.innerHTML = '<option value="" selected disabled>Ex. PE</option>'
+        + SERVICES.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    }
+    if(team){
+      team.innerHTML = '<option value="" selected disabled>Choisir…</option>'
+        + effectiveTeams.map(t => `<option value="${esc(t.code)}">${esc(t.name)}</option>`).join('');
+    }
+  }
+
+  /* Ajout manuel d'un matelot par l'admin.
+     Ecrit aux 3 memes emplacements que l'inscription joueur :
+       teams/{code}.members[] , teams/{code}/matelots/{code} , matelots/{code}
+     et applique les memes controles (nom obligatoire, pas d'homonyme). */
+  async function adminAddMember(){
+    if(!isAdminUnlocked()) return;
+    const btn = $('adminAddMemberBtn');
+    const name = ($('adminNewMemberName').value || '').trim().toUpperCase();
+    const service = $('adminNewMemberSvc').value;
+    const teamCode = $('adminNewMemberTeam').value;
+    const msg = $('adminAddMemberMsg');
+
+    const manque = [];
+    if(!name) manque.push('le nom');
+    if(!service) manque.push('le service');
+    if(!teamCode) manque.push("l'équipage");
+    if(manque.length){ alert('Il manque ' + manque.join(', ') + '.'); return; }
+    if(name.length < 2){ alert('Nom trop court.'); return; }
+
+    btn.disabled = true;
+    try{
+      const teamRef = doc(db,'teams',teamCode);
+      const teamSnap = await getDoc(teamRef);
+      if(!teamSnap.exists()){ alert("Cette équipe n'existe plus. Recharge le panneau."); return; }
+
+      // Codes et noms deja pris, sur TOUTES les equipes
+      const allSnap = await getDocs(collection(db,'teams'));
+      const usedCodes = new Set();
+      const usedNames = new Map();
+      allSnap.forEach(d => {
+        const data = d.data();
+        (data.members || []).forEach(m => {
+          if(m.codeMatelot) usedCodes.add(m.codeMatelot);
+          const k = m.memberKey || memberKey(m.name || '');
+          if(k) usedNames.set(k, { name: m.name || '', team: data.teamName || d.id });
+        });
+      });
+      const dup = usedNames.get(memberKey(name));
+      if(dup){
+        alert('Un matelot nommé « ' + (dup.name || name) + ' » est déjà à bord ('
+          + dup.team + ").\n\nAjoute une initiale pour le distinguer.");
+        return;
+      }
+
+      let matelotCode, attempts = 0;
+      do { matelotCode = generateMatelotCode(); attempts++; if(!usedCodes.has(matelotCode)) break; } while(attempts < 50);
+
+      const teamName = teamSnap.data().teamName || teamCode;
+      const registeredAt = new Date().toISOString();
+      const matelotDoc = {
+        name, service, memberKey: memberKey(name), codeMatelot: matelotCode,
+        teamCode, teamName, registeredAt
+      };
+      await setDoc(doc(db,'teams',teamCode,'matelots',matelotCode), matelotDoc);
+      const members = [...(teamSnap.data().members || []),
+        { name, service, memberKey: memberKey(name), codeMatelot: matelotCode, registeredAt }];
+      await updateDoc(teamRef, { members, updatedAt: registeredAt });
+      await setDoc(doc(db,'matelots',matelotCode), {
+        codeMatelot: matelotCode, teamCode, teamName, name, service, createdAt: serverTimestamp()
+      });
+
+      // Le code n'est affiche qu'ici : l'admin doit le transmettre.
+      msg.innerHTML = '<div class="notice success" style="margin:0">'
+        + '<b>' + esc(name) + '</b> ajouté à <b>' + esc(teamName) + '</b>.<br>'
+        + 'Code Matelot : <span class="code uppercase">' + esc(matelotCode) + '</span>'
+        + '<div class="small" style="margin-top:6px">Clique sur le code pour le copier, puis transmets-le au matelot.</div>'
+        + '</div>';
+      $('adminNewMemberName').value = '';
+      $('adminNewMemberSvc').value = '';
+      $('adminNewMemberTeam').value = '';
+      await renderAdminMembers();
+      await loadTeams();
+    }catch(err){
+      console.error('adminAddMember:', err);
+      alert('Échec de l\'ajout : ' + (err.message || err));
+    }finally{
+      btn.disabled = false;
+    }
+  }
+  $('adminAddMemberBtn')?.addEventListener('click', adminAddMember);
+
   /* ---------- TAB : ÉQUIPES ---------- */
   async function renderAdminTeams(){
     if(!isAdminUnlocked()) return;
@@ -3879,7 +4007,9 @@ function qrDataUri(text, opts){
               <button class="danger mini tt-del" type="button">🗑</button>
             </div>
           </div>
-          ${isCustom ? '' : '<div class="small" style="color:var(--muted);margin-top:4px">⚠️ Équipe par défaut — suppression interdite</div>'}
+          ${Number(t.memberCount) > 0
+            ? `<div class="small" style="color:#9b1111;margin-top:6px;font-weight:800">⚠️ ${t.memberCount} matelot(s) à bord — les supprimer effacera aussi leurs Codes Matelot</div>`
+            : '<div class="small" style="color:var(--muted);margin-top:6px">Aucun matelot à bord</div>'}
         </div>`;
       }).join('');
       box.querySelectorAll('.team').forEach(teamEl => {
