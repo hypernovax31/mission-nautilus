@@ -285,7 +285,11 @@
 
 <main>
   <!-- Section identification -->
-  <section class="card" id="identityCard">
+  <!-- Masque au depart : le matelot est identifie automatiquement par son
+       Code Matelot. Ce formulaire n'est reaffiche qu'en repli, si le code
+       est absent ou introuvable (voir autoIdentifyFromCode). Sans cela, il
+       apparaitrait une fraction de seconde avant de disparaitre. -->
+  <section class="card" id="identityCard" style="display:none">
     <h2>👤 IDENTIFICATION MATELOT</h2>
     <div class="body">
       <p style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 12px;">
@@ -520,6 +524,38 @@ function getCurrentTeamCode() {
   return localStorage.getItem('nautilusCurrentTeam');
 }
 function setCurrentTeamCode(code) { localStorage.setItem('nautilusCurrentTeam', code); }
+
+/* Code Matelot transmis par la page d'accueil (?m=ABCD-1234), ou memorise
+   lors d'un passage precedent. Il permet d'identifier le joueur sans rien
+   lui redemander : il s'est deja connecte avec son code perso ou son lien
+   perso a l'embarquement. */
+function getCurrentMatelotCode() {
+  const params = new URLSearchParams(location.search);
+  const fromUrl = (params.get('m') || '').trim().toUpperCase();
+  if (fromUrl) {
+    localStorage.setItem('nautilusMatelotCode', fromUrl);
+    return fromUrl;
+  }
+  return (localStorage.getItem('nautilusMatelotCode') || '').trim().toUpperCase();
+}
+
+/* Retrouve la fiche du matelot (nom + service) a partir de son code.
+   Deux emplacements possibles, comme sur la page d'accueil :
+     1. teams/{equipe}/matelots/{code} : fiche complete
+     2. matelots/{code}                : index global (repli) */
+async function getMatelotByCode(teamCode, code) {
+  const cd = String(code || '').trim().toUpperCase();
+  if (!cd) return null;
+  try {
+    if (teamCode) {
+      const snap = await getDoc(doc(db, 'teams', teamCode, 'matelots', cd));
+      if (snap.exists()) return snap.data();
+    }
+    const idx = await getDoc(doc(db, 'matelots', cd));
+    if (idx.exists()) return idx.data();
+  } catch (e) { console.warn('getMatelotByCode:', e); }
+  return null;
+}
 
 /* ---------- ACCÈS FIRESTORE ---------- */
 async function getTeam(code) {
@@ -759,6 +795,7 @@ window.Nautilus = {
   $, esc, normalize, memberKey, simple, teamCodeFromInput, hashString,
   getStepCode, getStepIdFromCode,
   getClientId, getCurrentTeamCode, setCurrentTeamCode,
+  getCurrentMatelotCode, getMatelotByCode,
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, isLocked, formatDate,
@@ -810,6 +847,8 @@ window.Nautilus = {
   (async function init() {
     /* 1) Vérifier équipe */
     if (!state.teamCode) {
+      // Le message d'erreur vit dans ce bloc : il faut le rendre visible.
+      $('identityCard').style.display = 'block';
       $('identifyMsg').innerHTML = `<div class="status-banner warning">⚠️ Aucun équipage détecté. <a href="index.html" style="color:var(--fnac);text-decoration:underline;">Retourne à l'accueil pour embarquer</a>.</div>`;
       $('identifyBtn').disabled = true;
     } else {
@@ -824,10 +863,76 @@ window.Nautilus = {
       }
       /* Charge l'équipe + branche les listeners live */
       await attachTeamListener();
+
+      /* ===== IDENTIFICATION AUTOMATIQUE =====
+         Le matelot s'est deja identifie sur la page d'accueil, avec son
+         Code Matelot ou son lien personnel (QR). Lui redemander son nom et
+         son service ici n'a plus de sens : on retrouve sa fiche a partir
+         de son code et on entre directement dans le mini-jeu.
+         Le formulaire reste dans la page et sert de repli : il ne
+         s'affiche que si le code est absent ou introuvable (arrivee
+         directe sur cette page, code efface, base injoignable). */
+      const auto = await autoIdentifyFromCode();
+      if (!auto) {
+        // Repli : pas de code exploitable, on demande l'identite.
+        $('identityCard').style.display = 'block';
+      }
     }
   })();
 
   // Ancienne fonction validateAccessCode supprimée (plus de garde-fou d'URL).
+
+  /* === Identification automatique par Code Matelot ===
+     Retrouve la fiche du matelot et entre dans le jeu sans rien demander.
+     Renvoie true si l'entree a reussi. */
+  async function autoIdentifyFromCode() {
+    const code = N.getCurrentMatelotCode();
+    if (!code) return false;                 // pas de code : on garde le formulaire
+
+    const fiche = await N.getMatelotByCode(state.teamCode, code);
+    if (!fiche || !fiche.name) return false; // code inconnu : repli sur le formulaire
+
+    /* Securite : le code doit appartenir a l'equipage de cette session.
+       Sinon un matelot d'une autre equipe pourrait jouer ici par erreur. */
+    if (fiche.teamCode && fiche.teamCode !== state.teamCode) return false;
+
+    const key = N.memberKey(fiche.name);
+    state.me = {
+      name: String(fiche.name).toUpperCase(),
+      service: fiche.service || 'PE',
+      memberKey: key,
+      clientId: N.getClientId()
+    };
+
+    /* Le matelot est deja inscrit dans l'equipe cote accueil. On ne
+       l'ajoute a members[] que s'il en est absent (cas d'une fiche creee
+       avant ce mecanisme). */
+    const already = (state.team?.members || []).some(m => m.memberKey === key);
+    if (!already && state.team) {
+      try {
+        await N.saveTeam(state.team, {
+          members: [...(state.team.members || []), {
+            name: state.me.name, service: state.me.service,
+            memberKey: key, registeredAt: new Date().toISOString()
+          }]
+        });
+      } catch (e) { console.warn('autoIdentify saveTeam:', e); }
+    }
+
+    localStorage.setItem('nautilusLastMember', JSON.stringify(state.me));
+    N.showToast(`Bienvenue à bord, ${state.me.name}.`, 'success');
+    renderCrew();
+
+    N.heartbeat(state.teamCode);
+    if (!state._heartbeatInterval) {
+      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode), 30000);
+    }
+
+    // Le formulaire n'a jamais besoin d'apparaitre : on le retire tout de suite.
+    $('identityCard').style.display = 'none';
+    showGame();
+    return true;
+  }
 
   /* === Identification joueur === */
   async function identify() {

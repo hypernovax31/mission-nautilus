@@ -5555,7 +5555,12 @@ function qrDataUri(text, opts){
        jamais jouee pour ce palier. */
     if(currentTeam.currentStep === 'start'){
       const teamCode = currentTeam.teamCode;
-      const url = `palier1.html?code=${encodeURIComponent(teamCode)}`;
+      /* On transmet AUSSI le Code Matelot : le mini-jeu sait alors qui joue
+         et n'a plus besoin de redemander nom et service. Le matelot s'est
+         deja identifie a l'embarquement (code perso ou lien perso du QR). */
+      const mc = currentMatelot?.codeMatelot || '';
+      const url = `palier1.html?code=${encodeURIComponent(teamCode)}`
+                + (mc ? `&m=${encodeURIComponent(mc)}` : '');
       showNautilusAlarm('launch-' + Date.now(), 5000);
       await wait(5000);
       $('nautilusAlarm')?.classList.remove('show');
