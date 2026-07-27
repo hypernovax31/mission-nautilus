@@ -1380,6 +1380,75 @@
   let _revealRunning = false;   // une annonce est en cours
   let _blipByTeam = {};         // teamCode -> numero de blip (1..5)
   let _lastTeams = [];          // dernier etat connu des equipes actives
+  let _userInteracted = false;  // un clic/tap a-t-il eu lieu sur la page ?
+  const _interactionWaiters = [];
+
+  /* Le navigateur bloque le son tant que l'utilisateur n'a rien touche, et
+     l'animation n'a d'interet que si quelqu'un regarde : on attend donc un
+     premier clic avant de lancer l'annonce des equipages. */
+  const _INTERACTION_EVENTS = ['pointerdown','touchstart','keydown','click'];
+  function markUserInteraction(){
+    if(_userInteracted) return;
+    _userInteracted = true;
+    _INTERACTION_EVENTS.forEach(evt => window.removeEventListener(evt, markUserInteraction));
+    while(_interactionWaiters.length) _interactionWaiters.shift()();
+  }
+  _INTERACTION_EVENTS.forEach(evt => {
+    window.addEventListener(evt, markUserInteraction, { passive:true });
+  });
+
+  function waitForUserInteraction(){
+    if(_userInteracted) return Promise.resolve();
+    return new Promise(resolve => _interactionWaiters.push(resolve));
+  }
+
+  /* Angle courant du balayage, lu directement sur la matrice de transformation
+     (fiable quelle que soit la vitesse d'animation ou l'etat du radar).
+     0deg = vers la droite, sens horaire (y ecran vers le bas). */
+  function sweepAngle(){
+    const el = document.querySelector('.radar-sweep-big');
+    if(!el) return null;
+    const tr = getComputedStyle(el).transform;
+    if(!tr || tr === 'none') return 0;
+    const m = tr.match(/matrix\(([^)]+)\)/);
+    if(!m) return 0;
+    const [a, b] = m[1].split(',').map(Number);
+    return (Math.atan2(b, a) * 180 / Math.PI + 360) % 360;
+  }
+
+  /* Angle sous lequel se trouve un blip, d'apres sa position CSS. */
+  function blipAngle(idx){
+    const el = $('radarBlip' + idx);
+    const screen = document.querySelector('.radar-screen-big');
+    if(!el || !screen) return null;
+    const r = el.getBoundingClientRect(), s = screen.getBoundingClientRect();
+    if(!s.width) return null;
+    const dx = (r.left + r.width/2) - (s.left + s.width/2);
+    const dy = (r.top + r.height/2) - (s.top + s.height/2);
+    return (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+  }
+
+  /* Resout quand le faisceau passe sur l'angle vise (ou apres timeout). */
+  function waitForSweepOver(targetDeg, timeoutMs){
+    return new Promise(resolve => {
+      if(targetDeg == null){ resolve(); return; }
+      const deadline = Date.now() + (timeoutMs || 4000);
+      let prev = sweepAngle();
+      if(prev == null){ resolve(); return; }
+      const tick = () => {
+        if(Date.now() > deadline){ resolve(); return; }
+        const cur = sweepAngle();
+        if(cur == null){ resolve(); return; }
+        // Distance parcourue depuis la derniere image (gere le passage par 360)
+        const step = (cur - prev + 360) % 360;
+        const toTarget = (targetDeg - prev + 360) % 360;
+        if(step > 0 && toTarget <= step){ resolve(); return; }
+        prev = cur;
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }
 
   /* Change le message en fondu : la boite garde une taille fixe (CSS),
      donc rien ne bouge autour pendant le changement. */
@@ -1570,6 +1639,10 @@
   async function processRevealQueue(){
     if(_revealRunning || !_revealQueue.length) return;
     _revealRunning = true;
+
+    // Condition 1 : rien ne demarre tant que l'ecran n'a pas ete touche.
+    await waitForUserInteraction();
+
     const stage = $('radarStage');
     const box = $('teamsBox');
 
@@ -1583,8 +1656,16 @@
       if(stage) stage.classList.add('radar-scanning');
       setRadarStatus('Contact sonar : ' + (team.teamName || 'equipage'));
 
-      // b) Le point blanc "pop" sur le sonar, en meme temps que le son
-      const blipEl = $('radarBlip' + assignBlip(code));
+      const blipIdx = assignBlip(code);
+      const blipEl = $('radarBlip' + blipIdx);
+
+      // Condition 2 : on attend que le faisceau balaie la position du point.
+      // Le radar vient peut-etre de changer de taille : on laisse une image
+      // pour que la position du blip soit a jour avant de mesurer l'angle.
+      await new Promise(r => requestAnimationFrame(() => r()));
+      await waitForSweepOver(blipAngle(blipIdx), 4000);
+
+      // b) Le point blanc "pop" au passage du faisceau, en meme temps que le son
       if(blipEl) blipEl.classList.add('revealed', 'blip-pop');
 
       await playAlarmOnce();
