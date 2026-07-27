@@ -591,8 +591,17 @@ function isLocked(team) {
 function formatDate(iso) { return iso ? new Date(iso).toLocaleString('fr-FR') : '—'; }
 
 /* ---------- AUDIO WEB API ---------- */
+/* Le bouton "sonar" de la page d'accueil est l'interrupteur general du son
+   du jeu. Son etat est partage entre les pages via localStorage : si le
+   joueur a coupe le son, AUCUN bip du mini-jeu ne doit sortir ici non plus. */
+function isSoundEnabled() {
+  try { return localStorage.getItem('nautilusSoundOn') !== '0'; }
+  catch (e) { return true; }
+}
+
 let _audioCtx = null;
 function getAudioCtx() {
+  if (!isSoundEnabled()) return null;   // sonar eteint : silence total
   if (!_audioCtx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
@@ -753,7 +762,7 @@ window.Nautilus = {
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, isLocked, formatDate,
-  getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
+  isSoundEnabled, getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
   showToast, addLogEntry, clearLog, heartbeat
 };
@@ -1175,7 +1184,15 @@ window.Nautilus = {
     }
     _isPlaying = true;
     const ctx = N.getAudioCtx();
-    if (!ctx) { _isPlaying = false; return; }
+    if (!ctx) {
+      // Sonar eteint : on ne joue rien ET on ne consomme pas d'ecoute.
+      // On explique pourquoi, sinon le bouton semble casse.
+      _isPlaying = false;
+      if (!N.isSoundEnabled()) {
+        N.showToast('Le sonar est coupé : réactive-le sur la page d\'accueil pour entendre le signal.', 'danger');
+      }
+      return;
+    }
     if (ctx.state === 'suspended') await ctx.resume();
     const master = ctx.createGain();
     master.gain.value = 0.55;

@@ -1932,6 +1932,11 @@
   /* Joue l'alarme une seule fois et resout a la fin du son. */
   function playAlarmOnce(){
     return new Promise(resolve => {
+      // Sonar eteint : pas de son, mais l'animation garde son rythme
+      // (on attend la duree qu'aurait prise l'alarme).
+      let soundOn = true;
+      try{ soundOn = localStorage.getItem('nautilusSoundOn') !== '0'; }catch(e){ /* ignore */ }
+      if(!soundOn){ setTimeout(resolve, REVEAL_SOUND_FALLBACK_MS); return; }
       const a = document.getElementById('revealAlarmAudio') || document.getElementById('alarmAudio');
       if(!a){ setTimeout(resolve, REVEAL_SOUND_FALLBACK_MS); return; }
       let done = false;
@@ -3390,6 +3395,7 @@ function qrDataUri(text, opts){
   }
 
   function playIrisMechanism(){
+    if(!isSoundEnabled()) return;   // sonar eteint : aucun son fabrique
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if(!AudioContext) return;
     const ctx = audioCtx || new AudioContext();
@@ -3474,6 +3480,9 @@ function qrDataUri(text, opts){
   }
 
   function playSubmarineAlarm(durationMs){
+    // Sonar eteint = silence total : l'alarme reste muette (l'ecran rouge,
+    // lui, s'affiche quand meme).
+    if(!isSoundEnabled()) return;
     const alarmAudio = document.getElementById('alarmAudio');
     if(!alarmAudio) return;
 
@@ -3602,10 +3611,61 @@ function qrDataUri(text, opts){
      Si un navigateur refuse la lecture muette (cas rare), on retombe sur
      l'ancien comportement : nouvelle tentative a chaque evenement. */
 
+  /* ===== INTERRUPTEUR GENERAL DU SON =====
+     Le bouton "sonar" ne commande pas seulement la musique d'ambiance :
+     c'est le robinet principal de TOUS les sons du jeu.
+       - sonar allume  : ambiance + alarmes + bips du mini-jeu audibles
+       - sonar eteint  : silence total, aucune source ne peut sortir un son
+     Le choix est memorise et partage avec les autres pages (palier1.html)
+     via localStorage, pour que le silence soit respecte partout. */
+  const SOUND_PREF_KEY = 'nautilusSoundOn';
+
+  /* Etat du son, declare ici car isSoundEnabled() s'en sert en repli. */
   const OCEAN_VOLUME = 0.42;
   let _primedSilently = false;   // la lecture muette anticipee tourne
   let _audioWakeDone = false;    // le son est reellement audible
   let _primeIdleTimer = null;    // coupe la lecture muette si inutilisee
+  /* Le sonar a-t-il ete eteint volontairement ? Repris du precedent
+     passage sur le site : le silence doit survivre au rechargement. */
+  let _soundOffByUser = (() => {
+    try{ return localStorage.getItem('nautilusSoundOn') === '0'; }
+    catch(e){ return false; }
+  })();
+
+  /* Le son est autorise SAUF si le joueur l'a explicitement coupe.
+     Attention : tester "=== '1'" bloquerait tous les sons a la premiere
+     visite (rien n'est encore enregistre). On teste donc l'inverse. */
+  function isSoundEnabled(){
+    try{ return localStorage.getItem(SOUND_PREF_KEY) !== '0'; }
+    catch(e){ return true; }
+  }
+  function setSoundEnabled(on){
+    try{ localStorage.setItem(SOUND_PREF_KEY, on ? '1' : '0'); }catch(e){ /* mode prive */ }
+  }
+
+  /* Coupe net toutes les sources sonores de la page. */
+  function silenceEverything(){
+    // 1) Les trois lecteurs <audio> (ambiance, alarme, annonce d'equipage)
+    document.querySelectorAll('audio').forEach(a => {
+      try{
+        a.pause();
+        a.muted = true;
+        a.currentTime = 0;
+      }catch(e){ /* element non pret */ }
+    });
+    // 2) Les sons fabriques par le code (grincement de l'iris) : on suspend
+    //    le moteur audio, ce qui stoppe aussi tout son deja en cours.
+    try{ if(audioCtx && audioCtx.state === 'running') audioCtx.suspend(); }catch(e){ /* ignore */ }
+  }
+
+  /* Autorise a nouveau les lecteurs a produire du son. */
+  function unmuteAlarms(){
+    ['alarmAudio','revealAlarmAudio'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.muted = false;
+    });
+    try{ if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }catch(e){ /* ignore */ }
+  }
 
   function _ambiance(){ return document.getElementById('ambianceAudio'); }
 
@@ -3617,7 +3677,7 @@ function qrDataUri(text, opts){
      ne donne pas suite. */
   function primeOceanAudioSilently(){
     const a = _ambiance();
-    if(!a || _primedSilently || _audioWakeDone) return;
+    if(!a || _primedSilently || _audioWakeDone || _soundOffByUser) return;
     if(document.visibilityState !== 'visible') return;
     a.muted = true;
     a.volume = 0;
@@ -3689,15 +3749,26 @@ function qrDataUri(text, opts){
   function toggleOceanAudio(){
     const a = _ambiance();
     if(!a) return;
-    if(!a.paused && !a.muted){
-      // Coupure volontaire : on la memorise pour ne pas relancer le son
-      // tout seul au retour sur l'onglet.
+    const soundIsOn = !a.paused && !a.muted;
+    if(soundIsOn){
+      // EXTINCTION GENERALE : plus aucun son ne doit sortir de la page,
+      // ni l'ambiance, ni les alarmes, ni les bips fabriques par le code.
       a.dataset.userPaused = '1';
-      a.pause();
+      setSoundEnabled(false);
+      _soundOffByUser = true;
+      _audioWakeDone = false;
+      _primedSilently = false;
+      clearTimeout(_primeIdleTimer);
+      silenceEverything();
       setSonarButtonState(false);
     }else{
+      // ALLUMAGE GENERAL : tout redevient audible.
       a.dataset.userPaused = '0';
+      setSoundEnabled(true);
+      _soundOffByUser = false;
       _audioWakeDone = true;
+      a.muted = false;              // silenceEverything() l'avait coupe
+      unmuteAlarms();
       startOceanAudio();
     }
   }
@@ -3720,11 +3791,14 @@ function qrDataUri(text, opts){
 
   async function activateAudioFromNavigation(){
     if(_audioWakeDone) return;
+    // Sonar eteint volontairement : le scroll ne doit RIEN rallumer.
+    if(_soundOffByUser) return;
     const a = _ambiance();
     if(a && a.dataset.userPaused === '1') return;  // coupe volontairement
     const started = await startOceanAudio();
     if(!started) return;          // refuse : on reste a l'ecoute
     _audioWakeDone = true;
+    setSoundEnabled(true);        // memorise : le son est en marche
     AUDIO_WAKE_EVENTS.forEach(evt => {
       window.removeEventListener(evt, activateAudioFromNavigation, { capture:true });
       window.removeEventListener(evt, activateAudioFromNavigation);
@@ -3749,7 +3823,7 @@ function qrDataUri(text, opts){
   let _primeArmed = false;
   const PRIME_HINT_EVENTS = ['mousemove','pointerover','touchstart','pointerdown','keydown','scroll','wheel'];
   function armPrime(){
-    if(_primeArmed || _audioWakeDone) return;
+    if(_primeArmed || _audioWakeDone || _soundOffByUser) return;
     _primeArmed = true;
     PRIME_HINT_EVENTS.forEach(evt => document.removeEventListener(evt, armPrime, { capture:true }));
     primeOceanAudioSilently();
@@ -3764,6 +3838,15 @@ function qrDataUri(text, opts){
   PRIME_HINT_EVENTS.forEach(evt => {
     document.addEventListener(evt, armPrime, { passive:true, capture:true });
   });
+
+  /* Etat de depart : si le joueur avait coupe le sonar lors de sa derniere
+     visite, on retablit le silence complet des le chargement. */
+  if(_soundOffByUser){
+    silenceEverything();
+    setSonarButtonState(false);
+    const _a0 = _ambiance();
+    if(_a0) _a0.dataset.userPaused = '1';
+  }
 
   document.addEventListener('visibilitychange', () => {
     const a = _ambiance();
