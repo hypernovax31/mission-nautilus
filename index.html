@@ -1757,15 +1757,18 @@
     try{
       await ensureTeams();
       try{ await refreshAdminTeams(); }catch(e){}
-      let cfgData = {};
-      try{
-        const cfgSnap = await getDoc(doc(db,'game','config'));
-        cfgData = cfgSnap.exists() ? cfgSnap.data() : {};
-      }catch(e){}
-      const customs = Array.isArray(cfgData.customTeams) ? cfgData.customTeams : [];
-      const allDefs = [...TEAM_DEFS, ...customs.filter(c => !TEAM_DEFS.some(d => d.code === c.code))];
-      const teams=[];
-      for(const t of allDefs){const team=await getTeam(t.code);if(team)teams.push(team);}
+      // Source unique de verite : la collection Firestore. Une equipe
+      // supprimee disparait donc aussi cote joueur, sans decalage.
+      const teamsSnap = await getDocs(collection(db,'teams'));
+      const teams = teamsSnap.docs.map(d => ({ teamCode: d.id, ...d.data() }));
+      teams.sort((a, b) => {
+        const ia = TEAM_DEFS.findIndex(t => t.code === a.teamCode);
+        const ib = TEAM_DEFS.findIndex(t => t.code === b.teamCode);
+        if(ia !== -1 && ib !== -1) return ia - ib;
+        if(ia !== -1) return -1;
+        if(ib !== -1) return 1;
+        return String(a.teamName||'').localeCompare(String(b.teamName||''), 'fr');
+      });
 
       // Demarre le radar en mode veille (des la 1ere execution)
       startRadarStatusLoop();
@@ -2372,16 +2375,16 @@ function qrDataUri(text, opts){
       let matelotCode, attempts=0;
       do { matelotCode = generateMatelotCode(); attempts++; if(!usedCodes.has(matelotCode)) break; } while(attempts < 50);
 
-      // 2) Choix de l'equipe (equilibrage par service + taille)
+      // 2) Choix de l'equipe (equilibrage par service + taille).
+      // On repartit uniquement dans les equipes qui existent VRAIMENT :
+      // allTeamsSnap est deja charge plus haut, aucune lecture en plus.
       const allTeams=[];
-      let cfgData = {};
-      try{
-        const cfgSnap = await getDoc(doc(db,'game','config'));
-        cfgData = cfgSnap.exists() ? cfgSnap.data() : {};
-      }catch(e){}
-      const customs = Array.isArray(cfgData.customTeams) ? cfgData.customTeams : [];
-      const allDefs = [...TEAM_DEFS, ...customs.filter(c => !TEAM_DEFS.some(d => d.code === c.code))];
-      for(const t of allDefs){const team=await getTeam(t.code);if(team)allTeams.push(team);}
+      allTeamsSnap.forEach(d => allTeams.push({ teamCode: d.id, ...d.data() }));
+      if(!allTeams.length){
+        $('registerBtn').disabled = false;
+        alert("Aucun équipage n'est disponible pour le moment. Recharge la page.");
+        return;
+      }
 
       const chosen = pickBalancedTeam(allTeams, service);
 
@@ -2577,13 +2580,21 @@ function qrDataUri(text, opts){
    * Ne vide PAS les membres. Action irréversible — double confirmation.
    */
   async function resetAllProgress(){
-    const ok1 = confirm("⚠️ Action irréversible : remettre la progression des 5 équipes à zéro ?\n\n(NEMO, NAUTILUS, ARONNAX, NEDLAND, CALAMAR)\n→ currentStep=start, failCount=0, lockedUntil=null, completedSteps=[]\n\nLes membres inscrits sont conservés.");
+    // La liste est lue dans Firestore : le message annonce les equipes
+    // reellement presentes, pas une liste figee dans le code.
+    await refreshAdminTeams();
+    if(!effectiveTeams.length){ alert('Aucune équipe dans la base.'); return; }
+    const noms = effectiveTeams.map(t => t.name).join(', ');
+    const ok1 = confirm(`⚠️ Action irréversible : remettre à zéro la progression de ${effectiveTeams.length} équipe(s) ?\n\n(${noms})\n→ currentStep=start, failCount=0, lockedUntil=null, completedSteps=[]\n\nLes membres inscrits sont conservés.`);
     if(!ok1) return;
-    const ok2 = confirm("Confirme une seconde fois : reset complet de la progression des 5 équipes ?");
+    const ok2 = confirm("Confirme une seconde fois : reset complet de la progression ?");
     if(!ok2) return;
     try{
-      for(const t of TEAM_DEFS){
+      let done = 0;
+      for(const t of effectiveTeams){
         const teamRef = doc(db,'teams',t.code);
+        const snap = await getDoc(teamRef);
+        if(!snap.exists()) continue; // supprimee entre-temps
         await updateDoc(teamRef, {
           currentStep: 'start',
           status: 'active',
@@ -2594,8 +2605,9 @@ function qrDataUri(text, opts){
           finishedAt: null,
           updatedAt: new Date().toISOString()
         });
+        done++;
       }
-      endAdminSession("✅ Progression des équipes remise à zéro · session fermée");
+      endAdminSession(`✅ Progression remise à zéro pour ${done} équipe(s) · session fermée`);
       if(currentTeam){
         const fresh = await getTeam(currentTeam.teamCode);
         if(fresh) currentTeam = fresh;
@@ -3135,7 +3147,7 @@ function qrDataUri(text, opts){
 
   /* Liste effective des équipes (initiale + ajoutées via admin).
      On relit `customTeams` dans `game/config` à chaque ouverture du panneau. */
-  let effectiveTeams = TEAM_DEFS.slice();
+  let effectiveTeams = []; // rempli par refreshAdminTeams() depuis Firestore
 
   function openAdminPanel(){
     const panel = $('adminPanel');
@@ -3326,16 +3338,28 @@ function qrDataUri(text, opts){
   }
   document.querySelectorAll('.admin-tab').forEach(b => b.addEventListener('click', () => switchAdminTab(b.dataset.tab)));
 
-  /* Rafraîchit effectiveTeams depuis Firestore (TEAM_DEFS initiaux + customTeams). */
+  /* Le panneau admin doit refleter EXACTEMENT la collection Firestore.
+     On lit donc teams/ directement : une equipe supprimee dans Firebase
+     disparait du panneau, et une equipe ajoutee a la main y apparait.
+     TEAM_DEFS ne sert plus qu'a distinguer les equipes par defaut des
+     equipes custom (badge + confirmation renforcee a la suppression). */
   async function refreshAdminTeams(){
     try{
-      const cfg = await getDoc(doc(db,'game','config'));
-      const data = cfg.exists() ? cfg.data() : {};
-      const customs = Array.isArray(data.customTeams) ? data.customTeams : [];
-      effectiveTeams = [...TEAM_DEFS, ...customs];
+      const snap = await getDocs(collection(db,'teams'));
+      effectiveTeams = snap.docs
+        .map(d => ({ code: d.id, name: (d.data().teamName || d.id) }))
+        .sort((a, b) => {
+          // Equipes par defaut d'abord, dans l'ordre de TEAM_DEFS, puis les autres
+          const ia = TEAM_DEFS.findIndex(t => t.code === a.code);
+          const ib = TEAM_DEFS.findIndex(t => t.code === b.code);
+          if(ia !== -1 && ib !== -1) return ia - ib;
+          if(ia !== -1) return -1;
+          if(ib !== -1) return 1;
+          return a.name.localeCompare(b.name, 'fr');
+        });
     }catch(e){
       console.warn('refreshAdminTeams:', e);
-      effectiveTeams = TEAM_DEFS.slice();
+      effectiveTeams = [];
     }
   }
 
@@ -3673,6 +3697,10 @@ function qrDataUri(text, opts){
     box.innerHTML = '<div class="small">Chargement…</div>';
     try{
       await refreshAdminTeams();
+      if(!effectiveTeams.length){
+        box.innerHTML = '<div class="notice warning">Aucune équipe dans Firestore.<br><span class="small">Recharge la page : les équipes par défaut seront recréées (sauf celles marquées comme supprimées).</span></div>';
+        return;
+      }
       box.innerHTML = effectiveTeams.map(t => {
         const isCustom = !TEAM_DEFS.some(d => d.code === t.code);
         return `<div class="team" style="background:#fff" data-team="${esc(t.code)}">
@@ -3743,8 +3771,11 @@ function qrDataUri(text, opts){
     const codeRaw = simple(name).replace(/[^A-Z0-9]/g, '');
     if(codeRaw.length < 3){ alert('Nom trop court : 3 caractères minimum.'); return; }
     if(codeRaw.length > 24){ alert('Nom trop long : 24 caractères maximum.'); return; }
-    if(effectiveTeams.some(t => t.code === codeRaw)){ alert('Cette équipe existe déjà.'); return; }
     try{
+      // On verifie l'existence dans Firestore, pas sur une liste en memoire
+      // qui pourrait dater (equipe creee depuis un autre appareil).
+      const dup = await getDoc(doc(db,'teams',codeRaw));
+      if(dup.exists()){ alert('Cette équipe existe déjà.'); return; }
       // 1) créer le doc team
       await setDoc(doc(db,'teams',codeRaw), {
         teamCode: codeRaw, teamName: name,
@@ -3761,7 +3792,11 @@ function qrDataUri(text, opts){
       if(!customs.some(t => t.code === codeRaw)){
         customs.push({ code: codeRaw, name });
       }
-      await setDoc(cfgRef, { customTeams: customs, updatedAt:new Date().toISOString() }, {merge:true});
+      // Si cette equipe avait ete supprimee, on retire la marque "obsolete" :
+      // sans cela, ensureTeams() la supprimerait de nouveau au rechargement.
+      const obsolete = (Array.isArray(cfg.obsoleteTeams) ? cfg.obsoleteTeams : [])
+        .filter(c => c !== codeRaw);
+      await setDoc(cfgRef, { customTeams: customs, obsoleteTeams: obsolete, updatedAt:new Date().toISOString() }, {merge:true});
       $('adminNewTeamName').value = '';
       await refreshAdminTeams();
       await renderAdminTeams();
