@@ -128,6 +128,32 @@
       .team::before{opacity:0}
     }
 
+    /* ===== Economie de batterie / chaleur =====
+       Le radar tourne en continu (rotation + halos + pulsations). Tant
+       qu'il est hors de l'ecran ou que l'onglet est en arriere-plan, ces
+       animations consomment du GPU pour rien : on les met en pause.
+       .anim-idle est pose par le script. */
+    .anim-idle .radar-sweep-big,
+    .anim-idle .radar-grid,
+    .anim-idle .radar-center,
+    .anim-idle .radar-blip,
+    .anim-idle.radar-stage{animation-play-state:paused !important}
+
+    /* Onglet en arriere-plan : plus aucune animation decorative. */
+    body.page-hidden *,
+    body.page-hidden *::before,
+    body.page-hidden *::after{
+      animation-play-state:paused !important;
+    }
+
+    /* Respect du reglage systeme : aucune animation decorative. */
+    @media (prefers-reduced-motion: reduce){
+      .radar-sweep-big,.radar-center,.radar-blip,.oxygen-liquid::before,
+      .oxygen-liquid::after,.install-pwa-btn,.hero-cta.pulse-engage{
+        animation:none !important;
+      }
+    }
+
     /* Les codes sont cliquables : un clic copie dans le presse-papier. */
     .code{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
     .code:hover{box-shadow:0 6px 18px rgba(0,0,0,.22)}
@@ -209,8 +235,8 @@
     .top-bar{position:fixed;top:14px;right:14px;z-index:10000;display:flex;align-items:stretch;gap:8px;flex-wrap:nowrap;justify-content:flex-end;width:calc(100vw - 28px);max-width:calc(2*var(--tb-btn-w) + 8px);pointer-events:none;--tb-btn-w:clamp(104px,30vw,170px)}
     .top-bar>*{margin:0;pointer-events:auto}
     .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{box-sizing:border-box;flex:1 1 0;min-width:0;max-width:var(--tb-btn-w);padding:9px 10px;border-width:2px;border-style:solid;border-radius:999px;font-size:clamp(10px,2.5vw,12px);font-weight:1000;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;min-height:auto;position:static}
-    .sonar-toggle{background:rgba(0,0,0,.42);color:rgba(255,255,255,.82);border-color:rgba(245,176,39,.45);box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
-    .install-pwa-btn{background:linear-gradient(135deg,#f5b027,#d89020);color:#111;border-color:transparent;backdrop-filter:blur(6px)}
+    .sonar-toggle{background:rgba(0,0,0,.62);color:rgba(255,255,255,.88);border-color:rgba(245,176,39,.45);box-shadow:0 8px 18px rgba(0,0,0,.18)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
+    .install-pwa-btn{background:linear-gradient(135deg,#f5b027,#d89020);color:#111;border-color:transparent}
     /* Reglages de l'animation, en 0,2,0 pour passer devant .btn-pulse */
     .install-pwa-btn.btn-pulse{--btn-shadow:0 6px 20px rgba(245,176,39,.55)}
     /* ===== Animation unifiee des boutons : .btn-pulse =====
@@ -363,7 +389,6 @@
       border-radius:28px;
       box-shadow:0 22px 48px rgba(0,0,0,.24);
       overflow:hidden;
-      backdrop-filter:blur(8px);
     }
     .card h2{
       margin:0;
@@ -390,8 +415,8 @@
     .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:var(--fs-small);color:#6e7a84;line-height:1.38}.code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111;color:var(--fnac);border:2px solid var(--fnac);border-radius:12px;padding:8px 12px;display:inline-block;user-select:all;font-size:16px;box-shadow:0 6px 14px rgba(0,0,0,.12)}.teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);font-weight:900;margin-top:3px}.sonar-loading .body{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(8,48,72,.80))!important}.sonar-loader{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:34px 18px;background:linear-gradient(135deg,rgba(7,26,43,.98),rgba(11,52,78,.96));border:1px solid rgba(120,255,180,.28);border-radius:22px;color:#baffd2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18)}.sonar-screen{position:relative;width:170px;height:170px;min-width:170px;flex:0 0 170px;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.08),rgba(0,0,0,.25) 70%),#02120d;border:3px solid rgba(91,255,156,.75);box-shadow:0 0 22px rgba(91,255,156,.28),inset 0 0 22px rgba(91,255,156,.12);overflow:hidden}.sonar-screen:before{content:"";position:absolute;inset:26px;border:1px solid rgba(91,255,156,.24);border-radius:50%;box-shadow:0 0 0 26px rgba(91,255,156,.10),0 0 0 52px rgba(91,255,156,.07)}.sonar-screen:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(91,255,156,.18);box-shadow:-59px 59px 0 -58px transparent}.sonar-text{font-family:Consolas,"Courier New",monospace;text-transform:uppercase;white-space:nowrap;letter-spacing:.045em;font-weight:1000;font-size:clamp(11px,3vw,20px);color:#fff;text-shadow:0 0 14px rgba(91,255,156,.55);max-width:100%;overflow:visible;text-align:center}.sonar-text:after{content:"";animation:none}/* sonarDots desactive (les points sont geres par <span id="radarDots">) */.cockpit-action{display:flex;justify-content:center;margin-top:18px}.cockpit-launch{min-width:min(100%,360px);text-align:center}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}.progress{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.dot{padding:6px 10px;border-radius:999px;background:#eef2f5;font-size:12px;font-weight:800;color:#52606a}.dot.doneDot{background:#e5fff2;color:#08633e;border:1px solid #aee5ca}.dot.currentDot{background:#111;color:var(--fnac)}
     .hero-actions{position:relative;z-index:2;display:flex;gap:20px;flex-wrap:wrap;margin-top:40px}.hero-cta{position:relative;z-index:2;margin-top:0;background:var(--fnac);color:#111;border:0;border-radius:999px;padding:16px 24px;font-weight:1000;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(245,176,39,.28);width:auto;min-width:210px}.hero-cta.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(245,176,39,.55);box-shadow:none}
     .hero-cta.red{background:linear-gradient(135deg,#ff4b3e,#9b1111);color:#fff;box-shadow:0 0 30px rgba(255,55,55,.25)}
-    .ocean-wallpaper{position:fixed;top:0;left:0;width:100vw;height:100vh;height:100lvh;z-index:0;pointer-events:none;overflow:hidden;background-image:url('assets/fond-nautilus.jpg');background-position:center top;background-size:100% auto;background-repeat:no-repeat;background-color:#03111f;transform:translateZ(0);will-change:transform;}
-    .countdown-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(8,48,72,.80));color:#fff;border-color:rgba(142,231,255,.18);position:relative;overflow:hidden}.countdown-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(142,231,255,.06) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.05) 1px,transparent 1px);background-size:34px 34px;opacity:.35;pointer-events:none}.oxygen-dashboard{position:relative;z-index:1}.oxygen-meter{background:linear-gradient(135deg,#061524,#0b2d44);border:1px solid rgba(142,231,255,.25);border-radius:24px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 18px 35px rgba(0,0,0,.25)}.oxygen-meter-top{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:baseline;gap:clamp(6px,2vw,14px);color:#dff6ff;font-weight:900;letter-spacing:.05em;text-transform:uppercase;font-size:13px;margin-bottom:10px;min-width:0}.oxygen-meter-top span{font-size:clamp(13px,3.6vw,34px);line-height:1.1;letter-spacing:.02em;min-width:0;overflow-wrap:anywhere;flex:1 1 auto}.oxygen-meter-top strong{font-family:Consolas,"Courier New",monospace;font-size:clamp(20px,5vw,44px);line-height:1;color:#8ee7ff;text-shadow:0 0 12px rgba(142,231,255,.45);white-space:nowrap;flex:0 0 auto}.oxygen-status{margin:0 0 16px;color:#b7d9e8;font-weight:800;line-height:1.4}.oxygen-tube{position:relative;height:38px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),#020812;border:2px solid rgba(220,250,255,.45);box-shadow:inset 0 0 18px rgba(0,0,0,.85),0 0 18px rgba(142,231,255,.12)}.oxygen-liquid{position:relative;height:100%;width:100%;border-radius:999px;overflow:hidden;background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);background-size:220% 100%;transition:width .7s ease,filter .3s ease;box-shadow:0 0 22px rgba(142,231,255,.65),inset 0 0 18px rgba(255,255,255,.28)}.oxygen-liquid:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(255,255,255,.62) 0 2px,transparent 3px),radial-gradient(circle at 55% 45%,rgba(255,255,255,.48) 0 2px,transparent 3px),radial-gradient(circle at 80% 55%,rgba(255,255,255,.42) 0 1px,transparent 2px);background-size:90px 100%;animation:bubblesMove 5s linear infinite;opacity:.65}.oxygen-liquid:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.38) 45%,transparent 60%);transform:translateX(-100%);animation:glassSweep 3.8s ease-in-out infinite}.oxygen-liquid.warning-level{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}.oxygen-liquid.critical{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c);animation:criticalPulse .6s infinite alternate}.oxygen-scale{display:flex;justify-content:space-between;color:rgba(223,246,255,.65);font-family:Consolas,"Courier New",monospace;font-size:var(--fs-tiny);margin-top:8px}.oxygen-bottom{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap}.oxygen-state{display:inline-flex;padding:7px 11px;border-radius:999px;font-weight:900;font-size:12px;letter-spacing:.06em;background:rgba(142,231,255,.12);color:#8ee7ff;border:1px solid rgba(142,231,255,.35);text-transform:uppercase}.oxygen-state.warning{background:rgba(245,176,39,.13);color:#ffd36c;border-color:rgba(245,176,39,.45)}.oxygen-state.critical{background:rgba(255,75,62,.16);color:#ff7b72;border-color:rgba(255,75,62,.55);animation:criticalText .7s infinite alternate}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,4vw,44px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap;line-height:1}@keyframes bubblesMove{from{background-position:0 0}to{background-position:180px 0}}@keyframes glassSweep{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}@keyframes criticalPulse{from{filter:brightness(.9)}to{filter:brightness(1.45)}}@keyframes criticalText{from{opacity:.7}to{opacity:1}}.nautilus-alarm{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(130,0,0,.38);animation:alarmScreen .55s infinite alternate}.nautilus-alarm.show{display:flex}.alarm-panel{max-width:720px;margin:20px;padding:28px;border:3px solid #ff352e;border-radius:24px;background:linear-gradient(135deg,rgba(20,0,0,.94),rgba(80,0,0,.92));color:#fff;text-align:center;box-shadow:0 0 45px rgba(255,0,0,.5)}.alarm-title{font-size:clamp(34px,6vw,70px);font-weight:1000;color:#ff4b3e;text-shadow:0 0 20px rgba(255,0,0,.55);letter-spacing:-.04em}.alarm-panel p{font-size:clamp(18px,2.5vw,26px);font-weight:900;line-height:1.25}@keyframes alarmScreen{from{box-shadow:inset 0 0 0 rgba(255,0,0,0)}to{box-shadow:inset 0 0 120px rgba(255,0,0,.95)}}.final-cta{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 0%,rgba(120,0,0,.22),transparent 34%),linear-gradient(180deg,rgba(3,3,5,.80) 0%,rgba(18,4,7,.80) 48%,rgba(0,0,0,.80) 100%);color:#fff;border:1px solid rgba(255,40,40,.24);text-align:center;box-shadow:0 28px 70px rgba(0,0,0,.38),inset 0 0 60px rgba(255,0,0,.08);backdrop-filter:blur(3px)}.final-cta:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,0,0,.06),transparent),radial-gradient(circle at 20% 80%,rgba(0,0,0,.38),transparent 42%);pointer-events:none}.final-cta .body{position:relative;z-index:1}.abyss-warning{padding-top:clamp(24px,4vw,42px);padding-bottom:clamp(24px,4vw,42px)}.abyss-top{margin:0 0 10px;color:#9b1111;font-size:clamp(14px,2vw,20px);font-weight:1000;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 0 16px rgba(155,17,17,.45)}.final-cta h2{background:none!important;color:#fff!important;font-size:clamp(38px,6.3vw,76px);line-height:.95;padding:0!important;margin:0 0 18px!important;text-shadow:0 0 18px rgba(255,0,0,.38),4px 4px 0 #000;text-transform:uppercase}.abyss-mid{margin:0 auto 8px;color:#b31313;font-size:clamp(15px,2.15vw,22px);line-height:1.35;font-weight:900;max-width:920px}.abyss-bottom{margin:0 auto;color:#b31313;font-size:clamp(16px,2.35vw,24px);line-height:1.35;font-weight:1000;max-width:920px;text-transform:none}
+    .ocean-wallpaper{position:fixed;top:0;left:0;width:100vw;height:100vh;height:100lvh;z-index:0;pointer-events:none;overflow:hidden;background-image:url('assets/fond-nautilus.jpg');background-position:center top;background-size:100% auto;background-repeat:no-repeat;background-color:#03111f;}
+    .countdown-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(8,48,72,.80));color:#fff;border-color:rgba(142,231,255,.18);position:relative;overflow:hidden}.countdown-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(142,231,255,.06) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.05) 1px,transparent 1px);background-size:34px 34px;opacity:.35;pointer-events:none}.oxygen-dashboard{position:relative;z-index:1}.oxygen-meter{background:linear-gradient(135deg,#061524,#0b2d44);border:1px solid rgba(142,231,255,.25);border-radius:24px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 18px 35px rgba(0,0,0,.25)}.oxygen-meter-top{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:baseline;gap:clamp(6px,2vw,14px);color:#dff6ff;font-weight:900;letter-spacing:.05em;text-transform:uppercase;font-size:13px;margin-bottom:10px;min-width:0}.oxygen-meter-top span{font-size:clamp(13px,3.6vw,34px);line-height:1.1;letter-spacing:.02em;min-width:0;overflow-wrap:anywhere;flex:1 1 auto}.oxygen-meter-top strong{font-family:Consolas,"Courier New",monospace;font-size:clamp(20px,5vw,44px);line-height:1;color:#8ee7ff;text-shadow:0 0 12px rgba(142,231,255,.45);white-space:nowrap;flex:0 0 auto}.oxygen-status{margin:0 0 16px;color:#b7d9e8;font-weight:800;line-height:1.4}.oxygen-tube{position:relative;height:38px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),#020812;border:2px solid rgba(220,250,255,.45);box-shadow:inset 0 0 18px rgba(0,0,0,.85),0 0 18px rgba(142,231,255,.12)}.oxygen-liquid{position:relative;height:100%;width:100%;border-radius:999px;overflow:hidden;background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);background-size:220% 100%;transition:width .7s ease,filter .3s ease;box-shadow:0 0 22px rgba(142,231,255,.65),inset 0 0 18px rgba(255,255,255,.28)}.oxygen-liquid:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(255,255,255,.62) 0 2px,transparent 3px),radial-gradient(circle at 55% 45%,rgba(255,255,255,.48) 0 2px,transparent 3px),radial-gradient(circle at 80% 55%,rgba(255,255,255,.42) 0 1px,transparent 2px);background-size:90px 100%;animation:bubblesMove 5s linear infinite;opacity:.65}.oxygen-liquid:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.38) 45%,transparent 60%);transform:translateX(-100%);animation:glassSweep 3.8s ease-in-out infinite}.oxygen-liquid.warning-level{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}.oxygen-liquid.critical{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c);animation:criticalPulse .6s infinite alternate}.oxygen-scale{display:flex;justify-content:space-between;color:rgba(223,246,255,.65);font-family:Consolas,"Courier New",monospace;font-size:var(--fs-tiny);margin-top:8px}.oxygen-bottom{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap}.oxygen-state{display:inline-flex;padding:7px 11px;border-radius:999px;font-weight:900;font-size:12px;letter-spacing:.06em;background:rgba(142,231,255,.12);color:#8ee7ff;border:1px solid rgba(142,231,255,.35);text-transform:uppercase}.oxygen-state.warning{background:rgba(245,176,39,.13);color:#ffd36c;border-color:rgba(245,176,39,.45)}.oxygen-state.critical{background:rgba(255,75,62,.16);color:#ff7b72;border-color:rgba(255,75,62,.55);animation:criticalText .7s infinite alternate}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,4vw,44px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap;line-height:1}@keyframes bubblesMove{from{background-position:0 0}to{background-position:180px 0}}@keyframes glassSweep{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}@keyframes criticalPulse{from{filter:brightness(.9)}to{filter:brightness(1.45)}}@keyframes criticalText{from{opacity:.7}to{opacity:1}}.nautilus-alarm{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(130,0,0,.38);animation:alarmScreen .55s infinite alternate}.nautilus-alarm.show{display:flex}.alarm-panel{max-width:720px;margin:20px;padding:28px;border:3px solid #ff352e;border-radius:24px;background:linear-gradient(135deg,rgba(20,0,0,.94),rgba(80,0,0,.92));color:#fff;text-align:center;box-shadow:0 0 45px rgba(255,0,0,.5)}.alarm-title{font-size:clamp(34px,6vw,70px);font-weight:1000;color:#ff4b3e;text-shadow:0 0 20px rgba(255,0,0,.55);letter-spacing:-.04em}.alarm-panel p{font-size:clamp(18px,2.5vw,26px);font-weight:900;line-height:1.25}@keyframes alarmScreen{from{box-shadow:inset 0 0 0 rgba(255,0,0,0)}to{box-shadow:inset 0 0 120px rgba(255,0,0,.95)}}.final-cta{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 0%,rgba(120,0,0,.22),transparent 34%),linear-gradient(180deg,rgba(3,3,5,.80) 0%,rgba(18,4,7,.80) 48%,rgba(0,0,0,.80) 100%);color:#fff;border:1px solid rgba(255,40,40,.24);text-align:center;box-shadow:0 28px 70px rgba(0,0,0,.38),inset 0 0 60px rgba(255,0,0,.08)}.final-cta:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,0,0,.06),transparent),radial-gradient(circle at 20% 80%,rgba(0,0,0,.38),transparent 42%);pointer-events:none}.final-cta .body{position:relative;z-index:1}.abyss-warning{padding-top:clamp(24px,4vw,42px);padding-bottom:clamp(24px,4vw,42px)}.abyss-top{margin:0 0 10px;color:#9b1111;font-size:clamp(14px,2vw,20px);font-weight:1000;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 0 16px rgba(155,17,17,.45)}.final-cta h2{background:none!important;color:#fff!important;font-size:clamp(38px,6.3vw,76px);line-height:.95;padding:0!important;margin:0 0 18px!important;text-shadow:0 0 18px rgba(255,0,0,.38),4px 4px 0 #000;text-transform:uppercase}.abyss-mid{margin:0 auto 8px;color:#b31313;font-size:clamp(15px,2.15vw,22px);line-height:1.35;font-weight:900;max-width:920px}.abyss-bottom{margin:0 auto;color:#b31313;font-size:clamp(16px,2.35vw,24px);line-height:1.35;font-weight:1000;max-width:920px;text-transform:none}
 
     @supports (height: 100svh){.ocean-wallpaper{height:100svh}}
     
@@ -1560,11 +1585,15 @@
     const io = new IntersectionObserver(entries => {
       entries.forEach(en => {
         _radarVisible = en.isIntersecting;
+        // Hors ecran : on met les animations du radar en pause plutot que
+        // de faire tourner le balayage et les halos dans le vide.
+        const stage = document.getElementById('radarStage');
+        if(stage) stage.classList.toggle('anim-idle', !en.isIntersecting);
         if(_radarVisible){
           while(_visibilityWaiters.length) _visibilityWaiters.shift()();
         }
       });
-    }, { threshold: 0.35 });
+    }, { threshold: 0.01 });
     io.observe(target);
   })();
 
@@ -1573,19 +1602,29 @@
     return new Promise(resolve => _visibilityWaiters.push(resolve));
   }
 
+  /* Mesure de l'angle du balayage : getComputedStyle force un recalcul de
+     style a chaque appel. Appele a 60 images/s, c'etait le poste le plus
+     lourd du script. On met le resultat en cache sur une image. */
+  let _sweepCache = { t: 0, v: null };
+
   /* Angle courant du balayage, lu directement sur la matrice de transformation
      (fiable quelle que soit la vitesse d'animation ou l'etat du radar).
      0deg = vers la droite, sens horaire (y ecran vers le bas). */
   function sweepAngle(){
-    const el = document.querySelector('.radar-sweep-big');
+    const now = performance.now();
+    if(now - _sweepCache.t < 12) return _sweepCache.v;   // 1 mesure par image
+    const el = _sweepEl || (_sweepEl = document.querySelector('.radar-sweep-big'));
     if(!el) return null;
     const tr = getComputedStyle(el).transform;
     if(!tr || tr === 'none') return 0;
     const m = tr.match(/matrix\(([^)]+)\)/);
     if(!m) return 0;
     const [a, b] = m[1].split(',').map(Number);
-    return (Math.atan2(b, a) * 180 / Math.PI + 360) % 360;
+    const deg = (Math.atan2(b, a) * 180 / Math.PI + 360) % 360;
+    _sweepCache = { t: now, v: deg };
+    return deg;
   }
+  let _sweepEl = null;
 
   /* Angle sous lequel se trouve un blip, d'apres sa position CSS. */
   function blipAngle(idx){
@@ -3380,8 +3419,41 @@ function qrDataUri(text, opts){
     });
   }
 
-  setInterval(updateCountdown, 1000);
-  setInterval(refreshMissionConfig, 10000);
+  /* ===== Limitation de la consommation =====
+     Les navigateurs ne suspendent pas toujours les timers d'un onglet
+     masque (et jamais sur un ecran simplement verrouille cote desktop).
+     On coupe donc explicitement tout ce qui tourne quand la page n'est
+     pas visible, et on relance a son retour. */
+  let _tickCountdown = null, _tickConfig = null, _tickTeams = null;
+
+  function startBackgroundTimers(){
+    if(_tickCountdown === null) _tickCountdown = setInterval(updateCountdown, 1000);
+    if(_tickConfig === null)    _tickConfig    = setInterval(refreshMissionConfig, 10000);
+    if(_tickTeams === null)     _tickTeams     = setInterval(() => loadTeams(), 60000);
+  }
+  function stopBackgroundTimers(){
+    clearInterval(_tickCountdown); _tickCountdown = null;
+    clearInterval(_tickConfig);    _tickConfig    = null;
+    clearInterval(_tickTeams);     _tickTeams     = null;
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    const hidden = document.visibilityState !== 'visible';
+    document.body.classList.toggle('page-hidden', hidden);
+    if(hidden){
+      stopBackgroundTimers();
+      // Le heartbeat ecrit dans Firestore : inutile onglet masque.
+      if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
+    }else{
+      startBackgroundTimers();
+      if(currentTeam && !heartbeatTimer) startHeartbeat();
+      // Remise a niveau immediate apres une absence prolongee
+      updateCountdown();
+      refreshMissionConfig();
+    }
+  });
+
+  startBackgroundTimers();
 
 
   // Ambiance sonore : démarrage après interaction utilisateur.
@@ -4491,7 +4563,7 @@ function qrDataUri(text, opts){
   });
   */
 
-  setInterval(()=>loadTeams(), 60000);
+  // (loadTeams est rafraichi par startBackgroundTimers)
 
     (async function init(){
     currentTeam = null;
