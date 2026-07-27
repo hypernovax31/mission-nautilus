@@ -3395,14 +3395,10 @@ function qrDataUri(text, opts){
       const raw = (codeEl.textContent || '').trim();
       if(raw){
         e.preventDefault();
-        // Sur l'ecran d'inscription, on copie la fiche complete ; ailleurs,
-        // le code seul suffit.
-        const isMatelotCode = codeEl.id === 'matelotCodeDisplay';
-        const payload = isMatelotCode
-          ? buildNoteText(currentMatelot?.name, raw, currentMatelot?.teamName)
-          : raw;
-        const ok = await copyTextToClipboard(payload);
-        showToast(ok ? '📋 Copié dans le presse-papier' : '❌ Copie impossible',
+        // Un clic sur un code ne copie QUE ce code. La fiche complete
+        // (avec le QR) reste accessible via le bouton "Copier".
+        const ok = await copyTextToClipboard(raw);
+        showToast(ok ? '📋 Code copié : ' + raw : '❌ Copie impossible',
           ok ? 'linear-gradient(135deg,#075c39,#0a8a5a)' : 'linear-gradient(135deg,#9b1111,#b8322b)');
         if(ok){
           codeEl.classList.add('code-copied');
