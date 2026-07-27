@@ -1119,7 +1119,10 @@
   </style>
 </head>
 <body>
-<audio id="ambianceAudio" loop preload="auto">
+<!-- muted des le depart : une lecture SILENCIEUSE est autorisee sans geste
+     utilisateur. Le script la lance immediatement, puis coupe simplement la
+     sourdine au premier scroll (voir primeOceanAudioSilently). -->
+<audio id="ambianceAudio" loop preload="auto" muted playsinline>
   <source src="assets/ambiance-sonar.mp3" type="audio/mpeg">
 </audio>
 <audio id="alarmAudio" preload="auto">
@@ -3516,30 +3519,92 @@ function qrDataUri(text, opts){
     btn.classList.toggle('active', isActive);
   }
 
-  /* Renvoie une promesse : true si la lecture a demarre, false si le
-     navigateur l'a refusee (politique d'autoplay). */
+  /* --- Deverrouillage du son au scroll -----------------------------------
+     Probleme : tous les navigateurs (Chrome, Firefox, Safari, Edge, sur PC
+     comme sur Mac) refusent de demarrer un son tant que l'utilisateur n'a
+     pas fait un geste dit "d'activation" : clic, appui de touche, tap.
+     Le scroll / la molette ne comptent PAS comme tel : appeler play() sur
+     un simple scroll est rejete.
+
+     Solution : la lecture SILENCIEUSE anticipee.
+     Des le chargement, on lance l'ambiance en sourdine (muted). Une lecture
+     muette est autorisee partout sans aucun geste. L'element est donc deja
+     "en train de jouer". Au premier scroll il ne reste plus qu'a couper la
+     sourdine et monter le volume : ce n'est plus un demarrage de lecture,
+     donc plus aucun blocage. Le son part immediatement.
+     Si un navigateur refuse quand meme la lecture muette (cas rare), on
+     retombe sur l'ancien comportement : nouvelle tentative a chaque
+     evenement, y compris les vrais clics. */
+
+  const OCEAN_VOLUME = 0.42;
+  let _primedSilently = false;   // la lecture muette anticipee tourne
+  let _audioWakeDone = false;    // le son est reellement audible
+
+  function _ambiance(){ return document.getElementById('ambianceAudio'); }
+
+  /* Lance la lecture en sourdine, sans rien demander a l'utilisateur. */
+  function primeOceanAudioSilently(){
+    const a = _ambiance();
+    if(!a || _primedSilently || _audioWakeDone) return;
+    a.muted = true;
+    a.volume = 0;
+    const p = a.play();
+    if(p && typeof p.then === 'function'){
+      p.then(() => { _primedSilently = true; }).catch(() => { _primedSilently = false; });
+    }
+  }
+
+  /* Rend le son audible. Renvoie true si l'ambiance joue vraiment. */
   function startOceanAudio(){
-    const ambianceAudio = document.getElementById("ambianceAudio");
-    if(!ambianceAudio) return Promise.resolve(false);
-    ambianceAudio.volume = 0.42;
-    ambianceAudio.muted = false;
-    return ambianceAudio.play().then(() => {
+    const a = _ambiance();
+    if(!a) return Promise.resolve(false);
+
+    // Cas 1 : la lecture muette anticipee tourne deja -> on demasque.
+    // Aucun geste requis : la lecture a deja ete accordee.
+    if(_primedSilently && !a.paused){
+      a.muted = false;
+      a.volume = OCEAN_VOLUME;
+      // Safari peut mettre l'element en pause en le demasquant : on laisse
+      // passer une image puis on verifie qu'il joue toujours.
+      return new Promise(resolve => setTimeout(resolve, 80)).then(() => {
+        if(a.paused){
+          return a.play().then(() => { setSonarButtonState(true); return true; })
+                         .catch(() => {
+                           // Refus : on repart en sourdine pour rester pret
+                           // pour le prochain geste (clic notamment).
+                           a.muted = true;
+                           a.volume = 0;
+                           a.play().catch(() => { _primedSilently = false; });
+                           setSonarButtonState(false);
+                           return false;
+                         });
+        }
+        setSonarButtonState(true);
+        return true;
+      });
+    }
+
+    // Cas 2 : demarrage classique (necessite un vrai geste sur certains
+    // navigateurs).
+    a.muted = false;
+    a.volume = OCEAN_VOLUME;
+    return a.play().then(() => {
       setSonarButtonState(true);
       return true;
     }).catch(() => false);
   }
 
   function toggleOceanAudio(){
-    const ambianceAudio = document.getElementById("ambianceAudio");
-    if(!ambianceAudio) return;
-    if(!ambianceAudio.paused){
+    const a = _ambiance();
+    if(!a) return;
+    if(!a.paused && !a.muted){
       // Coupure volontaire : on la memorise pour ne pas relancer le son
       // tout seul au retour sur l'onglet.
-      ambianceAudio.dataset.userPaused = '1';
-      ambianceAudio.pause();
+      a.dataset.userPaused = '1';
+      a.pause();
       setSonarButtonState(false);
     }else{
-      ambianceAudio.dataset.userPaused = '0';
+      a.dataset.userPaused = '0';
       _audioWakeDone = true;
       startOceanAudio();
     }
@@ -3547,37 +3612,48 @@ function qrDataUri(text, opts){
 
   $('sonarToggleBtn')?.addEventListener('click', toggleOceanAudio);
 
-  const ambianceAudioElement = document.getElementById("ambianceAudio");
+  const ambianceAudioElement = _ambiance();
+  // Le <audio> joue aussi en sourdine : le bouton ne doit s'allumer que
+  // lorsque le son est reellement audible.
   ambianceAudioElement?.addEventListener('pause', () => setSonarButtonState(false));
-  ambianceAudioElement?.addEventListener('play', () => setSonarButtonState(true));
+  ambianceAudioElement?.addEventListener('play', () => {
+    setSonarButtonState(!ambianceAudioElement.muted && ambianceAudioElement.volume > 0);
+  });
 
-  /* Demarrage de l'ambiance sonore.
-     Les navigateurs bloquent la lecture tant qu'aucun geste reel n'a eu
-     lieu ; un scroll ne suffit pas toujours (Safari iOS notamment).
-     On ecoute donc un large eventail d'evenements et surtout on NE RETIRE
-     les ecouteurs QUE si la lecture a effectivement demarre : avant, ils
-     etaient poses en { once:true } et disparaissaient des la premiere
-     tentative, meme refusee — le son ne repartait alors jamais. */
-  const AUDIO_WAKE_EVENTS = ['pointerdown','touchstart','touchend','mousedown',
-    'click','keydown','scroll','wheel','mousemove'];
-  let _audioWakeDone = false;
+  /* Reveil du son : scroll, molette, glissement tactile, clic, touche...
+     Les ecouteurs ne sont retires QUE si le son est devenu audible ; une
+     tentative refusee laisse le dispositif en place. */
+  const AUDIO_WAKE_EVENTS = ['scroll','wheel','touchmove','pointerdown','touchstart',
+    'touchend','mousedown','click','keydown','mousemove'];
 
   async function activateAudioFromNavigation(){
     if(_audioWakeDone) return;
+    const a = _ambiance();
+    if(a && a.dataset.userPaused === '1') return;  // coupe volontairement
     const started = await startOceanAudio();
     if(!started) return;          // refuse : on reste a l'ecoute
     _audioWakeDone = true;
     AUDIO_WAKE_EVENTS.forEach(evt => {
+      window.removeEventListener(evt, activateAudioFromNavigation, { capture:true });
       window.removeEventListener(evt, activateAudioFromNavigation);
+      document.removeEventListener(evt, activateAudioFromNavigation, { capture:true });
       document.removeEventListener(evt, activateAudioFromNavigation);
     });
   }
 
   AUDIO_WAKE_EVENTS.forEach(evt => {
     window.addEventListener(evt, activateAudioFromNavigation, { passive:true });
-    // Certains navigateurs mobiles ne propagent pas jusqu'a window :
-    // on double l'ecoute sur document, en phase de capture.
+    // Certains navigateurs ne propagent pas jusqu'a window (scroll dans un
+    // conteneur interne, navigateurs mobiles) : on double l'ecoute sur
+    // document en phase de capture.
     document.addEventListener(evt, activateAudioFromNavigation, { passive:true, capture:true });
+  });
+
+  // Lecture muette anticipee des maintenant, et nouvelle tentative des que
+  // l'onglet redevient visible (un onglet en arriere-plan peut la refuser).
+  primeOceanAudioSilently();
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') primeOceanAudioSilently();
   });
 
   // Retour d'onglet : si l'ambiance etait active, on la relance.
