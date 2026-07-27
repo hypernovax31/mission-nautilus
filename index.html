@@ -777,6 +777,13 @@
     .radar-stage.radar-collapsed .radar-screen-big{width:140px;height:140px;min-width:140px;flex-basis:140px}
     .radar-stage.radar-collapsed .radar-sweep-big{animation-duration:2s}
     .radar-stage.radar-collapsed .radar-blip{display:none}
+    /* Pendant l'annonce d'une equipe : le radar reprend sa taille et
+       les points redeviennent visibles, meme en mode reduit. */
+    .radar-stage.radar-collapsed.radar-scanning{min-height:clamp(300px,52vw,420px) !important;padding:clamp(20px,4vw,34px) clamp(14px,3vw,24px)}
+    .radar-stage.radar-collapsed.radar-scanning .radar-screen-big{width:min(78vw,340px);height:min(78vw,340px);min-width:220px;flex-basis:auto}
+    .radar-stage.radar-collapsed.radar-scanning .radar-blip{display:block}
+    .radar-stage.radar-collapsed.radar-scanning .radar-grid{opacity:1}
+    .radar-stage.radar-collapsed.radar-scanning .radar-sweep-big{animation-duration:2.8s}
     .radar-stage.radar-collapsed .radar-grid{opacity:.3}
     .radar-stage.radar-fading{opacity:0;pointer-events:none}
     .radar-big{padding:0;background:transparent;border:0;box-shadow:none;width:100%}
@@ -815,6 +822,34 @@
       opacity:0;
     }
     .radar-blip.revealed{width:14px;height:14px;opacity:1;box-shadow:0 0 22px 6px rgba(91,255,156,.55),0 0 0 3px rgba(255,255,255,.32)}
+    /* Le point "pop" : apparition franche puis pulsation, avec onde de choc */
+    .radar-blip.blip-pop{
+      width:20px;height:20px;background:#fff;
+      animation:blipPop .5s cubic-bezier(.2,1.4,.4,1) both, blipPulse 1s ease-in-out .5s infinite;
+    }
+    .radar-blip.blip-pop::after{
+      content:"";position:absolute;left:50%;top:50%;width:20px;height:20px;
+      margin:-10px 0 0 -10px;border-radius:50%;
+      border:2px solid rgba(255,255,255,.9);
+      animation:blipWave 1.4s ease-out infinite;pointer-events:none;
+    }
+    @keyframes blipPop{
+      0%{transform:scale(0);opacity:0}
+      55%{transform:scale(1.55);opacity:1}
+      100%{transform:scale(1);opacity:1}
+    }
+    @keyframes blipPulse{
+      0%,100%{box-shadow:0 0 20px 5px rgba(255,255,255,.55),0 0 0 3px rgba(255,255,255,.35)}
+      50%{box-shadow:0 0 34px 12px rgba(255,255,255,.8),0 0 0 6px rgba(255,255,255,.22)}
+    }
+    @keyframes blipWave{
+      0%{transform:scale(1);opacity:.85}
+      100%{transform:scale(4.6);opacity:0}
+    }
+    @media (prefers-reduced-motion: reduce){
+      .radar-blip.blip-pop{animation:none}
+      .radar-blip.blip-pop::after{animation:none;opacity:0}
+    }
     #radarBlip1{left:25%;top:32%}
     #radarBlip2{left:62%;top:28%}
     #radarBlip3{left:48%;top:62%}
@@ -919,6 +954,11 @@
   <source src="assets/ambiance-sonar.mp3" type="audio/mpeg">
 </audio>
 <audio id="alarmAudio" preload="auto">
+  <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
+</audio>
+<!-- Meme son, element distinct : l'annonce des equipages ne doit pas
+     entrer en conflit avec l'alarme de mission (qui boucle 3 fois). -->
+<audio id="revealAlarmAudio" preload="auto">
   <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
 </audio>
 <div class="top-bar">
@@ -1324,6 +1364,12 @@
   const REVEAL_INITIAL_DELAY = 250; // delai avant la 1ere carte (apres 1 tour de radar)
   let _radarStatusInterval = null;
   let _knownTeams = {}; // teamCode -> { hasMembers: bool, revealedAt: number }
+  // File de revelation : une equipe est annoncee par cycle d'alarme.
+  let _revealQueue = [];        // codes en attente d'annonce
+  let _revealedCodes = new Set(); // codes deja annonces
+  let _revealRunning = false;   // une annonce est en cours
+  let _blipByTeam = {};         // teamCode -> numero de blip (1..5)
+  let _lastTeams = [];          // dernier etat connu des equipes actives
 
   /* Change le message en fondu : la boite garde une taille fixe (CSS),
      donc rien ne bouge autour pendant le changement. */
@@ -1440,36 +1486,117 @@
       if(!newKnown[code]){
         card.classList.add('out');
         setTimeout(() => card.remove(), 500);
+        // Elle pourra etre re-annoncee si des matelots reviennent
+        _revealedCodes.delete(code);
+        const bi = _blipByTeam[code];
+        if(bi){
+          const b = $('radarBlip' + bi);
+          if(b) b.classList.remove('revealed', 'blip-pop');
+          delete _blipByTeam[code];
+        }
       }
     });
 
-    // 4) Ajout des nouvelles cartes (avec animation)
-    let revealIndex = 0;
+    // 4) Mise a jour des cartes existantes + mise en file des nouvelles
     active.forEach(t => {
       const existing = box.querySelector(`[data-team="${t.teamCode}"]`);
       if(existing){
-        // Met a jour le contenu si necessaire
         existing.outerHTML = teamCardHtml(t);
         const newEl = box.querySelector(`[data-team="${t.teamCode}"]`);
         if(newEl) newEl.classList.add('in');
-      }else{
-        // Nouvelle carte
-        const temp = document.createElement('div');
-        temp.innerHTML = teamCardHtml(t);
-        const el = temp.firstElementChild;
-        box.appendChild(el);
-        // Allume le blip correspondant (Hollywood : blip = bateau detecte)
-        const blipIdx = revealIndex % 5;
-        const blipEl = $('radarBlip' + (blipIdx + 1));
-        if(blipEl){
-          blipEl.classList.add('revealed');
-          // Eteint apres 2.5s (le blip "clignote")
-          setTimeout(() => blipEl.classList.remove('revealed'), 2500);
-        }
-        setTimeout(() => el.classList.add('in'), REVEAL_INITIAL_DELAY + revealIndex * REVEAL_STAGGER_MS);
-        revealIndex++;
+      }else if(!_revealQueue.includes(t.teamCode) && !_revealedCodes.has(t.teamCode)){
+        // Nouvelle equipe : on la met en file, elle sera revelee une par une
+        // au rythme de l'alarme sonar (voir processRevealQueue).
+        _revealQueue.push(t.teamCode);
       }
     });
+    _lastTeams = active;
+    processRevealQueue();
+  }
+
+  /* ---------- Revelation sequencee : 1 equipe par cycle d'alarme ----------
+     Chaque nouvelle equipe apparait sur le sonar sous forme de point blanc
+     qui "pop", accompagne du son Submarine_alarm. La carte de l'equipe
+     s'affiche a la FIN du son, puis on enchaine avec la suivante. */
+  const REVEAL_SOUND_FALLBACK_MS = 2100; // duree du mp3 (~2,06 s) si l'event 'ended' ne vient pas
+
+  function assignBlip(teamCode){
+    if(_blipByTeam[teamCode]) return _blipByTeam[teamCode];
+    const used = new Set(Object.values(_blipByTeam));
+    for(let i = 1; i <= 5; i++){
+      if(!used.has(i)){ _blipByTeam[teamCode] = i; return i; }
+    }
+    const idx = (Object.keys(_blipByTeam).length % 5) + 1;
+    _blipByTeam[teamCode] = idx;
+    return idx;
+  }
+
+  /* Joue l'alarme une seule fois et resout a la fin du son. */
+  function playAlarmOnce(){
+    return new Promise(resolve => {
+      const a = document.getElementById('revealAlarmAudio') || document.getElementById('alarmAudio');
+      if(!a){ setTimeout(resolve, REVEAL_SOUND_FALLBACK_MS); return; }
+      let done = false;
+      const finish = () => {
+        if(done) return;
+        done = true;
+        a.onended = null;
+        clearTimeout(timer);
+        resolve();
+      };
+      // Filet de securite : si 'ended' ne se declenche pas (onglet en
+      // arriere-plan, lecture bloquee), on enchaine quand meme.
+      const timer = setTimeout(finish, REVEAL_SOUND_FALLBACK_MS + 600);
+      a.onended = finish;
+      try{
+        a.pause();
+        a.currentTime = 0;
+        a.volume = 0.82;
+        a.play().catch(() => finish());
+      }catch(e){ finish(); }
+    });
+  }
+
+  async function processRevealQueue(){
+    if(_revealRunning || !_revealQueue.length) return;
+    _revealRunning = true;
+    const stage = $('radarStage');
+    const box = $('teamsBox');
+
+    while(_revealQueue.length){
+      const code = _revealQueue.shift();
+      const team = (_lastTeams || []).find(t => t.teamCode === code);
+      // L'equipe a disparu entre-temps (membres retires) : on saute.
+      if(!team || box.querySelector(`[data-team="${code}"]`)) continue;
+
+      // a) Le radar repasse en grand pour que le point soit bien visible
+      if(stage) stage.classList.add('radar-scanning');
+      setRadarStatus('Contact sonar : ' + (team.teamName || 'equipage'));
+
+      // b) Le point blanc "pop" sur le sonar, en meme temps que le son
+      const blipEl = $('radarBlip' + assignBlip(code));
+      if(blipEl) blipEl.classList.add('revealed', 'blip-pop');
+
+      await playAlarmOnce();
+
+      // c) Fin du son : la carte de l'equipe apparait
+      const temp = document.createElement('div');
+      temp.innerHTML = teamCardHtml(team);
+      const el = temp.firstElementChild;
+      if(el){
+        box.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('in'));
+      }
+      _revealedCodes.add(code);
+      if(blipEl) blipEl.classList.remove('blip-pop');
+
+      // d) Petite respiration avant l'equipe suivante
+      if(_revealQueue.length) await new Promise(r => setTimeout(r, 420));
+    }
+
+    if(stage) stage.classList.remove('radar-scanning');
+    setRadarStatus('Signaux détectés');
+    _revealRunning = false;
   }
 
   /**
