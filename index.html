@@ -138,12 +138,12 @@
     }
     @media(max-width:520px){
       /* Les 2 boutons restent strictement identiques et sur une seule ligne */
-      .top-bar{top:10px;right:10px;gap:6px;width:calc(100vw - 20px);max-width:calc(2*var(--tb-btn-w) + 6px);--tb-btn-w:clamp(104px,30vw,140px)}
-      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{padding:8px 8px;letter-spacing:0}
+      .top-bar{top:8px;right:8px;gap:6px;width:calc(100vw - 16px);max-width:calc(2*var(--tb-btn-w) + 6px);--tb-btn-w:clamp(88px,25vw,116px)}
+      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{padding:7px 8px;letter-spacing:0;border-width:1.5px;font-size:clamp(9px,2.3vw,11px)}
     }
     @media(max-width:360px){
-      .top-bar{--tb-btn-w:clamp(92px,29vw,120px)}
-      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{font-size:9.5px;padding:7px 6px}
+      .top-bar{--tb-btn-w:clamp(76px,24vw,96px)}
+      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{font-size:9px;padding:6px 5px}
     }
     /* --- Encart d'embarquement : code matelot + QR alignes --- */
     .matelot-card{padding:clamp(16px,3.5vw,22px)}
@@ -286,6 +286,18 @@
 
     /* Header : sur écrans étroits, le titre ne déborde pas */
     .hero-title{word-break:break-word;overflow-wrap:break-word}
+
+    /* Sous 480px, la barre de boutons descend assez bas pour croiser
+       "FNAC LABÈGE". On reserve donc la hauteur de la barre au-dessus
+       du header, et la marque passe sous les boutons. */
+    @media(max-width:480px){
+      header{padding-top:56px}
+      .brand{font-size:clamp(15px,4.2vw,18px);letter-spacing:.06em}
+    }
+    @media(max-width:360px){
+      header{padding-top:52px}
+      .brand{font-size:14px;letter-spacing:.04em}
+    }
     
 
     /* Chrono O2 : ne casse pas sur 320px */
@@ -920,8 +932,6 @@
     @keyframes pwaFadeOut{from{opacity:1}to{opacity:0}}
     .pwa-modal-card{position:relative;background:linear-gradient(160deg,#0a2a40 0%,#061524 60%,#020812 100%);border:2px solid rgba(245,176,39,.6);border-radius:24px;padding:28px 24px 24px;max-width:min(94vw,460px);width:100%;color:#e9f7ff;box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.05);animation:pwaSlideIn .4s cubic-bezier(.2,.9,.3,1.2);max-height:90vh;overflow-y:auto}
     @keyframes pwaSlideIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
-    .pwa-modal-close{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);font-size:16px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;margin:0}
-    .pwa-modal-close:hover{background:rgba(255,75,62,.5);transform:rotate(90deg)}
     .pwa-modal-emoji{text-align:center;line-height:1;margin:0 0 12px;animation:pwaEmojiBounce 1.6s ease-in-out infinite;display:flex;flex-direction:column;align-items:center;gap:6px}
     .pwa-submarine{width:min(60vw,180px);height:auto;display:block;filter:drop-shadow(0 6px 12px rgba(245,176,39,.3))}
     .pwa-submarine-label{font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;font-size:22px;font-weight:900;letter-spacing:.08em;color:#f5b027;text-transform:uppercase;text-shadow:0 0 12px rgba(245,176,39,.4),2px 2px 0 #000}
@@ -3854,7 +3864,7 @@ const PWA_CONTENT = {
     title: 'Installe Mission Nautilus sur ton iPhone',
     subtitle: 'En 3 gestes, l’app sera sur ton écran d’accueil.',
     steps: [
-      { text: 'Touche le bouton <b>...</b> (3 petits points) en haut à droite de Safari', hint: 'C’est le menu de la page, pas les onglets' },
+      { text: 'Toucher le bouton menu à droite de safari (rond avec trois points a l’intérieur)' },
       { text: 'Appuie sur <b>Partager</b> en haut du menu', hint: 'Icône carré avec une flèche vers le haut' },
       { text: 'Sélectionne <b>Ajouter à l’écran d’accueil</b>', hint: 'Puis confirme en appuyant sur Ajouter' }
     ],
@@ -3952,7 +3962,6 @@ function showInstallInstructions(){
   overlay.className = 'pwa-modal';
   overlay.innerHTML =
     '<div class="pwa-modal-card">' +
-      '<button type="button" class="pwa-modal-close" aria-label="Fermer" data-close>✕</button>' +
       '<div class="pwa-modal-emoji">' + PWA_SUBMARINE_HTML + '</div>' +
       '<h2 class="pwa-modal-title">' + c.title + '</h2>' +
       '<p class="pwa-modal-subtitle">' + c.subtitle + '</p>' +
