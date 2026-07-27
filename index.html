@@ -949,10 +949,18 @@
       position:absolute;width:0;height:0;border-radius:50%;
       background:rgba(255,255,255,.95);
       box-shadow:0 0 0 0 rgba(255,255,255,.85);
-      transition:width .55s ease,height .55s ease,box-shadow .55s ease,opacity .35s ease;
       opacity:0;
     }
-    .radar-blip.revealed{width:14px;height:14px;opacity:1;box-shadow:0 0 22px 6px rgba(91,255,156,.55),0 0 0 3px rgba(255,255,255,.32)}
+    /* Le point reste blanc (lisible sur le fond sombre du sonar) mais son
+       halo prend la couleur de l'equipage : on voit donc d'un coup d'oeil
+       QUEL equipage se trouve a quelle distance du centre. Repli sur le
+       vert du sonar si aucune couleur n'est fournie. */
+    .radar-blip.revealed{
+      width:14px;height:14px;opacity:1;
+      box-shadow:
+        0 0 22px 6px rgba(var(--blip-glow,91,255,156),.75),
+        0 0 0 3px rgba(255,255,255,.32);
+    }
     /* Le point "pop" : apparition franche puis pulsation, avec onde de choc */
     .radar-blip.blip-pop{
       width:20px;height:20px;background:#fff;
@@ -964,10 +972,12 @@
       border:2px solid rgba(255,255,255,.9);
       animation:blipWave 1.4s ease-out infinite;pointer-events:none;
     }
+    /* Le centrage translate(-50%,-50%) est repris dans chaque etape :
+       une animation sur transform remplace la valeur de base. */
     @keyframes blipPop{
-      0%{transform:scale(0);opacity:0}
-      55%{transform:scale(1.55);opacity:1}
-      100%{transform:scale(1);opacity:1}
+      0%{transform:translate(-50%,-50%) scale(0);opacity:0}
+      55%{transform:translate(-50%,-50%) scale(1.55);opacity:1}
+      100%{transform:translate(-50%,-50%) scale(1);opacity:1}
     }
     @keyframes blipPulse{
       0%,100%{box-shadow:0 0 20px 5px rgba(255,255,255,.55),0 0 0 3px rgba(255,255,255,.35)}
@@ -978,14 +988,42 @@
       100%{transform:scale(4.6);opacity:0}
     }
     @media (prefers-reduced-motion: reduce){
-      .radar-blip.blip-pop{animation:none}
+      /* Sans animation, il faut remettre le centrage a la main : c'est
+         blipPop qui le portait pendant la pulsation. */
+      .radar-blip.blip-pop{animation:none;transform:translate(-50%,-50%)}
       .radar-blip.blip-pop::after{animation:none;opacity:0}
     }
-    #radarBlip1{left:25%;top:32%}
-    #radarBlip2{left:62%;top:28%}
-    #radarBlip3{left:48%;top:62%}
-    #radarBlip4{left:18%;top:66%}
-    #radarBlip5{left:74%;top:55%}
+    /* POSITION DES POINTS = AVANCEMENT DANS LE JEU
+       Les points ne sont plus places en dur : le script calcule leur
+       position (voir positionBlip). Chaque equipage garde un ANGLE fixe qui
+       lui est propre (ils ne se superposent donc jamais), et son RAYON
+       diminue au fil des paliers : palier 1 = tout au bord, palier final =
+       au centre de la cible. Le deplacement est anime pour qu'on voie
+       l'equipage progresser vers le centre. */
+    /* Le deplacement se fait sur left/top et NON sur transform : l'animation
+       d'apparition du point (blipPop) utilise deja transform:scale(), elle
+       ecraserait un positionnement par translate(). */
+    .radar-blip{
+      left:50%;top:50%;
+      /* le point est centre sur sa coordonnee, quelle que soit sa taille */
+      transform:translate(-50%,-50%);
+      transition:
+        width .55s ease,height .55s ease,box-shadow .55s ease,opacity .35s ease,
+        left 1.2s cubic-bezier(.25,.9,.3,1),top 1.2s cubic-bezier(.25,.9,.3,1);
+    }
+    @media (prefers-reduced-motion: reduce){
+      .radar-blip{transition:opacity .35s ease}
+    }
+    /* Anneaux de reference : un cercle par palier (8 paliers). Ils tombent
+       EXACTEMENT sur le rayon de chaque palier, pour qu'on lise
+       l'avancement d'un coup d'oeil. L'anneau du palier final (le plus
+       proche du centre) est volontairement plus marque.
+       "closest-side" : la reference du degrade est la moitie de la largeur,
+       ce qui rend le calcul des rayons exact. */
+    .radar-rings{
+      position:absolute;inset:0;border-radius:50%;pointer-events:none;
+      background:radial-gradient(circle closest-side,transparent 0,transparent 21.69%,rgba(91,255,156,.34) 21.69%,rgba(91,255,156,.34) 22.31%,transparent 22.31%,transparent 30.83%,rgba(91,255,156,.15) 30.83%,rgba(91,255,156,.15) 31.45%,transparent 31.45%,transparent 39.98%,rgba(91,255,156,.15) 39.98%,rgba(91,255,156,.15) 40.60%,transparent 40.60%,transparent 49.12%,rgba(91,255,156,.15) 49.12%,rgba(91,255,156,.15) 49.74%,transparent 49.74%,transparent 58.26%,rgba(91,255,156,.15) 58.26%,rgba(91,255,156,.15) 58.88%,transparent 58.88%,transparent 67.40%,rgba(91,255,156,.15) 67.40%,rgba(91,255,156,.15) 68.02%,transparent 68.02%,transparent 76.55%,rgba(91,255,156,.15) 76.55%,rgba(91,255,156,.15) 77.17%,transparent 77.17%,transparent 85.69%,rgba(91,255,156,.15) 85.69%,rgba(91,255,156,.15) 86.31%,transparent 86.31%);
+    }
     .radar-center{
       position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;
       background:#fff;transform:translate(-50%,-50%);
@@ -1212,6 +1250,7 @@
         <div class="sonar-loader radar-big">
           <div class="sonar-screen radar-screen-big">
             <div class="radar-grid"></div>
+            <div class="radar-rings" aria-hidden="true"></div>
             <div class="radar-sweep-big"></div>
             <div class="radar-blip" id="radarBlip1"></div>
             <div class="radar-blip" id="radarBlip2"></div>
@@ -1645,16 +1684,13 @@
   }
   let _sweepEl = null;
 
-  /* Angle sous lequel se trouve un blip, d'apres sa position CSS. */
+  /* Angle sous lequel se trouve un blip.
+     L'angle est desormais impose par le script (blipAngleDeg) : on le rend
+     directement, sans mesurer le DOM. C'est plus fiable, car le point est
+     peut-etre encore en train de glisser vers sa nouvelle position quand on
+     interroge son angle. */
   function blipAngle(idx){
-    const el = $('radarBlip' + idx);
-    const screen = document.querySelector('.radar-screen-big');
-    if(!el || !screen) return null;
-    const r = el.getBoundingClientRect(), s = screen.getBoundingClientRect();
-    if(!s.width) return null;
-    const dx = (r.left + r.width/2) - (s.left + s.width/2);
-    const dy = (r.top + r.height/2) - (s.top + s.height/2);
-    return (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+    return (blipAngleDeg(idx) + 360) % 360;
   }
 
   /* Resout quand le faisceau passe sur l'angle vise (ou apres timeout). */
@@ -1804,6 +1840,10 @@
         existing.outerHTML = teamCardHtml(t);
         const newEl = box.querySelector(`[data-team="${t.teamCode}"]`);
         if(newEl) newEl.classList.add('in');
+        // L'equipage a peut-etre change de palier : son point glisse vers
+        // le centre (ou reste en place s'il n'a pas avance).
+        const bIdx = _blipByTeam[t.teamCode];
+        if(bIdx) positionBlip(bIdx, t.currentStep, t.teamCode);
       }else if(!_revealQueue.includes(t.teamCode) && !_revealedCodes.has(t.teamCode)){
         // Nouvelle equipe : on la met en file, elle sera revelee une par une
         // au rythme de l'alarme sonar (voir processRevealQueue).
@@ -1829,6 +1869,49 @@
     const idx = (Object.keys(_blipByTeam).length % 5) + 1;
     _blipByTeam[teamCode] = idx;
     return idx;
+  }
+
+  /* ===== POSITION DES POINTS SUR LE SONAR =====
+     Le point d'un equipage traduit son avancement reel :
+       - RAYON : palier 1 = tout au bord de la cible, palier final = au
+         centre. Chaque palier franchi rapproche visiblement le point.
+       - ANGLE : fixe et propre a chaque equipage (5 directions reparties
+         sur le tour). Deux equipages au meme palier restent donc bien
+         separes : ils sont sur le meme cercle, mais dans des directions
+         differentes.
+     Le point ne va jamais jusqu'au centre exact : le coeur du sonar est
+     deja occupe par le point blanc central. */
+
+  const BLIP_RADIUS_MAX = 43;   // % du rayon : palier 1, au bord
+  const BLIP_RADIUS_MIN = 11;   // % du rayon : palier final, au centre
+
+  /* Les 5 directions sont volontairement dans le desordre (0, 144, 288...) :
+     deux equipages voisins dans la liste se retrouvent a l'oppose sur le
+     cadran, ce qui les rend encore plus faciles a distinguer. */
+  function blipAngleDeg(idx){
+    return ((idx - 1) * 144) % 360 - 90;   // -90 = on demarre vers le haut
+  }
+
+  /* Rang du palier (0 = premier, 1 = dernier) d'apres la liste STEPS. */
+  function stepProgress(stepId){
+    const ids = Object.keys(STEPS);
+    const i = ids.indexOf(stepId);
+    if(i < 0) return 0;
+    if(ids.length < 2) return 0;
+    return i / (ids.length - 1);
+  }
+
+  /* Place le point d'une equipe selon son palier. */
+  function positionBlip(idx, stepId, teamCode){
+    const el = $('radarBlip' + idx);
+    if(!el) return;
+    const p = stepProgress(stepId);                                   // 0 -> 1
+    const radius = BLIP_RADIUS_MAX - (BLIP_RADIUS_MAX - BLIP_RADIUS_MIN) * p;
+    const a = blipAngleDeg(idx) * Math.PI / 180;
+    el.style.left = (50 + radius * Math.cos(a)).toFixed(2) + '%';
+    el.style.top  = (50 + radius * Math.sin(a)).toFixed(2) + '%';
+    el.dataset.step = stepId || '';
+    if(teamCode) el.style.setProperty('--blip-glow', teamStyle(teamCode).glow);
   }
 
   /* Joue l'alarme une seule fois et resout a la fin du son. */
@@ -1890,10 +1973,17 @@
       const blipIdx = assignBlip(code);
       const blipEl = $('radarBlip' + blipIdx);
 
+      // Le point est place AVANT d'apparaitre, a la distance qui correspond
+      // au palier atteint par l'equipage (sans animation de glissement : il
+      // doit surgir directement au bon endroit).
+      if(blipEl) blipEl.style.transition = 'none';
+      positionBlip(blipIdx, team.currentStep, code);
+      if(blipEl){
+        void blipEl.offsetWidth;          // applique la position immediatement
+        blipEl.style.transition = '';     // le glissement reprend ensuite
+      }
+
       // Condition 2 : on attend que le faisceau balaie la position du point.
-      // Le radar vient peut-etre de changer de taille : on laisse une image
-      // pour que la position du blip soit a jour avant de mesurer l'angle.
-      await new Promise(r => requestAnimationFrame(() => r()));
       await waitForSweepOver(blipAngle(blipIdx), 4000);
 
       // b) Le point blanc "pop" au passage du faisceau, en meme temps que le son
