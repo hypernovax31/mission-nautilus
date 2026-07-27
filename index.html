@@ -84,6 +84,14 @@
     #adminPanel input,#adminPanel select,#adminPanel textarea{max-width:100%;box-sizing:border-box}
     #adminPanel .admin-pane{min-width:0;overflow-wrap:anywhere}
 
+    /* Les codes sont cliquables : un clic copie dans le presse-papier. */
+    .code{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
+    .code:hover{box-shadow:0 6px 18px rgba(0,0,0,.22)}
+    .code.code-copied{transform:scale(1.04);box-shadow:0 0 0 3px rgba(24,168,122,.55)}
+    @media (prefers-reduced-motion: reduce){
+      .code,.code.code-copied{transition:none;transform:none}
+    }
+
     .admin-o2-badge.warning{color:#8c5a1f;background:rgba(245,176,39,.14);border-color:rgba(245,176,39,.4)}
     .admin-o2-badge.critical{color:#a3271b;background:rgba(255,75,62,.12);border-color:rgba(255,75,62,.45)}
 
@@ -1121,6 +1129,7 @@
         <div class="boarding-action"><button class="primary" id="registerBtn">Monter à bord</button></div>
       </div>
       <div id="registerMsg"></div>
+      <div id="embarkMissionAction" class="cockpit-action" style="display:none"></div>
     </div>
   </section>
 
@@ -2193,18 +2202,26 @@ function qrDataUri(text, opts){
    * Construit le contenu textuel de la note (nom + code + equipe + lien).
    */
   /* URL publique du jeu (sans parametre ni ancre). */
+  /* URL publique du jeu. En production on renvoie l'adresse canonique ;
+     en local (fichier ouvert directement ou serveur de test) on garde
+     l'origine courante pour que le lien reste utilisable. */
+  const SITE_URL = 'https://hypernovax31.github.io/mission-nautilus/';
   function siteUrl(){
-    return location.origin + location.pathname.replace(/[^/]*$/, '') + 'index.html';
+    const host = location.hostname;
+    const isLocal = !host || host === 'localhost' || host === '127.0.0.1' || location.protocol === 'file:';
+    return isLocal ? (location.origin + location.pathname.replace(/[^/]*$/, '')) : SITE_URL;
   }
 
+  /* Texte unique utilise par TOUS les boutons (Copier, Partager, et la
+     modale Agrandir) : une seule source, aucun format divergent. */
   function buildNoteText(name, code, teamName){
     return 'MISSION NAUTILUS\n' +
       '=================\n\n' +
       'Lien : ' + siteUrl() + '\n\n' +
-      'Matelot : ' + name + '\n\n' +
-      'Equipage : ' + teamName + '\n\n' +
+      'Matelot : ' + (name || '—') + '\n\n' +
+      'Equipage : ' + (teamName || '—') + '\n\n' +
       'Code Matelot : ' + code + '\n\n' +
-      'IMPORTANT : Le code est personnel et a usage unique.';
+      'IMPORTANT : Le code est personnel et à usage unique.';
   }
 
   /**
@@ -2263,15 +2280,15 @@ function qrDataUri(text, opts){
     }
   }
 
-  async function copyMatelotToClipboard(name, code, teamName, link){
-    const text = buildNoteText(name, code, teamName);
+  /* Copie un texte quelconque, avec repli pour les navigateurs sans
+     navigator.clipboard (ou en contexte non securise). */
+  async function copyTextToClipboard(text){
     try{
       if(navigator.clipboard && navigator.clipboard.writeText){
         await navigator.clipboard.writeText(text);
         return true;
       }
     }catch(e){}
-    // Fallback : textarea + execCommand
     try{
       const ta = document.createElement('textarea');
       ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0';
@@ -2282,6 +2299,10 @@ function qrDataUri(text, opts){
     }catch(e){
       return false;
     }
+  }
+
+  async function copyMatelotToClipboard(name, code, teamName, link){
+    return copyTextToClipboard(buildNoteText(name, code, teamName));
   }
 
   /**
@@ -2331,7 +2352,7 @@ function qrDataUri(text, opts){
         '<div style="font-family:Consolas,monospace;font-size:22px;font-weight:1000;letter-spacing:.08em;margin-top:14px;color:#fff;background:rgba(0,0,0,.55);padding:10px 18px;border-radius:10px;border:2px solid rgba(245,176,39,.55);display:inline-block">' + esc(code) + '</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px">' +
           '<button type="button" id="qrModalShare" class="qr-modal-share">📤 Partager</button>' +
-          '<button type="button" id="qrModalCopy" class="qr-modal-share" style="background:rgba(255,255,255,.12)">📋 Copier le lien</button>' +
+          '<button type="button" id="qrModalCopy" class="qr-modal-share" style="background:rgba(255,255,255,.12)">📋 Copier</button>' +
         '</div>' +
         '<div style="margin-top:18px;font-size:12px;opacity:.7">Tape en dehors pour fermer</div>' +
       '</div>';
@@ -2350,17 +2371,19 @@ function qrDataUri(text, opts){
         // Pas de fetch reseau : le QR est genere localement.
         const blob = await qrToPngBlob(qrUrl, 600);
         const file = new File([blob], 'matelot-' + code + '.png', { type: 'image/png' });
+        // Meme texte que les boutons Copier / Partager, + l'image du QR.
+        const noteText = buildNoteText(currentMatelot?.name, code, currentMatelot?.teamName);
         if(navigator.canShare && navigator.canShare({ files: [file] })){
           await navigator.share({
             files: [file],
-            title: 'Code Matelot ' + code,
-            text: 'Mon Code Matelot pour Mission Nautilus : ' + code + '\nLien de reprise : ' + resumeLink
+            title: 'Mission Nautilus - Code Matelot',
+            text: noteText
           });
           showToast('✅ Partage envoye', 'linear-gradient(135deg,#075c39,#0a8a5a)');
         }else if(navigator.share){
           await navigator.share({
-            title: 'Code Matelot ' + code,
-            text: 'Mon Code Matelot : ' + code + '\nLien : ' + resumeLink
+            title: 'Mission Nautilus - Code Matelot',
+            text: noteText
           });
         }else{
           // Fallback : telecharge le PNG (window.open sur data: est bloque par les navigateurs)
@@ -2376,8 +2399,8 @@ function qrDataUri(text, opts){
         console.warn('qrShare:', err);
         // Fallback : clipboard avec le code
         try{
-          await navigator.clipboard.writeText(code + '\n' + resumeLink);
-          showToast('📋 Code + lien copies dans le presse-papier', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+          await navigator.clipboard.writeText(buildNoteText(currentMatelot?.name, code, currentMatelot?.teamName));
+          showToast('📋 Informations copiées dans le presse-papier', 'linear-gradient(135deg,#075c39,#0a8a5a)');
         }catch(e2){
           showToast('❌ Partage impossible', 'linear-gradient(135deg,#9b1111,#b8322b)');
         }
@@ -2386,14 +2409,10 @@ function qrDataUri(text, opts){
 
     // Bouton copier
     document.getElementById('qrModalCopy').addEventListener('click', async () => {
-      const text = 'Code Matelot : ' + code + '\nLien : ' + resumeLink;
-      try{
-        await navigator.clipboard.writeText(text);
-        showToast('📋 Lien copie dans le presse-papier', 'linear-gradient(135deg,#075c39,#0a8a5a)');
-      }catch(e){
-        // Fallback prompt
-        window.prompt('Copiez ce lien :', resumeLink);
-      }
+      const text = buildNoteText(currentMatelot?.name, code, currentMatelot?.teamName);
+      const ok = await copyTextToClipboard(text);
+      if(ok) showToast('📋 Informations copiées dans le presse-papier', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      else window.prompt('Copiez ces informations :', text);
     });
 
   }
@@ -2529,7 +2548,9 @@ function qrDataUri(text, opts){
       $('memberName').value = '';
       renderGame(false);
       await loadTeams();
-      document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+      // Pas de scroll automatique : le matelot doit d'abord lire et noter
+      // son code, affiche juste au-dessus.
+      renderEmbarkMissionButton();
     }catch(err){
       console.error('NAUTILUS register error:', err);
       $('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar gresille...</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Detail technique : ${esc(err.code || err.message || err)}</span></div>`;
@@ -2612,7 +2633,7 @@ function qrDataUri(text, opts){
     $('joinMsg').innerHTML = '<div class="notice success">&#x2705; <b>' + esc(m.name) + '</b>, matelot de l\'equipe <b>' + esc(t.teamName) + '</b>, reprends la plongee.' + unlockMsg + '</div>';
     renderGame(res.justUnlocked);
     await loadTeams();
-    document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+    renderEmbarkMissionButton();
   }
 
   /**
@@ -2728,7 +2749,7 @@ function qrDataUri(text, opts){
       ? 'L’équipage est au départ. Lancez officiellement la mission pour déclencher le premier mini-jeu.'
       : 'Le Nautilus reprend là où votre équipe s’est arrêtée. Préparez-vous à poursuivre le palier en cours.';
     box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}${launchNotice}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">${cockpitButtonIntro}</p><div class="cockpit-action"><button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">${cockpitButtonLabel}</button></div></div>`;
-    $('cockpitMissionBtn')?.addEventListener('click', launchSelectedPalier);
+    $('cockpitMissionBtn')?.addEventListener('click', () => launchSelectedPalier());
   }
 
   const RULES = {
@@ -3102,7 +3123,30 @@ function qrDataUri(text, opts){
   window.addEventListener('mousemove', activateAudioFromNavigation, { once:true, passive:true });
   window.addEventListener('keydown', activateAudioFromNavigation, { once:true });
 
+  /* Bouton de mission affiche DANS le bloc embarquement, une fois le
+     matelot inscrit ou reconnecte. Le libelle suit l'avancement reel :
+     "LANCER LA MISSION" tant que l'equipe est au depart, puis
+     "REPRENDRE LA MISSION" des qu'un mini-jeu a ete commence. */
+  function renderEmbarkMissionButton(){
+    const box = $('embarkMissionAction');
+    if(!box) return;
+    if(!currentTeam){
+      box.style.display = 'none';
+      box.innerHTML = '';
+      return;
+    }
+    const started = currentTeam.currentStep !== 'start'
+      || (currentTeam.completedSteps || []).length > 0
+      || !!currentTeam.startedAt;
+    const label = started ? 'REPRENDRE LA MISSION' : 'LANCER LA MISSION';
+    box.style.display = 'flex';
+    box.innerHTML = '<button class="hero-cta red cockpit-launch" type="button" id="embarkMissionBtn">'
+      + label + '</button>';
+    $('embarkMissionBtn')?.addEventListener('click', () => launchSelectedPalier());
+  }
+
   function updateFinalMissionButton(){
+    renderEmbarkMissionButton();
     const btn = $('cockpitMissionBtn');
     if(!btn) return;
     btn.textContent = currentTeam?.currentStep === 'start' ? 'LANCER LA MISSION' : 'REPRENDRE LA MISSION';
@@ -3179,6 +3223,28 @@ function qrDataUri(text, opts){
         // l'utilisateur a annule, on ne fait rien
       }else{
         showToast('❌ Impossible d\'ouvrir l\'app Notes — utilise Copier', 'linear-gradient(135deg,#9b1111,#b8322b)');
+      }
+      return;
+    }
+    // Clic direct sur un code affiche (.code) : copie immediate, sans bouton.
+    const codeEl = e.target.closest('.code');
+    if(codeEl && !e.target.closest('button')){
+      const raw = (codeEl.textContent || '').trim();
+      if(raw){
+        e.preventDefault();
+        // Sur l'ecran d'inscription, on copie la fiche complete ; ailleurs,
+        // le code seul suffit.
+        const isMatelotCode = codeEl.id === 'matelotCodeDisplay';
+        const payload = isMatelotCode
+          ? buildNoteText(currentMatelot?.name, raw, currentMatelot?.teamName)
+          : raw;
+        const ok = await copyTextToClipboard(payload);
+        showToast(ok ? '📋 Copié dans le presse-papier' : '❌ Copie impossible',
+          ok ? 'linear-gradient(135deg,#075c39,#0a8a5a)' : 'linear-gradient(135deg,#9b1111,#b8322b)');
+        if(ok){
+          codeEl.classList.add('code-copied');
+          setTimeout(() => codeEl.classList.remove('code-copied'), 900);
+        }
       }
       return;
     }
