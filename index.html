@@ -1137,10 +1137,14 @@
   </style>
 </head>
 <body>
-<!-- muted des le depart : une lecture SILENCIEUSE est autorisee sans geste
-     utilisateur. Le script la lance immediatement, puis coupe simplement la
-     sourdine au premier scroll (voir primeOceanAudioSilently). -->
-<audio id="ambianceAudio" loop preload="auto" muted playsinline>
+<!-- L'attribut autoplay demande le demarrage des le chargement : sur un site
+     deja connu de l'appareil (app installee, visites repetees) le navigateur
+     l'accorde et le son part tout seul.
+     muted au depart : une lecture SILENCIEUSE, elle, est TOUJOURS autorisee.
+     Le script tente d'abord le son audible (enableSoundAtLoad) et, en cas de
+     refus, garde cette lecture muette prete a etre demasquee instantanement
+     au premier geste, quel qu'il soit. -->
+<audio id="ambianceAudio" loop preload="auto" autoplay muted playsinline>
   <source src="assets/ambiance-sonar.mp3" type="audio/mpeg">
 </audio>
 <audio id="alarmAudio" preload="auto">
@@ -3733,7 +3737,15 @@ function qrDataUri(text, opts){
     return a.play().then(() => {
       setSonarButtonState(true);
       return true;
-    }).catch(() => false);
+    }).catch(() => {
+      /* Refus du navigateur. Il ne faut PAS laisser l'element demasque :
+         la lecture muette de secours ne pourrait plus demarrer et le son
+         resterait bloque jusqu'a un vrai clic. On remet la sourdine. */
+      a.muted = true;
+      a.volume = 0;
+      setSonarButtonState(false);
+      return false;
+    });
   }
 
   function toggleOceanAudio(){
@@ -3805,11 +3817,6 @@ function qrDataUri(text, opts){
     document.addEventListener(evt, activateAudioFromNavigation, { passive:true, capture:true });
   });
 
-  /* Amorcage de la lecture muette : PAS au chargement (cela ferait tourner
-     le decodeur audio en permanence, meme si l'utilisateur ne touche a
-     rien). On l'amorce au premier signe que quelqu'un est la — le survol
-     de la souris ou le tout debut d'un geste tactile — puis le scroll n'a
-     plus qu'a demasquer le son. */
   let _primeArmed = false;
   const PRIME_HINT_EVENTS = ['mousemove','pointerover','touchstart','pointerdown','keydown','scroll','wheel'];
   function armPrime(){
@@ -3829,13 +3836,57 @@ function qrDataUri(text, opts){
     document.addEventListener(evt, armPrime, { passive:true, capture:true });
   });
 
+  /* ===== SON ACTIF DES LE CHARGEMENT DE LA PAGE =====
+     Objectif : l'ambiance et les bruitages sont audibles des l'ouverture,
+     sans que le joueur ait la moindre action a faire.
+
+     Limite imposee par TOUS les navigateurs (Chrome, Firefox, Safari,
+     Edge) : un son ne peut pas demarrer sans autorisation. Celle-ci est
+     accordee automatiquement quand le site est deja connu de l'appareil
+     (app installee sur l'ecran d'accueil, visites repetees) — c'est le cas
+     des joueurs pendant l'evenement. On procede donc en deux temps :
+
+       1. On tente le son AUDIBLE immediatement au chargement. Si le
+          navigateur l'accepte, la musique demarre toute seule : rien a
+          faire, but atteint.
+       2. S'il refuse (typiquement la toute premiere visite), on lance
+          aussitot la lecture MUETTE, qui elle est toujours autorisee. Le
+          fichier tourne alors deja en sourdine : le tout premier geste,
+          meme un simple scroll, n'a plus qu'a couper la sourdine. C'est
+          instantane et plus jamais bloque.
+
+     Dans les deux cas, aucun clic sur le bouton sonar n'est necessaire. */
+  async function enableSoundAtLoad(){
+    if(_soundOffByUser) return;   // le joueur avait coupe le son : on respecte
+
+    // Les bruitages (alarmes) ne doivent porter aucune sourdine residuelle.
+    unmuteAlarms();
+
+    // 1) Tentative de lecture audible immediate.
+    const started = await startOceanAudio();
+    if(started){
+      _audioWakeDone = true;
+      setSoundEnabled(true);
+      return;
+    }
+
+    // 2) Refus du navigateur : lecture muette immediate, prete a etre
+    //    demasquee au premier geste, quel qu'il soit.
+    _primeArmed = true;
+    PRIME_HINT_EVENTS.forEach(evt => document.removeEventListener(evt, armPrime, { capture:true }));
+    primeOceanAudioSilently();
+  }
   /* Etat de depart : si le joueur avait coupe le sonar lors de sa derniere
-     visite, on retablit le silence complet des le chargement. */
+     visite, on retablit le silence complet AVANT toute tentative de
+     lecture. L'ordre compte : le silence d'abord, la mise en route ensuite. */
   if(_soundOffByUser){
     silenceEverything();
     setSonarButtonState(false);
     const _a0 = _ambiance();
     if(_a0) _a0.dataset.userPaused = '1';
+  }else{
+    // Sinon : on allume le son des maintenant (voir enableSoundAtLoad).
+    enableSoundAtLoad();
   }
 
   document.addEventListener('visibilitychange', () => {
