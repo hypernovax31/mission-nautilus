@@ -1597,8 +1597,9 @@
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>
             <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>
+            <button class="secondary" id="cleanupFieldsBtn" type="button" style="margin:0">🧹 Nettoyer les champs obsolètes</button>
           </div>
-          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).</p>
+          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>Le nettoyage retire « migratedFrom », un reste de l'ancienne migration des identifiants d'équipe : sans effet sur le jeu.</p>
         </div>
       </div>
     </div>
@@ -1614,7 +1615,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   /* Supprime les equipes retirees via le panneau admin (game/config.obsoleteTeams),
      pour qu'elles ne soient pas recreees au chargement suivant. */
@@ -3549,7 +3550,7 @@ function qrDataUri(text, opts){
    * Double confirmation obligatoire (action irréversible).
    */
   async function resetAllMembers(){
-    const ok1 = confirm("⚠️ Action irréversible : vider l'équipage de toutes les équipes ?\n\nCela supprimera tous les noms de matelots inscrits ainsi que leurs Codes Matelot (reconnexion impossible).\nLa progression et le blocage des équipes ne sont PAS affectés.");
+    const ok1 = confirm("⚠️ Action irréversible : vider l'équipage de toutes les équipes ?\n\nCela supprimera tous les noms de matelots inscrits ainsi que leurs Codes Matelot (reconnexion impossible).\nLes compteurs « en ligne » sont également remis à zéro.\nLa progression et le blocage des équipes ne sont PAS affectés.");
     if(!ok1) return;
     const ok2 = confirm("Confirme une seconde fois : tu veux vraiment purger TOUS les membres ?");
     if(!ok2) return;
@@ -3575,7 +3576,15 @@ function qrDataUri(text, opts){
             purged++;
           }
         }
-        await updateDoc(teamRef, { members: [], updatedAt: new Date().toISOString() });
+        /* onlinePlayers doit etre vide lui aussi : il contient les
+           horodatages des appareils connectes, un par session. Sans cela,
+           les traces des matelots qu'on vient de supprimer resteraient dans
+           la base apres le reset. Plus de matelots = plus personne en ligne. */
+        await updateDoc(teamRef, {
+          members: [],
+          onlinePlayers: {},
+          updatedAt: new Date().toISOString()
+        });
       }
       endAdminSession(`✅ ${purged} matelot(s) supprimé(s) · session fermée`);
       await loadTeams();
@@ -3589,6 +3598,61 @@ function qrDataUri(text, opts){
    * Réinitialise la PROGRESSION des 5 équipes (palier 1, 0 échec, non bloqué).
    * Ne vide PAS les membres. Action irréversible — double confirmation.
    */
+  /**
+   * Supprime les champs devenus inutiles dans les fiches d'equipe.
+   * Pour l'instant : migratedFrom, laisse par la migration des identifiants
+   * d'equipe (CAPITAINE -> NEMO, etc.). Le code qui l'ecrivait a ete retire
+   * depuis longtemps, mais effacer du code ne supprime pas les valeurs deja
+   * enregistrees dans la base : il faut le faire explicitement.
+   * Sans risque : ce champ n'est lu nulle part dans l'application.
+   */
+  async function cleanupObsoleteFields(){
+    await refreshAdminTeams();
+    if(!effectiveTeams.length){ alert('Aucune équipe dans la base.'); return; }
+
+    // On ne montre la demande de confirmation que s'il y a vraiment
+    // quelque chose a nettoyer.
+    const concerned = [];
+    for(const t of effectiveTeams){
+      const snap = await getDoc(doc(db,'teams',t.code));
+      if(snap.exists() && snap.data().migratedFrom !== undefined){
+        concerned.push(t.name);
+      }
+    }
+    if(!concerned.length){
+      alert('✅ Rien à nettoyer : aucune fiche ne contient de champ obsolète.');
+      return;
+    }
+
+    const ok = confirm(
+      `Nettoyer le champ obsolète « migratedFrom » sur ${concerned.length} équipe(s) ?\n\n` +
+      `(${concerned.join(', ')})\n\n` +
+      `Ce champ est un reste de l'ancienne migration des identifiants d'équipe.\n` +
+      `Il n'est plus utilisé nulle part : sa suppression n'a aucun effet sur le jeu.`
+    );
+    if(!ok) return;
+
+    try{
+      let done = 0;
+      for(const t of effectiveTeams){
+        const ref = doc(db,'teams',t.code);
+        const snap = await getDoc(ref);
+        if(!snap.exists() || snap.data().migratedFrom === undefined) continue;
+        // deleteField() retire vraiment la cle, au lieu d'y mettre null.
+        await updateDoc(ref, {
+          migratedFrom: deleteField(),
+          updatedAt: new Date().toISOString()
+        });
+        done++;
+      }
+      endAdminSession(`✅ Champ obsolète retiré de ${done} équipe(s) · session fermée`);
+      await loadTeams();
+    }catch(err){
+      console.error('NAUTILUS cleanupObsoleteFields error:', err);
+      alert(`❌ Échec du nettoyage : ${err.message || err}`);
+    }
+  }
+
   async function resetAllProgress(){
     // La liste est lue dans Firestore : le message annonce les equipes
     // reellement presentes, pas une liste figee dans le code.
@@ -4523,6 +4587,7 @@ function qrDataUri(text, opts){
     }
   });
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
+  $('cleanupFieldsBtn')?.addEventListener('click', cleanupObsoleteFields);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
 
   /* =====================================================================
