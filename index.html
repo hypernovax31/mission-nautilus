@@ -3389,58 +3389,8 @@ function qrDataUri(text, opts){
       if(title) title.textContent = 'ABYSSES';
       if(subtitle) subtitle.textContent = '';
     }
-    playIrisMechanism();
     overlay.classList.add('show');
     return wait(6400).then(()=>overlay.classList.remove('show'));
-  }
-
-  function playIrisMechanism(){
-    if(!isSoundEnabled()) return;   // sonar eteint : aucun son fabrique
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if(!AudioContext) return;
-    const ctx = audioCtx || new AudioContext();
-    audioCtx = ctx;
-    const master = ctx.createGain();
-    master.gain.value = 0.16;
-    master.connect(ctx.destination);
-    const now = ctx.currentTime;
-
-    // Grincement mécanique grave + cliquetis d'engrenages.
-    const grind = ctx.createOscillator();
-    const grindGain = ctx.createGain();
-    const grindFilter = ctx.createBiquadFilter();
-    grind.type = 'sawtooth';
-    grind.frequency.setValueAtTime(82, now);
-    grind.frequency.exponentialRampToValueAtTime(38, now + 1.25);
-    grindFilter.type = 'lowpass';
-    grindFilter.frequency.value = 520;
-    grindGain.gain.setValueAtTime(0.0001, now);
-    grindGain.gain.exponentialRampToValueAtTime(0.55, now + 0.08);
-    grindGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.45);
-    grind.connect(grindFilter); grindFilter.connect(grindGain); grindGain.connect(master);
-    grind.start(now); grind.stop(now + 1.5);
-
-    for(let i=0;i<9;i++){
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.value = 180 + i*22;
-      const t = now + 0.12 + i*0.105;
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.24, t + 0.012);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
-      osc.connect(gain); gain.connect(master);
-      osc.start(t); osc.stop(t + 0.08);
-    }
-
-    const boom = ctx.createOscillator();
-    const boomGain = ctx.createGain();
-    boom.type = 'sine'; boom.frequency.value = 46;
-    boomGain.gain.setValueAtTime(0.0001, now + 1.15);
-    boomGain.gain.exponentialRampToValueAtTime(0.75, now + 1.20);
-    boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.05);
-    boom.connect(boomGain); boomGain.connect(master);
-    boom.start(now + 1.15); boom.stop(now + 2.1);
   }
 
   async function startMissionOfficial(withAlarm=true){
@@ -3574,7 +3524,6 @@ function qrDataUri(text, opts){
   })();
 
   // Ambiance sonore : démarrage après interaction utilisateur.
-  let audioCtx = null;
   function setSonarButtonState(isActive){
     const btn = document.getElementById('sonarToggleBtn');
     if(!btn) return;
@@ -3616,6 +3565,9 @@ function qrDataUri(text, opts){
      c'est le robinet principal de TOUS les sons du jeu.
        - sonar allume  : ambiance + alarmes + bips du mini-jeu audibles
        - sonar eteint  : silence total, aucune source ne peut sortir un son
+     Tant qu'il est eteint, aucun bouton de la page (embarquement, reprise,
+     lancement de palier) ne peut relancer le son : le verrou est pose dans
+     startOceanAudio() elle-meme.
      Le choix est memorise et partage avec les autres pages (palier1.html)
      via localStorage, pour que le silence soit respecte partout. */
   const SOUND_PREF_KEY = 'nautilusSoundOn';
@@ -3643,9 +3595,9 @@ function qrDataUri(text, opts){
     try{ localStorage.setItem(SOUND_PREF_KEY, on ? '1' : '0'); }catch(e){ /* mode prive */ }
   }
 
-  /* Coupe net toutes les sources sonores de la page. */
+  /* Coupe net toutes les sources sonores de la page : les trois lecteurs
+     <audio> (ambiance, alarme de mission, annonce d'equipage). */
   function silenceEverything(){
-    // 1) Les trois lecteurs <audio> (ambiance, alarme, annonce d'equipage)
     document.querySelectorAll('audio').forEach(a => {
       try{
         a.pause();
@@ -3653,9 +3605,6 @@ function qrDataUri(text, opts){
         a.currentTime = 0;
       }catch(e){ /* element non pret */ }
     });
-    // 2) Les sons fabriques par le code (grincement de l'iris) : on suspend
-    //    le moteur audio, ce qui stoppe aussi tout son deja en cours.
-    try{ if(audioCtx && audioCtx.state === 'running') audioCtx.suspend(); }catch(e){ /* ignore */ }
   }
 
   /* Autorise a nouveau les lecteurs a produire du son. */
@@ -3664,7 +3613,6 @@ function qrDataUri(text, opts){
       const el = document.getElementById(id);
       if(el) el.muted = false;
     });
-    try{ if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }catch(e){ /* ignore */ }
   }
 
   function _ambiance(){ return document.getElementById('ambianceAudio'); }
@@ -3708,6 +3656,13 @@ function qrDataUri(text, opts){
 
   /* Rend le son audible. Renvoie true si l'ambiance joue vraiment. */
   function startOceanAudio(){
+    /* VERROU CENTRAL : si le joueur a coupe le sonar, rien ne doit rallumer
+       l'ambiance — ni un clic sur "Engagez-vous", ni "Reprendre la
+       mission", ni le lancement d'un palier. Le verrou est place ici, dans
+       la fonction elle-meme, pour couvrir TOUS les appels existants et a
+       venir : impossible d'oublier un bouton. Seul le bouton sonar peut
+       relancer le son, et il leve d'abord le verrou. */
+    if(_soundOffByUser) return Promise.resolve(false);
     const a = _ambiance();
     if(!a) return Promise.resolve(false);
 
@@ -3752,7 +3707,7 @@ function qrDataUri(text, opts){
     const soundIsOn = !a.paused && !a.muted;
     if(soundIsOn){
       // EXTINCTION GENERALE : plus aucun son ne doit sortir de la page,
-      // ni l'ambiance, ni les alarmes, ni les bips fabriques par le code.
+      // ni l'ambiance, ni les alarmes, ni les bips du mini-jeu.
       a.dataset.userPaused = '1';
       setSoundEnabled(false);
       _soundOffByUser = true;
