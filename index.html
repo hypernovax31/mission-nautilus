@@ -139,6 +139,19 @@
     .anim-idle .radar-blip,
     .anim-idle.radar-stage{animation-play-state:paused !important}
 
+    /* Pause generique : tout bloc marque .offscreen (pose par le script des
+       qu'il sort de l'ecran) gele ses animations, y compris celles de ses
+       pseudo-elements. Indispensable sur iPhone : les animations de
+       box-shadow (pulsations des boutons, hublots, jauge d'oxygene) sont
+       redessinees par le processeur a chaque image et font chauffer le
+       telephone meme quand elles sont invisibles. */
+    .offscreen,
+    .offscreen *,
+    .offscreen *::before,
+    .offscreen *::after{
+      animation-play-state:paused !important;
+    }
+
     /* Onglet en arriere-plan : plus aucune animation decorative. */
     body.page-hidden *,
     body.page-hidden *::before,
@@ -259,7 +272,13 @@
       --pulse-color:rgba(245,176,39,.42);
       --pulse-speed:2.2s;
       --btn-shadow:0 8px 18px rgba(0,0,0,.18);
-      animation:btnPulse var(--pulse-speed) ease-in-out infinite;
+      /* BATTERIE : animer une box-shadow force le telephone a redessiner le
+         bouton ET le decor situe dessous a chaque image. Le bouton
+         "Installer l'app" est fixe en haut de l'ecran : en boucle infinie il
+         faisait chauffer l'iPhone en permanence. On limite donc la
+         pulsation a 8 cycles (~18 s) : l'oeil est attire au chargement,
+         puis tout s'arrete. */
+      animation:btnPulse var(--pulse-speed) ease-in-out 8;
     }
     @keyframes btnPulse{
       0%,100%{box-shadow:var(--btn-shadow),0 0 0 0 rgba(245,176,39,0)}
@@ -271,16 +290,16 @@
     }
 
     /* Banniere d'onboarding iOS : invitation persistante en bas */
-    .ios-install-banner{position:fixed;left:12px;right:12px;bottom:12px;z-index:9998;background:linear-gradient(135deg,#0a2a40,#061524);border:1px solid rgba(245,176,39,.55);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 18px 36px rgba(0,0,0,.5);color:#e9f7ff;font-size:13px;line-height:1.45;backdrop-filter:blur(8px);animation:bannerSlideUp .45s cubic-bezier(.2,.9,.3,1.2)}
+    .ios-install-banner{position:fixed;left:12px;right:12px;bottom:12px;z-index:9998;background:linear-gradient(135deg,#0a2a40,#061524);border:1px solid rgba(245,176,39,.55);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 18px 36px rgba(0,0,0,.5);color:#e9f7ff;font-size:13px;line-height:1.45;animation:bannerSlideUp .45s cubic-bezier(.2,.9,.3,1.2)}
     .ios-install-banner .b-ico{font-size:24px;flex:0 0 24px}
     .ios-install-banner .b-text{flex:1;min-width:0}
     .ios-install-banner .b-text b{color:#ffe2a0}
     .ios-install-banner .b-actions{display:flex;gap:6px;flex:0 0 auto}
     /* Animation qui attire l'oeil sur la fleche "Partager -> Ajouter" */
     @keyframes iosShareArrow{0%,100%{opacity:1;transform:translateX(0)}50%{opacity:1;transform:translateX(4px)}}
-    .ios-share-arrow{display:inline-block;animation:iosShareArrow 1.4s ease-in-out infinite;color:#ffe2a0;font-weight:1000}
+    .ios-share-arrow{display:inline-block;animation:iosShareArrow 1.4s ease-in-out 10;color:#ffe2a0;font-weight:1000}
     /* Animation "pulse" pour les hublots/icones - attire l'attention utilisateur */
-    .ios-install-banner .b-ico{animation:iosBannerPulse 1.6s ease-in-out infinite;font-size:30px}
+    .ios-install-banner .b-ico{animation:iosBannerPulse 1.6s ease-in-out 10;font-size:30px}
     @keyframes iosBannerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
     .ios-install-banner button{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:900;font-size:12px;padding:8px 12px;border-radius:10px;min-height:auto;margin:0;letter-spacing:.02em}
     .ios-install-banner .b-help{background:#f5b027;color:#111}
@@ -410,7 +429,7 @@
     .intro-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 20%,rgba(142,231,255,.18),transparent 26%),radial-gradient(circle at 82% 70%,rgba(245,176,39,.14),transparent 22%),linear-gradient(90deg,rgba(142,231,255,.05) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.045) 1px,transparent 1px);background-size:auto,auto,38px 38px,38px 38px;pointer-events:none;opacity:.85}
     .intro-card>h2,.countdown-card>h2{position:relative;z-index:1}.intro-card .body{position:relative;z-index:1}.intro-text{font-family:Consolas,"Courier New",monospace;font-size:clamp(16px,2vw,21px);line-height:1.65;color:#baffd2;text-shadow:0 0 12px rgba(91,255,156,.35);margin:0;max-width:none;min-height:170px;padding:16px 18px;background:rgba(0,0,0,.22);border:1px solid rgba(120,255,180,.24);border-radius:16px;box-shadow:inset 0 0 18px rgba(0,0,0,.22);font-weight:900}
     .typewriter-caret{display:none;margin-left:2px;color:#5bff9c;animation:cursorBlink .85s steps(2,end) infinite;font-weight:900;line-height:inherit}#missionOrderTyping .typewriter-caret{display:inline-block}@keyframes cursorBlink{50%{opacity:0}}.typewriter{position:relative;overflow:hidden}
-    .mission-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:16px;margin-top:22px;justify-items:center}.mission-step{position:relative;aspect-ratio:1/1;width:min(100%,300px)!important;max-width:300px;min-height:138px;height:auto;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;text-align:center;margin:0!important;color:#f4fbff;background:radial-gradient(circle at 42% 38%,rgba(142,231,255,.20),rgba(10,47,70,.92) 46%,rgba(3,14,24,.98) 72%);border:8px solid #5c4630;box-shadow:inset 0 0 0 5px rgba(245,176,39,.28),inset 0 0 28px rgba(142,231,255,.25),0 12px 24px rgba(0,0,0,.28);padding:18px;transition:.18s transform,.18s box-shadow,.18s border-color}.mission-step:before{content:"";position:absolute;inset:10px;border-radius:50%;border:2px solid rgba(245,176,39,.45);pointer-events:none;animation:hublotPulse 2.8s ease-in-out infinite}.mission-step:after{content:"";position:absolute;top:22%;left:22%;width:20%;height:20%;border-radius:50%;background:rgba(255,255,255,.22);filter:blur(.2px);pointer-events:none}@keyframes hublotPulse{0%,100%{border-color:rgba(245,176,39,.35);box-shadow:0 0 0 rgba(245,176,39,0)}50%{border-color:rgba(245,176,39,.95);box-shadow:0 0 18px rgba(245,176,39,.55)}}.mission-step:hover{transform:translateY(-4px) scale(1.02);box-shadow:inset 0 0 0 5px rgba(245,176,39,.38),inset 0 0 34px rgba(142,231,255,.34),0 18px 30px rgba(0,0,0,.34)}.mission-step.active{border-color:var(--fnac);box-shadow:inset 0 0 0 5px rgba(245,176,39,.52),inset 0 0 42px rgba(142,231,255,.38),0 0 0 5px rgba(245,176,39,.18),0 18px 32px rgba(0,0,0,.34)}
+    .mission-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:16px;margin-top:22px;justify-items:center}.mission-step{position:relative;aspect-ratio:1/1;width:min(100%,300px)!important;max-width:300px;min-height:138px;height:auto;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;text-align:center;margin:0!important;color:#f4fbff;background:radial-gradient(circle at 42% 38%,rgba(142,231,255,.20),rgba(10,47,70,.92) 46%,rgba(3,14,24,.98) 72%);border:8px solid #5c4630;box-shadow:inset 0 0 0 5px rgba(245,176,39,.28),inset 0 0 28px rgba(142,231,255,.25),0 12px 24px rgba(0,0,0,.28);padding:18px;transition:.18s transform,.18s box-shadow,.18s border-color}.mission-step:before{content:"";position:absolute;inset:10px;border-radius:50%;border:2px solid rgba(245,176,39,.45);pointer-events:none;animation:hublotPulse 2.8s ease-in-out 6}.mission-step:after{content:"";position:absolute;top:22%;left:22%;width:20%;height:20%;border-radius:50%;background:rgba(255,255,255,.22);filter:blur(.2px);pointer-events:none}@keyframes hublotPulse{0%,100%{border-color:rgba(245,176,39,.35);box-shadow:0 0 0 rgba(245,176,39,0)}50%{border-color:rgba(245,176,39,.95);box-shadow:0 0 18px rgba(245,176,39,.55)}}.mission-step:hover{transform:translateY(-4px) scale(1.02);box-shadow:inset 0 0 0 5px rgba(245,176,39,.38),inset 0 0 34px rgba(142,231,255,.34),0 18px 30px rgba(0,0,0,.34)}.mission-step.active{border-color:var(--fnac);box-shadow:inset 0 0 0 5px rgba(245,176,39,.52),inset 0 0 42px rgba(142,231,255,.38),0 0 0 5px rgba(245,176,39,.18),0 18px 32px rgba(0,0,0,.34)}
     .num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--fnac);font-weight:900;color:#111;box-shadow:0 5px 10px rgba(245,176,39,.25);z-index:1;margin:0!important;line-height:1;text-align:center;flex:0 0 auto}.mission-step b{display:block;color:#fff;margin:0!important;padding:0 18%;font-size:clamp(13px,2.2vw,22px);text-transform:uppercase;letter-spacing:.02em;z-index:1;line-height:1.08;width:100%;text-align:center}.mission-step p{display:none}.rule-detail{margin-top:18px;background:linear-gradient(135deg,#071a2b,#0b344e);color:#e9f7ff;border:1px solid rgba(142,231,255,.22);border-radius:20px;padding:20px;min-height:150px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}.rule-detail h3{margin:0 0 8px;color:var(--fnac);font-size:22px}.rule-detail p{margin:0 0 10px;line-height:1.5}.rule-detail ul{margin:10px 0 0;padding-left:18px}.rule-detail li{margin:6px 0;line-height:1.4}
     label{display:block;font-weight:900;margin:0 0 9px;color:#1a2834}
     input,select{width:100%;height:52px;min-height:52px;padding:13px 14px;border:2px solid #d8e0e6;border-radius:15px;font:inherit;background:#fff;color:#111;line-height:1.2}
@@ -421,8 +440,14 @@
     .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:var(--fs-small);color:#6e7a84;line-height:1.38}.code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111;color:var(--fnac);border:2px solid var(--fnac);border-radius:12px;padding:8px 12px;display:inline-block;user-select:all;font-size:16px;box-shadow:0 6px 14px rgba(0,0,0,.12)}.teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);font-weight:900;margin-top:3px}.sonar-loading .body{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(8,48,72,.80))!important}.sonar-loader{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:34px 18px;background:linear-gradient(135deg,rgba(7,26,43,.98),rgba(11,52,78,.96));border:1px solid rgba(120,255,180,.28);border-radius:22px;color:#baffd2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18)}.sonar-screen{position:relative;width:170px;height:170px;min-width:170px;flex:0 0 170px;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.08),rgba(0,0,0,.25) 70%),#02120d;border:3px solid rgba(91,255,156,.75);box-shadow:0 0 22px rgba(91,255,156,.28),inset 0 0 22px rgba(91,255,156,.12);overflow:hidden}.sonar-screen:before{content:"";position:absolute;inset:26px;border:1px solid rgba(91,255,156,.24);border-radius:50%;box-shadow:0 0 0 26px rgba(91,255,156,.10),0 0 0 52px rgba(91,255,156,.07)}.sonar-screen:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(91,255,156,.18);box-shadow:-59px 59px 0 -58px transparent}.sonar-text{font-family:Consolas,"Courier New",monospace;text-transform:uppercase;white-space:nowrap;letter-spacing:.045em;font-weight:1000;font-size:clamp(11px,3vw,20px);color:#fff;text-shadow:0 0 14px rgba(91,255,156,.55);max-width:100%;overflow:visible;text-align:center}.sonar-text:after{content:"";animation:none}/* sonarDots desactive (les points sont geres par <span id="radarDots">) */.cockpit-action{display:flex;justify-content:center;margin-top:18px}.cockpit-launch{min-width:min(100%,360px);text-align:center}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}.progress{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.dot{padding:6px 10px;border-radius:999px;background:#eef2f5;font-size:12px;font-weight:800;color:#52606a}.dot.doneDot{background:#e5fff2;color:#08633e;border:1px solid #aee5ca}.dot.currentDot{background:#111;color:var(--fnac)}
     .hero-actions{position:relative;z-index:2;display:flex;gap:20px;flex-wrap:wrap;margin-top:40px}.hero-cta{position:relative;z-index:2;margin-top:0;background:var(--fnac);color:#111;border:0;border-radius:999px;padding:16px 24px;font-weight:1000;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(245,176,39,.28);width:auto;min-width:210px}.hero-cta.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(245,176,39,.55);box-shadow:none}
     .hero-cta.red{background:linear-gradient(135deg,#ff4b3e,#9b1111);color:#fff;box-shadow:0 0 30px rgba(255,55,55,.25)}
-    .ocean-wallpaper{position:fixed;top:0;left:0;width:100vw;height:100vh;height:100lvh;z-index:0;pointer-events:none;overflow:hidden;background-image:url('assets/fond-nautilus.jpg');background-position:center top;background-size:100% auto;background-repeat:no-repeat;background-color:#03111f;}
-    .countdown-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(8,48,72,.80));color:#fff;border-color:rgba(142,231,255,.18);position:relative;overflow:hidden}.countdown-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(142,231,255,.06) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.05) 1px,transparent 1px);background-size:34px 34px;opacity:.35;pointer-events:none}.oxygen-dashboard{position:relative;z-index:1}.oxygen-meter{background:linear-gradient(135deg,#061524,#0b2d44);border:1px solid rgba(142,231,255,.25);border-radius:24px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 18px 35px rgba(0,0,0,.25)}.oxygen-meter-top{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:baseline;gap:clamp(6px,2vw,14px);color:#dff6ff;font-weight:900;letter-spacing:.05em;text-transform:uppercase;font-size:13px;margin-bottom:10px;min-width:0}.oxygen-meter-top span{font-size:clamp(13px,3.6vw,34px);line-height:1.1;letter-spacing:.02em;min-width:0;overflow-wrap:anywhere;flex:1 1 auto}.oxygen-meter-top strong{font-family:Consolas,"Courier New",monospace;font-size:clamp(20px,5vw,44px);line-height:1;color:#8ee7ff;text-shadow:0 0 12px rgba(142,231,255,.45);white-space:nowrap;flex:0 0 auto}.oxygen-status{margin:0 0 16px;color:#b7d9e8;font-weight:800;line-height:1.4}.oxygen-tube{position:relative;height:38px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),#020812;border:2px solid rgba(220,250,255,.45);box-shadow:inset 0 0 18px rgba(0,0,0,.85),0 0 18px rgba(142,231,255,.12)}.oxygen-liquid{position:relative;height:100%;width:100%;border-radius:999px;overflow:hidden;background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);background-size:220% 100%;transition:width .7s ease,filter .3s ease;box-shadow:0 0 22px rgba(142,231,255,.65),inset 0 0 18px rgba(255,255,255,.28)}.oxygen-liquid:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(255,255,255,.62) 0 2px,transparent 3px),radial-gradient(circle at 55% 45%,rgba(255,255,255,.48) 0 2px,transparent 3px),radial-gradient(circle at 80% 55%,rgba(255,255,255,.42) 0 1px,transparent 2px);background-size:90px 100%;animation:bubblesMove 5s linear infinite;opacity:.65}.oxygen-liquid:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.38) 45%,transparent 60%);transform:translateX(-100%);animation:glassSweep 3.8s ease-in-out infinite}.oxygen-liquid.warning-level{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}.oxygen-liquid.critical{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c);animation:criticalPulse .6s infinite alternate}.oxygen-scale{display:flex;justify-content:space-between;color:rgba(223,246,255,.65);font-family:Consolas,"Courier New",monospace;font-size:var(--fs-tiny);margin-top:8px}.oxygen-bottom{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap}.oxygen-state{display:inline-flex;padding:7px 11px;border-radius:999px;font-weight:900;font-size:12px;letter-spacing:.06em;background:rgba(142,231,255,.12);color:#8ee7ff;border:1px solid rgba(142,231,255,.35);text-transform:uppercase}.oxygen-state.warning{background:rgba(245,176,39,.13);color:#ffd36c;border-color:rgba(245,176,39,.45)}.oxygen-state.critical{background:rgba(255,75,62,.16);color:#ff7b72;border-color:rgba(255,75,62,.55);animation:criticalText .7s infinite alternate}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,4vw,44px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap;line-height:1}@keyframes bubblesMove{from{background-position:0 0}to{background-position:180px 0}}@keyframes glassSweep{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}@keyframes criticalPulse{from{filter:brightness(.9)}to{filter:brightness(1.45)}}@keyframes criticalText{from{opacity:.7}to{opacity:1}}.nautilus-alarm{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(130,0,0,.38);animation:alarmScreen .55s infinite alternate}.nautilus-alarm.show{display:flex}.alarm-panel{max-width:720px;margin:20px;padding:28px;border:3px solid #ff352e;border-radius:24px;background:linear-gradient(135deg,rgba(20,0,0,.94),rgba(80,0,0,.92));color:#fff;text-align:center;box-shadow:0 0 45px rgba(255,0,0,.5)}.alarm-title{font-size:clamp(34px,6vw,70px);font-weight:1000;color:#ff4b3e;text-shadow:0 0 20px rgba(255,0,0,.55);letter-spacing:-.04em}.alarm-panel p{font-size:clamp(18px,2.5vw,26px);font-weight:900;line-height:1.25}@keyframes alarmScreen{from{box-shadow:inset 0 0 0 rgba(255,0,0,0)}to{box-shadow:inset 0 0 120px rgba(255,0,0,.95)}}.final-cta{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 0%,rgba(120,0,0,.22),transparent 34%),linear-gradient(180deg,rgba(3,3,5,.80) 0%,rgba(18,4,7,.80) 48%,rgba(0,0,0,.80) 100%);color:#fff;border:1px solid rgba(255,40,40,.24);text-align:center;box-shadow:0 28px 70px rgba(0,0,0,.38),inset 0 0 60px rgba(255,0,0,.08)}.final-cta:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,0,0,.06),transparent),radial-gradient(circle at 20% 80%,rgba(0,0,0,.38),transparent 42%);pointer-events:none}.final-cta .body{position:relative;z-index:1}.abyss-warning{padding-top:clamp(24px,4vw,42px);padding-bottom:clamp(24px,4vw,42px)}.abyss-top{margin:0 0 10px;color:#9b1111;font-size:clamp(14px,2vw,20px);font-weight:1000;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 0 16px rgba(155,17,17,.45)}.final-cta h2{background:none!important;color:#fff!important;font-size:clamp(38px,6.3vw,76px);line-height:.95;padding:0!important;margin:0 0 18px!important;text-shadow:0 0 18px rgba(255,0,0,.38),4px 4px 0 #000;text-transform:uppercase}.abyss-mid{margin:0 auto 8px;color:#b31313;font-size:clamp(15px,2.15vw,22px);line-height:1.35;font-weight:900;max-width:920px}.abyss-bottom{margin:0 auto;color:#b31313;font-size:clamp(16px,2.35vw,24px);line-height:1.35;font-weight:1000;max-width:920px;text-transform:none}
+    .ocean-wallpaper{position:fixed;top:0;left:0;width:100vw;height:100vh;height:100lvh;z-index:0;pointer-events:none;overflow:hidden;background-image:url('assets/fond-nautilus.jpg');background-position:center top;background-size:100% auto;background-repeat:no-repeat;background-color:#03111f;
+      /* BATTERIE iPhone : ce fond est fixe alors que la page defile par
+         dessus. Sans isolation, Safari le redessine a chaque pixel de
+         scroll. contain:strict le sort des calculs de la page et
+         translateZ(0) le fige dans une couche a part, dessinee une seule
+         fois puis simplement reaffichee. */
+      contain:strict;transform:translateZ(0);backface-visibility:hidden;}
+    .countdown-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(8,48,72,.80));color:#fff;border-color:rgba(142,231,255,.18);position:relative;overflow:hidden}.countdown-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(142,231,255,.06) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.05) 1px,transparent 1px);background-size:34px 34px;opacity:.35;pointer-events:none}.oxygen-dashboard{position:relative;z-index:1}.oxygen-meter{background:linear-gradient(135deg,#061524,#0b2d44);border:1px solid rgba(142,231,255,.25);border-radius:24px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 18px 35px rgba(0,0,0,.25)}.oxygen-meter-top{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:baseline;gap:clamp(6px,2vw,14px);color:#dff6ff;font-weight:900;letter-spacing:.05em;text-transform:uppercase;font-size:13px;margin-bottom:10px;min-width:0}.oxygen-meter-top span{font-size:clamp(13px,3.6vw,34px);line-height:1.1;letter-spacing:.02em;min-width:0;overflow-wrap:anywhere;flex:1 1 auto}.oxygen-meter-top strong{font-family:Consolas,"Courier New",monospace;font-size:clamp(20px,5vw,44px);line-height:1;color:#8ee7ff;text-shadow:0 0 12px rgba(142,231,255,.45);white-space:nowrap;flex:0 0 auto}.oxygen-status{margin:0 0 16px;color:#b7d9e8;font-weight:800;line-height:1.4}.oxygen-tube{position:relative;height:38px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),#020812;border:2px solid rgba(220,250,255,.45);box-shadow:inset 0 0 18px rgba(0,0,0,.85),0 0 18px rgba(142,231,255,.12)}.oxygen-liquid{position:relative;height:100%;width:100%;border-radius:999px;overflow:hidden;background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);background-size:220% 100%;transition:width .7s ease,filter .3s ease;box-shadow:0 0 22px rgba(142,231,255,.65),inset 0 0 18px rgba(255,255,255,.28)}.oxygen-liquid:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(255,255,255,.62) 0 2px,transparent 3px),radial-gradient(circle at 55% 45%,rgba(255,255,255,.48) 0 2px,transparent 3px),radial-gradient(circle at 80% 55%,rgba(255,255,255,.42) 0 1px,transparent 2px);background-size:90px 100%;animation:bubblesMove 12s linear infinite;opacity:.65}.oxygen-liquid:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.38) 45%,transparent 60%);transform:translateX(-100%);animation:glassSweep 9s ease-in-out infinite;will-change:transform}.oxygen-liquid.warning-level{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}.oxygen-liquid.critical{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c);animation:criticalPulse .6s infinite alternate}.oxygen-scale{display:flex;justify-content:space-between;color:rgba(223,246,255,.65);font-family:Consolas,"Courier New",monospace;font-size:var(--fs-tiny);margin-top:8px}.oxygen-bottom{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap}.oxygen-state{display:inline-flex;padding:7px 11px;border-radius:999px;font-weight:900;font-size:12px;letter-spacing:.06em;background:rgba(142,231,255,.12);color:#8ee7ff;border:1px solid rgba(142,231,255,.35);text-transform:uppercase}.oxygen-state.warning{background:rgba(245,176,39,.13);color:#ffd36c;border-color:rgba(245,176,39,.45)}.oxygen-state.critical{background:rgba(255,75,62,.16);color:#ff7b72;border-color:rgba(255,75,62,.55);animation:criticalText .7s infinite alternate}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,4vw,44px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap;line-height:1}@keyframes bubblesMove{from{background-position:0 0}to{background-position:180px 0}}@keyframes glassSweep{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}@keyframes criticalPulse{from{filter:brightness(.9)}to{filter:brightness(1.45)}}@keyframes criticalText{from{opacity:.7}to{opacity:1}}.nautilus-alarm{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(130,0,0,.38);animation:alarmScreen .55s infinite alternate}.nautilus-alarm.show{display:flex}.alarm-panel{max-width:720px;margin:20px;padding:28px;border:3px solid #ff352e;border-radius:24px;background:linear-gradient(135deg,rgba(20,0,0,.94),rgba(80,0,0,.92));color:#fff;text-align:center;box-shadow:0 0 45px rgba(255,0,0,.5)}.alarm-title{font-size:clamp(34px,6vw,70px);font-weight:1000;color:#ff4b3e;text-shadow:0 0 20px rgba(255,0,0,.55);letter-spacing:-.04em}.alarm-panel p{font-size:clamp(18px,2.5vw,26px);font-weight:900;line-height:1.25}@keyframes alarmScreen{from{box-shadow:inset 0 0 0 rgba(255,0,0,0)}to{box-shadow:inset 0 0 120px rgba(255,0,0,.95)}}.final-cta{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 0%,rgba(120,0,0,.22),transparent 34%),linear-gradient(180deg,rgba(3,3,5,.80) 0%,rgba(18,4,7,.80) 48%,rgba(0,0,0,.80) 100%);color:#fff;border:1px solid rgba(255,40,40,.24);text-align:center;box-shadow:0 28px 70px rgba(0,0,0,.38),inset 0 0 60px rgba(255,0,0,.08)}.final-cta:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,0,0,.06),transparent),radial-gradient(circle at 20% 80%,rgba(0,0,0,.38),transparent 42%);pointer-events:none}.final-cta .body{position:relative;z-index:1}.abyss-warning{padding-top:clamp(24px,4vw,42px);padding-bottom:clamp(24px,4vw,42px)}.abyss-top{margin:0 0 10px;color:#9b1111;font-size:clamp(14px,2vw,20px);font-weight:1000;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 0 16px rgba(155,17,17,.45)}.final-cta h2{background:none!important;color:#fff!important;font-size:clamp(38px,6.3vw,76px);line-height:.95;padding:0!important;margin:0 0 18px!important;text-shadow:0 0 18px rgba(255,0,0,.38),4px 4px 0 #000;text-transform:uppercase}.abyss-mid{margin:0 auto 8px;color:#b31313;font-size:clamp(15px,2.15vw,22px);line-height:1.35;font-weight:900;max-width:920px}.abyss-bottom{margin:0 auto;color:#b31313;font-size:clamp(16px,2.35vw,24px);line-height:1.35;font-weight:1000;max-width:920px;text-transform:none}
 
     @supports (height: 100svh){.ocean-wallpaper{height:100svh}}
     
@@ -938,7 +963,7 @@
     }
     /* Quand le radar est en mode "veille" (pas d'equipe avec membres) : pulsation douce */
     .radar-stage.radar-standby{
-      animation:radarStandbyPulse 6.4s ease-in-out infinite;
+      animation:radarStandbyPulse 10s ease-in-out infinite;
     }
     @keyframes radarStandbyPulse{
       0%,100%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18),0 0 0 0 rgba(91,255,156,0)}
@@ -3236,20 +3261,31 @@ function qrDataUri(text, opts){
 
     // 4) Anime caractere par caractere
     //    On utilise innerHTML pour echapper & < > et inserer le caret inline
-    const escCh = (c) => c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '&' ? '&amp;' : c;
+    /* BATTERIE : la version precedente reconstruisait tout le HTML a chaque
+       lettre (innerHTML + echappement des ~330 caracteres), soit environ
+       55 000 operations et 330 recalculs de mise en page pour une phrase.
+       Ici on ecrit dans un noeud de texte deja en place : le navigateur ne
+       fait que rallonger la chaine, sans reconstruire quoi que ce soit. */
+    const textNode = document.createTextNode('');
+    typingSpan.appendChild(textNode);
+    const caretEl = document.createElement('span');
+    caretEl.className = 'typewriter-caret';
+    caretEl.textContent = '▌';
+    typingSpan.appendChild(caretEl);
+
     let i = 0;
     const speed = 10; // ms par caractere (rapide)
     const tick = () => {
       if(i >= fullText.length){
-        // Termine : on retire le caret (texte final complet, plus de curseur)
-        typingSpan.innerHTML = fullText.split('').map(escCh).join('');
+        textNode.nodeValue = fullText;
+        caretEl.remove();          // termine : plus de curseur
         return;
       }
-      i++;
-      // Texte deja affiche (avec escape) + caret
-      const shown = fullText.slice(0, i).split('').map(escCh).join('');
-      typingSpan.innerHTML = shown + '<span class="typewriter-caret">▌</span>';
-      setTimeout(tick, speed);
+      // On ecrit plusieurs caracteres par image plutot qu'un seul toutes
+      // les 10 ms : meme vitesse a l'oeil, 3 fois moins de reveils.
+      i = Math.min(fullText.length, i + 3);
+      textNode.nodeValue = fullText.slice(0, i);
+      setTimeout(tick, speed * 3);
     };
     setTimeout(tick, 60);
   }
@@ -3505,6 +3541,23 @@ function qrDataUri(text, opts){
 
   startBackgroundTimers();
 
+  /* --- Gel des animations hors ecran (economie de batterie iPhone) -------
+     Safari iOS continue de calculer les animations CSS des elements qui ne
+     sont plus a l'ecran. Les pulsations de box-shadow (boutons, hublots,
+     jauge d'oxygene, bulles) sont recalculees et redessinees 60 fois par
+     seconde par le processeur : c'est la source principale de chauffe.
+     On surveille chaque bloc et on lui pose .offscreen des qu'il sort du
+     champ, ce qui met ses animations en pause. */
+  (function freezeOffscreenAnimations(){
+    if(typeof IntersectionObserver !== 'function') return;
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        en.target.classList.toggle('offscreen', !en.isIntersecting);
+      });
+    }, { rootMargin: '80px 0px' });   // petite marge : pas de clignotement au bord
+    document.querySelectorAll('.card, .final-cta, .mission-steps, header, footer')
+      .forEach(el => io.observe(el));
+  })();
 
   // Ambiance sonore : démarrage après interaction utilisateur.
   let audioCtx = null;
@@ -3527,30 +3580,60 @@ function qrDataUri(text, opts){
      un simple scroll est rejete.
 
      Solution : la lecture SILENCIEUSE anticipee.
-     Des le chargement, on lance l'ambiance en sourdine (muted). Une lecture
-     muette est autorisee partout sans aucun geste. L'element est donc deja
-     "en train de jouer". Au premier scroll il ne reste plus qu'a couper la
-     sourdine et monter le volume : ce n'est plus un demarrage de lecture,
-     donc plus aucun blocage. Le son part immediatement.
-     Si un navigateur refuse quand meme la lecture muette (cas rare), on
-     retombe sur l'ancien comportement : nouvelle tentative a chaque
-     evenement, y compris les vrais clics. */
+     On lance l'ambiance en sourdine (muted). Une lecture muette est
+     autorisee partout sans aucun geste. L'element est alors deja "en train
+     de jouer" : au premier scroll il ne reste plus qu'a couper la sourdine
+     et monter le volume, ce qui n'est plus un demarrage de lecture, donc
+     plus aucun blocage. Le son part immediatement.
+
+     ATTENTION BATTERIE (iPhone) : cette lecture muette ne doit PAS tourner
+     en permanence, sinon le decodeur audio travaille sans arret et le
+     telephone chauffe. Elle n'est donc amorcee qu'au premier signe de
+     presence, et coupee au bout de 45 s si personne n'active le son.
+     Si un navigateur refuse la lecture muette (cas rare), on retombe sur
+     l'ancien comportement : nouvelle tentative a chaque evenement. */
 
   const OCEAN_VOLUME = 0.42;
   let _primedSilently = false;   // la lecture muette anticipee tourne
   let _audioWakeDone = false;    // le son est reellement audible
+  let _primeIdleTimer = null;    // coupe la lecture muette si inutilisee
 
   function _ambiance(){ return document.getElementById('ambianceAudio'); }
 
-  /* Lance la lecture en sourdine, sans rien demander a l'utilisateur. */
+  /* Lance la lecture en sourdine, sans rien demander a l'utilisateur.
+     ATTENTION BATTERIE : un <audio> qui joue, meme muet, empeche le
+     telephone de se mettre en veille legere et fait tourner le decodeur
+     audio en continu (l'iPhone chauffe et se vide). On ne l'active donc
+     QUE juste avant d'en avoir besoin, et on l'arrete si l'utilisateur
+     ne donne pas suite. */
   function primeOceanAudioSilently(){
     const a = _ambiance();
     if(!a || _primedSilently || _audioWakeDone) return;
+    if(document.visibilityState !== 'visible') return;
     a.muted = true;
     a.volume = 0;
     const p = a.play();
     if(p && typeof p.then === 'function'){
-      p.then(() => { _primedSilently = true; }).catch(() => { _primedSilently = false; });
+      p.then(() => {
+        _primedSilently = true;
+        // Filet de securite : si personne n'active le son dans les 45 s,
+        // on coupe la lecture muette pour rendre la batterie au telephone.
+        clearTimeout(_primeIdleTimer);
+        _primeIdleTimer = setTimeout(unprimeOceanAudio, 45000);
+      }).catch(() => { _primedSilently = false; });
+    }
+  }
+
+  /* Arrete la lecture muette (economie de batterie). */
+  function unprimeOceanAudio(){
+    const a = _ambiance();
+    if(!a || _audioWakeDone) return;
+    if(_primedSilently && a.muted){
+      a.pause();
+      _primedSilently = false;
+      // On se remet en attente : le prochain geste reamorcera la lecture
+      // muette, pour que le scroll suivant allume quand meme le son.
+      rearmPrime();
     }
   }
 
@@ -3649,18 +3732,46 @@ function qrDataUri(text, opts){
     document.addEventListener(evt, activateAudioFromNavigation, { passive:true, capture:true });
   });
 
-  // Lecture muette anticipee des maintenant, et nouvelle tentative des que
-  // l'onglet redevient visible (un onglet en arriere-plan peut la refuser).
-  primeOceanAudioSilently();
-  document.addEventListener('visibilitychange', () => {
-    if(document.visibilityState === 'visible') primeOceanAudioSilently();
+  /* Amorcage de la lecture muette : PAS au chargement (cela ferait tourner
+     le decodeur audio en permanence, meme si l'utilisateur ne touche a
+     rien). On l'amorce au premier signe que quelqu'un est la — le survol
+     de la souris ou le tout debut d'un geste tactile — puis le scroll n'a
+     plus qu'a demasquer le son. */
+  let _primeArmed = false;
+  const PRIME_HINT_EVENTS = ['mousemove','pointerover','touchstart','pointerdown','keydown','scroll','wheel'];
+  function armPrime(){
+    if(_primeArmed || _audioWakeDone) return;
+    _primeArmed = true;
+    PRIME_HINT_EVENTS.forEach(evt => document.removeEventListener(evt, armPrime, { capture:true }));
+    primeOceanAudioSilently();
+  }
+  function rearmPrime(){
+    if(_audioWakeDone) return;
+    _primeArmed = false;
+    PRIME_HINT_EVENTS.forEach(evt => {
+      document.addEventListener(evt, armPrime, { passive:true, capture:true });
+    });
+  }
+  PRIME_HINT_EVENTS.forEach(evt => {
+    document.addEventListener(evt, armPrime, { passive:true, capture:true });
   });
 
-  // Retour d'onglet : si l'ambiance etait active, on la relance.
   document.addEventListener('visibilitychange', () => {
-    if(document.visibilityState !== 'visible' || !_audioWakeDone) return;
-    const a = document.getElementById('ambianceAudio');
-    if(a && a.paused && a.dataset.userPaused !== '1') startOceanAudio();
+    const a = _ambiance();
+    if(document.visibilityState !== 'visible'){
+      // Onglet quitte / ecran eteint : on relache le decodeur audio si le
+      // son n'etait pas reellement demande. Sinon l'iPhone continue de
+      // travailler en poche.
+      clearTimeout(_primeIdleTimer);
+      unprimeOceanAudio();
+      return;
+    }
+    // Retour d'onglet : si l'ambiance etait active, on la relance.
+    if(_audioWakeDone){
+      if(a && a.paused && a.dataset.userPaused !== '1') startOceanAudio();
+    }else if(_primeArmed){
+      primeOceanAudioSilently();
+    }
   });
 
   /* Bouton de mission affiche DANS le bloc embarquement, une fois le
