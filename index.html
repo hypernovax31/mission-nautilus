@@ -1112,6 +1112,65 @@
     }
     #radarStatus.radar-msg-out .radar-msg{opacity:0}
 
+    /* ===== Bandeau de releve du sonar =====
+       Presente les chiffres comme une console de bord : petites etiquettes
+       en capitales, valeurs en gros caracteres a chasse fixe, le tout dans
+       le vert phosphore de l'ecran radar. */
+    .sonar-readout{
+      display:flex;align-items:stretch;justify-content:center;
+      flex-wrap:wrap;
+      gap:clamp(10px,2.4vw,22px);
+      width:min(96%,560px);
+      margin:14px auto 0;
+      padding:12px clamp(10px,2.6vw,18px);
+      border:1px solid rgba(91,255,156,.30);
+      border-radius:14px;
+      background:linear-gradient(180deg,rgba(2,18,13,.72),rgba(2,18,13,.42));
+      box-shadow:inset 0 0 22px rgba(91,255,156,.10);
+      font-family:Consolas,"Courier New",monospace;
+    }
+    .readout-cell{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:2px;min-width:0;flex:0 1 auto;text-align:center;
+    }
+    .readout-wide{flex:1 1 190px}
+    .readout-sep{
+      width:1px;align-self:stretch;
+      background:linear-gradient(180deg,transparent,rgba(91,255,156,.34),transparent);
+    }
+    .readout-label{
+      font-size:var(--fs-tiny);letter-spacing:.10em;text-transform:uppercase;
+      color:rgba(186,255,210,.72);font-weight:900;line-height:1.2;
+    }
+    .readout-value{
+      font-size:clamp(24px,5.4vw,38px);line-height:1;font-weight:1000;color:#fff;
+      text-shadow:0 0 14px rgba(91,255,156,.75);
+      font-variant-numeric:tabular-nums;
+    }
+    .readout-unit{
+      font-size:var(--fs-tiny);letter-spacing:.06em;text-transform:uppercase;
+      color:rgba(186,255,210,.66);font-weight:900;line-height:1.2;
+    }
+    .readout-line{
+      font-size:var(--fs-small);line-height:1.35;color:#baffd2;font-weight:900;
+      letter-spacing:.02em;overflow-wrap:anywhere;
+    }
+    /* Le chiffre pulse brievement quand un equipage vient d'etre detecte. */
+    .readout-value.readout-bump{animation:readoutBump .7s ease}
+    @keyframes readoutBump{
+      0%{transform:scale(1);text-shadow:0 0 14px rgba(91,255,156,.75)}
+      35%{transform:scale(1.28);text-shadow:0 0 30px rgba(91,255,156,1)}
+      100%{transform:scale(1);text-shadow:0 0 14px rgba(91,255,156,.75)}
+    }
+    @media(max-width:420px){
+      .sonar-readout{gap:8px;padding:10px 8px}
+      .readout-sep{display:none}
+      .readout-wide{flex:1 1 100%}
+    }
+    @media (prefers-reduced-motion: reduce){
+      .readout-value.readout-bump{animation:none}
+    }
+
     @keyframes centerPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}50%{transform:translate(-50%,-50%) scale(1.4);opacity:.7}}
 
     /* Reveal des equipages (style hollywood: slide+fade+glow) */
@@ -1188,13 +1247,43 @@
       .radar-blip[data-team]::before{width:30px;height:30px;margin:-15px 0 0 -15px}
     }
     .radar-grid,.radar-rings,.radar-sweep-big{pointer-events:none}
+    /* Etat allume simple (sans clignotement, ex. animations reduites).
+       PAS de !important ici : il l'emporterait sur l'animation de
+       clignotement definie plus bas, qui ne se verrait alors jamais. */
     .radar-blip.blip-active{
       box-shadow:
         0 0 0 5px rgba(var(--blip-glow,91,255,156),1),
         0 0 26px 10px rgba(var(--blip-glow,91,255,156),1),
-        0 0 48px 20px rgba(var(--blip-glow,91,255,156),.65) !important;
+        0 0 48px 20px rgba(var(--blip-glow,91,255,156),.65);
     }
     .radar-blip:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+    /* Clignotement du point quand on survole ou clique sa carte (et
+       inversement) : le halo bat, ce qui attire l'oeil bien plus qu'un
+       simple changement de taille. On anime uniquement box-shadow, la
+       taille ne bouge pas : le point reste exactement sur sa position. */
+    .radar-blip.blip-flash{
+      animation:blipFlash .55s ease-in-out infinite alternate !important;
+    }
+    @keyframes blipFlash{
+      from{
+        box-shadow:
+          0 0 0 4px rgba(var(--blip-glow,91,255,156),.85),
+          0 0 16px 6px rgba(var(--blip-glow,91,255,156),.55);
+      }
+      to{
+        box-shadow:
+          0 0 0 8px rgba(var(--blip-glow,91,255,156),1),
+          0 0 38px 16px rgba(var(--blip-glow,91,255,156),1),
+          0 0 60px 26px rgba(var(--blip-glow,91,255,156),.55);
+      }
+    }
+    /* La carte indique qu'elle reagit au clic. */
+    .team.team-reveal{cursor:pointer}
+    @media (prefers-reduced-motion: reduce){
+      /* Pas de clignotement : le point reste allume en continu. */
+      .radar-blip.blip-flash{animation:none !important}
+    }
 
     /* Accessibilite / batterie : pas de pulsation de halo si l'utilisateur
        demande des animations reduites. */
@@ -1370,6 +1459,26 @@
             <div class="radar-center"></div>
           </div>
           <div class="sonar-text" id="radarStatus"><span class="radar-msg" id="radarMsg">En attente de nouveaux signaux...</span></div>
+          <!-- Bandeau de releve, facon console de sonar : ce que l'appareil
+               a detecte jusqu'a present. Rempli par renderSonarReadout(). -->
+          <div class="sonar-readout" id="sonarReadout" aria-live="polite">
+            <div class="readout-cell">
+              <span class="readout-label">Contacts confirmés</span>
+              <span class="readout-value" id="readoutTeams">0</span>
+              <span class="readout-unit" id="readoutTeamsUnit">équipage</span>
+            </div>
+            <div class="readout-sep" aria-hidden="true"></div>
+            <div class="readout-cell">
+              <span class="readout-label">Effectif détecté</span>
+              <span class="readout-value" id="readoutCrew">0</span>
+              <span class="readout-unit" id="readoutCrewUnit">matelot</span>
+            </div>
+            <div class="readout-sep" aria-hidden="true"></div>
+            <div class="readout-cell readout-wide">
+              <span class="readout-label">Relevé du sonar</span>
+              <span class="readout-line" id="readoutVerdict">Aucun écho. Les fonds sont déserts.</span>
+            </div>
+          </div>
         </div>
       </div>
       <div id="teamsBox" class="teamlist" style="padding:0 clamp(18px,3vw,28px) clamp(18px,3vw,28px)"></div>
@@ -1882,6 +1991,50 @@
      supprimee (c'etait aussi un minuteur permanent en moins). */
   const RADAR_IDLE_TEXT = 'En attente de nouveaux signaux...';
 
+  /* ===== Releve du sonar : combien d'equipages ont ete detectes =====
+     Le bandeau sous le radar se lit comme une console de bord. Le verdict
+     change avec l'avancement du repérage, pour que l'ecran raconte quelque
+     chose au lieu d'afficher un chiffre nu.
+     IMPORTANT : on ne compte que les equipages DEJA ANNONCES sur le sonar.
+     Afficher tout de suite le total connu de la base revelerait le
+     resultat avant que l'animation ne les decouvre un par un. */
+  function sonarVerdict(nbTeams, nbCrew){
+    if(nbTeams === 0) return 'Aucun écho. Les fonds sont déserts.';
+    if(nbTeams === 1) return 'Premier écho capté. Un bâtiment navigue dans la zone.';
+    if(nbTeams === 2) return 'Deux coques identifiées. Le trafic s’intensifie.';
+    if(nbTeams === 3) return 'Trois signatures distinctes. La zone devient dense.';
+    return `Zone saturée : ${nbTeams} coques suivies simultanément, ${nbCrew} matelots en plongée.`;
+  }
+
+  function renderSonarReadout(){
+    const elT = $('readoutTeams'), elC = $('readoutCrew'), elV = $('readoutVerdict');
+    if(!elT || !elC || !elV) return;
+
+    // Equipages effectivement reveles, et leurs matelots.
+    const shown = (_lastTeams || []).filter(t => _revealedCodes.has(t.teamCode));
+    const nbTeams = shown.length;
+    const nbCrew  = shown.reduce((n, t) => n + ((t.members || []).length), 0);
+
+    const prev = Number(elT.dataset.n || '0');
+    elT.textContent = nbTeams;
+    elC.textContent = nbCrew;
+    elT.dataset.n = String(nbTeams);
+
+    // Accord singulier / pluriel
+    const uT = $('readoutTeamsUnit'), uC = $('readoutCrewUnit');
+    if(uT) uT.textContent = nbTeams > 1 ? 'équipages' : 'équipage';
+    if(uC) uC.textContent = nbCrew  > 1 ? 'matelots'  : 'matelot';
+
+    elV.textContent = sonarVerdict(nbTeams, nbCrew);
+
+    // Un nouvel equipage vient d'etre detecte : le chiffre pulse.
+    if(nbTeams > prev){
+      elT.classList.remove('readout-bump');
+      void elT.offsetWidth;              // redemarre l'animation
+      elT.classList.add('readout-bump');
+    }
+  }
+
   /**
    * Genere le HTML d'une carte equipe.
    */
@@ -2010,6 +2163,7 @@
       }
     });
     _lastTeams = active;
+    renderSonarReadout();        // effectifs a jour, equipes retirees, etc.
     processRevealQueue();
   }
 
@@ -2052,15 +2206,59 @@
     if(card) card.classList.toggle('team-spotlight', on);
     const idx = _blipByTeam[teamCode];
     const blip = idx && document.getElementById('radarBlip' + idx);
+    // Le point clignote, que la mise en evidence vienne du sonar ou de la
+    // carte : le comportement est le meme dans les deux sens.
     if(blip) blip.classList.toggle('blip-active', on);
+    if(blip) blip.classList.toggle('blip-flash', on);
   }
 
   function clearBlipHighlights(){
     document.querySelectorAll('.team-spotlight')
       .forEach(el => el.classList.remove('team-spotlight'));
-    document.querySelectorAll('.blip-active')
-      .forEach(el => el.classList.remove('blip-active'));
+    document.querySelectorAll('.blip-active, .blip-flash')
+      .forEach(el => el.classList.remove('blip-active', 'blip-flash'));
   }
+
+  /* Meme mise en evidence, declenchee depuis la CARTE cette fois.
+     Le point correspondant se met a clignoter sur le sonar : c'est le seul
+     moyen de le retrouver parmi les autres, surtout quand deux equipages
+     sont proches. */
+  const highlightFromCard = setBlipHighlight;
+  let _spotlightTimer = null;   // minuteur unique de la mise en evidence
+
+  (function wireCardToBlip(){
+    const box = document.getElementById('teamsBox');
+    if(!box) return;
+    const teamOf = e => {
+      const c = e.target.closest && e.target.closest('.team-reveal');
+      return (c && c.dataset.team) ? c.dataset.team : null;
+    };
+
+    // Survol souris seulement (au toucher, 'pointerover' resterait allume).
+    box.addEventListener('pointerover', e => {
+      if(e.pointerType !== 'mouse') return;
+      const code = teamOf(e);
+      if(code) highlightFromCard(code, true);
+    });
+    box.addEventListener('pointerout', e => {
+      if(e.pointerType !== 'mouse') return;
+      const code = teamOf(e);
+      if(code) highlightFromCard(code, false);
+    });
+
+    /* Clic sur la carte : on remonte au sonar pour voir le point clignoter,
+       sinon la mise en evidence se produirait hors de l'ecran. */
+    box.addEventListener('click', e => {
+      const code = teamOf(e);
+      if(!code) return;
+      clearBlipHighlights();
+      highlightFromCard(code, true);
+      document.getElementById('radarStage')
+        ?.scrollIntoView({ behavior:'smooth', block:'center' });
+      clearTimeout(_spotlightTimer);
+      _spotlightTimer = setTimeout(() => highlightFromCard(code, false), 2000);
+    });
+  })();
 
   (function wireBlipToCard(){
     const screen = document.querySelector('.radar-screen-big');
@@ -2092,8 +2290,8 @@
       const card = document.querySelector(`#teamsBox [data-team="${code}"]`);
       if(card) card.scrollIntoView({ behavior:'smooth', block:'center' });
       // Le halo s'eteint tout seul apres 1 s : c'est un repere, pas un etat.
-      clearTimeout(setBlipHighlight._t);
-      setBlipHighlight._t = setTimeout(() => setBlipHighlight(code, false), 1000);
+      clearTimeout(_spotlightTimer);
+      _spotlightTimer = setTimeout(() => setBlipHighlight(code, false), 1000);
     });
 
     // Accessibilite : meme comportement au clavier.
@@ -2277,6 +2475,7 @@
         requestAnimationFrame(() => el.classList.add('in'));
       }
       _revealedCodes.add(code);
+      renderSonarReadout();      // le compteur suit la decouverte
 
       /* On laisse le son finir avant d'annoncer l'equipage suivant : le
          rythme sonore de la sequence reste inchange. */
