@@ -1186,7 +1186,7 @@
   <section class="card intro-card">
     <h2>ORDRE DE MISSION</h2>
     <div class="body">
-      <p class="intro-text typewriter" id="missionOrderText" data-text="Des transmissions ont refait surface dans les abysses du magasin : le Nautilus a laissé sa trace. Rejoignez un équipage, activez votre sonar et explorez les rayons pour décrypter les mini-jeux et ouvrir les QR verrouillés. Chaque palier atteint débloque le suivant : faites remonter votre sous-marin avant que l&#39;oxygène ne manque."><span id="missionOrderTyping"></span><span id="missionOrderCaret" class="typewriter-caret">▌</span></p>
+      <p class="intro-text typewriter" id="missionOrderText" data-text="1870 : le Nautilus disparaît corps et biens. Cent cinquante ans plus tard, son signal résonne de nouveau — sous les rayons de la Fnac Labège. Huit paliers vous séparent de la surface. À chacun, une énigme à briser, puis un QR Code dissimulé quelque part dans le magasin. Un équipage plonge ensemble et remonte ensemble. L’oxygène est compté : sept jours, pas un de plus. Le premier équipage à ramener le Nautilus à la surface entrera dans la légende du magasin. Le sonar est allumé, matelot. À vous de jouer."><span id="missionOrderTyping"></span><span id="missionOrderCaret" class="typewriter-caret">▌</span></p>
       <div class="mission-steps" id="ruleCards">
         <button type="button" class="mission-step active" data-rule="embark"><span class="num">1</span><b>Embarquez</b></button>
         <button type="button" class="mission-step" data-rule="solve"><span class="num">2</span><b>Décryptez</b></button>
@@ -1618,11 +1618,33 @@
     const TOL = 6; // petite tolerance en pixels
     let ticking = false;
 
+    /* Le declencheur doit correspondre a ce que VOIT le joueur : "le sonar
+       est en haut de l'ecran". L'ancienne version exigeait que le haut du
+       bloc touche le pixel 0 ; si on s'arretait de scroller juste avant,
+       l'animation ne partait pas du tout et semblait tres lente a venir.
+       Trois situations declenchent maintenant l'annonce : */
     function reached(){
       const r = target.getBoundingClientRect();
       const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-      if(r.top <= TOL) return true;
-      // Bas de page atteint : le bloc ne peut plus monter davantage.
+      if(!vh) return false;
+
+      // 1) Le haut du bloc est arrive en haut de l'ecran (avec une marge
+      //    large : le bloc peut s'arreter un peu plus bas, l'intention est
+      //    la meme).
+      if(r.top <= Math.max(TOL, vh * 0.25)) return true;
+
+      // 2) Le sonar lui-meme est bien visible : c'est le vrai repere pour
+      //    le joueur, qui regarde le radar et non les bords du bloc.
+      const radar = document.getElementById('radarStage');
+      if(radar){
+        const rr = radar.getBoundingClientRect();
+        if(rr.height){
+          const visible = Math.min(rr.bottom, vh) - Math.max(rr.top, 0);
+          if(visible / rr.height >= 0.6) return true;
+        }
+      }
+
+      // 3) Bas de page atteint : le bloc ne peut plus monter davantage.
       const docH = document.documentElement.scrollHeight;
       const atBottom = (window.scrollY + vh) >= (docH - 2);
       return atBottom && r.bottom <= vh + TOL;
@@ -1651,6 +1673,18 @@
     window.addEventListener('scroll', onMove, { passive:true });
     window.addEventListener('resize', onMove, { passive:true });
     window.addEventListener('orientationchange', onMove, { passive:true });
+
+    /* Filet de securite : le bloc peut arriver en haut de l'ecran sans
+       qu'aucun evenement ne se produise (contenu charge apres coup qui
+       decale la page, image du fond qui finit de se charger, retour
+       arriere du navigateur...). On verifie donc aussi 3 fois par seconde
+       tant que le declencheur n'est pas arme. Le controle est une simple
+       lecture de position, et le minuteur s'arrete des qu'il a servi. */
+    const guard = setInterval(() => {
+      if(_radarArmed){ clearInterval(guard); return; }
+      check();
+    }, 300);
+
     // Etat de depart (page rechargee deja scrollee, ancre, etc.)
     requestAnimationFrame(check);
   })();
@@ -1693,10 +1727,25 @@
     return (blipAngleDeg(idx) + 360) % 360;
   }
 
+  /* Le balayage tourne-t-il vraiment ?
+     Il est fige si l'utilisateur a demande des animations reduites, ou si
+     le radar a ete mis en pause parce qu'il etait hors ecran. Dans ce cas
+     il ne faut PAS attendre son passage : l'angle ne changera jamais et on
+     patienterait pour rien jusqu'au delai de secours. */
+  function sweepIsRunning(){
+    const el = _sweepEl || (_sweepEl = document.querySelector('.radar-sweep-big'));
+    if(!el) return false;
+    const st = getComputedStyle(el);
+    if(st.animationName === 'none' || st.animationPlayState === 'paused') return false;
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    return true;
+  }
+
   /* Resout quand le faisceau passe sur l'angle vise (ou apres timeout). */
   function waitForSweepOver(targetDeg, timeoutMs){
     return new Promise(resolve => {
       if(targetDeg == null){ resolve(); return; }
+      if(!sweepIsRunning()){ resolve(); return; }   // balayage fige : on n'attend pas
       const deadline = Date.now() + (timeoutMs || 4000);
       let prev = sweepAngle();
       if(prev == null){ resolve(); return; }
@@ -1956,6 +2005,7 @@
     await waitForRadarVisible();
 
     const box = $('teamsBox');
+    let isFirstReveal = true;   // la 1ere annonce doit demarrer sans temps mort
 
     while(_revealQueue.length){
       const code = _revealQueue.shift();
@@ -1983,8 +2033,18 @@
         blipEl.style.transition = '';     // le glissement reprend ensuite
       }
 
-      // Condition 2 : on attend que le faisceau balaie la position du point.
-      await waitForSweepOver(blipAngle(blipIdx), 4000);
+      /* On attend que le faisceau balaie la position du point : c'est ce qui
+         donne l'impression que le sonar "detecte" l'equipage.
+         MAIS pour la toute premiere annonce, cette attente se voyait comme
+         un temps mort (jusqu'a 2,8 s les yeux sur un radar qui tourne dans
+         le vide, avant meme le premier son). On raccourcit donc fortement
+         le delai maximal du premier contact : si le faisceau n'est pas au
+         bon endroit rapidement, on enchaine sans lui. Les annonces
+         suivantes gardent le rythme complet, l'attente y est masquee par
+         l'animation de la carte precedente. */
+      const sweepTimeout = isFirstReveal ? 700 : 3200;
+      await waitForSweepOver(blipAngle(blipIdx), sweepTimeout);
+      isFirstReveal = false;
 
       // b) Le point blanc "pop" au passage du faisceau, en meme temps que le son
       if(blipEl) blipEl.classList.add('revealed', 'blip-pop');
@@ -3156,38 +3216,42 @@ function qrDataUri(text, opts){
   const RULES = {
     embark: {
       title: '1 — Embarquez',
-      text: 'Inscrivez votre nom et votre service. Vous rejoindrez automatiquement un équipage : Nemo, Nautilus, Aronnax ou Ned Land.',
+      text: 'Donnez votre nom et votre service : le Nautilus vous affecte aussitôt à l’un de ses quatre équipages — Nemo, Nautilus, Aronnax ou Ned Land. Vous recevez alors votre Code Matelot. Ce code est votre ADN à bord : il ne vous sera montré qu’une seule fois.',
       bullets: [
-        'Notez impérativement votre code matelot, il sera votre ADN tout le long du jeu.',
-        'Ce code permet de reprendre la mission sur n’importe quel appareil.',
-        'Tous les membres au sein d’une équipe avancent sur la même progression.'
+        'Notez-le ou scannez son QR : sans lui, impossible de remonter à bord.',
+        'Il vous permet de reprendre la mission depuis n’importe quel appareil.',
+        'Tout l’équipage partage la même progression : ce que vous débloquez, vous le débloquez pour tous.',
+        'Chaque matelot est unique — un même nom ne peut pas embarquer deux fois.'
       ]
     },
     solve: {
       title: '2 — Décryptez',
-      text: 'Dans chaque palier, un mini-jeu chronométré apparaît. Dans le cas d’un succès, un lieu dans le magasin vous sera révélé afin de trouver un QR Code.',
+      text: 'À chaque palier, le Nautilus vous soumet une énigme chronométrée : signal en morse, code à reconstituer, mécanisme à comprendre. Résolvez-la et la coque s’entrouvre : le sous-marin vous révèle où se cache le prochain QR Code dans le magasin.',
       bullets: [
-        'Lisez bien la consigne avant de vous lancer.',
-        'Le temps et les erreurs sont limités et vous pénalisent.'
+        'Lisez la consigne jusqu’au bout avant de vous lancer : le chrono ne démarre qu’après.',
+        'Le temps est limité et chaque erreur vous coûte cher.',
+        'Vous pouvez jouer à plusieurs sur le même palier : parlez-vous, comparez, croisez vos idées.'
       ]
     },
     scan: {
       title: '3 — Scannez',
-      text: 'Après le mini-jeu, suivez l’indice de cachette dans le magasin. Le QR suivant peut être dans un rayon, une PLV, un livre, un meuble ou derrière un objet.',
+      text: 'L’indice en poche, quittez l’écran et fouillez le magasin. Le QR Code peut être glissé dans un rayon, agrafé à une PLV, coincé entre deux livres, fixé sous un meuble ou caché derrière un objet. Il ne viendra pas à vous.',
       bullets: [
-        'Cherchez et trouvez le QR Code dissimulé.',
-        'Scannez-le et entrez dans un nouveau palier.'
+        'Cherchez à hauteur d’yeux… mais aussi plus haut et plus bas.',
+        'Scannez le QR trouvé : le palier suivant s’ouvre immédiatement.',
+        'Respectez le magasin, les clients et le travail des équipes : on cherche, on ne dérange pas.'
       ]
     },
     survive: {
-      title: '4 — Mais attention...',
-      text: 'Si l’équipage échoue, la mission se bloque temporairement. Plus les échecs s’accumulent, plus votre vaisseau prend du temps à remonter.',
+      title: '4 — Survivez',
+      text: 'Chaque échec fait plonger le Nautilus un peu plus profond, et la remontée devient plus longue. L’équipage est alors bloqué : impossible de reprendre avant que la pression ne retombe. Et pendant ce temps, les autres équipages continuent d’avancer.',
       bullets: [
-        '1er échec : 2h de pénalité',
-        '2e échec : 4h',
-        '3e échec : 8h',
-        '4e échec : 16h',
-        'À partir du 5e échec : 24h par échec'
+        '1er échec : 2 h de remontée',
+        '2e échec : 4 h',
+        '3e échec : 8 h',
+        '4e échec : 16 h',
+        'À partir du 5e échec : 24 h par échec',
+        'Sept jours d’oxygène pour tout le monde : à zéro, la mission se referme.'
       ]
     }
   };
