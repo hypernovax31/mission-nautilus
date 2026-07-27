@@ -104,8 +104,6 @@
     }
     .top-bar{position:fixed;top:14px;right:14px;z-index:10000;display:flex;align-items:stretch;gap:8px;flex-wrap:nowrap;justify-content:flex-end;width:calc(100vw - 28px);max-width:calc(2*var(--tb-btn-w) + 8px);pointer-events:none;--tb-btn-w:clamp(104px,30vw,170px)}
     .top-bar>*{margin:0;pointer-events:auto}
-    .top-bar .tb-short{display:none}
-    .top-bar .tb-long{display:inline}
     .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{box-sizing:border-box;flex:1 1 0;min-width:0;max-width:var(--tb-btn-w);padding:9px 10px;border-width:2px;border-style:solid;border-radius:999px;font-size:clamp(10px,2.5vw,12px);font-weight:1000;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;min-height:auto;position:static}
     .sonar-toggle{background:rgba(0,0,0,.42);color:rgba(255,255,255,.82);border-color:rgba(245,176,39,.45);box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
     .install-pwa-btn{background:linear-gradient(135deg,#f5b027,#d89020);color:#111;border-color:#fff;box-shadow:0 6px 20px rgba(245,176,39,.55),0 0 0 0 rgba(245,176,39,.4);backdrop-filter:blur(6px);animation:pwaBtnPulse 2.2s ease-in-out infinite}
@@ -127,23 +125,18 @@
     @keyframes bannerSlideUp{from{transform:translateY(140%);opacity:0}to{transform:translateY(0);opacity:1}}
     .install-pwa-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
     .install-pwa-btn.installed{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3);animation:none}
-    @keyframes pwaBtnPulse{0%,100%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 8px rgba(245,176,39,.35)}}
+    @keyframes pwaBtnPulse{0%,100%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 8px 18px rgba(0,0,0,.18),0 0 0 3px rgba(245,176,39,.42)}}
     /* Animation identique (plus grande) pour le hero-cta 'Engagez-vous' */
     @keyframes heroCtaPulse{0%,100%{box-shadow:0 14px 30px rgba(245,176,39,.28),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 14px 30px rgba(245,176,39,.28),0 0 0 18px rgba(245,176,39,.42)}}
     .hero-cta.pulse-engage{animation:heroCtaPulse 2.4s ease-in-out infinite}
-    @media(max-width:560px){
-      /* Libelles courts : evite la troncature, les 2 boutons restent egaux */
-      .top-bar .tb-long{display:none}
-      .top-bar .tb-short{display:inline}
-    }
     @media(max-width:520px){
       /* Les 2 boutons restent strictement identiques et sur une seule ligne */
-      .top-bar{top:8px;right:8px;gap:6px;width:calc(100vw - 16px);max-width:calc(2*var(--tb-btn-w) + 6px);--tb-btn-w:clamp(88px,25vw,116px)}
-      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{padding:7px 8px;letter-spacing:0;border-width:1.5px;font-size:clamp(9px,2.3vw,11px)}
+      .top-bar{top:7px;right:7px;gap:6px;width:calc(100vw - 14px);max-width:calc(2*var(--tb-btn-w) + 6px);--tb-btn-w:clamp(118px,33.5vw,152px)}
+      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{padding:7px 5px;letter-spacing:0;border-width:1.5px;font-size:clamp(8px,2.05vw,9.6px);gap:3px}
     }
     @media(max-width:360px){
-      .top-bar{--tb-btn-w:clamp(76px,24vw,96px)}
-      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{font-size:9px;padding:6px 5px}
+      .top-bar{top:6px;right:6px;gap:5px;width:calc(100vw - 12px);--tb-btn-w:clamp(104px,32.5vw,132px)}
+      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{font-size:clamp(7.4px,2.35vw,8.4px);padding:6px 4px;gap:2px}
     }
     /* --- Encart d'embarquement : code matelot + QR alignes --- */
     .matelot-card{padding:clamp(16px,3.5vw,22px)}
@@ -972,8 +965,8 @@
   <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
 </audio>
 <div class="top-bar">
-  <button id="installPwaBtn" class="install-pwa-btn" type="button" title="Installer l'app sur mon écran d'accueil">📲&nbsp;<span class="tb-long">Installer&nbsp;l'app</span><span class="tb-short">Installer</span></button>
-  <button id="sonarToggleBtn" class="sonar-toggle" type="button"><span class="tb-long">Activer le sonar</span><span class="tb-short">Sonar</span></button>
+  <button id="installPwaBtn" class="install-pwa-btn" type="button" title="Installer l'app sur mon écran d'accueil">📲&nbsp;<span class="tb-label">Installer&nbsp;l'app</span></button>
+  <button id="sonarToggleBtn" class="sonar-toggle" type="button"><span class="tb-label">Activer le sonar</span></button>
 </div>
 <div id="iosInstallBanner" class="ios-install-banner" style="display:none" role="dialog" aria-live="polite">
   <div class="b-ico">📲</div>
@@ -1572,7 +1565,7 @@
       if(stage && !stage.classList.contains('radar-collapsed')){
         stage.classList.add('radar-collapsed');
         stopRadarStatusLoop();
-        setRadarStatus('Recherche de nouveaux signaux…');
+        setRadarStatus('En attente de nouveaux signaux...');
       }
     }else{
       // Aucune equipe avec membres : radar en mode "veille" (pulsation continue)
@@ -1721,7 +1714,7 @@
     }
 
     if(stage) stage.classList.remove('radar-scanning');
-    setRadarStatus('Recherche de nouveaux signaux…');
+    setRadarStatus('En attente de nouveaux signaux...');
     _revealRunning = false;
   }
 
@@ -2936,16 +2929,11 @@ function qrDataUri(text, opts){
   function setSonarButtonState(isActive){
     const btn = document.getElementById('sonarToggleBtn');
     if(!btn) return;
-    // On remplace le contenu des 2 libelles (long + court) sans casser
-    // la structure responsive : textContent effacerait les <span>.
-    const longEl = btn.querySelector('.tb-long');
-    const shortEl = btn.querySelector('.tb-short');
-    if(longEl && shortEl){
-      longEl.textContent = isActive ? 'Sonar activé' : 'Activer le sonar';
-      shortEl.textContent = isActive ? 'Actif' : 'Sonar';
-    }else{
-      btn.textContent = isActive ? 'Sonar activé' : 'Activer le sonar';
-    }
+    // On ecrit dans le <span> interne : btn.textContent effacerait la structure.
+    const label = btn.querySelector('.tb-label');
+    const txt = isActive ? 'Sonar activé' : 'Activer le sonar';
+    if(label) label.textContent = txt;
+    else btn.textContent = txt;
     btn.classList.toggle('active', isActive);
   }
 
