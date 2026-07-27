@@ -1546,36 +1546,21 @@
   let _revealRunning = false;   // une annonce est en cours
   let _blipByTeam = {};         // teamCode -> numero de blip (1..5)
   let _lastTeams = [];          // dernier etat connu des equipes actives
-  let _userInteracted = false;  // un clic/tap a-t-il eu lieu sur la page ?
-  const _interactionWaiters = [];
 
-  /* Le navigateur bloque le son tant que l'utilisateur n'a rien touche, et
-     l'animation n'a d'interet que si quelqu'un regarde : on attend donc un
-     premier clic avant de lancer l'annonce des equipages. */
-  /* Un simple scroll suffit a debloquer l'annonce (au meme titre qu'un
-     clic ou une touche). Note : les navigateurs n'autorisent la lecture
-     audio qu'apres un VRAI geste (clic/tap/touche) ; apres un simple
-     scroll l'alarme peut rester muette, mais l'animation se deroule
-     normalement grace au repli de playAlarmOnce(). */
-  const _INTERACTION_EVENTS = ['scroll','wheel','pointerdown','touchstart','touchmove','keydown','click'];
-  function markUserInteraction(){
-    if(_userInteracted) return;
-    _userInteracted = true;
-    _INTERACTION_EVENTS.forEach(evt => window.removeEventListener(evt, markUserInteraction));
-    while(_interactionWaiters.length) _interactionWaiters.shift()();
-  }
-  _INTERACTION_EVENTS.forEach(evt => {
-    window.addEventListener(evt, markUserInteraction, { passive:true });
-  });
+  /* Note audio : les navigateurs n'autorisent la lecture qu'apres un VRAI
+     geste (clic/tap/touche). Si l'utilisateur n'a fait que scroller,
+     l'alarme peut rester muette : l'animation se deroule quand meme grace
+     au repli de playAlarmOnce(). Le declenchement de l'annonce, lui, ne
+     depend plus que de la position du bloc a l'ecran (voir plus bas). */
 
-  function waitForUserInteraction(){
-    if(_userInteracted) return Promise.resolve();
-    return new Promise(resolve => _interactionWaiters.push(resolve));
-  }
-
-  /* --- Visibilite du bloc "Equipages en plongeon" ---
-     L'annonce ne demarre que si le bloc est reellement a l'ecran : inutile
-     de reveler des equipages que personne ne regarde. */
+  /* --- Visibilite du bloc "Equipages en plongee" ---
+     Deux notions differentes :
+     1) _radarVisible  : le bloc est a l'ecran (ne serait-ce qu'un peu).
+        Sert a mettre les animations en pause hors ecran et a suspendre
+        l'annonce si l'utilisateur part ailleurs en cours de route.
+     2) _radarArmed    : le HAUT du bloc a atteint le HAUT de l'ecran
+        (l'utilisateur a scrolle/glisse jusqu'a lui). C'est le vrai
+        declencheur du demarrage de l'annonce des equipages. */
   let _radarVisible = false;
   const _visibilityWaiters = [];
   (function watchRadarVisibility(){
@@ -1600,6 +1585,61 @@
   function waitForRadarVisible(){
     if(_radarVisible) return Promise.resolve();
     return new Promise(resolve => _visibilityWaiters.push(resolve));
+  }
+
+  /* --- Declencheur : le haut du bloc touche le haut de l'ecran ---
+     Tant que l'utilisateur n'a pas amene le bloc "Equipages en plongee"
+     en haut de son ecran (par scroll ou glissement), l'annonce attend.
+     Repli : si la page ne peut plus descendre (bloc en bas de page), on
+     considere le bloc comme atteint des qu'il est entierement visible. */
+  let _radarArmed = false;
+  const _armedWaiters = [];
+  (function watchRadarTop(){
+    const target = document.getElementById('equipagesEnMer');
+    if(!target){ _radarArmed = true; return; }
+    const TOL = 6; // petite tolerance en pixels
+    let ticking = false;
+
+    function reached(){
+      const r = target.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      if(r.top <= TOL) return true;
+      // Bas de page atteint : le bloc ne peut plus monter davantage.
+      const docH = document.documentElement.scrollHeight;
+      const atBottom = (window.scrollY + vh) >= (docH - 2);
+      return atBottom && r.bottom <= vh + TOL;
+    }
+
+    function arm(){
+      if(_radarArmed) return;
+      _radarArmed = true;
+      window.removeEventListener('scroll', onMove);
+      window.removeEventListener('resize', onMove);
+      window.removeEventListener('orientationchange', onMove);
+      while(_armedWaiters.length) _armedWaiters.shift()();
+    }
+
+    function check(){
+      ticking = false;
+      if(reached()) arm();
+    }
+
+    function onMove(){
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(check);
+    }
+
+    window.addEventListener('scroll', onMove, { passive:true });
+    window.addEventListener('resize', onMove, { passive:true });
+    window.addEventListener('orientationchange', onMove, { passive:true });
+    // Etat de depart (page rechargee deja scrollee, ancre, etc.)
+    requestAnimationFrame(check);
+  })();
+
+  function waitForRadarArmed(){
+    if(_radarArmed) return Promise.resolve();
+    return new Promise(resolve => _armedWaiters.push(resolve));
   }
 
   /* Mesure de l'angle du balayage : getComputedStyle force un recalcul de
@@ -1880,9 +1920,10 @@
     if(_revealRunning || !_revealQueue.length) return;
     _revealRunning = true;
 
-    // Condition 1 : une interaction (scroll, clic, touche) a eu lieu.
-    await waitForUserInteraction();
-    // Condition 2 : le bloc "Equipages en plongeon" est visible a l'ecran.
+    // Condition 1 : le haut du bloc "Equipages en plongee" a atteint le haut
+    // de l'ecran (l'utilisateur a scrolle ou glisse jusqu'a lui).
+    await waitForRadarArmed();
+    // Condition 2 : le bloc est bien a l'ecran a cet instant.
     await waitForRadarVisible();
 
     const stage = $('radarStage');
