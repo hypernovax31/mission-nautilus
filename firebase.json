@@ -5,7 +5,9 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "README.md"
+      "README.md",
+      "firestore.rules",
+      "tools/**"
     ],
     "rewrites": [
       {
@@ -13,5 +15,8 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }

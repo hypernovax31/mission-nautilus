@@ -352,8 +352,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc,
-  collection, addDoc, serverTimestamp, onSnapshot
+  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ---------- CONFIGURATION ---------- */
@@ -536,12 +535,6 @@ async function saveTeam(team, patch) {
   const updated = { ...patch, updatedAt: new Date().toISOString() };
   await updateDoc(doc(db, 'teams', team.teamCode), updated);
   return { ...team, ...updated };
-}
-async function addEvent(team, type, data = {}) {
-  return addDoc(collection(db, 'events'), {
-    teamCode: team.teamCode, teamName: team.teamName, type,
-    ...data, createdAt: serverTimestamp()
-  });
 }
 
 /* ---------- SESSION PARTAGÉE (sous-collection morseSession) ---------- */
@@ -755,7 +748,7 @@ window.Nautilus = {
   $, esc, normalize, memberKey, simple, teamCodeFromInput, hashString,
   getStepCode, getStepIdFromCode,
   getClientId, getCurrentTeamCode, setCurrentTeamCode,
-  getTeam, getTeamRealtime, saveTeam, addEvent,
+  getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, isLocked, formatDate,
   getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
@@ -844,7 +837,6 @@ window.Nautilus = {
       try {
         await N.saveTeam(state.team, { members });
         state.me = { name: member.name, service, memberKey: key, clientId: N.getClientId() };
-        await N.addEvent(state.team, 'member_joined', { memberName: member.name, service });
         N.addLogEntry(`${member.name} a rejoint l'équipage.`, 'info');
       } catch (err) {
         $('identifyMsg').innerHTML = `<div class="status-banner danger">❌ Erreur : ${esc(err.message)}</div>`;
@@ -1039,7 +1031,6 @@ window.Nautilus = {
       startedWordHint: entry.h,
       lastEvent: 'session_started'
     });
-    await N.addEvent(state.team, 'morse_session_started', { by: state.me.name });
     N.addLogEntry(`⚓ ${state.me.name} a pris les commandes du protocole. Épreuve en cours…`, 'info');
   }
 
@@ -1264,7 +1255,6 @@ window.Nautilus = {
     const hours = N.getLockHours(nextFail);
     const until = N.getLockedUntilISO(nextFail);
     await N.saveTeam(state.team, { status: 'blocked', failCount: nextFail, lastLockHours: hours, lockedUntil: until });
-    await N.addEvent(state.team, 'team_blocked', { reason, failCount: nextFail, hours, until });
     N.addLogEntry(`🔒 L'équipage est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h).`, 'danger');
   }
 
@@ -1275,7 +1265,6 @@ window.Nautilus = {
     const update = { status: 'active', lockedUntil: null, completedSteps: completed, lastEvent: 'step_advanced' };
     if (next) { update.currentStep = next; }
     await N.saveTeam(state.team, update);
-    await N.addEvent(state.team, 'step_completed', { step: 'start', next });
     N.addLogEntry(`➡️ Palier suivant ouvert : <b>${N.STEPS[next]?.label || '?'}</b>.`, 'success');
     N.markHintsExhausted(state.word);
   }

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nautilus — Purge Firestore</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:820px;margin:0 auto;padding:24px;background:#0b1622;color:#e8f4fb}
+  h1{color:#f5b027;font-size:22px}
+  .warn{background:#3a1512;border:1px solid #b8322b;border-radius:10px;padding:14px;line-height:1.5}
+  .ok{background:#0d2a1e;border:1px solid #1e7a52;border-radius:10px;padding:14px}
+  button{background:#f5b027;color:#111;border:0;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;font-size:15px}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.scan{background:#2b6a94;color:#fff}
+  pre{background:#050d16;border:1px solid #1d3a4f;border-radius:10px;padding:14px;white-space:pre-wrap;font-size:13px;max-height:420px;overflow:auto}
+  code{background:#050d16;padding:2px 6px;border-radius:5px;color:#8ee7ff}
+</style>
+</head>
+<body>
+<h1>🧹 Purge des collections Firestore mortes</h1>
+
+<div class="warn">
+  <b>À lire avant de cliquer.</b><br>
+  Ce script supprime définitivement les collections <code>events</code>,
+  <code>arrivals</code> et <code>members</code>, retirées du code applicatif.<br><br>
+  <b>Ordre important :</b> lance cette purge <u>AVANT</u> de déployer
+  <code>firestore.rules</code>. Les nouvelles règles interdisent l'accès à ces
+  collections, ce qui rendrait la suppression impossible depuis le navigateur.<br><br>
+  Les collections utilisées (<code>teams</code>, <code>matelots</code>,
+  <code>game</code>) ne sont <b>jamais</b> touchées.
+</div>
+
+<p>
+  <button class="scan" id="scanBtn">1. Analyser (lecture seule)</button>
+  <button id="purgeBtn" disabled>2. Supprimer définitivement</button>
+</p>
+<pre id="log">Prêt. Commence par « Analyser » pour voir ce qui existe.</pre>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, collection, getDocs, deleteDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+// Meme projet que index.html / palier1.html
+const firebaseConfig = {
+  apiKey: "AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
+  authDomain: "mission-nautilus.firebaseapp.com",
+  projectId: "mission-nautilus",
+  storageBucket: "mission-nautilus.firebasestorage.app",
+  messagingSenderId: "444670686419",
+  appId: "1:444670686419:web:00d186940a2fb8c8c29026"
+};
+const db = getFirestore(initializeApp(firebaseConfig));
+
+// Collections retirees du code applicatif :
+//  - events   : ~25 ecritures, jamais relue (write-only)
+//  - arrivals : doublon de teams.finishedAt, jamais relue
+//  - members  : jamais ecrite (l'inscription passe par teams.members[] + matelots/)
+const DEAD = ['events', 'arrivals', 'members'];
+
+const logEl = document.getElementById('log');
+const scanBtn = document.getElementById('scanBtn');
+const purgeBtn = document.getElementById('purgeBtn');
+const log = (m) => { logEl.textContent += '\n' + m; logEl.scrollTop = logEl.scrollHeight; };
+
+let found = {};
+
+scanBtn.onclick = async () => {
+  logEl.textContent = 'Analyse en cours…';
+  found = {};
+  let total = 0;
+  for (const name of DEAD) {
+    try {
+      const snap = await getDocs(collection(db, name));
+      found[name] = snap.docs;
+      total += snap.size;
+      log(`  ${name.padEnd(10)} : ${snap.size} document(s)`);
+    } catch (e) {
+      log(`  ${name.padEnd(10)} : inaccessible (${e.code || e.message})`);
+      log(`               -> les regles restrictives sont peut-etre deja deployees.`);
+    }
+  }
+  log(`\nTotal a supprimer : ${total} document(s).`);
+  purgeBtn.disabled = total === 0;
+  if (total === 0) log('Rien a faire, la base est deja propre.');
+};
+
+purgeBtn.onclick = async () => {
+  const total = Object.values(found).reduce((n, d) => n + d.length, 0);
+  if (!confirm(`Supprimer definitivement ${total} document(s) ?\n\nCette action est irreversible.`)) return;
+  purgeBtn.disabled = scanBtn.disabled = true;
+  log('\nSuppression…');
+  let done = 0, failed = 0;
+  for (const [name, docs] of Object.entries(found)) {
+    for (const d of docs) {
+      try { await deleteDoc(d.ref); done++; }
+      catch (e) { failed++; log(`  echec ${name}/${d.id} : ${e.code || e.message}`); }
+    }
+    if (docs.length) log(`  ${name} : ${docs.length} supprime(s)`);
+  }
+  log(`\nTermine : ${done} supprime(s)${failed ? `, ${failed} echec(s)` : ''}.`);
+  log('Tu peux maintenant deployer les regles :  firebase deploy --only firestore:rules');
+  scanBtn.disabled = false;
+};
+</script>
+</body>
+</html>

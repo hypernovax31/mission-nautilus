@@ -1341,7 +1341,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   /* Codes d'équipe obsolètes à nettoyer dans Firestore (migration).
      Ces docs sont des restes d'anciennes versions du jeu où les codes
@@ -1546,12 +1546,10 @@
     return null;
   }
   async function saveTeam(team,patch){if(!team||!team.teamCode) throw new Error('Code Matelot manquant. Recharge la page.');const updated={...patch,updatedAt:new Date().toISOString()};await updateDoc(doc(db,'teams',team.teamCode),updated);currentTeam={...team,...updated};return currentTeam;}
-  async function addEvent(team,type,data={}){await addDoc(collection(db,'events'),{teamCode:team.teamCode,teamName:team.teamName,type,...data,createdAt:serverTimestamp()});}
 
   async function autoUnlockIfNeeded(team){
     if(team?.status==='blocked'&&!isLocked(team)){
       const unlocked=await saveTeam(team,{status:'active',lockedUntil:null,lastUnlockMessageAt:new Date().toISOString()});
-      await addEvent(unlocked,'unblocked',{step:unlocked.currentStep});
       return {team:unlocked,justUnlocked:true};
     }
     return {team,justUnlocked:false};
@@ -2095,10 +2093,7 @@
         createdAt: serverTimestamp()
       });
 
-      // 6) Event log
-      await addEvent(chosen, 'member_registered', { memberName: name, service, codeMatelot: matelotCode });
-
-      // 7) Recharge + session memoire (volatil, JAMAIS localStorage)
+      // 6) Recharge + session memoire (volatil, JAMAIS localStorage)
       const updated = await getTeam(chosen.teamCode);
       currentTeam = updated;
       currentMatelot = matelotDoc;
@@ -2212,47 +2207,63 @@
     const lockHours=getLockHours(nextFailCount);
     const lockedUntil=getLockedUntilISO(nextFailCount);
     await saveTeam(currentTeam,{status:'blocked',failCount:nextFailCount,lastLockHours:lockHours,lockedUntil});
-    await addEvent(currentTeam,'blocked',{step:currentTeam.currentStep,reason,failCount:nextFailCount,lockHours,lockedUntil});
     renderGame();await loadTeams();
   }
 
   async function completeStep(){
     if(!currentTeam)return;
     const stepId=currentTeam.currentStep;const step=STEPS[stepId];const completed=Array.from(new Set([...(currentTeam.completedSteps||[]),stepId]));const next=step?.next;
-    if(next){await saveTeam(currentTeam,{status:'active',lockedUntil:null,completedSteps:completed,currentStep:next});await addEvent(currentTeam,'step_completed',{step:stepId,nextStep:next});}
-    else{const finishedAt=new Date().toISOString();await saveTeam(currentTeam,{status:'finished',lockedUntil:null,completedSteps:completed,finishedAt});await addDoc(collection(db,'arrivals'),{teamCode:currentTeam.teamCode,teamName:currentTeam.teamName,arrivedAt:serverTimestamp()});await addEvent(currentTeam,'finished',{finishedAt});}
+    if(next){await saveTeam(currentTeam,{status:'active',lockedUntil:null,completedSteps:completed,currentStep:next});}
+    else{const finishedAt=new Date().toISOString();await saveTeam(currentTeam,{status:'finished',lockedUntil:null,completedSteps:completed,finishedAt});}
     renderGame();await loadTeams();
   }
 
   async function resetCurrentTeamProgress(){
     if(!currentTeam)return;if(!confirm(`Réinitialiser la progression de ${currentTeam.teamName} ?`))return;
-    await saveTeam(currentTeam,{currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],finishedAt:null});await addEvent(currentTeam,'team_reset',{});renderGame();await loadTeams();
+    await saveTeam(currentTeam,{currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],finishedAt:null});renderGame();await loadTeams();
   }
 
   /**
-   * Réinitialise TOUS les membres des 5 équipes actives.
-   * Vide la collection `members` (Firestore) + champ `members` de chaque équipe.
+   * Réinitialise TOUS les membres des équipes actives.
+   * Purge les 3 emplacements ou un matelot existe :
+   *   1. teams/{code}.members[]              (affichage admin)
+   *   2. teams/{code}/matelots/{codeMatelot} (fiche detaillee)
+   *   3. matelots/{codeMatelot}              (index global de reconnexion)
+   * Le point 3 est indispensable : sans lui, un matelot purge peut encore
+   * se reconnecter avec son ancien Code Matelot.
    * Conserve la progression (palier, failCount, etc.) — seul l'équipage est purgé.
    * Double confirmation obligatoire (action irréversible).
    */
   async function resetAllMembers(){
-    const ok1 = confirm("⚠️ Action irréversible : vider l'équipage des 5 équipes ?\n\nCela supprimera tous les noms de matelots inscrits (NEMO, NAUTILUS, ARONNAX, NEDLAND, CALAMAR).\nLa progression et le blocage des équipes ne sont PAS affectés.");
+    const ok1 = confirm("⚠️ Action irréversible : vider l'équipage de toutes les équipes ?\n\nCela supprimera tous les noms de matelots inscrits ainsi que leurs Codes Matelot (reconnexion impossible).\nLa progression et le blocage des équipes ne sont PAS affectés.");
     if(!ok1) return;
     const ok2 = confirm("Confirme une seconde fois : tu veux vraiment purger TOUS les membres ?");
     if(!ok2) return;
     try{
-      for(const t of TEAM_DEFS){
+      await refreshAdminTeams();
+      let purged = 0;
+      for(const t of effectiveTeams){
         const teamRef = doc(db,'teams',t.code);
         const snap = await getDoc(teamRef);
-        if(snap.exists()){
-          await updateDoc(teamRef, { members: [], updatedAt: new Date().toISOString() });
+        if(!snap.exists()) continue;
+        // Sous-collection matelots + index global
+        const matelotsSnap = await getDocs(collection(db,'teams',t.code,'matelots'));
+        for(const d of matelotsSnap.docs){
+          const code = d.data().codeMatelot || d.id;
+          await deleteDoc(doc(db,'matelots',code)).catch(() => {});
+          await deleteDoc(d.ref).catch(() => {});
+          purged++;
         }
+        // Codes presents dans members[] mais sans fiche (inscriptions anciennes)
+        for(const m of (snap.data().members || [])){
+          if(m.codeMatelot && !matelotsSnap.docs.some(d => (d.data().codeMatelot || d.id) === m.codeMatelot)){
+            await deleteDoc(doc(db,'matelots',m.codeMatelot)).catch(() => {});
+            purged++;
+          }
+        }
+        await updateDoc(teamRef, { members: [], updatedAt: new Date().toISOString() });
       }
-      const membersSnap = await getDocs(collection(db,'members'));
-      const deletions = membersSnap.docs.map(d => deleteDoc(d.ref));
-      await Promise.all(deletions);
-      await addEvent({ teamCode:'ALL', teamName:'Toutes les équipes' }, 'members_reset', { count: membersSnap.size, at: new Date().toISOString() });
-      endAdminSession(`✅ ${membersSnap.size} matelot(s) supprimé(s) · session fermée`);
+      endAdminSession(`✅ ${purged} matelot(s) supprimé(s) · session fermée`);
       await loadTeams();
     }catch(err){
       console.error('NAUTILUS resetAllMembers error:', err);
@@ -2283,7 +2294,6 @@
           updatedAt: new Date().toISOString()
         });
       }
-      await addEvent({ teamCode:'ALL', teamName:'Toutes les équipes' }, 'progress_reset', { at: new Date().toISOString() });
       endAdminSession("✅ Progression des équipes remise à zéro · session fermée");
       if(currentTeam){
         const fresh = await getTeam(currentTeam.teamCode);
@@ -2590,7 +2600,6 @@
         updatedAt: new Date().toISOString()
       }, {merge:true});
       missionConfig = { ...(missionConfig||{}), missionStartedAt };
-      if(currentTeam) await addEvent(currentTeam, 'mission_started', { startedAt });
       updateCountdown();
     }else{
       updateCountdown();
@@ -3130,9 +3139,7 @@
           ? toTeam.members.map(m => m.memberKey === newKey ? updatedMember : m)
           : [...(toTeam.members || []), updatedMember];
         await updateDoc(toRef, { members: toMembers, updatedAt: new Date().toISOString() });
-        await addEvent(toTeam, 'member_moved', { memberName: updatedMember.name, from: fromTeamCode, to: toTeamCode });
       }
-      await addEvent(fromTeam, 'member_updated', { memberName: updatedMember.name });
       await renderAdminMembers();
       await loadTeams();
       endAdminSession(`✅ Membre ${updatedMember.name} mis à jour · session fermée`);
@@ -3151,7 +3158,6 @@
       const team = { teamCode, ...snap.data() };
       const newMembers = (team.members || []).filter(m => m.memberKey !== targetMemberKey);
       await updateDoc(ref, { members: newMembers, updatedAt: new Date().toISOString() });
-      await addEvent(team, 'member_deleted', { memberKey: targetMemberKey });
       await renderAdminMembers();
       await loadTeams();
       endAdminSession(`✅ Membre supprimé · session fermée`);
@@ -3239,7 +3245,6 @@
       }
       if(Number.isFinite(patch.failCount)) updates.failCount = Math.max(0, Math.floor(patch.failCount));
       await updateDoc(ref, updates);
-      await addEvent(team, 'lock_updated', { updates });
       await renderAdminLocks();
       await loadTeams();
       endAdminSession(`✅ Blocage de ${team.teamName} mis à jour · session fermée`);
@@ -3256,9 +3261,6 @@
       const snap = await getDoc(ref);
       const teamName = snap.exists() ? snap.data().teamName : teamCode;
       await updateDoc(ref, { status:'active', lockedUntil:null, updatedAt:new Date().toISOString(), lastUnlockAt:new Date().toISOString() });
-      if(snap.exists()){
-        await addEvent({ teamCode, teamName }, 'admin_unlocked', {});
-      }
       await renderAdminLocks();
       await loadTeams();
       endAdminSession(`✅ ${teamName} débloquée · session fermée`);
@@ -3327,7 +3329,6 @@
         updatedAt: new Date().toISOString()
       }, {merge:true});
       missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: durationMs };
-      if(currentTeam) await addEvent(currentTeam, 'oxygen_reset', { startedAt, durationMs, by: 'admin' });
       updateCountdown();
       renderAdminOxygen();
       endAdminSession('✅ Réserve O₂ mise à jour · session fermée');
@@ -3345,7 +3346,6 @@
       updatedAt: new Date().toISOString()
     }, {merge:true});
     missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: 7 * 24 * 60 * 60 * 1000 };
-    if(currentTeam) await addEvent(currentTeam, 'oxygen_reset', { startedAt, by: 'admin' });
     updateCountdown();
     renderAdminOxygen();
     endAdminSession('✅ O₂ reset à maintenant (7j) · session fermée');
@@ -3359,7 +3359,6 @@
       updatedAt: new Date().toISOString()
     }, {merge:true});
     missionConfig = { ...(missionConfig||{}), missionStartedAt: null, missionDurationMs: null };
-    if(currentTeam) await addEvent(currentTeam, 'oxygen_cleared', { by: 'admin' });
     updateCountdown();
     renderAdminOxygen();
     endAdminSession('✅ Mission arrêtée (O₂ cleared) · session fermée');
@@ -3447,8 +3446,6 @@
         if(!used.has(candidate)) break;
       } while(attempts < 30);
       await updateDoc(doc(db,'teams',code), { crewCode: candidate, updatedAt: new Date().toISOString() });
-      const snap = await getDoc(doc(db,'teams',code));
-      if(snap.exists()) await addEvent({ teamCode: code, teamName: snap.data().teamName }, 'crew_code_regenerated', { newCrewCode: candidate });
       await refreshAdminTeams();
       await renderAdminTeams();
       await loadTeams();
@@ -3462,8 +3459,6 @@
     if(!isAdminUnlocked()) return;
     try{
       await updateDoc(doc(db,'teams',code), { teamName: newName, updatedAt: new Date().toISOString() });
-      const snap = await getDoc(doc(db,'teams',code));
-      if(snap.exists()) await addEvent({ teamCode: code, teamName: snap.data().teamName }, 'team_renamed', { newName });
       await refreshAdminTeams();
       await renderAdminTeams();
       await loadTeams();
@@ -3498,7 +3493,6 @@
         customs.push({ code: codeRaw, name });
       }
       await setDoc(cfgRef, { customTeams: customs, updatedAt:new Date().toISOString() }, {merge:true});
-      await addEvent({ teamCode:codeRaw, teamName:name }, 'team_added', { by: 'admin' });
       $('adminNewTeamCode').value = '';
       $('adminNewTeamName').value = '';
       await refreshAdminTeams();
@@ -3518,11 +3512,20 @@
         const typed = prompt(`⚠️ Tu supprimes une équipe PAR DÉFAUT (${code}).\n\nPour confirmer, tape exactement le code de l'équipe (${code}) en MAJUSCULES :`);
         if(typed !== code){ alert('Confirmation annulée.'); return; }
       }
-      // Supprimer le doc + les membres globaux liés
+      // Purge des matelots (sous-collection + index global) AVANT le doc equipe,
+      // sinon les Codes Matelot restent valides et pointent vers une equipe fantome.
+      const matelotsSnap = await getDocs(collection(db,'teams',code,'matelots'));
+      for(const d of matelotsSnap.docs){
+        await deleteDoc(doc(db,'matelots', d.data().codeMatelot || d.id)).catch(() => {});
+        await deleteDoc(d.ref).catch(() => {});
+      }
+      const teamSnap = await getDoc(doc(db,'teams',code));
+      if(teamSnap.exists()){
+        for(const m of (teamSnap.data().members || [])){
+          if(m.codeMatelot) await deleteDoc(doc(db,'matelots',m.codeMatelot)).catch(() => {});
+        }
+      }
       await deleteDoc(doc(db,'teams',code));
-      const membersSnap = await getDocs(collection(db,'members'));
-      const deletions = membersSnap.docs.filter(d => d.data().teamCode === code).map(d => deleteDoc(d.ref));
-      await Promise.all(deletions);
       // Config : retirer des customTeams et ajouter aux obsolètes
       const cfgRef = doc(db,'game','config');
       const cfgSnap = await getDoc(cfgRef);
@@ -3531,7 +3534,6 @@
       const obsolete = Array.isArray(cfg.obsoleteTeams) ? cfg.obsoleteTeams : [];
       if(!obsolete.includes(code)) obsolete.push(code);
       await setDoc(cfgRef, { customTeams: customs, obsoleteTeams: obsolete, updatedAt:new Date().toISOString() }, {merge:true});
-      await addEvent({ teamCode:code, teamName:code }, 'team_deleted', { by: 'admin', wasDefault: !!isDefault });
       await refreshAdminTeams();
       await renderAdminTeams();
       await renderAdminMembers();

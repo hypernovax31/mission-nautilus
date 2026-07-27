@@ -17,8 +17,36 @@ s'accumulent, plus l'équipage est bloqué longtemps avant de retenter.
 | `pwa-install.js` | Modale d'installation PWA (instructions par OS) + enregistrement du SW |
 | `manifest.json` | Manifeste PWA (nom, couleurs, icônes) |
 | `sw.js` | Service worker (cache offline) |
-| `firebase.json` | Config hosting |
+| `firebase.json` | Config hosting + pointeur vers les règles Firestore |
+| `firestore.rules` | Règles de sécurité Firestore |
 | `assets/` | Audio ambiance, fond d'écran et icônes |
+| `tools/` | Scripts de maintenance (non déployés) |
+
+## Modèle de données Firestore
+Trois collections, et trois seulement :
+
+| Chemin | Rôle |
+|---|---|
+| `teams/{code}` | État d'un équipage : progression, blocage, `members[]`, `finishedAt` |
+| `teams/{code}/matelots/{codeMatelot}` | Fiche détaillée d'un matelot |
+| `teams/{code}/morseSession/current` | Session partagée temps réel du palier 1 |
+| `matelots/{codeMatelot}` | Index global : Code Matelot → équipe (reconnexion) |
+| `game/config` | Config de partie : équipes actives, oxygène, équipes obsolètes |
+
+Un matelot existe à **trois endroits** (`teams.members[]`, la sous-collection
+`matelots/`, et l'index global `matelots/`). Toute suppression doit purger les
+trois, sinon le Code Matelot reste valide et la reconnexion fonctionne encore.
+
+### Collections supprimées
+`events`, `arrivals` et `members` ont été retirées du code :
+
+- **`events`** — ~25 écritures par partie, jamais relue (aucun `getDocs`/`onSnapshot`). Pur write-only qui grossissait indéfiniment.
+- **`arrivals`** — doublon de `teams.finishedAt`, jamais relue.
+- **`members`** — lue et supprimée, mais **jamais écrite** : toujours vide. Le compteur « X matelot(s) supprimé(s) » affichait donc systématiquement 0.
+
+Purge des données résiduelles (à faire **avant** de déployer les règles) :
+ouvrir `tools/purge-firestore.html` dans un navigateur, puis « Analyser » et
+« Supprimer ». Les nouvelles règles bloquent ensuite leur recréation.
 
 ## Icônes
 `assets/icon.svg` est **la source unique**. Tous les PNG en sont dérivés :
@@ -52,4 +80,7 @@ python3 -m http.server 8000
 ## Déploiement
 ```bash
 firebase deploy --only hosting
+
+# Règles Firestore (après avoir purgé les collections mortes)
+firebase deploy --only firestore:rules
 ```
