@@ -2274,13 +2274,12 @@ function qrDataUri(text, opts){
     const text = buildNoteText(name, code, teamName);
     const fileName = 'Mission-Nautilus-' + code + '.txt';
 
-    // 1) Web Share API (mobile moderne) : on joint l'image du QR, plus
-    // parlante qu'un .txt et directement enregistrable dans la galerie.
+    // 1) Web Share API : on partage UNE image PNG contenant toute la fiche
+    // (texte + QR), directement enregistrable dans la galerie.
     try{
       if(navigator.canShare){
         try{
-          const qrUri = qrDataUri(code, { ecl: 'H' });
-          const pngBlob = await qrToPngBlob(qrUri, 600);
+          const pngBlob = await buildMatelotCardPng(name, code, teamName);
           const png = new File([pngBlob], 'matelot-' + code + '.png', { type: 'image/png' });
           if(navigator.canShare({ files: [png] })){
             await navigator.share({
@@ -2292,7 +2291,7 @@ function qrDataUri(text, opts){
           }
         }catch(qrErr){
           if(qrErr && qrErr.name === 'AbortError') return { ok: false, reason: 'cancelled' };
-          console.warn('partage du QR impossible, repli texte :', qrErr);
+          console.warn('partage de la fiche impossible, repli texte :', qrErr);
         }
         const file = new File([text], fileName, { type: 'text/plain' });
         if(navigator.canShare({ files: [file] })){
@@ -2428,6 +2427,72 @@ function qrDataUri(text, opts){
     });
   }
 
+  /* Genere UNE image PNG contenant toute la fiche matelot : le texte
+     (MISSION NAUTILUS, lien, matelot, equipage, code) et le QR en dessous.
+     C'est ce fichier unique qui est partage, plutot qu'un QR nu accompagne
+     d'un texte que certaines applications ignorent. */
+  function buildMatelotCardPng(name, code, teamName){
+    return new Promise((resolve, reject) => {
+      const W = 900, PAD = 56, QR = 380;
+      const img = new Image();
+      img.onload = () => {
+        try{
+          const lines = [
+            { t: 'MISSION NAUTILUS', size: 44, weight: '900', color: '#f5b027', gap: 14 },
+            { t: '=================', size: 30, weight: '700', color: '#5d7286', gap: 34 },
+            { t: 'Lien : ' + siteUrl(),        size: 24, weight: '600', color: '#cfe3f0', gap: 26 },
+            { t: 'Matelot : ' + (name || '—'), size: 28, weight: '800', color: '#ffffff', gap: 26 },
+            { t: 'Equipage : ' + (teamName || '—'), size: 28, weight: '800', color: '#ffffff', gap: 26 },
+            { t: 'Code Matelot : ' + code,     size: 34, weight: '900', color: '#f5b027', gap: 34 }
+          ];
+          const textH = lines.reduce((a, l) => a + l.size + l.gap, 0);
+          const noteH = 30 + 26;
+          const H = PAD + textH + QR + 34 + noteH + PAD;
+
+          const cv = document.createElement('canvas');
+          cv.width = W; cv.height = H;
+          const ctx = cv.getContext('2d');
+
+          // Fond dans les couleurs du jeu
+          const g = ctx.createLinearGradient(0, 0, W, H);
+          g.addColorStop(0, '#0a2a40');
+          g.addColorStop(1, '#020812');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, W, H);
+          ctx.strokeStyle = 'rgba(245,176,39,.45)';
+          ctx.lineWidth = 4;
+          ctx.strokeRect(2, 2, W - 4, H - 4);
+
+          // Texte
+          let y = PAD;
+          ctx.textBaseline = 'top';
+          for(const l of lines){
+            ctx.font = l.weight + ' ' + l.size + 'px Arial, Helvetica, sans-serif';
+            ctx.fillStyle = l.color;
+            ctx.fillText(l.t, PAD, y);
+            y += l.size + l.gap;
+          }
+
+          // QR centre, sur fond blanc (indispensable pour qu'il reste lisible)
+          const qx = (W - QR) / 2;
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(qx - 14, y - 14, QR + 28, QR + 28);
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(img, qx, y, QR, QR);
+          y += QR + 34;
+
+          ctx.font = '700 22px Arial, Helvetica, sans-serif';
+          ctx.fillStyle = '#ff9b8f';
+          ctx.fillText('IMPORTANT : Le code est personnel et à usage unique.', PAD, y);
+
+          cv.toBlob(b => b ? resolve(b) : reject(new Error('canvas vide')), 'image/png');
+        }catch(e){ reject(e); }
+      };
+      img.onerror = () => reject(new Error('QR illisible'));
+      img.src = qrDataUri(code, { ecl: 'H' });
+    });
+  }
+
   async function viewMatelotQr(qrUrl, code){
     // Le QR encode le Code Matelot en clair (pas un lien) : la camera du
     // telephone affiche le code, que le matelot recopie dans "Reprendre ta mission".
@@ -2462,9 +2527,10 @@ function qrDataUri(text, opts){
       try{
         // Convertit le QR (SVG en data: URI) en PNG via un canvas.
         // Pas de fetch reseau : le QR est genere localement.
-        const blob = await qrToPngBlob(qrUrl, 600);
+        // Une seule image PNG : la fiche complete (texte + QR).
+        const blob = await buildMatelotCardPng(
+          currentMatelot?.name, code, currentMatelot?.teamName);
         const file = new File([blob], 'matelot-' + code + '.png', { type: 'image/png' });
-        // Meme texte que les boutons Copier / Partager, + l'image du QR.
         const noteText = buildNoteText(currentMatelot?.name, code, currentMatelot?.teamName);
         if(navigator.canShare && navigator.canShare({ files: [file] })){
           await navigator.share({
@@ -2485,7 +2551,7 @@ function qrDataUri(text, opts){
           a.href = url; a.download = 'matelot-' + code + '.png';
           document.body.appendChild(a); a.click(); a.remove();
           setTimeout(() => URL.revokeObjectURL(url), 5000);
-          showToast('📷 QR telecharge', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+          showToast('📷 Fiche PNG téléchargée', 'linear-gradient(135deg,#075c39,#0a8a5a)');
         }
       }catch(err){
         if(err && err.name === 'AbortError') return;
@@ -2502,10 +2568,14 @@ function qrDataUri(text, opts){
 
     // Bouton copier
     document.getElementById('qrModalCopy').addEventListener('click', async () => {
-      const text = buildNoteText(currentMatelot?.name, code, currentMatelot?.teamName);
-      const ok = await copyTextToClipboard(text);
-      if(ok) showToast('📋 Informations copiées dans le presse-papier', 'linear-gradient(135deg,#075c39,#0a8a5a)');
-      else window.prompt('Copiez ces informations :', text);
+      const ok = await copyMatelotToClipboard(
+        currentMatelot?.name, code, currentMatelot?.teamName, resumeLink);
+      if(ok){
+        showToast('📋 Fiche + QR copiés', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      }else{
+        window.prompt('Copiez ces informations :',
+          buildNoteText(currentMatelot?.name, code, currentMatelot?.teamName));
+      }
     });
 
   }
