@@ -1138,6 +1138,51 @@
           0 2px 6px rgba(0,0,0,.06);
       }
     }
+    /* ===== Mise en evidence depuis le sonar =====
+       Survol ou clic sur un point blanc : la carte de l'equipage s'entoure
+       d'un halo de sa couleur, nettement plus marque que son contour
+       habituel, pour la reperer d'un coup d'oeil dans la liste. */
+    .team.team-reveal.team-spotlight{
+      border-color:rgba(var(--team-glow,143,164,181),1);
+      box-shadow:
+        0 0 0 3px rgba(var(--team-glow,143,164,181),.55),
+        0 0 26px 8px rgba(var(--team-glow,143,164,181),.60),
+        0 10px 28px rgba(0,0,0,.18);
+      /* animation:none -> la mise en evidence prend le pas sur teamGlint,
+         qui pourrait encore tourner juste apres l'apparition de la carte. */
+      animation:none;
+    }
+    /* Le point du sonar montre qu'il est cliquable et repond au survol.
+       Deux precautions indispensables :
+       1) le balayage, la grille et les anneaux sont dessines APRES les
+          points dans le document : sans z-index ils passeraient devant et
+          intercepteraient le clic. On remonte donc les points au-dessus.
+       2) un point de 16 px est trop petit pour un doigt. On l'entoure d'une
+          zone tactile invisible, MAIS elle ne doit pas mordre sur celle du
+          voisin : deux points d'equipages differents peuvent n'etre
+          eloignes que de 32 px (sonar a 250 px) et meme 22 px sur petit
+          ecran. Une zone de 44 px, la taille habituellement recommandee,
+          se chevaucherait et selectionnerait la mauvaise equipe.
+          On la fixe donc a 26 px, agrandie a 30 px quand le sonar est
+          grand : c'est le maximum sur pour rester sans ambiguite. */
+    .radar-blip[data-team]{cursor:pointer;z-index:3}
+    .radar-blip[data-team]::before{
+      content:"";position:absolute;left:50%;top:50%;
+      width:26px;height:26px;margin:-13px 0 0 -13px;
+      border-radius:50%;
+    }
+    @media(min-width:430px){
+      .radar-blip[data-team]::before{width:30px;height:30px;margin:-15px 0 0 -15px}
+    }
+    .radar-grid,.radar-rings,.radar-sweep-big{pointer-events:none}
+    .radar-blip.blip-active{
+      box-shadow:
+        0 0 0 5px rgba(var(--blip-glow,91,255,156),1),
+        0 0 26px 10px rgba(var(--blip-glow,91,255,156),1),
+        0 0 48px 20px rgba(var(--blip-glow,91,255,156),.65) !important;
+    }
+    .radar-blip:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
     /* Accessibilite / batterie : pas de pulsation de halo si l'utilisateur
        demande des animations reduites. */
     @media (prefers-reduced-motion: reduce){
@@ -1915,7 +1960,12 @@
         const bi = _blipByTeam[code];
         if(bi){
           const b = $('radarBlip' + bi);
-          if(b) b.classList.remove('revealed', 'blip-pop');
+          if(b){
+            b.classList.remove('revealed', 'blip-pop', 'blip-active');
+            delete b.dataset.team;
+            b.removeAttribute('role');
+            b.removeAttribute('tabindex');
+          }
           delete _blipByTeam[code];
         }
       }
@@ -1925,9 +1975,17 @@
     active.forEach(t => {
       const existing = box.querySelector(`[data-team="${t.teamCode}"]`);
       if(existing){
+        /* La carte est reconstruite a chaque rafraichissement (toutes les
+           60 s). Si le joueur survolait justement ce point, la mise en
+           evidence disparaitrait sous ses yeux : on la reporte sur la
+           nouvelle carte. */
+        const wasLit = existing.classList.contains('team-spotlight');
         existing.outerHTML = teamCardHtml(t);
         const newEl = box.querySelector(`[data-team="${t.teamCode}"]`);
-        if(newEl) newEl.classList.add('in');
+        if(newEl){
+          newEl.classList.add('in');
+          if(wasLit) newEl.classList.add('team-spotlight');
+        }
         // L'equipage a peut-etre change de palier : son point glisse vers
         // le centre (ou reste en place s'il n'a pas avance).
         const bIdx = _blipByTeam[t.teamCode];
@@ -1947,6 +2005,93 @@
      qui "pop", accompagne du son Submarine_alarm. La carte de l'equipe
      s'affiche a la FIN du son, puis on enchaine avec la suivante. */
   const REVEAL_SOUND_FALLBACK_MS = 2100; // duree du mp3 (~2,06 s) si l'event 'ended' ne vient pas
+  const CARD_AFTER_BLIP_MS = 330;        // delai entre le point et sa carte
+
+  /* Attente qui ne s'ecoule QUE pendant que le bloc est sous les yeux.
+     Un simple setTimeout continuerait de tourner si le joueur regarde
+     ailleurs : la carte apparaitrait hors de sa vue. */
+  function waitVisible(ms){
+    return new Promise(resolve => {
+      let left = ms;
+      let last = performance.now();
+      const tick = () => {
+        const now = performance.now();
+        const dt = now - last;
+        last = now;
+        if(_radarVisible){
+          left -= dt;
+          if(left <= 0){ resolve(); return; }
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+
+  /* ===== LIEN POINT DU SONAR <-> CARTE DE L'EQUIPAGE =====
+     Survoler (souris) ou toucher/cliquer un point blanc met en evidence la
+     carte de l'equipage correspondant : elle s'entoure d'un halo de SA
+     couleur. Au clic, la page defile en douceur jusqu'a la carte : sur un
+     telephone, elle est souvent bien plus bas que le sonar. */
+  function setBlipHighlight(teamCode, on){
+    const box = document.getElementById('teamsBox');
+    const card = box && box.querySelector(`[data-team="${teamCode}"]`);
+    if(card) card.classList.toggle('team-spotlight', on);
+    const idx = _blipByTeam[teamCode];
+    const blip = idx && document.getElementById('radarBlip' + idx);
+    if(blip) blip.classList.toggle('blip-active', on);
+  }
+
+  function clearBlipHighlights(){
+    document.querySelectorAll('.team-spotlight')
+      .forEach(el => el.classList.remove('team-spotlight'));
+    document.querySelectorAll('.blip-active')
+      .forEach(el => el.classList.remove('blip-active'));
+  }
+
+  (function wireBlipToCard(){
+    const screen = document.querySelector('.radar-screen-big');
+    if(!screen) return;
+    const teamOf = e => {
+      const b = e.target.closest && e.target.closest('.radar-blip');
+      return (b && b.dataset.team) ? b.dataset.team : null;
+    };
+
+    // Survol souris uniquement : sur mobile, 'pointerover' se declenche au
+    // toucher et laisserait le halo allume apres le depart du doigt.
+    screen.addEventListener('pointerover', e => {
+      if(e.pointerType !== 'mouse') return;
+      const code = teamOf(e);
+      if(code) setBlipHighlight(code, true);
+    });
+    screen.addEventListener('pointerout', e => {
+      if(e.pointerType !== 'mouse') return;
+      const code = teamOf(e);
+      if(code) setBlipHighlight(code, false);
+    });
+
+    // Clic / toucher : on met en evidence et on descend jusqu'a la carte.
+    screen.addEventListener('click', e => {
+      const code = teamOf(e);
+      if(!code) return;
+      clearBlipHighlights();
+      setBlipHighlight(code, true);
+      const card = document.querySelector(`#teamsBox [data-team="${code}"]`);
+      if(card) card.scrollIntoView({ behavior:'smooth', block:'center' });
+      // Le halo s'eteint tout seul : c'est un repere, pas un etat.
+      clearTimeout(setBlipHighlight._t);
+      setBlipHighlight._t = setTimeout(() => setBlipHighlight(code, false), 2600);
+    });
+
+    // Accessibilite : meme comportement au clavier.
+    screen.addEventListener('keydown', e => {
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      const b = e.target.closest && e.target.closest('.radar-blip');
+      if(!b || !b.dataset.team) return;
+      e.preventDefault();
+      b.click();
+    });
+  })();
 
   function assignBlip(teamCode){
     if(_blipByTeam[teamCode]) return _blipByTeam[teamCode];
@@ -1999,7 +2144,13 @@
     el.style.left = (50 + radius * Math.cos(a)).toFixed(2) + '%';
     el.style.top  = (50 + radius * Math.sin(a)).toFixed(2) + '%';
     el.dataset.step = stepId || '';
-    if(teamCode) el.style.setProperty('--blip-glow', teamStyle(teamCode).glow);
+    if(teamCode){
+      el.style.setProperty('--blip-glow', teamStyle(teamCode).glow);
+      // Sert a relier le point a sa carte au survol / au clic.
+      el.dataset.team = teamCode;
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+    }
   }
 
   /* Joue l'alarme une seule fois et resout a la fin du son. */
@@ -2096,9 +2247,15 @@
       // b) Le point blanc "pop" au passage du faisceau, en meme temps que le son
       if(blipEl) blipEl.classList.add('revealed', 'blip-pop');
 
-      await playAlarmOnce();
+      /* c) La carte suit le point de tres pres : 0,33 s plus tard.
+         Avant, on attendait la FIN de l'alarme (~2,1 s) : le lien entre le
+         point qui vient d'apparaitre et la carte etait perdu. On lance donc
+         le son sans l'attendre, et on enchaine apres un court delai.
+         Le delai est mis en pause si le joueur quitte le bloc du regard,
+         pour que la carte n'apparaisse jamais hors de sa vue. */
+      const alarmDone = playAlarmOnce();
+      await waitVisible(CARD_AFTER_BLIP_MS);
 
-      // c) Fin du son : la carte de l'equipe apparait
       const temp = document.createElement('div');
       temp.innerHTML = teamCardHtml(team);
       const el = temp.firstElementChild;
@@ -2107,6 +2264,10 @@
         requestAnimationFrame(() => el.classList.add('in'));
       }
       _revealedCodes.add(code);
+
+      /* On laisse le son finir avant d'annoncer l'equipage suivant : le
+         rythme sonore de la sequence reste inchange. */
+      await alarmDone;
       if(blipEl) blipEl.classList.remove('blip-pop');
 
       // d) Petite respiration avant l'equipe suivante
