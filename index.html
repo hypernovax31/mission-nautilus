@@ -1623,22 +1623,30 @@
      au repli de playAlarmOnce(). Le declenchement de l'annonce, lui, ne
      depend plus que de la position du bloc a l'ecran (voir plus bas). */
 
-  /* --- Le sonar tourne UNIQUEMENT quand le joueur le regarde -------------
-     Regle unique et simple, remplacant l'ancien systeme a deux conditions
-     ("le bloc est un peu visible" + "le haut du bloc touche le haut de
-     l'ecran"). Cette seconde condition etait la cause du demarrage tardif :
-     si le joueur s'arretait de scroller avant que le bord du bloc n'atteigne
-     le sommet de l'ecran, l'animation n'etait jamais lancee.
+  /* --- L'animation tourne UNIQUEMENT quand le BLOC est sous les yeux -----
+     Regle demandee :
+       - le bloc "Equipages en plongee" visible a 45 % ou plus -> demarrage
+         ou reprise de l'animation ;
+       - le bloc sous 45 %  -> TOUT se met en pause (rotation du balayage,
+         halos, points, annonce en cours et son de l'alarme).
+     On repart exactement la ou on s'etait arrete, rien n'est perdu.
 
-     Desormais on observe LE SONAR lui-meme :
-       - il est visible a 45 % ou plus  -> l'animation demarre / reprend
-       - il repasse sous 45 %           -> TOUT se met en pause (rotation du
-         balayage, halos, points, annonce en cours et son de l'alarme)
-     On repart exactement la ou on s'etait arrete, rien n'est perdu. */
+     POINT DELICAT : ce bloc contient le sonar ET les cartes des equipages.
+     Il devient donc vite plus haut que l'ecran. Or le pourcentage d'un
+     IntersectionObserver se calcule par rapport a la taille de l'ELEMENT :
+     un bloc deux fois plus haut que l'ecran ne pourrait jamais depasser
+     50 %, et sur un grand bloc il n'atteindrait meme jamais 45 %, si bien
+     que l'animation ne demarrerait plus jamais.
+     On calcule donc le pourcentage par rapport a la plus petite des deux
+     hauteurs (le bloc ou l'ecran). Autrement dit :
+       - bloc plus petit que l'ecran : "45 % du bloc est visible" ;
+       - bloc plus grand que l'ecran : "le bloc occupe 45 % de l'ecran".
+     Dans les deux cas cela correspond a ce que percoit le joueur. */
+  const RADAR_VISIBLE_RATIO = 0.45;
   let _radarVisible = false;
   const _visibilityWaiters = [];
 
-  /* Gele ou relance les animations CSS du sonar. */
+  /* Gele ou relance les animations du sonar. */
   function setRadarPaused(paused){
     const stage = document.getElementById('radarStage');
     if(stage) stage.classList.toggle('anim-idle', paused);
@@ -1652,31 +1660,61 @@
   }
 
   (function watchRadarVisibility(){
-    // On surveille le sonar, pas le bloc entier : c'est lui que le joueur
-    // regarde, et le bloc peut etre bien plus haut que l'ecran.
-    const target = document.getElementById('radarStage')
-                || document.getElementById('equipagesEnMer');
-    if(!target || typeof IntersectionObserver !== 'function'){
-      _radarVisible = true;
-      return;
-    }
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(en => {
-        // Un sonar plus haut que l'ecran ne peut jamais atteindre 45 % :
-        // dans ce cas on se contente de le savoir a l'ecran.
-        const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-        const tall = en.boundingClientRect.height > vh * 0.9;
-        const onScreen = tall ? en.isIntersecting : en.intersectionRatio >= 0.45;
+    // On surveille le BLOC entier, pas seulement le sonar.
+    const target = document.getElementById('equipagesEnMer');
+    if(!target){ _radarVisible = true; return; }
 
-        if(onScreen === _radarVisible) return;
-        _radarVisible = onScreen;
-        setRadarPaused(!onScreen);
-        if(onScreen){
-          while(_visibilityWaiters.length) _visibilityWaiters.shift()();
-        }
-      });
-    }, { threshold: [0, 0.2, 0.45, 0.7, 1] });
-    io.observe(target);
+    /* Part du bloc reellement sous les yeux, rapportee a la plus petite
+       des deux hauteurs (bloc / ecran) — voir l'explication ci-dessus. */
+    function visibleRatio(){
+      const r = target.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      if(!vh || !r.height) return 0;
+      const visible = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+      if(visible <= 0) return 0;
+      return visible / Math.min(r.height, vh);
+    }
+
+    function apply(){
+      const onScreen = visibleRatio() >= RADAR_VISIBLE_RATIO;
+      if(onScreen === _radarVisible) return;
+      _radarVisible = onScreen;
+      setRadarPaused(!onScreen);
+      if(onScreen){
+        while(_visibilityWaiters.length) _visibilityWaiters.shift()();
+      }
+    }
+
+    /* Le pourcentage doit etre suivi en continu pendant le defilement.
+       Pour ne pas alourdir le scroll (et la batterie), l'ecoute n'est
+       active QUE lorsque le bloc est au moins un peu a l'ecran ; des qu'il
+       en sort completement, on se contente de l'observateur. */
+    let ticking = false;
+    function onMove(){
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { ticking = false; apply(); });
+    }
+    let listening = false;
+    function listen(on){
+      if(on === listening) return;
+      listening = on;
+      const fn = on ? window.addEventListener : window.removeEventListener;
+      fn.call(window, 'scroll', onMove, { passive:true });
+      fn.call(window, 'resize', onMove, { passive:true });
+      fn.call(window, 'orientationchange', onMove, { passive:true });
+    }
+
+    if(typeof IntersectionObserver === 'function'){
+      new IntersectionObserver(entries => {
+        entries.forEach(en => listen(en.isIntersecting));
+        apply();
+      }, { threshold: [0, 0.01] }).observe(target);
+    }else{
+      listen(true);   // vieux navigateur : on suit le defilement en continu
+    }
+
+    apply();          // etat de depart (page rechargee deja defilee)
   })();
 
   function waitForRadarVisible(){
