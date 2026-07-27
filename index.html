@@ -1386,7 +1386,12 @@
   /* Le navigateur bloque le son tant que l'utilisateur n'a rien touche, et
      l'animation n'a d'interet que si quelqu'un regarde : on attend donc un
      premier clic avant de lancer l'annonce des equipages. */
-  const _INTERACTION_EVENTS = ['pointerdown','touchstart','keydown','click'];
+  /* Un simple scroll suffit a debloquer l'annonce (au meme titre qu'un
+     clic ou une touche). Note : les navigateurs n'autorisent la lecture
+     audio qu'apres un VRAI geste (clic/tap/touche) ; apres un simple
+     scroll l'alarme peut rester muette, mais l'animation se deroule
+     normalement grace au repli de playAlarmOnce(). */
+  const _INTERACTION_EVENTS = ['scroll','wheel','pointerdown','touchstart','touchmove','keydown','click'];
   function markUserInteraction(){
     if(_userInteracted) return;
     _userInteracted = true;
@@ -1400,6 +1405,31 @@
   function waitForUserInteraction(){
     if(_userInteracted) return Promise.resolve();
     return new Promise(resolve => _interactionWaiters.push(resolve));
+  }
+
+  /* --- Visibilite du bloc "Equipages en plongeon" ---
+     L'annonce ne demarre que si le bloc est reellement a l'ecran : inutile
+     de reveler des equipages que personne ne regarde. */
+  let _radarVisible = false;
+  const _visibilityWaiters = [];
+  (function watchRadarVisibility(){
+    const target = document.getElementById('equipagesEnMer');
+    if(!target){ _radarVisible = true; return; }
+    if(typeof IntersectionObserver !== 'function'){ _radarVisible = true; return; }
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        _radarVisible = en.isIntersecting;
+        if(_radarVisible){
+          while(_visibilityWaiters.length) _visibilityWaiters.shift()();
+        }
+      });
+    }, { threshold: 0.35 });
+    io.observe(target);
+  })();
+
+  function waitForRadarVisible(){
+    if(_radarVisible) return Promise.resolve();
+    return new Promise(resolve => _visibilityWaiters.push(resolve));
   }
 
   /* Angle courant du balayage, lu directement sur la matrice de transformation
@@ -1640,8 +1670,10 @@
     if(_revealRunning || !_revealQueue.length) return;
     _revealRunning = true;
 
-    // Condition 1 : rien ne demarre tant que l'ecran n'a pas ete touche.
+    // Condition 1 : une interaction (scroll, clic, touche) a eu lieu.
     await waitForUserInteraction();
+    // Condition 2 : le bloc "Equipages en plongeon" est visible a l'ecran.
+    await waitForRadarVisible();
 
     const stage = $('radarStage');
     const box = $('teamsBox');
@@ -1655,6 +1687,9 @@
       // a) Le radar repasse en grand pour que le point soit bien visible
       if(stage) stage.classList.add('radar-scanning');
       setRadarStatus('Contact sonar : ' + (team.teamName || 'equipage'));
+
+      // Si l'utilisateur a scrolle ailleurs, on patiente jusqu'a son retour.
+      await waitForRadarVisible();
 
       const blipIdx = assignBlip(code);
       const blipEl = $('radarBlip' + blipIdx);
