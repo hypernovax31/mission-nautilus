@@ -102,10 +102,13 @@
       border:4px solid rgba(245,176,39,.46);
       opacity:.26;
     }
-    .top-bar{position:fixed;top:14px;right:14px;z-index:10000;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 28px)}
-    .top-bar>*{margin:0}
-    .sonar-toggle{position:static;background:rgba(0,0,0,.42);color:rgba(255,255,255,.82);border:1px solid rgba(245,176,39,.45);border-radius:999px;padding:8px 11px;font-size:11px;font-weight:800;letter-spacing:.03em;min-height:auto;width:auto;margin:0;box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
-    .install-pwa-btn{position:static;background:linear-gradient(135deg,#f5b027,#d89020);color:#111;border:2px solid #fff;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:1000;letter-spacing:.02em;min-height:auto;width:auto;margin:0;box-shadow:0 6px 20px rgba(245,176,39,.55),0 0 0 0 rgba(245,176,39,.4);backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:5px;animation:pwaBtnPulse 2.2s ease-in-out infinite;text-transform:uppercase}
+    .top-bar{position:fixed;top:14px;right:14px;z-index:10000;display:flex;align-items:stretch;gap:8px;flex-wrap:nowrap;justify-content:flex-end;width:calc(100vw - 28px);max-width:calc(2*var(--tb-btn-w) + 8px);pointer-events:none;--tb-btn-w:clamp(104px,30vw,170px)}
+    .top-bar>*{margin:0;pointer-events:auto}
+    .top-bar .tb-short{display:none}
+    .top-bar .tb-long{display:inline}
+    .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{box-sizing:border-box;flex:1 1 0;min-width:0;max-width:var(--tb-btn-w);padding:9px 10px;border-width:2px;border-style:solid;border-radius:999px;font-size:clamp(10px,2.5vw,12px);font-weight:1000;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;min-height:auto;position:static}
+    .sonar-toggle{background:rgba(0,0,0,.42);color:rgba(255,255,255,.82);border-color:rgba(245,176,39,.45);box-shadow:0 8px 18px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
+    .install-pwa-btn{background:linear-gradient(135deg,#f5b027,#d89020);color:#111;border-color:#fff;box-shadow:0 6px 20px rgba(245,176,39,.55),0 0 0 0 rgba(245,176,39,.4);backdrop-filter:blur(6px);animation:pwaBtnPulse 2.2s ease-in-out infinite}
     /* Banniere d'onboarding iOS : invitation persistante en bas */
     .ios-install-banner{position:fixed;left:12px;right:12px;bottom:12px;z-index:9998;background:linear-gradient(135deg,#0a2a40,#061524);border:1px solid rgba(245,176,39,.55);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 18px 36px rgba(0,0,0,.5);color:#e9f7ff;font-size:13px;line-height:1.45;backdrop-filter:blur(8px);animation:bannerSlideUp .45s cubic-bezier(.2,.9,.3,1.2)}
     .ios-install-banner .b-ico{font-size:24px;flex:0 0 24px}
@@ -128,9 +131,19 @@
     /* Animation identique (plus grande) pour le hero-cta 'Engagez-vous' */
     @keyframes heroCtaPulse{0%,100%{box-shadow:0 14px 30px rgba(245,176,39,.28),0 0 0 0 rgba(245,176,39,0)}50%{box-shadow:0 14px 30px rgba(245,176,39,.28),0 0 0 18px rgba(245,176,39,.42)}}
     .hero-cta.pulse-engage{animation:heroCtaPulse 2.4s ease-in-out infinite}
+    @media(max-width:560px){
+      /* Libelles courts : evite la troncature, les 2 boutons restent egaux */
+      .top-bar .tb-long{display:none}
+      .top-bar .tb-short{display:inline}
+    }
     @media(max-width:520px){
-      .install-pwa-btn{font-size:11px;padding:7px 11px}
-      .install-pwa-btn span{font-size:11px}
+      /* Les 2 boutons restent strictement identiques et sur une seule ligne */
+      .top-bar{top:10px;right:10px;gap:6px;width:calc(100vw - 20px);max-width:calc(2*var(--tb-btn-w) + 6px);--tb-btn-w:clamp(104px,30vw,140px)}
+      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{padding:8px 8px;letter-spacing:0}
+    }
+    @media(max-width:360px){
+      .top-bar{--tb-btn-w:clamp(92px,29vw,120px)}
+      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{font-size:9.5px;padding:7px 6px}
     }
     /* Modale QR plein ecran avec bouton "Partager ce QR" pour mobile */
     .qr-modal-share{padding:10px 18px;background:linear-gradient(135deg,#075c39,#0a8a5a);color:#fff;border:0;border-radius:999px;font-weight:1000;font-size:14px;margin-top:16px;cursor:pointer;letter-spacing:.04em}
@@ -1098,8 +1111,8 @@
   <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
 </audio>
 <div class="top-bar">
-  <button id="installPwaBtn" class="install-pwa-btn" type="button" title="Installer l'app sur mon écran d'accueil">📲 Installer l'app</button>
-  <button id="sonarToggleBtn" class="sonar-toggle" type="button">Activer le sonar</button>
+  <button id="installPwaBtn" class="install-pwa-btn" type="button" title="Installer l'app sur mon écran d'accueil">📲&nbsp;<span class="tb-long">Installer&nbsp;l'app</span><span class="tb-short">Installer</span></button>
+  <button id="sonarToggleBtn" class="sonar-toggle" type="button"><span class="tb-long">Activer le sonar</span><span class="tb-short">Sonar</span></button>
 </div>
 <div id="iosInstallBanner" class="ios-install-banner" style="display:none" role="dialog" aria-live="polite">
   <div class="b-ico">📲</div>
@@ -2942,7 +2955,16 @@ function qrDataUri(text, opts){
   function setSonarButtonState(isActive){
     const btn = document.getElementById('sonarToggleBtn');
     if(!btn) return;
-    btn.textContent = isActive ? 'Sonar activé' : 'Activer le sonar';
+    // On remplace le contenu des 2 libelles (long + court) sans casser
+    // la structure responsive : textContent effacerait les <span>.
+    const longEl = btn.querySelector('.tb-long');
+    const shortEl = btn.querySelector('.tb-short');
+    if(longEl && shortEl){
+      longEl.textContent = isActive ? 'Sonar activé' : 'Activer le sonar';
+      shortEl.textContent = isActive ? 'Actif' : 'Sonar';
+    }else{
+      btn.textContent = isActive ? 'Sonar activé' : 'Activer le sonar';
+    }
     btn.classList.toggle('active', isActive);
   }
 
