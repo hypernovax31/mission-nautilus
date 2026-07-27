@@ -235,7 +235,13 @@
     .top-bar{position:fixed;top:14px;right:14px;z-index:10000;display:flex;align-items:stretch;gap:8px;flex-wrap:nowrap;justify-content:flex-end;width:calc(100vw - 28px);max-width:calc(2*var(--tb-btn-w) + 8px);pointer-events:none;--tb-btn-w:clamp(104px,30vw,170px)}
     .top-bar>*{margin:0;pointer-events:auto}
     .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{box-sizing:border-box;flex:1 1 0;min-width:0;max-width:var(--tb-btn-w);padding:9px 10px;border-width:2px;border-style:solid;border-radius:999px;font-size:clamp(10px,2.5vw,12px);font-weight:1000;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;min-height:auto;position:static}
-    .sonar-toggle{background:rgba(0,0,0,.62);color:rgba(255,255,255,.88);border-color:rgba(245,176,39,.45);box-shadow:0 8px 18px rgba(0,0,0,.18)}.sonar-toggle:hover{background:rgba(245,176,39,.92);color:#111}.sonar-toggle.active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
+    /* Bouton sonar : 2 etats seulement, aucun effet de survol.
+       eteint = noir / allume = vert. */
+    .sonar-toggle{background:rgba(0,0,0,.62);color:rgba(255,255,255,.88);border-color:rgba(245,176,39,.45);box-shadow:0 8px 18px rgba(0,0,0,.18)}
+    .sonar-toggle:hover,.sonar-toggle:focus,.sonar-toggle:focus-visible,.sonar-toggle:active{background:rgba(0,0,0,.62);color:rgba(255,255,255,.88);border-color:rgba(245,176,39,.45)}
+    .sonar-toggle.active,.sonar-toggle.active:hover,.sonar-toggle.active:focus,.sonar-toggle.active:focus-visible,.sonar-toggle.active:active{background:rgba(18,138,90,.85);color:#fff;border-color:rgba(255,255,255,.3)}
+    /* neutralise le survol generique des boutons (brillance + petit saut) */
+    .sonar-toggle:hover,.sonar-toggle:active,.sonar-toggle.active:hover,.sonar-toggle.active:active{filter:none;transform:none}
     .install-pwa-btn{background:linear-gradient(135deg,#f5b027,#d89020);color:#111;border-color:transparent}
     /* Reglages de l'animation, en 0,2,0 pour passer devant .btn-pulse */
     .install-pwa-btn.btn-pulse{--btn-shadow:0 6px 20px rgba(245,176,39,.55)}
