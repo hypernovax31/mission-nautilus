@@ -188,15 +188,6 @@
       mix-blend-mode:multiply;
       opacity:.42;
     }
-    .hero-subtitle{
-      position:relative;
-      z-index:1;
-      max-width:min(1280px,100%);
-      margin:22px 0 0;
-      color:#d9edf7;
-      font-size:clamp(16px,2.1vw,20px);
-      line-height:1.55;
-    }
     main{
       position:relative;
       z-index:2;
@@ -258,7 +249,7 @@
 
     /* Header : sur écrans étroits, le titre ne déborde pas */
     .hero-title{word-break:break-word;overflow-wrap:break-word}
-    .hero-subtitle{font-size:clamp(14px,2.1vw,20px)}
+    
 
     /* Chrono O2 : ne casse pas sur 320px */
     .countdown{font-size:clamp(18px,5.5vw,44px);letter-spacing:.01em}
@@ -462,7 +453,6 @@
       .hero-kicker{font-size:10px;padding:6px 10px}
       .hero-title{margin-top:10px;font-size:clamp(38px,8vh,72px);line-height:.9;max-width:100%}
       .hero-line{margin-top:10px;font-size:clamp(18px,4.4vh,30px);line-height:1.1}
-      .hero-subtitle{margin-top:10px;font-size:14px;line-height:1.35;max-width:920px}
       .hero-actions{margin-top:14px}
       .hero-cta{padding:11px 16px;min-height:42px;font-size:13px}
       main{padding-top:14px;gap:14px;margin-bottom:60px}
@@ -476,7 +466,6 @@
       .sonar-screen{width:120px;height:120px;min-width:120px;flex-basis:120px}.sonar-loader{padding:18px 12px}
     }
     @media (orientation:landscape) and (max-height:430px){
-      .hero-subtitle{display:none}
       .hero-title{font-size:clamp(34px,10vh,56px)}
       .hero-line{font-size:clamp(16px,5vh,24px)}
       .mission-step{width:min(100%,130px)!important;max-width:130px}
@@ -1146,14 +1135,13 @@
   <div class="hero-kicker">Grand jeu interne · Mission confidentielle</div>
   <h1 class="hero-title">Mission Nautilus</h1>
   <div class="hero-line">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</div>
-  <p class="hero-subtitle">Des transmissions ont refait surface dans le magasin. Rejoignez un équipage, explorez les rayons, décryptez les mini-jeux et ouvrez les QR verrouillés avant que l’oxygène ne manque.</p>
   <div class="hero-actions"><button class="hero-cta pulse-engage" id="launchMissionBtn">⚓ Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la mission</button></div>
 </header>
 <main>
   <section class="card intro-card">
     <h2>ORDRE DE MISSION</h2>
     <div class="body">
-      <p class="intro-text typewriter" id="missionOrderText" data-text="Plongez dans les abysses du magasin : votre équipage et vous devez suivre la trace du Nautilus. Activez votre sonar et faites remonter votre sous-marin avant que l&#39;oxygène ne manque. L&#39;atteinte de chaque palier permet de débloquer le suivant."><span id="missionOrderTyping"></span><span id="missionOrderCaret" class="typewriter-caret">▌</span></p>
+      <p class="intro-text typewriter" id="missionOrderText" data-text="Des transmissions ont refait surface dans les abysses du magasin : le Nautilus a laissé sa trace. Rejoignez un équipage, activez votre sonar et explorez les rayons pour décrypter les mini-jeux et ouvrir les QR verrouillés. Chaque palier atteint débloque le suivant : faites remonter votre sous-marin avant que l&#39;oxygène ne manque."><span id="missionOrderTyping"></span><span id="missionOrderCaret" class="typewriter-caret">▌</span></p>
       <div class="mission-steps" id="ruleCards">
         <button type="button" class="mission-step active" data-rule="embark"><span class="num">1</span><b>Embarquez</b></button>
         <button type="button" class="mission-step" data-rule="solve"><span class="num">2</span><b>Décryptez</b></button>
