@@ -146,18 +146,27 @@
       .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{font-size:9.5px;padding:7px 6px}
     }
     /* --- Encart d'embarquement : code matelot + QR alignes --- */
-    .matelot-reveal{display:flex;gap:18px;align-items:stretch;justify-content:center;flex-wrap:wrap;margin:16px 0 12px}
-    .matelot-reveal-code{flex:1 1 220px;min-width:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
-    .matelot-reveal-label{color:#5d6d78;letter-spacing:.05em;font-weight:900;margin:0}
-    .matelot-reveal-code .code{font-size:clamp(20px,4.6vw,26px);padding:14px 22px;margin:0}
-    .matelot-qr-card{flex:1 1 220px;min-width:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px}
+    .matelot-card{padding:clamp(16px,3.5vw,22px)}
+    .matelot-welcome{margin:0 0 14px;font-size:clamp(15px,2.4vw,17px);line-height:1.45}
+    /* Alerte : le message le plus important de l'ecran */
+    .matelot-alert{display:flex;gap:12px;align-items:flex-start;margin:0 0 18px;padding:14px 16px;
+      background:#fff4f2;border:2px solid #e5776c;border-left-width:6px;border-radius:12px;
+      color:#8c1d11;font-weight:800;line-height:1.5;font-size:clamp(13px,2.2vw,14.5px)}
+    .matelot-alert-ico{flex:0 0 auto;font-size:20px;line-height:1.2}
+    .matelot-reveal{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch;margin:0}
+    .matelot-reveal-code{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+      text-align:center;padding:16px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px;min-width:0}
+    .matelot-reveal-label{margin:0;color:#5d6d78;letter-spacing:.06em;font-weight:900;
+      text-transform:uppercase;font-size:clamp(10px,1.9vw,12px)}
+    .matelot-reveal-code .code{font-size:clamp(19px,4.4vw,27px);padding:14px 18px;margin:0;max-width:100%;
+      overflow-wrap:anywhere}
+    .matelot-qr-card{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px}
     .matelot-qr-thumb{width:132px;height:132px;flex:0 0 auto;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
     .matelot-qr-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
     .matelot-qr-actions button{width:auto!important;flex:0 0 auto}
-    .matelot-reveal-warn{margin-top:4px;color:#9b1111;font-weight:900;line-height:1.5}
-    @media(max-width:520px){
-      .matelot-reveal{gap:12px}
-      .matelot-reveal-code,.matelot-qr-card{flex:1 1 100%}
+    @media(max-width:560px){
+      .matelot-reveal{grid-template-columns:1fr;gap:12px}
+      .matelot-alert{gap:10px;padding:12px 13px}
       .matelot-qr-actions button{flex:1 1 auto}
     }
     /* Modale QR plein ecran avec bouton "Partager ce QR" pour mobile */
@@ -740,14 +749,15 @@
     /* ===== ANIMATION RADAR HOLLYWOOD ===== */
     .radar-stage{
       display:flex;flex-direction:column;align-items:center;justify-content:center;
-      padding:24px 16px;margin-bottom:18px;
+      width:100%;box-sizing:border-box;
+      padding:clamp(20px,4vw,34px) clamp(14px,3vw,24px);margin-bottom:18px;
       background:linear-gradient(135deg,rgba(5,16,28,.96),rgba(11,52,78,.96));
       border:1px solid rgba(120,255,180,.28);border-radius:22px;color:#baffd2;
       box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18);
-      min-height:240px;
+      min-height:clamp(300px,52vw,420px);
     }
     .radar-stage.radar-collapsed{
-      min-height:0;padding:14px 16px;margin-bottom:12px;
+      min-height:0 !important;padding:14px 16px;margin-bottom:12px;
       transition:min-height .8s ease,padding .8s ease,margin .8s ease,opacity .6s ease;
     }
     /* Quand le radar est en mode "veille" (pas d'equipe avec membres) : pulsation douce */
@@ -841,14 +851,14 @@
     @keyframes imBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
 
     .radar-stage.radar-collapsed .sonar-loader{padding:14px}
-    .radar-stage.radar-collapsed .radar-screen-big{width:120px;height:120px;min-width:120px;flex-basis:120px}
+    .radar-stage.radar-collapsed .radar-screen-big{width:140px;height:140px;min-width:140px;flex-basis:140px}
     .radar-stage.radar-collapsed .radar-sweep-big{animation-duration:2s}
     .radar-stage.radar-collapsed .radar-blip{display:none}
     .radar-stage.radar-collapsed .radar-grid{opacity:.3}
     .radar-stage.radar-fading{opacity:0;pointer-events:none}
     .radar-big{padding:0;background:transparent;border:0;box-shadow:none;width:100%}
     .radar-screen-big{
-      position:relative;width:min(70vw,240px);height:min(70vw,240px);min-width:200px;flex:0 0 240px;
+      position:relative;width:min(78vw,340px);height:min(78vw,340px);min-width:220px;flex:0 0 auto;
       aspect-ratio:1/1;border-radius:50%;
       background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.10),rgba(0,0,0,.35) 75%),#02120d;
       border:3px solid rgba(91,255,156,.85);
@@ -870,7 +880,7 @@
       border-radius:2px;
     }
     .radar-sweep-big:after{
-      content:"";position:absolute;left:0;top:-95px;width:170px;height:190px;
+      content:"";position:absolute;left:0;top:-50%;width:100%;height:200%;
       background:conic-gradient(from -25deg,rgba(91,255,156,.32),transparent 50deg);
       transform-origin:left center;pointer-events:none;
     }
@@ -896,39 +906,26 @@
     @keyframes radarRotateFast{to{transform:rotate(360deg)}}
 
     /* Status du radar : texte aligne a gauche + points animes a droite */
+    /* Statut du radar : boite de taille FIXE. Le message change en fondu
+       a l'interieur, sans jamais deplacer le contenu autour. */
     #radarStatus{
-      display:inline-flex !important;
-      align-items:baseline;
-      gap:6px;
-      text-align:left !important;
-      max-width:min(92vw, 520px);
+      display:flex !important;
+      align-items:center;
+      justify-content:center;
+      width:min(92%, 520px);
+      min-height:2.6em;
+      margin:0 auto;
       padding:0 6px;
+      text-align:center !important;
+      white-space:normal;
     }
     #radarStatus .radar-msg{
-      flex:0 0 auto;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      display:block;
+      width:100%;
+      transition:opacity .28s ease;
+      overflow-wrap:anywhere;
     }
-    #radarStatus .radar-dots{
-      flex:0 0 auto;
-      display:inline-block;
-      min-width:1.6em;
-      text-align:left;
-      letter-spacing:.1em;
-      color:#baffd2;
-      font-weight:1000;
-    }
-    #radarStatus .radar-dots::after{
-      content:"";
-      animation:radarDotCycle 1.6s steps(4,end) infinite;
-    }
-    @keyframes radarDotCycle{
-      0%{content:""}
-      25%{content:"."}
-      50%{content:".."}
-      75%,100%{content:"..."}
-    }
+    #radarStatus.radar-msg-out .radar-msg{opacity:0}
 
     @keyframes centerPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}50%{transform:translate(-50%,-50%) scale(1.4);opacity:.7}}
 
@@ -1240,7 +1237,7 @@
             <div class="radar-blip" id="radarBlip5"></div>
             <div class="radar-center"></div>
           </div>
-          <div class="sonar-text" id="radarStatus"><span class="radar-msg" id="radarMsg">Balayage des fonds marins</span><span class="radar-dots" aria-hidden="true"></span></div>
+          <div class="sonar-text" id="radarStatus"><span class="radar-msg" id="radarMsg">Balayage des fonds marins</span></div>
         </div>
       </div>
       <div id="teamsBox" class="teamlist"></div>
@@ -1363,108 +1360,21 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  /* Anciens identifiants d'equipe a nettoyer dans Firestore.
-     Depuis l'abandon des codes secrets, l'identifiant d'une equipe est son
-     nom (NEMO, NAUTILUS, ...). Les anciens docs CAPITAINE/SOUSMARIN/... sont
-     supprimes une fois leur contenu migre (voir migrateLegacyTeamCodes). */
-  const OBSOLETE_TEAM_CODES = ['CAPITAINE', 'SOUSMARIN', 'DOCTEUR', 'HARPON', 'TENTACULE', 'BALEINE', 'GEANT'];
-
-  /* Correspondance ancien identifiant -> nouveau (= nom de l'equipe). */
-  const LEGACY_TEAM_MAP = {
-    CAPITAINE: 'NEMO',
-    SOUSMARIN: 'NAUTILUS',
-    DOCTEUR:   'ARONNAX',
-    HARPON:    'NEDLAND',
-    TENTACULE: 'CALAMAR'
-  };
-  /**
-   * Migration : recopie teams/CAPITAINE -> teams/NEMO, etc.
-   * Transfere la progression, les membres, la sous-collection matelots et
-   * remet a jour l'index global matelots/{code}. Idempotente : si la cible
-   * existe deja avec des membres, on ne touche a rien.
-   * L'ancien doc est ensuite supprime par cleanupObsoleteTeams().
-   */
-  async function migrateLegacyTeamCodes(){
-    for(const [oldCode, newCode] of Object.entries(LEGACY_TEAM_MAP)){
-      try{
-        const oldRef = doc(db,'teams',oldCode);
-        const oldSnap = await getDoc(oldRef);
-        if(!oldSnap.exists()) continue;
-
-        const oldData = oldSnap.data();
-        const newRef = doc(db,'teams',newCode);
-        const newSnap = await getDoc(newRef);
-        const target = newSnap.exists() ? newSnap.data() : null;
-
-        // On n'ecrase jamais une equipe cible qui a deja des membres.
-        if(!target || !(target.members || []).length){
-          const def = TEAM_DEFS.find(t => t.code === newCode);
-          await setDoc(newRef, {
-            ...oldData,
-            teamCode: newCode,
-            teamName: def ? def.name : (oldData.teamName || newCode),
-            migratedFrom: oldCode,
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-
-          // Sous-collection matelots + index global
-          const mats = await getDocs(collection(db,'teams',oldCode,'matelots'));
-          for(const d of mats.docs){
-            const m = d.data();
-            const codeMatelot = m.codeMatelot || d.id;
-            await setDoc(doc(db,'teams',newCode,'matelots',codeMatelot),
-              { ...m, teamCode: newCode }, { merge: true });
-            await setDoc(doc(db,'matelots',codeMatelot),
-              { teamCode: newCode }, { merge: true }).catch(() => {});
-            await deleteDoc(d.ref).catch(() => {});
-          }
-          // Matelots presents seulement dans members[]
-          for(const m of (oldData.members || [])){
-            if(m.codeMatelot){
-              await setDoc(doc(db,'matelots',m.codeMatelot),
-                { teamCode: newCode }, { merge: true }).catch(() => {});
-            }
-          }
-          console.log(`[Migration] ${oldCode} -> ${newCode}`);
-        }
-      }catch(err){
-        console.warn(`[Migration] Echec ${oldCode} :`, err);
-      }
-    }
-  }
-
+  /* Supprime les equipes retirees via le panneau admin (game/config.obsoleteTeams),
+     pour qu'elles ne soient pas recreees au chargement suivant. */
   async function cleanupObsoleteTeams(){
-    // 1) hard-coded legacy
-    for(const code of OBSOLETE_TEAM_CODES){
-      try{
-        const ref = doc(db, 'teams', code);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          await deleteDoc(ref);
-          console.log(`[Migration] Supprimé équipe obsolète : ${code}`);
-        }
-      } catch(err){
-        console.warn(`[Migration] Échec suppression ${code} :`, err);
-      }
-    }
-    // 2) custom obsolete (équipes supprimées via panneau admin)
     try{
       const cfgSnap = await getDoc(doc(db,'game','config'));
-      if(cfgSnap.exists()){
-        const cfg = cfgSnap.data();
-        const obsolete = Array.isArray(cfg.obsoleteTeams) ? cfg.obsoleteTeams : [];
-        for(const code of obsolete){
-          if(OBSOLETE_TEAM_CODES.includes(code)) continue; // déjà fait
-          const ref = doc(db, 'teams', code);
-          const snap = await getDoc(ref);
-          if(snap.exists()){
-            await deleteDoc(ref);
-            console.log(`[Migration] Supprimé équipe custom obsolète : ${code}`);
-          }
-        }
+      if(!cfgSnap.exists()) return;
+      const obsolete = cfgSnap.data().obsoleteTeams;
+      if(!Array.isArray(obsolete) || !obsolete.length) return;
+      for(const code of obsolete){
+        const ref = doc(db, 'teams', code);
+        const snap = await getDoc(ref);
+        if(snap.exists()) await deleteDoc(ref);
       }
     }catch(err){
-      console.warn('[Migration] obsoleteTeams custom:', err);
+      console.warn('cleanupObsoleteTeams:', err);
     }
   }
 
@@ -1616,27 +1526,36 @@
   let _radarStatusInterval = null;
   let _knownTeams = {}; // teamCode -> { hasMembers: bool, revealedAt: number }
 
+  /* Change le message en fondu : la boite garde une taille fixe (CSS),
+     donc rien ne bouge autour pendant le changement. */
   function setRadarStatus(msg){
+    const box = $('radarStatus');
     const el = $('radarMsg');
-    if(el) el.textContent = msg;
+    if(!el) return;
+    if(!box){ el.textContent = msg; return; }
+    box.classList.add('radar-msg-out');
+    setTimeout(() => {
+      el.textContent = msg;
+      box.classList.remove('radar-msg-out');
+    }, 280);
   }
 
   function startRadarStatusLoop(){
     if(_radarStatusInterval) return; // deja en cours
     const messages = [
-      'Balayage des fonds marins...',
-      'Detection des signaux en surface...',
-      'Identification des coques...',
-      'Reception des emissions des matelots...',
-      'Compilation des donnees...',
-      'Aucun signal detecte...',
-      'En attente de matelots...'
+      'Balayage des fonds marins',
+      'Détection des signaux en surface',
+      'Identification des coques',
+      'Réception des émissions des matelots',
+      'Compilation des données',
+      'Aucun signal détecté',
+      'En attente de matelots'
     ];
     let i = 0;
     _radarStatusInterval = setInterval(() => {
       i = (i + 1) % messages.length;
       setRadarStatus(messages[i]);
-    }, 2200);
+    }, 2600);
   }
 
   function stopRadarStatusLoop(){
@@ -1709,14 +1628,14 @@
       if(stage && !stage.classList.contains('radar-collapsed')){
         stage.classList.add('radar-collapsed');
         stopRadarStatusLoop();
-        setRadarStatus('Signaux detectes...');
+        setRadarStatus('Signaux détectés');
       }
     }else{
       // Aucune equipe avec membres : radar en mode "veille" (pulsation continue)
       if(stage && stage.classList.contains('radar-collapsed')){
         stage.classList.remove('radar-collapsed');
         startRadarStatusLoop();
-        setRadarStatus('Balayage des fonds marins...');
+        setRadarStatus('Balayage des fonds marins');
       }else if(stage && !stage.classList.contains('radar-standby')){
         stage.classList.add('radar-standby');
       }
@@ -2454,16 +2373,19 @@ function qrDataUri(text, opts){
       const resumeLink = matelotCode;
       const qrUrl = qrDataUri(resumeLink, { ecl: 'H' });
       $('registerMsg').innerHTML =
-        '<div class="notice success" style="padding:18px 20px">' +
-          '<b>' + esc(name) + '</b> embarque à bord du <b>Nautilus</b> avec l\'équipe <b>' + esc(chosen.teamName) + '</b>.' +
+        '<div class="notice success matelot-card">' +
+          '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
+          '<div class="matelot-alert" role="alert">' +
+            '<span class="matelot-alert-ico" aria-hidden="true">&#x26A0;</span>' +
+            '<span>Ce code est <b>personnel</b> et à <b>usage unique</b> : il ne te sera <b>plus jamais affiché</b>.<br>Note-le ou scanne le QR.</span>' +
+          '</div>' +
           '<div class="matelot-reveal">' +
             '<div class="matelot-reveal-code">' +
-              '<div class="small matelot-reveal-label">&#x2693; TON CODE MATELOT</div>' +
+              '<div class="matelot-reveal-label">Ton Code Matelot</div>' +
               '<div class="code uppercase" id="matelotCodeDisplay">' + esc(matelotCode) + '</div>' +
             '</div>' +
             matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
           '</div>' +
-          '<div class="small matelot-reveal-warn">&#x26A0; Ce code est <b>personnel</b> et à <b>usage unique</b> : il ne te sera plus jamais affiché. Note-le ou scanne le QR.</div>' +
         '</div>';
       $('memberName').value = '';
       renderGame(false);
@@ -3907,10 +3829,7 @@ function qrDataUri(text, opts){
     if($('matelotCodeInput')) $('matelotCodeInput').value = '';
 
     /* Nettoyage des anciennes équipes (codes obsolètes) avant tout */
-    // ORDRE IMPORTANT : migrer AVANT de nettoyer, sinon les anciennes
-    // equipes seraient supprimees avec leur contenu.
-    try { await migrateLegacyTeamCodes(); } catch(e) { console.warn('Migration legacy error:', e); }
-    try { await cleanupObsoleteTeams(); } catch(e) { console.warn('Migration error:', e); }
+    try { await cleanupObsoleteTeams(); } catch(e) { console.warn('cleanup error:', e); }
 
     await loadMissionConfig();
     updateCountdown();
