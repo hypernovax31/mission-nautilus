@@ -145,6 +145,21 @@
       .top-bar{--tb-btn-w:clamp(92px,29vw,120px)}
       .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{font-size:9.5px;padding:7px 6px}
     }
+    /* --- Encart d'embarquement : code matelot + QR alignes --- */
+    .matelot-reveal{display:flex;gap:18px;align-items:stretch;justify-content:center;flex-wrap:wrap;margin:16px 0 12px}
+    .matelot-reveal-code{flex:1 1 220px;min-width:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
+    .matelot-reveal-label{color:#5d6d78;letter-spacing:.05em;font-weight:900;margin:0}
+    .matelot-reveal-code .code{font-size:clamp(20px,4.6vw,26px);padding:14px 22px;margin:0}
+    .matelot-qr-card{flex:1 1 220px;min-width:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px}
+    .matelot-qr-thumb{width:132px;height:132px;flex:0 0 auto;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
+    .matelot-qr-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+    .matelot-qr-actions button{width:auto!important;flex:0 0 auto}
+    .matelot-reveal-warn{margin-top:4px;color:#9b1111;font-weight:900;line-height:1.5}
+    @media(max-width:520px){
+      .matelot-reveal{gap:12px}
+      .matelot-reveal-code,.matelot-qr-card{flex:1 1 100%}
+      .matelot-qr-actions button{flex:1 1 auto}
+    }
     /* Modale QR plein ecran avec bouton "Partager ce QR" pour mobile */
     .qr-modal-share{padding:10px 18px;background:linear-gradient(135deg,#075c39,#0a8a5a);color:#fff;border:0;border-radius:999px;font-weight:1000;font-size:14px;margin-top:16px;cursor:pointer;letter-spacing:.04em}
     .qr-modal-share:hover{filter:brightness(1.1);transform:translateY(-1px)}
@@ -1433,9 +1448,10 @@
   const normalize=s=>String(s||'').trim().toUpperCase();
   const memberKey=name=>normalize(String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]/gi,''));
   const simple=s=>normalize(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''));
-  /* IMPORTANT : seul le code équipage (CAPITAINE/SOUSMARIN/DOCTEUR/HARPON/TENTACULE)
-     OU un éventuel crewCode permet de reprendre. Le nom affiché (Nemo/Nautilus/...)
-     NE PERMET PAS de rejoindre — c'est juste un label public. */
+  /* Convertit une saisie en identifiant technique d'equipe.
+     Les joueurs ne saisissent plus de code equipage : ils utilisent leur
+     Code Matelot personnel. Cette fonction ne sert plus qu'en interne
+     (panneau admin, migrations). */
   function teamCodeFromInput(value){
     const raw = String(value||'').trim();
     if(!raw) return '';
@@ -1443,25 +1459,10 @@
     // 1) match exact sur le code équipe
     const byCode = TEAM_DEFS.find(t => simple(t.code) === wanted);
     if(byCode) return byCode.code;
-    // 2) match sur crewCode (codes secrets générés, distincts du code équipe)
-    const byCrew = TEAM_DEFS.find(t => t.crewCode && simple(t.crewCode) === wanted);
-    if(byCrew) return byCrew.code;
-    // 3) sinon, on retourne tel quel (sera testé contre customTeams dans getTeam)
+    // 2) sinon, on retourne tel quel (sera teste contre customTeams dans getTeam)
     return raw;
   }
 
-  /* Génère un code équipage secret lisible : 4 lettres + tiret + 3 chiffres (ex: NEMO-742).
-     Distinct du code équipe (CAPITAINE/SOUSMARIN/...) qui reste l'identifiant technique.
-     Ici crewCode = code qui sera imprimé sur le QR et que le membre tape pour reprendre. */
-  function generateCrewCode(){
-    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // sans I/O pour éviter confusion
-    const digits = '23456789'; // sans 0/1
-    let s = '';
-    for(let i=0;i<4;i++) s += letters[Math.floor(Math.random()*letters.length)];
-    s += '-';
-    for(let i=0;i<3;i++) s += digits[Math.floor(Math.random()*digits.length)];
-    return s;
-  }
   function getLockHours(failCount){return Math.min(24, Math.pow(2, failCount));}
   function getLockedUntilISO(failCount){const d=new Date();d.setHours(d.getHours()+getLockHours(failCount));return d.toISOString();}
   function isLocked(team){return team?.status==='blocked'&&team.lockedUntil&&new Date(team.lockedUntil).getTime()>Date.now();}
@@ -1507,7 +1508,7 @@
       const ref=doc(db,'teams',t.code);
       const snap=await getDoc(ref);
       if(!snap.exists()){
-        await setDoc(ref,{teamCode:t.code,teamName:t.name,crewCode:generateCrewCode(),currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],members:[],onlinePlayers:{},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+        await setDoc(ref,{teamCode:t.code,teamName:t.name,currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],members:[],onlinePlayers:{},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
       }else{
         const data=snap.data();
         const patch={teamCode:t.code,teamName:t.name,updatedAt:new Date().toISOString()};
@@ -1516,18 +1517,6 @@
         if(data.failCount===undefined) patch.failCount=0;
         if(!data.currentStep) patch.currentStep='start';
         if(!data.status) patch.status='active';
-        // Génère un crewCode si manquant (code secret imprimé sur le QR)
-        if(!data.crewCode){
-          // collision-safe : vérifier qu'aucune autre équipe n'a déjà ce crewCode
-          let candidate, attempts=0;
-          do {
-            candidate = generateCrewCode();
-            attempts++;
-            const dup = allDefs.find(other => other.crewCode === candidate);
-            if(!dup) break;
-          } while(attempts < 20);
-          patch.crewCode = candidate;
-        }
         await updateDoc(ref,patch).catch(()=>{});
       }
     }
@@ -1539,16 +1528,6 @@
     // 1) essai direct par code équipe
     let snap=await getDoc(doc(db,'teams',cleanCode));
     if(snap.exists()) return {teamCode:cleanCode,...snap.data()};
-    // 2) sinon, recherche par crewCode (parcourt toutes les équipes)
-    try{
-      const all = await getDocs(collection(db,'teams'));
-      for(const d of all.docs){
-        const data = d.data();
-        if(data.crewCode && simple(data.crewCode) === simple(cleanCode)){
-          return {teamCode:data.teamCode || d.id, ...data};
-        }
-      }
-    }catch(e){ console.warn('getTeam crewCode lookup:', e); }
     return null;
   }
   async function saveTeam(team,patch){if(!team||!team.teamCode) throw new Error('Code Matelot manquant. Recharge la page.');const updated={...patch,updatedAt:new Date().toISOString()};await updateDoc(doc(db,'teams',team.teamCode),updated);currentTeam={...team,...updated};return currentTeam;}
@@ -2074,18 +2053,18 @@ function qrDataUri(text, opts){
    * pour un matelot venant d'etre inscrit.
    */
   function matelotQrCardHtml(code, name, teamName, qrUrl, resumeLink){
-    return '<div class="matelot-qr-card" style="margin:16px 0 6px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center">' +
-      '<div class="matelot-qr-thumb" data-qr-url="' + esc(qrUrl) + '" data-qr-code="' + esc(code) + '" style="width:120px;height:120px;flex:0 0 120px;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);cursor:pointer;display:flex;align-items:center;justify-content:center" title="Cliquer pour agrandir le QR">' +
-        '<img src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:100%;height:100%;display:block;image-rendering:pixelated" loading="eager" onerror="this.parentElement.innerHTML=\'<div style=&quot;font-size:11px;color:#9b1111;text-align:center;padding:6px&quot;>QR indisponible<br>(hors ligne)</div>\'">' +
+    // QR non cliquable : le bouton "Agrandir" fait deja ce travail.
+    // Les 3 boutons ont le meme style blanc (aucun n'est prioritaire).
+    const btn = 'background:#fff;color:#0b3a2b;border:1px solid #cbd7df;border-radius:10px;'
+      + 'padding:8px 12px;font-weight:900;font-size:12px;cursor:pointer;min-height:34px;margin:0';
+    return '<div class="matelot-qr-card">' +
+      '<div class="matelot-qr-thumb">' +
+        '<img src="' + esc(qrUrl) + '" alt="QR de ton Code Matelot" style="width:100%;height:100%;display:block;image-rendering:pixelated" loading="eager" onerror="this.parentElement.innerHTML=\'<div style=&quot;font-size:11px;color:#9b1111;text-align:center;padding:6px&quot;>QR indisponible</div>\'">' +
       '</div>' +
-      '<div style="flex:1;min-width:200px;text-align:left">' +
-        '<div class="small" style="margin-bottom:4px"><b>Scannez pour reprendre la mission</b></div>' +
-        '<div class="small" style="margin-bottom:8px;color:#52606a">Le QR contient un lien direct vers la page avec ton code pr\u00e9- rempli.</div>' +
-        '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
-          '<button type="button" class="matelot-action-notes" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="background:#f5b027;color:#111;border:0;border-radius:10px;padding:8px 12px;font-weight:900;font-size:12px;cursor:pointer;min-height:34px;margin:0">&#x1F4DD; Notes</button>' +
-          '<button type="button" class="matelot-action-copy" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="background:#fff;color:#075c39;border:1px solid #aee5ca;border-radius:10px;padding:8px 12px;font-weight:900;font-size:12px;cursor:pointer;min-height:34px;margin:0">&#x1F4CB; Copier</button>' +
-          '<button type="button" class="matelot-action-viewqr" data-qr-url="' + esc(qrUrl) + '" data-code="' + esc(code) + '" style="background:#fff;color:#0b3a2b;border:1px solid #cbd7df;border-radius:10px;padding:8px 12px;font-weight:900;font-size:12px;cursor:pointer;min-height:34px;margin:0">&#x1F50D; Agrandir</button>' +
-        '</div>' +
+      '<div class="matelot-qr-actions">' +
+        '<button type="button" class="matelot-action-viewqr" data-qr-url="' + esc(qrUrl) + '" data-code="' + esc(code) + '" style="' + btn + '">&#x1F50D; Agrandir</button>' +
+        '<button type="button" class="matelot-action-copy" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="' + btn + '">&#x1F4CB; Copier</button>' +
+        '<button type="button" class="matelot-action-notes" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="' + btn + '">&#x1F4DD; Notes</button>' +
       '</div>' +
     '</div>';
   }
@@ -2351,7 +2330,6 @@ function qrDataUri(text, opts){
       const allTeamsSnap = await getDocs(collection(db,'teams'));
       const usedCodes = new Set();
       allTeamsSnap.forEach(d => {
-        const c = d.data().crewCode; if(c) usedCodes.add(c);
         const ms = d.data().members || [];
         ms.forEach(m => { if(m.codeMatelot) usedCodes.add(m.codeMatelot); });
       });
@@ -2416,14 +2394,15 @@ function qrDataUri(text, opts){
       const qrUrl = qrDataUri(resumeLink, { ecl: 'H' });
       $('registerMsg').innerHTML =
         '<div class="notice success" style="padding:18px 20px">' +
-          '<b>' + esc(name) + '</b> embarque a bord du <b>Nautilus</b> avec l\'equipe <b>' + esc(chosen.teamName) + '</b>.<br><br>' +
-          '<div style="text-align:center;margin:14px 0 10px">' +
-            '<div class="small" style="margin-bottom:6px;color:#5d6d78;letter-spacing:.04em">&#x2693; TON CODE MATELOT (A NOTER IMPERATIVEMENT) &#x2693;</div>' +
-            '<div class="code uppercase" id="matelotCodeDisplay" style="font-size:22px;padding:14px 22px">' + esc(matelotCode) + '</div>' +
-            '<div class="small" style="margin-top:8px;color:#9b1111;font-weight:900">&#x26A0; Ce code est <b>personnel</b> et a <b>usage unique</b>. Il ne te sera plus jamais affiche.<br>Note-le sur ton QR ou dans un endroit sur.</div>' +
+          '<b>' + esc(name) + '</b> embarque à bord du <b>Nautilus</b> avec l\'équipe <b>' + esc(chosen.teamName) + '</b>.' +
+          '<div class="matelot-reveal">' +
+            '<div class="matelot-reveal-code">' +
+              '<div class="small matelot-reveal-label">&#x2693; TON CODE MATELOT</div>' +
+              '<div class="code uppercase" id="matelotCodeDisplay">' + esc(matelotCode) + '</div>' +
+            '</div>' +
+            matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
           '</div>' +
-          matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
-          '<div class="small" style="margin-top:10px;line-height:1.5">Pour <b>reprendre la mission</b> :<br>1. Scanne le QR avec l\'app <b>camera</b> de ton telephone (le code apparait en clair)<br>2. <b>Copie-le</b> et <b>colle-le</b> dans la zone <b>Reprendre ta mission</b><br>3. Ou tape simplement le code <b>' + esc(matelotCode) + '</b> a la main.</div>' +
+          '<div class="small matelot-reveal-warn">&#x26A0; Ce code est <b>personnel</b> et à <b>usage unique</b> : il ne te sera plus jamais affiché. Note-le ou scanne le QR.</div>' +
         '</div>';
       $('memberName').value = '';
       renderGame(false);
@@ -2622,7 +2601,7 @@ function qrDataUri(text, opts){
       return;
     }
     if(isLocked(currentTeam)){
-      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p></div>`;
+      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p></div>`;
       return;
     }
     const launchNotice = palierLaunchNotice ? `<div class="notice success"><b>${esc(step.label)} chargé.</b><br>Le Nautilus reprend la navigation là où votre équipage s’est arrêté.</div>` : '';
@@ -2631,7 +2610,7 @@ function qrDataUri(text, opts){
     const cockpitButtonIntro = currentTeam.currentStep === 'start'
       ? 'L’équipage est au départ. Lancez officiellement la mission pour déclencher le premier mini-jeu.'
       : 'Le Nautilus reprend là où votre équipe s’est arrêtée. Préparez-vous à poursuivre le palier en cours.';
-    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}${launchNotice}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Code équipage : « <span class="code uppercase">${esc(currentTeam.teamCode)}</span> »</p><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">${cockpitButtonIntro}</p><div class="cockpit-action"><button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">${cockpitButtonLabel}</button></div></div>`;
+    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}${launchNotice}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">${cockpitButtonIntro}</p><div class="cockpit-action"><button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">${cockpitButtonLabel}</button></div></div>`;
     $('cockpitMissionBtn')?.addEventListener('click', launchSelectedPalier);
   }
 
@@ -3111,12 +3090,6 @@ function qrDataUri(text, opts){
     if(viewBtn){
       e.preventDefault();
       viewMatelotQr(viewBtn.dataset.qrUrl, viewBtn.dataset.code);
-      return;
-    }
-    const thumb = e.target.closest('.matelot-qr-thumb');
-    if(thumb){
-      e.preventDefault();
-      viewMatelotQr(thumb.dataset.qrUrl, thumb.dataset.code);
       return;
     }
   });
@@ -3689,16 +3662,8 @@ function qrDataUri(text, opts){
     box.innerHTML = '<div class="small">Chargement…</div>';
     try{
       await refreshAdminTeams();
-      // Récupère les crewCodes depuis Firestore pour chaque équipe
-      const liveData = {};
-      for(const t of effectiveTeams){
-        const live = await getTeam(t.code);
-        if(live) liveData[t.code] = live;
-      }
       box.innerHTML = effectiveTeams.map(t => {
         const isCustom = !TEAM_DEFS.some(d => d.code === t.code);
-        const live = liveData[t.code] || {};
-        const crew = live.crewCode || '—';
         return `<div class="team" style="background:#fff" data-team="${esc(t.code)}">
           <h3>${esc(t.name)} <span class="small" style="color:var(--muted)">(${esc(t.code)})${isCustom ? ' <span style="color:#075c39">[custom]</span>' : ''}</span></h3>
           <div class="hr"></div>
@@ -3711,11 +3676,6 @@ function qrDataUri(text, opts){
               <button class="primary mini tt-save" type="button" style="background:var(--fnac);color:#111">💾 Renommer</button>
               <button class="danger mini tt-del" type="button">🗑</button>
             </div>
-          </div>
-          <div class="team-crew-row" style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
-            <span class="small" style="color:var(--muted)">🔐 Code équipage (QR) :</span>
-            <code class="tt-crew" style="font-size:14px;letter-spacing:.06em;color:#0b3a2b;background:#e6f1ec;padding:2px 8px;border-radius:4px">${esc(crew)}</code>
-            <button class="mini tt-regen" type="button" title="Régénérer un nouveau code équipage" style="background:#fff;color:#444;border:1px solid #d6dde3">🔄 Régénérer</button>
           </div>
           ${isCustom ? '' : '<div class="small" style="color:var(--muted);margin-top:4px">⚠️ Équipe par défaut — suppression interdite</div>'}
         </div>`;
@@ -3736,37 +3696,10 @@ function qrDataUri(text, opts){
           }
           await adminDeleteTeam(code, isDefault);
         });
-        teamEl.querySelector('.tt-regen').addEventListener('click', async () => {
-          if(!confirm(`Régénérer le code équipage de ${code} ?\n\n• L'ancien code ne fonctionnera plus pour reprendre la mission\n• Les membres devront utiliser le nouveau code (ou se réinscrire)\n• Tu devras réimprimer le QR avec le nouveau code`)) return;
-          await adminRegenCrewCode(code);
-        });
       });
     }catch(err){
       console.error('renderAdminTeams:', err);
       box.innerHTML = `<div class="notice warning">Erreur : ${esc(err.message || err)}</div>`;
-    }
-  }
-  async function adminRegenCrewCode(code){
-    if(!isAdminUnlocked()) return;
-    try{
-      // Collision-safe : récupère tous les crewCodes existants
-      const all = await getDocs(collection(db,'teams'));
-      const used = new Set();
-      all.forEach(d => { const c = d.data().crewCode; if(c) used.add(c); });
-      let candidate, attempts=0;
-      do {
-        candidate = generateCrewCode();
-        attempts++;
-        if(!used.has(candidate)) break;
-      } while(attempts < 30);
-      await updateDoc(doc(db,'teams',code), { crewCode: candidate, updatedAt: new Date().toISOString() });
-      await refreshAdminTeams();
-      await renderAdminTeams();
-      await loadTeams();
-      endAdminSession(`✅ Code équipage ${code} régénéré : ${candidate} · session fermée`);
-    }catch(err){
-      console.error('adminRegenCrewCode:', err);
-      alert(`❌ Échec régénération : ${err.message || err}`);
     }
   }
   async function adminRenameTeam(code, newName){
@@ -3792,7 +3725,7 @@ function qrDataUri(text, opts){
     try{
       // 1) créer le doc team
       await setDoc(doc(db,'teams',codeRaw), {
-        teamCode: codeRaw, teamName: name, crewCode: generateCrewCode(),
+        teamCode: codeRaw, teamName: name,
         currentStep:'start', status:'active', lockedUntil:null,
         failCount:0, lastLockHours:0, completedSteps:[],
         members:[], onlinePlayers:{},
