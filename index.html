@@ -1572,7 +1572,7 @@
       if(stage && !stage.classList.contains('radar-collapsed')){
         stage.classList.add('radar-collapsed');
         stopRadarStatusLoop();
-        setRadarStatus('Signaux détectés');
+        setRadarStatus('Recherche de nouveaux signaux…');
       }
     }else{
       // Aucune equipe avec membres : radar en mode "veille" (pulsation continue)
@@ -1721,7 +1721,7 @@
     }
 
     if(stage) stage.classList.remove('radar-scanning');
-    setRadarStatus('Signaux détectés');
+    setRadarStatus('Recherche de nouveaux signaux…');
     _revealRunning = false;
   }
 
