@@ -38,7 +38,11 @@
       --successbg:#effff7;
       --successb:#aee5ca;
     }
-    *{box-sizing:border-box} body, button, .card, .notice, .team, .stepbox{user-select:none;-webkit-user-select:none;-ms-user-select:none} input, textarea, select, .code{user-select:text;-webkit-user-select:text;-ms-user-select:text}
+    *{box-sizing:border-box}
+    /* PROTECTION-COPIE (desactivee) : selection de texte libre.
+       Pour la reactiver au dernier palier, decommenter la ligne ci-dessous.
+    body, button, .card, .notice, .team, .stepbox{user-select:none;-webkit-user-select:none;-ms-user-select:none} */
+    input, textarea, select, .code{user-select:text;-webkit-user-select:text;-ms-user-select:text}
     html{scroll-behavior:smooth}
     body{
       margin:0;
@@ -3569,12 +3573,15 @@
     }
   });
 
+  /* PROTECTION-COPIE (desactivee) : clic droit et selection autorises.
+     Pour la reactiver au dernier palier, decommenter le bloc ci-dessous.
   document.addEventListener('contextmenu', e => e.preventDefault());
   document.addEventListener('selectstart', e => {
     if(!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && !e.target.classList.contains('code')) {
       e.preventDefault();
     }
   });
+  */
 
   setInterval(()=>loadTeams(), 60000);
 
