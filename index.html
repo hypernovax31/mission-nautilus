@@ -248,6 +248,11 @@
     .top-bar{position:fixed;top:14px;right:14px;z-index:10000;display:flex;align-items:stretch;gap:8px;flex-wrap:nowrap;justify-content:flex-end;width:calc(100vw - 28px);max-width:calc(2*var(--tb-btn-w) + 8px);pointer-events:none;--tb-btn-w:clamp(104px,30vw,170px)}
     .top-bar>*{margin:0;pointer-events:auto}
     .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{box-sizing:border-box;flex:1 1 0;min-width:0;max-width:var(--tb-btn-w);padding:9px 10px;border-width:2px;border-style:solid;border-radius:999px;font-size:clamp(10px,2.5vw,12px);font-weight:1000;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;min-height:auto;position:static}
+    /* L'icone du bouton sonar ne doit jamais etre rognee ni compressee :
+       c'est le libelle qui se raccourcit si la place manque. */
+    .top-bar>.sonar-toggle>.tb-ico{flex:0 0 auto;line-height:1}
+    .top-bar>.sonar-toggle>.tb-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
+
     /* Bouton sonar : 2 etats seulement, aucun effet de survol.
        eteint = noir / allume = vert. */
     .sonar-toggle{background:rgba(0,0,0,.62);color:rgba(255,255,255,.88);border-color:rgba(245,176,39,.45);box-shadow:0 8px 18px rgba(0,0,0,.18)}
@@ -1160,7 +1165,7 @@
 </audio>
 <div class="top-bar">
   <button id="installPwaBtn" class="install-pwa-btn btn-pulse" type="button" title="Installer l'app sur mon écran d'accueil">📲&nbsp;<span class="tb-label">Installer&nbsp;l'app</span></button>
-  <button id="sonarToggleBtn" class="sonar-toggle" type="button"><span class="tb-label">Activer le sonar</span></button>
+  <button id="sonarToggleBtn" class="sonar-toggle" type="button"><span class="tb-ico" aria-hidden="true">🔇</span>&nbsp;<span class="tb-label">Activer le sonar</span></button>
 </div>
 <div id="iosInstallBanner" class="ios-install-banner" style="display:none" role="dialog" aria-live="polite">
   <div class="b-ico">📲</div>
@@ -3564,11 +3569,15 @@ function qrDataUri(text, opts){
   function setSonarButtonState(isActive){
     const btn = document.getElementById('sonarToggleBtn');
     if(!btn) return;
-    // On ecrit dans le <span> interne : btn.textContent effacerait la structure.
+    // On ecrit dans les <span> internes : btn.textContent effacerait la
+    // structure (icone + libelle).
     const label = btn.querySelector('.tb-label');
     const txt = isActive ? 'Sonar activé' : 'Activer le sonar';
     if(label) label.textContent = txt;
     else btn.textContent = txt;
+    // Icone en tete : haut-parleur si le son joue, barre si le son est coupe.
+    const ico = btn.querySelector('.tb-ico');
+    if(ico) ico.textContent = isActive ? '🔊' : '🔇';
     btn.classList.toggle('active', isActive);
   }
 
