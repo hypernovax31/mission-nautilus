@@ -111,9 +111,18 @@
       content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
       background-image:var(--team-emblem);
       background-repeat:no-repeat;
-      background-position:right -12px bottom -14px;
-      background-size:min(46%,150px) auto;
-      opacity:.06;
+      background-position:right -14px bottom -16px;
+      background-size:min(44%,146px) auto;
+      opacity:.07;
+    }
+    /* Teinte tres legere : liseré coloré + fond degrade a peine perceptible,
+       juste assez pour differencier les equipages d'un coup d'oeil. */
+    .team{border-left:4px solid var(--team-tint,#dfe8ee)}
+    .team::after{
+      content:"";position:absolute;inset:0;z-index:-2;pointer-events:none;
+      border-radius:inherit;
+      background:linear-gradient(135deg,var(--team-tint,#dfe8ee) 0%,transparent 62%);
+      opacity:.05;
     }
     @media (prefers-contrast: more){
       .team::before{opacity:0}
@@ -1139,7 +1148,7 @@
         <button type="button" class="mission-step active" data-rule="embark"><span class="num">1</span><b>Embarquez</b></button>
         <button type="button" class="mission-step" data-rule="solve"><span class="num">2</span><b>Décryptez</b></button>
         <button type="button" class="mission-step" data-rule="scan"><span class="num">3</span><b>Scannez</b></button>
-        <button type="button" class="mission-step" data-rule="survive"><span class="num">4</span><b>Survivez</b></button>
+        <button type="button" class="mission-step" data-rule="survive"><span class="num">4</span><b>Attention</b></button>
       </div>
       <div class="rule-detail" id="ruleDetail" aria-live="polite"></div>
     </div>
@@ -1379,8 +1388,7 @@
     { code:"NEMO",     name:"Nemo" },
     { code:"NAUTILUS", name:"Nautilus" },
     { code:"ARONNAX",  name:"Aronnax" },
-    { code:"NEDLAND",  name:"Ned Land" },
-    { code:"CALAMAR",  name:"Calamar" }
+    { code:"NEDLAND",  name:"Ned Land" }
   ];
   const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
 
@@ -1658,19 +1666,30 @@
      pose en filigrane tres clair pour les distinguer au premier coup d'oeil.
      Dessine en SVG inline (data: URI) : aucun fichier a charger, fonctionne
      hors ligne, et la couleur suit le theme. */
-  const TEAM_EMBLEMS = {
-    NEMO: '<path d="M100 26 L100 174 M100 174 q-30 0-30-26 M100 174 q30 0 30-26" stroke="%C" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="100" cy="52" r="20" stroke="%C" stroke-width="7" fill="none"/><path d="M62 96 h76" stroke="%C" stroke-width="7" stroke-linecap="round"/>',
-    NAUTILUS: '<ellipse cx="100" cy="108" rx="72" ry="26" stroke="%C" stroke-width="7" fill="none"/><rect x="84" y="70" width="34" height="22" rx="4" stroke="%C" stroke-width="7" fill="none"/><path d="M172 108 l22-14 v28 z" fill="%C"/><path d="M40 150 q30-12 60 0 t60 0" stroke="%C" stroke-width="6" fill="none" stroke-linecap="round"/>',
-    ARONNAX: '<circle cx="88" cy="92" r="46" stroke="%C" stroke-width="8" fill="none"/><path d="M122 126 l44 44" stroke="%C" stroke-width="10" stroke-linecap="round"/><path d="M70 92 q18-20 36 0" stroke="%C" stroke-width="6" fill="none" stroke-linecap="round"/>',
-    NEDLAND: '<path d="M100 172 V44" stroke="%C" stroke-width="8" stroke-linecap="round"/><path d="M100 20 l26 40 h-52 z" fill="%C"/><path d="M100 72 l30 22 M100 72 l-30 22" stroke="%C" stroke-width="7" stroke-linecap="round" fill="none"/>',
-    CALAMAR: '<ellipse cx="100" cy="66" rx="34" ry="42" stroke="%C" stroke-width="7" fill="none"/><circle cx="88" cy="60" r="6" fill="%C"/><circle cx="112" cy="60" r="6" fill="%C"/><path d="M76 104 q-14 40 -34 56 M92 108 q-8 44 -22 62 M108 108 q8 44 22 62 M124 104 q14 40 34 56" stroke="%C" stroke-width="6" fill="none" stroke-linecap="round"/>',
-    DEFAULT: '<circle cx="100" cy="100" r="52" stroke="%C" stroke-width="7" fill="none"/><path d="M100 48 V152 M48 100 H152" stroke="%C" stroke-width="6" stroke-linecap="round"/><path d="M100 48 l14 26 h-28 z" fill="%C"/>'
+  /* Identite visuelle des equipages : un embleme + une teinte tres legere
+     par equipe, pour les distinguer au premier coup d'oeil sans alourdir
+     la lecture. Sept jeux sont prevus (5 equipes actuelles + 2 en reserve),
+     avec un repli neutre pour toute equipe creee depuis le panneau admin. */
+  const TEAM_STYLES = {
+    NEMO:     { tint: '#0b3a5a', emblem: 'M100 30a16 16 0 1 1 0 32 16 16 0 0 1 0-32Zm0 40v104M64 88h72M100 174c-30 0-46-20-48-44l14 6-6-18 22 8c-6 18 4 32 18 34Zm0 0c30 0 46-20 48-44l-14 6 6-18-22 8c6 18-4 32-18 34Z' },
+    NAUTILUS: { tint: '#0f6b52', emblem: 'M100 78c40 0 72 14 72 30s-32 30-72 30-72-14-72-30 32-30 72-30Zm-14-24h28v22H86Zm86 22 22-12v40l-22-12M28 158q22-10 44 0t44 0 44 0' },
+    ARONNAX:  { tint: '#7a4f14', emblem: 'M86 44a44 44 0 1 1 0 88 44 44 0 0 1 0-88Zm0 14a30 30 0 1 0 0 60 30 30 0 0 0 0-60Zm32 76 46 46' },
+    NEDLAND:  { tint: '#8c2f39', emblem: 'M100 178V54m0-38 22 38h-44Zm0 60 26 20m-26-20-26 20m26 22 20 16m-20-16-20 16' },
+    CALAMAR:  { tint: '#5a3a7a', emblem: 'M100 24c20 0 34 18 34 42s-14 38-34 38-34-14-34-38 14-42 34-42Zm-14 34a6 6 0 1 1 0 12 6 6 0 0 1 0-12Zm28 0a6 6 0 1 1 0 12 6 6 0 0 1 0-12ZM74 102q-16 38-40 54m54-48q-10 44-26 62m38-60q0 46 8 64m14-66q10 44 26 60m10-66q16 34 34 46' },
+    BALEINE:  { tint: '#1c5f7a', emblem: 'M34 108q28-34 62-34t56 30q18-4 30-18-4 22-16 32 12 10 16 28-20-10-34-8-22 28-56 28t-58-30Zm100-18a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z' },
+    TRITON:   { tint: '#8a6a12', emblem: 'M100 176V56m-30-6 30 34 30-34M62 26v34m76-34v34M100 20v40M52 60h96' },
+    DEFAULT:  { tint: '#4a5a68', emblem: 'M100 26 118 82l56 18-56 18-18 56-18-56-56-18 56-18Z' }
   };
 
+  function teamStyle(teamCode){
+    return TEAM_STYLES[teamCode] || TEAM_STYLES.DEFAULT;
+  }
+
   function teamEmblemUri(teamCode){
-    const key = TEAM_EMBLEMS[teamCode] ? teamCode : 'DEFAULT';
-    const body = TEAM_EMBLEMS[key].split('%C').join('#0b3a5a');
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">' + body + '</svg>';
+    const st = teamStyle(teamCode);
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none"'
+      + ' stroke="' + st.tint + '" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">'
+      + '<path d="' + st.emblem + '"/></svg>';
     return 'data:image/svg+xml,' + encodeURIComponent(svg);
   }
 
@@ -1679,9 +1698,9 @@
     const online=onlineCount(t);
     const lockedBadge = isLocked(t) ? `<div class="small" style="color:var(--bad)">Bloquée jusqu’au ${formatDate(t.lockedUntil)}</div>` : '';
     const teamLogo = (t.teamName || '?').charAt(0).toUpperCase();
-    return `<div class="team team-reveal" data-team="${esc(t.teamCode)}" style="--team-emblem:url('${teamEmblemUri(t.teamCode)}')">
+    return `<div class="team team-reveal" data-team="${esc(t.teamCode)}" style="--team-emblem:url('${teamEmblemUri(t.teamCode)}');--team-tint:${teamStyle(t.teamCode).tint}">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#075c39,#18a87a);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:18px;box-shadow:0 6px 14px rgba(0,0,0,.22)">${esc(teamLogo)}</div>
+        <div style="width:42px;height:42px;border-radius:50%;background:var(--team-tint,#075c39);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:18px;box-shadow:0 6px 14px rgba(0,0,0,.22)">${esc(teamLogo)}</div>
         <div style="flex:1;min-width:0">
           <h3 style="margin:0;font-size:17px">${esc(t.teamName)}</h3>
           <div class="small" style="color:var(--muted)">${online} en ligne</div>
@@ -1962,6 +1981,8 @@ const ECB = {
   7: { L: [20, 2, 78],  M: [18, 4, 31] },
   8: { L: [24, 2, 97] },
   9: { L: [30, 2, 116] },
+  // Pas de version 10+ : au-dela, la norme impose un champ de longueur
+  // sur 16 bits (mode octet) que encodeBits() n'ecrit pas.
 };
 const ALIGN = { 1: [], 2: [6, 18], 3: [6, 22], 4: [6, 26], 5: [6, 30],
   6: [6, 34], 7: [6, 22, 38], 8: [6, 24, 42], 9: [6, 26, 46] };
@@ -2334,6 +2355,32 @@ function qrDataUri(text, opts){
 
   /* Texte unique utilise par TOUS les boutons (Copier, Partager, et la
      modale Agrandir) : une seule source, aucun format divergent. */
+  /* Contenu du QR : une fiche de contact vCard.
+     Pourquoi pas du texte brut : les appareils photo cherchent une URL
+     dans ce qu'ils lisent et, des qu'ils en trouvent une, proposent
+     d'OUVRIR LE SITE au lieu d'afficher le texte. Le format vCard est
+     reconnu nativement par iOS et Android : le telephone propose alors
+     d'ENREGISTRER la fiche (contact), de la partager ou de la copier,
+     sans jamais ouvrir de page web.
+     Aucune URL n'est incluse, precisement pour eviter ce comportement.
+     Limite : 230 caracteres (QR version 9, niveau L). Les valeurs sont
+     donc bornees pour qu'un nom tres long ne fasse jamais deborder. */
+  function buildVCard(name, code, teamName){
+    const clean = v => String(v || '')
+      .replace(/[\\;,\r\n]/g, ' ')   // caracteres reserves du format vCard
+      .replace(/\s+/g, ' ').trim();
+    const nom = clean(name).slice(0, 28) || 'Matelot';
+    const eq  = clean(teamName).slice(0, 20) || '-';
+    const cd  = clean(code);
+    // Le code et l'equipage figurent deja dans FN et ORG : les repeter
+    // dans NOTE ferait deborder la capacite sur les noms longs.
+    return 'BEGIN:VCARD\r\nVERSION:3.0\r\n'
+      + 'FN:' + cd + ' - ' + nom + '\r\n'
+      + 'ORG:Mission Nautilus - ' + eq + '\r\n'
+      + 'NOTE:Code personnel a usage unique.\r\n'
+      + 'END:VCARD';
+  }
+
   function buildNoteText(name, code, teamName){
     return 'MISSION NAUTILUS\n' +
       '=================\n\n' +
@@ -2447,7 +2494,7 @@ function qrDataUri(text, opts){
     const text = buildNoteText(name, code, teamName);
     try{
       if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
-        const qrUri = qrDataUri(text, { ecl: 'L' });
+        const qrUri = qrDataUri(buildVCard(name, code, teamName), { ecl: 'L' });
         const pngBlob = await qrToPngBlob(qrUri, 420);
         const dataUrl = await blobToDataUrl(pngBlob);
         const html = '<div style="font-family:Arial,sans-serif">'
@@ -2568,7 +2615,7 @@ function qrDataUri(text, opts){
         }catch(e){ reject(e); }
       };
       img.onerror = () => reject(new Error('QR illisible'));
-      img.src = qrDataUri(buildNoteText(name, code, teamName), { ecl: 'L' });
+      img.src = qrDataUri(buildVCard(name, code, teamName), { ecl: 'L' });
     });
   }
 
@@ -2772,8 +2819,7 @@ function qrDataUri(text, opts){
       // page web, et un code seul declenche une recherche Google.
       // Niveau L impose : 211 caracteres ne tiennent pas au-dessus.
       const resumeLink = matelotCode;
-      const qrUrl = qrDataUri(
-        buildNoteText(name, matelotCode, chosen.teamName), { ecl: 'L' });
+      const qrUrl = qrDataUri(buildVCard(name, matelotCode, chosen.teamName), { ecl: 'L' });
       $('registerMsg').innerHTML =
         '<div class="notice success matelot-card">' +
           '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
@@ -2999,23 +3045,39 @@ function qrDataUri(text, opts){
   const RULES = {
     embark: {
       title: '1 — Embarquez',
-      text: 'Inscrivez votre nom et votre service. Vous rejoignez automatiquement un équipage : Nemo, Nautilus, Aronnax, Ned Land ou Calamar.',
-      bullets: ['Notez le code de votre équipage.', 'Ce code permet de reprendre la mission sur n’importe quel appareil.', 'Tous les membres avancent sur la même progression.']
+      text: 'Inscrivez votre nom et votre service. Vous rejoindrez automatiquement un équipage : Nemo, Nautilus, Aronnax ou Ned Land.',
+      bullets: [
+        'Notez impérativement votre code matelot, il sera votre ADN tout le long du jeu.',
+        'Ce code permet de reprendre la mission sur n’importe quel appareil.',
+        'Tous les membres au sein d’une équipe avancent sur la même progression.'
+      ]
     },
     solve: {
       title: '2 — Décryptez',
-      text: 'À chaque palier, un mini-jeu chronométré apparaît. En cas de réussite, il révèle le mot de passe du prochain QR.',
-      bullets: ['Lisez bien la consigne avant de lancer.', 'Le temps et les erreurs sont limités.', 'Le mot de passe obtenu sert au QR suivant.']
+      text: 'Dans chaque palier, un mini-jeu chronométré apparaît. Dans le cas d’un succès, un lieu dans le magasin vous sera révélé afin de trouver un QR Code.',
+      bullets: [
+        'Lisez bien la consigne avant de vous lancer.',
+        'Le temps et les erreurs sont limités et vous pénalisent.'
+      ]
     },
     scan: {
       title: '3 — Scannez',
-      text: 'Après le mini-jeu, suivez l’indice de cachette dans le magasin. Le QR suivant peut être dans un rayon, une boîte, un livre, un meuble ou derrière une étiquette.',
-      bullets: ['Trouvez physiquement le QR.', 'Scannez-le.', 'Entrez le mot de passe gagné juste avant.']
+      text: 'Après le mini-jeu, suivez l’indice de cachette dans le magasin. Le QR suivant peut être dans un rayon, une PLV, un livre, un meuble ou derrière un objet.',
+      bullets: [
+        'Cherchez et trouvez le QR Code dissimulé.',
+        'Scannez-le et entrez dans un nouveau palier.'
+      ]
     },
     survive: {
-      title: '4 — Et la suite...',
-      text: 'Si l’équipage échoue, la mission se bloque temporairement. Plus les échecs s’accumulent, plus le Nautilus met du temps à remonter.',
-      bullets: ['1er échec : 2h.', '2e : 4h, 3e : 8h, 4e : 16h.', 'À partir du 5e : 24h.']
+      title: '4 — Mais attention...',
+      text: 'Si l’équipage échoue, la mission se bloque temporairement. Plus les échecs s’accumulent, plus votre vaisseau prend du temps à remonter.',
+      bullets: [
+        '1er échec : 2h de pénalité',
+        '2e échec : 4h',
+        '3e échec : 8h',
+        '4e échec : 16h',
+        'À partir du 5e échec : 24h par échec'
+      ]
     }
   };
 
@@ -3272,16 +3334,16 @@ function qrDataUri(text, opts){
     }
   }
 
-  function showNautilusAlarm(startedAt){
+  function showNautilusAlarm(startedAt, durationMs){
     seenAlarmAt = startedAt;
     const alarm = $('nautilusAlarm');
     if(!alarm) return;
     alarm.classList.add('show');
-    playSubmarineAlarm();
-    setTimeout(()=>alarm.classList.remove('show'), 9500);
+    playSubmarineAlarm(durationMs);
+    setTimeout(() => alarm.classList.remove('show'), durationMs || 9500);
   }
 
-  function playSubmarineAlarm(){
+  function playSubmarineAlarm(durationMs){
     const alarmAudio = document.getElementById('alarmAudio');
     if(!alarmAudio) return;
 
@@ -3290,10 +3352,22 @@ function qrDataUri(text, opts){
     alarmAudio.volume = 0.82;
     alarmAudio.dataset.loopCount = '0';
 
+    // Le son dure ~2 s : on le repete pour couvrir la duree demandee,
+    // sans jamais deborder (sinon l'alarme continuait apres la
+    // redirection vers le mini-jeu).
+    const maxLoops = durationMs ? Math.max(1, Math.ceil(durationMs / 2100)) : 3;
+    if(durationMs){
+      setTimeout(() => {
+        alarmAudio.onended = null;
+        alarmAudio.pause();
+        alarmAudio.currentTime = 0;
+      }, durationMs);
+    }
+
     alarmAudio.onended = () => {
       const count = Number(alarmAudio.dataset.loopCount || '0') + 1;
       alarmAudio.dataset.loopCount = String(count);
-      if(count < 3){
+      if(count < maxLoops){
         alarmAudio.currentTime = 0;
         alarmAudio.play().catch(() => {});
       }else{
@@ -4477,11 +4551,16 @@ function qrDataUri(text, opts){
       document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
       return;
     }
-    /* Si on est au palier 1 (start), on redirige vers la page dédiée.
-       (URL publique : /palier1.html — bundle standalone CSS+JS+HTML). */
+    /* Palier 1 : sequence d'alerte (ecran rouge clignotant + alarme
+       sonore) pendant 5 s, puis redirection vers la page du mini-jeu.
+       La redirection etait immediate : l'animation existait mais n'etait
+       jamais jouee pour ce palier. */
     if(currentTeam.currentStep === 'start'){
       const teamCode = currentTeam.teamCode;
       const url = `palier1.html?code=${encodeURIComponent(teamCode)}`;
+      showNautilusAlarm('launch-' + Date.now(), 5000);
+      await wait(5000);
+      $('nautilusAlarm')?.classList.remove('show');
       location.href = url;
       return;
     }
