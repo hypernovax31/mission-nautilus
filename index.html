@@ -43,6 +43,11 @@
        Pour la reactiver au dernier palier, decommenter la ligne ci-dessous.
     body, button, .card, .notice, .team, .stepbox{user-select:none;-webkit-user-select:none;-ms-user-select:none} */
     input, textarea, select, .code{user-select:text;-webkit-user-select:text;-ms-user-select:text}
+    /* Placeholders : gris tres clair, identique sur input et select */
+    input::placeholder{color:#b8c4cd;opacity:1}
+    input::-webkit-input-placeholder{color:#b8c4cd}
+    select:invalid,select option[value=""]{color:#b8c4cd}
+
     /* Le Code Matelot doit rester selectionnable en TOUTES circonstances,
        y compris si une protection anti-copie est reactivee plus tard. */
     .code,#matelotCodeDisplay{user-select:all !important;-webkit-user-select:all !important;-ms-user-select:all !important;-webkit-touch-callout:default !important;cursor:text}
@@ -1068,7 +1073,7 @@
     <div class="body">
       <div class="boarding-grid">
         <div><label>Ton nom</label><input id="memberName" placeholder="Ex. JULES VERNE" autocomplete="off"></div>
-        <div><label for="memberService">Ton service</label><select id="memberService"><option value="" selected disabled>Ex. PE</option><option value="PE">PE</option><option value="PT">PT</option><option value="SAV">SAV</option><option value="LOG">LOG</option><option value="CAI">CAI</option><option value="GAD">GAD</option><option value="CODIR">CODIR</option></select></div>
+        <div><label for="memberService">Ton service</label><select id="memberService" required><option value="" selected disabled>Ex. PE</option><option value="PE">PE</option><option value="PT">PT</option><option value="SAV">SAV</option><option value="LOG">LOG</option><option value="CAI">CAI</option><option value="GAD">GAD</option><option value="CODIR">CODIR</option></select></div>
         <div class="boarding-action"><button class="primary" id="registerBtn">Monter à bord</button></div>
       </div>
       <div id="registerMsg"></div>
@@ -1079,7 +1084,7 @@
     <h2>🧭 REPRENDRE TA MISSION</h2>
     <div class="body">
       <div class="grid">
-        <div><label>Code Matelot</label><input id="matelotCodeInput" placeholder="ABCD-7421" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase;letter-spacing:.06em"></div>
+        <div><label for="matelotCodeInput">Code Matelot</label><input id="matelotCodeInput" placeholder="Ex. ABCD-1234" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="9" style="text-transform:uppercase;letter-spacing:.06em"></div>
         <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
       </div>
       <p class="small">Déjà inscrit(e) ? Entre ton <b>Code Matelot</b> personnel (remis à l'inscription, imprimé sur ton QR) pour reprendre la mission là où tu t'étais arrêté(e).</p>
@@ -2078,6 +2083,39 @@ function qrDataUri(text, opts){
 }
 
 
+  /* Format d'un Code Matelot : 4 lettres, un tiret, 4 chiffres (ex. ABCD-1234).
+     Les lettres I et O, les chiffres 0 et 1 sont exclus a la generation pour
+     eviter les confusions, mais on reste tolerant a la saisie. */
+  const MATELOT_CODE_RE = /^[A-Z]{4}-[0-9]{4}$/;
+
+  /* Met en forme la saisie au fil de la frappe :
+     - passage en majuscules
+     - seules des LETTRES sont acceptees sur les 4 premiers caracteres
+     - seuls des CHIFFRES sont acceptes sur les 4 derniers
+     - le tiret est insere automatiquement apres la 4e lettre */
+  function formatMatelotCodeInput(raw){
+    const up = String(raw || '').toUpperCase();
+    // Collage d'un texte complet (ex. "Code Matelot : ABCD-1234") : on extrait
+    // le code plutot que de prendre les 4 premieres lettres de la phrase.
+    const found = up.match(/[A-Z]{4}\s*-?\s*[0-9]{4}/);
+    const src = (found && up.length > 9) ? found[0] : up;
+
+    let letters = '', digits = '';
+    for(const ch of src){
+      if(letters.length < 4){
+        if(ch >= 'A' && ch <= 'Z') letters += ch;
+        continue;               // chiffres et tirets ignores avant la 4e lettre
+      }
+      if(digits.length < 4 && ch >= '0' && ch <= '9') digits += ch;
+    }
+    if(letters.length < 4) return letters;
+    // Tiret ajoute des la 4e lettre, SAUF si l'utilisateur vient de l'effacer
+    // (4 lettres, aucun chiffre, et plus de tiret dans la saisie) : sinon le
+    // tiret se remettrait tout seul et bloquerait la correction des lettres.
+    if(!digits.length && !src.includes('-')) return letters;
+    return letters + '-' + digits;
+  }
+
   function generateMatelotCode(){
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
     const digits = '23456789';
@@ -2502,20 +2540,27 @@ function qrDataUri(text, opts){
   }
 
   async function joinTeam(){
-    const codeRaw = ($('matelotCodeInput').value || '').trim();
+    const codeRaw = ($('matelotCodeInput').value || '').trim().toUpperCase();
+    $('joinMsg').innerHTML = '';
+    // Champ vide ou format incorrect : alerte popup, comme a l'embarquement.
     if(!codeRaw){
-      $('joinMsg').innerHTML = '<div class="notice warning">Entre ton <b>Code Matelot</b> pour rallumer le sonar.</div>';
+      alert('Halte-là Matelot ! Entre ton Code Matelot personnel pour rallumer le sonar.');
+      return;
+    }
+    if(!MATELOT_CODE_RE.test(codeRaw)){
+      alert('Halte-là Matelot ! Ton Code Matelot doit être composé de 4 lettres, '
+        + "d'un tiret, puis de 4 chiffres.\n\nExemple : ABCD-1234");
       return;
     }
     const res = await resumeWithMatelotCode(codeRaw);
     if(!res.ok){
-      let hint = '';
       if(res.reason === 'not_found'){
-        hint = '<br><span class="small">Aucun matelot ne correspond a ce code. Verifie l\'orthographe (le code est du type <b>ABCD-7421</b>).<br>Si tu n\'es jamais inscrit(e), commence par <b>Embarquement Matelot</b> ci-dessus.</span>';
-      }else if(res.reason === 'error'){
-        hint = '<br><span class="small">Detail : ' + esc(res.err && (res.err.message || res.err.code) || res.err) + '</span>';
+        alert('Halte-là Matelot ! Aucun matelot ne correspond au code ' + codeRaw
+          + ".\n\nVérifie ta saisie, ou embarque d'abord via « Embarquement Matelot ».");
+      }else{
+        alert('Halte-là Matelot ! La transmission a échoué.\n\nDétail : '
+          + (res.err && (res.err.message || res.err.code) || res.err));
       }
-      $('joinMsg').innerHTML = '<div class="notice warning">Code Matelot introuvable.' + hint + '</div>';
       return;
     }
     const m = res.matelot;
@@ -3121,6 +3166,18 @@ function qrDataUri(text, opts){
   $('memberName').addEventListener('keydown',e=>{if(e.key==='Enter')registerMember();});
   $('joinBtn').addEventListener('click',()=>joinTeam());
   $('matelotCodeInput').addEventListener('keydown',e=>{if(e.key==='Enter')joinTeam();});
+  // Mise en forme en direct : majuscules, tiret automatique, lettres puis chiffres.
+  $('matelotCodeInput')?.addEventListener('input', e => {
+    const el = e.target;
+    const atEnd = el.selectionStart === el.value.length;
+    const next = formatMatelotCodeInput(el.value);
+    if(next !== el.value){
+      el.value = next;
+      // On ne replace le curseur en fin que si l'utilisateur y etait deja,
+      // pour ne pas gener une correction en milieu de code.
+      if(atEnd) el.setSelectionRange(next.length, next.length);
+    }
+  });
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
 
