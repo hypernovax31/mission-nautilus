@@ -5470,47 +5470,71 @@ function qrDataUri(text, opts){
     await loadTeams();
     renderGame(false);
 
-    /* Si l'URL contient ?m=CODE (depuis un QR scanne), on pre-remplit
-       et on lance la reprise automatiquement. */
+    /* Si l'URL contient ?m=CODE (depuis un QR scanne), on reprend la
+       mission IMMEDIATEMENT, sans faire patienter le matelot.
+
+       Ancien deroule : l'ecran rouge d'alarme s'affichait pour 9,5 s, puis
+       on attendait 1,5 s "que la scene se stabilise", puis 0,7 s de
+       defilement avant seulement d'appeler la reprise. Le matelot restait
+       donc environ 7 secondes devant un ecran rouge alors que sa mission
+       etait deja rechargee derriere.
+
+       Nouveau deroule : la reprise part tout de suite, en parallele d'une
+       breve alarme de 1,6 s qui sert uniquement d'accuse de reception du
+       scan. Des que les donnees sont la, on va droit a la chambre de
+       pilotage. */
     try{
       const urlParams = new URLSearchParams(window.location.search);
       const m = urlParams.get('m') || urlParams.get('matelot');
       if(m){
         const code = m.trim().toUpperCase();
-        /* On CONSERVE ?m= dans la barre d'adresse.
-           Auparavant on l'effacait pour eviter de rejouer la sequence a
-           chaque rafraichissement. Mais c'est justement cette adresse que
-           le matelot doit pouvoir mettre en favori : nettoyee, le favori
-           aurait enregistre le site sans son code, et la reprise
-           automatique n'aurait plus fonctionne.
-           La sequence d'accueil (alarme + defilement) n'est donc jouee
-           qu'une fois par session ; les ouvertures suivantes depuis le
-           favori reprennent la mission directement, sans reprise du
-           spectacle. */
+        /* On CONSERVE ?m= dans la barre d'adresse : c'est cette adresse que
+           le matelot met en favori. Nettoyee, le favori perdrait son code.
+           La breve alarme d'accueil n'est jouee qu'une fois par session. */
         let alreadyPlayed = false;
         try{ alreadyPlayed = sessionStorage.getItem('nautilusAutoResume') === code; }
         catch(e){ /* navigation privee */ }
         try{ sessionStorage.setItem('nautilusAutoResume', code); }catch(e){ /* ignore */ }
-        // Feedback visuel : uniquement a la premiere ouverture du lien.
-        if(!alreadyPlayed) showNautilusAlarm('qr-scan-' + Date.now());
-        // On remplit l'input et on attend un peu pour que la scene se stabilise
+
         $('matelotCodeInput').value = code;
-        await new Promise(r => setTimeout(r, alreadyPlayed ? 200 : 1500));
-        // Defilement vers la zone de reprise (inutile si on a deja joue la
-        // sequence : on va directement au resultat).
-        if(!alreadyPlayed){
-          document.getElementById('retrouverEquipage')?.scrollIntoView({behavior:'smooth', block:'start'});
-          await new Promise(r => setTimeout(r, 700));
+
+        /* Accuse de reception court (1,6 s) : le temps de comprendre que le
+           scan a fonctionne, pas plus. Il ne bloque RIEN : la reprise
+           s'execute en meme temps. */
+        if(!alreadyPlayed) showNautilusAlarm('qr-scan-' + Date.now(), 1600);
+
+        /* La reprise demarre immediatement, sans attendre l'alarme.
+           PIEGE EVITE : si le code est invalide ou inconnu, joinTeam()
+           ouvre une fenetre d'alerte. Elle apparaitrait DERRIERE l'ecran
+           rouge encore affiche, et le matelot ne comprendrait pas pourquoi
+           la page semble bloquee. On coupe donc l'alarme avant de laisser
+           joinTeam() signaler une erreur. */
+        const codeLooksValid = MATELOT_CODE_RE.test(code);
+        if(!codeLooksValid){
+          $('nautilusAlarm')?.classList.remove('show');
         }
-        // Lance la reprise
+        const before = currentTeam;
         await joinTeam();
-        // Si succes : scroll vers la chambre de pilotage
+        // Echec de la reprise : on retire l'ecran rouge sans attendre.
+        if(currentTeam === before){
+          $('nautilusAlarm')?.classList.remove('show');
+        }
+
+        /* On rejoint la chambre de pilotage des que l'ecran rouge s'efface.
+           Si l'equipe est bloquee, on y va aussi : c'est la que le message
+           de blocage est affiche. */
+        const settle = alreadyPlayed ? 60 : 1700;
         setTimeout(() => {
           const t = $('gameBox');
-          if(t && t.querySelector('.stepbox') && !t.querySelector('.stepbox.locked')){
-            document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+          if(t && t.querySelector('.stepbox')){
+            document.getElementById('gameCard')
+              ?.scrollIntoView({behavior:'smooth', block:'start'});
+          }else{
+            // Code refuse : on montre la zone de reprise pour corriger.
+            document.getElementById('retrouverEquipage')
+              ?.scrollIntoView({behavior:'smooth', block:'start'});
           }
-        }, 500);
+        }, settle);
       }
     }catch(e){ console.warn('auto-resume from URL:', e); }
   })();
