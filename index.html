@@ -1694,7 +1694,6 @@
   function getLockedUntilISO(failCount){const d=new Date();d.setHours(d.getHours()+getLockHours(failCount));return d.toISOString();}
   function isLocked(team){return team?.status==='blocked'&&team.lockedUntil&&new Date(team.lockedUntil).getTime()>Date.now();}
   function formatDate(iso){return iso?new Date(iso).toLocaleString('fr-FR'):'—';}
-  function lockRuleText(){return `1er échec : 2h · 2e : 4h · 3e : 8h · 4e : 16h · 5e et suivants : 24h`;}
   function onlineCount(team){
     const now = Date.now();
     const online = team.onlinePlayers || {};
@@ -3704,7 +3703,7 @@ function qrDataUri(text, opts){
       return;
     }
     if(isLocked(currentTeam)){
-      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p><p class="small">Échecs cumulés : ${Number(currentTeam.failCount||0)} · ${lockRuleText()}</p></div>`;
+      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p></div>`;
       return;
     }
     const launchNotice = palierLaunchNotice ? `<div class="notice success"><b>${esc(step.label)} chargé.</b><br>Le Nautilus reprend la navigation là où votre équipage s’est arrêté.</div>` : '';
