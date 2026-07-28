@@ -4990,20 +4990,27 @@ function qrDataUri(text, opts){
      donc dire DEPLACER ces documents, pas seulement modifier un champ.
      Oublier l'un des trois laisserait un code fantome utilisable. */
   async function adminChangeMatelotCode(teamCode, oldCode, newCode, memberData){
-    if(oldCode === newCode) return;
+    /* Appelee a CHAQUE enregistrement, meme sans changement de code : elle
+       sert aussi a propager un nouveau nom ou un nouveau service.
+       Un ancien "if(oldCode === newCode) return;" bloquait justement ce
+       cas, et laissait l'ancien nom dans la fiche et dans l'index. */
+
     // 2) fiche detaillee de l'equipe
     let fiche = { ...memberData, codeMatelot: newCode, teamCode };
     if(oldCode){
       const oldRef = doc(db,'teams',teamCode,'matelots',oldCode);
       const oldSnap = await getDoc(oldRef);
+      /* On repart de l'ancienne fiche pour conserver ses champs annexes
+         (date d'inscription...), MAIS memberData passe en dernier : les
+         valeurs modifiees ecrasent bien les anciennes. */
       if(oldSnap.exists()) fiche = { ...oldSnap.data(), ...fiche };
-      await deleteDoc(oldRef).catch(() => {});
+      if(oldCode !== newCode) await deleteDoc(oldRef).catch(() => {});
     }
     if(newCode){
       await setDoc(doc(db,'teams',teamCode,'matelots',newCode), fiche);
     }
     // 3) index global (sert a la reconnexion par code)
-    if(oldCode) await deleteDoc(doc(db,'matelots',oldCode)).catch(() => {});
+    if(oldCode && oldCode !== newCode) await deleteDoc(doc(db,'matelots',oldCode)).catch(() => {});
     if(newCode){
       await setDoc(doc(db,'matelots',newCode), {
         codeMatelot: newCode,
@@ -5036,6 +5043,12 @@ function qrDataUri(text, opts){
         codeMatelot: finalCode,
         updatedAt: new Date().toISOString()
       };
+      /* Nom de l'equipe de destination : il est ecrit dans la fiche et dans
+         l'index global. L'ancienne version se rabattait sur le CODE de
+         l'equipe quand elle changeait, ce qui inscrivait par exemple
+         "NEDLAND" au lieu de "Ned Land". */
+      let toTeamName = fromTeam.teamName || toTeamCode;
+
       if(fromTeamCode === toTeamCode){
         // Juste modifier
         const newMembers = fromTeam.members.map(m => m.memberKey === oldMemberKey ? updatedMember : m);
@@ -5049,6 +5062,7 @@ function qrDataUri(text, opts){
         const toSnap = await getDoc(toRef);
         if(!toSnap.exists()) throw new Error(`Équipe destination ${toTeamCode} introuvable.`);
         const toTeam = { teamCode: toTeamCode, ...toSnap.data() };
+        toTeamName = toTeam.teamName || toTeamCode;
         // Vérifier collision de memberKey dans la destination
         const collision = (toTeam.members || []).find(m => m.memberKey === newKey);
         const toMembers = collision
@@ -5057,35 +5071,43 @@ function qrDataUri(text, opts){
         await updateDoc(toRef, { members: toMembers, updatedAt: new Date().toISOString() });
       }
 
-      /* Fiche detaillee et index global.
-         Deux cas ou il faut les deplacer :
-           - le code change (cc.oldCode !== finalCode) ;
-           - le matelot change d'equipe : sa fiche vit sous l'ancienne
-             equipe et doit suivre, sinon la reprise renverrait vers la
-             mauvaise equipe. */
-      const codeMoved   = cc.oldCode !== undefined && cc.oldCode !== finalCode;
+      /* ===== SYNCHRONISATION DES 3 EMPLACEMENTS =====
+         Un matelot existe a trois endroits :
+           1. teams/{equipe}.members[]        (deja mis a jour ci-dessus)
+           2. teams/{equipe}/matelots/{code}  (fiche detaillee)
+           3. matelots/{code}                 (index global de reprise)
+
+         BUG CORRIGE : cette mise a jour n'etait faite QUE si le code ou
+         l'equipe changeait. Renommer un matelot ne touchait donc que la
+         liste d'equipage : la fiche et l'index gardaient l'ancien nom, et
+         la reprise par Code Matelot affichait toujours l'ancien nom.
+
+         On synchronise desormais SYSTEMATIQUEMENT, quelle que soit la
+         modification. */
+      const srcCode  = (cc.oldCode !== undefined) ? cc.oldCode : (member.codeMatelot || '');
       const teamChanged = fromTeamCode !== toTeamCode;
-      if(codeMoved || teamChanged){
-        const src = cc.oldCode !== undefined ? cc.oldCode : (member.codeMatelot || '');
-        if(teamChanged && src){
-          // Retirer la fiche de l'ancienne equipe avant de la recreer.
-          await deleteDoc(doc(db,'teams',fromTeamCode,'matelots',src)).catch(() => {});
+
+      // La fiche vit sous l'equipe : si l'equipe change, l'ancienne copie
+      // doit disparaitre, sinon la reprise renverrait vers la mauvaise.
+      if(teamChanged && srcCode){
+        await deleteDoc(doc(db,'teams',fromTeamCode,'matelots',srcCode)).catch(() => {});
+      }
+
+      await adminChangeMatelotCode(
+        toTeamCode,
+        teamChanged ? '' : srcCode,   // deja supprimee juste au-dessus
+        finalCode,
+        {
+          name: updatedMember.name,
+          service: updatedMember.service,
+          memberKey: newKey,
+          teamName: toTeamName
         }
-        await adminChangeMatelotCode(
-          toTeamCode,
-          teamChanged ? '' : src,     // deja supprimee ci-dessus si l'equipe change
-          finalCode,
-          {
-            name: updatedMember.name,
-            service: updatedMember.service,
-            memberKey: newKey,
-            teamName: (toTeamCode === fromTeamCode ? fromTeam.teamName : undefined) || toTeamCode
-          }
-        );
-        if(teamChanged && src && src !== finalCode){
-          // L'ancien code ne doit plus exister dans l'index global.
-          await deleteDoc(doc(db,'matelots',src)).catch(() => {});
-        }
+      );
+
+      // L'ancien code ne doit plus permettre de se connecter.
+      if(srcCode && srcCode !== finalCode){
+        await deleteDoc(doc(db,'matelots',srcCode)).catch(() => {});
       }
 
       await renderAdminMembers();
