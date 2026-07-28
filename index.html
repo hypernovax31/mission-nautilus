@@ -1711,6 +1711,10 @@
   }
   async function heartbeat(){
     if(!currentTeam) return;
+    /* Verrou : le compte de test ne s'inscrit jamais dans onlinePlayers.
+       Place ici, il couvre tous les appels, y compris ceux qu'on
+       ajouterait plus tard. */
+    if(currentTeam.isTest || currentMatelot?.isTest) return;
     const onlinePlayers = { ...(currentTeam.onlinePlayers || {}), [SESSION_ID]: new Date().toISOString() };
     try{
       await updateDoc(doc(db,'teams',currentTeam.teamCode), { onlinePlayers, updatedAt:new Date().toISOString() });
@@ -3485,6 +3489,7 @@ function qrDataUri(text, opts){
      Il est rattache a la premiere equipe existante, uniquement le temps de
      la session : rien n'est enregistre. */
   const TEST_MATELOT_CODE = 'ZZZZ-0000';
+  const TEST_TEAM_NAME    = 'Équipage de test';
 
   async function resumeAsTestMatelot(){
     // On se rattache a une equipe reelle pour pouvoir suivre la partie.
@@ -3500,11 +3505,28 @@ function qrDataUri(text, opts){
       service: 'CODIR',
       codeMatelot: TEST_MATELOT_CODE,
       teamCode: team.teamCode,
-      teamName: team.teamName,
+      teamName: TEST_TEAM_NAME,
       isTest: true
     };
     const unlock = await autoUnlockIfNeeded(team);
-    currentTeam = unlock.team;
+
+    /* EQUIPAGE FICTIF, comme dans le mini-jeu.
+       Avant, on reprenait l'equipe reelle telle quelle : les messages
+       annoncaient donc "matelot de l'equipe Nemo", et le testeur heritait
+       en plus de son blocage et de sa progression. Il repart desormais
+       d'un equipage neuf, nomme sans ambiguite. */
+    currentTeam = {
+      ...unlock.team,
+      teamName: TEST_TEAM_NAME,
+      currentStep: 'start',
+      status: 'active',
+      lockedUntil: null,
+      failCount: 0,
+      completedSteps: [],
+      members: [{ name:'TEST', service:'CODIR', memberKey: memberKey('TEST'),
+                  codeMatelot: TEST_MATELOT_CODE }],
+      isTest: true
+    };
     currentMatelot = matelot;
     $('matelotCodeInput').value = '';
     /* Pas de startHeartbeat() : le compte de test ne doit pas apparaitre
@@ -3583,8 +3605,15 @@ function qrDataUri(text, opts){
     }
     const m = res.matelot;
     const t = res.team;
-    const unlockMsg = res.justUnlocked ? '<br><br>&#x1F513; <b>Transmission reactivee</b> - ton equipe peut reprendre.' : '';
-    $('joinMsg').innerHTML = '<div class="notice success">&#x2705; <b>' + esc(m.name) + '</b>, matelot de l\'equipe <b>' + esc(t.teamName) + '</b>, reprends la plongee.' + unlockMsg + '</div>';
+    /* Accents retablis : ces messages etaient ecrits sans accent
+       ("reactivee", "equipe", "plongee"), ce qui detonnait avec le reste
+       du site. */
+    const unlockMsg = res.justUnlocked ? '<br><br>&#x1F513; <b>Transmission réactivée</b> — ton équipage peut reprendre.' : '';
+    /* Compte de test : message adapte, il n'appartient a aucun equipage. */
+    const welcome = m.isTest
+      ? '&#x2705; <b>Mode test</b> — tu explores le jeu librement. Rien n\'est enregistré.'
+      : '&#x2705; <b>' + esc(m.name) + '</b>, matelot de l\'équipage <b>' + esc(t.teamName) + '</b>, reprends la plongée.';
+    $('joinMsg').innerHTML = '<div class="notice success">' + welcome + unlockMsg + '</div>';
     renderGame(res.justUnlocked);
     await loadTeams();
     renderEmbarkMissionButton();
@@ -4108,7 +4137,8 @@ function qrDataUri(text, opts){
       if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
     }else{
       startBackgroundTimers();
-      if(currentTeam && !heartbeatTimer) startHeartbeat();
+      // Compte de test exclu : il ne doit jamais apparaitre "en ligne".
+      if(currentTeam && !currentTeam.isTest && !heartbeatTimer) startHeartbeat();
       // Remise a niveau immediate apres une absence prolongee
       updateCountdown();
       refreshMissionConfig();
