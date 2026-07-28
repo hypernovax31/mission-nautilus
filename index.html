@@ -3366,14 +3366,26 @@ function qrDataUri(text, opts){
         });
       });
 
-      // Pas d'homonyme : deux matelots identiques seraient impossibles a
-      // distinguer par l'organisateur pendant la partie.
+      /* Pas d'homonyme : deux matelots identiques seraient impossibles a
+         distinguer pendant la partie.
+
+         BUG CORRIGE : l'inscription etait bien refusee, mais la session
+         PRECEDENTE restait ouverte. Si quelqu'un venait de s'inscrire sur
+         le meme appareil, le bouton de mission restait affiche et le
+         nouveau venu se retrouvait connecte sous l'identite du matelot
+         precedent. On ferme donc la session avant de refuser. */
       const already = usedNames.get(memberKey(name));
       if(already){
+        currentTeam = null;
+        currentMatelot = null;
+        if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
+        renderEmbarkMissionButton();   // retire le bouton de mission
+        renderGame(false);             // vide la chambre de pilotage
+        $('registerMsg').innerHTML = '';
         $('registerBtn').disabled = false;
-        alert("Halte-là Matelot ! Un matelot nommé « " + (already.name || name) + " » est déjà à bord ("
-          + already.team + ").\n\nAjoute une initiale ou ton prénom pour te distinguer (ex. « "
-          + name + " L. »).");
+        alert('Ce nom est déjà pris à bord.\n\nAjoute ton prénom ou une initiale pour te distinguer.');
+        $('memberName').focus();
+        $('memberName').select();
         return;
       }
       let matelotCode, attempts=0;
@@ -3578,7 +3590,7 @@ function qrDataUri(text, opts){
     }
   }
 
-  async function joinTeam(){
+  async function joinTeam(skipScroll){
     const codeRaw = ($('matelotCodeInput').value || '').trim().toUpperCase();
     $('joinMsg').innerHTML = '';
     // Champ vide ou format incorrect : alerte popup, comme a l'embarquement.
@@ -3617,6 +3629,21 @@ function qrDataUri(text, opts){
     renderGame(res.justUnlocked);
     await loadTeams();
     renderEmbarkMissionButton();
+
+    /* Le matelot vient de saisir son code : on l'emmene directement a la
+       chambre de pilotage, sa mission l'y attend. Le court delai laisse le
+       temps au message de confirmation d'apparaitre et au cockpit d'etre
+       rempli par renderGame().
+
+       EXCEPTION : lors d'une reprise par QR, l'ecran rouge d'alarme est
+       encore affiche et la sequence gere DEJA son propre defilement a la
+       fin. Un second defilement partirait trop tot, pendant l'alarme. */
+    if(!skipScroll){
+      setTimeout(() => {
+        document.getElementById('gameCard')
+          ?.scrollIntoView({ behavior:'smooth', block:'start' });
+      }, 450);
+    }
   }
 
   /**
@@ -4522,14 +4549,17 @@ function qrDataUri(text, opts){
       box.innerHTML = '';
       return;
     }
-    const started = currentTeam.currentStep !== 'start'
-      || (currentTeam.completedSteps || []).length > 0
-      || !!currentTeam.startedAt;
-    const label = started ? 'REPRENDRE LA MISSION' : 'LANCER LA MISSION';
+    /* Ce bouton NE LANCE PLUS la mission : il emmene simplement le matelot
+       jusqu'a la chambre de pilotage, ou se trouve le vrai bouton de
+       lancement. Avant, deux boutons declenchaient la meme action a deux
+       endroits differents, ce qui pretait a confusion. */
     box.style.display = 'flex';
     box.innerHTML = '<button class="hero-cta red cockpit-launch" type="button" id="embarkMissionBtn">'
-      + label + '</button>';
-    $('embarkMissionBtn')?.addEventListener('click', () => launchSelectedPalier());
+      + 'REJOINDRE LE COCKPIT</button>';
+    $('embarkMissionBtn')?.addEventListener('click', () => {
+      document.getElementById('gameCard')
+        ?.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
   }
 
   function updateFinalMissionButton(){
@@ -5429,10 +5459,12 @@ function qrDataUri(text, opts){
           if(k) usedNames.set(k, { name: m.name || '', team: data.teamName || d.id });
         });
       });
+      /* Cote admin, pas de session a fermer : on refuse simplement.
+         Message aligne sur celui de l'embarquement, mais l'admin a besoin
+         de savoir DANS QUELLE equipe le nom est deja pris. */
       const dup = usedNames.get(memberKey(name));
       if(dup){
-        alert('Un matelot nommé « ' + (dup.name || name) + ' » est déjà à bord ('
-          + dup.team + ").\n\nAjoute une initiale pour le distinguer.");
+        alert('Ce nom est déjà pris (' + dup.team + ').\n\nAjoute un prénom ou une initiale pour le distinguer.');
         return;
       }
 
@@ -5732,7 +5764,7 @@ function qrDataUri(text, opts){
           $('nautilusAlarm')?.classList.remove('show');
         }
         const before = currentTeam;
-        await joinTeam();
+        await joinTeam(true);   // la sequence QR gere son propre defilement
         // Echec de la reprise : on retire l'ecran rouge sans attendre.
         if(currentTeam === before){
           $('nautilusAlarm')?.classList.remove('show');
