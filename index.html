@@ -622,12 +622,13 @@
     .member-edit-row,.team-edit-row{display:grid;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #e8eef2}
     /* Desktop large (>=1200px) : 5 colonnes larges [Nom | Svc | Equipe | Vide | Actions] */
     @media(min-width:1200px){
-      .member-edit-row{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.6fr) auto}
+      /* [Nom | Service+Equipe | Code Matelot | Actions] */
+      .member-edit-row{grid-template-columns:minmax(0,1.3fr) minmax(0,1.6fr) minmax(0,.95fr) auto}
       .team-edit-row{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto}
     }
     /* Tablette/desktop (640-1200px) : 4 colonnes [Nom | Svc+Equipe | Vide | Actions] */
     @media(min-width:640px) and (max-width:1199px){
-      .member-edit-row{grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) minmax(0,.6fr) auto}
+      .member-edit-row{grid-template-columns:minmax(0,1.2fr) minmax(0,1.8fr) minmax(0,.9fr) auto}
       .team-edit-row{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto}
     }
     /* Mobile : tout en 1 colonne */
@@ -635,6 +636,15 @@
       .member-edit-row,.team-edit-row{grid-template-columns:1fr !important;gap:8px}
     }
     .member-edit-row:last-child,.team-edit-row:last-child{border-bottom:0}
+    /* Code Matelot : police a chasse fixe pour eviter toute confusion entre
+       caracteres, et saisie forcee en majuscules comme partout ailleurs. */
+    .member-edit-row .me-code{
+      font-family:Consolas,"Courier New",monospace !important;
+      text-transform:uppercase;letter-spacing:.04em;font-weight:900;
+    }
+    .member-edit-row .me-code.me-code-bad{
+      border-color:#efb2ac !important;background:#ffe7e3 !important;
+    }
     /* Sous-grille 2 colonnes (service + team) — optimisée pour tablette/mobile */
     .me-sub{display:grid;grid-template-columns:1fr 1fr;gap:6px;min-width:0}
     /* Inputs / selects : taille compacte, jamais de débordement */
@@ -3465,9 +3475,52 @@ function qrDataUri(text, opts){
    * 2) Charge l'equipe + la subcollection matelots/{code} pour recuperer nom/service.
    * 3) Met en session memoire (volatil, JAMAIS en localStorage).
    */
+  /* ===== MATELOT DE TEST =====
+     Compte de service permettant a l'organisation de parcourir le jeu sans
+     s'inscrire : code ZZZZ-0000.
+     Il est volontairement INVISIBLE : il n'est ecrit nulle part dans la
+     base, donc il n'apparait ni dans l'equipage, ni dans le panneau admin,
+     ni dans le compteur de matelots du sonar, et il ne fausse pas la
+     repartition automatique des joueurs entre equipages.
+     Il est rattache a la premiere equipe existante, uniquement le temps de
+     la session : rien n'est enregistre. */
+  const TEST_MATELOT_CODE = 'ZZZZ-0000';
+
+  async function resumeAsTestMatelot(){
+    // On se rattache a une equipe reelle pour pouvoir suivre la partie.
+    let team = null;
+    for(const t of TEAM_DEFS){
+      team = await getTeam(t.code);
+      if(team) break;
+    }
+    if(!team) return { ok:false, reason:'team_missing' };
+
+    const matelot = {
+      name: 'TEST',
+      service: 'CODIR',
+      codeMatelot: TEST_MATELOT_CODE,
+      teamCode: team.teamCode,
+      teamName: team.teamName,
+      isTest: true
+    };
+    const unlock = await autoUnlockIfNeeded(team);
+    currentTeam = unlock.team;
+    currentMatelot = matelot;
+    $('matelotCodeInput').value = '';
+    /* Pas de startHeartbeat() : le compte de test ne doit pas apparaitre
+       dans le nombre de joueurs en ligne. */
+    updateFinalMissionButton();
+    return { ok:true, justUnlocked: unlock.justUnlocked, matelot, team: currentTeam };
+  }
+
   async function resumeWithMatelotCode(rawCode){
     const code = String(rawCode || '').trim().toUpperCase().replace(/\s+/g, '');
     if(!code){ return { ok:false, reason:'empty' }; }
+    // Compte de test : reconnu avant toute lecture de la base.
+    if(code === TEST_MATELOT_CODE){
+      try{ return await resumeAsTestMatelot(); }
+      catch(err){ return { ok:false, reason:'error', err }; }
+    }
     try{
       const idxSnap = await getDoc(doc(db,'matelots',code));
       if(!idxSnap.exists()){
@@ -4859,12 +4912,15 @@ function qrDataUri(text, opts){
         <h3>${allMembers.length} matelot(s) inscrit(s)</h3>
         <div class="hr"></div>
         ${allMembers.map((m, idx) => `
-          <div class="member-edit-row" data-key="${esc(m.memberKey || '')}" data-team="${esc(m._teamCode)}">
+          <div class="member-edit-row" data-key="${esc(m.memberKey || '')}" data-team="${esc(m._teamCode)}" data-code="${esc(m.codeMatelot || '')}">
             <input type="text" class="me-name" value="${esc(m.name || '')}" placeholder="Nom">
             <div class="me-sub">
               <select class="me-svc">${serviceOptions.replace(`value="${esc(m.service)}"`, `value="${esc(m.service)}" selected`)}</select>
               <select class="me-team">${teamOptions.replace(`value="${esc(m._teamCode)}"`, `value="${esc(m._teamCode)}" selected`)}</select>
             </div>
+            <input type="text" class="me-code" value="${esc(m.codeMatelot || '')}" placeholder="ABCD-1234"
+                   maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                   title="Code Matelot — sert au joueur pour reprendre sa mission">
             <div class="me-actions">
               <button class="primary mini me-save" type="button" style="background:var(--fnac);color:#111">💾</button>
               <button class="danger mini me-del" type="button">🗑</button>
@@ -4877,12 +4933,43 @@ function qrDataUri(text, opts){
       box.querySelectorAll('.member-edit-row').forEach(row => {
         const key = row.dataset.key;
         const oldTeam = row.dataset.team;
+        const oldCode = row.dataset.code || '';
         row.querySelector('.me-save').addEventListener('click', async () => {
           const newName = row.querySelector('.me-name').value.trim().toUpperCase();
           const newSvc = row.querySelector('.me-svc').value;
           const newTeamCode = row.querySelector('.me-team').value;
+          const codeEl = row.querySelector('.me-code');
+          const newCode = (codeEl.value || '').trim().toUpperCase();
           if(!newName){ alert('Le nom ne peut pas être vide.'); return; }
-          await adminMoveOrRenameMember(oldTeam, key, { name: newName, service: newSvc }, newTeamCode);
+
+          // Le code doit respecter le format, sinon le joueur ne pourra
+          // plus se reconnecter. Champ vide accepte : le matelot n'aura
+          // simplement pas de code (cas des inscriptions tres anciennes).
+          codeEl.classList.remove('me-code-bad');
+          if(newCode && !MATELOT_CODE_RE.test(newCode)){
+            codeEl.classList.add('me-code-bad');
+            alert('Code Matelot invalide.\n\nFormat attendu : 4 lettres, un tiret, 4 chiffres.\nExemple : ABCD-1234');
+            return;
+          }
+          if(newCode !== oldCode && newCode){
+            // ZZZZ-0000 est reserve au compte de test interne : l'attribuer
+            // a un vrai matelot creerait deux identites sur le meme code.
+            if(newCode === TEST_MATELOT_CODE){
+              codeEl.classList.add('me-code-bad');
+              alert(`Le code ${TEST_MATELOT_CODE} est réservé au compte de test interne.\n\nChoisis un autre code.`);
+              return;
+            }
+            // Un code doit rester unique : deux matelots avec le meme code
+            // se connecteraient sur la meme fiche.
+            const taken = await getDoc(doc(db,'matelots',newCode));
+            if(taken.exists()){
+              codeEl.classList.add('me-code-bad');
+              alert(`Le code ${newCode} est déjà attribué à un autre matelot.\n\nChoisis un code différent.`);
+              return;
+            }
+            if(!confirm(`Changer le Code Matelot de ${newName} ?\n\n${oldCode || '(aucun)'}  →  ${newCode}\n\nL'ancien code ne fonctionnera plus, et le QR déjà remis au matelot deviendra inutilisable.`)) return;
+          }
+          await adminMoveOrRenameMember(oldTeam, key, { name: newName, service: newSvc }, newTeamCode, { oldCode, newCode });
         });
         row.querySelector('.me-del').addEventListener('click', async () => {
           if(!confirm(`Supprimer définitivement ce matelot de l'équipe ?`)) return;
@@ -4895,7 +4982,41 @@ function qrDataUri(text, opts){
     }
   }
 
-  async function adminMoveOrRenameMember(fromTeamCode, oldMemberKey, patch, toTeamCode){
+  /* Un Code Matelot existe a TROIS endroits (voir resetAllMembers) :
+       1. teams/{equipe}.members[].codeMatelot   -> liste de l'equipage
+       2. teams/{equipe}/matelots/{code}         -> fiche detaillee
+       3. matelots/{code}                        -> index global de reprise
+     Les identifiants 2 et 3 sont le code lui-meme : changer un code veut
+     donc dire DEPLACER ces documents, pas seulement modifier un champ.
+     Oublier l'un des trois laisserait un code fantome utilisable. */
+  async function adminChangeMatelotCode(teamCode, oldCode, newCode, memberData){
+    if(oldCode === newCode) return;
+    // 2) fiche detaillee de l'equipe
+    let fiche = { ...memberData, codeMatelot: newCode, teamCode };
+    if(oldCode){
+      const oldRef = doc(db,'teams',teamCode,'matelots',oldCode);
+      const oldSnap = await getDoc(oldRef);
+      if(oldSnap.exists()) fiche = { ...oldSnap.data(), ...fiche };
+      await deleteDoc(oldRef).catch(() => {});
+    }
+    if(newCode){
+      await setDoc(doc(db,'teams',teamCode,'matelots',newCode), fiche);
+    }
+    // 3) index global (sert a la reconnexion par code)
+    if(oldCode) await deleteDoc(doc(db,'matelots',oldCode)).catch(() => {});
+    if(newCode){
+      await setDoc(doc(db,'matelots',newCode), {
+        codeMatelot: newCode,
+        name: fiche.name || '',
+        service: fiche.service || '',
+        teamCode,
+        teamName: fiche.teamName || '',
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+
+  async function adminMoveOrRenameMember(fromTeamCode, oldMemberKey, patch, toTeamCode, codeChange){
     if(!isAdminUnlocked()) return;
     try{
       const fromRef = doc(db,'teams',fromTeamCode);
@@ -4905,11 +5026,14 @@ function qrDataUri(text, opts){
       const member = (fromTeam.members || []).find(m => m.memberKey === oldMemberKey);
       if(!member) throw new Error('Membre introuvable dans l\'équipe source.');
       const newKey = memberKey(patch.name || member.name);
+      const cc = codeChange || {};
+      const finalCode = (cc.newCode !== undefined) ? cc.newCode : (member.codeMatelot || '');
       const updatedMember = {
         ...member,
         ...patch,
         name: (patch.name || member.name).toUpperCase(),
         memberKey: newKey,
+        codeMatelot: finalCode,
         updatedAt: new Date().toISOString()
       };
       if(fromTeamCode === toTeamCode){
@@ -4932,6 +5056,38 @@ function qrDataUri(text, opts){
           : [...(toTeam.members || []), updatedMember];
         await updateDoc(toRef, { members: toMembers, updatedAt: new Date().toISOString() });
       }
+
+      /* Fiche detaillee et index global.
+         Deux cas ou il faut les deplacer :
+           - le code change (cc.oldCode !== finalCode) ;
+           - le matelot change d'equipe : sa fiche vit sous l'ancienne
+             equipe et doit suivre, sinon la reprise renverrait vers la
+             mauvaise equipe. */
+      const codeMoved   = cc.oldCode !== undefined && cc.oldCode !== finalCode;
+      const teamChanged = fromTeamCode !== toTeamCode;
+      if(codeMoved || teamChanged){
+        const src = cc.oldCode !== undefined ? cc.oldCode : (member.codeMatelot || '');
+        if(teamChanged && src){
+          // Retirer la fiche de l'ancienne equipe avant de la recreer.
+          await deleteDoc(doc(db,'teams',fromTeamCode,'matelots',src)).catch(() => {});
+        }
+        await adminChangeMatelotCode(
+          toTeamCode,
+          teamChanged ? '' : src,     // deja supprimee ci-dessus si l'equipe change
+          finalCode,
+          {
+            name: updatedMember.name,
+            service: updatedMember.service,
+            memberKey: newKey,
+            teamName: (toTeamCode === fromTeamCode ? fromTeam.teamName : undefined) || toTeamCode
+          }
+        );
+        if(teamChanged && src && src !== finalCode){
+          // L'ancien code ne doit plus exister dans l'index global.
+          await deleteDoc(doc(db,'matelots',src)).catch(() => {});
+        }
+      }
+
       await renderAdminMembers();
       await loadTeams();
       endAdminSession(`✅ Membre ${updatedMember.name} mis à jour · session fermée`);
@@ -4948,8 +5104,19 @@ function qrDataUri(text, opts){
       const snap = await getDoc(ref);
       if(!snap.exists()) throw new Error('Équipe introuvable.');
       const team = { teamCode, ...snap.data() };
+      const victim = (team.members || []).find(m => m.memberKey === targetMemberKey);
       const newMembers = (team.members || []).filter(m => m.memberKey !== targetMemberKey);
       await updateDoc(ref, { members: newMembers, updatedAt: new Date().toISOString() });
+
+      /* Purge des deux autres emplacements du matelot. Sans cela son Code
+         Matelot restait valide : il pouvait se reconnecter alors qu'il
+         venait d'etre supprime de l'equipage. */
+      const code = victim?.codeMatelot;
+      if(code){
+        await deleteDoc(doc(db,'teams',teamCode,'matelots',code)).catch(() => {});
+        await deleteDoc(doc(db,'matelots',code)).catch(() => {});
+      }
+
       await renderAdminMembers();
       await loadTeams();
       endAdminSession(`✅ Membre supprimé · session fermée`);

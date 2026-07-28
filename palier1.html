@@ -889,6 +889,23 @@ window.Nautilus = {
     const code = N.getCurrentMatelotCode();
     if (!code) return false;                 // pas de code : on garde le formulaire
 
+    /* Compte de test (ZZZZ-0000) : il n'existe pas en base, on fabrique son
+       identite a la volee. Il n'est PAS ajoute a members[] : il doit rester
+       invisible pour les vrais joueurs. */
+    if (code === 'ZZZZ-0000') {
+      state.me = {
+        name: 'TEST', service: 'CODIR',
+        memberKey: N.memberKey('TEST'),
+        clientId: N.getClientId(),
+        isTest: true
+      };
+      N.showToast('Mode test : tu joues sans être inscrit dans l\'équipage.', 'info');
+      renderCrew();
+      $('identityCard').style.display = 'none';
+      showGame();
+      return true;
+    }
+
     const fiche = await N.getMatelotByCode(state.teamCode, code);
     if (!fiche || !fiche.name) return false; // code inconnu : repli sur le formulaire
 
