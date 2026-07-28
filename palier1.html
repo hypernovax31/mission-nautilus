@@ -277,9 +277,10 @@
     <button class="topbar-back" id="backBtn">← Accueil</button>
     <div class="topbar-title">Palier 1</div>
   </div>
+  <!-- Le code technique de l'equipe (NEMO, NEDLAND...) n'apportait rien au
+       joueur : le nom de l'equipage figure juste a cote. Mention retiree. -->
   <div class="topbar-info">
     <span>Équipage : <b id="topTeam">—</b></span>
-    <span>Code : <b id="topCode">—</b></span>
   </div>
 </div>
 
@@ -873,8 +874,11 @@ window.Nautilus = {
       $('identifyMsg').innerHTML = `<div class="status-banner warning">⚠️ Aucun équipage détecté. <a href="index.html" style="color:var(--fnac);text-decoration:underline;">Retourne à l'accueil pour embarquer</a>.</div>`;
       $('identifyBtn').disabled = true;
     } else {
-      $('topTeam').textContent = state.teamCode;
-      $('topCode').textContent = state.teamCode;
+      /* Affichage provisoire le temps que l'equipe se charge : on montre
+         des points de suspension plutot que le code technique (NEMO...),
+         que le joueur n'a pas besoin de voir. onTeamUpdate() y mettra
+         ensuite le vrai nom d'equipage. */
+      $('topTeam').textContent = '…';
       $('identifyBtn').addEventListener('click', identify);
       $('memberName').addEventListener('keydown', e => { if (e.key === 'Enter') identify(); });
       /* Auto-remplir si on a déjà un nom en local */
@@ -930,16 +934,26 @@ window.Nautilus = {
          vraie equipe, ni voir ses membres. On remplace donc l'equipage par
          un equipage d'un seul matelot : lui-meme. Il joue ainsi exactement
          comme un nouveau venu, seul a bord. */
+      /* Etat NEUF, et non une copie de la vraie equipe : sinon le testeur
+         heriterait de son blocage ou de sa progression, et se retrouverait
+         devant "Equipage en surface" ou "palier deja termine" au lieu de
+         pouvoir jouer. Il demarre comme un tout nouvel equipage. */
       state.team = {
-        ...(state.team || {}),
         teamCode: state.teamCode,
         teamName: 'Équipage de test',
+        currentStep: 'start',
+        status: 'active',
+        lockedUntil: null,
+        failCount: 0,
+        completedSteps: [],
+        onlinePlayers: {},
         members: [{
           name: 'TEST', service: 'CODIR',
           memberKey: state.me.memberKey,
           registeredAt: new Date().toISOString()
         }]
       };
+      state.session = null;   // aucune epreuve en cours au depart
       $('topTeam').textContent = 'Équipage de test';
       N.showToast('Mode test : partie d\'essai, rien n\'est enregistré.', 'info');
       renderCrew();
@@ -1050,7 +1064,6 @@ window.Nautilus = {
   function onTeamUpdate() {
     const t = state.team;
     $('topTeam').textContent = t.teamName || t.teamCode;
-    $('topCode').textContent = t.teamCode;
     /* Bandeau statut */
     if (N.isLocked(t)) {
       setStatus(`🔒 Équipage bloqué jusqu'à ${N.formatDate(t.lockedUntil)} — ${t.failCount || 0} échec(s) cumulé(s).`, 'danger');
@@ -1092,6 +1105,12 @@ window.Nautilus = {
     if (!state.unsubSession && !state.isTest) {
       state.unsubSession = N.watchSession(state.teamCode, onSessionUpdate);
     }
+
+    /* BUG CORRIGE : sans ecoute temps reel, plus personne ne declenchait le
+       rendu de la zone de jeu. Le compte de test restait donc bloque sur le
+       texte d'attente "En attente d'un matelot..." et ne pouvait rien
+       tester. On dessine la zone tout de suite. */
+    if (state.isTest) renderGameArea();
   }
 
   function onSessionUpdate(session) {
