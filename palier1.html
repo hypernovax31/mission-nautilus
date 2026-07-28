@@ -568,9 +568,24 @@ async function getTeamRealtime(code, callback) {
     callback(snap.exists() ? { teamCode: teamCodeFromInput(code), ...snap.data() } : null);
   });
 }
+/* ===== MODE TEST (compte fantome ZZZZ-0000) =====
+   Le compte de test doit pouvoir parcourir TOUT le jeu sans laisser la
+   moindre trace. Sans ce verrou, une partie d'essai perdue aurait bloque
+   une VRAIE equipe pendant 2 h, et une partie gagnee l'aurait fait avancer
+   au palier suivant.
+   Le verrou est place ici, dans les fonctions d'ecriture elles-memes :
+   toutes les ecritures existantes et futures sont ainsi couvertes, sans
+   avoir a y penser a chaque appel. */
+function isTestMode() {
+  try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; }
+  catch (e) { return false; }
+}
+
 async function saveTeam(team, patch) {
   if (!team || !team.teamCode) throw new Error('Équipe introuvable. Recharge la page.');
   const updated = { ...patch, updatedAt: new Date().toISOString() };
+  // Mode test : on simule la mise a jour en memoire, rien n'est envoye.
+  if (isTestMode()) return { ...team, ...updated };
   await updateDoc(doc(db, 'teams', team.teamCode), updated);
   return { ...team, ...updated };
 }
@@ -589,6 +604,7 @@ function watchSession(teamCode, callback) {
   });
 }
 async function createSession(teamCode, data) {
+  if (isTestMode()) return;   // partie d'essai : aucune session partagee
   await setDoc(sessionRef(teamCode), {
     teamCode: teamCodeFromInput(teamCode),
     state: 'playing',
@@ -605,12 +621,14 @@ async function createSession(teamCode, data) {
   });
 }
 async function updateSession(teamCode, patch) {
+  if (isTestMode()) return;
   await updateDoc(sessionRef(teamCode), { ...patch, lastEventAt: new Date().toISOString() });
 }
 async function endSession(teamCode, reason) {
   await updateSession(teamCode, { state: 'ended', endReason: reason, endedAt: new Date().toISOString() });
 }
 async function clearSession(teamCode) {
+  if (isTestMode()) return;
   await setDoc(sessionRef(teamCode), { state: 'idle', clearedAt: new Date().toISOString() });
 }
 
@@ -779,6 +797,8 @@ function clearLog() {
 
 /* ---------- HEARTBEAT (mise à jour lastSeen du membre) ---------- */
 async function heartbeat(teamCode) {
+  // Mode test : ne pas apparaitre dans le compteur "en ligne" des joueurs.
+  if (isTestMode()) return;
   const team = await getTeam(teamCode);
   if (!team) return;
   const online = { ...(team.onlinePlayers || {}), [getClientId()]: new Date().toISOString() };
@@ -799,6 +819,7 @@ window.Nautilus = {
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, isLocked, formatDate,
+  isTestMode,
   isSoundEnabled, getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
   showToast, addLogEntry, clearLog, heartbeat
@@ -861,6 +882,11 @@ window.Nautilus = {
       if (cached) {
         try { const m = JSON.parse(cached); $('memberName').value = m.name || ''; $('memberService').value = m.service || 'PE'; } catch(e){}
       }
+      /* Le drapeau du mode test doit etre pose AVANT de brancher l'ecoute
+         temps reel : sinon la premiere reponse de Firestore ecraserait
+         l'equipage fictif avant meme qu'il soit cree. */
+      state.isTest = (N.getCurrentMatelotCode() === 'ZZZZ-0000');
+
       /* Charge l'équipe + branche les listeners live */
       await attachTeamListener();
 
@@ -893,13 +919,29 @@ window.Nautilus = {
        identite a la volee. Il n'est PAS ajoute a members[] : il doit rester
        invisible pour les vrais joueurs. */
     if (code === 'ZZZZ-0000') {
+      state.isTest = true;
       state.me = {
         name: 'TEST', service: 'CODIR',
         memberKey: N.memberKey('TEST'),
         clientId: N.getClientId(),
         isTest: true
       };
-      N.showToast('Mode test : tu joues sans être inscrit dans l\'équipage.', 'info');
+      /* EQUIPAGE FICTIF : le compte fantome ne doit pas apparaitre dans une
+         vraie equipe, ni voir ses membres. On remplace donc l'equipage par
+         un equipage d'un seul matelot : lui-meme. Il joue ainsi exactement
+         comme un nouveau venu, seul a bord. */
+      state.team = {
+        ...(state.team || {}),
+        teamCode: state.teamCode,
+        teamName: 'Équipage de test',
+        members: [{
+          name: 'TEST', service: 'CODIR',
+          memberKey: state.me.memberKey,
+          registeredAt: new Date().toISOString()
+        }]
+      };
+      $('topTeam').textContent = 'Équipage de test';
+      N.showToast('Mode test : partie d\'essai, rien n\'est enregistré.', 'info');
       renderCrew();
       $('identityCard').style.display = 'none';
       showGame();
@@ -997,6 +1039,10 @@ window.Nautilus = {
         setStatus('Équipage introuvable.', 'danger');
         return;
       }
+      /* MODE TEST : on ignore les mises a jour de la vraie equipe, sinon
+         l'equipage fictif du testeur serait remplace par le vrai (et son
+         eventuel blocage s'appliquerait a la partie d'essai). */
+      if (state.isTest) return;
       state.team = team;
       onTeamUpdate();
     });
@@ -1039,8 +1085,11 @@ window.Nautilus = {
     $('logCard').style.display = 'block';
     $('gameCard').style.display = 'block';
 
-    /* Branche le listener de session si pas déjà fait */
-    if (!state.unsubSession) {
+    /* Branche le listener de session si pas déjà fait.
+       MODE TEST : surtout pas. La session d'essai vit uniquement en memoire ;
+       l'ecoute temps reel renverrait la session REELLE de l'equipe (ou null)
+       et ecraserait la partie en cours du testeur. */
+    if (!state.unsubSession && !state.isTest) {
       state.unsubSession = N.watchSession(state.teamCode, onSessionUpdate);
     }
   }
@@ -1141,15 +1190,48 @@ window.Nautilus = {
   async function startNewSession() {
     if (!state.me || !state.team) return;
     /* Vérifier qu'il n'y a pas déjà une session active (race condition possible) */
-    const current = await N.getSession(state.teamCode);
-    if (current && current.state === 'playing') {
-      N.showToast('Un autre matelot est déjà aux commandes. Patiente.', 'warning');
-      return;
+    if (!state.isTest) {
+      const current = await N.getSession(state.teamCode);
+      if (current && current.state === 'playing') {
+        N.showToast('Un autre matelot est déjà aux commandes. Patiente.', 'warning');
+        return;
+      }
     }
     /* Choisir un mot et démarrer. Chaque mot a son indice géographique associé
        (où se trouve le QR du palier 2 dans le magasin). */
     const entry = N.pickWord();
     state.word = entry.w;
+
+    /* MODE TEST : rien n'est ecrit dans Firestore, donc l'ecoute temps reel
+       ne renverra jamais de session. On la fabrique en memoire pour que la
+       partie se deroule exactement comme une vraie. */
+    if (state.isTest) {
+      state.session = {
+        teamCode: state.teamCode,
+        state: 'playing',
+        startedAt: new Date().toISOString(),
+        startedBy: state.me.clientId,
+        startedByName: state.me.name,
+        startedByMemberKey: state.me.memberKey,
+        wordLength: entry.w.length,
+        wordHash: N.hashString(entry.w),
+        listensLeft: 3,
+        attempts: 0,
+        errors: 0,
+        maxErrors: 3,
+        timeLimit: 210,
+        hintsRevealed: [false, false, false],
+        startedWordHint: entry.h,
+        lastEvent: 'session_started'
+      };
+      N.addLogEntry(`⚓ ${state.me.name} a pris les commandes du protocole. Épreuve en cours…`, 'info');
+      /* renderGameArea() et non onSessionUpdate() : cette derniere REMPLACE
+         state.session par son argument, ce qui effacerait la session qu'on
+         vient de fabriquer. */
+      renderGameArea();
+      return;
+    }
+
     await N.createSession(state.teamCode, {
       startedBy: state.me.clientId,
       startedByName: state.me.name,
@@ -1416,6 +1498,14 @@ window.Nautilus = {
     const remaining = (state.session.hintsRevealed || [false, false, false]).map((v, i) => v ? -1 : i).filter(i => i >= 0);
     if (remaining.length === 0) { N.showToast('Tous les indices sont déjà révélés.', 'info'); return; }
     const idx = remaining[Math.floor(Math.random() * remaining.length)];
+    /* MODE TEST : le compte fantome est seul a bord, mais on veut pouvoir
+       essayer le parcours "indice envoye a un coequipier" sans etre puni
+       par le blocage 24 h du mode solo. Il est donc son propre coequipier :
+       l'indice lui revient directement. */
+    if (state.isTest) {
+      await applyTeamHint(idx, state.me);
+      return;
+    }
     /* Trouver un co-équipier (autre que moi) */
     const others = (state.team.members || []).filter(m => m.memberKey !== state.me.memberKey);
     if (others.length === 0) {
@@ -1462,6 +1552,16 @@ window.Nautilus = {
     });
       N.addLogEntry(`🆘 ${state.me.name} a envoyé un cap à <b>${esc(target.name)}</b>.`, 'info');
       N.showToast(`Cap envoyé à ${target.name}.`, 'info');
+
+    /* MODE TEST : rien n'est ecrit dans la session partagee, donc l'indice
+       n'arriverait jamais par la voie normale (l'ecoute temps reel de
+       Firestore). On l'affiche donc directement : le testeur voit le meme
+       resultat qu'un vrai coequipier, sans blocage 24 h. */
+    if (state.isTest) {
+      state.session = { ...(state.session || {}), hintsRevealed: newHints };
+      showFloatingHint(buildHintContent(idx), 8000);
+      renderGameArea();
+    }
   }
 
   function buildHintContent(idx) {
@@ -1686,5 +1786,9 @@ window.Nautilus = {
 })(); // Fin de l'IIFE du code palier
 
 </script>
+<!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu.
+     Une seule ligne a copier sur chaque nouvelle page : le script cree le
+     lecteur, le bouton et ses styles, et retient le choix du joueur. -->
+<script src="sonar-button.js" defer></script>
 </body>
 </html>
