@@ -11,6 +11,20 @@
    Le script se charge de tout : il cree le lecteur audio, le bouton, ses
    styles, et il retient le choix du joueur.
 
+   UN SON DIFFERENT PAR PAGE
+   Chaque page peut avoir sa propre ambiance :
+
+       <script src="sonar-button.js" data-src="assets/mon-ambiance.mp3" defer></script>
+
+   Sans precision, c'est l'ambiance par defaut du jeu qui est utilisee.
+
+   OU SE PLACE LE BOUTON
+   - Si la page a une barre en haut (.topbar) ou un emplacement marque
+     data-sonar-slot, le bouton s'y INSERE : il ne recouvre rien.
+   - Sinon il flotte en haut a droite.
+   Pour choisir soi-meme l'endroit, il suffit d'ajouter data-sonar-slot sur
+   l'element qui doit l'accueillir.
+
    POURQUOI UN FICHIER SEPARE
    La page d'accueil embarquait sa propre copie de ce mecanisme. Chaque
    nouvelle page aurait du la recopier, avec le risque de versions qui
@@ -68,6 +82,8 @@
       + '.nx-sonar-toggle.active:active{background:rgba(18,138,90,.85);color:#fff;'
       + 'border-color:rgba(255,255,255,.3);filter:none;transform:none}'
       + '.nx-sonar-toggle .nx-ico{flex:0 0 auto;line-height:1}'
+      /* Insere dans une barre existante : plus petit, aligne avec le reste. */
+      + '.nx-sonar-toggle.nx-inline{padding:6px 12px;font-size:11px;flex:0 0 auto}'
       + '@media(max-width:520px){.nx-sonar-bar{top:7px;right:7px}'
       + '.nx-sonar-toggle{padding:7px 10px;font-size:clamp(8px,2.05vw,9.6px);border-width:1.5px}}';
     var st = document.createElement('style');
@@ -77,7 +93,29 @@
   }
 
   /* ---------- Elements ---------- */
+  /* Quel fichier son pour CETTE page ?
+     Chaque page peut avoir sa propre ambiance. Trois facons de la choisir,
+     de la plus prioritaire a la moins :
+
+       1. un attribut sur la balise du script :
+            <script src="sonar-button.js" data-src="assets/ambiance-morse.mp3" defer></script>
+       2. une variable posee avant le script :
+            <script>window.NAUTILUS_AMBIANCE = 'assets/ambiance-morse.mp3';</script>
+       3. rien : on retombe sur l'ambiance par defaut du jeu.
+
+     Ainsi une nouvelle page peut avoir sa musique sans toucher a ce
+     fichier, et sans imposer celle de la page d'accueil. */
+  function ambianceSrc() {
+    var tag = document.currentScript
+           || document.querySelector('script[src*="sonar-button.js"]');
+    var fromTag = tag && tag.getAttribute('data-src');
+    if (fromTag) return fromTag;
+    if (window.NAUTILUS_AMBIANCE) return window.NAUTILUS_AMBIANCE;
+    return 'assets/ambiance-sonar.mp3';
+  }
+
   function buildAudio() {
+    // Une page peut fournir son propre lecteur : on le respecte tel quel.
     audio = document.getElementById('ambianceAudio');
     if (audio) return;
     audio = document.createElement('audio');
@@ -88,15 +126,13 @@
     audio.setAttribute('playsinline', '');
     var src = document.createElement('source');
     // Chemin relatif : fonctionne aussi sur GitHub Pages (sous-dossier).
-    src.src = 'assets/ambiance-sonar.mp3';
+    src.src = ambianceSrc();
     src.type = 'audio/mpeg';
     audio.appendChild(src);
     document.body.appendChild(audio);
   }
 
   function buildButton() {
-    var bar = document.createElement('div');
-    bar.className = 'nx-sonar-bar';
     btn = document.createElement('button');
     btn.type = 'button';
     btn.id = 'sonarToggleBtn';
@@ -104,6 +140,23 @@
     btn.innerHTML = '<span class="nx-ico" aria-hidden="true">🔇</span>'
                   + '<span class="nx-label">Activer le sonar</span>';
     btn.addEventListener('click', toggle);
+
+    /* PLACEMENT
+       Si la page possede deja une barre en haut (data-sonar-slot, ou la
+       .topbar des pages palier), on INSERE le bouton dedans : il se range
+       a cote du reste au lieu de flotter par-dessus et de masquer le
+       contenu.
+       Sinon seulement, on le pose en flottant en haut a droite. */
+    var slot = document.querySelector('[data-sonar-slot]')
+            || document.querySelector('.topbar .topbar-info')
+            || document.querySelector('.topbar');
+    if (slot) {
+      btn.classList.add('nx-inline');
+      slot.appendChild(btn);
+      return;
+    }
+    var bar = document.createElement('div');
+    bar.className = 'nx-sonar-bar';
     bar.appendChild(btn);
     document.body.appendChild(bar);
   }
