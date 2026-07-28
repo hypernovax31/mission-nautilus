@@ -136,15 +136,21 @@
 
     .morse-answer-zone{background:rgba(0,0,0,.28);border:1px solid rgba(142,231,255,.18);border-radius:16px;padding:16px;margin-bottom:14px;}
     .morse-answer-label{display:block;font-size:11px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:8px;}
-    .morse-slots{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:12px;min-height:42px;}
-    .morse-slot{
-      display:inline-flex;align-items:center;justify-content:center;
-      width:30px;height:38px;border-bottom:3px solid var(--fnac);
-      background:rgba(255,255,255,.04);border-radius:5px 5px 0 0;
-      font-family:Consolas,"Courier New",monospace;font-size:20px;font-weight:1000;color:#8ee7ff;
+    /* Zone de reponse : un seul bandeau qui s'allonge au fil de la frappe.
+       Les anciennes cases pre-dessinees (une par lettre) revelaient la
+       longueur du mot avant meme la premiere ecoute. */
+    .morse-typed{
+      min-height:52px;display:flex;align-items:center;justify-content:center;
+      flex-wrap:wrap;gap:2px;padding:8px 12px;margin-bottom:12px;
+      border-bottom:3px solid var(--fnac);border-radius:6px 6px 0 0;
+      background:rgba(255,255,255,.04);
+      font-family:Consolas,"Courier New",monospace;
+      font-size:clamp(20px,5vw,28px);font-weight:1000;letter-spacing:.18em;
+      color:#fff;text-shadow:0 0 10px rgba(142,231,255,.55);
+      word-break:break-all;transition:background .2s ease,color .2s ease;
     }
-    .morse-slot.filled{color:#fff;background:rgba(142,231,255,.12);text-shadow:0 0 8px rgba(142,231,255,.6);}
-    .morse-slot.wrong{background:rgba(255,75,62,.25);color:#ff7b72;}
+    .morse-typed-ph{color:rgba(155,196,212,.55);letter-spacing:0;font-size:20px;}
+    .morse-typed.wrong{background:rgba(255,75,62,.25);color:#ff7b72;}
 
     .morse-keypad{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:480px;margin:0 auto 12px;}
     @media(max-width:560px){.morse-keypad{grid-template-columns:repeat(6,1fr);}}
@@ -1176,8 +1182,7 @@ window.Nautilus = {
   function renderIdleScreen(t, me) {
     return `
       <div class="status-banner info">
-        📋 <b>Aucun protocole en cours.</b><br>
-        Un seul matelot peut être aux commandes à la fois. Si un co-équipier est déjà lancé, le système t'en empêchera et tu pourras l'aider en lui transmettant un indice.
+        📋 <b>Aucun protocole en cours.</b> Un seul matelot prend les commandes ; les autres suivent et peuvent lui envoyer un cap.
       </div>
       <div class="morse-stepbox">
         <div class="morse-header">
@@ -1188,13 +1193,15 @@ window.Nautilus = {
           </div>
         </div>
         <p class="morse-brief">
-          ⚓ <b>Briefing du capitaine Nemo — confidentiel :</b>
+          ⚓ <b>Briefing du capitaine Nemo</b>
           <br><br>
-          L'équipage doit transmettre un <b>code de sept lettres ou plus</b> au tableau de bord du sas. Le mot est connu du capitaine seul — à toi de le recevoir et de le retranscrire.
+          Le sas ne s'ouvrira qu'avec un mot de passe. Le capitaine te l'enverra
+          en <b>morse</b> : à toi de l'écouter et de l'écrire.
           <br><br>
-          ⏱️ <b>Temps imparti</b> : 3 minutes 30.<br>
-          ❌ <b>Trois erreurs</b> et l'équipage tout entier est repoussé en surface.<br>
-          🆘 <b>Indice</b> : un seul bouton t'est accordé. Si tu as un co-équipier, l'indice lui parviendra. Sinon, il sera visible 5s sur ton écran — mais tu seras bloqué 24h pour ce palier.
+          🎧 <b>3 écoutes</b> du signal.<br>
+          ⏱️ <b>3 minutes 30</b> pour répondre.<br>
+          ❌ <b>3 erreurs</b> et l'équipage est repoussé en surface.<br>
+          🆘 Bloqué ? Demande un <b>cap</b> au capitaine.
         </p>
         <div class="morse-actions">
           <button class="primary" id="takeLeadBtn" style="flex:1 1 100%;">⚓ PRENDRE LES COMMANDES</button>
@@ -1220,6 +1227,7 @@ window.Nautilus = {
        (où se trouve le QR du palier 2 dans le magasin). */
     const entry = N.pickWord();
     state.word = entry.w;
+    state.typed = '';        // repart d'une reponse vide
 
     /* MODE TEST : rien n'est ecrit dans Firestore, donc l'ecoute temps reel
        ne renverra jamais de session. On la fabrique en memoire pour que la
@@ -1272,25 +1280,22 @@ window.Nautilus = {
   function renderPlayerScreen(s, t, me) {
     const remaining = computeRemaining(s);
     const min = Math.floor(remaining / 60), sec = remaining % 60;
-    const wordLength = s.wordLength || 0;
-    const slots = '_'.repeat(wordLength).split('').map((_, i) =>
-      `<span class="morse-slot" data-i="${i}">_</span>`).join('');
     const listensLeft = s.listensLeft ?? 0;
     const errors = s.errors ?? 0;
     const maxErrors = s.maxErrors ?? 3;
+    const typed = state.typed || '';
 
+    /* Les caps sont la SEULE source d'aide. Tant qu'un cap n'est pas
+       demande, son contenu reste totalement cache : meme sa description
+       ne doit rien laisser deviner. */
     const hintCards = [
-      { label: '🧭 Cap nº1', body: 'Une <b>recommandation officielle</b> sera transmise à ton co-équipier (ou affichée 5s sur ton écran).' },
-      { label: '🧭 Cap nº2', body: s.hintsRevealed[1] ? `Le mot de passe contient <b>${wordLength} caractères</b>.` : 'Le capitaine connaît la <b>longueur du message</b>.' },
-      { label: '🧭 Cap nº3', body: s.hintsRevealed[2] ? `La première lettre du mot de passe est <b>${esc(s.firstLetter || '?')}</b>.` : 'La <b>première lettre</b> t\'aidera à démarrer.' }
+      { label: 'Cap nº1', body: 'Une <b>recommandation officielle</b> du capitaine.' },
+      { label: 'Cap nº2', body: `Le mot compte <b>${s.wordLength || '?'} lettres</b>.` },
+      { label: 'Cap nº3', body: `Il commence par <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` }
     ];
-    const hintBtnText = s.hintsRevealed.every(Boolean) ? '🔓 Tous les caps relevés' : '🆘 DEMANDER UN CAP';
-    const hintBtnDisabled = s.hintsRevealed.every(Boolean);
+    const allRevealed = s.hintsRevealed.every(Boolean);
 
     return `
-      <div class="status-banner info">
-        🧭 <b>${esc(me.name)}</b>, tu es seul maître à bord du protocole. Les autres matelots voient ton activité en direct mais ne peuvent pas intervenir — ils peuvent juste t'envoyer un indice.
-      </div>
       <div class="morse-stepbox">
         <div class="morse-header">
           <h3>🧪 PROTOCOLE EN COURS</h3>
@@ -1299,7 +1304,11 @@ window.Nautilus = {
             <span class="morse-timer" id="morseTimer">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</span>
           </div>
         </div>
-        <p class="morse-brief">Reçois le signal et retranscris-le en clair. Le mot de passe fait <b>${wordLength} lettres</b>. Trois écoutes sont autorisées, trois erreurs sont tolérées. Au-delà, l'équipage est repoussé en surface.</p>
+
+        <p class="morse-brief">
+          Écoute le signal et écris le mot qu'il épelle.
+        </p>
+
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
             <div class="morse-sweep"></div>
@@ -1307,15 +1316,16 @@ window.Nautilus = {
           </div>
           <div class="morse-controls">
             <button class="morse-listen-btn" id="morseListenBtn" ${listensLeft <= 0 ? 'disabled' : ''}>
-              ${listensLeft > 0 ? '▶️ Recevoir le signal' : '🔇 Plus de réception possible'}
+              ${listensLeft > 0 ? '▶️ Écouter le signal' : '🔇 Plus d\'écoute'}
             </button>
-            <div class="morse-counter">Réceptions : <b id="morseCounter">${listensLeft}</b> / 3</div>
-            <div class="morse-counter" style="color:#9bc4d4;">Erreurs : <b style="color:${errors >= maxErrors - 1 ? '#ff7b72' : '#8ee7ff'};">${errors}</b> / ${maxErrors}</div>
+            <div class="morse-counter">Écoutes restantes : <b id="morseCounter">${listensLeft}</b> / 3</div>
+            <div class="morse-counter">Erreurs : <b style="color:${errors >= maxErrors - 1 ? '#ff7b72' : '#8ee7ff'};">${errors}</b> / ${maxErrors}</div>
           </div>
         </div>
+
         <div class="morse-answer-zone">
-          <label class="morse-answer-label">Traduction (le mot complet, sans espace)</label>
-          <div class="morse-slots" id="morseSlots">${slots}</div>
+          <label class="morse-answer-label">Ta réponse</label>
+          <div class="morse-typed" id="morseTyped">${typed ? esc(typed) : '<span class="morse-typed-ph">—</span>'}</div>
           <div class="morse-keypad" id="morseKeypad">
             ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l =>
               `<button type="button" class="morse-key" data-l="${l}">${l}</button>`).join('')}
@@ -1327,17 +1337,18 @@ window.Nautilus = {
           </div>
           <div id="morseFeedback"></div>
         </div>
+
         <div class="morse-hints-zone">
           <div class="morse-hint-target">
             <div class="morse-hint-target-info">
-              🆘 <b>Indice</b> — sera envoyé à un co-équipier, ou visible 5s si tu es seul.
+              Bloqué ? Demande un cap au capitaine.
             </div>
-            <button class="morse-hint-btn" id="morseHintBtn" ${hintBtnDisabled ? 'disabled' : ''}>${hintBtnText}</button>
+            <button class="morse-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '🔓 Tous les caps relevés' : '🆘 DEMANDER UN CAP'}</button>
           </div>
           <div class="morse-hints-grid">
             ${hintCards.map((h, i) => `
               <div class="morse-hint-card ${s.hintsRevealed[i] ? 'morse-hint-revealed' : ''}">
-                <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed[i] ? '✓' : ''}</div>
+                <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed[i] ? '✓' : '🔒'}</div>
                 <div>${s.hintsRevealed[i] ? h.body : '— non révélé —'}</div>
               </div>
             `).join('')}
@@ -1346,16 +1357,6 @@ window.Nautilus = {
       </div>
     `;
   }
-
-  function computeRemaining(s) {
-    if (!s || !s.startedAt || !s.timeLimit) return 0;
-    const elapsed = Math.floor((Date.now() - new Date(s.startedAt).getTime()) / 1000);
-    return Math.max(0, s.timeLimit - elapsed);
-  }
-
-  /* === Événements joueur === */
-  let _audioCtx = null;
-  let _isPlaying = false;
 
   function bindPlayerEvents() {
     /* Timer live */
@@ -1371,28 +1372,41 @@ window.Nautilus = {
 
     /* Listen button */
     $('morseListenBtn')?.addEventListener('click', listenTransmission);
-    /* Keypad */
+    /* Saisie libre : la reponse s'ecrit dans state.typed, sans case
+       pre-dessinee. Les anciennes cases revelaient le nombre de lettres du
+       mot avant meme la premiere ecoute. */
     document.querySelectorAll('.morse-key').forEach(btn => {
       btn.addEventListener('click', () => {
-        const slots = document.querySelectorAll('.morse-slot');
-        for (const slot of slots) {
-          if (slot.textContent === '_') {
-            slot.textContent = btn.dataset.l;
-            slot.classList.add('filled');
-            break;
-          }
-        }
+        state.typed = (state.typed || '') + btn.dataset.l;
+        paintTyped();
       });
     });
     $('morseDeleteBtn')?.addEventListener('click', () => {
-      const slots = Array.from(document.querySelectorAll('.morse-slot'));
-      for (let i = slots.length - 1; i >= 0; i--) {
-        if (slots[i].textContent !== '_') { slots[i].textContent = '_'; slots[i].classList.remove('filled'); break; }
-      }
+      state.typed = (state.typed || '').slice(0, -1);
+      paintTyped();
     });
     $('morseClearBtn')?.addEventListener('click', () => {
-      document.querySelectorAll('.morse-slot').forEach(s => { s.textContent = '_'; s.classList.remove('filled'); });
+      state.typed = '';
+      paintTyped();
     });
+    /* Clavier physique : plus confortable sur ordinateur. */
+    if (state.keyHandler) document.removeEventListener('keydown', state.keyHandler);
+    state.keyHandler = (e) => {
+      if (!state.session || state.session.state !== 'playing') return;
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if (/^[a-zA-Z]$/.test(e.key)) {
+        state.typed = (state.typed || '') + e.key.toUpperCase();
+        paintTyped();
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        state.typed = (state.typed || '').slice(0, -1);
+        paintTyped();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        submitAnswer();
+      }
+    };
+    document.addEventListener('keydown', state.keyHandler);
     $('morseSubmitBtn')?.addEventListener('click', submitAnswer);
     $('morseHintBtn')?.addEventListener('click', requestHint);
   }
@@ -1436,8 +1450,16 @@ window.Nautilus = {
   }
 
   function readAnswer() {
-    return Array.from(document.querySelectorAll('.morse-slot'))
-      .map(s => s.textContent === '_' ? '' : s.textContent).join('').toUpperCase();
+    return (state.typed || '').toUpperCase();
+  }
+
+  /* Affiche la reponse en cours de saisie. */
+  function paintTyped() {
+    const el = $('morseTyped');
+    if (!el) return;
+    const v = state.typed || '';
+    el.innerHTML = v ? esc(v) : '<span class="morse-typed-ph">—</span>';
+    el.classList.remove('wrong');
   }
 
   async function submitAnswer() {
@@ -1445,8 +1467,11 @@ window.Nautilus = {
     const guess = readAnswer();
     const target = state.word;
     const fb = $('morseFeedback');
-    if (guess.length < target.length) {
-      fb.innerHTML = `<div class="status-banner warning">⚠️ Mot incomplet. Continue à écouter le signal.</div>`;
+    /* On ne compare PAS a la longueur du mot : le message reveleraiit
+       combien de lettres il reste a trouver. On refuse seulement une
+       reponse vide, et cela ne coute pas d'erreur. */
+    if (!guess) {
+      fb.innerHTML = `<div class="status-banner warning">⚠️ Écris d'abord ta réponse.</div>`;
       return;
     }
     if (guess === target.toUpperCase()) {
@@ -1470,15 +1495,15 @@ window.Nautilus = {
         await blockTeam('morse_too_many_errors');
       } else {
         await N.updateSession(state.teamCode, { errors: newErrors, attempts: (state.session.attempts || 0) + 1, lastEvent: 'wrong_answer' });
-        fb.innerHTML = `<div class="status-banner warning">❌ Mauvaise traduction. ${max - newErrors} chance(s) restante(s).</div>`;
-        /* Highlight slots incorrects */
-        const slots = document.querySelectorAll('.morse-slot');
-        slots.forEach((slot, i) => {
-          if (slot.textContent !== '_' && slot.textContent !== target[i]) {
-            slot.classList.add('wrong');
-            setTimeout(() => slot.classList.remove('wrong'), 900);
-          }
-        });
+        fb.innerHTML = `<div class="status-banner warning">❌ Mauvaise réponse. ${max - newErrors} chance(s) restante(s).</div>`;
+        /* On signale l'erreur SANS montrer quelles lettres sont fausses :
+           l'ancien surlignage lettre par lettre revenait a corriger la
+           reponse gratuitement. */
+        const el = $('morseTyped');
+        if (el) {
+          el.classList.add('wrong');
+          setTimeout(() => el.classList.remove('wrong'), 900);
+        }
       }
     }
   }
@@ -1604,8 +1629,6 @@ window.Nautilus = {
   function renderSpectatorScreen(s, t, me) {
     const remaining = computeRemaining(s);
     const min = Math.floor(remaining / 60), sec = remaining % 60;
-    const wordLength = s.wordLength || 0;
-    const slots = '_'.repeat(wordLength).split('').map(() => '<span class="morse-slot">_</span>').join('');
     const playerName = s.startedByName || 'un matelot';
     return `
       <div class="status-banner warning">
@@ -1632,10 +1655,8 @@ window.Nautilus = {
           </div>
         </div>
         <div class="morse-answer-zone">
-          <label class="morse-answer-label">Décodage en cours…</label>
-          <div class="morse-slots" id="morseSlots">${slots}</div>
-          <div class="status-banner info" style="margin-top:10px;">
-            🔒 Tu ne peux pas modifier la traduction — seul <b>${esc(playerName)}</b> peut le faire.
+          <div class="status-banner info">
+            🔒 Seul <b>${esc(playerName)}</b> peut répondre.
           </div>
         </div>
         <div class="morse-hints-zone">
@@ -1651,7 +1672,7 @@ window.Nautilus = {
             ${[
               { label: '🧭 Cap nº1', body: s.hintsRevealed?.[0] ? 'Une recommandation officielle a été révélée.' : '— non révélé —' },
               { label: '🧭 Cap nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${wordLength} caractères</b>.` : '— non révélé —' },
-              { label: '🧭 Cap nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(s.firstLetter || '?')}</b>.` : '— non révélé —' }
+              { label: '🧭 Cap nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '— non révélé —' }
             ].map((h, i) => `
               <div class="morse-hint-card ${s.hintsRevealed?.[i] ? 'morse-hint-revealed' : ''}">
                 <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed?.[i] ? '✓' : ''}</div>
