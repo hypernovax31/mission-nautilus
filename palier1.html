@@ -1358,6 +1358,17 @@ window.Nautilus = {
     `;
   }
 
+  /* Temps restant de l'epreuve, en secondes.
+     RESTAUREE : cette fonction avait ete emportee lors de la reecriture de
+     l'ecran de jeu. Ses 4 appels subsistaient, si bien que l'affichage du
+     protocole levait "computeRemaining is not defined" : le mini-jeu ne
+     demarrait plus du tout. */
+  function computeRemaining(s) {
+    if (!s || !s.startedAt || !s.timeLimit) return 0;
+    const elapsed = Math.floor((Date.now() - new Date(s.startedAt).getTime()) / 1000);
+    return Math.max(0, s.timeLimit - elapsed);
+  }
+
   function bindPlayerEvents() {
     /* Timer live */
     if (state.timerHandle) clearInterval(state.timerHandle);
