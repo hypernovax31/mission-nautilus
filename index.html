@@ -1910,39 +1910,107 @@
 
   function progressHtml(team){const completed=team.completedSteps||[];return `<div class="progress">${Object.keys(STEPS).map(id=>`<span class="dot ${completed.includes(id)?'doneDot':(id===team.currentStep?'currentDot':'')}">${esc(STEPS[id].label)}</span>`).join('')}</div>`;}
 
-  async function ensureTeams(){
-    // Charger la config pour récupérer les customTeams (sans les écraser)
-    let cfgData = {};
-    try{
-      const cfgSnap = await getDoc(doc(db,'game','config'));
-      cfgData = cfgSnap.exists() ? cfgSnap.data() : {};
-    }catch(e){}
+  /* Prepare les equipes dans la base.
+     REECRITE POUR LA VITESSE. L'ancienne version faisait, a chaque appel :
+       1 lecture config + (1 lecture + 1 ECRITURE) par equipe + 1 ecriture config
+     soit une dizaine d'aller-retours enchaines UN PAR UN. Et elle etait
+     appelee deux fois pendant une inscription (une fois en direct, une fois
+     via loadTeams), plus toutes les 60 s par le rafraichissement auto.
+     Sur un telephone en 4G du magasin, cela suffisait a rendre
+     l'embarquement interminable.
+
+     Trois corrections :
+       - une seule lecture groupee de toutes les equipes (getDocs) au lieu
+         d'une lecture par equipe ;
+       - on N'ECRIT QUE s'il manque vraiment quelque chose (avant, chaque
+         equipe etait reecrite a chaque passage, pour rien) ;
+       - le resultat est garde en memoire quelques secondes : deux appels
+         rapproches ne refont pas le travail.
+     Renvoie la liste des equipes, pour eviter a l'appelant une relecture. */
+  let _ensureTeamsPromise = null;
+  let _ensureTeamsAt = 0;
+  const ENSURE_TEAMS_TTL = 30000;   // 30 s
+
+  async function ensureTeams(force){
+    const now = Date.now();
+    if(!force && _ensureTeamsPromise && (now - _ensureTeamsAt) < ENSURE_TEAMS_TTL){
+      return _ensureTeamsPromise;
+    }
+    _ensureTeamsAt = now;
+    _ensureTeamsPromise = _ensureTeamsRun().catch(err => {
+      // Un echec ne doit pas rester en cache : on rejouera au prochain appel.
+      _ensureTeamsPromise = null;
+      throw err;
+    });
+    return _ensureTeamsPromise;
+  }
+
+  async function _ensureTeamsRun(){
+    // Les deux lectures partent EN MEME TEMPS : on attend le plus lent des
+    // deux, pas la somme des deux.
+    const [cfgSnap, teamsSnap] = await Promise.all([
+      getDoc(doc(db,'game','config')).catch(() => null),
+      getDocs(collection(db,'teams'))
+    ]);
+    const cfgData = (cfgSnap && cfgSnap.exists()) ? cfgSnap.data() : {};
     const customs = Array.isArray(cfgData.customTeams) ? cfgData.customTeams : [];
     const obsolete = Array.isArray(cfgData.obsoleteTeams) ? cfgData.obsoleteTeams : [];
     const allDefs = [...TEAM_DEFS, ...customs.filter(c => !TEAM_DEFS.some(d => d.code === c.code))];
 
-    const codes=[];
+    const existing = new Map();
+    teamsSnap.forEach(d => existing.set(d.id, d.data()));
+
+    const codes = [];
+    const jobs = [];          // ecritures a lancer en parallele
+    const teams = [];         // etat final, renvoye a l'appelant
+
     for(const t of allDefs){
-      // Ne pas (re)créer les équipes marquées comme obsolètes
       if(obsolete.includes(t.code)) continue;
       codes.push(t.code);
-      const ref=doc(db,'teams',t.code);
-      const snap=await getDoc(ref);
-      if(!snap.exists()){
-        await setDoc(ref,{teamCode:t.code,teamName:t.name,currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],members:[],onlinePlayers:{},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
-      }else{
-        const data=snap.data();
-        const patch={teamCode:t.code,teamName:t.name,updatedAt:new Date().toISOString()};
-        if(!Array.isArray(data.members)) patch.members=[];
-        if(!data.onlinePlayers) patch.onlinePlayers={};
-        if(data.failCount===undefined) patch.failCount=0;
-        if(!data.currentStep) patch.currentStep='start';
-        if(!data.status) patch.status='active';
-        await updateDoc(ref,patch).catch(()=>{});
+      const ref = doc(db,'teams',t.code);
+      const data = existing.get(t.code);
+
+      if(!data){
+        const fresh = {teamCode:t.code,teamName:t.name,currentStep:'start',status:'active',lockedUntil:null,failCount:0,lastLockHours:0,completedSteps:[],members:[],onlinePlayers:{},createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+        jobs.push(setDoc(ref, fresh).catch(()=>{}));
+        teams.push(fresh);
+        continue;
       }
+
+      /* On ne repare QUE ce qui est reellement casse. Sans ce test, chaque
+         chargement de page reecrivait les 4 equipes, ce qui coutait 4
+         ecritures reseau a chaque fois — et faisait clignoter les
+         "updatedAt" pour rien. */
+      const patch = {};
+      if(data.teamCode !== t.code) patch.teamCode = t.code;
+      if(data.teamName !== t.name) patch.teamName = t.name;
+      if(!Array.isArray(data.members)) patch.members = [];
+      if(!data.onlinePlayers) patch.onlinePlayers = {};
+      if(data.failCount === undefined) patch.failCount = 0;
+      if(!data.currentStep) patch.currentStep = 'start';
+      if(!data.status) patch.status = 'active';
+
+      if(Object.keys(patch).length){
+        patch.updatedAt = new Date().toISOString();
+        jobs.push(updateDoc(ref, patch).catch(()=>{}));
+      }
+      teams.push({ teamCode: t.code, ...data, ...patch });
     }
-    await setDoc(doc(db,'game','config'),{activeTeamCodes:codes,updatedAt:new Date().toISOString()},{merge:true});
+
+    // La liste des codes actifs ne change quasiment jamais : on ne la
+    // reecrit que si elle a bouge.
+    const known = Array.isArray(cfgData.activeTeamCodes) ? cfgData.activeTeamCodes : null;
+    if(!known || known.length !== codes.length || known.some((c,i) => c !== codes[i])){
+      jobs.push(setDoc(doc(db,'game','config'),{activeTeamCodes:codes,updatedAt:new Date().toISOString()},{merge:true}).catch(()=>{}));
+    }
+
+    if(jobs.length) await Promise.all(jobs);
+    return teams;
   }
+
+  /* A appeler apres toute action admin qui cree ou supprime une equipe :
+     sans cela, le cache de 30 s pourrait continuer a decrire l'ancien etat. */
+  function invalidateTeamsCache(){ _ensureTeamsPromise = null; _ensureTeamsAt = 0; }
 
   async function getTeam(code){
     const cleanCode=teamCodeFromInput(code);
@@ -2704,11 +2772,15 @@
     const box=$('teamsBox');
     try{
       await ensureTeams();
-      try{ await refreshAdminTeams(); }catch(e){}
       // Source unique de verite : la collection Firestore. Une equipe
       // supprimee disparait donc aussi cote joueur, sans decalage.
       const teamsSnap = await getDocs(collection(db,'teams'));
       const teams = teamsSnap.docs.map(d => ({ teamCode: d.id, ...d.data() }));
+      /* La liste admin est construite a partir de CETTE lecture.
+         Avant, refreshAdminTeams() relisait toute la collection pour son
+         propre compte : deux lectures identiques a la suite a chaque
+         rafraichissement. */
+      try{ refreshAdminTeams(teams); }catch(e){}
       teams.sort((a, b) => {
         const ia = TEAM_DEFS.findIndex(t => t.code === a.teamCode);
         const ib = TEAM_DEFS.findIndex(t => t.code === b.teamCode);
@@ -2730,6 +2802,7 @@
       _loadTeamsRunning = false;
     }
   }
+
 
   function pickBalancedTeam(teams, service){
     const scored=teams.map(team=>{
@@ -3530,20 +3603,32 @@ function qrDataUri(text, opts){
     }
     if(name.length < 2){alert('Halte-là Matelot ! Ton nom est trop court pour être enregistré.');return;}
     $('registerBtn').disabled=true;
+    /* Repere visuel immediat : sur un telephone en 4G, l'inscription prend
+       forcement une seconde ou deux. Sans retour, le matelot croit que rien
+       ne se passe et re-appuie. */
+    const _btnLabel = $('registerBtn').textContent;
+    $('registerBtn').textContent = 'Ouverture du sas…';
     try{
-      await ensureTeams();
+      /* VITESSE : ensureTeams() renvoie desormais l'etat des equipes, et il
+         a lui-meme lu la collection. Une seule lecture au lieu de deux.
+
+         `true` = on IGNORE le cache de 30 s. C'est indispensable ici : si
+         deux matelots s'inscrivent coup sur coup sur le meme telephone (le
+         cas classique du poste d'accueil), le second lirait une liste
+         `members[]` datant d'avant le premier et l'ecraserait en
+         reecrivant le tableau. Ailleurs, le cache est sans danger : il ne
+         sert qu'a l'affichage. */
+      const allTeams = await ensureTeams(true);
 
       // 1) Genere un Code Matelot unique (4 lettres + 4 chiffres)
-      const allTeamsSnap = await getDocs(collection(db,'teams'));
       const usedCodes = new Set();
       const usedNames = new Map(); // cle normalisee -> nom + equipe, pour le message
-      allTeamsSnap.forEach(d => {
-        const data = d.data();
+      allTeams.forEach(data => {
         const ms = data.members || [];
         ms.forEach(m => {
           if(m.codeMatelot) usedCodes.add(m.codeMatelot);
           const k = m.memberKey || memberKey(m.name || '');
-          if(k) usedNames.set(k, { name: m.name || '', team: data.teamName || d.id });
+          if(k) usedNames.set(k, { name: m.name || '', team: data.teamName || data.teamCode });
         });
       });
 
@@ -3564,6 +3649,7 @@ function qrDataUri(text, opts){
         renderGame(false);             // vide la chambre de pilotage
         $('registerMsg').innerHTML = '';
         $('registerBtn').disabled = false;
+        $('registerBtn').textContent = _btnLabel;
         alert('⚓ Ce nom figure déjà au registre du Nautilus !\n\n'
           + 'Deux matelots identiques, et le capitaine s\'y perd.\n'
           + 'Ajoute ton prénom ou une initiale pour embarquer.');
@@ -3576,11 +3662,10 @@ function qrDataUri(text, opts){
 
       // 2) Choix de l'equipe (equilibrage par service + taille).
       // On repartit uniquement dans les equipes qui existent VRAIMENT :
-      // allTeamsSnap est deja charge plus haut, aucune lecture en plus.
-      const allTeams=[];
-      allTeamsSnap.forEach(d => allTeams.push({ teamCode: d.id, ...d.data() }));
+      // `allTeams` vient de ensureTeams(), aucune lecture en plus.
       if(!allTeams.length){
         $('registerBtn').disabled = false;
+        $('registerBtn').textContent = _btnLabel;
         alert("Aucun équipage n'est disponible pour le moment. Recharge la page.");
         return;
       }
@@ -3596,27 +3681,36 @@ function qrDataUri(text, opts){
         teamName: chosen.teamName,
         registeredAt: new Date().toISOString()
       };
-      await setDoc(doc(db,'teams',chosen.teamCode,'matelots',matelotCode), matelotDoc);
-
       // 4) Retrocompat : ajout dans members[]
       const members = [...(chosen.members||[]), {
         name, service, memberKey: memberKey(name), codeMatelot: matelotCode,
         registeredAt: matelotDoc.registeredAt
       }];
-      await updateDoc(doc(db,'teams',chosen.teamCode), { members, updatedAt: new Date().toISOString() });
+      const teamPatch = { members, updatedAt: new Date().toISOString() };
 
-      // 5) Index global 'matelots' (lookup Code Matelot -> equipe)
-      await setDoc(doc(db,'matelots',matelotCode), {
-        codeMatelot: matelotCode,
-        teamCode: chosen.teamCode,
-        teamName: chosen.teamName,
-        name, service,
-        createdAt: serverTimestamp()
-      });
+      /* VITESSE : ces trois ecritures sont INDEPENDANTES (trois documents
+         differents). Avant, on attendait la fin de chacune avant de lancer
+         la suivante : trois allers-retours bout a bout. Lancees ensemble,
+         on n'attend plus que la plus lente. */
+      await Promise.all([
+        setDoc(doc(db,'teams',chosen.teamCode,'matelots',matelotCode), matelotDoc),
+        updateDoc(doc(db,'teams',chosen.teamCode), teamPatch),
+        // 5) Index global 'matelots' (lookup Code Matelot -> equipe)
+        setDoc(doc(db,'matelots',matelotCode), {
+          codeMatelot: matelotCode,
+          teamCode: chosen.teamCode,
+          teamName: chosen.teamName,
+          name, service,
+          createdAt: serverTimestamp()
+        })
+      ]);
 
-      // 6) Recharge + session memoire (volatil, JAMAIS localStorage)
-      const updated = await getTeam(chosen.teamCode);
-      currentTeam = updated;
+      /* 6) Session memoire (volatil, JAMAIS localStorage).
+         On ne relit PAS l'equipe depuis la base : on vient tout juste de
+         l'ecrire, on sait donc exactement ce qu'elle contient. Cette
+         relecture coutait un aller-retour de plus pour zero information
+         nouvelle. */
+      currentTeam = { ...chosen, ...teamPatch };
       currentMatelot = matelotDoc;
       $('matelotCodeInput').value = '';
       startHeartbeat();
@@ -3657,16 +3751,21 @@ function qrDataUri(text, opts){
         '</div>';
       $('memberName').value = '';
       renderGame(false);
-      await loadTeams();
       // Pas de scroll automatique : le matelot doit d'abord lire et noter
       // son code, affiche juste au-dessus. Le bouton lui permet de
       // descendre au cockpit quand il est pret.
       renderEmbarkMissionButton(true);
+      /* Le radar des equipages se rafraichit EN ARRIERE-PLAN, sans `await`.
+         Il ne concerne pas le matelot qui vient de s'inscrire : son code et
+         son QR sont deja affiches. Avant, on attendait ce rechargement
+         complet avant de lui montrer le bouton du cockpit — plusieurs
+         secondes d'attente pour un simple rafraichissement d'affichage. */
+      loadTeams().catch(e => console.warn('loadTeams (arriere-plan):', e));
     }catch(err){
       console.error('NAUTILUS register error:', err);
       $('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar gresille...</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Detail technique : ${esc(err.code || err.message || err)}</span></div>`;
     }
-    finally{$('registerBtn').disabled=false;}
+    finally{ $('registerBtn').disabled=false; $('registerBtn').textContent = _btnLabel; }
   }
 
   /**
@@ -5221,14 +5320,21 @@ function qrDataUri(text, opts){
      disparait du panneau, et une equipe ajoutee a la main y apparait.
      TEAM_DEFS ne sert plus qu'a distinguer les equipes par defaut des
      equipes custom (badge + confirmation renforcee a la suppression). */
-  async function refreshAdminTeams(){
+  /* Construit la liste d'equipes utilisee par le panneau admin.
+     `preloaded` : liste deja lue par l'appelant. Quand elle est fournie, on
+     ne relit RIEN — c'est le cas de loadTeams(), qui vient justement de lire
+     la collection. Sans argument, le comportement d'origine est conserve
+     (lecture complete), pour tous les appels du panneau admin. */
+  async function refreshAdminTeams(preloaded){
     try{
-      const snap = await getDocs(collection(db,'teams'));
-      effectiveTeams = snap.docs
-        .map(d => ({
-          code: d.id,
-          name: (d.data().teamName || d.id),
-          memberCount: (d.data().members || []).length
+      const rows = preloaded
+        ? preloaded.map(t => ({ teamCode: t.teamCode, data: t }))
+        : (await getDocs(collection(db,'teams'))).docs.map(d => ({ teamCode: d.id, data: d.data() }));
+      effectiveTeams = rows
+        .map(r => ({
+          code: r.teamCode,
+          name: (r.data.teamName || r.teamCode),
+          memberCount: (r.data.members || []).length
         }))
         .sort((a, b) => {
           // Equipes par defaut d'abord, dans l'ordre de TEAM_DEFS, puis les autres
@@ -5873,6 +5979,7 @@ function qrDataUri(text, opts){
         customs[idx] = { ...customs[idx], name: newName };
         await setDoc(cfgRef, { customTeams: customs, updatedAt: new Date().toISOString() }, { merge: true });
       }
+      invalidateTeamsCache();
       await refreshAdminTeams();
       await renderAdminTeams();
       await loadTeams();
@@ -5917,6 +6024,7 @@ function qrDataUri(text, opts){
         .filter(c => c !== codeRaw);
       await setDoc(cfgRef, { customTeams: customs, obsoleteTeams: obsolete, updatedAt:new Date().toISOString() }, {merge:true});
       $('adminNewTeamName').value = '';
+      invalidateTeamsCache();
       await refreshAdminTeams();
       await renderAdminTeams();
       await loadTeams();
@@ -5957,6 +6065,7 @@ function qrDataUri(text, opts){
       const obsolete = Array.isArray(cfg.obsoleteTeams) ? cfg.obsoleteTeams : [];
       if(!obsolete.includes(code)) obsolete.push(code);
       await setDoc(cfgRef, { customTeams: customs, obsoleteTeams: obsolete, updatedAt:new Date().toISOString() }, {merge:true});
+      invalidateTeamsCache();
       await refreshAdminTeams();
       await renderAdminTeams();
       await renderAdminMembers();
