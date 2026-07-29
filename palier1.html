@@ -1369,6 +1369,12 @@ window.Nautilus = {
     return Math.max(0, s.timeLimit - elapsed);
   }
 
+  /* === Événements joueur === */
+  /* RESTAUREE : ce verrou avait ete emporte lors de la refonte de l'ecran de
+     jeu. Sans lui, la premiere ligne de listenTransmission() levait
+     "_isPlaying is not defined" et AUCUN son ne sortait jamais. */
+  let _isPlaying = false;
+
   function bindPlayerEvents() {
     /* Timer live */
     if (state.timerHandle) clearInterval(state.timerHandle);
@@ -1445,9 +1451,21 @@ window.Nautilus = {
     const master = ctx.createGain();
     master.gain.value = 0.55;
     master.connect(ctx.destination);
-    /* Décrémente le compteur côté Firestore */
-    await N.updateSession(state.teamCode, { listensLeft: state.session.listensLeft - 1, lastEvent: 'listen' });
-    N.addLogEntry(`🔊 ${state.me.name} reçoit le signal (${state.session.listensLeft - 1}/3 restantes).`, 'info');
+    /* Décrémente le compteur côté Firestore.
+       MODE TEST : rien n'est ecrit en base, donc l'ecoute temps reel ne
+       renverra aucune mise a jour. On decremente donc en memoire, sinon le
+       compteur resterait bloque a 3/3 pendant toute la partie d'essai. */
+    const left = Math.max(0, (state.session.listensLeft ?? 0) - 1);
+    if (state.isTest) {
+      state.session = { ...state.session, listensLeft: left, lastEvent: 'listen' };
+      const cnt = $('morseCounter');
+      if (cnt) cnt.textContent = String(left);
+      const lb = $('morseListenBtn');
+      if (lb && left <= 0) { lb.disabled = true; lb.textContent = '🔇 Plus d\'écoute'; }
+    } else {
+      await N.updateSession(state.teamCode, { listensLeft: left, lastEvent: 'listen' });
+    }
+    N.addLogEntry(`🔊 ${state.me.name} reçoit le signal (${left}/3 restantes).`, 'info');
     const visual = $('morseVisual');
     const setVisual = (on) => { if (visual) visual.classList.toggle('on', on); };
     setVisual(true);
