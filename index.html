@@ -3564,7 +3564,9 @@ function qrDataUri(text, opts){
         renderGame(false);             // vide la chambre de pilotage
         $('registerMsg').innerHTML = '';
         $('registerBtn').disabled = false;
-        alert('Ce nom est déjà pris à bord.\n\nAjoute ton prénom ou une initiale pour te distinguer.');
+        alert('⚓ Ce nom figure déjà au registre du Nautilus !\n\n'
+          + 'Deux matelots identiques, et le capitaine s\'y perd.\n'
+          + 'Ajoute ton prénom ou une initiale pour embarquer.');
         $('memberName').focus();
         $('memberName').select();
         return;
@@ -3657,8 +3659,9 @@ function qrDataUri(text, opts){
       renderGame(false);
       await loadTeams();
       // Pas de scroll automatique : le matelot doit d'abord lire et noter
-      // son code, affiche juste au-dessus.
-      renderEmbarkMissionButton();
+      // son code, affiche juste au-dessus. Le bouton lui permet de
+      // descendre au cockpit quand il est pret.
+      renderEmbarkMissionButton(true);
     }catch(err){
       console.error('NAUTILUS register error:', err);
       $('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar gresille...</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Detail technique : ${esc(err.code || err.message || err)}</span></div>`;
@@ -4831,18 +4834,25 @@ function qrDataUri(text, opts){
      matelot inscrit ou reconnecte. Le libelle suit l'avancement reel :
      "LANCER LA MISSION" tant que l'equipe est au depart, puis
      "REPRENDRE LA MISSION" des qu'un mini-jeu a ete commence. */
-  function renderEmbarkMissionButton(){
+  /* Bouton "Rejoindre le cockpit" du bloc embarquement.
+
+     Il n'est utile QU'APRES UNE NOUVELLE INSCRIPTION : le matelot vient de
+     recevoir son Code Matelot, il doit le noter avant de descendre, donc on
+     ne le fait pas defiler tout seul — ce bouton lui laisse la main.
+
+     Lors d'une REPRISE par Code Matelot, la page descend deja
+     automatiquement vers la chambre de pilotage : le bouton ferait double
+     emploi et resterait affiche pour rien.
+     D'ou le parametre `show` : seul l'appel de fin d'inscription le passe
+     a true, tous les autres masquent le bouton. */
+  function renderEmbarkMissionButton(show){
     const box = $('embarkMissionAction');
     if(!box) return;
-    if(!currentTeam){
+    if(!currentTeam || !show){
       box.style.display = 'none';
       box.innerHTML = '';
       return;
     }
-    /* Ce bouton NE LANCE PLUS la mission : il emmene simplement le matelot
-       jusqu'a la chambre de pilotage, ou se trouve le vrai bouton de
-       lancement. Avant, deux boutons declenchaient la meme action a deux
-       endroits differents, ce qui pretait a confusion. */
     box.style.display = 'flex';
     box.innerHTML = '<button class="hero-cta red cockpit-launch" type="button" id="embarkMissionBtn">'
       + 'REJOINDRE LE COCKPIT</button>';
@@ -5754,7 +5764,8 @@ function qrDataUri(text, opts){
          de savoir DANS QUELLE equipe le nom est deja pris. */
       const dup = usedNames.get(memberKey(name));
       if(dup){
-        alert('Ce nom est déjà pris (' + dup.team + ').\n\nAjoute un prénom ou une initiale pour le distinguer.');
+        alert('⚓ Ce nom figure déjà au registre (' + dup.team + ').\n\n'
+          + 'Ajoute un prénom ou une initiale pour le distinguer.');
         return;
       }
 
