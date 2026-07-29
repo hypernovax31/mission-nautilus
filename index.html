@@ -3684,37 +3684,48 @@ function qrDataUri(text, opts){
   const TEST_TEAM_NAME    = 'Équipage de test';
 
   async function resumeAsTestMatelot(){
-    // On se rattache a une equipe reelle pour pouvoir suivre la partie.
-    let team = null;
-    for(const t of TEAM_DEFS){
-      team = await getTeam(t.code);
-      if(team) break;
-    }
-    if(!team) return { ok:false, reason:'team_missing' };
+    /* Le compte de test doit fonctionner MEME si la base est vide,
+       injoignable, ou si toutes les equipes sont bloquees.
+
+       Deux defauts corriges ici :
+       1. On exigeait qu'une equipe existe en base (getTeam). Sans equipe
+          creee, ou en cas de coupure reseau, la connexion echouait avec
+          "Verifie ta saisie" alors que le code etait bon.
+       2. On appelait autoUnlockIfNeeded(), qui ECRIT dans Firestore quand
+          une equipe bloquee a purge sa peine. Une simple connexion de test
+          pouvait donc debloquer une vraie equipe.
+
+       L'equipage de test est desormais entierement fabrique en memoire.
+       On tente juste de recuperer un code d'equipe existant pour que le
+       lancement du palier 1 pointe sur quelque chose de coherent, mais
+       ce n'est plus bloquant. */
+    let teamCode = TEAM_DEFS[0]?.code || 'NEMO';
+    try{
+      for(const t of TEAM_DEFS){
+        const found = await getTeam(t.code);
+        if(found){ teamCode = found.teamCode || t.code; break; }
+      }
+    }catch(e){ /* base injoignable : on garde le code par defaut */ }
 
     const matelot = {
       name: 'TEST',
       service: 'CODIR',
       codeMatelot: TEST_MATELOT_CODE,
-      teamCode: team.teamCode,
+      teamCode,
       teamName: TEST_TEAM_NAME,
       isTest: true
     };
-    const unlock = await autoUnlockIfNeeded(team);
 
-    /* EQUIPAGE FICTIF, comme dans le mini-jeu.
-       Avant, on reprenait l'equipe reelle telle quelle : les messages
-       annoncaient donc "matelot de l'equipe Nemo", et le testeur heritait
-       en plus de son blocage et de sa progression. Il repart desormais
-       d'un equipage neuf, nomme sans ambiguite. */
+    /* Equipage fictif, etat NEUF : ni blocage, ni progression heritee. */
     currentTeam = {
-      ...unlock.team,
+      teamCode,
       teamName: TEST_TEAM_NAME,
       currentStep: 'start',
       status: 'active',
       lockedUntil: null,
       failCount: 0,
       completedSteps: [],
+      onlinePlayers: {},
       members: [{ name:'TEST', service:'CODIR', memberKey: memberKey('TEST'),
                   codeMatelot: TEST_MATELOT_CODE }],
       isTest: true
@@ -3724,7 +3735,7 @@ function qrDataUri(text, opts){
     /* Pas de startHeartbeat() : le compte de test ne doit pas apparaitre
        dans le nombre de joueurs en ligne. */
     updateFinalMissionButton();
-    return { ok:true, justUnlocked: unlock.justUnlocked, matelot, team: currentTeam };
+    return { ok:true, justUnlocked:false, matelot, team: currentTeam };
   }
 
   async function resumeWithMatelotCode(rawCode){
@@ -3807,22 +3818,30 @@ function qrDataUri(text, opts){
       : '&#x2705; <b>' + esc(m.name) + '</b>, matelot de l\'équipage <b>' + esc(t.teamName) + '</b>, reprends la plongée.';
     $('joinMsg').innerHTML = '<div class="notice success">' + welcome + unlockMsg + '</div>';
     renderGame(res.justUnlocked);
-    await loadTeams();
     renderEmbarkMissionButton();
 
-    /* Le matelot vient de saisir son code : on l'emmene directement a la
-       chambre de pilotage, sa mission l'y attend. Le court delai laisse le
-       temps au message de confirmation d'apparaitre et au cockpit d'etre
-       rempli par renderGame().
+    /* Le matelot vient de saisir son code : on l'emmene a la chambre de
+       pilotage, sa mission l'y attend.
+
+       BUG CORRIGE : le defilement etait place APRES `await loadTeams()`.
+       Cette lecture de Firestore peut prendre une seconde ou plus, et elle
+       redessine les cartes d'equipage — donc la hauteur de la page. Le
+       defilement partait trop tard, vers une position deja perimee, et
+       semblait ne rien faire. Il part maintenant tout de suite, et le
+       rechargement des equipes se fait derriere, sans le bloquer.
 
        EXCEPTION : lors d'une reprise par QR, l'ecran rouge d'alarme est
-       encore affiche et la sequence gere DEJA son propre defilement a la
-       fin. Un second defilement partirait trop tot, pendant l'alarme. */
+       encore affiche et la sequence gere DEJA son propre defilement. */
     if(!skipScroll){
-      setTimeout(() => {
-        document.getElementById('gameCard')
-          ?.scrollIntoView({ behavior:'smooth', block:'start' });
-      }, 450);
+      const goCockpit = () => document.getElementById('gameCard')
+        ?.scrollIntoView({ behavior:'smooth', block:'start' });
+      // Une image d'attente : le cockpit vient d'etre rempli par renderGame().
+      requestAnimationFrame(() => setTimeout(goCockpit, 60));
+      /* Second passage apres l'arrivee des equipes : si leur affichage a
+         change la hauteur de la page, on se recale sur la bonne position. */
+      loadTeams().then(() => setTimeout(goCockpit, 120));
+    }else{
+      loadTeams();
     }
   }
 
