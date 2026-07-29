@@ -1124,6 +1124,187 @@
     }
     #radarStatus.radar-msg-out .radar-msg{opacity:0}
 
+    /* =========================================================
+       COCKPIT DU NAUTILUS — chambre de pilotage
+       Inspire d'un vrai pupitre de sous-marin : plaques de metal
+       vissees, cadrans phosphorescents, tubes a vide ambres.
+       REGLE : le decor ne doit jamais gener la lecture. Les valeurs
+       sont grandes, contrastees, et chaque cadran porte son etiquette.
+       PERFORMANCE : que des degrades statiques, aucune animation en
+       boucle (le sonar en a deja). Seule la lampe d'alerte clignote,
+       et uniquement quand l'equipage est bloque.
+       ========================================================= */
+    .cockpit{
+      --brass:#c9973f; --glass:#6affc0; --amber:#ffb545;
+      position:relative;border-radius:18px;overflow:hidden;
+      padding:clamp(14px,2.6vw,22px);
+      background:
+        linear-gradient(180deg,rgba(255,255,255,.06),transparent 40%),
+        linear-gradient(160deg,#2b2f33,#15181b 55%,#0d0f11);
+      border:1px solid #05070a;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 16px 34px rgba(0,0,0,.42);
+      color:#e8f6ff;
+    }
+    /* Rivets aux quatre coins : detail qui plante le decor sans cout. */
+    .cockpit::before{
+      content:"";position:absolute;inset:9px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.06);pointer-events:none;
+      background:
+        radial-gradient(circle at 0 0,rgba(210,220,230,.55) 0 2.5px,transparent 3px),
+        radial-gradient(circle at 100% 0,rgba(210,220,230,.55) 0 2.5px,transparent 3px),
+        radial-gradient(circle at 0 100%,rgba(210,220,230,.55) 0 2.5px,transparent 3px),
+        radial-gradient(circle at 100% 100%,rgba(210,220,230,.55) 0 2.5px,transparent 3px);
+    }
+
+    /* Plaque gravee du nom d'equipage */
+    .ck-plate{
+      position:relative;display:flex;align-items:center;justify-content:space-between;
+      gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:9px 14px;border-radius:8px;
+      background:linear-gradient(180deg,#3a3027,#241d16);
+      border:1px solid rgba(201,151,63,.55);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 8px rgba(0,0,0,.35);
+    }
+    .ck-plate-name{
+      font-family:Consolas,"Courier New",monospace;font-weight:1000;
+      font-size:clamp(15px,2.6vw,21px);letter-spacing:.10em;text-transform:uppercase;
+      color:var(--brass);text-shadow:0 1px 0 #000;
+    }
+    .ck-plate-sub{font-size:var(--fs-tiny);letter-spacing:.14em;text-transform:uppercase;color:#9fb0bd}
+
+    /* Rangee de cadrans */
+    .ck-gauges{
+      display:grid;gap:clamp(10px,2vw,16px);
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      margin-bottom:14px;
+    }
+    .ck-gauge{
+      position:relative;display:flex;flex-direction:column;align-items:center;
+      gap:6px;padding:12px 10px;border-radius:12px;
+      background:linear-gradient(180deg,#20252a,#0f1316);
+      border:1px solid rgba(255,255,255,.07);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 4px 10px rgba(0,0,0,.34);
+    }
+    /* Le verre bombe du cadran */
+    .ck-dial{
+      position:relative;width:clamp(78px,17vw,104px);aspect-ratio:1/1;border-radius:50%;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+      background:
+        radial-gradient(circle at 38% 30%,rgba(255,255,255,.16),transparent 46%),
+        radial-gradient(circle,rgba(106,255,192,.14),rgba(0,0,0,.55) 72%),#04120e;
+      border:3px solid #6b7278;
+      box-shadow:
+        inset 0 0 16px rgba(106,255,192,.22),
+        inset 0 0 0 1px rgba(0,0,0,.6),
+        0 0 14px rgba(106,255,192,.16);
+    }
+    /* Graduations : un simple degrade repete, aucun element en plus. */
+    .ck-dial::before{
+      content:"";position:absolute;inset:6px;border-radius:50%;pointer-events:none;
+      background:repeating-conic-gradient(from 0deg,
+        rgba(106,255,192,.34) 0deg 1.1deg,transparent 1.1deg 15deg);
+      -webkit-mask:radial-gradient(circle,transparent 0 62%,#000 63%);
+              mask:radial-gradient(circle,transparent 0 62%,#000 63%);
+    }
+    .ck-dial-value{
+      font-family:Consolas,"Courier New",monospace;font-weight:1000;line-height:1;
+      font-size:clamp(20px,4.6vw,30px);color:#eafff5;
+      text-shadow:0 0 12px rgba(106,255,192,.85);
+    }
+    .ck-dial-unit{font-size:var(--fs-tiny);letter-spacing:.10em;text-transform:uppercase;color:rgba(106,255,192,.85)}
+    .ck-gauge-label{
+      font-size:var(--fs-tiny);letter-spacing:.11em;text-transform:uppercase;
+      font-weight:900;color:#9fb0bd;text-align:center;line-height:1.25;
+    }
+    /* Variante ambre pour les valeurs d'alerte */
+    .ck-gauge.amber .ck-dial{
+      background:
+        radial-gradient(circle at 38% 30%,rgba(255,255,255,.16),transparent 46%),
+        radial-gradient(circle,rgba(255,181,69,.16),rgba(0,0,0,.55) 72%),#150d04;
+      box-shadow:inset 0 0 16px rgba(255,181,69,.24),inset 0 0 0 1px rgba(0,0,0,.6),0 0 14px rgba(255,181,69,.18);
+    }
+    .ck-gauge.amber .ck-dial::before{
+      background:repeating-conic-gradient(from 0deg,rgba(255,181,69,.34) 0deg 1.1deg,transparent 1.1deg 15deg);
+    }
+    .ck-gauge.amber .ck-dial-value{text-shadow:0 0 12px rgba(255,181,69,.85)}
+    .ck-gauge.amber .ck-dial-unit{color:rgba(255,181,69,.9)}
+
+    /* Ecran de position : la donnee la plus importante */
+    .ck-screen{
+      position:relative;margin-bottom:14px;padding:14px 16px;border-radius:12px;
+      background:linear-gradient(180deg,rgba(4,26,20,.96),rgba(2,14,11,.96));
+      border:2px solid rgba(106,255,192,.35);
+      box-shadow:inset 0 0 26px rgba(106,255,192,.10),0 4px 12px rgba(0,0,0,.34);
+    }
+    .ck-screen-label{
+      font-size:var(--fs-tiny);letter-spacing:.14em;text-transform:uppercase;
+      font-weight:900;color:rgba(106,255,192,.75);margin-bottom:4px;
+    }
+    .ck-screen-value{
+      font-family:Consolas,"Courier New",monospace;font-weight:1000;
+      font-size:clamp(20px,4.4vw,30px);line-height:1.1;color:#eafff5;
+      text-shadow:0 0 14px rgba(106,255,192,.6);
+    }
+    .ck-screen-desc{margin:8px 0 0;font-size:var(--fs-small);line-height:1.5;color:#b9cbd6}
+
+    /* Bandeau de progression : une diode par palier */
+    .ck-track{
+      display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:11px 12px;
+      border-radius:12px;background:linear-gradient(180deg,#20252a,#0f1316);
+      border:1px solid rgba(255,255,255,.07);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+    }
+    .ck-led{
+      flex:1 1 62px;min-width:0;display:flex;flex-direction:column;align-items:center;
+      gap:5px;padding:6px 3px;border-radius:8px;background:rgba(0,0,0,.32);
+    }
+    .ck-led-dot{
+      width:11px;height:11px;border-radius:50%;
+      background:#243036;box-shadow:inset 0 0 4px rgba(0,0,0,.85);
+    }
+    .ck-led.done .ck-led-dot{background:var(--glass);box-shadow:0 0 10px rgba(106,255,192,.9)}
+    .ck-led.now  .ck-led-dot{background:var(--amber);box-shadow:0 0 12px rgba(255,181,69,1)}
+    .ck-led-txt{
+      font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:900;
+      color:#7f909c;text-align:center;line-height:1.2;overflow-wrap:anywhere;
+    }
+    .ck-led.done .ck-led-txt{color:rgba(106,255,192,.9)}
+    .ck-led.now  .ck-led-txt{color:var(--amber)}
+
+    /* Consigne + levier de lancement */
+    .ck-order{
+      margin:0 0 12px;padding:11px 14px;border-radius:10px;
+      background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
+      font-size:var(--fs-small);line-height:1.5;color:#cfe6ef;
+    }
+    .ck-launch{display:flex;justify-content:center}
+    .ck-launch .hero-cta{min-width:min(100%,380px)}
+
+    /* Etats particuliers : bloque / termine */
+    .cockpit.is-locked{border-color:rgba(255,75,62,.5)}
+    .cockpit.is-locked .ck-screen{
+      border-color:rgba(255,75,62,.5);
+      background:linear-gradient(180deg,rgba(38,6,4,.96),rgba(20,3,2,.96));
+      box-shadow:inset 0 0 26px rgba(255,75,62,.12),0 4px 12px rgba(0,0,0,.34);
+    }
+    .cockpit.is-locked .ck-screen-label{color:rgba(255,123,114,.85)}
+    .cockpit.is-locked .ck-screen-value{color:#ffd9d5;text-shadow:0 0 14px rgba(255,75,62,.7)}
+    /* Seule animation du cockpit, et seulement en cas de blocage. */
+    .ck-alarm-lamp{
+      display:inline-block;width:10px;height:10px;border-radius:50%;
+      background:#ff4b3e;box-shadow:0 0 12px rgba(255,75,62,.95);margin-right:8px;
+      animation:ckLamp 1.1s ease-in-out infinite alternate;
+    }
+    @keyframes ckLamp{from{opacity:.35}to{opacity:1}}
+    .cockpit.is-done{border-color:rgba(106,255,192,.45)}
+
+    @media(max-width:420px){
+      .ck-gauges{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .ck-led{flex:1 1 54px}
+    }
+    @media (prefers-reduced-motion: reduce){
+      .ck-alarm-lamp{animation:none}
+    }
+
     /* ===== Bandeau de releve du sonar =====
        Presente les chiffres comme une console de bord : petites etiquettes
        en capitales, valeurs en gros caracteres a chasse fixe, le tout dans
@@ -1727,7 +1908,6 @@
     heartbeatTimer = setInterval(heartbeat, 30000);
   }
 
-  function progressHtml(team){const completed=team.completedSteps||[];return `<div class="progress">${Object.keys(STEPS).map(id=>`<span class="dot ${completed.includes(id)?'doneDot':(id===team.currentStep?'currentDot':'')}">${esc(STEPS[id].label)}</span>`).join('')}</div>`;}
 
   async function ensureTeams(){
     // Charger la config pour récupérer les customTeams (sans les écraser)
@@ -3802,764 +3982,132 @@ function qrDataUri(text, opts){
     }
   }
 
+  /* Bandeau de diodes : une par palier, allumee selon l'avancement.
+     Les libelles sont raccourcis ("Palier 1" -> "1") : sur huit paliers,
+     le texte complet deborderait sur telephone. */
+  function cockpitTrackHtml(team){
+    const done = team.completedSteps || [];
+    const ids = Object.keys(STEPS);
+    return '<div class="ck-track">' + ids.map(id => {
+      const isDone = done.includes(id);
+      const isNow  = id === team.currentStep;
+      const cls = isDone ? 'done' : (isNow ? 'now' : '');
+      const label = (STEPS[id].label || '').replace(/^Palier\s*/i, '');
+      return '<div class="ck-led ' + cls + '" title="' + esc(STEPS[id].label) + '">'
+           +   '<span class="ck-led-dot"></span>'
+           +   '<span class="ck-led-txt">' + esc(label) + '</span>'
+           + '</div>';
+    }).join('') + '</div>';
+  }
+
+  /* Plaque gravee du nom d'equipage, en tete du pupitre. */
+  function cockpitPlateHtml(team, subtitle){
+    return '<div class="ck-plate">'
+         +   '<span class="ck-plate-name">' + esc(team.teamName || '—') + '</span>'
+         +   '<span class="ck-plate-sub">' + esc(subtitle) + '</span>'
+         + '</div>';
+  }
+
   function renderGame(justUnlocked=false){
     const box=$('gameBox');
-    if(!currentTeam){updateFinalMissionButton();box.innerHTML=`<div class="notice">Le carnet de bord du Nautilus affichera les données de ton équipe au cours de l’aventure.</div>`;return;}
+    if(!currentTeam){
+      updateFinalMissionButton();
+      box.innerHTML=`<div class="notice">Le carnet de bord du Nautilus affichera les données de ton équipe au cours de l’aventure.</div>`;
+      return;
+    }
     const step=STEPS[currentTeam.currentStep]||STEPS.start;
     const members=currentTeam.members||[];
+
+    /* Chiffres du pupitre, calcules une fois pour tous les etats. */
+    const ids       = Object.keys(STEPS);
+    const doneCount = (currentTeam.completedSteps || []).length;
+    const stepNo    = Math.min(ids.indexOf(currentTeam.currentStep) + 1 || 1, ids.length);
+    const fails     = Number(currentTeam.failCount || 0);
+
+    /* --- Mission terminee --- */
     if(currentTeam.status==='finished'){
-      box.innerHTML=`<div class="stepbox done"><h3>Mission accomplie</h3><p><b>${esc(currentTeam.teamName)}</b> a atteint le dernier signal du Nautilus.</p><p>Le carnet de bord est scellé. L’équipage peut savourer sa remontée.</p></div>`;
+      box.innerHTML =
+        '<div class="cockpit is-done">'
+        + cockpitPlateHtml(currentTeam, 'Mission accomplie')
+        + '<div class="ck-screen">'
+        +   '<div class="ck-screen-label">Statut du Nautilus</div>'
+        +   '<div class="ck-screen-value">SURFACE ATTEINTE</div>'
+        +   '<p class="ck-screen-desc">Le carnet de bord est scellé. L’équipage peut savourer sa remontée.</p>'
+        + '</div>'
+        + cockpitTrackHtml(currentTeam)
+        + '</div>';
       return;
     }
+
+    /* --- Equipage bloque --- */
     if(isLocked(currentTeam)){
-      box.innerHTML=`<div class="stepbox locked"><h3>${esc(currentTeam.teamName)}</h3><h3>Le Nautilus plonge en silence…</h3><p>La transmission a été perdue dans les abysses.</p><p>Nouvelle tentative possible le : <b>${formatDate(currentTeam.lockedUntil)}</b></p></div>`;
+      box.innerHTML =
+        '<div class="cockpit is-locked">'
+        + cockpitPlateHtml(currentTeam, 'Remontée forcée')
+        + '<div class="ck-screen">'
+        +   '<div class="ck-screen-label"><span class="ck-alarm-lamp"></span>Statut du Nautilus</div>'
+        +   '<div class="ck-screen-value">PLONGÉE EN SILENCE</div>'
+        +   '<p class="ck-screen-desc">La transmission a été perdue dans les abysses.<br>'
+        +     'Reprise possible le <b>' + esc(formatDate(currentTeam.lockedUntil)) + '</b>.</p>'
+        + '</div>'
+        + cockpitTrackHtml(currentTeam)
+        + '</div>';
       return;
     }
-    const launchNotice = palierLaunchNotice ? `<div class="notice success"><b>${esc(step.label)} chargé.</b><br>Le Nautilus reprend la navigation là où votre équipage s’est arrêté.</div>` : '';
+
+    /* --- Navigation normale --- */
+    const launchNotice = palierLaunchNotice
+      ? `<div class="notice success"><b>${esc(step.label)} chargé.</b><br>Le Nautilus reprend la navigation là où votre équipage s’est arrêté.</div>`
+      : '';
     palierLaunchNotice = false;
-    const cockpitButtonLabel = currentTeam.currentStep === 'start' ? 'LANCER LA MISSION' : 'REPRENDRE LA MISSION';
-    const cockpitButtonIntro = currentTeam.currentStep === 'start'
+    const unlockNotice = justUnlocked
+      ? `<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`
+      : '';
+
+    const atStart = currentTeam.currentStep === 'start';
+    const cockpitButtonLabel = atStart ? 'LANCER LA MISSION' : 'REPRENDRE LA MISSION';
+    const cockpitButtonIntro = atStart
       ? 'L’équipage est au départ. Lancez officiellement la mission pour déclencher le premier mini-jeu.'
       : 'Le Nautilus reprend là où votre équipe s’est arrêtée. Préparez-vous à poursuivre le palier en cours.';
-    box.innerHTML=`${justUnlocked?`<div class="notice success"><b>Transmission réactivée</b><br>Le Nautilus est remonté à profondeur stable.<br>Votre équipe peut reprendre la mission.</div>`:''}${launchNotice}<div class="stepbox"><h3>${esc(currentTeam.teamName)}</h3><p>Membres à bord : <b>${members.length}</b></p>${progressHtml(currentTeam)}<p>Position actuelle : <b>${esc(step.label)}</b></p><p>${esc(step.description)}</p><div class="hr"></div><p class="notice">${cockpitButtonIntro}</p><div class="cockpit-action"><button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">${cockpitButtonLabel}</button></div></div>`;
+
+    box.innerHTML = unlockNotice + launchNotice
+      + '<div class="cockpit">'
+      +   cockpitPlateHtml(currentTeam, 'Poste de pilotage')
+
+      /* Trois cadrans : les chiffres cles, lisibles d'un coup d'oeil. */
+      +   '<div class="ck-gauges">'
+      +     '<div class="ck-gauge">'
+      +       '<div class="ck-dial"><span class="ck-dial-value">' + members.length + '</span>'
+      +         '<span class="ck-dial-unit">à bord</span></div>'
+      +       '<div class="ck-gauge-label">Équipage</div>'
+      +     '</div>'
+      +     '<div class="ck-gauge">'
+      +       '<div class="ck-dial"><span class="ck-dial-value">' + stepNo + '<span style="opacity:.5">/' + ids.length + '</span></span>'
+      +         '<span class="ck-dial-unit">palier</span></div>'
+      +       '<div class="ck-gauge-label">Position</div>'
+      +     '</div>'
+      +     '<div class="ck-gauge' + (fails > 0 ? ' amber' : '') + '">'
+      +       '<div class="ck-dial"><span class="ck-dial-value">' + doneCount + '</span>'
+      +         '<span class="ck-dial-unit">validés</span></div>'
+      +       '<div class="ck-gauge-label">Sas franchis</div>'
+      +     '</div>'
+      +   '</div>'
+
+      /* Ecran principal : ou en est l'equipage, et ce qui l'attend. */
+      +   '<div class="ck-screen">'
+      +     '<div class="ck-screen-label">Position actuelle</div>'
+      +     '<div class="ck-screen-value">' + esc(step.label) + '</div>'
+      +     '<p class="ck-screen-desc">' + esc(step.description) + '</p>'
+      +   '</div>'
+
+      +   cockpitTrackHtml(currentTeam)
+      +   '<p class="ck-order">' + cockpitButtonIntro + '</p>'
+      +   '<div class="ck-launch">'
+      +     '<button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">' + cockpitButtonLabel + '</button>'
+      +   '</div>'
+      + '</div>';
+
     $('cockpitMissionBtn')?.addEventListener('click', () => launchSelectedPalier());
-  }
-
-  const RULES = {
-    embark: {
-      title: '1 — Embarquez',
-      text: 'Donnez votre nom et votre service : le Nautilus vous affecte aussitôt à l’un de ses quatre équipages — Nemo, Nautilus, Aronnax ou Ned Land. Vous recevez alors votre Code Matelot. Ce code est votre ADN à bord : il ne vous sera montré qu’une seule fois.',
-      bullets: [
-        'Notez-le ou scannez son QR : sans lui, impossible de remonter à bord.',
-        'Il vous permet de reprendre la mission depuis n’importe quel appareil.',
-        'Tout l’équipage partage la même progression : ce que vous débloquez, vous le débloquez pour tous.',
-        'Chaque matelot est unique — un même nom ne peut pas embarquer deux fois.'
-      ]
-    },
-    solve: {
-      title: '2 — Décryptez',
-      text: 'À chaque palier, le Nautilus vous soumet un mini-jeu chronométré. Résolvez-le et l’écoutille s’entrouvre : le sous-marin vous révèle le lieu où se cache le prochain QR Code dans le magasin.',
-      bullets: [
-        'Le temps est limité et chaque erreur vous fera perdre du temps face aux autres équipes.'
-      ]
-    },
-    scan: {
-      title: '3 — Scannez',
-      text: 'Une fois le lieu repéré, quittez l’écran et fouillez le magasin. Le QR Code peut être glissé dans une TG, agrafé à une PLV, coincé entre deux livres, fixé autour d’un meuble ou caché derrière un objet. Il faudra bien chercher car il ne viendra pas à vous.',
-      bullets: [
-        'Cherchez à hauteur d’yeux… mais aussi plus haut et plus bas.',
-        'Scannez le QR trouvé : le palier suivant s’ouvre immédiatement.',
-        'Respectez le magasin, les clients et le travail des équipes : on cherche, on ne dérange pas.'
-      ]
-    },
-    survive: {
-      title: '4 — Survivez',
-      text: 'Chaque échec vous éloigne un peu plus du Nautilus. Tout l’équipage est bloqué : impossible de reprendre avant que la pression ne retombe. Et pendant ce temps, les autres équipages continuent d’avancer.',
-      bullets: [
-        '1er échec : 2 h de blocage',
-        '2e échec : 4 h',
-        '3e échec : 8 h',
-        '4e échec : 16 h',
-        'À partir du 5e échec : 24 h par échec',
-        '7 jours d’oxygène pour tout le monde : à 0, le signal sera définitivement perdu.'
-      ]
-    }
-  };
-
-  function showRule(key, shouldScroll=false){
-    const rule = RULES[key] || RULES.embark;
-    const detail = $('ruleDetail');
-    if(!detail) return;
-    /* Une fiche peut n'avoir aucune puce (ex. "Scannez") : dans ce cas on
-       n'insere pas de <ul>, sinon le navigateur reserve une puce vide et
-       laisse un blanc disgracieux sous le texte. */
-    const bullets = (rule.bullets && rule.bullets.length)
-      ? `<ul>${rule.bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`
-      : '';
-    detail.innerHTML = `<h3>${esc(rule.title)}</h3><p>${esc(rule.text)}</p>${bullets}`;
-    document.querySelectorAll('.mission-step').forEach(btn => btn.classList.toggle('active', btn.dataset.rule === key));
-    if(shouldScroll){
-      setTimeout(() => document.getElementById('ruleCards')?.scrollIntoView({behavior:'smooth', block:'start'}), 80);
-    }
-  }
-
-  document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => showRule(btn.dataset.rule, true)));
-  showRule('embark', false);
-
-  /**
-   * Anime l'apparition du texte d'ordre de mission, SANS modifier la hauteur du bloc.
-   * Technique :
-   * 1. On fixe la hauteur du container a la taille du texte complet des le depart
-   *    (en injectant le texte en opacity:0 dans un placeholder qui reserve la place).
-   * 2. On anime les mots un par un au-dessus (z-index superieur) en changeant
-   *    uniquement l'opacite, pas le contenu.
-   * => Pas de decalage de scroll, pas de saccade.
-   */
-  /**
-   * Typewriter pour l'ordre de mission.
-   * - Lit data-html (HTML leger : supporte <b>)
-   * - Le conteneur est deja a la bonne taille AVANT l'animation :
-   *   on injecte tout le HTML en visibility:hidden, on mesure, puis on lance.
-   * - Anime caractere par caractere (en sautant les balises HTML).
-   * - Affiche un curseur clignotant a la fin du texte.
-   * Pas de decalage, pas de saccade.
-   */
-  /**
-   * Typewriter pour l'ordre de mission.
-   * - Lit data-text (texte brut)
-   * - Le conteneur est deja a la bonne taille AVANT l'animation :
-   *   on injecte tout le texte en visibility:hidden, on mesure, puis on lance.
-   * - Anime caractere par caractere avec un curseur qui suit les lettres.
-   * Pas de decalage, pas de saccade. Un seul curseur, en ligne avec le texte.
-   */
-  function startMissionOrderTypewriter(){
-    const el = $('missionOrderText');
-    if(!el || el.dataset.typed === 'true') return;
-    el.dataset.typed = 'true';
-
-    const fullText = el.dataset.text || el.textContent || '';
-
-    const typingSpan = $('missionOrderTyping');
-    const caretSpan = $('missionOrderCaret');
-    if(!typingSpan || !caretSpan) return;
-
-    /* RESERVATION DE LA PLACE — sans figer la hauteur en pixels.
-       Ancien defaut : on mesurait la hauteur du texte complet une seule
-       fois, puis on l'imposait en pixels (height + overflow:hidden). Des
-       que la fenetre changeait de largeur, cette hauteur devenait fausse :
-       en retrecissant le texte prenait plus de lignes et se retrouvait
-       COUPE ; en elargissant il en prenait moins et laissait un grand vide.
-
-       Nouvelle methode : on garde en permanence le texte complet dans le
-       document, mais rendu invisible (visibility:hidden). C'est lui qui
-       fixe la hauteur du bloc, et le navigateur la recalcule tout seul a
-       chaque redimensionnement. Le texte qui s'ecrit est superpose par
-       dessus, en position absolue. Plus rien a mesurer, plus rien a figer :
-       la hauteur est toujours exactement la bonne. */
-    const ghost = document.createElement('span');
-    ghost.className = 'typewriter-ghost';
-    ghost.setAttribute('aria-hidden', 'true');
-    ghost.textContent = fullText;
-    typingSpan.parentNode.insertBefore(ghost, typingSpan);
-
-    // Le texte anime se superpose au fantome, il ne participe plus au flux.
-    typingSpan.classList.add('typewriter-live');
-    typingSpan.textContent = '';
-
-    // 4) Anime caractere par caractere
-    //    On utilise innerHTML pour echapper & < > et inserer le caret inline
-    /* BATTERIE : la version precedente reconstruisait tout le HTML a chaque
-       lettre (innerHTML + echappement des ~330 caracteres), soit environ
-       55 000 operations et 330 recalculs de mise en page pour une phrase.
-       Ici on ecrit dans un noeud de texte deja en place : le navigateur ne
-       fait que rallonger la chaine, sans reconstruire quoi que ce soit. */
-    const textNode = document.createTextNode('');
-    typingSpan.appendChild(textNode);
-    const caretEl = document.createElement('span');
-    caretEl.className = 'typewriter-caret';
-    caretEl.textContent = '▌';
-    typingSpan.appendChild(caretEl);
-
-    let i = 0;
-    const speed = 10; // ms par caractere (rapide)
-    const tick = () => {
-      if(i >= fullText.length){
-        textNode.nodeValue = fullText;
-        caretEl.remove();          // termine : plus de curseur
-        /* Termine : le texte affiche est identique au fantome. On rend le
-           texte au flux normal et on retire le fantome, pour ne pas garder
-           deux copies du meme paragraphe dans la page (le lecteur d'ecran
-           n'en verra qu'une, et la hauteur reste juste puisque c'est
-           desormais le vrai texte qui la porte). */
-        typingSpan.classList.remove('typewriter-live');
-        ghost.remove();
-        return;
-      }
-      // On ecrit plusieurs caracteres par image plutot qu'un seul toutes
-      // les 10 ms : meme vitesse a l'oeil, 3 fois moins de reveils.
-      i = Math.min(fullText.length, i + 3);
-      textNode.nodeValue = fullText.slice(0, i);
-      setTimeout(tick, speed * 3);
-    };
-    setTimeout(tick, 60);
-  }
-
-  const orderObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if(entry.isIntersecting) startMissionOrderTypewriter();
-    });
-  }, {threshold: .35});
-  if($('missionOrderText')) orderObserver.observe($('missionOrderText'));
-
-  const MISSION_DURATION_MS_DEFAULT = 7 * 24 * 60 * 60 * 1000;
-  function getMissionDurationMs(){
-    const v = missionConfig?.missionDurationMs;
-    return (typeof v === 'number' && v > 0) ? v : MISSION_DURATION_MS_DEFAULT;
-  }
-  /* Alias historique pour ne pas casser les références existantes. */
-  const MISSION_DURATION_MS = MISSION_DURATION_MS_DEFAULT;
-
-  async function loadMissionConfig(){
-    const snap = await getDoc(doc(db,'game','config'));
-    missionConfig = snap.exists() ? snap.data() : {};
-    return missionConfig;
-  }
-
-  function updateCountdown(){
-    const el = $('oxygenCountdown');
-    const status = $('oxygenStatus');
-    const pctEl = $('oxygenPercent');
-    const bar = $('oxygenBar');
-    const state = $('oxygenState');
-    if(!el || !status || !bar) return;
-
-    const startedAt = missionConfig?.missionStartedAt;
-    if(!startedAt){
-      el.textContent = '7J 00h00m00s';
-      status.textContent = 'En attente du premier signal…';
-      bar.style.width = '100%';
-      bar.classList.remove('warning-level','critical');
-      if(pctEl) pctEl.textContent = '100%';
-      if(state){state.textContent='PRESSION STABLE';state.className='oxygen-state';}
-      return;
-    }
-
-    const start = new Date(startedAt).getTime();
-    const durationMs = getMissionDurationMs();
-    const end = start + durationMs;
-    let diff = Math.max(0, end - Date.now());
-    const percent = Math.max(0, Math.min(100, Math.round((diff / durationMs) * 100)));
-
-    const d = Math.floor(diff / 86400000); diff -= d * 86400000;
-    const h = Math.floor(diff / 3600000); diff -= h * 3600000;
-    const m = Math.floor(diff / 60000); diff -= m * 60000;
-    const sec = Math.floor(diff / 1000);
-
-    el.textContent = `${d}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(sec).padStart(2,'0')}s`;
-    status.textContent = `Signal actif — équipage en plongeon.`;
-    bar.style.width = percent + '%';
-    bar.classList.toggle('warning-level', percent <= 50 && percent > 20);
-    bar.classList.toggle('critical', percent <= 20);
-    if(pctEl) pctEl.textContent = percent + '%';
-    if(state){
-      if(percent <= 20){state.textContent='OXYGÈNE CRITIQUE';state.className='oxygen-state critical';}
-      else if(percent <= 50){state.textContent='RÉSERVE EN BAISSE';state.className='oxygen-state warning';}
-      else{state.textContent='PRESSION STABLE';state.className='oxygen-state';}
-    }
-  }
-
-    let seenAlarmAt = null;
-  async function refreshMissionConfig(){
-    const before = missionConfig?.missionStartedAt || null;
-    await loadMissionConfig();
-    const after = missionConfig?.missionStartedAt || null;
-    updateCountdown();
-    if(after && after !== before && seenAlarmAt !== after){
-      showNautilusAlarm(after);
-    }
-  }
-
-  function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
-
-  async function startMissionOfficial(withAlarm=true){
-    startOceanAudio();
-    if(withAlarm) showNautilusAlarm('launch-' + Date.now());
-    if(!currentTeam){
-      const box = $('gameBox');
-      if(box){
-        box.innerHTML = `<div class="notice warning"><b>Équipage requis.</b><br>Avant de lancer le premier mini-jeu, embarquez un matelot ou reprenez un équipage existant.</div>`;
-      }
-      document.getElementById('embarquementMatelot')?.scrollIntoView({behavior:'smooth', block:'start'});
-      return;
-    }
-    await loadMissionConfig();
-    if(!missionConfig?.missionStartedAt){
-      const startedAt = new Date().toISOString();
-      await setDoc(doc(db,'game','config'), {
-        missionStartedAt: startedAt,
-        missionStartedByTeam: currentTeam?.teamCode || null,
-        missionStartedByTeamName: currentTeam?.teamName || null,
-        updatedAt: new Date().toISOString()
-      }, {merge:true});
-      missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt };
-      updateCountdown();
-    }else{
-      updateCountdown();
-    }
-  }
-
-  function showNautilusAlarm(startedAt, durationMs){
-    seenAlarmAt = startedAt;
-    const alarm = $('nautilusAlarm');
-    if(!alarm) return;
-    alarm.classList.add('show');
-    playSubmarineAlarm(durationMs);
-    setTimeout(() => alarm.classList.remove('show'), durationMs || 9500);
-  }
-
-  function playSubmarineAlarm(durationMs){
-    // Sonar eteint = silence total : l'alarme reste muette (l'ecran rouge,
-    // lui, s'affiche quand meme).
-    if(!isSoundEnabled()) return;
-    const alarmAudio = document.getElementById('alarmAudio');
-    if(!alarmAudio) return;
-
-    alarmAudio.pause();
-    alarmAudio.currentTime = 0;
-    alarmAudio.volume = 0.82;
-    alarmAudio.dataset.loopCount = '0';
-
-    // Le son dure ~2 s : on le repete pour couvrir la duree demandee,
-    // sans jamais deborder (sinon l'alarme continuait apres la
-    // redirection vers le mini-jeu).
-    const maxLoops = durationMs ? Math.max(1, Math.ceil(durationMs / 2100)) : 3;
-    if(durationMs){
-      setTimeout(() => {
-        alarmAudio.onended = null;
-        alarmAudio.pause();
-        alarmAudio.currentTime = 0;
-      }, durationMs);
-    }
-
-    alarmAudio.onended = () => {
-      const count = Number(alarmAudio.dataset.loopCount || '0') + 1;
-      alarmAudio.dataset.loopCount = String(count);
-      if(count < maxLoops){
-        alarmAudio.currentTime = 0;
-        alarmAudio.play().catch(() => {});
-      }else{
-        alarmAudio.onended = null;
-      }
-    };
-
-    alarmAudio.play().catch(() => {
-      console.log("Lecture de l’alarme bloquée par le navigateur.");
-    });
-  }
-
-  /* ===== Limitation de la consommation =====
-     Les navigateurs ne suspendent pas toujours les timers d'un onglet
-     masque (et jamais sur un ecran simplement verrouille cote desktop).
-     On coupe donc explicitement tout ce qui tourne quand la page n'est
-     pas visible, et on relance a son retour. */
-  let _tickCountdown = null, _tickConfig = null, _tickTeams = null;
-
-  function startBackgroundTimers(){
-    if(_tickCountdown === null) _tickCountdown = setInterval(updateCountdown, 1000);
-    if(_tickConfig === null)    _tickConfig    = setInterval(refreshMissionConfig, 10000);
-    if(_tickTeams === null)     _tickTeams     = setInterval(() => loadTeams(), 60000);
-  }
-  function stopBackgroundTimers(){
-    clearInterval(_tickCountdown); _tickCountdown = null;
-    clearInterval(_tickConfig);    _tickConfig    = null;
-    clearInterval(_tickTeams);     _tickTeams     = null;
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    const hidden = document.visibilityState !== 'visible';
-    document.body.classList.toggle('page-hidden', hidden);
-    if(hidden){
-      stopBackgroundTimers();
-      // Le heartbeat ecrit dans Firestore : inutile onglet masque.
-      if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
-    }else{
-      startBackgroundTimers();
-      // Compte de test exclu : il ne doit jamais apparaitre "en ligne".
-      if(currentTeam && !currentTeam.isTest && !heartbeatTimer) startHeartbeat();
-      // Remise a niveau immediate apres une absence prolongee
-      updateCountdown();
-      refreshMissionConfig();
-    }
-  });
-
-  startBackgroundTimers();
-
-  /* --- Gel des animations hors ecran (economie de batterie iPhone) -------
-     Safari iOS continue de calculer les animations CSS des elements qui ne
-     sont plus a l'ecran. Les pulsations de box-shadow (boutons, hublots,
-     jauge d'oxygene, bulles) sont recalculees et redessinees 60 fois par
-     seconde par le processeur : c'est la source principale de chauffe.
-     On surveille chaque bloc et on lui pose .offscreen des qu'il sort du
-     champ, ce qui met ses animations en pause. */
-  (function freezeOffscreenAnimations(){
-    if(typeof IntersectionObserver !== 'function') return;
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(en => {
-        en.target.classList.toggle('offscreen', !en.isIntersecting);
-      });
-    }, { rootMargin: '80px 0px' });   // petite marge : pas de clignotement au bord
-    document.querySelectorAll('.card, .final-cta, .mission-steps, header, footer')
-      .forEach(el => io.observe(el));
-  })();
-
-  // Ambiance sonore : démarrage après interaction utilisateur.
-  function setSonarButtonState(isActive){
-    const btn = document.getElementById('sonarToggleBtn');
-    if(!btn) return;
-    // On ecrit dans les <span> internes : btn.textContent effacerait la
-    // structure (icone + libelle).
-    const label = btn.querySelector('.tb-label');
-    const txt = isActive ? 'Sonar activé' : 'Activer le sonar';
-    if(label) label.textContent = txt;
-    else btn.textContent = txt;
-    // Icone en tete : haut-parleur si le son joue, barre si le son est coupe.
-    const ico = btn.querySelector('.tb-ico');
-    if(ico) ico.textContent = isActive ? '🔊' : '🔇';
-    btn.classList.toggle('active', isActive);
-  }
-
-  /* --- Deverrouillage du son au scroll -----------------------------------
-     Probleme : tous les navigateurs (Chrome, Firefox, Safari, Edge, sur PC
-     comme sur Mac) refusent de demarrer un son tant que l'utilisateur n'a
-     pas fait un geste dit "d'activation" : clic, appui de touche, tap.
-     Le scroll / la molette ne comptent PAS comme tel : appeler play() sur
-     un simple scroll est rejete.
-
-     Solution : la lecture SILENCIEUSE anticipee.
-     On lance l'ambiance en sourdine (muted). Une lecture muette est
-     autorisee partout sans aucun geste. L'element est alors deja "en train
-     de jouer" : au premier scroll il ne reste plus qu'a couper la sourdine
-     et monter le volume, ce qui n'est plus un demarrage de lecture, donc
-     plus aucun blocage. Le son part immediatement.
-
-     ATTENTION BATTERIE (iPhone) : cette lecture muette ne doit PAS tourner
-     en permanence, sinon le decodeur audio travaille sans arret et le
-     telephone chauffe. Elle n'est donc amorcee qu'au premier signe de
-     presence, et coupee au bout de 45 s si personne n'active le son.
-     Si un navigateur refuse la lecture muette (cas rare), on retombe sur
-     l'ancien comportement : nouvelle tentative a chaque evenement. */
-
-  /* ===== INTERRUPTEUR GENERAL DU SON =====
-     Le bouton "sonar" ne commande pas seulement la musique d'ambiance :
-     c'est le robinet principal de TOUS les sons du jeu.
-       - sonar allume  : ambiance + alarmes + bips du mini-jeu audibles
-       - sonar eteint  : silence total, aucune source ne peut sortir un son
-     Tant qu'il est eteint, aucun bouton de la page (embarquement, reprise,
-     lancement de palier) ne peut relancer le son : le verrou est pose dans
-     startOceanAudio() elle-meme.
-     Le choix est memorise et partage avec les autres pages (palier1.html)
-     via localStorage, pour que le silence soit respecte partout. */
-  const SOUND_PREF_KEY = 'nautilusSoundOn';
-
-  /* Etat du son, declare ici car isSoundEnabled() s'en sert en repli. */
-  const OCEAN_VOLUME = 0.42;
-  let _primedSilently = false;   // la lecture muette anticipee tourne
-  let _audioWakeDone = false;    // le son est reellement audible
-  let _primeIdleTimer = null;    // coupe la lecture muette si inutilisee
-  /* Le sonar a-t-il ete eteint volontairement ? Repris du precedent
-     passage sur le site : le silence doit survivre au rechargement. */
-  let _soundOffByUser = (() => {
-    try{ return localStorage.getItem('nautilusSoundOn') === '0'; }
-    catch(e){ return false; }
-  })();
-
-  /* Le son est autorise SAUF si le joueur l'a explicitement coupe.
-     Attention : tester "=== '1'" bloquerait tous les sons a la premiere
-     visite (rien n'est encore enregistre). On teste donc l'inverse. */
-  function isSoundEnabled(){
-    try{ return localStorage.getItem(SOUND_PREF_KEY) !== '0'; }
-    catch(e){ return true; }
-  }
-  function setSoundEnabled(on){
-    try{ localStorage.setItem(SOUND_PREF_KEY, on ? '1' : '0'); }catch(e){ /* mode prive */ }
-  }
-
-  /* Coupe net toutes les sources sonores de la page : les trois lecteurs
-     <audio> (ambiance, alarme de mission, annonce d'equipage). */
-  function silenceEverything(){
-    document.querySelectorAll('audio').forEach(a => {
-      try{
-        a.pause();
-        a.muted = true;
-        a.currentTime = 0;
-      }catch(e){ /* element non pret */ }
-    });
-  }
-
-  /* Autorise a nouveau les lecteurs a produire du son. */
-  function unmuteAlarms(){
-    ['alarmAudio','revealAlarmAudio'].forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.muted = false;
-    });
-  }
-
-  function _ambiance(){ return document.getElementById('ambianceAudio'); }
-
-  /* Lance la lecture en sourdine, sans rien demander a l'utilisateur.
-     ATTENTION BATTERIE : un <audio> qui joue, meme muet, empeche le
-     telephone de se mettre en veille legere et fait tourner le decodeur
-     audio en continu (l'iPhone chauffe et se vide). On ne l'active donc
-     QUE juste avant d'en avoir besoin, et on l'arrete si l'utilisateur
-     ne donne pas suite. */
-  function primeOceanAudioSilently(){
-    const a = _ambiance();
-    if(!a || _primedSilently || _audioWakeDone || _soundOffByUser) return;
-    if(document.visibilityState !== 'visible') return;
-    a.muted = true;
-    a.volume = 0;
-    const p = a.play();
-    if(p && typeof p.then === 'function'){
-      p.then(() => {
-        _primedSilently = true;
-        // Filet de securite : si personne n'active le son dans les 45 s,
-        // on coupe la lecture muette pour rendre la batterie au telephone.
-        clearTimeout(_primeIdleTimer);
-        _primeIdleTimer = setTimeout(unprimeOceanAudio, 45000);
-      }).catch(() => { _primedSilently = false; });
-    }
-  }
-
-  /* Arrete la lecture muette (economie de batterie). */
-  function unprimeOceanAudio(){
-    const a = _ambiance();
-    if(!a || _audioWakeDone) return;
-    if(_primedSilently && a.muted){
-      a.pause();
-      _primedSilently = false;
-      // On se remet en attente : le prochain geste reamorcera la lecture
-      // muette, pour que le scroll suivant allume quand meme le son.
-      rearmPrime();
-    }
-  }
-
-  /* Rend le son audible. Renvoie true si l'ambiance joue vraiment. */
-  function startOceanAudio(){
-    /* VERROU CENTRAL : si le joueur a coupe le sonar, rien ne doit rallumer
-       l'ambiance — ni un clic sur "Engagez-vous", ni "Reprendre la
-       mission", ni le lancement d'un palier. Le verrou est place ici, dans
-       la fonction elle-meme, pour couvrir TOUS les appels existants et a
-       venir : impossible d'oublier un bouton. Seul le bouton sonar peut
-       relancer le son, et il leve d'abord le verrou. */
-    if(_soundOffByUser) return Promise.resolve(false);
-    const a = _ambiance();
-    if(!a) return Promise.resolve(false);
-
-    // Cas 1 : la lecture muette anticipee tourne deja -> on demasque.
-    // Aucun geste requis : la lecture a deja ete accordee.
-    if(_primedSilently && !a.paused){
-      a.muted = false;
-      a.volume = OCEAN_VOLUME;
-      // Safari peut mettre l'element en pause en le demasquant : on laisse
-      // passer une image puis on verifie qu'il joue toujours.
-      return new Promise(resolve => setTimeout(resolve, 80)).then(() => {
-        if(a.paused){
-          return a.play().then(() => { setSonarButtonState(true); return true; })
-                         .catch(() => {
-                           // Refus : on repart en sourdine pour rester pret
-                           // pour le prochain geste (clic notamment).
-                           a.muted = true;
-                           a.volume = 0;
-                           a.play().catch(() => { _primedSilently = false; });
-                           setSonarButtonState(false);
-                           return false;
-                         });
-        }
-        setSonarButtonState(true);
-        return true;
-      });
-    }
-
-    // Cas 2 : demarrage classique (necessite un vrai geste sur certains
-    // navigateurs).
-    a.muted = false;
-    a.volume = OCEAN_VOLUME;
-    return a.play().then(() => {
-      setSonarButtonState(true);
-      return true;
-    }).catch(() => {
-      /* Refus du navigateur. Il ne faut PAS laisser l'element demasque :
-         la lecture muette de secours ne pourrait plus demarrer et le son
-         resterait bloque jusqu'a un vrai clic. On remet la sourdine. */
-      a.muted = true;
-      a.volume = 0;
-      setSonarButtonState(false);
-      return false;
-    });
-  }
-
-  function toggleOceanAudio(){
-    const a = _ambiance();
-    if(!a) return;
-    const soundIsOn = !a.paused && !a.muted;
-    if(soundIsOn){
-      // EXTINCTION GENERALE : plus aucun son ne doit sortir de la page,
-      // ni l'ambiance, ni les alarmes, ni les bips du mini-jeu.
-      a.dataset.userPaused = '1';
-      setSoundEnabled(false);
-      _soundOffByUser = true;
-      _audioWakeDone = false;
-      _primedSilently = false;
-      clearTimeout(_primeIdleTimer);
-      silenceEverything();
-      setSonarButtonState(false);
-    }else{
-      // ALLUMAGE GENERAL : tout redevient audible.
-      a.dataset.userPaused = '0';
-      setSoundEnabled(true);
-      _soundOffByUser = false;
-      _audioWakeDone = true;
-      a.muted = false;              // silenceEverything() l'avait coupe
-      unmuteAlarms();
-      startOceanAudio();
-    }
-  }
-
-  $('sonarToggleBtn')?.addEventListener('click', toggleOceanAudio);
-
-  const ambianceAudioElement = _ambiance();
-  // Le <audio> joue aussi en sourdine : le bouton ne doit s'allumer que
-  // lorsque le son est reellement audible.
-  ambianceAudioElement?.addEventListener('pause', () => setSonarButtonState(false));
-  ambianceAudioElement?.addEventListener('play', () => {
-    setSonarButtonState(!ambianceAudioElement.muted && ambianceAudioElement.volume > 0);
-  });
-
-  /* Reveil du son : scroll, molette, glissement tactile, clic, touche...
-     Les ecouteurs ne sont retires QUE si le son est devenu audible ; une
-     tentative refusee laisse le dispositif en place. */
-  const AUDIO_WAKE_EVENTS = ['scroll','wheel','touchmove','pointerdown','touchstart',
-    'touchend','mousedown','click','keydown','mousemove'];
-
-  async function activateAudioFromNavigation(){
-    if(_audioWakeDone) return;
-    // Sonar eteint volontairement : le scroll ne doit RIEN rallumer.
-    if(_soundOffByUser) return;
-    const a = _ambiance();
-    if(a && a.dataset.userPaused === '1') return;  // coupe volontairement
-    const started = await startOceanAudio();
-    if(!started) return;          // refuse : on reste a l'ecoute
-    _audioWakeDone = true;
-    setSoundEnabled(true);        // memorise : le son est en marche
-    AUDIO_WAKE_EVENTS.forEach(evt => {
-      window.removeEventListener(evt, activateAudioFromNavigation, { capture:true });
-      window.removeEventListener(evt, activateAudioFromNavigation);
-      document.removeEventListener(evt, activateAudioFromNavigation, { capture:true });
-      document.removeEventListener(evt, activateAudioFromNavigation);
-    });
-  }
-
-  AUDIO_WAKE_EVENTS.forEach(evt => {
-    window.addEventListener(evt, activateAudioFromNavigation, { passive:true });
-    // Certains navigateurs ne propagent pas jusqu'a window (scroll dans un
-    // conteneur interne, navigateurs mobiles) : on double l'ecoute sur
-    // document en phase de capture.
-    document.addEventListener(evt, activateAudioFromNavigation, { passive:true, capture:true });
-  });
-
-  let _primeArmed = false;
-  const PRIME_HINT_EVENTS = ['mousemove','pointerover','touchstart','pointerdown','keydown','scroll','wheel'];
-  function armPrime(){
-    if(_primeArmed || _audioWakeDone || _soundOffByUser) return;
-    _primeArmed = true;
-    PRIME_HINT_EVENTS.forEach(evt => document.removeEventListener(evt, armPrime, { capture:true }));
-    primeOceanAudioSilently();
-  }
-  function rearmPrime(){
-    if(_audioWakeDone) return;
-    _primeArmed = false;
-    PRIME_HINT_EVENTS.forEach(evt => {
-      document.addEventListener(evt, armPrime, { passive:true, capture:true });
-    });
-  }
-  PRIME_HINT_EVENTS.forEach(evt => {
-    document.addEventListener(evt, armPrime, { passive:true, capture:true });
-  });
-
-  /* ===== SON ACTIF DES LE CHARGEMENT DE LA PAGE =====
-     Objectif : l'ambiance et les bruitages sont audibles des l'ouverture,
-     sans que le joueur ait la moindre action a faire.
-
-     Limite imposee par TOUS les navigateurs (Chrome, Firefox, Safari,
-     Edge) : un son ne peut pas demarrer sans autorisation. Celle-ci est
-     accordee automatiquement quand le site est deja connu de l'appareil
-     (app installee sur l'ecran d'accueil, visites repetees) — c'est le cas
-     des joueurs pendant l'evenement. On procede donc en deux temps :
-
-       1. On tente le son AUDIBLE immediatement au chargement. Si le
-          navigateur l'accepte, la musique demarre toute seule : rien a
-          faire, but atteint.
-       2. S'il refuse (typiquement la toute premiere visite), on lance
-          aussitot la lecture MUETTE, qui elle est toujours autorisee. Le
-          fichier tourne alors deja en sourdine : le tout premier geste,
-          meme un simple scroll, n'a plus qu'a couper la sourdine. C'est
-          instantane et plus jamais bloque.
-
-     Dans les deux cas, aucun clic sur le bouton sonar n'est necessaire. */
-  async function enableSoundAtLoad(){
-    if(_soundOffByUser) return;   // le joueur avait coupe le son : on respecte
-
-    // Les bruitages (alarmes) ne doivent porter aucune sourdine residuelle.
-    unmuteAlarms();
-
-    // 1) Tentative de lecture audible immediate.
-    const started = await startOceanAudio();
-    if(started){
-      _audioWakeDone = true;
-      setSoundEnabled(true);
-      return;
-    }
-
-    // 2) Refus du navigateur : lecture muette immediate, prete a etre
-    //    demasquee au premier geste, quel qu'il soit.
-    _primeArmed = true;
-    PRIME_HINT_EVENTS.forEach(evt => document.removeEventListener(evt, armPrime, { capture:true }));
-    primeOceanAudioSilently();
-  }
-  /* Etat de depart : si le joueur avait coupe le sonar lors de sa derniere
-     visite, on retablit le silence complet AVANT toute tentative de
-     lecture. L'ordre compte : le silence d'abord, la mise en route ensuite. */
-  if(_soundOffByUser){
-    silenceEverything();
-    setSonarButtonState(false);
-    const _a0 = _ambiance();
-    if(_a0) _a0.dataset.userPaused = '1';
-  }else{
-    // Sinon : on allume le son des maintenant (voir enableSoundAtLoad).
-    enableSoundAtLoad();
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    const a = _ambiance();
-    if(document.visibilityState !== 'visible'){
-      // Onglet quitte / ecran eteint : on relache le decodeur audio si le
-      // son n'etait pas reellement demande. Sinon l'iPhone continue de
-      // travailler en poche.
-      clearTimeout(_primeIdleTimer);
-      unprimeOceanAudio();
-      return;
-    }
-    // Retour d'onglet : si l'ambiance etait active, on la relance.
-    if(_audioWakeDone){
-      if(a && a.paused && a.dataset.userPaused !== '1') startOceanAudio();
-    }else if(_primeArmed){
-      primeOceanAudioSilently();
-    }
-  });
-
-  /* Bouton de mission affiche DANS le bloc embarquement, une fois le
-     matelot inscrit ou reconnecte. Le libelle suit l'avancement reel :
-     "LANCER LA MISSION" tant que l'equipe est au depart, puis
-     "REPRENDRE LA MISSION" des qu'un mini-jeu a ete commence. */
-  function renderEmbarkMissionButton(){
-    const box = $('embarkMissionAction');
-    if(!box) return;
-    if(!currentTeam){
-      box.style.display = 'none';
-      box.innerHTML = '';
-      return;
-    }
-    /* Ce bouton NE LANCE PLUS la mission : il emmene simplement le matelot
-       jusqu'a la chambre de pilotage, ou se trouve le vrai bouton de
-       lancement. Avant, deux boutons declenchaient la meme action a deux
-       endroits differents, ce qui pretait a confusion. */
-    box.style.display = 'flex';
-    box.innerHTML = '<button class="hero-cta red cockpit-launch" type="button" id="embarkMissionBtn">'
-      + 'REJOINDRE LE COCKPIT</button>';
-    $('embarkMissionBtn')?.addEventListener('click', () => {
-      document.getElementById('gameCard')
-        ?.scrollIntoView({ behavior:'smooth', block:'start' });
-    });
   }
 
   function updateFinalMissionButton(){
