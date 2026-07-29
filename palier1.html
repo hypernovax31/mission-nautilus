@@ -97,7 +97,7 @@
     .crew-member .crew-meta{font-size:11px;color:#9bc4d4;}
     .crew-member .crew-status{font-size:11px;font-weight:800;}
 
-    /* === Morse stepbox === */
+    /* === Bloc de l epreuve === */
     .morse-stepbox{
       background:linear-gradient(135deg,#061524 0%,#0a2a40 60%,#03111f 100%);
       color:#eaf8ff;border:1px solid rgba(142,231,255,.28);
@@ -463,7 +463,7 @@ const MORSE_WORDS = [
 
 /* Lieu FIXE du QR du palier 2 dans le magasin.
    Ce texte est identique pour tous les mots tirés (le lieu ne dépend
-   pas du mot Morse trouvé). C'est ici que l'équipe devra scanner
+   pas du mot trouvé). C'est ici que l'équipe devra scanner
    le QR pour obtenir le numéro secret du palier 2. */
 const QR_LOCATION_HINT = "📍 Direction la borne d'arcade au fond du magasin, derrière l'écran de démonstration.";
 
@@ -671,7 +671,7 @@ function getAudioCtx() {
   return _audioCtx;
 }
 
-/* Tonalité Morse (point ou trait) sur le contexte courant */
+/* Tonalite du signal (point ou trait) sur le contexte courant */
 function playMorseTone(ctx, destination, freq, duration, startAt) {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -704,7 +704,7 @@ function wordToMorseSeq(word) {
   return seq;
 }
 
-/* Joue une séquence Morse à travers un nœud destination. */
+/* Joue une sequence de signal a travers un noeud destination. */
 async function playMorseSequence(ctx, destination, word, opts = {}) {
   const DOT = opts.dot ?? 0.18;
   const DASH = DOT * 3;
@@ -1196,7 +1196,7 @@ window.Nautilus = {
           ⚓ <b>Briefing du capitaine Nemo</b>
           <br><br>
           Le sas ne s'ouvrira qu'avec un mot de passe. Le capitaine te l'enverra
-          en <b>morse</b> : à toi de l'écouter et de l'écrire.
+          par le <b>sonar</b> : à toi de l'écouter et de l'écrire.
           <br><br>
           🎧 Le signal est faible : pense à monter le son 😉<br>
           ⏱️ <b>3 minutes 30</b> pour répondre.<br>
@@ -1492,8 +1492,8 @@ window.Nautilus = {
         lastEvent: 'solved',
         revealedWord: target  /* stocké en clair sur la session pour l'écran de victoire uniquement */
       });
-      N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe Morse ! L'épreuve du sonar est validée.`, 'success');
-      N.showToast('Mot de passe Morse déchiffré !', 'success');
+      N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe ! L'épreuve du sonar est validée.`, 'success');
+      N.showToast('Mot de passe déchiffré !', 'success');
       /* Avance le palier côté équipe */
       await advanceTeam();
     } else {
@@ -1622,7 +1622,7 @@ window.Nautilus = {
   function buildHintContent(idx) {
     const s = state.session;
     if (!s) return '';
-    if (idx === 0) return '📜 Une recommandation officielle sera consultable (UIT-R M.1677-1) — Morse international, accents inclus.';
+    if (idx === 0) return '📜 Le signal suit une <b>recommandation officielle</b> : UIT-R M.1677-1.';
     if (idx === 1) return `🔤 Le mot de passe contient ${s.wordLength} lettres.`;
     if (idx === 2) return `💡 Première lettre : ${state.word ? state.word[0] : '?'}`;
     return '';
@@ -1729,15 +1729,15 @@ window.Nautilus = {
       <div class="won-screen">
         <h2>🏆 Épreuve du sonar validée !</h2>
         <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">
-          L'équipage a remporté le Palier 1.<br>Le mot de passe Morse a été noté en lieu sûr par <b>${esc(s.startedByName || 'un matelot')}</b>.
+          L'équipage a remporté le Palier 1.<br>Le mot de passe a été noté en lieu sûr par <b>${esc(s.startedByName || 'un matelot')}</b>.
         </p>
 
         <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Thème de l'épreuve :</div>
         <div style="color:#fff;font-size:18px;font-weight:900;line-height:1.4;max-width:480px;margin:0 auto 12px;">
-          🌊 <b>Décodage Morse en mer</b> — le capitaine Nemo a intercepté un signal sous-marin qu'il fallait retranscrire.
+          🌊 <b>Décodage en mer</b> — le capitaine Nemo a intercepté un signal sous-marin qu'il fallait retranscrire.
         </div>
 
-        <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Mot de passe Morse :</div>
+        <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Mot de passe :</div>
         <div class="reveal-code">${esc(s.revealedWord || s.wordHash || '— —')}</div>
 
         <div class="qr-hint-block" style="margin:24px 0 0;padding:18px 20px;background:linear-gradient(135deg,rgba(245,176,39,.12),rgba(245,176,39,.06));border:2px solid rgba(245,176,39,.55);border-radius:18px;max-width:540px;margin-left:auto;margin-right:auto;text-align:left;">
