@@ -31,25 +31,20 @@
       --fs-small:max(10.5px, calc(var(--fs-base) * .80));
       --fs-tiny:max(9.5px, calc(var(--fs-base) * .70));
     }
+    /* Couleurs de base du site. Seules celles reellement utilisees sont
+       gardees : 8 autres (--abyss, --black, --cyan, --deep, --line,
+       --paper, --paper2, --surface) etaient definies mais jamais lues. */
     :root{
-      --fnac:#f5b027;
-      --black:#070b12;
-      --abyss:#061524;
-      --deep:#0a2a40;
-      --surface:#0f4562;
-      --cyan:#8ee7ff;
-      --paper:#ffffff;
-      --paper2:#f4fbff;
-      --text:#13202b;
-      --muted:#617181;
-      --line:#dce8ef;
-      --bad:#b8322b;
-      --warn:#fff4d8;
-      --warnb:#e8c05f;
-      --dangerbg:#fff0ee;
-      --dangerb:#efb2ac;
-      --successbg:#effff7;
-      --successb:#aee5ca;
+      --fnac:#f5b027;           /* jaune Fnac, couleur d'accent */
+      --text:#13202b;           /* texte courant */
+      --muted:#617181;          /* texte secondaire */
+      --bad:#b8322b;            /* erreur */
+      --warn:#fff4d8;           /* fond d'avertissement */
+      --warnb:#e8c05f;          /*  et son contour */
+      --dangerbg:#fff0ee;       /* fond de danger */
+      --dangerb:#efb2ac;        /*  et son contour */
+      --successbg:#effff7;      /* fond de reussite */
+      --successb:#aee5ca;       /*  et son contour */
     }
     *{box-sizing:border-box}
     /* PROTECTION-COPIE (desactivee) : selection de texte libre.
@@ -388,8 +383,8 @@
     /* Modale QR plein ecran avec bouton "Partager ce QR" pour mobile */
     .qr-modal-share{padding:10px 18px;background:linear-gradient(135deg,#075c39,#0a8a5a);color:#fff;border:0;border-radius:999px;font-weight:1000;font-size:14px;margin-top:16px;cursor:pointer;letter-spacing:.04em}
     .qr-modal-share:hover{filter:brightness(1.1);transform:translateY(-1px)}
-    .qr-tap-hint{margin-top:14px;font-size:var(--fs-small);opacity:.85}
-    .qr-tap-hint b{color:#ffe2a0}
+    
+    
     .brand{
       position:relative;
       z-index:1;
@@ -494,7 +489,7 @@
     #matelotCodeInput,#memberName{text-transform:uppercase}.uppercase{text-transform:uppercase;letter-spacing:.04em}
     button{border:0;border-radius:15px;padding:14px 18px;font:inherit;font-weight:900;cursor:pointer;margin:12px 8px 0 0;transition:.15s filter,.15s transform;min-height:48px}
     button:hover{filter:brightness(1.03);transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}.primary{background:var(--fnac);color:#111;box-shadow:0 10px 18px rgba(245,176,39,.26)}.secondary{background:#eaf0f4;color:#111}.danger{background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac}
-    .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:var(--fs-small);color:#6e7a84;line-height:1.38}.code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111;color:var(--fnac);border:2px solid var(--fnac);border-radius:12px;padding:8px 12px;display:inline-block;user-select:all;font-size:16px;box-shadow:0 6px 14px rgba(0,0,0,.12)}.teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);font-weight:900;margin-top:3px}.sonar-loading .body{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(8,48,72,.80))!important}.sonar-loader{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:34px 18px;background:linear-gradient(135deg,rgba(7,26,43,.98),rgba(11,52,78,.96));border:1px solid rgba(120,255,180,.28);border-radius:22px;color:#baffd2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18)}.sonar-screen{position:relative;width:170px;height:170px;min-width:170px;flex:0 0 170px;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.08),rgba(0,0,0,.25) 70%),#02120d;border:3px solid rgba(91,255,156,.75);box-shadow:0 0 22px rgba(91,255,156,.28),inset 0 0 22px rgba(91,255,156,.12);overflow:hidden}.sonar-screen:before{content:"";position:absolute;inset:26px;border:1px solid rgba(91,255,156,.24);border-radius:50%;box-shadow:0 0 0 26px rgba(91,255,156,.10),0 0 0 52px rgba(91,255,156,.07)}.sonar-screen:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(91,255,156,.18);box-shadow:-59px 59px 0 -58px transparent}.sonar-text{font-family:Consolas,"Courier New",monospace;text-transform:uppercase;white-space:nowrap;letter-spacing:.045em;font-weight:1000;font-size:clamp(11px,3vw,20px);color:#fff;text-shadow:0 0 14px rgba(91,255,156,.55);max-width:100%;overflow:visible;text-align:center}.sonar-text:after{content:"";animation:none}/* sonarDots desactive (les points sont geres par <span id="radarDots">) */.cockpit-action{display:flex;justify-content:center;margin-top:18px}.cockpit-launch{min-width:min(100%,360px);text-align:center}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}.progress{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.dot{padding:6px 10px;border-radius:999px;background:#eef2f5;font-size:12px;font-weight:800;color:#52606a}.dot.doneDot{background:#e5fff2;color:#08633e;border:1px solid #aee5ca}.dot.currentDot{background:#111;color:var(--fnac)}
+    .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:var(--fs-small);color:#6e7a84;line-height:1.38}.code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111;color:var(--fnac);border:2px solid var(--fnac);border-radius:12px;padding:8px 12px;display:inline-block;user-select:all;font-size:16px;box-shadow:0 6px 14px rgba(0,0,0,.12)}.teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);font-weight:900;margin-top:3px}.sonar-loader{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:34px 18px;background:linear-gradient(135deg,rgba(7,26,43,.98),rgba(11,52,78,.96));border:1px solid rgba(120,255,180,.28);border-radius:22px;color:#baffd2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18)}.sonar-screen{position:relative;width:170px;height:170px;min-width:170px;flex:0 0 170px;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.08),rgba(0,0,0,.25) 70%),#02120d;border:3px solid rgba(91,255,156,.75);box-shadow:0 0 22px rgba(91,255,156,.28),inset 0 0 22px rgba(91,255,156,.12);overflow:hidden}.sonar-screen:before{content:"";position:absolute;inset:26px;border:1px solid rgba(91,255,156,.24);border-radius:50%;box-shadow:0 0 0 26px rgba(91,255,156,.10),0 0 0 52px rgba(91,255,156,.07)}.sonar-screen:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(91,255,156,.18);box-shadow:-59px 59px 0 -58px transparent}.sonar-text{font-family:Consolas,"Courier New",monospace;text-transform:uppercase;white-space:nowrap;letter-spacing:.045em;font-weight:1000;font-size:clamp(11px,3vw,20px);color:#fff;text-shadow:0 0 14px rgba(91,255,156,.55);max-width:100%;overflow:visible;text-align:center}.sonar-text:after{content:"";animation:none}.cockpit-action{display:flex;justify-content:center;margin-top:18px}.cockpit-launch{min-width:min(100%,360px);text-align:center}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}
     .hero-actions{position:relative;z-index:2;display:flex;gap:20px;flex-wrap:wrap;margin-top:40px}.hero-cta{position:relative;z-index:2;margin-top:0;background:var(--fnac);color:#111;border:0;border-radius:999px;padding:16px 24px;font-weight:1000;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(245,176,39,.28);width:auto;min-width:210px}.hero-cta.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(245,176,39,.55);box-shadow:none}
     .hero-cta.red{background:linear-gradient(135deg,#ff4b3e,#9b1111);color:#fff;box-shadow:0 0 30px rgba(255,55,55,.25)}
     .ocean-wallpaper{position:fixed;top:0;left:0;width:100vw;height:100vh;height:100lvh;z-index:0;pointer-events:none;overflow:hidden;background-image:url('assets/fond-nautilus.jpg');background-position:center top;background-size:100% auto;background-repeat:no-repeat;background-color:#03111f;
@@ -965,7 +960,7 @@
        qu'il y ait des equipages ou non. */
     /* Animation du sweep pour qu'il soit bien visible */
     .radar-sweep-big{filter:drop-shadow(0 0 6px rgba(91,255,156,.7))}
-    .radar-stage.radar-fading{opacity:0;pointer-events:none}
+    
     .radar-big{padding:0;background:transparent;border:0;box-shadow:none;width:100%}
     .radar-screen-big{
       position:relative;width:min(62vw,250px);height:min(62vw,250px);min-width:170px;flex:0 0 auto;
@@ -1380,7 +1375,7 @@
       animation:teamGlint 1.4s ease both;
     }
     .team-reveal.out{opacity:0;transform:translateY(-12px) scale(.96);transition:opacity .45s ease,transform .45s ease}
-    .team-reveal.empty-team{opacity:1;transform:none;animation:none;display:none}
+    
     /* On anime box-shadow plutot que drop-shadow : le halo epouse alors le
        contour arrondi de la carte au lieu de baver autour du bloc. */
     @keyframes teamGlint{
@@ -1483,9 +1478,9 @@
     @media (prefers-reduced-motion: reduce){
       .team-reveal.in{animation:none}
     }
-    @media(max-width:520px){.im-grid-2{grid-template-columns:1fr}}
-    .im-block .small{font-size:var(--fs-small);opacity:.75;margin:0 0 10px}
-    @media(max-width:380px){.im-shortcut-btns{grid-template-columns:1fr}}
+    @media(max-width:520px){}
+    
+    @media(max-width:380px){}
 
     /* ===== Modale d'installation PWA ===== */
     .pwa-modal{position:fixed;inset:0;z-index:10005;background:rgba(2,8,18,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px;animation:pwaFadeIn .25s ease}
@@ -1908,25 +1903,13 @@
     heartbeatTimer = setInterval(heartbeat, 30000);
   }
 
-  function progressHtml(team){const completed=team.completedSteps||[];return `<div class="progress">${Object.keys(STEPS).map(id=>`<span class="dot ${completed.includes(id)?'doneDot':(id===team.currentStep?'currentDot':'')}">${esc(STEPS[id].label)}</span>`).join('')}</div>`;}
 
-  /* Prepare les equipes dans la base.
-     REECRITE POUR LA VITESSE. L'ancienne version faisait, a chaque appel :
-       1 lecture config + (1 lecture + 1 ECRITURE) par equipe + 1 ecriture config
-     soit une dizaine d'aller-retours enchaines UN PAR UN. Et elle etait
-     appelee deux fois pendant une inscription (une fois en direct, une fois
-     via loadTeams), plus toutes les 60 s par le rafraichissement auto.
-     Sur un telephone en 4G du magasin, cela suffisait a rendre
-     l'embarquement interminable.
-
-     Trois corrections :
-       - une seule lecture groupee de toutes les equipes (getDocs) au lieu
-         d'une lecture par equipe ;
-       - on N'ECRIT QUE s'il manque vraiment quelque chose (avant, chaque
-         equipe etait reecrite a chaque passage, pour rien) ;
-       - le resultat est garde en memoire quelques secondes : deux appels
-         rapproches ne refont pas le travail.
-     Renvoie la liste des equipes, pour eviter a l'appelant une relecture. */
+  /* Prepare les equipes dans la base, et renvoie leur etat.
+     Ecrite pour la vitesse : une seule lecture groupee (getDocs) au lieu
+     d'une par equipe, ecriture UNIQUEMENT si une donnee manque, et
+     resultat garde 30 s en memoire. Renvoyer la liste evite a l'appelant
+     une relecture. Ne pas revenir a une lecture/ecriture par equipe :
+     c'est ce qui rendait l'embarquement interminable en 4G. */
   let _ensureTeamsPromise = null;
   let _ensureTeamsAt = 0;
   const ENSURE_TEAMS_TTL = 30000;   // 30 s
@@ -2039,8 +2022,6 @@
    * - Re-render live : a chaque modification (inscription, suppression, etc.)
    *   on synchronise sans relancer l'animation radar.
    */
-  const REVEAL_STAGGER_MS = 420;
-  const REVEAL_INITIAL_DELAY = 250; // delai avant la 1ere carte (apres 1 tour de radar)
   let _knownTeams = {}; // teamCode -> { hasMembers: bool, revealedAt: number }
   // File de revelation : une equipe est annoncee par cycle d'alarme.
   let _revealQueue = [];        // codes en attente d'annonce
@@ -2055,25 +2036,16 @@
      au repli de playAlarmOnce(). Le declenchement de l'annonce, lui, ne
      depend plus que de la position du bloc a l'ecran (voir plus bas). */
 
-  /* --- L'animation tourne UNIQUEMENT quand le BLOC est sous les yeux -----
-     Regle demandee :
-       - le bloc "Equipages en plongee" visible a 45 % ou plus -> demarrage
-         ou reprise de l'animation ;
-       - le bloc sous 45 %  -> TOUT se met en pause (rotation du balayage,
-         halos, points, annonce en cours et son de l'alarme).
-     On repart exactement la ou on s'etait arrete, rien n'est perdu.
+  /* --- L'animation tourne UNIQUEMENT quand le bloc est sous les yeux -----
+     Bloc "Equipages en plongee" visible a >= 45 % : animation active.
+     En dessous : tout se met en pause (balayage, halos, annonce, son) et
+     reprend ensuite au meme point.
 
-     POINT DELICAT : ce bloc contient le sonar ET les cartes des equipages.
-     Il devient donc vite plus haut que l'ecran. Or le pourcentage d'un
-     IntersectionObserver se calcule par rapport a la taille de l'ELEMENT :
-     un bloc deux fois plus haut que l'ecran ne pourrait jamais depasser
-     50 %, et sur un grand bloc il n'atteindrait meme jamais 45 %, si bien
-     que l'animation ne demarrerait plus jamais.
-     On calcule donc le pourcentage par rapport a la plus petite des deux
-     hauteurs (le bloc ou l'ecran). Autrement dit :
-       - bloc plus petit que l'ecran : "45 % du bloc est visible" ;
-       - bloc plus grand que l'ecran : "le bloc occupe 45 % de l'ecran".
-     Dans les deux cas cela correspond a ce que percoit le joueur. */
+     PIEGE : le pourcentage d'un IntersectionObserver se calcule sur la
+     taille de l'ELEMENT. Ce bloc etant souvent plus haut que l'ecran, il
+     n'atteindrait jamais 45 % et l'animation ne demarrerait plus. On
+     ramene donc le calcul a la plus petite des deux hauteurs (bloc ou
+     ecran), ce qui correspond a ce que voit vraiment le joueur. */
   const RADAR_VISIBLE_RATIO = 0.45;
   let _radarVisible = false;
   const _visibilityWaiters = [];
@@ -2314,42 +2286,18 @@
   /* tint  = couleur du liseré et de l'embleme (sombre, lisible sur blanc)
      glow  = meme couleur eclaircie, en R,G,B, pour le halo lumineux
              (un halo de la teinte sombre ne se verrait pas) */
-  /* Palette des equipages — CALCULEE, pas choisie a l'oeil.
+  /* Palette des equipages — calculee, pas choisie a l'oeil.
+     glow = halo du point sur le sonar (fond noir)
+     tint = lisere / pastille / embleme des cartes (fond blanc)
 
-     Deux defauts corriges :
-
-     1. Le point du sonar et le lisere de la carte n'avaient PAS la meme
-        teinte. Ex. NEMO : le point tirait sur le bleu ciel, le lisere sur
-        le bleu-vert sombre. L'oeil ne faisait donc pas le lien entre les
-        deux. Desormais `tint` est exactement la MEME teinte que `glow`,
-        simplement assombrie pour rester lisible sur fond blanc : l'ecart
-        de teinte entre les deux est inferieur a 0,4 degre.
-
-     2. Deux equipages se ressemblaient trop. ARONNAX et TRITON n'etaient
-        separes que de 14 unites de difference percue (deltaE) : en dessous
-        de 25, deux couleurs voisines sur un ecran de telephone se
-        confondent. Idem NEMO et BALEINE (26).
-        Les teintes ont ete reparties sur le cercle des couleurs et les
-        clartes etagees, en verifiant a chaque fois l'ecart percu reel.
-        Ecart minimal desormais : 38 entre deux points, 25 entre deux
-        liseres — soit environ 3 fois mieux qu'avant.
-
-     Chaque equipage garde sa couleur d'origine (Nemo bleu, Nautilus vert,
-     Aronnax orange, Ned Land rouge, Calamar violet, Baleine turquoise,
-     Triton jaune) : seules les nuances ont ete ecartees les unes des
-     autres.
-
-     La clarte varie aussi d'un equipage a l'autre : c'est un second
-     repere, qui fonctionne meme pour les personnes qui distinguent mal
-     les couleurs. Verifie en simulant les trois formes de daltonisme :
-     l'ecart minimal passe de 4-7 a 17-19.
-
-     DEFAULT est un gris parfaitement neutre (aucune couleur) : il ne peut
-     donc etre confondu avec aucun equipage.
-
-     glow = R,G,B pour les halos du sonar (fond noir)
-     tint = liseré, pastille et embleme des cartes (fond blanc),
-            contraste garanti au moins 4,5:1 avec le blanc. */
+     Deux regles a respecter si on y touche :
+       - tint doit etre la MEME teinte que glow, juste assombrie, sinon
+         l'oeil ne relie plus le point a sa carte ;
+       - deux equipages doivent differer d'au moins 25 deltaE, sinon leurs
+         couleurs se confondent sur un ecran de telephone.
+     Etat actuel : ecart minimal 38 (points) et 25 (liseres), contraste
+     des liseres sur blanc >= 4,5:1, teintes distinctes aussi en vision
+     daltonienne. DEFAULT est un gris neutre volontaire. */
   const TEAM_STYLES = {
     NEMO:     { glow: '132,157,250', tint: '#1857b8', emblem: 'M100 30a16 16 0 1 1 0 32 16 16 0 0 1 0-32Zm0 40v104M64 88h72M100 174c-30 0-46-20-48-44l14 6-6-18 22 8c-6 18 4 32 18 34Zm0 0c30 0 46-20 48-44l-14 6 6-18-22 8c6 18-4 32-18 34Z' },
     NAUTILUS: { glow: '49,251,142', tint: '#138046', emblem: 'M100 78c40 0 72 14 72 30s-32 30-72 30-72-14-72-30 32-30 72-30Zm-14-24h28v22H86Zm86 22 22-12v40l-22-12M28 158q22-10 44 0t44 0 44 0' },
@@ -3264,21 +3212,12 @@ function qrDataUri(text, opts){
      Limite : 230 caracteres (QR version 9, niveau L). Les valeurs sont
      donc bornees pour qu'un nom tres long ne fasse jamais deborder. */
   /* ===== CONTENU DU QR : le lien personnel de reprise =====
-     Le QR contient desormais l'adresse du jeu suivie du code matelot :
+     Le QR contient l'adresse du jeu suivie du code matelot :
        https://.../mission-nautilus/?m=CXCL-9396
-     En le scannant avec l'appareil photo, le telephone propose d'ouvrir ce
-     lien. Le site lit alors le parametre ?m=, remplit le code et relance la
-     mission tout seul, sans rien taper.
-
-     Le matelot peut ensuite mettre CETTE page en favori (menu Partager ->
-     Ajouter aux favoris) : le lien memorise contient son code, donc chaque
-     ouverture depuis les favoris reprend sa mission automatiquement.
-
-     Historique : le QR contenait avant une fiche de contact vCard, pour
-     eviter que l'appareil photo n'ouvre le site. C'est exactement l'inverse
-     du besoin actuel — on veut justement qu'il l'ouvre.
-     Longueur : environ 60 caracteres, tres loin de la limite de 230
-     (QR version 9, niveau L). */
+     Scanne avec l'appareil photo, il ouvre le site, qui lit le ?m=, remplit
+     le code et relance la mission tout seul. Le matelot peut mettre cette
+     page en favori : son code y est deja.
+     Environ 60 caracteres, loin de la limite de 230 (version 9, niveau L). */
   function buildResumeUrl(code){
     const cd = String(code || '').trim().toUpperCase();
     return siteUrl() + '?m=' + encodeURIComponent(cd);
@@ -4353,18 +4292,13 @@ function qrDataUri(text, opts){
     if(!typingSpan || !caretSpan) return;
 
     /* RESERVATION DE LA PLACE — sans figer la hauteur en pixels.
-       Ancien defaut : on mesurait la hauteur du texte complet une seule
-       fois, puis on l'imposait en pixels (height + overflow:hidden). Des
-       que la fenetre changeait de largeur, cette hauteur devenait fausse :
-       en retrecissant le texte prenait plus de lignes et se retrouvait
-       COUPE ; en elargissant il en prenait moins et laissait un grand vide.
-
-       Nouvelle methode : on garde en permanence le texte complet dans le
-       document, mais rendu invisible (visibility:hidden). C'est lui qui
-       fixe la hauteur du bloc, et le navigateur la recalcule tout seul a
-       chaque redimensionnement. Le texte qui s'ecrit est superpose par
-       dessus, en position absolue. Plus rien a mesurer, plus rien a figer :
-       la hauteur est toujours exactement la bonne. */
+       Le texte complet reste dans le document mais invisible
+       (visibility:hidden) : c'est lui qui donne sa hauteur au bloc, et le
+       navigateur la recalcule seul a chaque changement de largeur. Le
+       texte qui s'ecrit est superpose par dessus, en position absolue.
+       Ne PAS revenir a une hauteur mesuree en pixels : elle devenait
+       fausse des que la fenetre changeait de taille (texte coupe ou grand
+       vide). */
     const ghost = document.createElement('span');
     ghost.className = 'typewriter-ghost';
     ghost.setAttribute('aria-hidden', 'true');
@@ -4638,25 +4572,12 @@ function qrDataUri(text, opts){
   }
 
   /* --- Deverrouillage du son au scroll -----------------------------------
-     Probleme : tous les navigateurs (Chrome, Firefox, Safari, Edge, sur PC
-     comme sur Mac) refusent de demarrer un son tant que l'utilisateur n'a
-     pas fait un geste dit "d'activation" : clic, appui de touche, tap.
-     Le scroll / la molette ne comptent PAS comme tel : appeler play() sur
-     un simple scroll est rejete.
-
-     Solution : la lecture SILENCIEUSE anticipee.
-     On lance l'ambiance en sourdine (muted). Une lecture muette est
-     autorisee partout sans aucun geste. L'element est alors deja "en train
-     de jouer" : au premier scroll il ne reste plus qu'a couper la sourdine
-     et monter le volume, ce qui n'est plus un demarrage de lecture, donc
-     plus aucun blocage. Le son part immediatement.
-
-     ATTENTION BATTERIE (iPhone) : cette lecture muette ne doit PAS tourner
-     en permanence, sinon le decodeur audio travaille sans arret et le
-     telephone chauffe. Elle n'est donc amorcee qu'au premier signe de
-     presence, et coupee au bout de 45 s si personne n'active le son.
-     Si un navigateur refuse la lecture muette (cas rare), on retombe sur
-     l'ancien comportement : nouvelle tentative a chaque evenement. */
+     Les navigateurs refusent de demarrer un son sans un vrai geste (clic,
+     tap, touche) ; le scroll ne compte pas. Astuce : on lance l'ambiance
+     en SOURDINE (toujours autorise) ; au premier scroll il ne reste qu'a
+     couper la sourdine, ce qui n'est plus un demarrage et passe partout.
+     La lecture muette est amorcee au premier signe de presence et coupee
+     apres 45 s : la laisser tourner ferait chauffer les iPhone. */
 
   /* ===== INTERRUPTEUR GENERAL DU SON =====
      Le bouton "sonar" ne commande pas seulement la musique d'ambiance :
@@ -4896,24 +4817,13 @@ function qrDataUri(text, opts){
   });
 
   /* ===== SON ACTIF DES LE CHARGEMENT DE LA PAGE =====
-     Objectif : l'ambiance et les bruitages sont audibles des l'ouverture,
-     sans que le joueur ait la moindre action a faire.
-
-     Limite imposee par TOUS les navigateurs (Chrome, Firefox, Safari,
-     Edge) : un son ne peut pas demarrer sans autorisation. Celle-ci est
-     accordee automatiquement quand le site est deja connu de l'appareil
-     (app installee sur l'ecran d'accueil, visites repetees) — c'est le cas
-     des joueurs pendant l'evenement. On procede donc en deux temps :
-
-       1. On tente le son AUDIBLE immediatement au chargement. Si le
-          navigateur l'accepte, la musique demarre toute seule : rien a
-          faire, but atteint.
-       2. S'il refuse (typiquement la toute premiere visite), on lance
-          aussitot la lecture MUETTE, qui elle est toujours autorisee. Le
-          fichier tourne alors deja en sourdine : le tout premier geste,
-          meme un simple scroll, n'a plus qu'a couper la sourdine. C'est
-          instantane et plus jamais bloque.
-
+     Le son doit etre audible a l'ouverture, sans aucune action du joueur.
+     Les navigateurs l'autorisent quand le site est deja connu de
+     l'appareil (visites repetees, app installee) : c'est le cas pendant
+     l'evenement. Deux temps :
+       1. on tente le son AUDIBLE tout de suite ;
+       2. s'il est refuse (1re visite), on lance la lecture MUETTE, elle
+          toujours permise : le premier geste n'aura qu'a la demuter.
      Dans les deux cas, aucun clic sur le bouton sonar n'est necessaire. */
   async function enableSoundAtLoad(){
     if(_soundOffByUser) return;   // le joueur avait coupe le son : on respecte
@@ -5005,6 +4915,13 @@ function qrDataUri(text, opts){
     btn.textContent = currentTeam?.currentStep === 'start' ? 'LANCER LA MISSION' : 'REPRENDRE LA MISSION';
   }
 
+  /* Lancement du palier depuis le cockpit.
+
+     Cette fonction existait EN DOUBLE : une premiere version ici, puis une
+     seconde tout en bas du fichier qui l'ecrasait au chargement. Seule la
+     seconde s'executait donc reellement ; la premiere etait du code mort
+     qui laissait croire a un autre comportement. Les deux sont fusionnees
+     ici, a leur place logique. */
   async function launchSelectedPalier(){
     if(!currentTeam){
       document.getElementById('embarquementMatelot')?.scrollIntoView({behavior:'smooth', block:'start'});
@@ -5014,23 +4931,32 @@ function qrDataUri(text, opts){
       document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
       return;
     }
-
     startOceanAudio();
+
+    /* Palier 1 : ecran rouge + alarme pendant 5 s, puis page du mini-jeu.
+       On transmet le Code Matelot : le mini-jeu sait alors qui joue et ne
+       redemande ni nom ni service. */
+    if(currentTeam.currentStep === 'start'){
+      const mc = currentMatelot?.codeMatelot || '';
+      const url = `palier1.html?code=${encodeURIComponent(currentTeam.teamCode)}`
+                + (mc ? `&m=${encodeURIComponent(mc)}` : '');
+      showNautilusAlarm('launch-' + Date.now(), 5000);
+      await wait(5000);
+      $('nautilusAlarm')?.classList.remove('show');
+      location.href = url;
+      return;
+    }
+
+    /* Paliers suivants : pas encore de page dediee, on reste sur le cockpit. */
     showNautilusAlarm('launch-' + Date.now());
     await wait(9600);
     $('nautilusAlarm')?.classList.remove('show');
-
-    if(currentTeam.currentStep === 'start'){
-      await startMissionOfficial(false);
-      palierLaunchNotice = true;
-      renderGame(false);
-    }else{
-      palierLaunchNotice = true;
-      renderGame(false);
-    }
+    palierLaunchNotice = true;
+    renderGame(false);
     document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
     updateFinalMissionButton();
   }
+
 
   function launchMission(){
     startOceanAudio();
@@ -6167,19 +6093,11 @@ function qrDataUri(text, opts){
     await loadTeams();
     renderGame(false);
 
-    /* Si l'URL contient ?m=CODE (depuis un QR scanne), on reprend la
-       mission IMMEDIATEMENT, sans faire patienter le matelot.
-
-       Ancien deroule : l'ecran rouge d'alarme s'affichait pour 9,5 s, puis
-       on attendait 1,5 s "que la scene se stabilise", puis 0,7 s de
-       defilement avant seulement d'appeler la reprise. Le matelot restait
-       donc environ 7 secondes devant un ecran rouge alors que sa mission
-       etait deja rechargee derriere.
-
-       Nouveau deroule : la reprise part tout de suite, en parallele d'une
-       breve alarme de 1,6 s qui sert uniquement d'accuse de reception du
-       scan. Des que les donnees sont la, on va droit a la chambre de
-       pilotage. */
+    /* Si l'URL contient ?m=CODE (QR scanne), la reprise part TOUT DE SUITE,
+       en parallele d'une breve alarme de 1,6 s qui sert d'accuse de
+       reception. Ne pas remettre d'attente avant l'appel : le matelot
+       restait 7 s devant un ecran rouge alors que sa mission etait deja
+       chargee derriere. */
     try{
       const urlParams = new URLSearchParams(window.location.search);
       const m = urlParams.get('m') || urlParams.get('matelot');
@@ -6236,44 +6154,7 @@ function qrDataUri(text, opts){
     }catch(e){ console.warn('auto-resume from URL:', e); }
   })();
 
-  /* Redirection du cockpit vers la page palier dédiée. */
-  launchSelectedPalier = async function(){
-    if(!currentTeam){
-      document.getElementById('embarquementMatelot')?.scrollIntoView({behavior:'smooth', block:'start'});
-      return;
-    }
-    if(currentTeam.status === 'blocked'){
-      document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
-      return;
-    }
-    /* Palier 1 : sequence d'alerte (ecran rouge clignotant + alarme
-       sonore) pendant 5 s, puis redirection vers la page du mini-jeu.
-       La redirection etait immediate : l'animation existait mais n'etait
-       jamais jouee pour ce palier. */
-    if(currentTeam.currentStep === 'start'){
-      const teamCode = currentTeam.teamCode;
-      /* On transmet AUSSI le Code Matelot : le mini-jeu sait alors qui joue
-         et n'a plus besoin de redemander nom et service. Le matelot s'est
-         deja identifie a l'embarquement (code perso ou lien perso du QR). */
-      const mc = currentMatelot?.codeMatelot || '';
-      const url = `palier1.html?code=${encodeURIComponent(teamCode)}`
-                + (mc ? `&m=${encodeURIComponent(mc)}` : '');
-      showNautilusAlarm('launch-' + Date.now(), 5000);
-      await wait(5000);
-      $('nautilusAlarm')?.classList.remove('show');
-      location.href = url;
-      return;
-    }
-    /* Pour les paliers suivants (pour l'instant non implémentés), on garde l'ancien flux. */
-    startOceanAudio();
-    showNautilusAlarm('launch-' + Date.now());
-    await wait(9600);
-    $('nautilusAlarm')?.classList.remove('show');
-    palierLaunchNotice = true;
-    renderGame(false);
-    document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
-    updateFinalMissionButton();
-  };
+
 </script>
 
 <script type="module">
