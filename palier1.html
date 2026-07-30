@@ -25,7 +25,7 @@
     /* PROTECTION-COPIE (desactivee) : selection de texte libre.
        Pour la reactiver au dernier palier, decommenter la ligne ci-dessous.
     body, button, .card, .notice, .stepbox, .morse-stepbox, .morse-log{user-select:none;-webkit-user-select:none} */
-    input, .code, .morse-hint-pill-revealed{user-select:text;-webkit-user-select:text}
+    input, .code{user-select:text;-webkit-user-select:text}
     body{
       margin:0;
       min-height:100vh;
@@ -95,7 +95,6 @@
     .crew-member.self{border-color:var(--fnac);background:rgba(245,176,39,.12);}
     .crew-member .crew-name{font-weight:900;color:#fff;}
     .crew-member .crew-meta{font-size:11px;color:#9bc4d4;}
-    .crew-member .crew-status{font-size:11px;font-weight:800;}
 
     /* === Bloc de l epreuve === */
     .morse-stepbox{
@@ -199,11 +198,6 @@
       background:rgba(91,255,156,.10);border-color:rgba(91,255,156,.5);color:#dfffe8;
     }
     .morse-hint-card.morse-hint-revealed .morse-hint-card-label{color:#5be09b;}
-    .morse-hint-pill-revealed{
-      display:inline-block;background:#111;color:var(--fnac);
-      border:2px solid var(--fnac);border-radius:8px;padding:4px 10px;
-      font-family:Consolas,"Courier New",monospace;font-weight:1000;
-    }
 
     /* === Journal de bord === */
     .morse-log{
@@ -241,29 +235,10 @@
     .status-banner.success{background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.45);color:#dfffe8;}
 
     /* === Step access (code de palier) === */
-    .step-access{
-      padding:18px;background:rgba(0,0,0,.32);
-      border:1px solid rgba(245,176,39,.45);border-radius:14px;margin-bottom:14px;
-    }
-    .step-access h3{margin:0 0 8px;color:var(--fnac);font-size:16px;letter-spacing:.06em;text-transform:uppercase;}
-    .step-access p{margin:0 0 12px;color:#bcd9e6;font-size:13px;line-height:1.5;}
-    .step-access .code-form{display:flex;gap:8px;flex-wrap:wrap;}
-    .step-access input{
-      flex:1 1 200px;height:48px;padding:10px 14px;
-      background:#0a1525;color:#fff;
-      border:1px solid rgba(142,231,255,.35);border-radius:10px;
-      font-family:Consolas,"Courier New",monospace;font-size:18px;font-weight:900;letter-spacing:.15em;
-    }
-    .step-access button{
-      margin:0;height:48px;background:var(--fnac);color:#111;font-weight:1000;
-      border:0;border-radius:10px;padding:0 20px;cursor:pointer;
-    }
 
     /* === Animations === */
     @keyframes slideInRight{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
     @keyframes slideOutRight{to{transform:translateX(120%);opacity:0;}}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-    .fade-in{animation:fadeIn .35s ease;}
 
     .notif-floating{
       position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);
@@ -839,7 +814,6 @@ window.Nautilus = {
    avec les helpers du core ($ et esc). */
 (() => {
   const N = window.Nautilus;
-  const $$ = N.$;
   const esc = N.esc;
 
   /* === État global === */
@@ -857,13 +831,7 @@ window.Nautilus = {
   };
 
   /* === Helpers UI === */
-  function showNotif(text, duration = 2200) {
-    const el = $('notifFloating');
-    el.textContent = text;
-    el.classList.add('show');
-    clearTimeout(state._notifTimer);
-    state._notifTimer = setTimeout(() => el.classList.remove('show'), duration);
-  }
+
   function setStatus(text, kind = 'info') {
     const el = $('teamStatus');
     if (!el) return;

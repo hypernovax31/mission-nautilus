@@ -3564,7 +3564,10 @@ function qrDataUri(text, opts){
       setTimeout(() => { t.style.opacity = '0'; }, 3200);
       setTimeout(() => t.remove(), 3700);
     }catch(e){}
-  }
+  }  /* Partage avec le module d'installation PWA, plus bas dans la page :
+     il affichait ses messages avec une copie de cette fonction. */
+  window.nautilusToast = showToast;
+
 
   async function registerMember(){
     const name=$('memberName').value.trim().toUpperCase();
@@ -6199,18 +6202,10 @@ window.addEventListener('appinstalled', () => {
 
 // (service worker : enregistre plus haut dans ce meme fichier)
 
-// Toast simple
-function showToast(msg, color){
-  const t = document.createElement('div');
-  t.textContent = msg;
-  t.style.cssText = `position:fixed;right:20px;bottom:90px;z-index:10004;background:${color || '#075c39'};color:#fff;padding:14px 18px;border-radius:14px;font-weight:900;box-shadow:0 14px 28px rgba(0,0,0,.32);font-size:13px;max-width:min(90vw,360px);border:1px solid rgba(255,255,255,.18);transition:opacity .4s`;
-  document.body.appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; }, 3200);
-  setTimeout(() => t.remove(), 3700);
-}
-
-// Helper pour faire des sauts de ligne en toute securite
-function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* Les messages passagers sont affiches par le showToast du module
+   principal, partage via window.nautilusToast. Ce module en avait une
+   copie quasi identique : deux fois le meme code a maintenir. */
+const showToast = (msg, color) => window.nautilusToast?.(msg, color);
 
 // Contenu par plateforme
 const PWA_CONTENT = {
