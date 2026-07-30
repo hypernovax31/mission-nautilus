@@ -2566,15 +2566,12 @@
   }
 
   /* ===== POSITION DES POINTS SUR LE SONAR =====
-     Le point d'un equipage traduit son avancement reel :
-       - RAYON : palier 1 = tout au bord de la cible, palier final = au
-         centre. Chaque palier franchi rapproche visiblement le point.
-       - ANGLE : fixe et propre a chaque equipage (5 directions reparties
-         sur le tour). Deux equipages au meme palier restent donc bien
-         separes : ils sont sur le meme cercle, mais dans des directions
-         differentes.
-     Le point ne va jamais jusqu'au centre exact : le coeur du sonar est
-     deja occupe par le point blanc central. */
+     Le point traduit l'avancement reel de l'equipage :
+       RAYON : palier 1 au bord, palier final au centre ;
+       ANGLE : fixe par equipage, 5 directions reparties sur le tour, si
+               bien que deux equipages au meme palier restent separes.
+     Le point ne rejoint jamais le centre exact : la place est prise par
+     le point blanc central. */
 
   const BLIP_RADIUS_MAX = 43;   // % du rayon : palier 1, au bord
   const BLIP_RADIUS_MIN = 11;   // % du rayon : palier final, au centre
@@ -3201,16 +3198,6 @@ function qrDataUri(text, opts){
 
   /* Texte unique utilise par TOUS les boutons (Copier, Partager, et la
      modale Agrandir) : une seule source, aucun format divergent. */
-  /* Contenu du QR : une fiche de contact vCard.
-     Pourquoi pas du texte brut : les appareils photo cherchent une URL
-     dans ce qu'ils lisent et, des qu'ils en trouvent une, proposent
-     d'OUVRIR LE SITE au lieu d'afficher le texte. Le format vCard est
-     reconnu nativement par iOS et Android : le telephone propose alors
-     d'ENREGISTRER la fiche (contact), de la partager ou de la copier,
-     sans jamais ouvrir de page web.
-     Aucune URL n'est incluse, precisement pour eviter ce comportement.
-     Limite : 230 caracteres (QR version 9, niveau L). Les valeurs sont
-     donc bornees pour qu'un nom tres long ne fasse jamais deborder. */
   /* ===== CONTENU DU QR : le lien personnel de reprise =====
      Le QR contient l'adresse du jeu suivie du code matelot :
        https://.../mission-nautilus/?m=CXCL-9396
@@ -5504,18 +5491,13 @@ function qrDataUri(text, opts){
       }
 
       /* ===== SYNCHRONISATION DES 3 EMPLACEMENTS =====
-         Un matelot existe a trois endroits :
-           1. teams/{equipe}.members[]        (deja mis a jour ci-dessus)
-           2. teams/{equipe}/matelots/{code}  (fiche detaillee)
-           3. matelots/{code}                 (index global de reprise)
-
-         BUG CORRIGE : cette mise a jour n'etait faite QUE si le code ou
-         l'equipe changeait. Renommer un matelot ne touchait donc que la
-         liste d'equipage : la fiche et l'index gardaient l'ancien nom, et
-         la reprise par Code Matelot affichait toujours l'ancien nom.
-
-         On synchronise desormais SYSTEMATIQUEMENT, quelle que soit la
-         modification. */
+     Un matelot existe a trois endroits, qui doivent TOUJOURS bouger
+     ensemble (creation, modification, suppression) :
+       1. teams/{equipe}.members[]            liste affichee
+       2. teams/{equipe}/matelots/{code}      fiche detaillee
+       3. matelots/{code}                     index de reconnexion
+     Oublier le 3 laisse un code supprime encore valide pour se
+     reconnecter. */
       const srcCode  = (cc.oldCode !== undefined) ? cc.oldCode : (member.codeMatelot || '');
       const teamChanged = fromTeamCode !== toTeamCode;
 
