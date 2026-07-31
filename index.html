@@ -3963,10 +3963,16 @@ function qrDataUri(text, opts){
       const teamPatch = { members, updatedAt: new Date().toISOString() };
 
       /* VITESSE : ces trois ecritures sont INDEPENDANTES (trois documents
-         differents). Avant, on attendait la fin de chacune avant de lancer
-         la suivante : trois allers-retours bout a bout. Lancees ensemble,
-         on n'attend plus que la plus lente. */
-      await Promise.all([
+         differents), donc lancees ENSEMBLE. On n'attend plus que la plus
+         lente au lieu de les enchainer.
+
+         On ne les attend PAS ICI : le Code Matelot est deja tire au sort
+         et son unicite verifiee, donc le QR et la carte peuvent etre
+         dessines tout de suite. Faire patienter le matelot devant un
+         ecran vide pendant l'enregistrement en base n'apportait rien :
+         l'information affichee ne depend pas du resultat de ces
+         ecritures. On surveille quand meme leur echec plus bas. */
+      const enregistrement = Promise.all([
         setDoc(doc(db,'teams',chosen.teamCode,'matelots',matelotCode), matelotDoc),
         updateDoc(doc(db,'teams',chosen.teamCode), teamPatch),
         // 5) Index global 'matelots' (lookup Code Matelot -> equipe)
@@ -4022,12 +4028,29 @@ function qrDataUri(text, opts){
       // son code, affiche juste au-dessus. Le bouton lui permet de
       // descendre au cockpit quand il est pret.
       renderEmbarkMissionButton(true);
-      /* Le radar des equipages se rafraichit EN ARRIERE-PLAN, sans `await`.
-         Il ne concerne pas le matelot qui vient de s'inscrire : son code et
-         son QR sont deja affiches. Avant, on attendait ce rechargement
-         complet avant de lui montrer le bouton du cockpit — plusieurs
-         secondes d'attente pour un simple rafraichissement d'affichage. */
-      loadTeams().catch(e => console.warn('loadTeams (arriere-plan):', e));
+
+      /* L'enregistrement en base se termine pendant que le matelot lit son
+         code. On ne le fait pas attendre, MAIS on ne l'ignore pas : s'il
+         echoue, le code affiche ne servirait a rien et il faut le dire
+         tout de suite, avant qu'il ne quitte la page. */
+      enregistrement
+        .then(() => {
+          /* Le radar ne se rafraichit qu'une fois l'inscription vraiment
+             enregistree, sinon il afficherait l'ancien effectif. */
+          loadTeams().catch(e => console.warn('loadTeams (arriere-plan):', e));
+        })
+        .catch(err => {
+          console.error('NAUTILUS enregistrement matelot:', err);
+          currentTeam = null;
+          currentMatelot = null;
+          if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
+          renderEmbarkMissionButton();
+          renderGame(false);
+          $('registerMsg').innerHTML =
+            '<div class="notice warning"><b>Le sonar gresille...</b> '
+            + 'Ton embarquement n\'a pas pu etre enregistre.<br>'
+            + '<span class="small">Ce code n\'est pas valable : recommence l\'inscription.</span></div>';
+        });
     }catch(err){
       console.error('NAUTILUS register error:', err);
       $('registerMsg').innerHTML=`<div class="notice warning"><b>Le sonar gresille...</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Detail technique : ${esc(err.code || err.message || err)}</span></div>`;
@@ -6376,16 +6399,33 @@ function qrDataUri(text, opts){
     if($('memberName')) $('memberName').value = '';
     if($('matelotCodeInput')) $('matelotCodeInput').value = '';
 
-    /* Nettoyage des anciennes équipes (codes obsolètes) avant tout */
-    try { await cleanupObsoleteTeams(); } catch(e) { console.warn('cleanup error:', e); }
+    /* PRIORITE AU MATELOT QUI ARRIVE PAR SON QR.
 
-    await loadMissionConfig();
-    updateCountdown();
-    if(missionConfig?.missionStartedAt && seenAlarmAt !== missionConfig.missionStartedAt){
-      showNautilusAlarm(missionConfig.missionStartedAt);
+       Ces trois etapes (menage des equipes supprimees, configuration de la
+       mission, radar des equipages) preparent la PAGE D'ACCUEIL. Elles
+       n'ont rien a voir avec la reprise d'une mission.
+
+       Elles etaient pourtant attendues AVANT de traiter le ?m= du QR :
+       une bonne seconde de lectures en base pendant laquelle le matelot
+       fixait un ecran rouge, alors que sa fiche aurait pu s'afficher tout
+       de suite. Elles tournent desormais en arriere-plan. */
+    const accueilPret = (async () => {
+      try { await cleanupObsoleteTeams(); } catch(e) { console.warn('cleanup error:', e); }
+      await loadMissionConfig();
+      updateCountdown();
+      if(missionConfig?.missionStartedAt && seenAlarmAt !== missionConfig.missionStartedAt){
+        showNautilusAlarm(missionConfig.missionStartedAt);
+      }
+      await loadTeams();
+      renderGame(false);
+    })();
+
+    /* Sans code dans l'adresse, il n'y a rien d'autre a faire : on attend
+       normalement la page d'accueil. */
+    if(!new URLSearchParams(window.location.search).get('m')
+       && !new URLSearchParams(window.location.search).get('matelot')){
+      await accueilPret;
     }
-    await loadTeams();
-    renderGame(false);
 
     /* Si l'URL contient ?m=CODE (QR scanne), la reprise part TOUT DE SUITE,
        en parallele d'une breve alarme de 1,6 s qui sert d'accuse de
@@ -6429,10 +6469,41 @@ function qrDataUri(text, opts){
           $('nautilusAlarm')?.classList.remove('show');
         }
 
+        /* FICHE A ENREGISTRER — TOUT DE SUITE, sans attendre.
+
+           Elle etait affichee apres `settle` (1,7 s), un delai prevu pour
+           laisser l'ecran rouge se dissiper avant de faire defiler la page.
+           Mais la fiche s'affiche PAR-DESSUS tout : elle n'a aucune raison
+           d'attendre ce defilement. Le matelot patientait donc pres de
+           3 secondes devant un ecran rouge alors que sa fiche etait prete.
+
+           On la montre des que la reprise a reussi. Elle recouvre l'ecran
+           rouge, qu'on retire aussitot : plus rien a attendre.
+
+           Une seule fois par appareil : `nautilusFicheVue` retient que
+           c'est fait. Sans ce garde-fou, le QR servant aussi de favori
+           pour revenir en jeu, la fiche s'afficherait en travers a
+           CHAQUE partie. Elle reste accessible a tout moment par le
+           bouton Agrandir de la carte d'embarquement. */
+        let ficheMontree = false;
+        if(currentTeam && currentMatelot){
+          let dejaVue = false;
+          try{ dejaVue = localStorage.getItem('nautilusFicheVue') === code; }
+          catch(e){ /* navigation privee : on montrera la fiche */ }
+          if(!dejaVue){
+            try{ localStorage.setItem('nautilusFicheVue', code); }catch(e){}
+            $('nautilusAlarm')?.classList.remove('show');
+            ficheMontree = true;
+            showMatelotFicheAfterScan(code);
+          }
+        }
+
         /* On rejoint la chambre de pilotage des que l'ecran rouge s'efface.
            Si l'equipe est bloquee, on y va aussi : c'est la que le message
-           de blocage est affiche. */
-        const settle = alreadyPlayed ? 60 : 1700;
+           de blocage est affiche.
+           Quand la fiche est ouverte, le defilement se fait derriere elle :
+           inutile d'attendre, la page sera deja en place a la fermeture. */
+        const settle = (alreadyPlayed || ficheMontree) ? 60 : 1700;
         setTimeout(() => {
           const t = $('gameBox');
           if(t && t.querySelector('.stepbox')){
@@ -6442,26 +6513,6 @@ function qrDataUri(text, opts){
             // Code refuse : on montre la zone de reprise pour corriger.
             document.getElementById('retrouverEquipage')
               ?.scrollIntoView({behavior:'smooth', block:'start'});
-          }
-
-          /* FICHE A ENREGISTRER — uniquement si la reprise a reussi.
-             Le matelot vient de scanner son QR : on lui montre sa fiche
-             en image, qu'il peut garder dans ses photos. La mission est
-             deja rechargee derriere : fermer la fiche suffit pour jouer.
-
-             Une seule fois par appareil : `nautilusFicheVue` retient que
-             c'est fait. Sans ce garde-fou, le QR servant aussi de favori
-             pour revenir en jeu, la fiche s'afficherait en travers a
-             CHAQUE partie. Elle reste accessible a tout moment par le
-             bouton Agrandir de la carte d'embarquement. */
-          if(currentTeam && currentMatelot){
-            let dejaVue = false;
-            try{ dejaVue = localStorage.getItem('nautilusFicheVue') === code; }
-            catch(e){ /* navigation privee : on montrera la fiche */ }
-            if(!dejaVue){
-              try{ localStorage.setItem('nautilusFicheVue', code); }catch(e){}
-              showMatelotFicheAfterScan(code);
-            }
           }
         }, settle);
       }
