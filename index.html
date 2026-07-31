@@ -1837,6 +1837,7 @@
             <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>
             <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>
             <button class="secondary" id="cleanupFieldsBtn" type="button" style="margin:0">🧹 Nettoyer les champs obsolètes</button>
+            <button class="secondary" id="cleanupTestSessionsBtn" type="button" style="margin:0">👻 Purger les parties de test</button>
           </div>
           <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>Le nettoyage retire « migratedFrom », un reste de l'ancienne migration des identifiants d'équipe : sans effet sur le jeu.</p>
         </div>
@@ -4332,6 +4333,57 @@ function qrDataUri(text, opts){
    * enregistrees dans la base : il faut le faire explicitement.
    * Sans risque : ce champ n'est lu nulle part dans l'application.
    */
+  /* Supprime les parties d'essai restees enregistrees en base.
+
+     INCIDENT REEL : un vrai matelot s'est vu refuser l'entree au palier
+     avec le message "TEST est aux commandes du protocole en cours". Le
+     compte fantome avait lance une partie AVANT la mise en place des
+     verrous, et cette session etait restee dans la base. Les verrous
+     empechent d'en creer de nouvelles, mais ne nettoient pas l'existant.
+
+     Le mini-jeu ignore desormais ces sessions a la lecture : plus aucun
+     joueur ne peut etre bloque, meme sans ce nettoyage. Ce bouton sert a
+     effacer pour de bon les traces deja presentes. */
+  async function cleanupTestSessions(){
+    if(!isAdminUnlocked()) return;
+    try{
+      await refreshAdminTeams();
+      if(!effectiveTeams.length){ alert('Aucune équipe dans la base.'); return; }
+
+      /* On ne montre la confirmation que s'il y a vraiment quelque chose
+         a purger : une alerte pour rien fait douter de l'outil. */
+      const trouvees = [];
+      for(const t of effectiveTeams){
+        const ref = doc(db,'teams',t.code,'morseSession','current');
+        const snap = await getDoc(ref);
+        if(!snap.exists()) continue;
+        const d = snap.data() || {};
+        const estTest = d.startedByMatelot === TEST_MATELOT_CODE
+                     || d.isTest === true
+                     || d.startedByName === 'TEST';
+        if(estTest) trouvees.push({ code: t.code, nom: t.name, ref, etat: d.state || '?' });
+      }
+
+      if(!trouvees.length){
+        alert('✅ Aucune partie de test en base. Rien à purger.');
+        return;
+      }
+
+      const liste = trouvees.map(x => `• ${x.nom} (${x.etat})`).join('\n');
+      if(!confirm(`${trouvees.length} partie(s) de test trouvée(s) :\n\n${liste}\n\n`
+        + `Les supprimer ? Les équipages concernés pourront de nouveau jouer.`)) return;
+
+      for(const x of trouvees){
+        await setDoc(x.ref, { state:'idle', clearedAt:new Date().toISOString() });
+      }
+      await loadTeams();
+      endAdminSession(`✅ ${trouvees.length} partie(s) de test purgée(s) · session fermée`);
+    }catch(err){
+      console.error('cleanupTestSessions:', err);
+      alert(`❌ Échec de la purge : ${err.message || err}`);
+    }
+  }
+
   async function cleanupObsoleteFields(){
     await refreshAdminTeams();
     if(!effectiveTeams.length){ alert('Aucune équipe dans la base.'); return; }
@@ -5453,6 +5505,7 @@ function qrDataUri(text, opts){
   });
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
   $('cleanupFieldsBtn')?.addEventListener('click', cleanupObsoleteFields);
+  $('cleanupTestSessionsBtn')?.addEventListener('click', cleanupTestSessions);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
 
   /* =====================================================================

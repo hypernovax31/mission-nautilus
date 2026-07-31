@@ -558,9 +558,29 @@ async function getTeamRealtime(code, callback) {
    Le verrou est place ici, dans les fonctions d'ecriture elles-memes :
    toutes les ecritures existantes et futures sont ainsi couvertes, sans
    avoir a y penser a chaque appel. */
+const TEST_MATELOT_CODE = 'ZZZZ-0000';
+
 function isTestMode() {
-  try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; }
+  try { return (localStorage.getItem('nautilusMatelotCode') || '') === TEST_MATELOT_CODE; }
   catch (e) { return false; }
+}
+
+/* Cette session appartient-elle au compte fantome ?
+
+   INCIDENT REEL : un vrai matelot s'est vu refuser l'entree avec le
+   message "TEST est aux commandes du protocole en cours". Une session
+   lancee par le compte de test etait restee enregistree en base, ecrite
+   AVANT la mise en place des verrous. Les verrous empechent d'en creer
+   de nouvelles, mais ne suppriment pas celles qui existaient deja.
+
+   On les reconnait donc a la lecture, et on les traite comme
+   inexistantes : une partie d'essai ne doit jamais apparaitre dans le
+   monde des vrais joueurs, ni les bloquer. */
+function isTestSession(session) {
+  if (!session) return false;
+  return session.startedByMatelot === TEST_MATELOT_CODE
+      || session.isTest === true
+      || session.startedByName === 'TEST';
 }
 
 async function saveTeam(team, patch) {
@@ -578,15 +598,22 @@ function sessionRef(teamCode) {
 }
 async function getSession(teamCode) {
   const snap = await getDoc(sessionRef(teamCode));
-  return snap.exists() ? snap.data() : null;
+  const data = snap.exists() ? snap.data() : null;
+  /* Une session du compte fantome n'existe pas pour les vrais joueurs. */
+  return isTestSession(data) ? null : data;
 }
 function watchSession(teamCode, callback) {
   return onSnapshot(sessionRef(teamCode), (snap) => {
-    callback(snap.exists() ? snap.data() : null);
+    const data = snap.exists() ? snap.data() : null;
+    callback(isTestSession(data) ? null : data);
   });
 }
 async function createSession(teamCode, data) {
   if (isTestMode()) return;   // partie d'essai : aucune session partagee
+  /* Ceinture et bretelles : si une session du compte fantome parvenait
+     malgre tout jusqu'ici, elle serait au moins identifiable et donc
+     ignoree a la lecture. */
+  if (data && data.startedByMatelot === TEST_MATELOT_CODE) return;
   await setDoc(sessionRef(teamCode), {
     teamCode: teamCodeFromInput(teamCode),
     state: 'playing',
@@ -1231,6 +1258,10 @@ window.Nautilus = {
       startedBy: state.me.clientId,
       startedByName: state.me.name,
       startedByMemberKey: state.me.memberKey,
+      /* Signe la session avec le Code Matelot de celui qui l'a lancee.
+         Sert de garde-fou : une session du compte fantome devient ainsi
+         reconnaissable et sera ignoree par les vrais joueurs. */
+      startedByMatelot: N.getCurrentMatelotCode() || '',
       wordLength: entry.w.length,
       wordHash: N.hashString(entry.w),
       listensLeft: 3,
