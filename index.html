@@ -374,6 +374,9 @@
     .matelot-code-help b{color:#0b5f8a}
     .matelot-qr-card{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px}
     .matelot-qr-thumb{width:min(168px,52vw);height:min(168px,52vw);flex:0 0 auto;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
+    .matelot-qr-help{margin:0;color:#4a6879;font-size:var(--fs-tiny);
+      line-height:1.45;text-align:center;max-width:24ch}
+    .matelot-qr-help b{color:#0b5f8a}
     .matelot-qr-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
     .matelot-qr-actions button{width:auto!important;flex:0 0 auto}
     @media(max-width:560px){
@@ -1656,7 +1659,7 @@
   </section>
 
   <section class="card" id="retrouverEquipage">
-    <h2>🧭 REPRENDRE TA MISSION</h2>
+    <h2>🧭 REPRENDS LA MISSION</h2>
     <div class="body">
       <div class="grid">
         <div><label for="matelotCodeInput">Code Matelot</label><input id="matelotCodeInput" placeholder="Ex. ABCD-1234" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="9" style="text-transform:uppercase;letter-spacing:.06em"></div>
@@ -3252,6 +3255,10 @@ function qrDataUri(text, opts){
       '<div class="matelot-qr-thumb">' +
         '<img src="' + esc(qrUrl) + '" alt="QR de ton Code Matelot" style="width:100%;height:100%;display:block;image-rendering:pixelated" loading="eager" onerror="this.parentElement.innerHTML=\'<div style=&quot;font-size:11px;color:#9b1111;text-align:center;padding:6px&quot;>QR indisponible</div>\'">' +
       '</div>' +
+      /* A quoi sert ce QR : le dire evite qu'on le prenne pour une simple
+         decoration, ou pour un code a scanner sur place. */
+      '<p class="matelot-qr-help">Scanne-le avec un <b>téléphone</b> pour ' +
+        'y reprendre ta partie.</p>' +
       '<div class="matelot-qr-actions">' +
         '<button type="button" class="matelot-action-viewqr" data-qr-url="' + esc(qrUrl) + '" data-code="' + esc(code) + '" style="' + btn + '">&#x1F50D; Agrandir</button>' +
         '<button type="button" class="matelot-action-copy" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="' + btn + '">&#x1F4CB; Copier</button>' +
@@ -3768,7 +3775,7 @@ function qrDataUri(text, opts){
     overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:radial-gradient(circle at 50% 30%,rgba(5,30,48,.96),rgba(0,0,0,.98));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
     overlay.innerHTML =
       '<div style="text-align:center;color:#fff;max-width:min(92vw,500px);width:100%">' +
-        '<div style="font-weight:1000;letter-spacing:.04em;font-size:13px;margin-bottom:10px;color:#ffe2a0;line-height:1.4">Scanne ce QR avec ton Appareil Photo</div>' +
+        '<div style="font-weight:1000;letter-spacing:.04em;font-size:13px;margin-bottom:10px;color:#ffe2a0;line-height:1.4">Scanne ce QR avec un téléphone<br>pour y reprendre ta partie</div>' +
         '<div style="background:#fff;padding:18px;border-radius:18px;display:inline-block;box-shadow:0 0 60px rgba(245,176,39,.4)">' +
           '<img id="qrModalImg" src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:min(70vw,380px);height:min(70vw,380px);display:block;image-rendering:pixelated">' +
         '</div>' +
@@ -6515,8 +6522,16 @@ function qrDataUri(text, opts){
            de blocage est affiche. */
         const settle = alreadyPlayed ? 60 : 1700;
         setTimeout(() => {
-          const t = $('gameBox');
-          if(t && t.querySelector('.stepbox')){
+          /* BUG CORRIGE : on cherchait `.stepbox` pour savoir si la
+             reprise avait reussi. Cette classe n'existe plus dans la
+             chambre de pilotage, qui produit `.cockpit` — la condition
+             etait donc TOUJOURS fausse, et le matelot arrivant par son
+             lien perso etait envoye sur le bloc "Reprends la mission"
+             au lieu de sa chambre de pilotage, alors meme que sa partie
+             etait chargee.
+             On se fie desormais a `currentTeam`, qui dit sans ambiguite
+             si la reprise a abouti. */
+          if(currentTeam){
             document.getElementById('gameCard')
               ?.scrollIntoView({behavior:'smooth', block:'start'});
           }else{
