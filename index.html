@@ -358,9 +358,15 @@
     .matelot-card{padding:clamp(16px,3.5vw,22px)}
     .matelot-welcome{margin:0 0 14px;font-size:clamp(15px,2.4vw,17px);line-height:1.45}
     /* Alerte : le message le plus important de l'ecran */
-    .matelot-alert{display:flex;gap:12px;align-items:flex-start;margin:0 0 18px;padding:14px 16px;
+    /* Le retour a la ligne n'est plus force (plus de <br>) : la phrase
+       tient sur UNE seule ligne quand l'ecran est assez large, et se
+       replie d'elle-meme sur les petits ecrans.
+       align-items:center centre alors le pictogramme sur la ligne unique ;
+       sur deux lignes ou plus il revient en haut (voir plus bas). */
+    .matelot-alert{display:flex;gap:12px;align-items:center;margin:0 0 18px;padding:14px 16px;
       background:#fff4f2;border:2px solid #e5776c;border-left-width:6px;border-radius:12px;
       color:#8c1d11;font-weight:800;line-height:1.5;font-size:var(--fs-small)}
+    @media(max-width:760px){ .matelot-alert{align-items:flex-start} }
     .matelot-alert-ico{flex:0 0 auto;font-size:20px;line-height:1.2}
     .matelot-reveal{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch;margin:0}
     .matelot-reveal-code{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
@@ -1319,12 +1325,6 @@
     }
     .ck-launch{display:flex;justify-content:center}
     /* Acces a la fiche du matelot, sous le bouton de mission. */
-    .ck-fiche{margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
-    .ck-fiche-btn{margin:0;min-height:44px;padding:11px 18px;border-radius:12px;
-      background:rgba(142,231,255,.10);color:#cfe6ef;border:1px solid rgba(142,231,255,.35);
-      font-weight:900;font-size:13px;cursor:pointer;transition:.18s background,.18s border-color}
-    .ck-fiche-btn:hover{background:rgba(142,231,255,.18);border-color:rgba(142,231,255,.6)}
-    .ck-fiche-hint{font-size:var(--fs-tiny);color:#8fb0c2;line-height:1.4;max-width:34ch}
     .ck-launch .hero-cta{min-width:min(100%,380px)}
 
     /* Etats particuliers : bloque / termine */
@@ -3670,6 +3670,12 @@ function qrDataUri(text, opts){
      de la chambre de pilotage. Elle s'affichait avant toute seule au
      retour par QR : penible a chaque visite, et le garde-fou cense
      l'eviter reposait sur une memoire que le telephone efface. */
+  /* NOTE : plus aucun bouton n'appelle cette fonction depuis que l'acces
+     "Ma fiche matelot" a ete retire du cockpit. Elle est conservee parce
+     qu'elle reste le moyen le plus simple de rouvrir la fiche complete
+     (image + enregistrement) si on veut la remettre quelque part.
+     La fiche du matelot reste accessible a l'inscription, par le bouton
+     "Agrandir" de la carte d'embarquement. */
   async function ouvrirFicheMatelot(code){
     const nom    = currentMatelot?.name || '';
     const equipe = currentMatelot?.teamName || '';
@@ -4032,7 +4038,7 @@ function qrDataUri(text, opts){
           '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
           '<div class="matelot-alert" role="alert">' +
             '<span class="matelot-alert-ico" aria-hidden="true">&#x26A0;</span>' +
-            '<span>Ce code est <b>personnel</b> et à <b>usage unique</b> : il ne te sera <b>plus jamais affiché</b>.<br>Note-le ou scanne le QR.</span>' +
+            '<span>Ce code est <b>personnel</b> et à <b>usage unique</b> : il ne te sera <b>plus jamais affiché</b> &mdash; Note-le ou scanne le QR.</span>' +
           '</div>' +
           '<div class="matelot-reveal">' +
             '<div class="matelot-reveal-code">' +
@@ -4227,16 +4233,14 @@ function qrDataUri(text, opts){
        vers une position perimee, et semblait ne rien faire.
        EXCEPTION : la reprise par QR gere deja son propre defilement. */
     if(!skipScroll){
-      /* On vise le BOUTON de mission plutot que le haut du bloc : sur un
-         telephone, la chambre de pilotage remplit tout l'ecran et le
-         bouton tomberait en dessous, invisible. */
+      /* On s'arrete sur l'encart "Position actuelle" : c'est la donnee
+         que le matelot doit lire en arrivant, et le bouton de mission
+         suit juste en dessous. Aligner sur le haut du BLOC laissait le
+         bouton hors de l'ecran d'un telephone. */
       const goCockpit = () => {
-        const cible = document.getElementById('cockpitMissionBtn')
+        const cible = document.getElementById('cockpitPosition')
                    || document.getElementById('gameCard');
-        cible?.scrollIntoView({
-          behavior:'smooth',
-          block: cible.id === 'cockpitMissionBtn' ? 'center' : 'start'
-        });
+        cible?.scrollIntoView({ behavior:'smooth', block:'start' });
       };
       requestAnimationFrame(() => setTimeout(goCockpit, 60));
       loadTeams().then(() => setTimeout(goCockpit, 120));
@@ -4552,8 +4556,10 @@ function qrDataUri(text, opts){
         : '&#x26A0; <b>' + fails + ' erreurs</b> au journal de bord. La coque est éprouvée : chaque erreur coûte désormais 24 h.')
       +   '</p>'
 
-      /* Ecran principal : ou en est l'equipage, et ce qui l'attend. */
-      +   '<div class="ck-screen">'
+      /* Ecran principal : ou en est l'equipage, et ce qui l'attend.
+         L'identifiant sert de point d'arrivee au defilement : c'est ici
+         que le matelot doit poser les yeux en arrivant. */
+      +   '<div class="ck-screen" id="cockpitPosition">'
       +     '<div class="ck-screen-label">Position actuelle</div>'
       +     '<div class="ck-screen-value">' + esc(step.label) + '</div>'
       +     '<p class="ck-screen-desc">' + esc(step.description) + '</p>'
@@ -4565,26 +4571,9 @@ function qrDataUri(text, opts){
       +     '<button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">' + cockpitButtonLabel + '</button>'
       +   '</div>'
 
-      /* Acces PERMANENT a la fiche du matelot.
-         Elle s'ouvrait avant toute seule au retour par QR ; c'etait
-         penible a chaque visite et le garde-fou qui devait l'eviter
-         reposait sur une memoire que le telephone efface.
-         Ici, elle est toujours a portee de main et ne s'impose jamais.
-         Le bouton n'apparait que si on sait QUI joue. */
-      +   (currentMatelot?.codeMatelot
-            ? '<div class="ck-fiche">'
-              + '<button type="button" class="ck-fiche-btn" id="cockpitFicheBtn">'
-              +   '&#x1F4C7; Ma fiche matelot'
-              + '</button>'
-              + '<span class="ck-fiche-hint">Ton code et ton QR, a enregistrer quand tu veux.</span>'
-              + '</div>'
-            : '')
       + '</div>';
 
     $('cockpitMissionBtn')?.addEventListener('click', () => launchSelectedPalier());
-    $('cockpitFicheBtn')?.addEventListener('click', () => {
-      if(currentMatelot?.codeMatelot) ouvrirFicheMatelot(currentMatelot.codeMatelot);
-    });
   }
 
   const RULES = {
@@ -6579,21 +6568,17 @@ function qrDataUri(text, opts){
              On se fie desormais a `currentTeam`, qui dit sans ambiguite
              si la reprise a abouti. */
           if(currentTeam){
-            /* On vise le BOUTON de mission, pas le haut du bloc.
+            /* On s'arrete sur l'encart "Position actuelle".
 
-               Aligne sur le haut, la chambre de pilotage remplit tout
-               l'ecran d'un telephone (plaque, cadrans, etat de la coque,
-               position, diodes) et le bouton "LANCER LA MISSION" tombe en
-               dessous : le matelot arrivait par son QR sans voir ce qu'il
-               devait faire, et rien ne le lui indiquait.
-               `block:'center'` place le bouton au milieu de l'ecran, donc
-               toujours visible, avec le cockpit encore lisible au-dessus. */
-            const cible = document.getElementById('cockpitMissionBtn')
+               Aligne sur le haut du BLOC, la chambre de pilotage remplit
+               tout l'ecran d'un telephone (plaque, cadrans, dommages,
+               position, diodes) et le bouton "LANCER LA MISSION" tombait
+               en dessous : le matelot arrivait sans voir quoi faire.
+               En partant de la position, le palier en cours et le bouton
+               sont tous les deux a l'ecran. */
+            const cible = document.getElementById('cockpitPosition')
                        || document.getElementById('gameCard');
-            cible?.scrollIntoView({
-              behavior:'smooth',
-              block: cible.id === 'cockpitMissionBtn' ? 'center' : 'start'
-            });
+            cible?.scrollIntoView({ behavior:'smooth', block:'start' });
           }else{
             // Code refuse : on montre la zone de reprise pour corriger.
             document.getElementById('retrouverEquipage')
