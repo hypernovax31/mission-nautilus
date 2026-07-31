@@ -1256,8 +1256,8 @@
     .ck-gauge.amber .ck-dial-value{text-shadow:0 0 12px rgba(255,181,69,.85)}
     .ck-gauge.amber .ck-dial-unit{color:rgba(255,181,69,.9)}
 
-    /* Etat de la coque, sous les cadrans. Vert au repos, ambre des la
-       premiere avarie. */
+    /* Etat des dommages, sous les cadrans. Vert au repos, ambre des la
+       premiere erreur. */
     .ck-hull{
       margin:-4px 0 14px;padding:9px 12px;border-radius:10px;
       background:rgba(106,255,192,.07);border:1px solid rgba(106,255,192,.22);
@@ -4526,8 +4526,8 @@ function qrDataUri(text, opts){
       +       '<div class="ck-gauge-label">Sas franchis</div>'
       +     '</div>'
 
-      /* 4e cadran : les avaries, c'est-a-dire les echecs de l'equipage.
-         Vert tant que la coque est intacte, ambre des la premiere avarie
+      /* 4e cadran : les erreurs commises par l'equipage.
+         Vert tant qu'aucune erreur n'est commise, ambre des la premiere
          (la couleur d'alerte deja utilisee ailleurs dans le cockpit).
          PIEGE EVITE : la classe `amber` etait posee sur le cadran des sas
          franchis, qui n'a rien a voir avec les echecs — un equipage ayant
@@ -4535,21 +4535,21 @@ function qrDataUri(text, opts){
          desormais sur le bon cadran. */
       +     '<div class="ck-gauge' + (fails > 0 ? ' amber' : '') + '">'
       +       '<div class="ck-dial"><span class="ck-dial-value">' + fails + '</span>'
-      +         '<span class="ck-dial-unit">' + (fails > 1 ? 'avaries' : 'avarie') + '</span></div>'
-      +       '<div class="ck-gauge-label">Coque</div>'
+      +         '<span class="ck-dial-unit">' + (fails > 1 ? 'erreurs' : 'erreur') + '</span></div>'
+      +       '<div class="ck-gauge-label">Dommages</div>'
       +     '</div>'
       +   '</div>'
 
-      /* Etat de la coque, en clair : un chiffre seul ne dit pas si c'est
-         grave. Le ton suit le nombre d'avaries. */
+      /* Etat des dommages, en clair : un chiffre seul ne dit pas si c'est
+         grave. Le ton suit le nombre d'erreurs. */
       +   '<p class="ck-hull' + (fails > 0 ? ' is-damaged' : '') + '">'
       +     (fails === 0
-        ? '&#x2713; <b>Coque intacte.</b> Aucune avarie au journal de bord.'
+        ? '&#x2713; <b>Aucun dommage.</b> La coque est intacte.'
         : fails === 1
-        ? '&#x26A0; <b>1 avarie</b> consignée au journal de bord. La coque tient bon.'
+        ? '&#x26A0; <b>1 erreur</b> consignée au journal de bord. La coque tient bon.'
         : fails < 5
-        ? '&#x26A0; <b>' + fails + ' avaries</b> au journal de bord. La coque encaisse, mais la pression monte.'
-        : '&#x26A0; <b>' + fails + ' avaries</b> au journal de bord. La coque est éprouvée : chaque erreur coûte désormais 24 h.')
+        ? '&#x26A0; <b>' + fails + ' erreurs</b> au journal de bord. La coque encaisse, mais la pression monte.'
+        : '&#x26A0; <b>' + fails + ' erreurs</b> au journal de bord. La coque est éprouvée : chaque erreur coûte désormais 24 h.')
       +   '</p>'
 
       /* Ecran principal : ou en est l'equipage, et ce qui l'attend. */
