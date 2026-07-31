@@ -1302,6 +1302,13 @@
       font-size:var(--fs-small);line-height:1.5;color:#cfe6ef;
     }
     .ck-launch{display:flex;justify-content:center}
+    /* Acces a la fiche du matelot, sous le bouton de mission. */
+    .ck-fiche{margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+    .ck-fiche-btn{margin:0;min-height:44px;padding:11px 18px;border-radius:12px;
+      background:rgba(142,231,255,.10);color:#cfe6ef;border:1px solid rgba(142,231,255,.35);
+      font-weight:900;font-size:13px;cursor:pointer;transition:.18s background,.18s border-color}
+    .ck-fiche-btn:hover{background:rgba(142,231,255,.18);border-color:rgba(142,231,255,.6)}
+    .ck-fiche-hint{font-size:var(--fs-tiny);color:#8fb0c2;line-height:1.4;max-width:34ch}
     .ck-launch .hero-cta{min-width:min(100%,380px)}
 
     /* Etats particuliers : bloque / termine */
@@ -3639,10 +3646,11 @@ function qrDataUri(text, opts){
      personnel a mettre en favori : en fermant la fiche, le matelot est
      deja dans sa chambre de pilotage.
 
-     La fiche n'est proposee qu'au PREMIER scan d'une session (voir le
-     drapeau `nautilusFicheVue`) : les jours suivants, le QR sert
-     seulement a reprendre la partie, sans rien afficher en travers. */
-  async function showMatelotFicheAfterScan(code){
+     Ouverte UNIQUEMENT a la demande, par le bouton "Ma fiche matelot"
+     de la chambre de pilotage. Elle s'affichait avant toute seule au
+     retour par QR : penible a chaque visite, et le garde-fou cense
+     l'eviter reposait sur une memoire que le telephone efface. */
+  async function ouvrirFicheMatelot(code){
     const nom    = currentMatelot?.name || '';
     const equipe = currentMatelot?.teamName || '';
 
@@ -3657,7 +3665,7 @@ function qrDataUri(text, opts){
         '<div class="fiche-actions">' +
           '<button type="button" id="ficheSave" class="fiche-btn fiche-btn-main">&#x1F4BE; Enregistrer ma fiche</button>' +
           '<button type="button" id="ficheSaveTxt" class="fiche-btn">&#x1F4C4; Enregistrer le texte</button>' +
-          '<button type="button" id="ficheClose" class="fiche-btn">Continuer la mission &rsaquo;</button>' +
+          '<button type="button" id="ficheClose" class="fiche-btn">Fermer</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(overlay);
@@ -4502,9 +4510,27 @@ function qrDataUri(text, opts){
       +   '<div class="ck-launch">'
       +     '<button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">' + cockpitButtonLabel + '</button>'
       +   '</div>'
+
+      /* Acces PERMANENT a la fiche du matelot.
+         Elle s'ouvrait avant toute seule au retour par QR ; c'etait
+         penible a chaque visite et le garde-fou qui devait l'eviter
+         reposait sur une memoire que le telephone efface.
+         Ici, elle est toujours a portee de main et ne s'impose jamais.
+         Le bouton n'apparait que si on sait QUI joue. */
+      +   (currentMatelot?.codeMatelot
+            ? '<div class="ck-fiche">'
+              + '<button type="button" class="ck-fiche-btn" id="cockpitFicheBtn">'
+              +   '&#x1F4C7; Ma fiche matelot'
+              + '</button>'
+              + '<span class="ck-fiche-hint">Ton code et ton QR, a enregistrer quand tu veux.</span>'
+              + '</div>'
+            : '')
       + '</div>';
 
     $('cockpitMissionBtn')?.addEventListener('click', () => launchSelectedPalier());
+    $('cockpitFicheBtn')?.addEventListener('click', () => {
+      if(currentMatelot?.codeMatelot) ouvrirFicheMatelot(currentMatelot.codeMatelot);
+    });
   }
 
   const RULES = {
@@ -6469,41 +6495,25 @@ function qrDataUri(text, opts){
           $('nautilusAlarm')?.classList.remove('show');
         }
 
-        /* FICHE A ENREGISTRER — TOUT DE SUITE, sans attendre.
+        /* PLUS DE POP-UP AUTOMATIQUE ICI.
 
-           Elle etait affichee apres `settle` (1,7 s), un delai prevu pour
-           laisser l'ecran rouge se dissiper avant de faire defiler la page.
-           Mais la fiche s'affiche PAR-DESSUS tout : elle n'a aucune raison
-           d'attendre ce defilement. Le matelot patientait donc pres de
-           3 secondes devant un ecran rouge alors que sa fiche etait prete.
+           La fiche s'ouvrait toute seule au retour par QR, avec un
+           garde-fou en memoire du navigateur (`nautilusFicheVue`) cense
+           ne la montrer qu'une fois. Ce garde-fou ne tient pas :
+             - iOS efface cette memoire pour les sites peu visites ;
+             - elle est vide en navigation privee ;
+             - elle est propre a chaque navigateur et chaque appareil.
+           Le matelot revoyait donc la fenetre en travers a des retours
+           parfaitement ordinaires, alors qu'il voulait juste jouer.
 
-           On la montre des que la reprise a reussi. Elle recouvre l'ecran
-           rouge, qu'on retire aussitot : plus rien a attendre.
-
-           Une seule fois par appareil : `nautilusFicheVue` retient que
-           c'est fait. Sans ce garde-fou, le QR servant aussi de favori
-           pour revenir en jeu, la fiche s'afficherait en travers a
-           CHAQUE partie. Elle reste accessible a tout moment par le
-           bouton Agrandir de la carte d'embarquement. */
-        let ficheMontree = false;
-        if(currentTeam && currentMatelot){
-          let dejaVue = false;
-          try{ dejaVue = localStorage.getItem('nautilusFicheVue') === code; }
-          catch(e){ /* navigation privee : on montrera la fiche */ }
-          if(!dejaVue){
-            try{ localStorage.setItem('nautilusFicheVue', code); }catch(e){}
-            $('nautilusAlarm')?.classList.remove('show');
-            ficheMontree = true;
-            showMatelotFicheAfterScan(code);
-          }
-        }
+           La fiche est desormais accessible EN PERMANENCE depuis la
+           chambre de pilotage (bouton "Ma fiche matelot"), donc a tout
+           moment et sans jamais s'imposer. Voir renderGame(). */
 
         /* On rejoint la chambre de pilotage des que l'ecran rouge s'efface.
            Si l'equipe est bloquee, on y va aussi : c'est la que le message
-           de blocage est affiche.
-           Quand la fiche est ouverte, le defilement se fait derriere elle :
-           inutile d'attendre, la page sera deja en place a la fermeture. */
-        const settle = (alreadyPlayed || ficheMontree) ? 60 : 1700;
+           de blocage est affiche. */
+        const settle = alreadyPlayed ? 60 : 1700;
         setTimeout(() => {
           const t = $('gameBox');
           if(t && t.querySelector('.stepbox')){
