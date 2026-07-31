@@ -370,8 +370,6 @@
     .matelot-reveal-code .code{font-size:clamp(19px,4.4vw,27px);padding:14px 18px;margin:0;max-width:100%;
       overflow-wrap:anywhere}
     .matelot-qr-card{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px}
-    .matelot-tip{margin-top:14px;padding:12px 14px;background:#eef7ff;border:1px solid #c8e0f2;border-left:4px solid #2e9fd8;border-radius:12px;font-size:var(--fs-small);line-height:1.5;color:#14384f}
-    .matelot-tip-how{display:inline-block;color:#4a6879}
     .matelot-qr-thumb{width:min(168px,52vw);height:min(168px,52vw);flex:0 0 auto;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
     .matelot-qr-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
     .matelot-qr-actions button{width:auto!important;flex:0 0 auto}
@@ -3759,7 +3757,7 @@ function qrDataUri(text, opts){
     overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:radial-gradient(circle at 50% 30%,rgba(5,30,48,.96),rgba(0,0,0,.98));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
     overlay.innerHTML =
       '<div style="text-align:center;color:#fff;max-width:min(92vw,500px);width:100%">' +
-        '<div style="font-weight:1000;letter-spacing:.04em;font-size:13px;margin-bottom:10px;color:#ffe2a0;line-height:1.4">Scanne ce QR avec ton Appareil Photo : le jeu s\'ouvre<br>et reprend ta mission tout seul.<br><span style="color:#baffd2">Ensuite, ajoute la page à tes favoris pour y revenir en un geste.</span></div>' +
+        '<div style="font-weight:1000;letter-spacing:.04em;font-size:13px;margin-bottom:10px;color:#ffe2a0;line-height:1.4">Scanne ce QR avec ton Appareil Photo</div>' +
         '<div style="background:#fff;padding:18px;border-radius:18px;display:inline-block;box-shadow:0 0 60px rgba(245,176,39,.4)">' +
           '<img id="qrModalImg" src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:min(70vw,380px);height:min(70vw,380px);display:block;image-rendering:pixelated">' +
         '</div>' +
@@ -4005,23 +4003,6 @@ function qrDataUri(text, opts){
               '<div class="code uppercase" id="matelotCodeDisplay">' + esc(matelotCode) + '</div>' +
             '</div>' +
             matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
-          '</div>' +
-          /* Le QR ouvre le jeu avec le code deja dedans. On explique le
-             geste a faire ensuite : mettre la page en favori, pour revenir
-             en un tap sans jamais retaper le code. */
-          (estOrdinateur()
-            ? '<div class="matelot-tip">'
-              + '<b>&#x1F4BB; Depuis un ordinateur :</b> le bouton <b>Enregistrer</b> depose deux '
-              + 'fichiers dans tes telechargements &mdash; la <b>fiche en image</b> (a envoyer sur '
-              + 'ton telephone, puis a garder dans tes photos) et la <b>note en texte</b>. '
-              + 'Le texte est aussi copie, pret a etre colle.'
-              + '</div>'
-            : '') +
-          '<div class="matelot-tip">' +
-            '<b>&#x1F4CC; Astuce :</b> scanne ton QR, le jeu s\'ouvre et reprend ta mission tout seul. ' +
-            'Une fois ouvert, ajoute la page à tes <b>favoris</b> ' +
-            '<span class="matelot-tip-how">(iPhone : bouton Partager <b>&#x2191;</b> &rsaquo; « Ajouter aux favoris » · Android : menu <b>&#8942;</b> &rsaquo; l\'étoile <b>&#9734;</b>)</span> : ' +
-            'ton code y est déjà enregistré.' +
           '</div>' +
         '</div>';
       $('memberName').value = '';
