@@ -381,6 +381,35 @@
       .matelot-qr-actions button{flex:1 1 auto}
     }
     /* Modale QR plein ecran avec bouton "Partager ce QR" pour mobile */
+    /* ===== Fiche matelot affichee apres un scan de QR =====
+       Elle se superpose a la page ; la reprise de mission continue
+       derriere. Tout tient sans defilement sur un telephone. */
+    .fiche-modal{position:fixed;inset:0;z-index:10006;display:flex;align-items:center;justify-content:center;
+      padding:16px;background:radial-gradient(circle at 50% 25%,rgba(5,30,48,.97),rgba(0,0,0,.97));
+      animation:ficheIn .28s ease;overflow-y:auto}
+    .fiche-modal.out{animation:ficheOut .25s ease forwards}
+    @keyframes ficheIn{from{opacity:0}to{opacity:1}}
+    @keyframes ficheOut{to{opacity:0}}
+    .fiche-box{width:100%;max-width:min(94vw,420px);text-align:center;color:#fff}
+    .fiche-head{font-size:clamp(17px,4.6vw,21px);font-weight:1000;color:var(--fnac);letter-spacing:.02em}
+    .fiche-sub{margin:6px 0 14px;font-size:var(--fs-small);color:#b7d9e8;line-height:1.4}
+    .fiche-imgwrap{min-height:120px;display:flex;align-items:center;justify-content:center}
+    /* L'image reste une vraie image : l'appui long du telephone propose
+       donc "Enregistrer" comme sur n'importe quelle photo. */
+    .fiche-img{width:100%;max-height:56vh;object-fit:contain;border-radius:14px;
+      box-shadow:0 18px 46px rgba(0,0,0,.55);display:block}
+    .fiche-loading{color:#8ee7ff;font-size:13px;font-weight:800}
+    .fiche-fallback{background:#0a2a40;border:1px solid rgba(245,176,39,.5);border-radius:14px;padding:22px 18px;width:100%}
+    .fiche-fallback-lab{font-size:11px;font-weight:900;letter-spacing:.06em;color:#9fc4d6;margin-bottom:10px}
+    .fiche-hint{margin:12px 0 4px;font-size:12px;color:#9fc4d6;line-height:1.45}
+    .fiche-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+    .fiche-btn{width:100%;margin:0;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.22);
+      background:rgba(255,255,255,.10);color:#fff;font-weight:900;font-size:14px;cursor:pointer;min-height:46px}
+    .fiche-btn-main{background:linear-gradient(135deg,#f5b027,#d89020);color:#111;border:0}
+    .fiche-btn:hover{filter:brightness(1.08)}
+    @media (prefers-reduced-motion: reduce){
+      .fiche-modal,.fiche-modal.out{animation:none}
+    }
     .qr-modal-share{padding:10px 18px;background:linear-gradient(135deg,#075c39,#0a8a5a);color:#fff;border:0;border-radius:999px;font-weight:1000;font-size:14px;margin-top:16px;cursor:pointer;letter-spacing:.04em}
     .qr-modal-share:hover{filter:brightness(1.1);transform:translateY(-1px)}
     
@@ -3523,6 +3552,89 @@ function qrDataUri(text, opts){
     });
   }
 
+  /* ===== FICHE MATELOT APRES UN SCAN =====
+
+     Ce que voit le matelot qui scanne son QR : sa fiche complete en
+     IMAGE (la meme que celle du bouton Partager), affichee en grand,
+     avec deux facons de la garder :
+       - appui long directement sur l'image, comme n'importe quelle photo ;
+       - un bouton, pour ceux qui ne connaissent pas ce geste.
+
+     POINT IMPORTANT : la reprise de mission n'est PAS remplacee. Elle
+     s'execute normalement DERRIERE cette fiche. Le QR reste donc le lien
+     personnel a mettre en favori : en fermant la fiche, le matelot est
+     deja dans sa chambre de pilotage.
+
+     La fiche n'est proposee qu'au PREMIER scan d'une session (voir le
+     drapeau `nautilusFicheVue`) : les jours suivants, le QR sert
+     seulement a reprendre la partie, sans rien afficher en travers. */
+  async function showMatelotFicheAfterScan(code){
+    const nom    = currentMatelot?.name || '';
+    const equipe = currentMatelot?.teamName || '';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'fiche-modal';
+    overlay.innerHTML =
+      '<div class="fiche-box">' +
+        '<div class="fiche-head">&#x2693; Ta fiche de matelot</div>' +
+        '<div class="fiche-sub">Garde-la : ton code ne sera plus jamais affiche.</div>' +
+        '<div class="fiche-imgwrap"><div class="fiche-loading">Preparation de ta fiche…</div></div>' +
+        '<div class="fiche-hint">&#x1F4F2; Appui long sur l\'image pour l\'enregistrer dans tes photos</div>' +
+        '<div class="fiche-actions">' +
+          '<button type="button" id="ficheSave" class="fiche-btn fiche-btn-main">&#x1F4BE; Enregistrer ma fiche</button>' +
+          '<button type="button" id="ficheClose" class="fiche-btn">Continuer la mission &rsaquo;</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    const fermer = () => { overlay.classList.add('out'); setTimeout(() => overlay.remove(), 250); };
+    overlay.addEventListener('click', e => { if(e.target === overlay) fermer(); });
+    overlay.querySelector('#ficheClose').addEventListener('click', fermer);
+
+    /* L'image est fabriquee ici meme (canvas), sans aucun appel reseau. */
+    let blob = null;
+    try{
+      blob = await buildMatelotCardPng(nom, code, equipe);
+      const url = URL.createObjectURL(blob);
+      overlay.querySelector('.fiche-imgwrap').innerHTML =
+        '<img class="fiche-img" src="' + url + '" alt="Fiche matelot ' + esc(code) + '">';
+    }catch(err){
+      console.warn('fiche image indisponible :', err);
+      /* Repli : si le dessin echoue, on montre au moins le code en clair
+         plutot qu'une fenetre vide. */
+      overlay.querySelector('.fiche-imgwrap').innerHTML =
+        '<div class="fiche-fallback"><div class="fiche-fallback-lab">Ton Code Matelot</div>' +
+        '<div class="code uppercase">' + esc(code) + '</div></div>';
+      overlay.querySelector('.fiche-hint').textContent = 'Note ce code : il ne sera plus affiche.';
+    }
+
+    overlay.querySelector('#ficheSave').addEventListener('click', async () => {
+      if(!blob){ showToast('Image indisponible — note ton code', 'linear-gradient(135deg,#9b1111,#b8322b)'); return; }
+      const file = new File([blob], 'matelot-' + code + '.png', { type: 'image/png' });
+      /* 1) Partage natif : c'est lui qui propose "Enregistrer l'image"
+            sur iPhone comme sur Android. */
+      try{
+        if(navigator.canShare && navigator.canShare({ files: [file] })){
+          await navigator.share({ files: [file], title: 'Mission Nautilus - Ta fiche de matelot' });
+          return;
+        }
+      }catch(err){
+        if(err && err.name === 'AbortError') return;   // annule par le matelot
+        console.warn('partage impossible, repli telechargement :', err);
+      }
+      /* 2) Repli : telechargement direct du fichier. */
+      try{
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'matelot-' + code + '.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        showToast('&#x1F4C1; Fiche telechargee', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      }catch(err){
+        showToast('Enregistrement impossible — fais un appui long sur l\'image', 'linear-gradient(135deg,#9b1111,#b8322b)');
+      }
+    });
+  }
+
   async function viewMatelotQr(qrUrl, code){
     // Le QR contient le lien personnel de reprise : le scanner ouvre le
     // jeu et relance la mission automatiquement (voir buildResumeUrl).
@@ -6198,6 +6310,26 @@ function qrDataUri(text, opts){
             // Code refuse : on montre la zone de reprise pour corriger.
             document.getElementById('retrouverEquipage')
               ?.scrollIntoView({behavior:'smooth', block:'start'});
+          }
+
+          /* FICHE A ENREGISTRER — uniquement si la reprise a reussi.
+             Le matelot vient de scanner son QR : on lui montre sa fiche
+             en image, qu'il peut garder dans ses photos. La mission est
+             deja rechargee derriere : fermer la fiche suffit pour jouer.
+
+             Une seule fois par appareil : `nautilusFicheVue` retient que
+             c'est fait. Sans ce garde-fou, le QR servant aussi de favori
+             pour revenir en jeu, la fiche s'afficherait en travers a
+             CHAQUE partie. Elle reste accessible a tout moment par le
+             bouton Agrandir de la carte d'embarquement. */
+          if(currentTeam && currentMatelot){
+            let dejaVue = false;
+            try{ dejaVue = localStorage.getItem('nautilusFicheVue') === code; }
+            catch(e){ /* navigation privee : on montrera la fiche */ }
+            if(!dejaVue){
+              try{ localStorage.setItem('nautilusFicheVue', code); }catch(e){}
+              showMatelotFicheAfterScan(code);
+            }
           }
         }, settle);
       }
