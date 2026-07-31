@@ -6482,9 +6482,15 @@ function qrDataUri(text, opts){
       try { await cleanupObsoleteTeams(); } catch(e) { console.warn('cleanup error:', e); }
       await loadMissionConfig();
       updateCountdown();
-      if(missionConfig?.missionStartedAt && seenAlarmAt !== missionConfig.missionStartedAt){
-        showNautilusAlarm(missionConfig.missionStartedAt);
-      }
+      /* PAS D'ALARME AU CHARGEMENT.
+         L'ecran rouge se declenchait des l'ouverture de la page quand la
+         mission etait deja lancee : le matelot le revoyait a chaque
+         visite, sans avoir rien demande.
+         L'alerte est reservee au clic sur "LANCER LA MISSION", ou elle a
+         un sens : elle annonce le depart du palier.
+         `seenAlarmAt` reste tenu a jour par refreshMissionConfig(), qui
+         signale le lancement officiel aux equipages DEJA sur la page. */
+      seenAlarmAt = missionConfig?.missionStartedAt || seenAlarmAt;
       await loadTeams();
       renderGame(false);
     })();
@@ -6507,19 +6513,12 @@ function qrDataUri(text, opts){
       if(m){
         const code = m.trim().toUpperCase();
         /* On CONSERVE ?m= dans la barre d'adresse : c'est cette adresse que
-           le matelot met en favori. Nettoyee, le favori perdrait son code.
-           La breve alarme d'accueil n'est jouee qu'une fois par session. */
-        let alreadyPlayed = false;
-        try{ alreadyPlayed = sessionStorage.getItem('nautilusAutoResume') === code; }
-        catch(e){ /* navigation privee */ }
-        try{ sessionStorage.setItem('nautilusAutoResume', code); }catch(e){ /* ignore */ }
-
+           le matelot met en favori. Nettoyee, le favori perdrait son code. */
         $('matelotCodeInput').value = code;
 
-        /* Accuse de reception court (1,6 s) : le temps de comprendre que le
-           scan a fonctionne, pas plus. Il ne bloque RIEN : la reprise
-           s'execute en meme temps. */
-        if(!alreadyPlayed) showNautilusAlarm('qr-scan-' + Date.now(), 1600);
+        /* PAS D'ALARME NON PLUS ICI : arriver sur sa page par son lien
+           perso n'est pas un evenement, c'est la facon normale de revenir
+           en jeu. L'ecran rouge est reserve au lancement du palier. */
 
         /* La reprise demarre immediatement, sans attendre l'alarme.
            PIEGE EVITE : si le code est invalide ou inconnu, joinTeam()
@@ -6549,14 +6548,16 @@ function qrDataUri(text, opts){
            Le matelot revoyait donc la fenetre en travers a des retours
            parfaitement ordinaires, alors qu'il voulait juste jouer.
 
-           La fiche est desormais accessible EN PERMANENCE depuis la
-           chambre de pilotage (bouton "Ma fiche matelot"), donc a tout
-           moment et sans jamais s'imposer. Voir renderGame(). */
+           La fiche reste accessible a l'inscription, par le bouton
+           "Agrandir" de la carte d'embarquement. */
 
-        /* On rejoint la chambre de pilotage des que l'ecran rouge s'efface.
-           Si l'equipe est bloquee, on y va aussi : c'est la que le message
-           de blocage est affiche. */
-        const settle = alreadyPlayed ? 60 : 1700;
+        /* On rejoint la chambre de pilotage tout de suite.
+           Ce delai etait de 1,7 s : il servait uniquement a laisser
+           l'ecran rouge se dissiper avant de faire defiler la page. Cet
+           ecran ne s'affiche plus a l'arrivee, l'attente n'a donc plus
+           lieu d'etre. Les 60 ms restantes laissent au cockpit le temps
+           d'etre rempli par renderGame() avant qu'on ne le vise. */
+        const settle = 60;
         setTimeout(() => {
           /* BUG CORRIGE : on cherchait `.stepbox` pour savoir si la
              reprise avait reussi. Cette classe n'existe plus dans la
