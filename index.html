@@ -3582,6 +3582,7 @@ function qrDataUri(text, opts){
         '<div class="fiche-hint">&#x1F4F2; Appui long sur l\'image pour l\'enregistrer dans tes photos</div>' +
         '<div class="fiche-actions">' +
           '<button type="button" id="ficheSave" class="fiche-btn fiche-btn-main">&#x1F4BE; Enregistrer ma fiche</button>' +
+          '<button type="button" id="ficheSaveTxt" class="fiche-btn">&#x1F4C4; Enregistrer le texte</button>' +
           '<button type="button" id="ficheClose" class="fiche-btn">Continuer la mission &rsaquo;</button>' +
         '</div>' +
       '</div>';
@@ -3631,6 +3632,46 @@ function qrDataUri(text, opts){
         showToast('&#x1F4C1; Fiche telechargee', 'linear-gradient(135deg,#075c39,#0a8a5a)');
       }catch(err){
         showToast('Enregistrement impossible — fais un appui long sur l\'image', 'linear-gradient(135deg,#9b1111,#b8322b)');
+      }
+    });
+
+    /* Version TEXTE de la fiche (.txt).
+
+       Complement utile de l'image : une photo se perd dans la galerie et
+       son contenu ne se cherche pas. Le texte, lui, se colle dans Notes,
+       se retrouve par recherche, et le lien de reprise y est cliquable.
+       C'est exactement la meme fiche que celle du bouton Partager :
+       buildNoteText() est la seule source, donc aucune divergence. */
+    overlay.querySelector('#ficheSaveTxt').addEventListener('click', async () => {
+      const texte = buildNoteText(nom, code, equipe);
+      const fichier = 'Mission-Nautilus-' + code + '.txt';
+      const blobTxt = new Blob([texte], { type: 'text/plain;charset=utf-8' });
+
+      /* 1) Partage natif : sur telephone, c'est lui qui propose
+            "Enregistrer dans Fichiers" ou l'envoi vers Notes. */
+      try{
+        const f = new File([blobTxt], fichier, { type: 'text/plain' });
+        if(navigator.canShare && navigator.canShare({ files: [f] })){
+          await navigator.share({ files: [f], title: 'Mission Nautilus - Ta fiche de matelot', text: texte });
+          return;
+        }
+      }catch(err){
+        if(err && err.name === 'AbortError') return;   // annule par le matelot
+        console.warn('partage du texte impossible, repli telechargement :', err);
+      }
+
+      /* 2) Repli : telechargement direct (ordinateur, ou telephone sans
+            partage de fichiers). */
+      try{
+        const url = URL.createObjectURL(blobTxt);
+        const a = document.createElement('a');
+        a.href = url; a.download = fichier;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        showToast('📄 Fiche texte enregistrée', 'linear-gradient(135deg,#075c39,#0a8a5a)');
+      }catch(err){
+        /* 3) Dernier recours : on montre le texte, a copier a la main. */
+        window.prompt('Copie ta fiche :', texte);
       }
     });
   }
