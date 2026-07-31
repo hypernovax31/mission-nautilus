@@ -1256,6 +1256,19 @@
     .ck-gauge.amber .ck-dial-value{text-shadow:0 0 12px rgba(255,181,69,.85)}
     .ck-gauge.amber .ck-dial-unit{color:rgba(255,181,69,.9)}
 
+    /* Etat de la coque, sous les cadrans. Vert au repos, ambre des la
+       premiere avarie. */
+    .ck-hull{
+      margin:-4px 0 14px;padding:9px 12px;border-radius:10px;
+      background:rgba(106,255,192,.07);border:1px solid rgba(106,255,192,.22);
+      color:#a9e8cf;font-size:var(--fs-tiny);line-height:1.45;text-align:center;
+    }
+    .ck-hull b{color:var(--glass)}
+    .ck-hull.is-damaged{
+      background:rgba(255,181,69,.08);border-color:rgba(255,181,69,.3);color:#f0d3a4;
+    }
+    .ck-hull.is-damaged b{color:var(--amber)}
+
     /* Ecran de position : la donnee la plus importante */
     .ck-screen{
       position:relative;margin-bottom:14px;padding:14px 16px;border-radius:12px;
@@ -4214,8 +4227,17 @@ function qrDataUri(text, opts){
        vers une position perimee, et semblait ne rien faire.
        EXCEPTION : la reprise par QR gere deja son propre defilement. */
     if(!skipScroll){
-      const goCockpit = () => document.getElementById('gameCard')
-        ?.scrollIntoView({ behavior:'smooth', block:'start' });
+      /* On vise le BOUTON de mission plutot que le haut du bloc : sur un
+         telephone, la chambre de pilotage remplit tout l'ecran et le
+         bouton tomberait en dessous, invisible. */
+      const goCockpit = () => {
+        const cible = document.getElementById('cockpitMissionBtn')
+                   || document.getElementById('gameCard');
+        cible?.scrollIntoView({
+          behavior:'smooth',
+          block: cible.id === 'cockpitMissionBtn' ? 'center' : 'start'
+        });
+      };
       requestAnimationFrame(() => setTimeout(goCockpit, 60));
       loadTeams().then(() => setTimeout(goCockpit, 120));
     }else{
@@ -4498,12 +4520,37 @@ function qrDataUri(text, opts){
       +         '<span class="ck-dial-unit">palier</span></div>'
       +       '<div class="ck-gauge-label">Position</div>'
       +     '</div>'
-      +     '<div class="ck-gauge' + (fails > 0 ? ' amber' : '') + '">'
+      +     '<div class="ck-gauge">'
       +       '<div class="ck-dial"><span class="ck-dial-value">' + doneCount + '</span>'
       +         '<span class="ck-dial-unit">validés</span></div>'
       +       '<div class="ck-gauge-label">Sas franchis</div>'
       +     '</div>'
+
+      /* 4e cadran : les avaries, c'est-a-dire les echecs de l'equipage.
+         Vert tant que la coque est intacte, ambre des la premiere avarie
+         (la couleur d'alerte deja utilisee ailleurs dans le cockpit).
+         PIEGE EVITE : la classe `amber` etait posee sur le cadran des sas
+         franchis, qui n'a rien a voir avec les echecs — un equipage ayant
+         echoue voyait donc sa REUSSITE passer en alerte. Elle est
+         desormais sur le bon cadran. */
+      +     '<div class="ck-gauge' + (fails > 0 ? ' amber' : '') + '">'
+      +       '<div class="ck-dial"><span class="ck-dial-value">' + fails + '</span>'
+      +         '<span class="ck-dial-unit">' + (fails > 1 ? 'avaries' : 'avarie') + '</span></div>'
+      +       '<div class="ck-gauge-label">Coque</div>'
+      +     '</div>'
       +   '</div>'
+
+      /* Etat de la coque, en clair : un chiffre seul ne dit pas si c'est
+         grave. Le ton suit le nombre d'avaries. */
+      +   '<p class="ck-hull' + (fails > 0 ? ' is-damaged' : '') + '">'
+      +     (fails === 0
+        ? '&#x2713; <b>Coque intacte.</b> Aucune avarie au journal de bord.'
+        : fails === 1
+        ? '&#x26A0; <b>1 avarie</b> consignée au journal de bord. La coque tient bon.'
+        : fails < 5
+        ? '&#x26A0; <b>' + fails + ' avaries</b> au journal de bord. La coque encaisse, mais la pression monte.'
+        : '&#x26A0; <b>' + fails + ' avaries</b> au journal de bord. La coque est éprouvée : chaque erreur coûte désormais 24 h.')
+      +   '</p>'
 
       /* Ecran principal : ou en est l'equipage, et ce qui l'attend. */
       +   '<div class="ck-screen">'
@@ -6532,8 +6579,21 @@ function qrDataUri(text, opts){
              On se fie desormais a `currentTeam`, qui dit sans ambiguite
              si la reprise a abouti. */
           if(currentTeam){
-            document.getElementById('gameCard')
-              ?.scrollIntoView({behavior:'smooth', block:'start'});
+            /* On vise le BOUTON de mission, pas le haut du bloc.
+
+               Aligne sur le haut, la chambre de pilotage remplit tout
+               l'ecran d'un telephone (plaque, cadrans, etat de la coque,
+               position, diodes) et le bouton "LANCER LA MISSION" tombe en
+               dessous : le matelot arrivait par son QR sans voir ce qu'il
+               devait faire, et rien ne le lui indiquait.
+               `block:'center'` place le bouton au milieu de l'ecran, donc
+               toujours visible, avec le cockpit encore lisible au-dessus. */
+            const cible = document.getElementById('cockpitMissionBtn')
+                       || document.getElementById('gameCard');
+            cible?.scrollIntoView({
+              behavior:'smooth',
+              block: cible.id === 'cockpitMissionBtn' ? 'center' : 'start'
+            });
           }else{
             // Code refuse : on montre la zone de reprise pour corriger.
             document.getElementById('retrouverEquipage')
