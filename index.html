@@ -369,6 +369,9 @@
       text-transform:uppercase;font-size:var(--fs-tiny)}
     .matelot-reveal-code .code{font-size:clamp(19px,4.4vw,27px);padding:14px 18px;margin:0;max-width:100%;
       overflow-wrap:anywhere}
+    .matelot-code-help{margin:2px 0 0;color:#4a6879;font-size:var(--fs-tiny);
+      line-height:1.45;max-width:26ch}
+    .matelot-code-help b{color:#0b5f8a}
     .matelot-qr-card{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px}
     .matelot-qr-thumb{width:min(168px,52vw);height:min(168px,52vw);flex:0 0 auto;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
     .matelot-qr-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
@@ -4001,6 +4004,14 @@ function qrDataUri(text, opts){
             '<div class="matelot-reveal-code">' +
               '<div class="matelot-reveal-label">Ton Code Matelot</div>' +
               '<div class="code uppercase" id="matelotCodeDisplay">' + esc(matelotCode) + '</div>' +
+              /* Le code est deja copiable d'un simple clic (voir le
+                 gestionnaire sur .code), mais rien ne l'indiquait : le
+                 matelot le recopiait a la main. On le dit, et on precise
+                 a quoi ce code sert plus tard. */
+              '<p class="matelot-code-help">' +
+                '<b>' + (estOrdinateur() ? 'Clique' : 'Appuie') + ' dessus pour le copier.</b><br>' +
+                'Garde-le : c\'est lui qui te fera remonter à bord si tu quittes le jeu.' +
+              '</p>' +
             '</div>' +
             matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
           '</div>' +
