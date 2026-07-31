@@ -3247,7 +3247,7 @@ function qrDataUri(text, opts){
       '<div class="matelot-qr-actions">' +
         '<button type="button" class="matelot-action-viewqr" data-qr-url="' + esc(qrUrl) + '" data-code="' + esc(code) + '" style="' + btn + '">&#x1F50D; Agrandir</button>' +
         '<button type="button" class="matelot-action-copy" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="' + btn + '">&#x1F4CB; Copier</button>' +
-        '<button type="button" class="matelot-action-notes" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="' + btn + '">&#x1F4E4; Partager</button>' +
+        '<button type="button" class="matelot-action-notes" data-code="' + esc(code) + '" data-name="' + esc(name) + '" data-team="' + esc(teamName) + '" data-link="' + esc(resumeLink) + '" style="' + btn + '">' + (estOrdinateur() ? '&#x1F4BE; Enregistrer' : '&#x1F4E4; Partager') + '</button>' +
       '</div>' +
     '</div>';
   }
@@ -3324,12 +3324,85 @@ function qrDataUri(text, opts){
       'IMPORTANT : Le code est personnel et à usage unique.';
   }
 
+  /* Sommes-nous sur un ordinateur (par opposition a un telephone ou une
+     tablette) ?
+
+     On ne se fie PAS au seul "userAgent" : les iPad recents se declarent
+     comme des Mac. On regarde donc aussi si l'ecran repond au toucher.
+     Un vrai Mac n'a pas d'ecran tactile ; un iPad en a un. */
+  function estOrdinateur(){
+    const ua = navigator.userAgent || '';
+    if(/iPhone|iPod|Android|Mobile/i.test(ua)) return false;
+    const tactile = (navigator.maxTouchPoints || 0) > 1;
+    if(/iPad/i.test(ua)) return false;
+    if(/Macintosh/i.test(ua) && tactile) return false;   // iPad deguise en Mac
+    return /Windows|Macintosh|Mac OS X|Linux|X11|CrOS/i.test(ua);
+  }
+
+  /* Declenche le telechargement d'un contenu, sous le nom voulu. */
+  function telechargerFichier(blob, nomFichier){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nomFichier; a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1500);
+  }
+
+  /* ===== SUR ORDINATEUR : on enregistre DEUX fichiers =====
+
+     Le partage natif du telephone (qui propose "Enregistrer dans Photos"
+     ou "Envoyer vers Notes") n'existe pas sur PC ni sur Mac. Jusqu'ici, le
+     bouton Partager s'y contentait donc de copier du texte dans le
+     presse-papier : aucune image nulle part, et rien a transferer sur le
+     telephone.
+
+     Sur ordinateur on produit donc les deux fichiers, cote a cote dans le
+     dossier Telechargements :
+       - Mission-Nautilus-CODE.png : la fiche en image, avec le QR. C'est
+         elle qu'on envoie sur le telephone (AirDrop, mail, messagerie),
+         et qui s'enregistre ensuite dans les photos.
+       - Mission-Nautilus-CODE.txt : la meme fiche en texte, a coller dans
+         une note. Le lien de reprise y reste cliquable.
+
+     Le texte est aussi copie dans le presse-papier : sur un ordinateur,
+     c'est souvent le geste le plus rapide pour l'envoyer a quelqu'un. */
+  async function enregistrerFichePourOrdinateur(name, code, teamName){
+    const texte = buildNoteText(name, code, teamName);
+    const base  = 'Mission-Nautilus-' + code;
+    let image = false, note = false;
+
+    try{
+      const png = await buildMatelotCardPng(name, code, teamName);
+      telechargerFichier(png, base + '.png');
+      image = true;
+    }catch(e){ console.warn('fiche image indisponible sur ordinateur :', e); }
+
+    try{
+      /* Un court decalage evite que le navigateur ne bloque le second
+         telechargement, certains n'en acceptant qu'un a la fois. */
+      await new Promise(r => setTimeout(r, 400));
+      telechargerFichier(new Blob([texte], { type: 'text/plain;charset=utf-8' }), base + '.txt');
+      note = true;
+    }catch(e){ console.warn('note texte indisponible :', e); }
+
+    try{ await navigator.clipboard.writeText(texte); }catch(e){ /* sans importance */ }
+
+    return { ok: image || note, image, note };
+  }
+
   /**
    * Tente d'ouvrir l'app Notes avec une nouvelle note contenant le code matelot.
    * 1) Web Share API avec un fichier text/plain (ouvre Notes sur iOS si app par defaut)
    * 2) Fallback : clipboard + lien data: (le telechargement ouvre Notes)
    */
   async function openMatelotInNotes(name, code, teamName, link){
+    /* Sur ordinateur, le partage natif n'existe pas : on enregistre
+       directement l'image et la note, plutot que de ne rien produire. */
+    if(estOrdinateur()){
+      const r = await enregistrerFichePourOrdinateur(name, code, teamName);
+      if(r.ok) return { ok: true, method: 'desktop-files', ...r };
+    }
     const text = buildNoteText(name, code, teamName);
     const fileName = 'Mission-Nautilus-' + code + '.txt';
 
@@ -3715,6 +3788,16 @@ function qrDataUri(text, opts){
           currentMatelot?.name, code, currentMatelot?.teamName);
         const file = new File([blob], 'matelot-' + code + '.png', { type: 'image/png' });
         const noteText = buildNoteText(currentMatelot?.name, code, currentMatelot?.teamName);
+        /* Ordinateur : pas de partage natif. On enregistre l'image ET la
+           note, comme le bouton Partager de la carte d'embarquement. */
+        if(estOrdinateur()){
+          const r = await enregistrerFichePourOrdinateur(
+            currentMatelot?.name, code, currentMatelot?.teamName);
+          showToast(r.ok ? '💾 Image + note enregistrées — envoie l\'image sur ton téléphone'
+                         : '❌ Enregistrement impossible',
+            r.ok ? 'linear-gradient(135deg,#075c39,#0a8a5a)' : 'linear-gradient(135deg,#9b1111,#b8322b)');
+          return;
+        }
         if(navigator.canShare && navigator.canShare({ files: [file] })){
           await navigator.share({
             files: [file],
@@ -3926,6 +4009,14 @@ function qrDataUri(text, opts){
           /* Le QR ouvre le jeu avec le code deja dedans. On explique le
              geste a faire ensuite : mettre la page en favori, pour revenir
              en un tap sans jamais retaper le code. */
+          (estOrdinateur()
+            ? '<div class="matelot-tip">'
+              + '<b>&#x1F4BB; Depuis un ordinateur :</b> le bouton <b>Enregistrer</b> depose deux '
+              + 'fichiers dans tes telechargements &mdash; la <b>fiche en image</b> (a envoyer sur '
+              + 'ton telephone, puis a garder dans tes photos) et la <b>note en texte</b>. '
+              + 'Le texte est aussi copie, pret a etre colle.'
+              + '</div>'
+            : '') +
           '<div class="matelot-tip">' +
             '<b>&#x1F4CC; Astuce :</b> scanne ton QR, le jeu s\'ouvre et reprend ta mission tout seul. ' +
             'Une fois ouvert, ajoute la page à tes <b>favoris</b> ' +
@@ -5197,7 +5288,15 @@ function qrDataUri(text, opts){
       const link = notesBtn.dataset.link;
       const res = await openMatelotInNotes(name, code, team, link);
       if(res.ok){
-        if(res.method === 'clipboard'){
+        if(res.method === 'desktop-files'){
+          /* Ordinateur : on annonce ce qui vient d'arriver dans le dossier
+             Telechargements, et ce qu'il reste a faire (envoyer l'image
+             sur le telephone). */
+          const quoi = (res.image && res.note) ? 'Image + note enregistrées'
+                     : res.image ? 'Image enregistrée' : 'Note enregistrée';
+          showToast('💾 ' + quoi + ' — envoie l\'image sur ton téléphone',
+            'linear-gradient(135deg,#075c39,#0a8a5a)');
+        }else if(res.method === 'clipboard'){
           showToast('📋 Fiche copiée — colle-la dans tes Notes', 'linear-gradient(135deg,#075c39,#0a8a5a)');
         }else if(res.method === 'download'){
           showToast('📁 Fichier .txt téléchargé — ouvre-le avec l\'app Notes', 'linear-gradient(135deg,#075c39,#0a8a5a)');
