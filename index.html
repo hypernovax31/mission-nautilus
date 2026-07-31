@@ -4312,6 +4312,14 @@ function qrDataUri(text, opts){
           onlinePlayers: {},
           updatedAt: new Date().toISOString()
         });
+
+        /* La partie en cours du mini-jeu doit tomber elle aussi : elle
+           porte le nom du matelot qui l'avait lancee. Sans cela, un
+           matelot qu'on vient de supprimer resterait "aux commandes du
+           protocole" et empecherait les nouveaux inscrits de jouer. */
+        await setDoc(doc(db,'teams',t.code,'morseSession','current'),
+          { state:'idle', clearedAt:new Date().toISOString() })
+          .catch(e => console.warn('reset session', t.code, e));
       }
       endAdminSession(`✅ ${purged} matelot(s) supprimé(s) · session fermée`);
       await loadTeams();
@@ -4457,6 +4465,15 @@ function qrDataUri(text, opts){
           finishedAt: null,
           updatedAt: new Date().toISOString()
         });
+
+        /* La partie en cours du mini-jeu vit dans un AUTRE document.
+           Elle n'etait pas remise a zero ici : apres un reset, l'equipage
+           retrouvait sa vieille partie, chronometre a 00:00, sans pouvoir
+           relancer quoi que ce soit. Un reset de progression doit rendre
+           l'equipage entierement neuf, mini-jeu compris. */
+        await setDoc(doc(db,'teams',t.code,'morseSession','current'),
+          { state:'idle', clearedAt:new Date().toISOString() })
+          .catch(e => console.warn('reset session', t.code, e));
         done++;
       }
       endAdminSession(`✅ Progression remise à zéro pour ${done} équipe(s) · session fermée`);

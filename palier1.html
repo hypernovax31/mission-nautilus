@@ -583,6 +583,36 @@ function isTestSession(session) {
       || session.startedByName === 'TEST';
 }
 
+/* Cette session est-elle PERIMEE ?
+
+   INCIDENT REEL : apres une remise a zero des progressions depuis le
+   panneau admin, un equipage se voyait accueilli par un chronometre a
+   00:00, sans pouvoir lancer quoi que ce soit.
+
+   Cause : le reset remet l'EQUIPE a neuf, mais la session du mini-jeu
+   vit dans un autre document (teams/{equipe}/morseSession/current) qui
+   n'etait pas touche. Une partie 'playing' commencee la veille restait
+   donc en base ; son temps etant depuis longtemps ecoule, le mini-jeu
+   affichait 00:00 et refusait de commencer.
+
+   Une partie 'playing' dont le temps imparti est depasse n'a plus aucun
+   sens : personne ne peut plus la jouer. On la considere donc comme
+   inexistante, ce qui laisse l'equipage repartir proprement. */
+function isStaleSession(session) {
+  if (!session || session.state !== 'playing') return false;
+  if (!session.startedAt || !session.timeLimit) return true;   // session incomplete
+  const ecoule = (Date.now() - new Date(session.startedAt).getTime()) / 1000;
+  /* Marge d'une minute : on ne veut pas effacer une partie qui vient
+     tout juste d'expirer sous les yeux du joueur, l'ecran de defaite
+     doit pouvoir s'afficher normalement. */
+  return ecoule > (Number(session.timeLimit) + 60);
+}
+
+/* Session a ignorer : partie d'essai, ou partie perimee. */
+function isDeadSession(session) {
+  return isTestSession(session) || isStaleSession(session);
+}
+
 async function saveTeam(team, patch) {
   if (!team || !team.teamCode) throw new Error('Équipe introuvable. Recharge la page.');
   const updated = { ...patch, updatedAt: new Date().toISOString() };
@@ -599,13 +629,14 @@ function sessionRef(teamCode) {
 async function getSession(teamCode) {
   const snap = await getDoc(sessionRef(teamCode));
   const data = snap.exists() ? snap.data() : null;
-  /* Une session du compte fantome n'existe pas pour les vrais joueurs. */
-  return isTestSession(data) ? null : data;
+  /* Ni les parties d'essai, ni les parties perimees n'existent pour les
+     vrais joueurs. */
+  return isDeadSession(data) ? null : data;
 }
 function watchSession(teamCode, callback) {
   return onSnapshot(sessionRef(teamCode), (snap) => {
     const data = snap.exists() ? snap.data() : null;
-    callback(isTestSession(data) ? null : data);
+    callback(isDeadSession(data) ? null : data);
   });
 }
 async function createSession(teamCode, data) {
