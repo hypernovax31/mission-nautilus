@@ -3099,21 +3099,62 @@ function qrMatrix(text, ecl = 'Q', forcedVersion = null, forcedMask = null) {
  * Rend un QR en image SVG (data: URI), utilisable directement dans <img src="...">.
  * Autonome : aucun appel reseau, fonctionne hors ligne.
  */
+/* Fabrique l'image du QR (SVG, en data-URI).
+
+   opts.ecl    niveau de correction d'erreur. 'Q' repare 25 % de l'image,
+               contre 7 % pour 'L'. C'est ce qui autorise a poser un
+               embleme au milieu sans rendre le code illisible.
+               Attention : 'Q' plafonne a 74 caracteres avec ce
+               generateur (v1-v9). Le lien de reprise en fait 60.
+   opts.color  couleur des modules (par defaut noir).
+   opts.emblem trace SVG de l'embleme d'equipage, dessine au centre dans
+               une pastille blanche. Les modules situes dessous sont
+               retires PROPREMENT du trace plutot que recouverts : un
+               lecteur voit alors du blanc franc, pas un module a moitie
+               cache.
+
+   Surface masquee par la pastille : environ 9 % des modules, tres en
+   dessous des 25 % que le niveau Q sait reparer. Verifie par decodage
+   reel des 8 emblemes. Ne pas agrandir la pastille sans refaire ce test,
+   et ne JAMAIS revenir en niveau L tant qu'un embleme est affiche. */
 function qrDataUri(text, opts){
   const o = opts || {};
-  const ecl = o.ecl || 'H';          // H = correction maximale (scan en magasin)
+  const ecl = o.ecl || 'H';
   const quiet = o.quiet == null ? 4 : o.quiet;  // marge blanche obligatoire
+  const color = o.color || '#000';
   const { matrix, size } = qrMatrix(String(text), ecl);
   const total = size + quiet * 2;
+
+  /* Demi-cote du trou central, en modules. 0 = pas d'embleme. */
+  const hole = o.emblem ? Math.floor(size * 0.16) : -1;
+  const mid  = (size - 1) / 2;
+
   let path = '';
   for(let r = 0; r < size; r++){
     for(let c = 0; c < size; c++){
-      if(matrix[r][c]) path += `M${c + quiet} ${r + quiet}h1v1h-1z`;
+      if(!matrix[r][c]) continue;
+      if(hole >= 0 && Math.abs(r - mid) <= hole && Math.abs(c - mid) <= hole) continue;
+      path += `M${c + quiet} ${r + quiet}h1v1h-1z`;
     }
   }
+
+  let centre = '';
+  if(o.emblem){
+    const cx = mid + quiet + 0.5, cy = mid + quiet + 0.5;
+    const rd = hole + 1.2;              // rayon de la pastille blanche
+    const em = (hole * 2 + 1) * 0.62;   // taille de l'embleme dedans
+    centre =
+      `<circle cx="${cx}" cy="${cy}" r="${rd}" fill="#fff"/>`
+      + `<g shape-rendering="geometricPrecision">`
+      + `<circle cx="${cx}" cy="${cy}" r="${rd - 0.5}" fill="none" stroke="${color}" stroke-width="0.6"/>`
+      + `<svg x="${cx - em / 2}" y="${cy - em / 2}" width="${em}" height="${em}" viewBox="0 0 200 200">`
+      + `<path d="${o.emblem}" fill="none" stroke="${color}" stroke-width="14"`
+      + ` stroke-linecap="round" stroke-linejoin="round"/></svg></g>`;
+  }
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges">`
     + `<rect width="${total}" height="${total}" fill="#fff"/>`
-    + `<path d="${path}" fill="#000"/></svg>`;
+    + `<path d="${path}" fill="${color}"/>${centre}</svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
@@ -3205,6 +3246,36 @@ function qrDataUri(text, opts){
      le code et relance la mission tout seul. Le matelot peut mettre cette
      page en favori : son code y est deja.
      Environ 60 caracteres, loin de la limite de 230 (version 9, niveau L). */
+  /* Image du QR personnel d'un matelot, aux couleurs de son equipage.
+
+     Les trois endroits qui affichent un QR (la carte d'inscription, la
+     copie presse-papier et l'image telechargeable) passent par ici : une
+     seule source, donc aucun risque qu'un QR sorte different des autres.
+
+     teamCode facultatif : sans lui, on retombe sur le gris neutre. */
+  /* Retrouve le code d'une equipe a partir de son nom affiche.
+     Plusieurs fonctions ne connaissent que le nom ("Ned Land") alors que
+     les couleurs sont rangees par code ("NEDLAND"). On cherche d'abord
+     dans les equipes chargees, puis on retombe sur une comparaison
+     simplifiee (sans accents ni espaces). */
+  function teamCodeFromName(teamName){
+    if(!teamName) return null;
+    const cible = simple(teamName).replace(/[^A-Z0-9]/g, '');
+    const connue = (_lastTeams || []).find(t =>
+      simple(t.teamName || '').replace(/[^A-Z0-9]/g, '') === cible);
+    if(connue) return connue.teamCode;
+    return Object.keys(TEAM_STYLES).find(k => k === cible) || null;
+  }
+
+  function matelotQrUri(code, teamCode){
+    const st = teamStyle(teamCode);
+    return qrDataUri(buildResumeUrl(code), {
+      ecl: 'Q',            // 25 % de correction : indispensable avec l'embleme
+      color: st.tint,      // meme couleur que le lisere de la carte d'equipage
+      emblem: st.emblem
+    });
+  }
+
   function buildResumeUrl(code){
     const cd = String(code || '').trim().toUpperCase();
     return siteUrl() + '?m=' + encodeURIComponent(cd);
@@ -3327,7 +3398,7 @@ function qrDataUri(text, opts){
     const text = buildNoteText(name, code, teamName);
     try{
       if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
-        const qrUri = qrDataUri(buildResumeUrl(code), { ecl: 'L' });
+        const qrUri = matelotQrUri(code, teamCodeFromName(teamName));
         const pngBlob = await qrToPngBlob(qrUri, 420);
         const dataUrl = await blobToDataUrl(pngBlob);
         const html = '<div style="font-family:Arial,sans-serif">'
@@ -3448,7 +3519,7 @@ function qrDataUri(text, opts){
         }catch(e){ reject(e); }
       };
       img.onerror = () => reject(new Error('QR illisible'));
-      img.src = qrDataUri(buildResumeUrl(code), { ecl: 'L' });
+      img.src = matelotQrUri(code, teamCodeFromName(teamName));
     });
   }
 
@@ -3683,14 +3754,8 @@ function qrDataUri(text, opts){
       updateFinalMissionButton();
 
       // 8) Affiche le Code Matelot (usage unique) + QR code + boutons Notes/Clipboard
-      // Le QR encode UNIQUEMENT le code matelot en clair (texte simple).
-      // Le QR contient la FICHE COMPLETE (et non un lien) : scanne avec
-      // l'appareil photo, le telephone affiche le texte et propose de le
-      // copier, le partager ou l'enregistrer. Un lien aurait ouvert une
-      // page web, et un code seul declenche une recherche Google.
-      // Niveau L impose : 211 caracteres ne tiennent pas au-dessus.
       const resumeLink = matelotCode;
-      const qrUrl = qrDataUri(buildResumeUrl(matelotCode), { ecl: 'L' });
+      const qrUrl = matelotQrUri(matelotCode, chosen.teamCode);
       $('registerMsg').innerHTML =
         '<div class="notice success matelot-card">' +
           '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
