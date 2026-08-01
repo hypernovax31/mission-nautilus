@@ -236,6 +236,33 @@
 
     /* === Step access (code de palier) === */
 
+    /* ===== Reserve d'oxygene (haut de page) ===== */
+    .o2-bar{display:flex;align-items:center;gap:10px;margin:0 0 14px;
+      padding:9px 12px;border-radius:12px;
+      background:linear-gradient(135deg,rgba(5,16,28,.9),rgba(8,48,72,.9));
+      border:1px solid rgba(142,231,255,.22)}
+    .o2-label{flex:0 0 auto;font-size:10px;font-weight:900;letter-spacing:.09em;
+      text-transform:uppercase;color:#8ee7ff}
+    .o2-tube{position:relative;flex:1 1 auto;height:22px;border-radius:999px;
+      overflow:hidden;background:rgba(0,0,0,.45);
+      border:1px solid rgba(142,231,255,.28)}
+    .o2-fill{height:100%;width:100%;border-radius:999px;
+      background:linear-gradient(90deg,#0a8a5a,#5be09b);
+      transition:width .6s ease,background .6s ease}
+    /* Le pourcentage est ECRIT DANS la jauge, centre, avec un lisere noir
+       pour rester lisible aussi bien sur le vert que sur le fond sombre. */
+    .o2-pct{position:absolute;inset:0;display:flex;align-items:center;
+      justify-content:center;font-size:11px;font-weight:1000;color:#fff;
+      letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+    .o2-time{flex:0 0 auto;font-family:Consolas,"Courier New",monospace;
+      font-size:11px;font-weight:900;color:#cfe6ef;white-space:nowrap}
+    .o2-bar.warn .o2-fill{background:linear-gradient(90deg,#b3760a,#f5b027)}
+    .o2-bar.crit .o2-fill{background:linear-gradient(90deg,#9b1111,#ff4b3e)}
+    @media(max-width:430px){
+      .o2-label{display:none}
+      .o2-time{font-size:10px}
+    }
+
     /* === Animations === */
     @keyframes slideInRight{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
     @keyframes slideOutRight{to{transform:translateX(120%);opacity:0;}}
@@ -266,6 +293,18 @@
 </div>
 
 <main>
+  <!-- Reserve d'oxygene : rappel permanent du compte a rebours commun aux
+       equipages. Le pourcentage est ecrit DANS la jauge, pour se lire d'un
+       coup d'oeil sans quitter le mini-jeu. -->
+  <div class="o2-bar" id="o2Bar" hidden>
+    <div class="o2-label">Réserve O₂</div>
+    <div class="o2-tube">
+      <div class="o2-fill" id="o2Fill"></div>
+      <span class="o2-pct" id="o2Pct">—</span>
+    </div>
+    <div class="o2-time" id="o2Time">—</div>
+  </div>
+
   <!-- Section identification -->
   <!-- Masque au depart : le matelot est identifie automatiquement par son
        Code Matelot. Ce formulaire n'est reaffiche qu'en repli, si le code
@@ -693,6 +732,16 @@ async function clearSession(teamCode) {
   await setDoc(sessionRef(teamCode), { state: 'idle', clearedAt: new Date().toISOString() });
 }
 
+/* Configuration commune de la mission (game/config).
+   Contient notamment missionStartedAt : l'instant ou le premier matelot a
+   lance le palier 1, point de depart du compte a rebours des 7 jours. */
+async function getMissionConfig() {
+  try {
+    const snap = await getDoc(doc(db, 'game', 'config'));
+    return snap.exists() ? snap.data() : {};
+  } catch (e) { return null; }
+}
+
 /* ---------- BLOCAGE PROGRESSIF ---------- */
 function getLockHours(failCount) { return Math.min(24, Math.pow(2, failCount)); }
 function getLockedUntilISO(failCount) {
@@ -880,6 +929,7 @@ window.Nautilus = {
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, isLocked, formatDate,
+  getMissionConfig,
   isTestMode,
   isSoundEnabled, getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
@@ -918,8 +968,65 @@ window.Nautilus = {
     el.className = 'status-banner ' + kind;
   }
 
+  /* ===== RESERVE D'OXYGENE (bandeau du haut) =====
+
+     Le compte a rebours des 7 jours est COMMUN a tous les equipages. Il
+     demarre quand le tout premier matelot lance le palier 1, et sa date
+     de depart vit dans game/config (missionStartedAt), ecrite par la page
+     d'accueil.
+
+     On la relit ici pour afficher la meme information pendant le mini-jeu :
+     le joueur voit ou en est la reserve sans quitter sa partie. Le
+     pourcentage est ecrit DANS la jauge.
+
+     Tant que la mission n'est pas lancee, le bandeau reste masque : il
+     n'aurait rien a montrer. */
+  let _o2Config = null;
+
+  async function chargerConfigO2() {
+    _o2Config = await N.getMissionConfig();
+  }
+
+  function majReserveO2() {
+    const bar = $('o2Bar');
+    if (!bar) return;
+    const depart = _o2Config?.missionStartedAt;
+    if (!depart) { bar.hidden = true; return; }
+
+    const duree = (typeof _o2Config?.missionDurationMs === 'number'
+                   && _o2Config.missionDurationMs > 0)
+      ? _o2Config.missionDurationMs
+      : 7 * 24 * 60 * 60 * 1000;
+
+    const fin = new Date(depart).getTime() + duree;
+    let reste = Math.max(0, fin - Date.now());
+    const pct = Math.max(0, Math.min(100, Math.round((reste / duree) * 100)));
+
+    const j = Math.floor(reste / 86400000); reste -= j * 86400000;
+    const h = Math.floor(reste / 3600000);  reste -= h * 3600000;
+    const m = Math.floor(reste / 60000);
+
+    bar.hidden = false;
+    $('o2Fill').style.width = pct + '%';
+    $('o2Pct').textContent = pct + '%';
+    $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m`;
+    bar.classList.toggle('warn', pct <= 40 && pct > 15);
+    bar.classList.toggle('crit', pct <= 15);
+  }
+
   /* === Boot === */
   (async function init() {
+    /* La reserve d'oxygene s'affiche des l'ouverture, puis se rafraichit
+       toutes les 30 s : inutile d'aller plus vite pour un compte a rebours
+       de 7 jours, et cela evite de solliciter le telephone pour rien. */
+    chargerConfigO2().then(() => {
+      majReserveO2();
+      setInterval(majReserveO2, 30000);
+      /* La date de depart peut etre posee pendant la partie (un autre
+         equipage lance la mission) : on la reverifie de temps en temps. */
+      setInterval(() => chargerConfigO2().then(majReserveO2), 120000);
+    });
+
     /* 1) Vérifier équipe */
     if (!state.teamCode) {
       // Le message d'erreur vit dans ce bloc : il faut le rendre visible.

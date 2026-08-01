@@ -520,6 +520,23 @@
     .typewriter{position:relative;display:grid}
     .typewriter-ghost,
     .typewriter-live{grid-area:1/1;min-width:0}
+    /* Invitation a ouvrir les hublots : sans elle, rien n'indiquait que
+       ces pastilles etaient cliquables, ni qu'il fallait les lire TOUTES. */
+    .rule-invite{display:flex;align-items:flex-start;gap:10px;margin:18px 0 0;
+      padding:11px 14px;border-radius:12px;background:#eef7ff;
+      border:1px solid #c8e0f2;border-left:4px solid #2e9fd8;
+      color:#14384f;font-size:var(--fs-small);line-height:1.5;font-weight:700}
+    .rule-invite-ico{flex:0 0 auto;font-size:17px;line-height:1.3}
+    .rule-invite-count{display:inline-block;margin-left:6px;padding:2px 9px;
+      border-radius:999px;background:#0b5f8a;color:#fff;font-size:var(--fs-tiny);
+      font-weight:900;white-space:nowrap}
+    .rule-invite-count.is-done{background:#0a8a5a}
+    /* Hublot deja lu : coche discrete, pour savoir ou l'on en est. */
+    button.mission-step.seen .num::after{content:"";position:absolute;
+      right:-3px;bottom:-3px;width:14px;height:14px;border-radius:50%;
+      background:#0a8a5a;border:2px solid #fff;
+      box-shadow:0 1px 3px rgba(0,0,0,.3)}
+    button.mission-step .num{position:relative}
     .mission-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:16px;margin-top:22px;justify-items:center}.mission-step{position:relative;aspect-ratio:1/1;width:min(100%,300px)!important;max-width:300px;min-height:138px;height:auto;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;text-align:center;margin:0!important;color:#f4fbff;background:radial-gradient(circle at 42% 38%,rgba(142,231,255,.20),rgba(10,47,70,.92) 46%,rgba(3,14,24,.98) 72%);border:8px solid #5c4630;box-shadow:inset 0 0 0 5px rgba(245,176,39,.28),inset 0 0 28px rgba(142,231,255,.25),0 12px 24px rgba(0,0,0,.28);padding:18px;transition:.18s transform,.18s box-shadow,.18s border-color}.mission-step:before{content:"";position:absolute;inset:10px;border-radius:50%;border:2px solid rgba(245,176,39,.45);pointer-events:none;animation:hublotPulse 2.8s ease-in-out 6}.mission-step:after{content:"";position:absolute;top:22%;left:22%;width:20%;height:20%;border-radius:50%;background:rgba(255,255,255,.22);filter:blur(.2px);pointer-events:none}@keyframes hublotPulse{0%,100%{border-color:rgba(245,176,39,.35);box-shadow:0 0 0 rgba(245,176,39,0)}50%{border-color:rgba(245,176,39,.95);box-shadow:0 0 18px rgba(245,176,39,.55)}}.mission-step:hover{transform:translateY(-4px) scale(1.02);box-shadow:inset 0 0 0 5px rgba(245,176,39,.38),inset 0 0 34px rgba(142,231,255,.34),0 18px 30px rgba(0,0,0,.34)}.mission-step.active{border-color:var(--fnac);box-shadow:inset 0 0 0 5px rgba(245,176,39,.52),inset 0 0 42px rgba(142,231,255,.38),0 0 0 5px rgba(245,176,39,.18),0 18px 32px rgba(0,0,0,.34)}
     .num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--fnac);font-weight:900;color:#111;box-shadow:0 5px 10px rgba(245,176,39,.25);z-index:1;margin:0!important;line-height:1;text-align:center;flex:0 0 auto}.mission-step b{display:block;color:#fff;margin:0!important;padding:0 18%;font-size:clamp(13px,2.2vw,22px);text-transform:uppercase;letter-spacing:.02em;z-index:1;line-height:1.08;width:100%;text-align:center}.mission-step p{display:none}.rule-detail{margin-top:18px;background:linear-gradient(135deg,#071a2b,#0b344e);color:#e9f7ff;border:1px solid rgba(142,231,255,.22);border-radius:20px;padding:20px;min-height:150px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}.rule-detail h3{margin:0 0 8px;color:var(--fnac);font-size:22px}.rule-detail p{margin:0 0 10px;line-height:1.5}.rule-detail ul{margin:10px 0 0;padding-left:18px}.rule-detail li{margin:6px 0;line-height:1.4}
     label{display:block;font-weight:900;margin:0 0 9px;color:#1a2834}
@@ -1624,6 +1641,11 @@
     <h2>ORDRE DE MISSION</h2>
     <div class="body">
       <p class="intro-text typewriter" id="missionOrderText" data-text="En 1870, le Nautilus disparaît au large des îles Lofoten, englouti par le maelström. 156 ans plus tard, son signal résonne de nouveau &mdash; sous les rayons de la Fnac Labège. Le premier équipage à le ramener à la surface entrera dans la légende du magasin. Le sonar est allumé, matelot. À vous de jouer !"><span id="missionOrderTyping"></span><span id="missionOrderCaret" class="typewriter-caret">▌</span></p>
+      <p class="rule-invite">
+        <span class="rule-invite-ico" aria-hidden="true">&#x1F447;</span>
+        <span>Ouvre les <b>4 hublots</b> : chacun donne une consigne indispensable.
+        <span class="rule-invite-count" id="ruleProgress">0 / 4 ouverts</span></span>
+      </p>
       <div class="mission-steps" id="ruleCards">
         <button type="button" class="mission-step active" data-rule="embark"><span class="num">1</span><b>Embarquez</b></button>
         <button type="button" class="mission-step" data-rule="solve"><span class="num">2</span><b>Décryptez</b></button>
@@ -4648,40 +4670,35 @@ function qrDataUri(text, opts){
   const RULES = {
     embark: {
       title: '1 — Embarquez',
-      text: 'Donnez votre nom et votre service : le Nautilus vous affecte aussitôt à l’un de ses quatre équipages — Nemo, Nautilus, Aronnax ou Ned Land. Vous recevez alors votre Code Matelot. Ce code est votre ADN à bord : il ne vous sera montré qu’une seule fois.',
+      text: 'Nom + service : le Nautilus vous affecte à un équipage et vous remet votre Code Matelot.',
       bullets: [
-        'Notez-le ou scannez son QR : sans lui, impossible de remonter à bord.',
-        'Il vous permet de reprendre la mission depuis n’importe quel appareil.',
-        'Tout l’équipage partage la même progression : ce que vous débloquez, vous le débloquez pour tous.',
-        'Chaque matelot est unique — un même nom ne peut pas embarquer deux fois.'
+        'Ce code ne s’affiche qu’UNE fois : notez-le ou scannez son QR.',
+        'C’est lui qui vous fait remonter à bord, depuis n’importe quel appareil.',
+        'Tout l’équipage avance ensemble : un palier franchi l’est pour tous.'
       ]
     },
     solve: {
       title: '2 — Décryptez',
-      text: 'À chaque palier, le Nautilus vous soumet un mini-jeu chronométré. Résolvez-le et l’écoutille s’entrouvre : le sous-marin vous révèle le lieu où se cache le prochain QR Code dans le magasin.',
+      text: 'Chaque palier ouvre un mini-jeu chronométré. Résolvez-le : le Nautilus vous dit alors où se cache le prochain QR Code dans le magasin.',
       bullets: [
-        'Le temps est limité et chaque erreur vous fera perdre du temps face aux autres équipes.'
+        'Le temps est compté, et chaque erreur vous coûte cher.'
       ]
     },
     scan: {
       title: '3 — Scannez',
-      text: 'Une fois le lieu repéré, quittez l’écran et fouillez le magasin. Le QR Code peut être glissé dans une TG, agrafé à une PLV, coincé entre deux livres, fixé autour d’un meuble ou caché derrière un objet. Il faudra bien chercher car il ne viendra pas à vous.',
+      text: 'Quittez l’écran et fouillez le magasin : le QR Code ne viendra pas à vous.',
       bullets: [
-        'Cherchez à hauteur d’yeux… mais aussi plus haut et plus bas.',
-        'Scannez le QR trouvé : le palier suivant s’ouvre immédiatement.',
-        'Respectez le magasin, les clients et le travail des équipes : on cherche, on ne dérange pas.'
+        'Regardez à hauteur d’yeux, mais aussi plus haut et plus bas.',
+        'Scannez-le : le palier suivant s’ouvre aussitôt.',
+        'Respectez le magasin, les clients et les équipes.'
       ]
     },
     survive: {
       title: '4 — Survivez',
-      text: 'Chaque échec vous éloigne un peu plus du Nautilus. Tout l’équipage est bloqué : impossible de reprendre avant que la pression ne retombe. Et pendant ce temps, les autres équipages continuent d’avancer.',
+      text: 'Un échec bloque TOUT l’équipage, pendant que les autres avancent.',
       bullets: [
-        '1er échec : 2 h de blocage',
-        '2e échec : 4 h',
-        '3e échec : 8 h',
-        '4e échec : 16 h',
-        'À partir du 5e échec : 24 h par échec',
-        '7 jours d’oxygène pour tout le monde : à 0, le signal sera définitivement perdu.'
+        'Blocage : 2 h, puis 4 h, 8 h, 16 h, et 24 h dès le 5ᵉ échec.',
+        '7 jours d’oxygène pour tous : à 0, le signal est perdu.'
       ]
     }
   };
@@ -4698,9 +4715,28 @@ function qrDataUri(text, opts){
       : '';
     detail.innerHTML = `<h3>${esc(rule.title)}</h3><p>${esc(rule.text)}</p>${bullets}`;
     document.querySelectorAll('.mission-step').forEach(btn => btn.classList.toggle('active', btn.dataset.rule === key));
+
+    /* Le hublot est marque comme lu, et on met a jour le compteur.
+       Sans repere, rien ne disait au joueur qu'il restait des consignes a
+       decouvrir : il en lisait une et passait a la suite. */
+    const btnLu = document.querySelector(`.mission-step[data-rule="${key}"]`);
+    if(btnLu) btnLu.classList.add('seen');
+    majProgressionHublots();
+
     if(shouldScroll){
       setTimeout(() => document.getElementById('ruleCards')?.scrollIntoView({behavior:'smooth', block:'start'}), 80);
     }
+  }
+
+  /* Compteur "N / 4 ouverts", sous l'invitation. Passe au vert une fois
+     les quatre consignes lues. */
+  function majProgressionHublots(){
+    const el = $('ruleProgress');
+    if(!el) return;
+    const total = document.querySelectorAll('.mission-step').length || 4;
+    const lus   = document.querySelectorAll('.mission-step.seen').length;
+    el.textContent = lus >= total ? '✓ les 4 sont lus' : `${lus} / ${total} ouverts`;
+    el.classList.toggle('is-done', lus >= total);
   }
 
   document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => showRule(btn.dataset.rule, true)));
@@ -5384,6 +5420,20 @@ function qrDataUri(text, opts){
       return;
     }
     startOceanAudio();
+
+    /* DEPART DU COMPTE A REBOURS DES 7 JOURS.
+
+       L'oxygene doit commencer a descendre a l'instant ou le tout premier
+       matelot lance officiellement le premier palier — pas avant.
+       startMissionOfficial() n'etait appelee NULLE PART : la date de
+       depart n'etait donc jamais posee, la jauge restait figee a 100 %
+       et le compte a rebours affichait "7J 00h00m00s" indefiniment.
+
+       La fonction ne fait rien si la mission est deja lancee : seul le
+       tout premier appel compte, et le chrono est commun a tous les
+       equipages. On n'attend pas le resultat (pas de `await`) pour ne
+       pas retarder l'entree dans le mini-jeu. */
+    startMissionOfficial(false).catch(e => console.warn('depart mission:', e));
 
     /* Palier 1 : ecran rouge + alarme pendant 5 s, puis page du mini-jeu.
        On transmet le Code Matelot : le mini-jeu sait alors qui joue et ne
