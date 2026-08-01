@@ -1613,7 +1613,19 @@ window.Nautilus = {
     const nextFail = Number(state.team.failCount || 0) + 1;
     const hours = N.getLockHours(nextFail);
     const until = N.getLockedUntilISO(nextFail);
-    await N.saveTeam(state.team, { status: 'blocked', failCount: nextFail, lastLockHours: hours, lockedUntil: until });
+
+    /* BUG CORRIGE : le resultat de saveTeam() etait jete.
+       L'ecran de defaite affiche "Reprise possible le <lockedUntil>" en
+       lisant state.team. Cette variable n'etait mise a jour que par
+       l'ecoute temps reel de Firestore, qui arrive APRES le dessin de
+       l'ecran — et jamais du tout en partie d'essai. Le matelot voyait
+       donc "Reprise possible le —", sans savoir combien de temps il
+       etait bloque, alors que la date etait pourtant bien enregistree.
+       On garde desormais l'equipe renvoyee par saveTeam() : elle
+       contient deja le blocage. */
+    state.team = await N.saveTeam(state.team, {
+      status: 'blocked', failCount: nextFail, lastLockHours: hours, lockedUntil: until
+    });
     N.addLogEntry(`🔒 L'équipage est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h).`, 'danger');
   }
 
