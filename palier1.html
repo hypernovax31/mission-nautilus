@@ -742,15 +742,33 @@ async function getMissionConfig() {
   } catch (e) { return null; }
 }
 
-/* ---------- BLOCAGE PROGRESSIF ---------- */
-function getLockHours(failCount) { return Math.min(24, Math.pow(2, failCount)); }
+/* ---------- BLOCAGE PROGRESSIF (PAR MATELOT) ---------- */
+/* REGLE DU JEU : un echec ne bloque QUE le matelot qui a echoue, jamais
+   tout l'equipage. Les autres peuvent reprendre le palier a tour de role.
+   Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e echec. */
+const LOCK_HOURS = [1, 2, 4, 8, 12];
+function getLockHours(failCount) {
+  const n = Math.max(1, Number(failCount) || 1);
+  return n <= LOCK_HOURS.length ? LOCK_HOURS[n - 1] : 24;
+}
 function getLockedUntilISO(failCount) {
   const d = new Date();
   d.setHours(d.getHours() + getLockHours(failCount));
   return d.toISOString();
 }
+/* Blocage de tout l'equipage : ne subsiste que par decision d'un admin. */
 function isLocked(team) {
   return team?.status === 'blocked' && team.lockedUntil && new Date(team.lockedUntil).getTime() > Date.now();
+}
+/* Fiche de blocage d'un matelot, rangee dans le document de l'equipe
+   sous matelotLocks[memberKey] = { failCount, lockedUntil, lastLockHours }. */
+function getMatelotLock(team, key) {
+  if (!team || !key) return null;
+  return (team.matelotLocks || {})[key] || null;
+}
+function isMatelotLocked(team, key) {
+  const l = getMatelotLock(team, key);
+  return !!(l && l.lockedUntil && new Date(l.lockedUntil).getTime() > Date.now());
 }
 function formatDate(iso) { return iso ? new Date(iso).toLocaleString('fr-FR') : '—'; }
 
@@ -928,7 +946,7 @@ window.Nautilus = {
   getCurrentMatelotCode, getMatelotByCode,
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, watchSession, createSession, updateSession, endSession, clearSession,
-  getLockHours, getLockedUntilISO, isLocked, formatDate,
+  getLockHours, getLockedUntilISO, isLocked, getMatelotLock, isMatelotLocked, formatDate,
   getMissionConfig,
   isTestMode,
   isSoundEnabled, getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
@@ -1225,8 +1243,12 @@ window.Nautilus = {
     const t = state.team;
     $('topTeam').textContent = t.teamName || t.teamCode;
     /* Bandeau statut */
+    const monBlocage = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
+    const jeSuisBloque = state.me ? N.isMatelotLocked(t, state.me.memberKey) : false;
     if (N.isLocked(t)) {
-      setStatus(`🔒 Équipage bloqué jusqu'à ${N.formatDate(t.lockedUntil)} — ${t.failCount || 0} échec(s) cumulé(s).`, 'danger');
+      setStatus(`🔒 Équipage bloqué jusqu'à ${N.formatDate(t.lockedUntil)} — décision du poste de commandement.`, 'danger');
+    } else if (jeSuisBloque) {
+      setStatus(`🔒 Tu es en surface jusqu'à ${N.formatDate(monBlocage.lockedUntil)} — ${monBlocage.failCount || 0} échec(s) personnel(s). L'équipage, lui, continue.`, 'danger');
     } else if (t.status === 'finished') {
       setStatus('🏆 Mission terminée. Carnet de bord scellé.', 'success');
     } else {
@@ -1234,6 +1256,12 @@ window.Nautilus = {
     }
     renderCrew();
     showGame();
+    /* BUG CORRIGE : showGame() ne redessine la zone de jeu que la premiere
+       fois (elle se contente ensuite de brancher l'ecoute de session). Un
+       changement venu du document d'equipe — notamment la pose ou la levee
+       d'un blocage PERSONNEL — n'apparaissait donc jamais a l'ecran tant
+       que la session ne bougeait pas. On redessine explicitement. */
+    if (state.me) renderGameArea();
   }
   function renderCrew() {
     const list = $('crewList');
@@ -1286,9 +1314,21 @@ window.Nautilus = {
     const s = state.session;
     const me = state.me;
 
-    /* Équipage bloqué */
+    /* Équipage bloqué (uniquement sur décision d'un administrateur) */
     if (N.isLocked(t)) {
       body.innerHTML = renderLockScreen(t);
+      return;
+    }
+
+    /* Blocage PERSONNEL : seul le matelot qui a échoué est repoussé en
+       surface. Les autres continuent de jouer normalement.
+       EXCEPTION : juste après sa défaite, on lui laisse d'abord l'écran
+       "trop d'erreurs" (qui indique déjà son heure de reprise), sinon il
+       passerait directement au verrou sans comprendre ce qui s'est passé. */
+    const jeViensDePerdre = !!(s && s.state === 'lost' && me
+      && (s.startedByMemberKey === me.memberKey || s.startedBy === me.clientId));
+    if (me && !jeViensDePerdre && N.isMatelotLocked(t, me.memberKey)) {
+      body.innerHTML = renderMatelotLockScreen(t, me);
       return;
     }
     if (t.status === 'finished') {
@@ -1314,7 +1354,7 @@ window.Nautilus = {
         body.innerHTML = renderNextStepPrompt(t);
         return;
       }
-      body.innerHTML = renderIdleScreen(t, me);
+      body.innerHTML = renderIdleScreen(t, me, null);
       bindIdleEvents();
       return;
     }
@@ -1326,7 +1366,14 @@ window.Nautilus = {
     }
 
     if (s.state === 'lost') {
-      body.innerHTML = renderLostScreen(s, t);
+      /* NOUVELLE REGLE : l'echec n'appartient qu'a son auteur. Celui qui a
+         echoue voit l'ecran de defaite (il est de toute facon bloque et
+         intercepte plus haut). Les autres matelots ne restent pas coinces
+         devant : la barre est libre, ils peuvent reprendre le palier. */
+      const cestMoi = me && (s.startedByMemberKey === me.memberKey || s.startedBy === me.clientId);
+      if (cestMoi) { body.innerHTML = renderLostScreen(s, t); return; }
+      body.innerHTML = renderIdleScreen(t, me, s);
+      bindIdleEvents();
       return;
     }
 
@@ -1344,11 +1391,19 @@ window.Nautilus = {
   }
 
   /* === ÉCRAN : idle (pas de session en cours) === */
-  function renderIdleScreen(t, me) {
+  function renderIdleScreen(t, me, echecPrecedent) {
+    /* Quand un camarade vient d'echouer, on le dit clairement : la barre
+       est libre, c'est au tour du suivant. */
+    const banniere = echecPrecedent
+      ? `<div class="status-banner warning">
+           🔁 <b>${esc(echecPrecedent.startedByName || 'Un matelot')}</b> a échoué et remonte en surface : lui seul est bloqué.
+           La barre est libre — <b>${esc(me?.name || 'matelot')}</b>, tu peux reprendre le palier.
+         </div>`
+      : `<div class="status-banner info">
+           📋 <b>Aucun protocole en cours.</b> Un seul matelot prend les commandes à la fois ; les autres suivent et peuvent lui envoyer un indice.
+         </div>`;
     return `
-      <div class="status-banner info">
-        📋 <b>Aucun protocole en cours.</b> Un seul matelot prend les commandes ; les autres suivent et peuvent lui envoyer un indice.
-      </div>
+      ${banniere}
       <div class="morse-stepbox">
         <div class="morse-header">
           <h3>🧪 ÉPREUVE DU PALIER</h3>
@@ -1365,7 +1420,8 @@ window.Nautilus = {
           <br><br>
           🎧 Le signal est faible : pense à monter le son 😉<br>
           ⏱️ <b>3 minutes 30</b> pour répondre.<br>
-          ❌ <b>3 erreurs</b> et l'équipage est repoussé en surface.<br>
+          ❌ <b>3 erreurs</b> et tu es repoussé en surface — toi seul.<br>
+          🤝 Un autre matelot pourra alors reprendre le palier à ta place.<br>
           🆘 Bloqué ? Demande un <b>indice</b> au capitaine.
         </p>
         <div class="morse-actions">
@@ -1380,6 +1436,13 @@ window.Nautilus = {
 
   async function startNewSession() {
     if (!state.me || !state.team) return;
+    /* Garde-fou : un matelot bloque ne peut pas reprendre les commandes,
+       meme en cliquant vite depuis un ecran affiche avant son blocage. */
+    if (N.isMatelotLocked(state.team, state.me.memberKey)) {
+      renderGameArea();
+      N.showToast('Tu es en surface : attends la fin de ton blocage.', 'warning');
+      return;
+    }
     /* Vérifier qu'il n'y a pas déjà une session active (race condition possible) */
     if (!state.isTest) {
       const current = await N.getSession(state.teamCode);
@@ -1695,13 +1758,13 @@ window.Nautilus = {
            BUG CORRIGE : c'etait l'inverse. Passer la session a 'lost'
            declenche aussitot le dessin de l'ecran de defaite, qui
            affiche "Reprise possible le <date>". Or cette date n'etait
-           ecrite qu'ensuite, par blockTeam(). Entre les deux, l'ecran se
+           ecrite qu'ensuite, par blockMatelot(). Entre les deux, l'ecran se
            dessinait sans date et affichait un simple tiret. Elle
            n'apparaissait qu'au rafraichissement suivant, une seconde
            plus tard — souvent jamais sous les yeux du joueur.
            En bloquant d'abord, la date existe deja quand l'ecran
            s'affiche. */
-        await blockTeam('morse_too_many_errors');
+        await blockMatelot('morse_too_many_errors');
         const finKO = { state: 'lost', errors: newErrors, endReason: 'too_many_errors',
                         lastEvent: 'lost', endedAt: new Date().toISOString() };
         await N.updateSession(state.teamCode, finKO);
@@ -1746,7 +1809,7 @@ window.Nautilus = {
     if (state.session.state !== 'playing') return;
     /* Meme ordre que pour les 3 erreurs : le blocage d'abord, sinon
        l'ecran de defaite s'affiche avant que la date de reprise existe. */
-    await blockTeam('morse_timeout');
+    await blockMatelot('morse_timeout');
     const finTemps = { state: 'lost', endReason: 'timeout', lastEvent: 'timeout',
                        endedAt: new Date().toISOString() };
     await N.updateSession(state.teamCode, finTemps);
@@ -1757,9 +1820,16 @@ window.Nautilus = {
     renderGameArea();
   }
 
-  async function blockTeam(reason) {
-    if (!state.team) return;
-    const nextFail = Number(state.team.failCount || 0) + 1;
+  async function blockMatelot(reason) {
+    if (!state.team || !state.me) return;
+    /* NOUVELLE REGLE DU JEU : on ne bloque plus l'equipage entier, mais
+       UNIQUEMENT le matelot qui vient d'echouer. Son compteur d'echecs lui
+       est propre : son 1er echec coute 1 h, meme si ses camarades en ont
+       deja accumule. Les autres gardent l'acces au palier et peuvent le
+       reprendre chacun leur tour. */
+    const key = state.me.memberKey;
+    const ancien = N.getMatelotLock(state.team, key);
+    const nextFail = Number(ancien?.failCount || 0) + 1;
     const hours = N.getLockHours(nextFail);
     const until = N.getLockedUntilISO(nextFail);
 
@@ -1772,16 +1842,28 @@ window.Nautilus = {
        etait bloque, alors que la date etait pourtant bien enregistree.
        On garde desormais l'equipe renvoyee par saveTeam() : elle
        contient deja le blocage. */
+    const locks = { ...(state.team.matelotLocks || {}) };
+    locks[key] = {
+      name: state.me.name, failCount: nextFail, lastLockHours: hours,
+      lockedUntil: until, reason: reason || '', blockedAt: new Date().toISOString()
+    };
+    /* failCount de l'equipe reste tenu a jour : il ne sert plus a calculer
+       la duree, seulement a afficher le total des avaries sur le pupitre. */
     state.team = await N.saveTeam(state.team, {
-      status: 'blocked', failCount: nextFail, lastLockHours: hours, lockedUntil: until
+      matelotLocks: locks,
+      failCount: Number(state.team.failCount || 0) + 1,
+      lastEvent: 'matelot_blocked'
     });
-    N.addLogEntry(`🔒 L'équipage est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h).`, 'danger');
+    N.addLogEntry(`🔒 ${state.me.name} est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h). L'équipage peut reprendre le palier.`, 'danger');
   }
 
   async function advanceTeam() {
     if (!state.team) return;
     const completed = Array.from(new Set([...(state.team.completedSteps || []), 'start']));
     const next = N.STEPS['start'].next;
+    /* Palier reussi : l'equipage avance. On leve un eventuel blocage
+       d'equipage (pose par un admin), mais PAS les blocages personnels :
+       ils suivent chaque matelot d'un palier a l'autre. */
     const update = { status: 'active', lockedUntil: null, completedSteps: completed, lastEvent: 'step_advanced' };
     if (next) { update.currentStep = next; }
     await N.saveTeam(state.team, update);
@@ -1885,7 +1967,7 @@ window.Nautilus = {
     const playerName = s.startedByName || 'un matelot';
     return `
       <div class="status-banner warning">
-        👀 <b>${esc(me.name)}</b>, tu ne peux pas jouer : <b>${esc(playerName)}</b> est aux commandes du protocole en cours. Tu peux uniquement l'aider en lui transmettant un indice depuis ton journal de bord.
+        👀 <b>${esc(me.name)}</b>, ce n'est pas ton tour : <b>${esc(playerName)}</b> est aux commandes. Aide-le en lui transmettant un indice depuis ton journal de bord — s'il échoue, la barre te reviendra.
       </div>
       <div class="morse-stepbox">
         <div class="morse-header">
@@ -1895,7 +1977,7 @@ window.Nautilus = {
             <span class="morse-timer" id="morseTimer">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</span>
           </div>
         </div>
-        <p class="morse-brief">Un protocole secret est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — chaque mauvaise traduction rapproche l'équipage de la surface.</p>
+        <p class="morse-brief">Un protocole secret est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — s'il échoue, il sera seul repoussé en surface et tu pourras prendre sa place.</p>
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
             <div class="morse-sweep"></div>
@@ -2010,6 +2092,7 @@ window.Nautilus = {
 
   /* === ÉCRAN : défaite === */
   function renderLostScreen(s, t) {
+    const monLock = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
     const reason = s.endReason || 'lost';
     const reasonText = reason === 'timeout' ? "⏳ Le temps s'est écoulé." :
                        reason === 'too_many_errors' ? "❌ Trop d'erreurs de traduction." : '💀 Épreuve perdue.';
@@ -2017,22 +2100,44 @@ window.Nautilus = {
       <div class="lock-screen">
         <h2>${reasonText}</h2>
         <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0 18px;">
-          L'équipage n'a pas validé l'épreuve. Tous les matelots sont repoussés en surface.
+          <b>Toi seul</b> es repoussé en surface. L'équipage, lui, reste en plongée :
+          un autre matelot peut reprendre le palier dès maintenant.
         </p>
-        ${t.lockedUntil
-          ? `<p class="lock-rule">⏱️ Reprise possible le <b>${esc(N.formatDate(t.lockedUntil))}</b></p>`
-          : `<p class="lock-rule">⏱️ Durée du blocage en cours de calcul…</p>`}
+        ${monLock?.lockedUntil
+          ? `<p class="lock-rule">⏱️ Tu pourras réessayer le <b>${esc(N.formatDate(monLock.lockedUntil))}</b> (blocage de ${esc(String(monLock.lastLockHours || '?'))} h).</p>`
+          : `<p class="lock-rule">⏱️ Durée de ton blocage en cours de calcul…</p>`}
         <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
       </div>
     `;
   }
 
-  /* === ÉCRAN : locked (équipage bloqué) === */
+  /* "1er echec", "2e echec"... : ecrire "1e" ferait faute. */
+  function ordinal(n) { return Number(n) === 1 ? '1ᵉʳ' : `${Number(n) || 1}ᵉ`; }
+
+  /* === ÉCRAN : blocage PERSONNEL (le matelot seul est en surface) === */
+  function renderMatelotLockScreen(t, me) {
+    const l = N.getMatelotLock(t, me.memberKey) || {};
+    return `
+      <div class="lock-screen">
+        <h2>🔒 ${esc(me.name)}, tu es en surface</h2>
+        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">
+          Ton échec ne bloque que toi. Le reste de l'équipage peut tenter le palier
+          pendant ce temps — un matelot à la fois.
+        </p>
+        <div class="countdown-big">${esc(N.formatDate(l.lockedUntil))}</div>
+        <p class="lock-rule">⏳ Tu pourras reprendre les commandes à cette heure
+          (${esc(ordinal(l.failCount || 1))} échec &rarr; ${esc(String(l.lastLockHours || '?'))} h).</p>
+        <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
+      </div>
+    `;
+  }
+
+  /* === ÉCRAN : locked (équipage bloqué par le poste de commandement) === */
   function renderLockScreen(t) {
     return `
       <div class="lock-screen">
         <h2>🔒 Équipage en surface</h2>
-        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">Tous les matelots sont en attente. L'épreuve ne peut pas être tentée pour le moment.</p>
+        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">Le poste de commandement a mis tout l'équipage en attente. L'épreuve ne peut pas être tentée pour le moment.</p>
         <div class="countdown-big">${esc(N.formatDate(t.lockedUntil))}</div>
         <p class="lock-rule">⏳ Reprise du Palier 1 possible à cette heure.</p>
       </div>

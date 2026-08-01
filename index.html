@@ -1638,7 +1638,7 @@
       <p class="intro-text typewriter" id="missionOrderText" data-text="En 1870, le Nautilus disparaît au large des îles Lofoten, englouti par le maelström. 156 ans plus tard, son signal résonne de nouveau &mdash; sous les rayons de la Fnac Labège. Le premier équipage à le ramener à la surface entrera dans la légende du magasin. Le sonar est allumé, matelot. À vous de jouer !"><span id="missionOrderTyping"></span><span id="missionOrderCaret" class="typewriter-caret">▌</span></p>
       <div class="rule-invite">
         <span class="rule-invite-eyebrow">Consignes de plongée</span>
-        <span class="rule-invite-main">Ouvre les <b>4 hublots</b> &mdash; chacun cache une consigne vitale.</span>
+        <span class="rule-invite-main">Ouvre les <b>4 hublots</b> pour connaître les indications de la mission.</span>
         <span class="rule-invite-count" id="ruleProgress"><i></i><i></i><i></i><i></i></span>
       </div>
       <div class="mission-steps" id="ruleCards">
@@ -1955,9 +1955,30 @@
     return found ? found.code : wanted;
   }
 
-  function getLockHours(failCount){return Math.min(24, Math.pow(2, failCount));}
+  /* BLOCAGE : il est PERSONNEL, pas collectif.
+     Un echec ne repousse en surface que le matelot qui l'a commis ; ses
+     camarades gardent l'acces au palier et le reprennent chacun leur tour.
+     Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e echec. */
+  const LOCK_HOURS = [1, 2, 4, 8, 12];
+  function getLockHours(failCount){
+    const n = Math.max(1, Number(failCount) || 1);
+    return n <= LOCK_HOURS.length ? LOCK_HOURS[n-1] : 24;
+  }
   function getLockedUntilISO(failCount){const d=new Date();d.setHours(d.getHours()+getLockHours(failCount));return d.toISOString();}
+  /* Blocage de TOUT l'equipage : ne subsiste que par decision d'un admin. */
   function isLocked(team){return team?.status==='blocked'&&team.lockedUntil&&new Date(team.lockedUntil).getTime()>Date.now();}
+  /* Blocages personnels, ranges dans teams/{code}.matelotLocks[memberKey]. */
+  function matelotKeyOf(matelot){
+    return matelot?.memberKey || memberKey(matelot?.name || '');
+  }
+  function getMatelotLock(team, key){
+    if(!team || !key) return null;
+    return (team.matelotLocks || {})[key] || null;
+  }
+  function isMatelotLocked(team, key){
+    const l = getMatelotLock(team, key);
+    return !!(l && l.lockedUntil && new Date(l.lockedUntil).getTime() > Date.now());
+  }
   function formatDate(iso){return iso?new Date(iso).toLocaleString('fr-FR'):'—';}
   function onlineCount(team){
     const now = Date.now();
@@ -4470,7 +4491,7 @@ function qrDataUri(text, opts){
     await refreshAdminTeams();
     if(!effectiveTeams.length){ alert('Aucune équipe dans la base.'); return; }
     const noms = effectiveTeams.map(t => t.name).join(', ');
-    const ok1 = confirm(`⚠️ Action irréversible : remettre à zéro la progression de ${effectiveTeams.length} équipe(s) ?\n\n(${noms})\n→ currentStep=start, failCount=0, lockedUntil=null, completedSteps=[]\n\nLes membres inscrits sont conservés.`);
+    const ok1 = confirm(`⚠️ Action irréversible : remettre à zéro la progression de ${effectiveTeams.length} équipe(s) ?\n\n(${noms})\n→ currentStep=start, failCount=0, blocages des matelots effacés, completedSteps=[]\n\nLes membres inscrits sont conservés.`);
     if(!ok1) return;
     const ok2 = confirm("Confirme une seconde fois : reset complet de la progression ?");
     if(!ok2) return;
@@ -4486,6 +4507,10 @@ function qrDataUri(text, opts){
           lockedUntil: null,
           failCount: 0,
           lastLockHours: 0,
+          /* Les blocages personnels des matelots font partie de la
+             progression : un reset doit les effacer, sinon un matelot
+             resterait en surface alors que tout repart de zero. */
+          matelotLocks: {},
           completedSteps: [],
           finishedAt: null,
           updatedAt: new Date().toISOString()
@@ -4587,6 +4612,27 @@ function qrDataUri(text, opts){
       return;
     }
 
+    /* --- Ce matelot est bloque, mais pas son equipage ---
+       Il voit son heure de reprise ; ses camarades, eux, gardent le
+       bouton de lancement : le palier reste jouable pour eux. */
+    const maCle    = matelotKeyOf(currentMatelot);
+    const monLock  = getMatelotLock(currentTeam, maCle);
+    if(isMatelotLocked(currentTeam, maCle)){
+      box.innerHTML =
+        '<div class="cockpit is-locked">'
+        + cockpitPlateHtml(currentTeam, 'Matelot en surface')
+        + '<div class="ck-screen">'
+        +   '<div class="ck-screen-label"><span class="ck-alarm-lamp"></span>Statut personnel</div>'
+        +   '<div class="ck-screen-value">REMONTÉE FORCÉE</div>'
+        +   '<p class="ck-screen-desc">Ton échec ne bloque que <b>toi</b> : le reste de l’équipage poursuit la plongée.<br>'
+        +     'Tu pourras reprendre les commandes le <b>' + esc(formatDate(monLock.lockedUntil)) + '</b>'
+        +     ' (' + esc(String(monLock.lastLockHours || '?')) + ' h de blocage).</p>'
+        + '</div>'
+        + cockpitTrackHtml(currentTeam)
+        + '</div>';
+      return;
+    }
+
     /* --- Navigation normale --- */
     const launchNotice = palierLaunchNotice
       ? `<div class="notice success"><b>${esc(step.label)} chargé.</b><br>Le Nautilus reprend la navigation là où votre équipage s’est arrêté.</div>`
@@ -4644,10 +4690,8 @@ function qrDataUri(text, opts){
       +     (fails === 0
         ? '&#x2713; <b>Aucun dommage.</b> La coque est intacte.'
         : fails === 1
-        ? '&#x26A0; <b>1 erreur</b> consignée au journal de bord. La coque tient bon.'
-        : fails < 5
-        ? '&#x26A0; <b>' + fails + ' erreurs</b> au journal de bord. La coque encaisse, mais la pression monte.'
-        : '&#x26A0; <b>' + fails + ' erreurs</b> au journal de bord. La coque est éprouvée : chaque erreur coûte désormais 24 h.')
+        ? '&#x26A0; <b>1 erreur</b> consignée au journal de bord. Seul son auteur a été repoussé en surface.'
+        : '&#x26A0; <b>' + fails + ' erreurs</b> au journal de bord. Chaque échec ne bloque que son auteur : la relève prend la barre.')
       +   '</p>'
 
       /* Ecran principal : ou en est l'equipage, et ce qui l'attend.
@@ -4673,10 +4717,10 @@ function qrDataUri(text, opts){
   const RULES = {
     embark: {
       title: '1 — Embarquez',
-      text: 'Nom + service : le Nautilus vous affecte à un équipage et vous remet votre Code Matelot.',
+      text: 'Inscris ton nom & ton service : le Nautilus t’affecte à un équipage et te remet ton Code Matelot personnel.',
       bullets: [
-        'Ce code ne s’affiche qu’UNE fois : notez-le ou scannez son QR.',
-        'C’est lui qui vous fait remonter à bord, depuis n’importe quel appareil.',
+        'Ce code ne s’affiche qu’UNE fois : note-le ou scanne son QR.',
+        'C’est lui qui te fait remonter à bord, depuis n’importe quel appareil.',
         'Tout l’équipage avance ensemble : un palier franchi l’est pour tous.'
       ]
     },
@@ -4691,16 +4735,17 @@ function qrDataUri(text, opts){
       title: '3 — Scannez',
       text: 'Quittez l’écran et fouillez le magasin : le QR Code ne viendra pas à vous.',
       bullets: [
-        'Regardez à hauteur d’yeux, mais aussi plus haut et plus bas.',
-        'Scannez-le : le palier suivant s’ouvre aussitôt.',
+        'Regardez absolument partout autour de la zone de recherche.',
+        'Scannez le QR Code trouvé : le palier suivant s’ouvre aussitôt.',
         'Respectez le magasin, les clients et les équipes.'
       ]
     },
     survive: {
       title: '4 — Survivez',
-      text: 'Un échec bloque TOUT l’équipage, pendant que les autres avancent.',
+      text: 'Un échec ne bloque QUE le matelot qui a échoué. L’équipage, lui, continue.',
       bullets: [
-        'Blocage : 2 h, puis 4 h, 8 h, 16 h, et 24 h dès le 5ᵉ échec.',
+        'Dès que l’accès est libre, un autre matelot reprend le palier : chacun son tour.',
+        'Blocage personnel : 1 h, puis 2 h, 4 h, 8 h, 12 h, et 24 h dès le 6ᵉ échec.',
         '7 jours d’oxygène pour tous : à 0, le signal est perdu.'
       ]
     }
@@ -5424,6 +5469,13 @@ function qrDataUri(text, opts){
       document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
       return;
     }
+    /* Blocage personnel : ce matelot-la ne peut pas relancer le palier,
+       meme si son equipage, lui, reste libre de le faire. */
+    if(isMatelotLocked(currentTeam, matelotKeyOf(currentMatelot))){
+      renderGame();
+      document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+      return;
+    }
     startOceanAudio();
 
     /* DEPART DU COMPTE A REBOURS DES 7 JOURS.
@@ -6108,6 +6160,7 @@ function qrDataUri(text, opts){
         return `<div class="team" style="background:#fff" data-team="${esc(t.teamCode)}">
           <h3>${esc(t.teamName)} <span class="small" style="color:var(--muted)">(${esc(t.teamCode)})</span></h3>
           <div class="small" style="margin-bottom:10px">Statut actuel : <b style="color:${locked ? 'var(--bad)' : '#075c39'}">${locked ? 'BLOQUÉE' : 'ACTIVE'}</b> · échecs : <b>${Number(t.failCount||0)}</b></div>
+          ${renderMatelotLocksHtml(t)}
           <div class="admin-form-grid">
             <label>Statut de l'équipe</label>
             <select class="lk-status">
@@ -6134,10 +6187,58 @@ function qrDataUri(text, opts){
           await adminUpdateLock(code, { status, lockedUntil: dtVal, failCount: fails });
         });
         teamEl.querySelector('.lk-unlock').addEventListener('click', () => adminUnlockTeam(code));
+        teamEl.querySelectorAll('.lk-free-one').forEach(b =>
+          b.addEventListener('click', () => adminUnlockMatelot(code, b.dataset.key)));
+        teamEl.querySelector('.lk-free-all')?.addEventListener('click', () => adminUnlockMatelot(code, null));
       });
     }catch(err){
       console.error('renderAdminLocks:', err);
       box.innerHTML = `<div class="notice warning">Erreur : ${esc(err.message || err)}</div>`;
+    }
+  }
+
+  /* Liste des matelots actuellement en surface (blocage personnel).
+     Sans cet affichage, un blocage individuel serait invisible depuis
+     l'admin : impossible de savoir qui est bloque, ni de le liberer. */
+  function renderMatelotLocksHtml(t){
+    const locks = t.matelotLocks || {};
+    const now = Date.now();
+    const actifs = Object.entries(locks)
+      .filter(([,l]) => l && l.lockedUntil && new Date(l.lockedUntil).getTime() > now);
+    if(!actifs.length){
+      return '<div class="small" style="margin-bottom:10px;color:#075c39">Aucun matelot bloqué individuellement.</div>';
+    }
+    const lignes = actifs.map(([key, l]) =>
+      `<li style="margin:4px 0">🔒 <b>${esc(l.name || key)}</b> — jusqu'au ${esc(formatDate(l.lockedUntil))}
+        (${esc(String(l.failCount || 1))} échec(s))
+        <button class="secondary lk-free-one" type="button" data-key="${esc(key)}" style="margin-left:8px;padding:3px 10px;font-size:12px">Libérer</button></li>`
+    ).join('');
+    return `<div class="small" style="margin-bottom:10px">
+        <b>Matelots en surface (${actifs.length})</b>
+        <ul style="margin:6px 0 8px 0;padding-left:18px">${lignes}</ul>
+        <button class="secondary lk-free-all" type="button" style="padding:4px 12px;font-size:12px">🔓 Libérer tous les matelots</button>
+      </div>`;
+  }
+
+  /* Leve un blocage personnel (un matelot, ou tous si key vaut null). */
+  async function adminUnlockMatelot(teamCode, key){
+    if(!isAdminUnlocked()) return;
+    try{
+      const ref = doc(db,'teams',teamCode);
+      const snap = await getDoc(ref);
+      if(!snap.exists()) throw new Error('Équipe introuvable.');
+      const locks = { ...(snap.data().matelotLocks || {}) };
+      if(key){ delete locks[key]; } else { Object.keys(locks).forEach(k => delete locks[k]); }
+      await updateDoc(ref, { matelotLocks: locks, updatedAt:new Date().toISOString() });
+      if(currentTeam?.teamCode === teamCode){
+        currentTeam = { ...currentTeam, matelotLocks: locks };
+        renderGame();
+      }
+      await renderAdminLocks();
+      endAdminSession(key ? '✅ Matelot libéré · session fermée' : '✅ Tous les matelots libérés · session fermée');
+    }catch(err){
+      console.error('adminUnlockMatelot:', err);
+      alert(`❌ Échec : ${err.message || err}`);
     }
   }
 
