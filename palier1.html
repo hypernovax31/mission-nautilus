@@ -1582,11 +1582,45 @@ window.Nautilus = {
       const max = state.session.maxErrors || 3;
       N.addLogEntry(`❌ ${state.me.name} a fait une erreur (${newErrors}/${max}).`, 'danger');
       if (newErrors >= max) {
-        await N.updateSession(state.teamCode, { state: 'lost', errors: newErrors, endReason: 'too_many_errors', lastEvent: 'lost', endedAt: new Date().toISOString() });
-        N.addLogEntry(`💀 L'équipage a épuisé ses chances. Remontée en surface forcée.`, 'danger');
+        /* ORDRE IMPORTANT : on bloque l'equipage AVANT de marquer la
+           session perdue.
+
+           BUG CORRIGE : c'etait l'inverse. Passer la session a 'lost'
+           declenche aussitot le dessin de l'ecran de defaite, qui
+           affiche "Reprise possible le <date>". Or cette date n'etait
+           ecrite qu'ensuite, par blockTeam(). Entre les deux, l'ecran se
+           dessinait sans date et affichait un simple tiret. Elle
+           n'apparaissait qu'au rafraichissement suivant, une seconde
+           plus tard — souvent jamais sous les yeux du joueur.
+           En bloquant d'abord, la date existe deja quand l'ecran
+           s'affiche. */
         await blockTeam('morse_too_many_errors');
+        const finKO = { state: 'lost', errors: newErrors, endReason: 'too_many_errors',
+                        lastEvent: 'lost', endedAt: new Date().toISOString() };
+        await N.updateSession(state.teamCode, finKO);
+        N.addLogEntry(`💀 L'équipage a épuisé ses chances. Remontée en surface forcée.`, 'danger');
+        /* On applique la fin de partie EN MEMOIRE et on redessine.
+
+           BUG CORRIGE : en partie d'essai, updateSession() n'ecrit rien
+           (c'est voulu, le compte fantome ne doit laisser aucune trace) et
+           aucune ecoute temps reel ne se declenche. L'ecran restait donc
+           bloque sur "PROTOCOLE EN COURS" apres la 3e erreur.
+           En partie reelle, cela fait simplement apparaitre l'ecran tout
+           de suite, sans attendre l'aller-retour reseau : le blocage etant
+           deja pose ci-dessus, la date de reprise s'affiche du premier
+           coup au lieu d'un tiret. */
+        state.session = { ...(state.session || {}), ...finKO };
+        renderGameArea();
+        return;
       } else {
-        await N.updateSession(state.teamCode, { errors: newErrors, attempts: (state.session.attempts || 0) + 1, lastEvent: 'wrong_answer' });
+        const essai = { errors: newErrors, attempts: (state.session.attempts || 0) + 1,
+                        lastEvent: 'wrong_answer' };
+        await N.updateSession(state.teamCode, essai);
+        /* Le compteur d'erreurs doit monter MEME en partie d'essai, ou
+           rien n'est ecrit en base. Sans cela, il restait a 0 et la 3e
+           erreur n'arrivait jamais : le compte fantome ne pouvait pas
+           tester l'echec du palier. */
+        state.session = { ...(state.session || {}), ...essai };
         fb.innerHTML = `<div class="status-banner warning">❌ Mauvaise réponse. ${max - newErrors} chance(s) restante(s).</div>`;
         /* On signale l'erreur SANS montrer quelles lettres sont fausses :
            l'ancien surlignage lettre par lettre revenait a corriger la
@@ -1603,9 +1637,17 @@ window.Nautilus = {
   async function onTimeOut() {
     if (!state.session) return;
     if (state.session.state !== 'playing') return;
-    await N.updateSession(state.teamCode, { state: 'lost', endReason: 'timeout', lastEvent: 'timeout', endedAt: new Date().toISOString() });
-    N.addLogEntry(`⏳ Le temps est écoulé. L'épreuve a échoué.`, 'danger');
+    /* Meme ordre que pour les 3 erreurs : le blocage d'abord, sinon
+       l'ecran de defaite s'affiche avant que la date de reprise existe. */
     await blockTeam('morse_timeout');
+    const finTemps = { state: 'lost', endReason: 'timeout', lastEvent: 'timeout',
+                       endedAt: new Date().toISOString() };
+    await N.updateSession(state.teamCode, finTemps);
+    N.addLogEntry(`⏳ Le temps est écoulé. L'épreuve a échoué.`, 'danger');
+    /* Meme raison que pour les 3 erreurs : sans cela, la partie d'essai
+       reste affichee comme "en cours" une fois le temps ecoule. */
+    state.session = { ...(state.session || {}), ...finTemps };
+    renderGameArea();
   }
 
   async function blockTeam(reason) {
@@ -1870,7 +1912,9 @@ window.Nautilus = {
         <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0 18px;">
           L'équipage n'a pas validé l'épreuve. Tous les matelots sont repoussés en surface.
         </p>
-        <p class="lock-rule">⏱️ Reprise possible le <b>${esc(N.formatDate(t.lockedUntil))}</b></p>
+        ${t.lockedUntil
+          ? `<p class="lock-rule">⏱️ Reprise possible le <b>${esc(N.formatDate(t.lockedUntil))}</b></p>`
+          : `<p class="lock-rule">⏱️ Durée du blocage en cours de calcul…</p>`}
         <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
       </div>
     `;
