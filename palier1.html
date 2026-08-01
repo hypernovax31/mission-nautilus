@@ -599,7 +599,28 @@ function isTestSession(session) {
    sens : personne ne peut plus la jouer. On la considere donc comme
    inexistante, ce qui laisse l'equipage repartir proprement. */
 function isStaleSession(session) {
-  if (!session || session.state !== 'playing') return false;
+  if (!session) return false;
+
+  /* Une partie GAGNEE ou PERDUE reste enregistree en base pour que
+     l'ecran de resultat s'affiche. Mais elle ne doit pas s'imposer
+     indefiniment : sans limite de temps, l'equipage retrouvait
+     "epreuve validee" ou "partie terminee" a chaque visite, des jours
+     plus tard, sans jamais pouvoir relancer.
+
+     INCIDENT REEL : apres une remise a zero des progressions, l'ecran
+     de fin revenait quand meme, parce que le reset ne touchait pas ce
+     document.
+
+     On garde donc le resultat affiche pendant 30 minutes — largement de
+     quoi le lire et en parler entre matelots — puis la partie est
+     consideree comme terminee et l'equipage repart proprement. */
+  if (session.state === 'won' || session.state === 'lost') {
+    const fin = session.endedAt || session.lastEventAt || session.startedAt;
+    if (!fin) return true;
+    return (Date.now() - new Date(fin).getTime()) / 1000 > 1800;   // 30 min
+  }
+
+  if (session.state !== 'playing') return false;
   if (!session.startedAt || !session.timeLimit) return true;   // session incomplete
   const ecoule = (Date.now() - new Date(session.startedAt).getTime()) / 1000;
   /* Marge d'une minute : on ne veut pas effacer une partie qui vient
@@ -1170,8 +1191,19 @@ window.Nautilus = {
 
     /* Pas de session active → écran d'accueil du palier */
     if (!s || s.state === 'idle' || s.state === 'ended') {
-      /* Si l'équipe a déjà fini ce palier, on est en transition */
-      if ((t.completedSteps || []).includes('start')) {
+      /* Palier deja franchi : on montre la suite du parcours.
+
+         On verifie AUSSI que l'equipage a bien quitte le palier 1
+         (currentStep). Sans cela, une equipe dont la liste des paliers
+         valides contenait 'start' alors qu'elle etait toujours au
+         palier 1 restait coincee sur "Palier 1 termine, prochaine
+         etape : Palier 1" — un ecran sans issue, qui invitait a passer
+         a une etape ou l'on se trouvait deja.
+         Cet etat incoherent peut venir d'une remise a zero partielle ou
+         d'une intervention manuelle en base. */
+      const dejaFranchi = (t.completedSteps || []).includes('start')
+                       && t.currentStep !== 'start';
+      if (dejaFranchi) {
         body.innerHTML = renderNextStepPrompt(t);
         return;
       }
@@ -1538,6 +1570,7 @@ window.Nautilus = {
         state: 'won',
         endReason: 'solved',
         lastEvent: 'solved',
+        endedAt: new Date().toISOString(),   /* repere pour savoir quand cet ecran a fait son temps */
         revealedWord: target  /* stocké en clair sur la session pour l'écran de victoire uniquement */
       });
       N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe ! L'épreuve du sonar est validée.`, 'success');
@@ -1549,7 +1582,7 @@ window.Nautilus = {
       const max = state.session.maxErrors || 3;
       N.addLogEntry(`❌ ${state.me.name} a fait une erreur (${newErrors}/${max}).`, 'danger');
       if (newErrors >= max) {
-        await N.updateSession(state.teamCode, { state: 'lost', errors: newErrors, endReason: 'too_many_errors', lastEvent: 'lost' });
+        await N.updateSession(state.teamCode, { state: 'lost', errors: newErrors, endReason: 'too_many_errors', lastEvent: 'lost', endedAt: new Date().toISOString() });
         N.addLogEntry(`💀 L'équipage a épuisé ses chances. Remontée en surface forcée.`, 'danger');
         await blockTeam('morse_too_many_errors');
       } else {
@@ -1570,7 +1603,7 @@ window.Nautilus = {
   async function onTimeOut() {
     if (!state.session) return;
     if (state.session.state !== 'playing') return;
-    await N.updateSession(state.teamCode, { state: 'lost', endReason: 'timeout', lastEvent: 'timeout' });
+    await N.updateSession(state.teamCode, { state: 'lost', endReason: 'timeout', lastEvent: 'timeout', endedAt: new Date().toISOString() });
     N.addLogEntry(`⏳ Le temps est écoulé. L'épreuve a échoué.`, 'danger');
     await blockTeam('morse_timeout');
   }
