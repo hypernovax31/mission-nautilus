@@ -4881,10 +4881,12 @@ function qrDataUri(text, opts){
          blanc qui servait a l'ancien clic mecanique. */
       _typeBus = _typeCtx.createGain();
       /* Volume general : DISCRET. Le bip est une onde pure, donc bien plus
-         efficace a niveau egal qu'un bruit filtre : 0,16 suffit largement
-         a le faire entendre par-dessus l'ambiance (pic mesure -21 dBFS).
-         Il doit ponctuer la lecture, pas la couvrir. */
-      _typeBus.gain.value = 0.16;
+         efficace a niveau egal qu'un bruit filtre.
+         Baisse de 0,16 a 0,105 : il y a maintenant UN bip par caractere
+         (environ 56 par seconde au lieu de 19). A trois fois plus de sons,
+         le meme niveau devenait fatigant. Plus nombreux donc plus discrets
+         — l'ensemble reste aussi present a l'oreille. */
+      _typeBus.gain.value = 0.105;
       _typeBus.connect(_typeCtx.destination);
       if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
       return _typeCtx;
@@ -4906,10 +4908,21 @@ function qrDataUri(text, opts){
     if(!isSoundEnabled()) return;
     const ctx = _openTypeAudio();
     if(!ctx) return;
-    const t = ctx.currentTime;
-    /* Deux bips ne peuvent pas se chevaucher a moins de 12 ms : sans ce
-       garde-fou, une rafale de lettres empilerait des dizaines de sons. */
-    if(t - _typeLastAt < 0.012) return;
+    /* GARDE-FOU QUI DECALE AU LIEU DE JETER.
+       L'ancienne version abandonnait purement et simplement le bip quand
+       deux caracteres tombaient trop pres. Mesure sur l'ordre de mission :
+       7 bips perdus sur 245, au hasard — la frappe avait des trous.
+       Maintenant on ne jette plus rien : si le bip precedent est trop
+       recent, celui-ci est simplement PROGRAMME 7 ms plus tard. La Web
+       Audio API sait jouer un son a une date future a la milliseconde
+       pres, donc chaque caractere garde son bip et l'ensemble reste
+       parfaitement regulier, meme si le navigateur hesite un instant.
+       Seule protection conservee : au-dela de 60 ms de retard accumule,
+       on abandonne — signe d'une rafale anormale (onglet en arriere-plan
+       qui rattrape son retard d'un coup). */
+    const maintenant = ctx.currentTime;
+    const t = Math.max(maintenant, _typeLastAt + 0.007);
+    if(t - maintenant > 0.060) return;
     _typeLastAt = t;
 
     try{
@@ -5007,7 +5020,11 @@ function qrDataUri(text, opts){
     typingSpan.appendChild(caretEl);
 
     let i = 0;
-    const speed = 10; // ms par caractere (rapide)
+    /* 18 ms par caractere : environ 5 secondes pour l'ordre de mission.
+       C'est le reglage qui laisse ENTENDRE les bips un par un. Plus vite
+       (10 ms), ils se fondent en un gresillement continu ; plus lent, la
+       lecture traine. */
+    const speed = 18; // ms par caractere
     /* SYNCHRONISATION : le texte part en meme temps que le son.
        On ne guette plus les gestes ici — c'est le systeme audio commun qui
        previent quand le son devient reellement audible (voir
@@ -5051,16 +5068,18 @@ function qrDataUri(text, opts){
         ghost.remove();
         return;
       }
-      // On ecrit plusieurs caracteres par image plutot qu'un seul toutes
-      // les 10 ms : meme vitesse a l'oeil, 3 fois moins de reveils.
-      i = Math.min(fullText.length, i + 3);
+      /* UN CARACTERE A LA FOIS, ET UN SON PAR CARACTERE.
+         Avant, trois lettres apparaissaient d'un coup pour un seul bip :
+         le son ne collait donc pas a ce que l'oeil voyait. Chaque lettre
+         a desormais son propre bip, ecrit dans la meme instruction : ils
+         ne peuvent plus se decaler l'un de l'autre. */
+      i += 1;
       textNode.nodeValue = fullText.slice(0, i);
-      /* UN clic par groupe de caracteres ecrit, pas un par lettre : a
-         30 ms d'intervalle c'est deja la cadence d'une frappe rapide, et
-         cela colle exactement a ce que l'oeil voit apparaitre. */
       const dernier = fullText[i - 1] || '';
-      _typeClick(dernier === ' ' || '.,;:!?—'.includes(dernier));
-      setTimeout(tick, speed * 3);
+      /* Les caracteres invisibles (espaces, retours) ne sonnent pas :
+         sinon on entendrait un bip sans rien voir apparaitre. */
+      if(dernier.trim()) _typeClick('.,;:!?—'.includes(dernier));
+      setTimeout(tick, speed);
     };
     attendreGeste();
   }
