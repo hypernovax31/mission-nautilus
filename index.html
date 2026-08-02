@@ -513,10 +513,34 @@
        juraient avec l'ambiance des abysses.
        ===================================================================== */
 
+    /* ===== DEGAGEMENT SOUS LA BARRE FIXE DU HAUT =====
+       La barre .top-bar (boutons "Installer l'app" et "Activer le sonar")
+       est en position fixe et occupe environ 50 px : 14 px de decalage
+       plus un bouton d'environ 36 px. Tout bloc vers lequel la page
+       defilait se retrouvait donc partiellement CACHE derriere elle.
+       scroll-margin-top reserve cette hauteur (+12 px de respiration) au
+       moment du defilement uniquement : la mise en page normale n'est pas
+       touchee d'un seul pixel. */
+    :root{--scroll-top-gap:62px}
+    #ruleCards,
+    #gameCard,
+    #cockpitPosition,
+    #embarquementMatelot,
+    #retrouverEquipage,
+    #equipagesEnMer{scroll-margin-top:var(--scroll-top-gap)}
+
     /* --- Plaque d'invitation --- */
     .rule-invite{
       display:flex;flex-direction:column;align-items:center;gap:7px;
       margin:26px 0 4px;padding:14px 18px;text-align:center;border-radius:14px;
+      /* CIBLE DU DEFILEMENT quand on ouvre un hublot.
+         La marge empeche la plaque de passer SOUS la barre fixe du haut
+         (boutons "Installer l'app" et "Activer le sonar"), qui occupe
+         environ 50 px : 14 px de decalage + un bouton de ~36 px. Sans
+         cette reserve, le titre "CONSIGNES DE PLONGEE" se retrouvait
+         cache derriere les boutons.
+         On garde 12 px de respiration au-dessus, d'ou 62 px. */
+      scroll-margin-top:var(--scroll-top-gap);
       background:linear-gradient(180deg,rgba(6,22,36,.92),rgba(4,14,24,.92));
       border:1px solid rgba(245,176,39,.30);
       box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 26px rgba(0,0,0,.34);
@@ -4772,7 +4796,18 @@ function qrDataUri(text, opts){
     majProgressionHublots();
 
     if(shouldScroll){
-      setTimeout(() => document.getElementById('ruleCards')?.scrollIntoView({behavior:'smooth', block:'start'}), 80);
+      /* On remonte sur la PLAQUE "Consignes de plongee", et non sur les
+         hublots eux-memes : le joueur voit ainsi le titre, les temoins de
+         progression, les quatre hublots ET le texte qui vient de s'ouvrir
+         dans un meme ecran. En visant les hublots, le titre partait
+         au-dessus de l'ecran et on perdait le repere.
+         Le degagement sous la barre fixe est assure par la regle CSS
+         scroll-margin-top de .rule-invite. */
+      setTimeout(() => {
+        const cible = document.querySelector('.rule-invite')
+                   || document.getElementById('ruleCards');
+        cible?.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 80);
     }
   }
 
