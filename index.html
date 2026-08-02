@@ -4818,6 +4818,126 @@ function qrDataUri(text, opts){
    * - Anime caractere par caractere avec un curseur qui suit les lettres.
    * Pas de decalage, pas de saccade. Un seul curseur, en ligne avec le texte.
    */
+  /* ======================================================================
+     SON DE FRAPPE DE L'ORDRE DE MISSION
+     ----------------------------------------------------------------------
+     Un petit "clic" seche a chaque groupe de lettres qui s'inscrit, pour
+     donner l'impression d'un telescripteur de bord.
+
+     POURQUOI PAS UN FICHIER MP3 ?
+     Un fichier joue des dizaines de fois par seconde impose au navigateur
+     autant de decodages et de lectures : sur telephone, cela sature et le
+     son se met a trainer. Ici le clic est FABRIQUE a la volee (quelques
+     dizaines d'echantillons de bruit filtre), donc zero octet a
+     telecharger, zero latence, et un grain legerement different a chaque
+     frappe — ce qui evite l'effet "machine a coudre" d'un son identique
+     repete.
+
+     REGLES RESPECTEES :
+     - Silencieux tant que le sonar est eteint (isSoundEnabled()).
+     - Le contexte audio n'est cree qu'au moment ou l'on tape vraiment,
+       et il est FERME a la fin de la phrase : rien ne tourne en fond,
+       la batterie du telephone est preservee.
+     - Si le navigateur refuse le son (pas encore de geste utilisateur),
+       le texte s'ecrit normalement, simplement sans bruit. */
+  let _typeCtx = null;        // contexte audio dedie, cree puis referme
+  let _typeBus = null;        // volume general de la frappe
+  let _typeNoise = null;      // court echantillon de bruit, reutilise
+  let _typeLastAt = 0;        // garde-fou anti-saturation
+
+  function _openTypeAudio(){
+    if(_typeCtx) return _typeCtx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    try{
+      _typeCtx = new AC();
+      /* Bruit blanc tres court (30 ms) : c'est la matiere premiere du
+         clic. On le fabrique UNE fois et on le rejoue en le decoupant,
+         plutot que d'en recreer un a chaque lettre. */
+      const n = Math.floor(_typeCtx.sampleRate * 0.03);
+      _typeNoise = _typeCtx.createBuffer(1, n, _typeCtx.sampleRate);
+      const d = _typeNoise.getChannelData(0);
+      for(let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+
+      _typeBus = _typeCtx.createGain();
+      _typeBus.gain.value = 0.13;      // volume general : discret
+      _typeBus.connect(_typeCtx.destination);
+      if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
+      return _typeCtx;
+    }catch(e){ _typeCtx = null; return null; }
+  }
+
+  function _closeTypeAudio(){
+    if(!_typeCtx) return;
+    const ctx = _typeCtx;
+    _typeCtx = null; _typeBus = null; _typeNoise = null;
+    /* Petit delai : on laisse les derniers clics finir de sonner avant
+       de fermer, sinon la fin de phrase est coupee net. */
+    setTimeout(() => { try{ ctx.close(); }catch(e){} }, 400);
+  }
+
+  /* Un clic de touche. `fort` = vrai pour la barre d'espace et la
+     ponctuation, qui sonnent un peu plus creux sur une vraie machine. */
+  function _typeClick(fort){
+    if(!isSoundEnabled()) return;
+    const ctx = _openTypeAudio();
+    if(!ctx || !_typeNoise) return;
+    const t = ctx.currentTime;
+    /* Deux clics ne peuvent pas se chevaucher a moins de 12 ms : sans ce
+       garde-fou, une rafale de lettres empilerait des dizaines de sons et
+       produirait un grondement au lieu d'une frappe. */
+    if(t - _typeLastAt < 0.012) return;
+    _typeLastAt = t;
+
+    try{
+      const src = ctx.createBufferSource();
+      src.buffer = _typeNoise;
+      /* Hauteur legerement differente a chaque frappe : c'est ce detail
+         qui fait entendre une machine et non une boucle. */
+      src.playbackRate.value = 0.85 + Math.random() * 0.45;
+
+      /* Filtre passe-bande : ne garde qu'une bande etroite du bruit, ce
+         qui transforme le souffle en petit "tac" de touche. */
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = fort ? 1100 + Math.random() * 200
+                                : 1900 + Math.random() * 700;
+      bp.Q.value = 6;
+
+      /* Enveloppe tres courte (~22 ms) : attaque immediate, extinction
+         nette. C'est la duree qui fait la difference entre un clic sec et
+         un bruit de friture. */
+      const g = ctx.createGain();
+      const dur = fort ? 0.030 : 0.022;
+      const vol = (fort ? 1 : 0.72) * (0.8 + Math.random() * 0.4);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+      src.connect(bp); bp.connect(g); g.connect(_typeBus);
+      src.start(t);
+      src.stop(t + dur + 0.01);
+    }catch(e){ /* son indisponible : le texte s'ecrit quand meme */ }
+  }
+
+  /* Petite cloche de fin de ligne, comme le retour de chariot d'une
+     machine a ecrire. Joue une seule fois, quand la phrase est finie. */
+  function _typeDing(){
+    if(!isSoundEnabled() || !_typeCtx) return;
+    try{
+      const ctx = _typeCtx, t = ctx.currentTime + 0.05;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 1760;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.16, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+      o.connect(g); g.connect(_typeBus);
+      o.start(t); o.stop(t + 0.34);
+    }catch(e){ /* silencieux */ }
+  }
+
   function startMissionOrderTypewriter(){
     const el = $('missionOrderText');
     if(!el || el.dataset.typed === 'true') return;
@@ -4863,10 +4983,38 @@ function qrDataUri(text, opts){
 
     let i = 0;
     const speed = 10; // ms par caractere (rapide)
+    /* PIEGE DES NAVIGATEURS : tant que l'utilisateur n'a rien touche, le
+       son est INTERDIT. Or l'ordre de mission est souvent deja visible au
+       chargement : la frappe serait donc muette a tous les coups.
+       On attend donc le premier geste (doigt, souris, clavier) avant de
+       lancer l'ecriture — mais au maximum 2,5 s, apres quoi le texte
+       s'ecrit quand meme, simplement sans bruit. Aucun saut de mise en
+       page pendant l'attente : le texte fantome tient deja la place. */
+    const lancer = () => { setTimeout(tick, 60); };
+    const attendreGeste = () => {
+      if(!isSoundEnabled()) { lancer(); return; }   // sonar eteint : inutile
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) { lancer(); return; }
+      let parti = false;
+      const go = () => {
+        if(parti) return;
+        parti = true;
+        clearTimeout(secours);
+        ['pointerdown','touchstart','keydown'].forEach(ev =>
+          window.removeEventListener(ev, go));
+        lancer();
+      };
+      const secours = setTimeout(go, 2500);
+      ['pointerdown','touchstart','keydown'].forEach(ev =>
+        window.addEventListener(ev, go, {once:false, passive:true}));
+    };
     const tick = () => {
       if(i >= fullText.length){
         textNode.nodeValue = fullText;
         caretEl.remove();          // termine : plus de curseur
+        /* Retour de chariot, puis on rend la carte son au telephone. */
+        _typeDing();
+        _closeTypeAudio();
         /* Termine : le texte affiche est identique au fantome. On rend le
            texte au flux normal et on retire le fantome, pour ne pas garder
            deux copies du meme paragraphe dans la page (le lecteur d'ecran
@@ -4880,9 +5028,14 @@ function qrDataUri(text, opts){
       // les 10 ms : meme vitesse a l'oeil, 3 fois moins de reveils.
       i = Math.min(fullText.length, i + 3);
       textNode.nodeValue = fullText.slice(0, i);
+      /* UN clic par groupe de caracteres ecrit, pas un par lettre : a
+         30 ms d'intervalle c'est deja la cadence d'une frappe rapide, et
+         cela colle exactement a ce que l'oeil voit apparaitre. */
+      const dernier = fullText[i - 1] || '';
+      _typeClick(dernier === ' ' || '.,;:!?—'.includes(dernier));
       setTimeout(tick, speed * 3);
     };
-    setTimeout(tick, 60);
+    attendreGeste();
   }
 
   const orderObserver = new IntersectionObserver((entries) => {
