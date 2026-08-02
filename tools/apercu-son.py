@@ -6,34 +6,31 @@ import math, struct, wave
 
 SR   = 48000
 STEP = 0.018        # 18 ms par caractere   (index.html : const speed = 18)
-BUS  = 0.45         # volume general        (index.html : _typeBus.gain.value)
-DUR  = 0.038        # duree d'une note
-ATT  = 0.005        # attaque douce : evite le claquement
+BUS  = 0.55         # volume general        (index.html : _typeBus.gain.value)
 GAP  = 0.007        # ecart minimal entre deux notes
-LP   = 1800         # passe-bas : arrondit les aigus
-OCT  = 0.18         # niveau de l'octave superieure (grain "numerique")
 
 TEXTE = ("En 1870, le Nautilus disparaît au large des îles Lofoten, englouti par le maelström. "
          "156 ans plus tard, son signal résonne de nouveau — sous les rayons de la Fnac Labège. "
          "Le premier équipage à le ramener à la surface entrera dans la légende du magasin. "
          "Le sonar est allumé, matelot. À vous de jouer !")
 
-buf = [0.0] * int(SR * (len(TEXTE) * STEP + 1.4))
+buf = [0.0] * int(SR * (len(TEXTE) * STEP + 2.0))
 
-def note(t0, freq, pic, duree, oct_niv=OCT, lp=LP):
-    """Sinus + octave discrete, attaque douce, le tout passe au filtre."""
+def note(t0, f0, pic, duree, att, fc, drop, sub, quinte):
+    """Fondamentale + sous-octave (corps) + quinte discrete, le tout filtre."""
     n = int(SR * duree)
+    ph = ph_sub = ph_q = 0.0
     brut = []
-    ph = ph2 = 0.0
     for i in range(n):
         p = i / SR
-        fr = freq * (0.96 ** (p / 0.038))       # legere descente
-        ph  += 2 * math.pi * fr / SR
-        ph2 += 2 * math.pi * fr * 2 / SR
-        v = math.sin(ph) + oct_niv * math.sin(ph2)
-        e = (p / ATT) if p < ATT else math.exp(math.log(0.0001) * (p - ATT) / (duree - ATT))
+        fr = f0 * (drop ** (p / duree))
+        ph     += 2 * math.pi * fr / SR
+        ph_sub += 2 * math.pi * fr / 2 / SR
+        ph_q   += 2 * math.pi * fr * 1.5 / SR
+        v = math.sin(ph) + sub * math.sin(ph_sub) + quinte * math.sin(ph_q)
+        e = (p / att) if p < att else math.exp(math.log(0.0001) * (p - att) / (duree - att))
         brut.append(v * min(e, 1.0) * pic)
-    a = math.exp(-2 * math.pi * lp / SR)        # passe-bas 1 pole
+    a = math.exp(-2 * math.pi * fc / SR)      # passe-bas 1 pole
     y = 0.0
     k0 = int(t0 * SR)
     for i, x in enumerate(brut):
@@ -49,13 +46,16 @@ for c in TEXTE:
         grave = c in '.,;:!?—'
         quand = max(t, dernier + GAP)   # on DECALE, on ne jette pas
         if quand - t <= 0.060:
-            note(quand, 440 if grave else 660, 0.60 if grave else 0.50, DUR)
+            if grave:
+                note(quand, 196, 0.62, 0.075, 0.014, 600, 0.93, 0.25, 0.07)
+            else:
+                note(quand, 262, 0.55, 0.065, 0.012, 700, 0.93, 0.22, 0.08)
             dernier = quand
     t += STEP
 
 # accuse de reception de fin : deux notes montantes, meme matiere
-note(t + 0.05, 784,    0.42, 0.100, 0.12, 1900)
-note(t + 0.13, 1046.5, 0.42, 0.140, 0.12, 1900)
+note(t + 0.05, 196,   0.46, 0.30, 0.018, 800, 0.98, 0.26, 0.09)
+note(t + 0.16, 261.6, 0.46, 0.42, 0.018, 850, 0.98, 0.26, 0.09)
 
 pic = max(abs(v) for v in buf) or 1
 print('duree %.1f s | pic reel %.3f (%.1f dBFS) — sans normalisation'
