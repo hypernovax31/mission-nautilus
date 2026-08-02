@@ -4925,65 +4925,91 @@ function qrDataUri(text, opts){
     _typeLastAt = t;
 
     try{
-      /* BIP NUMERIQUE : une onde carree tres courte, comme l'accuse de
-         reception d'un terminal. Une seule note, pas de bruit, pas de
-         basse : c'est ce depouillement qui fait "numerique" plutot que
-         "machine a ecrire".
-         L'onde carree (plutot que sinus) donne le petit grain electronique
-         caracteristique tout en restant parfaitement propre. */
+      /* NOTE NUMERIQUE DOUCE.
+         L'onde CARREE precedente etait agressive : mesure a l'analyse
+         spectrale, 18,6 % de son energie se trouvait au-dessus de 3 kHz —
+         la zone ou l'oreille est la plus sensible et se fatigue le plus
+         vite. Repetee 56 fois par seconde, elle devenait penible.
+         On passe donc a une SINUSOIDE, qui ne produit aucune harmonique :
+         0 % d'energie au-dessus de 3 kHz. Pour garder le caractere
+         electronique (une sinusoide seule sonne comme une flute), on lui
+         ajoute une octave discrete a 18 % : juste ce qu'il faut de reflet
+         metallique, sans durete. */
       const o = ctx.createOscillator();
-      o.type = 'square';
-      /* Deux hauteurs seulement, franches : les lettres sonnent haut, les
-         espaces et la ponctuation une octave plus bas. Pas de tirage au
-         sort ici — un appareil numerique ne varie pas, il repete. C'est
-         justement cette regularite qu'on veut entendre. */
-      o.frequency.value = fort ? 1046.5 : 2093;   // do6 / do7
+      o.type = 'sine';
+      /* Hauteurs BAISSEES d'une octave et demie : 660 Hz pour les lettres
+         (au lieu de 2093 Hz), 440 Hz pour la ponctuation. Plus grave =
+         plus sourd, plus feutre. Chaque note descend legerement pendant sa
+         duree, ce qui l'arrondit encore et evite l'effet "alarme". */
+      const fBase = fort ? 440 : 660;
+      o.frequency.setValueAtTime(fBase, t);
+      o.frequency.exponentialRampToValueAtTime(fBase * 0.96, t + 0.038);
+
+      /* L'octave au-dessus, tres en retrait : c'est elle qui fait
+         "numerique" plutot que "instrument". */
+      const o2 = ctx.createOscillator();
+      o2.type = 'sine';
+      o2.frequency.setValueAtTime(fBase * 2, t);
+      o2.frequency.exponentialRampToValueAtTime(fBase * 2 * 0.96, t + 0.038);
+      const g2 = ctx.createGain();
+      g2.gain.value = 0.18;
+
+      /* Filtre passe-bas : arrondit ce qui pourrait rester de pointu,
+         notamment sur les petits haut-parleurs qui accentuent les aigus. */
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 1800;
+      lp.Q.value = 0.7;
 
       const g = ctx.createGain();
-      /* DUREE CORRIGEE : 8 ms -> 28 ms.
-         C'EST LA CAUSE DU SILENCE. A 8 ms le bip ne contenait qu'une
-         vingtaine d'oscillations : l'oreille n'a pas le temps d'y
-         percevoir un son. Mesure : volume percu -45,8 dB, soit 28 dB SOUS
-         l'ambiance ocean — totalement inaudible. C'est aussi pour cela que
-         seule la note de fin s'entendait : elle dure 75 ms, donc elle
-         etait percue 7 dB plus fort que les bips, avec pourtant un pic
-         quasi identique.
-         A 28 ms le bip est percu a -27,4 dB (soit +18 dB) tout en restant
-         un point bref, et il s'eteint avant le caractere suivant (reste
-         -16 dB au bout des 18 ms). */
-      const dur = 0.028;
+      /* Duree portee a 38 ms (les notes graves ont besoin de plus de temps
+         pour etre percues que les aigues), et surtout ATTAQUE DOUCE de
+         5 ms au lieu de 1 ms : c'est le demarrage brutal qui produisait le
+         petit claquement desagreable au debut de chaque bip.
+         Extinction plus progressive egalement (duree/3,2 au lieu de /4). */
+      const dur = 0.038;
+      const pic = fort ? 0.60 : 0.50;
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(fort ? 0.9 : 0.6, t + 0.001);
+      g.gain.linearRampToValueAtTime(pic, t + 0.005);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
 
-      o.connect(g); g.connect(_typeBus);
-      o.start(t);
-      o.stop(t + dur + 0.005);
+      o.connect(lp);
+      o2.connect(g2); g2.connect(lp);
+      lp.connect(g); g.connect(_typeBus);
+      o.start(t);  o.stop(t + dur + 0.005);
+      o2.start(t); o2.stop(t + dur + 0.005);
     }catch(e){ /* son indisponible : le texte s'ecrit quand meme */ }
   }
 
-  /* Accuse de reception de fin de transmission : deux notes montantes,
-     tres breves. Remplace la cloche de machine a ecrire, qui n'avait plus
-     sa place maintenant que la frappe est numerique. */
+  /* Accuse de reception de fin de transmission : deux notes montantes.
+     Meme matiere sonore que les bips de frappe (sinus + octave discrete,
+     filtres), pour que la fin appartienne au meme instrument. */
   function _typeDing(){
     if(!isSoundEnabled() || !_typeCtx) return;
     try{
       const ctx = _typeCtx;
-      [[1568, 0.05], [2093, 0.115]].forEach(([f, dt]) => {
+      /* Meme facture que les bips : sinusoides filtrees, plus de carre.
+         Deux notes montantes (sol5 puis do6), une octave et demie plus bas
+         qu'avant, et un peu plus longues pour qu'elles respirent. */
+      [[784, 0.05, 0.100], [1046.5, 0.13, 0.140]].forEach(([f, dt, dur]) => {
         const t = ctx.currentTime + dt;
         const o = ctx.createOscillator();
+        const o2 = ctx.createOscillator();
         const g = ctx.createGain();
-        o.type = 'square';
-        o.frequency.value = f;
+        const g2 = ctx.createGain();
+        const lp = ctx.createBiquadFilter();
+        o.type = 'sine';  o.frequency.value = f;
+        o2.type = 'sine'; o2.frequency.value = f * 2;
+        g2.gain.value = 0.12;                 // octave encore plus discrete
+        lp.type = 'lowpass'; lp.frequency.value = 1900; lp.Q.value = 0.7;
         g.gain.setValueAtTime(0.0001, t);
-        /* Niveau cale sur celui des bips de frappe : a 0,16 la note de fin
-           passait 7 dB EN DESSOUS d'eux et se faisait oublier, a 0,5 elle
-           les ecrasait. A 0,34 elle les depasse d'environ 2 dB : on
-           l'entend comme une conclusion, pas comme un coup de gong. */
-        g.gain.exponentialRampToValueAtTime(0.34, t + 0.002);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
-        o.connect(g); g.connect(_typeBus);
-        o.start(t); o.stop(t + 0.08);
+        /* Attaque douce (6 ms) : plus aucun claquement au demarrage. */
+        g.gain.linearRampToValueAtTime(0.42, t + 0.006);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(lp); o2.connect(g2); g2.connect(lp);
+        lp.connect(g); g.connect(_typeBus);
+        o.start(t);  o.stop(t + dur + 0.01);
+        o2.start(t); o2.stop(t + dur + 0.01);
       });
     }catch(e){ /* silencieux */ }
   }

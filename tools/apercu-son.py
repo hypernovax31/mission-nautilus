@@ -5,44 +5,57 @@
 import math, struct, wave
 
 SR   = 48000
-STEP = 0.018        # 18 ms par caractere  (index.html : const speed = 18)
-BUS  = 0.45         # volume general       (index.html : _typeBus.gain.value)
-DUR  = 0.028        # duree d'un bip  (8 ms etait inaudible : voir commit)
-GAP  = 0.007        # ecart minimal entre deux bips
+STEP = 0.018        # 18 ms par caractere   (index.html : const speed = 18)
+BUS  = 0.45         # volume general        (index.html : _typeBus.gain.value)
+DUR  = 0.038        # duree d'une note
+ATT  = 0.005        # attaque douce : evite le claquement
+GAP  = 0.007        # ecart minimal entre deux notes
+LP   = 1800         # passe-bas : arrondit les aigus
+OCT  = 0.18         # niveau de l'octave superieure (grain "numerique")
 
 TEXTE = ("En 1870, le Nautilus disparaît au large des îles Lofoten, englouti par le maelström. "
          "156 ans plus tard, son signal résonne de nouveau — sous les rayons de la Fnac Labège. "
          "Le premier équipage à le ramener à la surface entrera dans la légende du magasin. "
          "Le sonar est allumé, matelot. À vous de jouer !")
 
-buf = [0.0] * int(SR * (len(TEXTE) * STEP + 1.2))
+buf = [0.0] * int(SR * (len(TEXTE) * STEP + 1.4))
 
-def carre(t0, freq, pic, duree):
-    """Onde carree tres courte, enveloppe attaque 1 ms puis extinction."""
+def note(t0, freq, pic, duree, oct_niv=OCT, lp=LP):
+    """Sinus + octave discrete, attaque douce, le tout passe au filtre."""
     n = int(SR * duree)
+    brut = []
+    ph = ph2 = 0.0
     for i in range(n):
         p = i / SR
-        e = (p / 0.001) if p < 0.001 else math.exp(-(p - 0.001) / (duree / 4.0))
-        v = 1.0 if math.sin(2 * math.pi * freq * p) >= 0 else -1.0
-        k = int(t0 * SR) + i
+        fr = freq * (0.96 ** (p / 0.038))       # legere descente
+        ph  += 2 * math.pi * fr / SR
+        ph2 += 2 * math.pi * fr * 2 / SR
+        v = math.sin(ph) + oct_niv * math.sin(ph2)
+        e = (p / ATT) if p < ATT else math.exp(math.log(0.0001) * (p - ATT) / (duree - ATT))
+        brut.append(v * min(e, 1.0) * pic)
+    a = math.exp(-2 * math.pi * lp / SR)        # passe-bas 1 pole
+    y = 0.0
+    k0 = int(t0 * SR)
+    for i, x in enumerate(brut):
+        y = (1 - a) * x + a * y
+        k = k0 + i
         if 0 <= k < len(buf):
-            buf[k] += v * pic * min(e, 1.0) * BUS
+            buf[k] += y * BUS
 
 t = 0.0
 dernier = -1.0
 for c in TEXTE:
     if c.strip():                       # les espaces ne sonnent pas
         grave = c in '.,;:!?—'
-        # garde-fou : on DECALE le bip, on ne le jette pas
-        quand = max(t, dernier + GAP)
+        quand = max(t, dernier + GAP)   # on DECALE, on ne jette pas
         if quand - t <= 0.060:
-            carre(quand, 1046.5 if grave else 2093, 0.9 if grave else 0.6, DUR)
+            note(quand, 440 if grave else 660, 0.60 if grave else 0.50, DUR)
             dernier = quand
     t += STEP
 
-# accuse de reception de fin : deux notes montantes
-carre(t + 0.05,  1568, 0.34, 0.075)
-carre(t + 0.115, 2093, 0.34, 0.075)
+# accuse de reception de fin : deux notes montantes, meme matiere
+note(t + 0.05, 784,    0.42, 0.100, 0.12, 1900)
+note(t + 0.13, 1046.5, 0.42, 0.140, 0.12, 1900)
 
 pic = max(abs(v) for v in buf) or 1
 print('duree %.1f s | pic reel %.3f (%.1f dBFS) — sans normalisation'
