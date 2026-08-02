@@ -5238,7 +5238,11 @@ function qrDataUri(text, opts){
     const sec = Math.floor(diff / 1000);
 
     el.textContent = `${d}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(sec).padStart(2,'0')}s`;
-    status.textContent = `Signal actif — équipage en plongeon.`;
+    /* Texte affiche des que la mission est lancee (un matelot a demarre
+       le premier palier). L'ancien libelle disait "equipage en plongeon",
+       une faute pour "plongee" — et il ne disait pas l'essentiel : que le
+       chrono tourne pour tout le monde. */
+    status.textContent = 'Mission active — la course est lancée.';
     bar.style.width = percent + '%';
     bar.classList.toggle('warning-level', percent <= 50 && percent > 20);
     bar.classList.toggle('critical', percent <= 20);
