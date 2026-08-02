@@ -518,10 +518,12 @@
        est en position fixe et occupe environ 50 px : 14 px de decalage
        plus un bouton d'environ 36 px. Tout bloc vers lequel la page
        defilait se retrouvait donc partiellement CACHE derriere elle.
-       scroll-margin-top reserve cette hauteur (+12 px de respiration) au
+       scroll-margin-top reserve cette hauteur (+2 px de respiration) au
        moment du defilement uniquement : la mise en page normale n'est pas
-       touchee d'un seul pixel. */
-    :root{--scroll-top-gap:62px}
+       touchee d'un seul pixel.
+       Reglage volontairement serre : le bloc vise se cale juste sous les
+       boutons, sans bande vide au-dessus. */
+    :root{--scroll-top-gap:52px}
     #ruleCards,
     #gameCard,
     #cockpitPosition,
@@ -539,7 +541,7 @@
          environ 50 px : 14 px de decalage + un bouton de ~36 px. Sans
          cette reserve, le titre "CONSIGNES DE PLONGEE" se retrouvait
          cache derriere les boutons.
-         On garde 12 px de respiration au-dessus, d'ou 62 px. */
+         On garde 2 px de respiration au-dessus, d'ou 52 px. */
       scroll-margin-top:var(--scroll-top-gap);
       background:linear-gradient(180deg,rgba(6,22,36,.92),rgba(4,14,24,.92));
       border:1px solid rgba(245,176,39,.30);
