@@ -4821,21 +4821,19 @@ function qrDataUri(text, opts){
   /* ======================================================================
      SON DE FRAPPE DE L'ORDRE DE MISSION
      ----------------------------------------------------------------------
-     Un petit "clic" seche a chaque groupe de lettres qui s'inscrit, pour
-     donner l'impression d'un telescripteur de bord.
+     Un bip numerique tres court a chaque groupe de caracteres qui
+     s'inscrit, comme un terminal de bord qui accuse reception. Sobre et
+     discret : une seule onde, aucune matiere, aucun hasard.
 
      POURQUOI PAS UN FICHIER MP3 ?
      Un fichier joue des dizaines de fois par seconde impose au navigateur
-     autant de decodages et de lectures : sur telephone, cela sature et le
-     son se met a trainer. Ici le clic est FABRIQUE a la volee (quelques
-     dizaines d'echantillons de bruit filtre), donc zero octet a
-     telecharger, zero latence, et un grain legerement different a chaque
-     frappe — ce qui evite l'effet "machine a coudre" d'un son identique
-     repete.
+     autant de decodages : sur telephone le son se met a trainer. Le bip
+     est donc genere a la volee par le navigateur — zero octet a
+     telecharger, zero latence.
 
      REGLES RESPECTEES :
      - Silencieux tant que le sonar est eteint (isSoundEnabled()).
-     - Le contexte audio n'est cree qu'au moment ou l'on tape vraiment,
+     - Le contexte audio n'est cree qu'au moment ou l'on ecrit vraiment,
        et il est FERME a la fin de la phrase : rien ne tourne en fond,
        la batterie du telephone est preservee.
      - Si le navigateur refuse le son (pas encore de geste utilisateur),
@@ -4865,7 +4863,6 @@ function qrDataUri(text, opts){
 
   let _typeCtx = null;        // contexte audio dedie, cree puis referme
   let _typeBus = null;        // volume general de la frappe
-  let _typeNoise = null;      // court echantillon de bruit, reutilise
   /* -1 et non 0 : sur un contexte audio tout neuf, currentTime vaut ~0.
      Avec 0 comme valeur de depart, le test anti-saturation ci-dessous
      ("moins de 12 ms depuis le clic precedent") etait vrai des le premier
@@ -4879,23 +4876,15 @@ function qrDataUri(text, opts){
     if(!AC) return null;
     try{
       _typeCtx = new AC();
-      /* Bruit blanc tres court (30 ms) : c'est la matiere premiere du
-         clic. On le fabrique UNE fois et on le rejoue en le decoupant,
-         plutot que d'en recreer un a chaque lettre. */
-      const n = Math.floor(_typeCtx.sampleRate * 0.03);
-      _typeNoise = _typeCtx.createBuffer(1, n, _typeCtx.sampleRate);
-      const d = _typeNoise.getChannelData(0);
-      for(let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
-
+      /* Plus rien a fabriquer : le bip numerique est une onde pure, le
+         navigateur la genere seul. On a supprime l'echantillon de bruit
+         blanc qui servait a l'ancien clic mecanique. */
       _typeBus = _typeCtx.createGain();
-      /* VOLUME CORRIGE. La valeur precedente (0,13) donnait un pic mesure
-         a -36 dBFS, soit environ 27 fois plus faible que l'ambiance ocean
-         qui tourne a 0,42 : les clics existaient bien, mais etaient tout
-         simplement couverts. Le filtre etroit (Q=6) mangeait en plus 88 %
-         de l'energie du bruit. Bande elargie + niveau recale pour un pic
-         autour de -8 dBFS mesure : nettement audible par-dessus
-         l'ambiance, avec encore de la marge avant saturation. */
-      _typeBus.gain.value = 0.55;
+      /* Volume general : DISCRET. Le bip est une onde pure, donc bien plus
+         efficace a niveau egal qu'un bruit filtre : 0,16 suffit largement
+         a le faire entendre par-dessus l'ambiance (pic mesure -21 dBFS).
+         Il doit ponctuer la lecture, pas la couvrir. */
+      _typeBus.gain.value = 0.16;
       _typeBus.connect(_typeCtx.destination);
       if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
       return _typeCtx;
@@ -4905,7 +4894,7 @@ function qrDataUri(text, opts){
   function _closeTypeAudio(){
     if(!_typeCtx) return;
     const ctx = _typeCtx;
-    _typeCtx = null; _typeBus = null; _typeNoise = null;
+    _typeCtx = null; _typeBus = null;
     /* Petit delai : on laisse les derniers clics finir de sonner avant
        de fermer, sinon la fin de phrase est coupee net. */
     setTimeout(() => { try{ ctx.close(); }catch(e){} }, 400);
@@ -4916,78 +4905,61 @@ function qrDataUri(text, opts){
   function _typeClick(fort){
     if(!isSoundEnabled()) return;
     const ctx = _openTypeAudio();
-    if(!ctx || !_typeNoise) return;
+    if(!ctx) return;
     const t = ctx.currentTime;
-    /* Deux clics ne peuvent pas se chevaucher a moins de 12 ms : sans ce
-       garde-fou, une rafale de lettres empilerait des dizaines de sons et
-       produirait un grondement au lieu d'une frappe. */
+    /* Deux bips ne peuvent pas se chevaucher a moins de 12 ms : sans ce
+       garde-fou, une rafale de lettres empilerait des dizaines de sons. */
     if(t - _typeLastAt < 0.012) return;
     _typeLastAt = t;
 
     try{
-      const src = ctx.createBufferSource();
-      src.buffer = _typeNoise;
-      /* Hauteur legerement differente a chaque frappe : c'est ce detail
-         qui fait entendre une machine et non une boucle. */
-      src.playbackRate.value = 0.85 + Math.random() * 0.45;
+      /* BIP NUMERIQUE : une onde carree tres courte, comme l'accuse de
+         reception d'un terminal. Une seule note, pas de bruit, pas de
+         basse : c'est ce depouillement qui fait "numerique" plutot que
+         "machine a ecrire".
+         L'onde carree (plutot que sinus) donne le petit grain electronique
+         caracteristique tout en restant parfaitement propre. */
+      const o = ctx.createOscillator();
+      o.type = 'square';
+      /* Deux hauteurs seulement, franches : les lettres sonnent haut, les
+         espaces et la ponctuation une octave plus bas. Pas de tirage au
+         sort ici — un appareil numerique ne varie pas, il repete. C'est
+         justement cette regularite qu'on veut entendre. */
+      o.frequency.value = fort ? 1046.5 : 2093;   // do6 / do7
 
-      /* Filtre passe-bande. Q ramene de 6 a 1,6 : a Q=6 la bande etait si
-         etroite qu'il ne restait presque plus de signal (pic 0,12 contre
-         0,27 a Q=1,6). Plus large = plus present, et le "tac" garde son
-         grain. */
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = fort ? 1100 + Math.random() * 200
-                                : 1900 + Math.random() * 700;
-      bp.Q.value = 1.6;
-
-      /* Enveloppe tres courte (~22 ms) : attaque immediate, extinction
-         nette. C'est la duree qui fait la difference entre un clic sec et
-         un bruit de friture. */
       const g = ctx.createGain();
-      const dur = fort ? 0.030 : 0.022;
-      const vol = (fort ? 1 : 0.72) * (0.8 + Math.random() * 0.4);
+      /* 8 ms seulement : a cette duree l'oreille percoit un point, pas une
+         note. C'est la cle de la discretion — court avant d'etre faible. */
+      const dur = 0.008;
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(vol, t + 0.002);
+      g.gain.exponentialRampToValueAtTime(fort ? 0.9 : 0.6, t + 0.001);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
 
-      src.connect(bp); bp.connect(g); g.connect(_typeBus);
-      src.start(t);
-      src.stop(t + dur + 0.01);
-
-      /* CORPS DU CLIC : un tres bref coup de basse (~190 Hz, 4 ms) sous le
-         bruit. C'est lui qui donne la sensation de touche qui frappe le
-         papier ; sans lui le bruit seul ressemble a un grattement et se
-         perd dans les petits haut-parleurs de telephone, qui restituent
-         mal les aigus isoles. */
-      const body = ctx.createOscillator();
-      const bg = ctx.createGain();
-      body.type = 'triangle';
-      body.frequency.setValueAtTime(fort ? 150 : 210, t);
-      body.frequency.exponentialRampToValueAtTime(fort ? 70 : 95, t + 0.02);
-      bg.gain.setValueAtTime(0.0001, t);
-      bg.gain.exponentialRampToValueAtTime(vol * 0.5, t + 0.001);
-      bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.020);
-      body.connect(bg); bg.connect(_typeBus);
-      body.start(t); body.stop(t + 0.025);
+      o.connect(g); g.connect(_typeBus);
+      o.start(t);
+      o.stop(t + dur + 0.005);
     }catch(e){ /* son indisponible : le texte s'ecrit quand meme */ }
   }
 
-  /* Petite cloche de fin de ligne, comme le retour de chariot d'une
-     machine a ecrire. Joue une seule fois, quand la phrase est finie. */
+  /* Accuse de reception de fin de transmission : deux notes montantes,
+     tres breves. Remplace la cloche de machine a ecrire, qui n'avait plus
+     sa place maintenant que la frappe est numerique. */
   function _typeDing(){
     if(!isSoundEnabled() || !_typeCtx) return;
     try{
-      const ctx = _typeCtx, t = ctx.currentTime + 0.05;
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine';
-      o.frequency.value = 1760;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.22, t + 0.008);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
-      o.connect(g); g.connect(_typeBus);
-      o.start(t); o.stop(t + 0.34);
+      const ctx = _typeCtx;
+      [[1568, 0.05], [2093, 0.115]].forEach(([f, dt]) => {
+        const t = ctx.currentTime + dt;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'square';
+        o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.5, t + 0.002);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
+        o.connect(g); g.connect(_typeBus);
+        o.start(t); o.stop(t + 0.08);
+      });
     }catch(e){ /* silencieux */ }
   }
 
