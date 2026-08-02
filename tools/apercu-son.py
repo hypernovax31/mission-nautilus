@@ -6,8 +6,8 @@ import math, struct, wave
 
 SR   = 48000
 STEP = 0.018        # 18 ms par caractere  (index.html : const speed = 18)
-BUS  = 0.105        # volume general       (index.html : _typeBus.gain.value)
-DUR  = 0.008        # duree d'un bip
+BUS  = 0.45         # volume general       (index.html : _typeBus.gain.value)
+DUR  = 0.028        # duree d'un bip  (8 ms etait inaudible : voir commit)
 GAP  = 0.007        # ecart minimal entre deux bips
 
 TEXTE = ("En 1870, le Nautilus disparaît au large des îles Lofoten, englouti par le maelström. "
@@ -41,8 +41,8 @@ for c in TEXTE:
     t += STEP
 
 # accuse de reception de fin : deux notes montantes
-carre(t + 0.05,  1568, 0.5, 0.075)
-carre(t + 0.115, 2093, 0.5, 0.075)
+carre(t + 0.05,  1568, 0.34, 0.075)
+carre(t + 0.115, 2093, 0.34, 0.075)
 
 pic = max(abs(v) for v in buf) or 1
 print('duree %.1f s | pic reel %.3f (%.1f dBFS) — sans normalisation'

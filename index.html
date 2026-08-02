@@ -4880,13 +4880,12 @@ function qrDataUri(text, opts){
          navigateur la genere seul. On a supprime l'echantillon de bruit
          blanc qui servait a l'ancien clic mecanique. */
       _typeBus = _typeCtx.createGain();
-      /* Volume general : DISCRET. Le bip est une onde pure, donc bien plus
-         efficace a niveau egal qu'un bruit filtre.
-         Baisse de 0,16 a 0,105 : il y a maintenant UN bip par caractere
-         (environ 56 par seconde au lieu de 19). A trois fois plus de sons,
-         le meme niveau devenait fatigant. Plus nombreux donc plus discrets
-         — l'ensemble reste aussi present a l'oreille. */
-      _typeBus.gain.value = 0.105;
+      /* Volume general, recale avec la nouvelle duree de bip (28 ms).
+         0,105 avait ete choisi pour un bip de 8 ms ; allonger le bip sans
+         toucher au volume l'aurait laisse trop faible. A 0,45 le volume
+         PERCU est de -27,4 dB, soit environ 9 dB sous l'ambiance ocean :
+         nettement audible, present, sans jamais couvrir la lecture. */
+      _typeBus.gain.value = 0.45;
       _typeBus.connect(_typeCtx.destination);
       if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
       return _typeCtx;
@@ -4941,9 +4940,18 @@ function qrDataUri(text, opts){
       o.frequency.value = fort ? 1046.5 : 2093;   // do6 / do7
 
       const g = ctx.createGain();
-      /* 8 ms seulement : a cette duree l'oreille percoit un point, pas une
-         note. C'est la cle de la discretion — court avant d'etre faible. */
-      const dur = 0.008;
+      /* DUREE CORRIGEE : 8 ms -> 28 ms.
+         C'EST LA CAUSE DU SILENCE. A 8 ms le bip ne contenait qu'une
+         vingtaine d'oscillations : l'oreille n'a pas le temps d'y
+         percevoir un son. Mesure : volume percu -45,8 dB, soit 28 dB SOUS
+         l'ambiance ocean — totalement inaudible. C'est aussi pour cela que
+         seule la note de fin s'entendait : elle dure 75 ms, donc elle
+         etait percue 7 dB plus fort que les bips, avec pourtant un pic
+         quasi identique.
+         A 28 ms le bip est percu a -27,4 dB (soit +18 dB) tout en restant
+         un point bref, et il s'eteint avant le caractere suivant (reste
+         -16 dB au bout des 18 ms). */
+      const dur = 0.028;
       g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(fort ? 0.9 : 0.6, t + 0.001);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -4968,7 +4976,11 @@ function qrDataUri(text, opts){
         o.type = 'square';
         o.frequency.value = f;
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.5, t + 0.002);
+        /* Niveau cale sur celui des bips de frappe : a 0,16 la note de fin
+           passait 7 dB EN DESSOUS d'eux et se faisait oublier, a 0,5 elle
+           les ecrasait. A 0,34 elle les depasse d'environ 2 dB : on
+           l'entend comme une conclusion, pas comme un coup de gong. */
+        g.gain.exponentialRampToValueAtTime(0.34, t + 0.002);
         g.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
         o.connect(g); g.connect(_typeBus);
         o.start(t); o.stop(t + 0.08);
