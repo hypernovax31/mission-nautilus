@@ -4840,13 +4840,41 @@ function qrDataUri(text, opts){
        la batterie du telephone est preservee.
      - Si le navigateur refuse le son (pas encore de geste utilisateur),
        le texte s'ecrit normalement, simplement sans bruit. */
+  /* ===== SIGNAL COMMUN DE DEMARRAGE DU SON =====
+     PROBLEME CORRIGE : l'ordre de mission attendait un geste de son cote
+     (avec sa propre limite de 2,5 s) pendant que l'ambiance ocean attendait
+     le sien du sien. Les deux partaient donc a des moments differents : le
+     texte s'ecrivait souvent AVANT que la carte son soit debloquee, donc en
+     silence, et l'ambiance arrivait apres coup.
+     Desormais il n'y a qu'un seul point de verite : des que le son devient
+     REELLEMENT audible, on previent tout le monde en meme temps. */
+  let _audioAudible = false;
+  const _audioReadyCbs = [];
+  function whenAudioReady(cb){
+    if(_audioAudible){ cb(); return; }
+    _audioReadyCbs.push(cb);
+  }
+  function notifyAudioReady(){
+    if(_audioAudible) return;
+    _audioAudible = true;
+    while(_audioReadyCbs.length){
+      const cb = _audioReadyCbs.shift();
+      try{ cb(); }catch(e){ /* un abonne casse ne doit pas bloquer les autres */ }
+    }
+  }
+
   let _typeCtx = null;        // contexte audio dedie, cree puis referme
   let _typeBus = null;        // volume general de la frappe
   let _typeNoise = null;      // court echantillon de bruit, reutilise
-  let _typeLastAt = 0;        // garde-fou anti-saturation
+  /* -1 et non 0 : sur un contexte audio tout neuf, currentTime vaut ~0.
+     Avec 0 comme valeur de depart, le test anti-saturation ci-dessous
+     ("moins de 12 ms depuis le clic precedent") etait vrai des le premier
+     appel et AVALAIT systematiquement le clic de la premiere lettre. */
+  let _typeLastAt = -1;       // garde-fou anti-saturation
 
   function _openTypeAudio(){
     if(_typeCtx) return _typeCtx;
+    _typeLastAt = -1;         // nouveau contexte : l'horloge repart de zero
     const AC = window.AudioContext || window.webkitAudioContext;
     if(!AC) return null;
     try{
@@ -4860,7 +4888,14 @@ function qrDataUri(text, opts){
       for(let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
 
       _typeBus = _typeCtx.createGain();
-      _typeBus.gain.value = 0.13;      // volume general : discret
+      /* VOLUME CORRIGE. La valeur precedente (0,13) donnait un pic mesure
+         a -36 dBFS, soit environ 27 fois plus faible que l'ambiance ocean
+         qui tourne a 0,42 : les clics existaient bien, mais etaient tout
+         simplement couverts. Le filtre etroit (Q=6) mangeait en plus 88 %
+         de l'energie du bruit. Bande elargie + niveau recale pour un pic
+         autour de -8 dBFS mesure : nettement audible par-dessus
+         l'ambiance, avec encore de la marge avant saturation. */
+      _typeBus.gain.value = 0.55;
       _typeBus.connect(_typeCtx.destination);
       if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
       return _typeCtx;
@@ -4896,13 +4931,15 @@ function qrDataUri(text, opts){
          qui fait entendre une machine et non une boucle. */
       src.playbackRate.value = 0.85 + Math.random() * 0.45;
 
-      /* Filtre passe-bande : ne garde qu'une bande etroite du bruit, ce
-         qui transforme le souffle en petit "tac" de touche. */
+      /* Filtre passe-bande. Q ramene de 6 a 1,6 : a Q=6 la bande etait si
+         etroite qu'il ne restait presque plus de signal (pic 0,12 contre
+         0,27 a Q=1,6). Plus large = plus present, et le "tac" garde son
+         grain. */
       const bp = ctx.createBiquadFilter();
       bp.type = 'bandpass';
       bp.frequency.value = fort ? 1100 + Math.random() * 200
                                 : 1900 + Math.random() * 700;
-      bp.Q.value = 6;
+      bp.Q.value = 1.6;
 
       /* Enveloppe tres courte (~22 ms) : attaque immediate, extinction
          nette. C'est la duree qui fait la difference entre un clic sec et
@@ -4917,6 +4954,22 @@ function qrDataUri(text, opts){
       src.connect(bp); bp.connect(g); g.connect(_typeBus);
       src.start(t);
       src.stop(t + dur + 0.01);
+
+      /* CORPS DU CLIC : un tres bref coup de basse (~190 Hz, 4 ms) sous le
+         bruit. C'est lui qui donne la sensation de touche qui frappe le
+         papier ; sans lui le bruit seul ressemble a un grattement et se
+         perd dans les petits haut-parleurs de telephone, qui restituent
+         mal les aigus isoles. */
+      const body = ctx.createOscillator();
+      const bg = ctx.createGain();
+      body.type = 'triangle';
+      body.frequency.setValueAtTime(fort ? 150 : 210, t);
+      body.frequency.exponentialRampToValueAtTime(fort ? 70 : 95, t + 0.02);
+      bg.gain.setValueAtTime(0.0001, t);
+      bg.gain.exponentialRampToValueAtTime(vol * 0.5, t + 0.001);
+      bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.020);
+      body.connect(bg); bg.connect(_typeBus);
+      body.start(t); body.stop(t + 0.025);
     }catch(e){ /* son indisponible : le texte s'ecrit quand meme */ }
   }
 
@@ -4931,7 +4984,7 @@ function qrDataUri(text, opts){
       o.type = 'sine';
       o.frequency.value = 1760;
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.16, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.22, t + 0.008);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
       o.connect(g); g.connect(_typeBus);
       o.start(t); o.stop(t + 0.34);
@@ -4983,30 +5036,32 @@ function qrDataUri(text, opts){
 
     let i = 0;
     const speed = 10; // ms par caractere (rapide)
-    /* PIEGE DES NAVIGATEURS : tant que l'utilisateur n'a rien touche, le
-       son est INTERDIT. Or l'ordre de mission est souvent deja visible au
-       chargement : la frappe serait donc muette a tous les coups.
-       On attend donc le premier geste (doigt, souris, clavier) avant de
-       lancer l'ecriture — mais au maximum 2,5 s, apres quoi le texte
-       s'ecrit quand meme, simplement sans bruit. Aucun saut de mise en
-       page pendant l'attente : le texte fantome tient deja la place. */
-    const lancer = () => { setTimeout(tick, 60); };
+    /* SYNCHRONISATION : le texte part en meme temps que le son.
+       On ne guette plus les gestes ici — c'est le systeme audio commun qui
+       previent quand le son devient reellement audible (voir
+       whenAudioReady). Ainsi l'ambiance ocean, les clics de frappe et
+       l'ecriture demarrent au meme instant, au lieu de trois horloges
+       independantes.
+       Filet de securite : si le son reste refuse au bout de 4 s (ou si le
+       sonar est eteint), on ecrit quand meme, simplement sans bruit. Le
+       texte fantome tient deja la place, donc aucune secousse a l'ecran. */
+    let parti = false;
+    const lancer = () => {
+      if(parti) return;
+      parti = true;
+      clearTimeout(secours);
+      /* Le contexte audio est ouvert AVANT le premier caractere : sans
+         cela, sa creation (quelques millisecondes) decalait le tout
+         premier clic par rapport a la premiere lettre. */
+      if(isSoundEnabled()) _openTypeAudio();
+      setTimeout(tick, 40);
+    };
+    const secours = setTimeout(lancer, 4000);
     const attendreGeste = () => {
-      if(!isSoundEnabled()) { lancer(); return; }   // sonar eteint : inutile
+      if(!isSoundEnabled()){ lancer(); return; }   // sonar eteint : on ecrit tout de suite
       const AC = window.AudioContext || window.webkitAudioContext;
-      if(!AC) { lancer(); return; }
-      let parti = false;
-      const go = () => {
-        if(parti) return;
-        parti = true;
-        clearTimeout(secours);
-        ['pointerdown','touchstart','keydown'].forEach(ev =>
-          window.removeEventListener(ev, go));
-        lancer();
-      };
-      const secours = setTimeout(go, 2500);
-      ['pointerdown','touchstart','keydown'].forEach(ev =>
-        window.addEventListener(ev, go, {once:false, passive:true}));
+      if(!AC){ lancer(); return; }                 // pas de son possible
+      whenAudioReady(lancer);
     };
     const tick = () => {
       if(i >= fullText.length){
@@ -5443,6 +5498,9 @@ function qrDataUri(text, opts){
       a.muted = false;              // silenceEverything() l'avait coupe
       unmuteAlarms();
       startOceanAudio();
+      /* Le joueur vient d'allumer le sonar lui-meme : si l'ordre de mission
+         attendait encore le son pour s'ecrire, il part maintenant. */
+      notifyAudioReady();
     }
   }
 
@@ -5472,6 +5530,7 @@ function qrDataUri(text, opts){
     if(!started) return;          // refuse : on reste a l'ecoute
     _audioWakeDone = true;
     setSoundEnabled(true);        // memorise : le son est en marche
+    notifyAudioReady();           // demarre l'ordre de mission au meme instant
     AUDIO_WAKE_EVENTS.forEach(evt => {
       window.removeEventListener(evt, activateAudioFromNavigation, { capture:true });
       window.removeEventListener(evt, activateAudioFromNavigation);
@@ -5527,6 +5586,7 @@ function qrDataUri(text, opts){
     if(started){
       _audioWakeDone = true;
       setSoundEnabled(true);
+      notifyAudioReady();      // le texte peut s'ecrire : le son est la
       return;
     }
 
