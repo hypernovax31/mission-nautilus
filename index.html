@@ -182,6 +182,21 @@
     .offscreen *::after{
       animation-play-state:paused !important;
     }
+    /* EXCEPTION : le balayage du sonar.
+       Il possede DEJA son propre mecanisme de mise en pause (.anim-idle),
+       calcule precisement sur la part du bloc reellement sous les yeux.
+       Le laisser dependre en plus de .offscreen, c'etait deux verrous pour
+       la meme porte : il suffisait que l'un des deux reste coince pour
+       que le radar ne tourne plus jamais — sans aucun moyen de le
+       relancer, puisque la classe n'est retiree que sur un evenement de
+       defilement. Symptome constate sur Brave : sonar vert immobile.
+       On rend donc .anim-idle seul maitre du balayage. */
+    .offscreen .radar-stage:not(.anim-idle) .radar-sweep-big,
+    .offscreen .radar-stage:not(.anim-idle) .radar-center,
+    .offscreen .radar-stage:not(.anim-idle) .radar-blip,
+    .offscreen .radar-stage:not(.anim-idle) .radar-blip::after{
+      animation-play-state:running !important;
+    }
 
     /* Onglet en arriere-plan : plus aucune animation decorative. */
     body.page-hidden *,
@@ -2213,6 +2228,12 @@
       return visible / Math.min(r.height, vh);
     }
 
+    /* On ne pose l'etat visuel QUE sur un changement reel.
+       Ne pas "forcer" au premier passage : la valeur de depart de
+       _radarVisible est `false` mais AUCUNE classe n'est encore posee,
+       donc le radar tourne. Forcer reviendrait a le geler au chargement
+       tant que la page n'a pas sa hauteur definitive — exactement le
+       defaut qu'on cherche a eviter. */
     function apply(){
       const onScreen = visibleRatio() >= RADAR_VISIBLE_RATIO;
       if(onScreen === _radarVisible) return;
@@ -2253,6 +2274,22 @@
     }
 
     apply();          // etat de depart (page rechargee deja defilee)
+
+    /* La hauteur de la page bouge encore apres ce premier calcul : polices
+       de caracteres, image de fond, cartes d'equipage... Un bloc juge
+       "hors ecran" a cet instant peut tres bien etre sous les yeux une
+       demi-seconde plus tard. On refait donc le point au chargement
+       complet, puis deux fois a court terme — c'est gratuit et cela evite
+       un sonar immobile jusqu'au premier defilement. */
+    window.addEventListener('load', apply, { once:true });
+    setTimeout(apply, 400);
+    setTimeout(apply, 1500);
+
+    /* Retour sur l'onglet : certains navigateurs suspendent les animations
+       en arriere-plan et ne les relancent pas toujours seuls. */
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'visible') apply();
+    });
   })();
 
   function waitForRadarVisible(){
@@ -5436,8 +5473,34 @@ function qrDataUri(text, opts){
         en.target.classList.toggle('offscreen', !en.isIntersecting);
       });
     }, { rootMargin: '80px 0px' });   // petite marge : pas de clignotement au bord
-    document.querySelectorAll('.card, .final-cta, .mission-steps, header, footer')
-      .forEach(el => io.observe(el));
+    const blocs = document.querySelectorAll('.card, .final-cta, .mission-steps, header, footer');
+    blocs.forEach(el => io.observe(el));
+
+    /* FILET DE SECURITE.
+       Ce reglage ne se met a jour QUE lorsqu'un bloc entre ou sort de
+       l'ecran. Si un navigateur rend son premier verdict AVANT que la page
+       ait sa hauteur definitive (polices, images, ou ressources bloquees
+       par une extension de protection), un bloc pourtant visible peut
+       etre marque "hors ecran" — et le rester indefiniment, faute de
+       nouvel evenement tant que le joueur ne fait pas defiler la page.
+       Toutes ses animations restent alors gelees.
+       On refait donc le point une fois la page entierement chargee, en
+       comparant la position reelle de chaque bloc a la taille de l'ecran. */
+    function verifierBlocs(){
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      if(!vh) return;
+      blocs.forEach(el => {
+        const r = el.getBoundingClientRect();
+        const visible = r.bottom > -80 && r.top < vh + 80;
+        el.classList.toggle('offscreen', !visible);
+      });
+    }
+    window.addEventListener('load', verifierBlocs, { once:true });
+    setTimeout(verifierBlocs, 600);
+    setTimeout(verifierBlocs, 2000);
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'visible') verifierBlocs();
+    });
   })();
 
   // Ambiance sonore : démarrage après interaction utilisateur.
