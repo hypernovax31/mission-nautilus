@@ -6965,13 +6965,60 @@ function qrDataUri(text, opts){
 
   // (recap.html supprime)
 
-  // Enregistrement du service worker (PWA)
+  /* Enregistrement du service worker (PWA) + MISE A JOUR AUTOMATIQUE.
+
+     PROBLEME CORRIGE : l'ancienne version se contentait d'enregistrer le
+     service worker. Quand une nouvelle version du jeu etait publiee, le
+     nouveau service worker s'installait bien en arriere-plan, mais la
+     page affichee, elle, continuait de montrer l'ANCIEN contenu jusqu'a
+     ce que le joueur ferme completement l'onglet (ou l'application
+     installee). Sur telephone, une application PWA n'est presque jamais
+     fermee : des corrections de texte pouvaient donc rester invisibles
+     pendant des jours, en donnant l'impression qu'elles n'avaient pas
+     ete faites.
+
+     Desormais : des qu'une nouvelle version a fini de s'installer, la
+     page se recharge UNE SEULE FOIS, toute seule. On verifie aussi
+     l'existence d'une mise a jour au retour sur l'application. */
   if('serviceWorker' in navigator){
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then((reg) => {
         console.log('[PWA] Service worker enregistre :', reg.scope);
+
+        /* Une nouvelle version arrive : on la surveille jusqu'a ce
+           qu'elle soit prete a prendre la main. */
+        reg.addEventListener('updatefound', () => {
+          const nouveau = reg.installing;
+          if(!nouveau) return;
+          nouveau.addEventListener('statechange', () => {
+            /* 'installed' + un service worker deja actif = il s'agit
+               bien d'une MISE A JOUR, pas de la toute premiere visite
+               (auquel cas recharger n'aurait aucun sens). */
+            if(nouveau.state === 'installed' && navigator.serviceWorker.controller){
+              console.log('[PWA] Nouvelle version prete.');
+            }
+          });
+        });
+
+        /* Verification au retour sur la page : le joueur revient sur
+           l'application apres l'avoir laissee de cote, c'est le bon
+           moment pour aller voir s'il existe une version plus recente. */
+        document.addEventListener('visibilitychange', () => {
+          if(document.visibilityState === 'visible') reg.update().catch(()=>{});
+        });
       }).catch((err) => {
         console.warn('[PWA] Echec enregistrement service worker :', err);
+      });
+
+      /* Le nouveau service worker a pris la main : on recharge pour
+         afficher la nouvelle version. Le verrou evite toute boucle de
+         rechargement, cas classique de cette technique. */
+      let _rechargeFaite = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if(_rechargeFaite) return;
+        _rechargeFaite = true;
+        console.log('[PWA] Nouvelle version active : rechargement.');
+        window.location.reload();
       });
     });
   }

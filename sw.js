@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v111';
+const CACHE_NAME = 'nautilus-v112';
 const PRECACHE = [
   './',
   './index.html',
@@ -17,6 +17,10 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE).catch(() => {}))
   );
+  /* skipWaiting : la nouvelle version prend la main tout de suite, sans
+     attendre la fermeture de tous les onglets. Combine a l'ecoute de
+     'controllerchange' dans index.html, la page se recharge alors d'elle
+     meme et le joueur voit immediatement la derniere version. */
   self.skipWaiting();
 });
 
@@ -35,6 +39,10 @@ self.addEventListener('fetch', (event) => {
   // Pour les requetes Firebase / API externes : network-first
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  /* Le service worker lui-meme n'est jamais servi depuis le cache : sinon
+     il pourrait se re-servir sa propre version perimee et le jeu ne se
+     mettrait plus jamais a jour. Le navigateur le recharge du reseau. */
+  if (url.pathname.endsWith('/sw.js')) return;
   // Pages HTML : network-first, fallback cache
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
