@@ -138,6 +138,69 @@
 
     .morse-brief{margin:8px 0 16px;color:#bcd9e6;line-height:1.5;font-size:clamp(13px,1.8vw,15px);}
 
+    /* ===== BRIEFING DU PALIER — mise en page refaite =====
+       L'ancienne version empilait tout dans un seul paragraphe separe par
+       des <br> : sur telephone, les lignes se coupaient n'importe ou et les
+       consignes importantes se noyaient dans le texte. Chaque consigne est
+       desormais une LIGNE A PART ENTIERE, avec son icone alignee dans une
+       colonne fixe : le regard descend la liste sans se perdre. */
+    .brief-card{
+      background:linear-gradient(180deg,rgba(4,14,24,.72),rgba(6,22,36,.72));
+      border:1px solid rgba(142,231,255,.20);
+      border-radius:14px;padding:16px 18px;margin:14px 0 16px;
+    }
+    /* Bandeau "un seul matelot a la fois" : c'est la regle du jeu, pas une
+       consigne pratique. Il se detache donc du reste. */
+    .brief-rule{
+      display:flex;gap:10px;align-items:flex-start;
+      background:rgba(142,231,255,.09);
+      border:1px solid rgba(142,231,255,.28);
+      border-left:3px solid var(--cyan);
+      border-radius:10px;padding:11px 13px;margin:0 0 14px;
+      color:#dff6ff;font-size:clamp(12.5px,1.7vw,14px);line-height:1.45;
+    }
+    .brief-rule .ico{flex:0 0 auto;line-height:1.45}
+    .brief-signature{
+      display:flex;align-items:center;gap:9px;margin:0 0 10px;
+      color:var(--fnac);font-weight:900;letter-spacing:.05em;
+      text-transform:uppercase;font-size:clamp(12px,1.7vw,14px);
+    }
+    /* Trait de separation qui prolonge le titre jusqu'au bord : donne au
+       bloc l'allure d'un document officiel. */
+    .brief-signature::after{
+      content:"";flex:1 1 auto;height:1px;
+      background:linear-gradient(90deg,rgba(245,176,39,.55),transparent);
+    }
+    .brief-intro{
+      margin:0 0 14px;color:#dff6ff;line-height:1.55;
+      font-size:clamp(13px,1.8vw,15px);
+    }
+    .brief-intro b{color:var(--cyan)}
+    /* La liste des consignes : une grille a deux colonnes (icone / texte).
+       La colonne d'icones a une largeur FIXE, donc tous les textes
+       s'alignent verticalement, meme quand une consigne tient sur deux
+       lignes. Avec des <br> ce n'etait jamais le cas. */
+    .brief-list{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+    .brief-list li{
+      display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;
+      color:#cfe6ef;line-height:1.45;font-size:clamp(12.5px,1.7vw,14.5px);
+    }
+    .brief-list li .ico{font-size:15px;line-height:1.45;text-align:center}
+    .brief-list li b{color:#fff}
+    /* Les deux consignes de sanction (echec, indice) sont mises en retrait
+       visuel : meme liste, mais fond ambre discret pour signaler qu'elles
+       ont une consequence. */
+    .brief-list li.warn{
+      background:rgba(245,176,39,.09);
+      border:1px solid rgba(245,176,39,.22);
+      border-radius:9px;padding:8px 10px;margin-left:-10px;margin-right:-10px;
+    }
+    .brief-list li.warn b{color:#ffd36c}
+    @media(max-width:430px){
+      .brief-card{padding:13px 14px}
+      .brief-list li{grid-template-columns:20px 1fr;gap:8px}
+    }
+
     .morse-sonar-panel{
       display:grid;grid-template-columns:140px 1fr;gap:16px;align-items:center;
       padding:16px;background:rgba(0,0,0,.32);
@@ -1473,8 +1536,12 @@ window.Nautilus = {
            🔁 <b>${esc(echecPrecedent.startedByName || 'Un matelot')}</b> a échoué et remonte en surface : lui seul est bloqué.
            La barre est libre — <b>${esc(me?.name || 'matelot')}</b>, tu peux reprendre le palier.
          </div>`
+      /* Bandeau du haut RACCOURCI : la regle "un seul matelot a la fois"
+         est desormais ecrite en toutes lettres dans le briefing, juste en
+         dessous. La repeter ici faisait lire deux fois la meme phrase a
+         quelques centimetres d'intervalle. */
       : `<div class="status-banner info">
-           📋 <b>Aucun protocole en cours.</b> Un seul matelot prend les commandes à la fois ; les autres suivent la progression depuis le journal de bord.
+           📋 <b>Aucun protocole en cours.</b> La barre est libre.
          </div>`;
     return `
       ${banniere}
@@ -1486,18 +1553,36 @@ window.Nautilus = {
             <span class="morse-timer" style="color:#9bc4d4;">03:30</span>
           </div>
         </div>
-        <p class="morse-brief">
-          ⚓ <b>Briefing du capitaine Nemo</b>
-          <br><br>
-          Le sas ne s'ouvrira qu'avec un mot de passe. Le capitaine te l'enverra
-          par le <b>sonar</b> : à toi de l'écouter et de l'écrire.
-          <br><br>
-          🎧 Le signal est faible : pense à monter le son 😉<br>
-          ⏱️ <b>3 minutes 30</b> pour répondre.<br>
-          ❌ <b>3 erreurs</b> et tu es repoussé en surface — toi seul.<br>
-          🤝 Un autre matelot pourra alors reprendre le palier à ta place.<br>
-          🆘 Bloqué ? Un <b>indice</b> est possible, mais il coûte 1 h de blocage.
-        </p>
+
+        <div class="brief-card">
+          <div class="brief-signature">⚓ Briefing du capitaine</div>
+
+          <div class="brief-rule">
+            <span class="ico" aria-hidden="true">📋</span>
+            <span><b>Un seul matelot prend les commandes à la fois</b> ; les autres
+              suivent la progression depuis le journal de bord.</span>
+          </div>
+
+          <p class="brief-intro">
+            Le sas ne s'ouvrira qu'avec un mot de passe. Le capitaine te l'enverra
+            par le <b>sonar</b> : à toi de l'écouter et de le retranscrire.
+          </p>
+
+          <ul class="brief-list">
+            <li><span class="ico" aria-hidden="true">🎧</span>
+              <span>Le signal est faible : pense à monter le son 😉</span></li>
+            <li><span class="ico" aria-hidden="true">⏱️</span>
+              <span><b>3 minutes 30</b> pour répondre.</span></li>
+            <li class="warn"><span class="ico" aria-hidden="true">❌</span>
+              <span><b>3 erreurs</b> et tu es repoussé en surface.</span></li>
+            <li><span class="ico" aria-hidden="true">🤝</span>
+              <span>Un autre matelot pourra alors reprendre l'épreuve à ta place.</span></li>
+            <li class="warn"><span class="ico" aria-hidden="true">🆘</span>
+              <span>Bloqué ? Un <b>indice</b> est possible, mais il te coûte
+                <b>1 h de blocage</b>.</span></li>
+          </ul>
+        </div>
+
         <div class="morse-actions">
           <button class="primary" id="takeLeadBtn" style="flex:1 1 100%;">⚓ PRENDRE LES COMMANDES</button>
         </div>
