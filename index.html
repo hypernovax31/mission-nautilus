@@ -1910,19 +1910,27 @@
 
   /* Supprime les equipes retirees via le panneau admin (game/config.obsoleteTeams),
      pour qu'elles ne soient pas recreees au chargement suivant. */
+  /* RENVOIE desormais la lecture de game/config au lieu de la jeter.
+     Ce document etait lu ici, puis RELU aussitot par loadMissionConfig() :
+     deux allers-retours reseau EN SERIE pour le meme contenu, soit le
+     double d'attente avant que la reserve d'oxygene s'affiche. */
   async function cleanupObsoleteTeams(){
     try{
       const cfgSnap = await getDoc(doc(db,'game','config'));
-      if(!cfgSnap.exists()) return;
+      if(!cfgSnap.exists()) return null;
       const obsolete = cfgSnap.data().obsoleteTeams;
-      if(!Array.isArray(obsolete) || !obsolete.length) return;
-      for(const code of obsolete){
+      if(!Array.isArray(obsolete) || !obsolete.length) return cfgSnap;
+      /* Les suppressions se font EN PARALLELE : enchainees une par une,
+         elles retardaient tout le demarrage de la page. */
+      await Promise.all(obsolete.map(async code => {
         const ref = doc(db, 'teams', code);
         const snap = await getDoc(ref);
         if(snap.exists()) await deleteDoc(ref);
-      }
+      }));
+      return cfgSnap;
     }catch(err){
       console.warn('cleanupObsoleteTeams:', err);
+      return null;
     }
   }
 
@@ -5201,9 +5209,43 @@ function qrDataUri(text, opts){
   /* Alias historique pour ne pas casser les références existantes. */
   const MISSION_DURATION_MS = MISSION_DURATION_MS_DEFAULT;
 
-  async function loadMissionConfig(){
-    const snap = await getDoc(doc(db,'game','config'));
+  /* Derniere configuration connue, gardee sur l'appareil.
+     La reserve d'oxygene ne changeait qu'APRES la reponse du serveur :
+     au chargement, la jauge restait figee sur "7J 00h00m00s / 100 %"
+     pendant toute la duree de la lecture reseau. Or cette information
+     bouge tres peu (une date de depart et une duree) : on la reaffiche
+     donc AUSSITOT depuis la memoire de l'appareil, puis on la corrige
+     silencieusement des que le serveur repond. */
+  const MISSION_CFG_KEY = 'nautilusMissionConfig';
+
+  function chargerConfigDepuisMemoire(){
+    try{
+      const brut = localStorage.getItem(MISSION_CFG_KEY);
+      if(!brut) return null;
+      const cfg = JSON.parse(brut);
+      /* Garde-fou : une valeur abimee ne doit pas fausser l'affichage. */
+      if(cfg && (cfg.missionStartedAt === null || typeof cfg.missionStartedAt === 'string')){
+        return cfg;
+      }
+    }catch(e){ /* memoire indisponible (navigation privee) */ }
+    return null;
+  }
+
+  function memoriserConfig(cfg){
+    try{
+      localStorage.setItem(MISSION_CFG_KEY, JSON.stringify({
+        missionStartedAt: cfg?.missionStartedAt ?? null,
+        missionDurationMs: cfg?.missionDurationMs ?? null
+      }));
+    }catch(e){ /* memoire pleine ou refusee : sans consequence */ }
+  }
+
+  /* Lecture de game/config. `snapPartage` evite de relire le document
+     quand un appelant vient deja de le faire (voir init). */
+  async function loadMissionConfig(snapPartage){
+    const snap = snapPartage || await getDoc(doc(db,'game','config'));
     missionConfig = snap.exists() ? snap.data() : {};
+    memoriserConfig(missionConfig);
     return missionConfig;
   }
 
@@ -7047,6 +7089,20 @@ function qrDataUri(text, opts){
     (async function init(){
     currentTeam = null;
     updateFinalMissionButton();
+
+    /* AFFICHAGE IMMEDIAT DE LA RESERVE D'OXYGENE.
+       Avant toute lecture reseau, on redessine la jauge a partir de la
+       derniere configuration connue de l'appareil. Le compte a rebours
+       est donc juste des la premiere image, au lieu de rester bloque sur
+       "7J 00h00m00s / 100 %" le temps que le serveur reponde.
+       Le calcul se fait sur l'heure COURANTE, pas sur une valeur figee :
+       meme une configuration vieille de plusieurs jours donne un temps
+       restant exact, puisque seule la date de depart est memorisee. */
+    const cfgMemoire = chargerConfigDepuisMemoire();
+    if(cfgMemoire){
+      missionConfig = cfgMemoire;
+      updateCountdown();
+    }
     
     if($('memberName')) $('memberName').value = '';
     if($('matelotCodeInput')) $('matelotCodeInput').value = '';
@@ -7062,8 +7118,13 @@ function qrDataUri(text, opts){
        fixait un ecran rouge, alors que sa fiche aurait pu s'afficher tout
        de suite. Elles tournent desormais en arriere-plan. */
     const accueilPret = (async () => {
-      try { await cleanupObsoleteTeams(); } catch(e) { console.warn('cleanup error:', e); }
-      await loadMissionConfig();
+      /* cleanupObsoleteTeams() lit deja game/config : on REUTILISE sa
+         lecture au lieu d'en lancer une seconde pour le meme document.
+         Une lecture reseau economisee, donc autant de temps gagne avant
+         l'affichage de la reserve d'oxygene. */
+      let cfgSnap = null;
+      try { cfgSnap = await cleanupObsoleteTeams(); } catch(e) { console.warn('cleanup error:', e); }
+      await loadMissionConfig(cfgSnap);
       updateCountdown();
       /* PAS D'ALARME AU CHARGEMENT.
          L'ecran rouge se declenchait des l'ouverture de la page quand la

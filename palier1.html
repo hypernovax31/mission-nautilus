@@ -1113,8 +1113,40 @@ window.Nautilus = {
      n'aurait rien a montrer. */
   let _o2Config = null;
 
+  /* MEME MEMOIRE QUE LA PAGE D'ACCUEIL (cle 'nautilusMissionConfig').
+     La jauge restait CACHEE tant que le serveur n'avait pas repondu : au
+     lancement du mini-jeu, elle apparaissait brutalement une seconde plus
+     tard, ce qui decalait toute la page sous les yeux du joueur.
+     On repart donc de la derniere configuration connue de l'appareil —
+     posee par la page d'accueil, que le matelot vient forcement de
+     traverser — puis on la corrige des la reponse du serveur. */
+  const MISSION_CFG_KEY = 'nautilusMissionConfig';
+
+  function configDepuisMemoire() {
+    try {
+      const brut = localStorage.getItem(MISSION_CFG_KEY);
+      if (!brut) return null;
+      const cfg = JSON.parse(brut);
+      if (cfg && (cfg.missionStartedAt === null || typeof cfg.missionStartedAt === 'string')) {
+        return cfg;
+      }
+    } catch (e) { /* memoire indisponible */ }
+    return null;
+  }
+
   async function chargerConfigO2() {
-    _o2Config = await N.getMissionConfig();
+    const frais = await N.getMissionConfig();
+    /* Une lecture ratee (reseau coupe) renvoie null : dans ce cas on
+       GARDE la valeur memorisee plutot que d'effacer la jauge. */
+    if (frais) {
+      _o2Config = frais;
+      try {
+        localStorage.setItem(MISSION_CFG_KEY, JSON.stringify({
+          missionStartedAt: frais.missionStartedAt ?? null,
+          missionDurationMs: frais.missionDurationMs ?? null
+        }));
+      } catch (e) { /* sans consequence */ }
+    }
   }
 
   function majReserveO2() {
@@ -1153,6 +1185,10 @@ window.Nautilus = {
     /* La reserve d'oxygene s'affiche des l'ouverture, puis se rafraichit
        toutes les 30 s : inutile d'aller plus vite pour un compte a rebours
        de 7 jours, et cela evite de solliciter le telephone pour rien. */
+    /* Affichage IMMEDIAT depuis la memoire, avant toute lecture reseau. */
+    _o2Config = configDepuisMemoire();
+    if (_o2Config) majReserveO2();
+
     chargerConfigO2().then(() => {
       majReserveO2();
       setInterval(majReserveO2, 30000);
