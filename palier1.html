@@ -68,6 +68,29 @@
       color:#fff;font-size:18px;
       border-bottom:1px solid rgba(142,231,255,.18);
     }
+    /* Titre de carte en DEUX parties : l'intitule a gauche, le chrono a
+       droite. Le temps etait auparavant repete dans un second encart, a
+       l'interieur de la carte, juste sous ce titre — deux fois la meme
+       information a deux centimetres d'ecart. Il vit maintenant dans la
+       barre de titre, ou il reste visible quel que soit l'ecran affiche
+       (accueil de l'epreuve, jeu en cours, spectateur). */
+    .card-h2-split{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+    .card-h2-timer{display:flex;align-items:baseline;gap:8px;}
+    .card-h2-timer .lbl{
+      font-size:10px;color:#9bc4d4;letter-spacing:.09em;
+      text-transform:uppercase;font-weight:800;
+    }
+    .card-h2-timer .val{
+      font-family:Consolas,"Courier New",monospace;
+      font-size:clamp(18px,2.6vw,24px);font-weight:1000;color:#8ee7ff;
+      text-shadow:0 0 12px rgba(142,231,255,.5);line-height:1;
+    }
+    /* Chrono qui tourne : il vire a l'ambre sous 60 s, au rouge sous 20 s. */
+    .card-h2-timer.warn .val{color:#ffd36c;text-shadow:0 0 12px rgba(245,176,39,.55);}
+    .card-h2-timer.crit .val{color:#ff7b72;text-shadow:0 0 12px rgba(255,75,62,.6);}
+    @media(max-width:430px){
+      .card-h2-timer .lbl{display:none}
+    }
     .body{padding:18px 20px;}
 
     /* === Identification joueur === */
@@ -463,7 +486,13 @@
 
   <!-- Zone de jeu -->
   <section class="card" id="gameCard" style="display:none;">
-    <h2>🧪 ÉPREUVE DU PALIER</h2>
+    <h2 class="card-h2-split">
+      <span>🧪 ÉPREUVE DU PALIER</span>
+      <span class="card-h2-timer" id="gameCardTimer">
+        <span class="lbl">Temps imparti</span>
+        <span class="val" id="gameCardTimerVal">03:30</span>
+      </span>
+    </h2>
     <div class="body" id="gameBody">
       <div class="notice" style="background:rgba(11,52,78,.6);border:1px solid rgba(142,231,255,.3);color:#dff6ff;">
         En attente d'un matelot pour rejoindre l'épreuve…
@@ -1496,6 +1525,19 @@ window.Nautilus = {
        d'avoir a y penser dans chacun de ces cas. */
     majVoyantPlongee();
 
+    /* Chrono de la barre de titre. Hors partie, il RETOMBE sur le temps
+       imparti (03:30) : sans cette remise a zero, il restait fige sur le
+       dernier temps affiche — un "00:07" trompeur apres une defaite, ou
+       le reliquat de la partie precedente sur l'ecran d'accueil.
+       Pendant une partie, ce sont les minuteries de bindPlayerEvents /
+       renderSpectatorScreen qui prennent le relais chaque demi-seconde. */
+    if (s && s.state === 'playing') {
+      majChronoTitre(computeRemaining(s), 'Temps restant');
+    } else {
+      if (state.timerHandle) { clearInterval(state.timerHandle); state.timerHandle = null; }
+      majChronoTitre(210, 'Temps imparti');
+    }
+
     /* Équipage bloqué (uniquement sur décision d'un administrateur) */
     if (N.isLocked(t)) {
       body.innerHTML = renderLockScreen(t);
@@ -1590,14 +1632,10 @@ window.Nautilus = {
     return `
       ${banniere}
       <div class="morse-stepbox">
-        <div class="morse-header">
-          <h3>🧪 ÉPREUVE DU PALIER</h3>
-          <div class="morse-timer-wrap">
-            <span class="morse-timer-label">Temps imparti</span>
-            <span class="morse-timer" style="color:#9bc4d4;">03:30</span>
-          </div>
-        </div>
-
+        <!-- Plus de titre ni de chrono ici : ils faisaient DOUBLON avec la
+             barre de titre de la carte, juste au-dessus ("EPREUVE DU
+             PALIER" + "Temps imparti 03:30"). Le briefing commence donc
+             directement. -->
         <div class="brief-card">
           <div class="brief-signature">⚓ Briefing du capitaine</div>
 
@@ -1788,14 +1826,8 @@ window.Nautilus = {
 
     return `
       <div class="morse-stepbox">
-        <div class="morse-header">
-          <h3>🧪 ÉPREUVE EN COURS</h3>
-          <div class="morse-timer-wrap">
-            <span class="morse-timer-label">Temps restant</span>
-            <span class="morse-timer" id="morseTimer">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</span>
-          </div>
-        </div>
-
+        <!-- Le chrono est affiche dans la barre de titre de la carte, pas
+             ici : une seule horloge a l'ecran, toujours au meme endroit. -->
         <p class="morse-brief">
           Écoute le signal et écris le mot qu'il épelle.
         </p>
@@ -1868,15 +1900,32 @@ window.Nautilus = {
      "_isPlaying is not defined" et AUCUN son ne sortait jamais. */
   let _isPlaying = false;
 
+  /* Ecrit le temps dans la barre de titre de la carte (une seule horloge
+     a l'ecran, toujours au meme endroit). `libelle` distingue le temps
+     IMPARTI, affiche avant le depart, du temps RESTANT une fois lance. */
+  function majChronoTitre(secondes, libelle) {
+    const zone = $('gameCardTimer');
+    const val  = $('gameCardTimerVal');
+    if (!zone || !val) return;
+    const m = Math.floor(Math.max(0, secondes) / 60);
+    const sec = Math.max(0, secondes) % 60;
+    val.textContent = `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    const lbl = zone.querySelector('.lbl');
+    if (lbl && libelle) lbl.textContent = libelle;
+    /* Couleur d'alerte seulement quand le chrono tourne vraiment : avant
+       le depart, "03:30" ne doit pas s'afficher en rouge. */
+    const enCours = libelle === 'Temps restant';
+    zone.classList.toggle('warn', enCours && secondes <= 60 && secondes > 20);
+    zone.classList.toggle('crit', enCours && secondes <= 20);
+  }
+
   function bindPlayerEvents() {
     /* Timer live */
     if (state.timerHandle) clearInterval(state.timerHandle);
     state.timerHandle = setInterval(() => {
-      const el = $('morseTimer');
-      if (!el || !state.session) return;
+      if (!state.session) return;
       const rem = computeRemaining(state.session);
-      const m = Math.floor(rem / 60), s = rem % 60;
-      el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      majChronoTitre(rem, 'Temps restant');
       if (rem <= 0) onTimeOut();
     }, 500);
 
@@ -2239,13 +2288,6 @@ window.Nautilus = {
         👀 <b>${esc(me.name)}</b>, ce n'est pas ton tour : <b>${esc(playerName)}</b> est aux commandes. Suis sa progression — s'il échoue ou demande un indice, la barre te reviendra.
       </div>
       <div class="morse-stepbox">
-        <div class="morse-header">
-          <h3>🧪 ${esc(playerName)} est en mission…</h3>
-          <div class="morse-timer-wrap">
-            <span class="morse-timer-label">Temps restant</span>
-            <span class="morse-timer" id="morseTimer">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</span>
-          </div>
-        </div>
         <p class="morse-brief">Une épreuve est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — s'il échoue, il sera seul repoussé en surface et tu pourras prendre sa place.</p>
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
@@ -2289,11 +2331,8 @@ window.Nautilus = {
     /* Bind timer + bouton indice */
     if (state.timerHandle) clearInterval(state.timerHandle);
     state.timerHandle = setInterval(() => {
-      const el = $('morseTimer');
-      if (!el || !state.session) return;
-      const rem = computeRemaining(state.session);
-      const m = Math.floor(rem / 60), s = rem % 60;
-      el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      if (!state.session) return;
+      majChronoTitre(computeRemaining(state.session), 'Temps restant');
     }, 500);
     /* sendSpectatorHint() a ete SUPPRIMEE : un spectateur ne peut plus
        envoyer d'indice. Seul le matelot aux commandes en demande, pour
