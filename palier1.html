@@ -85,6 +85,34 @@
     .identity-grid input:focus,.identity-grid select:focus{outline:none;border-color:var(--fnac);box-shadow:0 0 0 3px rgba(245,176,39,.25);}
     .identity-grid button{margin:0;height:48px;background:var(--fnac);color:#111;font-weight:1000;border-radius:12px;padding:0 20px;cursor:pointer;}
 
+    /* === Voyant "matelot aux commandes" ===
+       Pastille rouge qui clignote tant qu'un matelot joue reellement, et
+       qui s'eteint des que plus personne n'est aux commandes. Elle se voit
+       d'un coup d'oeil depuis n'importe quel ecran du mini-jeu.
+       Etat par defaut : ETEINTE (gris sombre, aucune animation), pour ne
+       pas laisser croire qu'une partie tourne alors que non. */
+    .dive-lamp{
+      display:inline-block;width:13px;height:13px;border-radius:50%;
+      vertical-align:middle;margin-left:10px;
+      background:#3a2626;
+      box-shadow:inset 0 0 4px rgba(0,0,0,.8);
+      transition:background .3s ease,box-shadow .3s ease;
+    }
+    .dive-lamp.on{
+      background:#ff4b3e;
+      box-shadow:0 0 10px rgba(255,75,62,.9),0 0 20px rgba(255,75,62,.5),inset 0 0 3px rgba(255,255,255,.4);
+      animation:diveLampBlink 1.1s ease-in-out infinite;
+    }
+    @keyframes diveLampBlink{
+      0%,100%{opacity:1}
+      50%{opacity:.28}
+    }
+    /* Respect du reglage "animations reduites" du telephone : la lampe
+       reste allumee en rouge, mais cesse de clignoter. */
+    @media (prefers-reduced-motion: reduce){
+      .dive-lamp.on{animation:none}
+    }
+
     /* === Équipage === */
     .crew{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px;}
     .crew-member{
@@ -327,7 +355,7 @@
     <h2>👤 IDENTIFICATION MATELOT</h2>
     <div class="body">
       <p style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 12px;">
-        Pour rejoindre la partie, indique ton nom (et ton service). Si un équipier est déjà en plongée, tu le verras apparaître dans le journal de bord ci-dessous — tu pourras l'aider en lui envoyant un indice.
+        Pour rejoindre la partie, indique ton nom (et ton service). Si un équipier est déjà en plongée, tu le verras apparaître dans le journal de bord ci-dessous — tu prendras la main dès qu’il aura terminé.
       </p>
       <div class="identity-grid">
         <div>
@@ -352,7 +380,7 @@
 
   <!-- Statut équipe -->
   <section class="card" id="teamCard" style="display:none;">
-    <h2>⚓ ÉQUIPAGE</h2>
+    <h2>⚓ ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Un matelot est aux commandes"></span></h2>
     <div class="body">
       <div id="teamStatus" class="status-banner info">Connexion au sonar en cours…</div>
       <div class="crew" id="crewList"></div>
@@ -706,6 +734,14 @@ async function getSession(teamCode) {
      vrais joueurs. */
   return isDeadSession(data) ? null : data;
 }
+/* Lecture BRUTE de la session, sans le filtre isDeadSession().
+   getSession() renvoie null pour une partie terminee ou perimee — c'est
+   voulu pour le jeu — mais on a besoin de relire une partie CLOSE pour y
+   recuperer les indices deja payes par l'equipage. */
+async function getSessionBrute(teamCode) {
+  const snap = await getDoc(sessionRef(teamCode));
+  return snap.exists() ? snap.data() : null;
+}
 function watchSession(teamCode, callback) {
   return onSnapshot(sessionRef(teamCode), (snap) => {
     const data = snap.exists() ? snap.data() : null;
@@ -958,7 +994,7 @@ window.Nautilus = {
   getClientId, getCurrentTeamCode, setCurrentTeamCode,
   getCurrentMatelotCode, getMatelotByCode,
   getTeam, getTeamRealtime, saveTeam,
-  sessionRef, getSession, watchSession, createSession, updateSession, endSession, clearSession,
+  sessionRef, getSession, getSessionBrute, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, isLocked, getMatelotLock, isMatelotLocked, formatDate,
   getMissionConfig,
   isTestMode,
@@ -1323,6 +1359,21 @@ window.Nautilus = {
     renderGameArea();
   }
 
+  /* Allume ou eteint le voyant rouge de l'encart "Equipage actif en
+     plongee". Il ne s'allume QUE si une epreuve est reellement en cours
+     (state 'playing') : ni une partie gagnee, ni une partie perdue, ni un
+     ecran d'attente ne doivent le faire clignoter. */
+  function majVoyantPlongee() {
+    const lamp = $('diveLamp');
+    if (!lamp) return;
+    const s = state.session;
+    const enCours = !!(s && s.state === 'playing');
+    lamp.classList.toggle('on', enCours);
+    lamp.setAttribute('title', enCours
+      ? `${s.startedByName || 'Un matelot'} est aux commandes`
+      : 'Aucun matelot aux commandes');
+  }
+
   /* === Rendu de la zone de jeu === */
   function renderGameArea() {
     const body = $('gameBody');
@@ -1330,6 +1381,12 @@ window.Nautilus = {
     const t = state.team;
     const s = state.session;
     const me = state.me;
+
+    /* Le voyant suit CHAQUE redessin : c'est le point de passage commun a
+       tous les changements d'etat (debut de partie, victoire, defaite,
+       indice demande, reprise par un autre matelot). Le placer ici evite
+       d'avoir a y penser dans chacun de ces cas. */
+    majVoyantPlongee();
 
     /* Équipage bloqué (uniquement sur décision d'un administrateur) */
     if (N.isLocked(t)) {
@@ -1417,7 +1474,7 @@ window.Nautilus = {
            La barre est libre — <b>${esc(me?.name || 'matelot')}</b>, tu peux reprendre le palier.
          </div>`
       : `<div class="status-banner info">
-           📋 <b>Aucun protocole en cours.</b> Un seul matelot prend les commandes à la fois ; les autres suivent et peuvent lui envoyer un indice.
+           📋 <b>Aucun protocole en cours.</b> Un seul matelot prend les commandes à la fois ; les autres suivent la progression depuis le journal de bord.
          </div>`;
     return `
       ${banniere}
@@ -1439,7 +1496,7 @@ window.Nautilus = {
           ⏱️ <b>3 minutes 30</b> pour répondre.<br>
           ❌ <b>3 erreurs</b> et tu es repoussé en surface — toi seul.<br>
           🤝 Un autre matelot pourra alors reprendre le palier à ta place.<br>
-          🆘 Bloqué ? Demande un <b>indice</b> au capitaine.
+          🆘 Bloqué ? Un <b>indice</b> est possible, mais il coûte 1 h de blocage.
         </p>
         <div class="morse-actions">
           <button class="primary" id="takeLeadBtn" style="flex:1 1 100%;">⚓ PRENDRE LES COMMANDES</button>
@@ -1468,6 +1525,22 @@ window.Nautilus = {
         return;
       }
     }
+    /* INDICES DEJA ACQUIS : ils appartiennent a l'EQUIPAGE, pas a la
+       partie. Un matelot a paye 1 h de blocage pour les obtenir ; il
+       serait injuste que la releve reparte de zero et doive repayer.
+       On les reporte donc sur la nouvelle partie.
+       A noter : le mot change a chaque partie, mais les indices restent
+       justes — le nombre de lettres et la premiere lettre sont lus sur le
+       NOUVEAU mot au moment de l'affichage, jamais figes. */
+    let indicesAcquis = [false, false, false];
+    try {
+      const precedente = state.session
+        || (state.isTest ? null : await N.getSessionBrute(state.teamCode));
+      if (precedente && Array.isArray(precedente.hintsRevealed)) {
+        indicesAcquis = precedente.hintsRevealed.slice(0, 3);
+      }
+    } catch (e) { /* pas de partie precedente lisible : on repart a zero */ }
+
     /* Choisir un mot et démarrer. Chaque mot a son indice géographique associé
        (où se trouve le QR du palier 2 dans le magasin). */
     const entry = N.pickWord();
@@ -1492,7 +1565,7 @@ window.Nautilus = {
         errors: 0,
         maxErrors: 3,
         timeLimit: 210,
-        hintsRevealed: [false, false, false],
+        hintsRevealed: indicesAcquis,
         startedWordHint: entry.h,
         lastEvent: 'session_started'
       };
@@ -1519,6 +1592,7 @@ window.Nautilus = {
       errors: 0,
       maxErrors: 3,
       timeLimit: 210,        /* 3 min 30 */
+      hintsRevealed: indicesAcquis,
       startedWordHint: entry.h,
       lastEvent: 'session_started'
     });
@@ -1538,7 +1612,11 @@ window.Nautilus = {
        demande, son contenu reste totalement cache : meme sa description
        ne doit rien laisser deviner. */
     const hintCards = [
-      { label: 'Indice nº1', body: 'Une <b>recommandation officielle</b> du capitaine.' },
+      /* L'indice nº1 annonce desormais son CONTENU dans l'encart, au lieu
+         de la formule enigmatique "Une recommandation officielle du
+         capitaine" qui n'aidait personne : le joueur ne savait meme pas de
+         quoi on lui parlait. On nomme directement la norme a consulter. */
+      { label: 'Indice nº1', body: 'Le signal suit la <b>recommandation UIT-R M.1677-1</b> : l’alphabet du télégraphe.' },
       { label: 'Indice nº2', body: `Le mot compte <b>${s.wordLength || '?'} lettres</b>.` },
       { label: 'Indice nº3', body: `Il commence par <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` }
     ];
@@ -1590,9 +1668,11 @@ window.Nautilus = {
         <div class="morse-hints-zone">
           <div class="morse-hint-target">
             <div class="morse-hint-target-info">
-              Bloqué ? Demande un indice au capitaine.
+              ⚠️ <b>Demander un indice te coûte 1 h de blocage.</b><br>
+              L’indice s’affiche aussitôt, puis tu remontes en surface :
+              un autre matelot pourra reprendre le mini-jeu à ta place.
             </div>
-            <button class="morse-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '🔓 Tous les indices révélés' : '🆘 DEMANDER UN INDICE'}</button>
+            <button class="morse-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '🔓 Tous les indices révélés' : '🆘 DEMANDER UN INDICE (−1 h)'}</button>
           </div>
           <div class="morse-hints-grid">
             ${hintCards.map((h, i) => `
@@ -1888,84 +1968,92 @@ window.Nautilus = {
     N.markHintsExhausted(state.word);
   }
 
-  /* === INDICE (1 bouton = 1 indice aléatoire) === */
+  /* === INDICE : REVELE AUSSITOT, MAIS COUTE 1 H DE BLOCAGE ===
+
+     ANCIEN FONCTIONNEMENT (supprime) : l'indice etait envoye a un AUTRE
+     matelot, tire au sort. Celui qui en avait besoin ne le voyait donc
+     jamais lui-meme, et devait esperer que son coequipier soit devant son
+     telephone pour le lui repeter. En pratique l'indice se perdait.
+     Le mode solo, lui, bloquait 24 h : une punition sans rapport avec le
+     service rendu.
+
+     NOUVELLE REGLE, la meme pour tout le monde :
+       - l'indice s'affiche IMMEDIATEMENT dans son encart, en clair ;
+       - son auteur est aussitot bloque 1 h et remonte en surface ;
+       - un autre matelot peut alors reprendre le mini-jeu.
+     L'indice reste acquis a l'equipage : celui qui prend la releve le
+     retrouve deja revele dans son encart. */
+  const HINT_LOCK_HOURS = 1;
+
   async function requestHint() {
-    if (!state.session) return;
-    const remaining = (state.session.hintsRevealed || [false, false, false]).map((v, i) => v ? -1 : i).filter(i => i >= 0);
-    if (remaining.length === 0) { N.showToast('Tous les indices sont déjà révélés.', 'info'); return; }
-    const idx = remaining[Math.floor(Math.random() * remaining.length)];
-    /* MODE TEST : le compte fantome est seul a bord, mais on veut pouvoir
-       essayer le parcours "indice envoye a un coequipier" sans etre puni
-       par le blocage 24 h du mode solo. Il est donc son propre coequipier :
-       l'indice lui revient directement. */
-    if (state.isTest) {
-      await applyTeamHint(idx, state.me);
-      return;
-    }
-    /* Trouver un co-équipier (autre que moi) */
-    const others = (state.team.members || []).filter(m => m.memberKey !== state.me.memberKey);
-    if (others.length === 0) {
-      /* Cas solo : afficher 5s puis auto-blocage 24h */
-      await applySoloHint(idx);
-    } else {
-      /* Envoyer à un co-équipier au hasard */
-      const target = others[Math.floor(Math.random() * others.length)];
-      await applyTeamHint(idx, target);
-    }
-  }
+    if (!state.session || !state.me) return;
+    const dispo = (state.session.hintsRevealed || [false, false, false])
+      .map((v, i) => v ? -1 : i).filter(i => i >= 0);
+    if (dispo.length === 0) { N.showToast('Tous les indices sont déjà révélés.', 'info'); return; }
 
-  async function applySoloHint(idx) {
-    /* Marque l'indice comme révélé dans la session */
-    const newHints = [...(state.session.hintsRevealed || [false, false, false])];
-    newHints[idx] = true;
-    await N.updateSession(state.teamCode, { hintsRevealed: newHints, lastEvent: 'hint_solo' });
-    /* Récupérer le contenu de l'indice pour l'afficher 5s */
-    const hintContent = buildHintContent(idx);
-      N.addLogEntry(`🆘 ${state.me.name} a demandé un indice (équipage seul). Visible 5s.`, 'warning');
-    showFloatingHint(hintContent, 5000);
-    /* Après 5s : auto-blocage 24h sur l'auteur */
-    setTimeout(async () => {
-      N.addLogEntry(`🚫 L'indice a disparu. ${state.me.name} est bloqué 24h pour ce palier.`, 'danger');
-      /* Blocage ciblé : on stocke une entrée dans team.members[].personalLocks */
-      const memberKey = state.me.memberKey;
-      const until = new Date(Date.now() + 24*60*60*1000).toISOString();
-      const members = (state.team.members || []).map(m => m.memberKey === memberKey ? { ...m, personalLockUntil: until, personalLockReason: 'morse_solo_hint' } : m);
-      await N.saveTeam(state.team, { members });
-      /* Mais le blocage solo ne touche QUE l'auteur, pas l'équipe. On remet l'indicateur */
-      N.showToast(`${state.me.name} ne peut plus commencer de partie avant ${N.formatDate(until)}.`, 'danger', 6000);
-    }, 5000);
-  }
+    /* Un seul indice a la fois, dans l'ordre : le nº1 est le plus general,
+       le nº3 le plus precis. Tirer au hasard pouvait donner d'emblee la
+       premiere lettre et vider l'epreuve de son interet. */
+    const idx = dispo[0];
 
-  async function applyTeamHint(idx, target) {
-    const newHints = [...(state.session.hintsRevealed || [false, false, false])];
-    newHints[idx] = true;
+    const btn = $('morseHintBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Transmission…'; }
+
+    const hints = [...(state.session.hintsRevealed || [false, false, false])];
+    hints[idx] = true;
+    const patch = { hintsRevealed: hints, lastEvent: 'hint_revealed',
+                    lastHintBy: state.me.name, lastHintIndex: idx };
+    await N.updateSession(state.teamCode, patch);
+    /* En memoire aussi : en partie d'essai rien n'est ecrit en base, et en
+       partie reelle cela evite d'attendre l'aller-retour reseau. */
+    state.session = { ...(state.session || {}), ...patch };
+
+    N.addLogEntry(`🆘 ${state.me.name} a demandé un indice. Il remonte en surface pour ${HINT_LOCK_HOURS} h.`, 'warning');
+    showFloatingHint(buildHintContent(idx), 9000);
+
+    /* Blocage personnel, exactement le meme mecanisme que pour un echec :
+       il s'ajoute a matelotLocks et n'affecte QUE ce matelot. La duree est
+       fixe (1 h) et ne fait pas monter le compteur d'echecs : demander de
+       l'aide n'est pas un echec. */
+    await blockMatelotForHint();
+
+    /* La session redevient libre : le mini-jeu en cours s'arrete pour tout
+       le monde, et le prochain matelot repart proprement. */
     await N.updateSession(state.teamCode, {
-      hintsRevealed: newHints,
-      lastEvent: 'hint_to_teammate',
-      lastHintTarget: target.memberKey,
-      lastHintTargetName: target.name,
-      lastHintType: idx
+      state: 'ended', endReason: 'hint_taken', lastEvent: 'hint_taken',
+      endedAt: new Date().toISOString()
     });
-      N.addLogEntry(`🆘 ${state.me.name} a envoyé un indice à <b>${esc(target.name)}</b>.`, 'info');
-      N.showToast(`Indice envoyé à ${target.name}.`, 'info');
+    state.session = null;
 
-    /* MODE TEST : rien n'est ecrit dans la session partagee, donc l'indice
-       n'arriverait jamais par la voie normale (l'ecoute temps reel de
-       Firestore). On l'affiche donc directement : le testeur voit le meme
-       resultat qu'un vrai coequipier, sans blocage 24 h. */
-    if (state.isTest) {
-      state.session = { ...(state.session || {}), hintsRevealed: newHints };
-      showFloatingHint(buildHintContent(idx), 8000);
-      renderGameArea();
-    }
+    renderGameArea();
+  }
+
+  /* Blocage de 1 h lie a la demande d'indice. Volontairement distinct de
+     blockMatelot() : pas d'incrementation du compteur d'echecs, duree fixe. */
+  async function blockMatelotForHint() {
+    if (!state.team || !state.me) return;
+    const key = state.me.memberKey;
+    const until = new Date(Date.now() + HINT_LOCK_HOURS * 3600 * 1000).toISOString();
+    const locks = { ...(state.team.matelotLocks || {}) };
+    const ancien = locks[key] || {};
+    locks[key] = {
+      name: state.me.name,
+      failCount: Number(ancien.failCount || 0),   // inchange : ce n'est pas un echec
+      lastLockHours: HINT_LOCK_HOURS,
+      lockedUntil: until,
+      reason: 'indice_demande',
+      blockedAt: new Date().toISOString()
+    };
+    state.team = await N.saveTeam(state.team, { matelotLocks: locks, lastEvent: 'matelot_hint_lock' });
+    N.showToast(`Indice obtenu. Tu remontes en surface jusqu’à ${N.formatDate(until)}.`, 'warning', 7000);
   }
 
   function buildHintContent(idx) {
     const s = state.session;
     if (!s) return '';
-    if (idx === 0) return '📜 Le signal suit une <b>recommandation officielle</b> : UIT-R M.1677-1.';
-    if (idx === 1) return `🔤 Le mot de passe contient ${s.wordLength} lettres.`;
-    if (idx === 2) return `💡 Première lettre : ${state.word ? state.word[0] : '?'}`;
+    if (idx === 0) return '📜 Le signal suit la <b>recommandation UIT-R M.1677-1</b> : l’alphabet du télégraphe.';
+    if (idx === 1) return `🔤 Le mot de passe contient <b>${s.wordLength || '?'} lettres</b>.`;
+    if (idx === 2) return `💡 Première lettre : <b>${state.word ? state.word[0] : (s.firstLetter || '?')}</b>`;
     return '';
   }
 
@@ -1984,7 +2072,7 @@ window.Nautilus = {
     const playerName = s.startedByName || 'un matelot';
     return `
       <div class="status-banner warning">
-        👀 <b>${esc(me.name)}</b>, ce n'est pas ton tour : <b>${esc(playerName)}</b> est aux commandes. Aide-le en lui transmettant un indice depuis ton journal de bord — s'il échoue, la barre te reviendra.
+        👀 <b>${esc(me.name)}</b>, ce n'est pas ton tour : <b>${esc(playerName)}</b> est aux commandes. Suis sa progression — s'il échoue ou demande un indice, la barre te reviendra.
       </div>
       <div class="morse-stepbox">
         <div class="morse-header">
@@ -2014,15 +2102,14 @@ window.Nautilus = {
         <div class="morse-hints-zone">
           <div class="morse-hint-target">
             <div class="morse-hint-target-info">
-              🆘 <b>Aider ${esc(playerName)}</b> — un indice lui sera envoyé automatiquement.
+              🧭 <b>Indices de l’équipage.</b> Seul le matelot aux commandes
+              peut en demander un — et cela lui coûte 1 h de blocage.
+              Ceux déjà obtenus restent visibles ici pour tous.
             </div>
-            <button class="morse-hint-btn" id="spectatorHintBtn" ${(s.hintsRevealed||[]).every(Boolean) ? 'disabled' : ''}>
-              ${(s.hintsRevealed||[]).every(Boolean) ? '🔓 Indices épuisés' : '🆘 ENVOYER UN INDICE'}
-            </button>
           </div>
           <div class="morse-hints-grid">
             ${[
-              { label: '🧭 Indice nº1', body: s.hintsRevealed?.[0] ? 'Une recommandation officielle a été révélée.' : '— non révélé —' },
+              { label: '🧭 Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b> : l’alphabet du télégraphe.' : '— non révélé —' },
               { label: '🧭 Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${wordLength} caractères</b>.` : '— non révélé —' },
               { label: '🧭 Indice nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '— non révélé —' }
             ].map((h, i) => `
@@ -2044,24 +2131,9 @@ window.Nautilus = {
       const m = Math.floor(rem / 60), s = rem % 60;
       el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     }, 500);
-    $('spectatorHintBtn')?.addEventListener('click', sendSpectatorHint);
-  }
-
-  async function sendSpectatorHint() {
-    if (!state.session) return;
-    const remaining = (state.session.hintsRevealed || [false, false, false]).map((v, i) => v ? -1 : i).filter(i => i >= 0);
-    if (remaining.length === 0) return;
-    const idx = remaining[Math.floor(Math.random() * remaining.length)];
-    /* En tant que spectateur, l'indice est aussi aléatoire et va au joueur actif */
-    const newHints = [...(state.session.hintsRevealed || [false, false, false])];
-    newHints[idx] = true;
-    await N.updateSession(state.teamCode, {
-      hintsRevealed: newHints,
-      lastEvent: 'hint_from_spectator',
-      lastHintType: idx
-    });
-    N.addLogEntry(`🆘 <b>${esc(state.me.name)}</b> a envoyé un indice au matelot en mission.`, 'info');
-    N.showToast('Indice envoyé au matelot en mission.', 'success');
+    /* sendSpectatorHint() a ete SUPPRIMEE : un spectateur ne peut plus
+       envoyer d'indice. Seul le matelot aux commandes en demande, pour
+       lui-meme, en echange de 1 h de blocage. */
   }
 
   /* === ÉCRAN : victoire === */
@@ -2134,16 +2206,26 @@ window.Nautilus = {
   /* === ÉCRAN : blocage PERSONNEL (le matelot seul est en surface) === */
   function renderMatelotLockScreen(t, me) {
     const l = N.getMatelotLock(t, me.memberKey) || {};
+    /* Deux raisons possibles de se retrouver en surface, et il ne faut pas
+       les confondre : un ECHEC (trop d'erreurs ou temps ecoule) ou une
+       DEMANDE D'INDICE. Le message annoncait "Ton echec" dans les deux
+       cas, ce qui etait faux et vexant pour qui avait simplement demande
+       un coup de main. */
+    const parIndice = l.reason === 'indice_demande';
+    const intro = parIndice
+      ? 'Tu as obtenu ton indice : il reste acquis à tout l’équipage. En échange, tu remontes en surface — un autre matelot peut reprendre le palier.'
+      : 'Ton échec ne bloque que toi. Le reste de l’équipage peut tenter le palier pendant ce temps — un matelot à la fois.';
+    const detail = parIndice
+      ? `⏳ Tu pourras reprendre les commandes à cette heure (indice demandé &rarr; ${esc(String(l.lastLockHours || 1))} h).`
+      : `⏳ Tu pourras reprendre les commandes à cette heure (${esc(ordinal(l.failCount || 1))} échec &rarr; ${esc(String(l.lastLockHours || '?'))} h).`;
     return `
       <div class="lock-screen">
-        <h2>🔒 ${esc(me.name)}, tu es en surface</h2>
+        <h2>${parIndice ? '🧭' : '🔒'} ${esc(me.name)}, tu es en surface</h2>
         <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">
-          Ton échec ne bloque que toi. Le reste de l'équipage peut tenter le palier
-          pendant ce temps — un matelot à la fois.
+          ${intro}
         </p>
         <div class="countdown-big">${esc(N.formatDate(l.lockedUntil))}</div>
-        <p class="lock-rule">⏳ Tu pourras reprendre les commandes à cette heure
-          (${esc(ordinal(l.failCount || 1))} échec &rarr; ${esc(String(l.lastLockHours || '?'))} h).</p>
+        <p class="lock-rule">${detail}</p>
         <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
       </div>
     `;
