@@ -466,7 +466,7 @@
     <h2>🧪 ÉPREUVE DU PALIER</h2>
     <div class="body" id="gameBody">
       <div class="notice" style="background:rgba(11,52,78,.6);border:1px solid rgba(142,231,255,.3);color:#dff6ff;">
-        En attente d'un matelot pour rejoindre le protocole…
+        En attente d'un matelot pour rejoindre l'épreuve…
       </div>
     </div>
   </section>
@@ -1022,9 +1022,18 @@ function addLogEntry(text, kind = 'info') {
   const li = document.createElement('li');
   li.className = 'morse-log-entry';
   li.style.cssText = `display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-left:3px solid ${c.border};background:rgba(0,0,0,.22);border-radius:8px;`;
+  /* BUG CORRIGE : le texte etait entierement echappe, si bien qu'une
+     entree contenant <b>...</b> affichait les balises EN CLAIR a l'ecran
+     ("Palier suivant ouvert : <b>Palier 2</b>."). On echappe toujours tout
+     — c'est indispensable, un nom de matelot est saisi librement et ne
+     doit jamais pouvoir injecter du code — PUIS on retablit uniquement
+     <b> et </b>, les deux seules balises autorisees ici. */
+  const texteRendu = esc(text)
+    .replace(/&lt;b&gt;/g, '<b>')
+    .replace(/&lt;\/b&gt;/g, '</b>');
   li.innerHTML = `
     <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.dot};box-shadow:0 0 8px ${c.dot};flex:0 0 10px;margin-top:5px;"></span>
-    <span style="flex:1;color:#dff6ff;line-height:1.4;">${esc(text)}</span>
+    <span style="flex:1;color:#dff6ff;line-height:1.4;">${texteRendu}</span>
   `;
   list.prepend(li);
   /* Limite à 20 entrées */
@@ -1565,20 +1574,19 @@ window.Nautilus = {
 
   /* === ÉCRAN : idle (pas de session en cours) === */
   function renderIdleScreen(t, me, echecPrecedent) {
-    /* Quand un camarade vient d'echouer, on le dit clairement : la barre
-       est libre, c'est au tour du suivant. */
+    /* PLUS D'ENCART "Aucun protocole en cours".
+       Il n'annoncait rien d'utile : le joueur voit deja le briefing et le
+       bouton "PRENDRE LES COMMANDES" juste en dessous, donc que la barre
+       est libre. C'etait une ligne de plus a lire avant d'arriver a
+       l'essentiel.
+       Seul subsiste le bandeau utile : celui qui previent qu'un camarade
+       vient d'echouer et que la releve peut y aller. */
     const banniere = echecPrecedent
       ? `<div class="status-banner warning">
            🔁 <b>${esc(echecPrecedent.startedByName || 'Un matelot')}</b> a échoué et remonte en surface : lui seul est bloqué.
-           La barre est libre — <b>${esc(me?.name || 'matelot')}</b>, tu peux reprendre le palier.
+           La barre est libre — <b>${esc(me?.name || 'matelot')}</b>, tu peux reprendre l'épreuve.
          </div>`
-      /* Bandeau du haut RACCOURCI : la regle "un seul matelot a la fois"
-         est desormais ecrite en toutes lettres dans le briefing, juste en
-         dessous. La repeter ici faisait lire deux fois la meme phrase a
-         quelques centimetres d'intervalle. */
-      : `<div class="status-banner info">
-           📋 <b>Aucun protocole en cours.</b> La barre est libre.
-         </div>`;
+      : '';
     return `
       ${banniere}
       <div class="morse-stepbox">
@@ -1638,11 +1646,46 @@ window.Nautilus = {
       N.showToast('Tu es en surface : attends la fin de ton blocage.', 'warning');
       return;
     }
-    /* Vérifier qu'il n'y a pas déjà une session active (race condition possible) */
+    /* VERROU : UN SEUL MATELOT AUX COMMANDES.
+       Trois protections, car une seule ne suffit pas :
+
+       1. Double-clic / clics repetes. Le bouton est desactive DES le
+          premier clic. Sans cela, un joueur impatient qui tapote deux fois
+          lancait deux parties coup sur coup, la seconde ecrasant la
+          premiere.
+       2. Etat local. Si l'ecoute temps reel a deja signale une partie en
+          cours, inutile d'aller interroger le serveur : on refuse tout de
+          suite.
+       3. Verification aupres du serveur juste avant d'ecrire, pour le cas
+          ou deux matelots cliquent a la meme seconde depuis deux
+          telephones. */
+    const btnLead = $('takeLeadBtn');
+    if (btnLead) {
+      if (btnLead.disabled) return;          // clic deja en cours de traitement
+      btnLead.disabled = true;
+      btnLead.textContent = '⏳ Prise de commandes…';
+    }
+
+    /* Remet le bouton en etat si la prise de commandes echoue : sans cela,
+       un refus laissait le joueur devant un bouton mort. */
+    const rendreLaMain = (message) => {
+      if (message) N.showToast(message, 'warning', 5000);
+      renderGameArea();
+    };
+
+    if (state.session && state.session.state === 'playing') {
+      rendreLaMain(`${state.session.startedByName || 'Un autre matelot'} est déjà aux commandes.`);
+      return;
+    }
+
     if (!state.isTest) {
       const current = await N.getSession(state.teamCode);
       if (current && current.state === 'playing') {
-        N.showToast('Un autre matelot est déjà aux commandes. Patiente.', 'warning');
+        /* On garde la partie trouvee : l'ecran de spectateur s'affichera
+           tout de suite, au lieu de laisser le joueur sur un ecran
+           d'attente qui ne correspond plus a la realite. */
+        state.session = current;
+        rendreLaMain(`${current.startedByName || 'Un autre matelot'} est déjà aux commandes.`);
         return;
       }
     }
@@ -1690,7 +1733,7 @@ window.Nautilus = {
         startedWordHint: entry.h,
         lastEvent: 'session_started'
       };
-      N.addLogEntry(`⚓ ${state.me.name} a pris les commandes du protocole. Épreuve en cours…`, 'info');
+      N.addLogEntry(`⚓ <b>${state.me.name}</b> a pris les commandes. Épreuve en cours — personne d'autre ne peut jouer.`, 'warning');
       /* renderGameArea() et non onSessionUpdate() : cette derniere REMPLACE
          state.session par son argument, ce qui effacerait la session qu'on
          vient de fabriquer. */
@@ -1717,7 +1760,7 @@ window.Nautilus = {
       startedWordHint: entry.h,
       lastEvent: 'session_started'
     });
-    N.addLogEntry(`⚓ ${state.me.name} a pris les commandes du protocole. Épreuve en cours…`, 'info');
+    N.addLogEntry(`⚓ <b>${state.me.name}</b> a pris les commandes. Épreuve en cours — personne d'autre ne peut jouer.`, 'warning');
   }
 
   /* === ÉCRAN : joueur actif === */
@@ -1746,7 +1789,7 @@ window.Nautilus = {
     return `
       <div class="morse-stepbox">
         <div class="morse-header">
-          <h3>🧪 PROTOCOLE EN COURS</h3>
+          <h3>🧪 ÉPREUVE EN COURS</h3>
           <div class="morse-timer-wrap">
             <span class="morse-timer-label">Temps restant</span>
             <span class="morse-timer" id="morseTimer">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</span>
@@ -2203,7 +2246,7 @@ window.Nautilus = {
             <span class="morse-timer" id="morseTimer">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</span>
           </div>
         </div>
-        <p class="morse-brief">Un protocole secret est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — s'il échoue, il sera seul repoussé en surface et tu pourras prendre sa place.</p>
+        <p class="morse-brief">Une épreuve est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — s'il échoue, il sera seul repoussé en surface et tu pourras prendre sa place.</p>
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
             <div class="morse-sweep"></div>
