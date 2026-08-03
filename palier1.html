@@ -1616,7 +1616,7 @@ window.Nautilus = {
          de la formule enigmatique "Une recommandation officielle du
          capitaine" qui n'aidait personne : le joueur ne savait meme pas de
          quoi on lui parlait. On nomme directement la norme a consulter. */
-      { label: 'Indice nº1', body: 'Le signal suit la <b>recommandation UIT-R M.1677-1</b> : l’alphabet du télégraphe.' },
+      { label: 'Indice nº1', body: 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' },
       { label: 'Indice nº2', body: `Le mot compte <b>${s.wordLength || '?'} lettres</b>.` },
       { label: 'Indice nº3', body: `Il commence par <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` }
     ];
@@ -2051,7 +2051,7 @@ window.Nautilus = {
   function buildHintContent(idx) {
     const s = state.session;
     if (!s) return '';
-    if (idx === 0) return '📜 Le signal suit la <b>recommandation UIT-R M.1677-1</b> : l’alphabet du télégraphe.';
+    if (idx === 0) return '📜 Le signal suit la <b>recommandation UIT-R M.1677-1</b>';
     if (idx === 1) return `🔤 Le mot de passe contient <b>${s.wordLength || '?'} lettres</b>.`;
     if (idx === 2) return `💡 Première lettre : <b>${state.word ? state.word[0] : (s.firstLetter || '?')}</b>`;
     return '';
@@ -2109,7 +2109,7 @@ window.Nautilus = {
           </div>
           <div class="morse-hints-grid">
             ${[
-              { label: '🧭 Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b> : l’alphabet du télégraphe.' : '— non révélé —' },
+              { label: '🧭 Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' : '— non révélé —' },
               { label: '🧭 Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${wordLength} caractères</b>.` : '— non révélé —' },
               { label: '🧭 Indice nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '— non révélé —' }
             ].map((h, i) => `
