@@ -635,6 +635,24 @@ function hashString(s) {
   return h;
 }
 
+/* Retrouve le mot d'une epreuve a partir de son empreinte (wordHash).
+
+   POURQUOI C'EST NECESSAIRE : le mot n'existait qu'en memoire vive, chez
+   le seul matelot qui avait lance l'epreuve. Des qu'il quittait la page
+   ou la rechargeait, ce mot etait perdu — l'indice "premiere lettre"
+   affichait alors un "?" et le bouton d'ecoute refusait de fonctionner,
+   alors que l'epreuve, elle, tournait toujours.
+   L'empreinte, elle, est bien enregistree dans la session. Comme les 40
+   mots de la banque ont des empreintes toutes differentes (verifie), on
+   remonte au mot sans ambiguite.
+   On ne stocke surtout PAS le mot en clair dans la session : n'importe
+   qui pourrait le lire et resoudre l'epreuve sans jouer. */
+function wordFromHash(hash) {
+  if (typeof hash !== 'number') return null;
+  const trouve = MORSE_WORDS.find(m => hashString(m.w) === hash);
+  return trouve ? trouve.w : null;
+}
+
 /* ---------- ROUTING PALIER (codes numériques) ---------- */
 /* Génère la série de codes : palier1 = 16 1 12 9 5 18 ; palier2 = +1 à chaque ; etc. */
 function getStepCode(stepId) {
@@ -1091,7 +1109,7 @@ window.Nautilus = {
   db, app,
   /* Helpers */
   $, esc, normalize, memberKey, simple, teamCodeFromInput, hashString,
-  getStepCode, getStepIdFromCode,
+  getStepCode, getStepIdFromCode, wordFromHash,
   getClientId, getCurrentTeamCode, setCurrentTeamCode,
   getCurrentMatelotCode, getMatelotByCode,
   getTeam, getTeamRealtime, saveTeam,
@@ -1493,6 +1511,20 @@ window.Nautilus = {
 
   function onSessionUpdate(session) {
     state.session = session;
+    /* RESTAURATION DU MOT apres un retour sur le jeu.
+       Le mot ne vivait qu'en memoire vive : au moindre rechargement de la
+       page, ou en revenant depuis l'accueil, il etait perdu. L'indice
+       "premiere lettre" affichait alors "?" et le bouton d'ecoute
+       refusait de jouer le signal, alors que l'epreuve tournait toujours.
+       On le reconstruit ici, a partir de l'empreinte enregistree dans la
+       session, des qu'il manque. */
+    if (!state.word && session && typeof session.wordHash === 'number') {
+      const retrouve = N.wordFromHash(session.wordHash);
+      if (retrouve) state.word = retrouve;
+    }
+    /* Epreuve terminee : on oublie le mot, pour que la partie suivante ne
+       reparte pas avec l'ancien. */
+    if (!session || session.state !== 'playing') state.word = null;
     renderGameArea();
   }
 
@@ -2316,7 +2348,12 @@ window.Nautilus = {
           <div class="morse-hints-grid">
             ${[
               { label: '🧭 Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' : '— non révélé —' },
-              { label: '🧭 Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${wordLength} caractères</b>.` : '— non révélé —' },
+              /* BUG BLOQUANT CORRIGE : il manquait le "s." devant
+                 wordLength. La variable n'existait pas, donc TOUT l'ecran
+                 du spectateur plantait ("wordLength is not defined") des
+                 qu'un indice etait revele : le coequipier se retrouvait
+                 devant une zone de jeu vide, sans aucun message. */
+              { label: '🧭 Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${s.wordLength || '?'} caractères</b>.` : '— non révélé —' },
               { label: '🧭 Indice nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '— non révélé —' }
             ].map((h, i) => `
               <div class="morse-hint-card ${s.hintsRevealed?.[i] ? 'morse-hint-revealed' : ''}">
