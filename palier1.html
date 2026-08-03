@@ -246,8 +246,20 @@
     .o2-tube{position:relative;flex:1 1 auto;height:22px;border-radius:999px;
       overflow:hidden;background:rgba(0,0,0,.45);
       border:1px solid rgba(142,231,255,.28)}
+    /* La barre du haut est "sticky" (z-index 50) : elle reste collee en
+       haut quand on fait defiler. La jauge doit donc passer DESSOUS et
+       jamais par-dessus, d'ou un z-index volontairement plus bas. */
+    .o2-bar{position:relative;z-index:1}
+
+    /* MEMES COULEURS QUE LA JAUGE DE LA PAGE D'ACCUEIL (.oxygen-liquid).
+       Le mini-jeu affichait un degrade VERT alors que l'accueil affiche un
+       degrade BLEU : la meme reserve d'oxygene changeait donc de couleur
+       d'un ecran a l'autre, comme s'il s'agissait de deux informations
+       differentes. Les trois teintes ci-dessous sont copiees a
+       l'identique depuis index.html, etats d'alerte compris. */
     .o2-fill{height:100%;width:100%;border-radius:999px;
-      background:linear-gradient(90deg,#0a8a5a,#5be09b);
+      background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);
+      box-shadow:0 0 12px rgba(142,231,255,.45),inset 0 0 10px rgba(255,255,255,.22);
       transition:width .6s ease,background .6s ease}
     /* Le pourcentage est ECRIT DANS la jauge, centre, avec un lisere noir
        pour rester lisible aussi bien sur le vert que sur le fond sombre. */
@@ -256,8 +268,9 @@
       letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.85)}
     .o2-time{flex:0 0 auto;font-family:Consolas,"Courier New",monospace;
       font-size:11px;font-weight:900;color:#cfe6ef;white-space:nowrap}
-    .o2-bar.warn .o2-fill{background:linear-gradient(90deg,#b3760a,#f5b027)}
-    .o2-bar.crit .o2-fill{background:linear-gradient(90deg,#9b1111,#ff4b3e)}
+    /* Alerte et niveau critique : memes degrades que sur l'accueil. */
+    .o2-bar.warn .o2-fill{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}
+    .o2-bar.crit .o2-fill{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c)}
     @media(max-width:430px){
       .o2-label{display:none}
       .o2-time{font-size:10px}
@@ -1028,8 +1041,12 @@ window.Nautilus = {
     $('o2Fill').style.width = pct + '%';
     $('o2Pct').textContent = pct + '%';
     $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m`;
-    bar.classList.toggle('warn', pct <= 40 && pct > 15);
-    bar.classList.toggle('crit', pct <= 15);
+    /* MEMES SEUILS QUE L'ACCUEIL : la jauge passait ici a l'orange a 40 %
+       et au rouge a 15 %, contre 50 % et 20 % sur la page d'accueil. Un
+       equipage a 45 % voyait donc du bleu sur un ecran et de l'orange sur
+       l'autre, au meme instant. */
+    bar.classList.toggle('warn', pct <= 50 && pct > 20);
+    bar.classList.toggle('crit', pct <= 20);
   }
 
   /* === Boot === */
