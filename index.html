@@ -4953,7 +4953,7 @@ function qrDataUri(text, opts){
     el.classList.toggle('is-done', lus >= total);
   }
 
-  /* ===== SYSTEME AUDIO : CONTEXTE UNIQUE ===== */
+  /* ===== AUDIO : contexte unique, demarre au premier geste ===== */
   let _audioCtx = null;
 
   function _ensureAudio(){
@@ -4966,59 +4966,56 @@ function qrDataUri(text, opts){
     return _audioCtx;
   }
 
-  /* ===== SON MECANIQUE NAUTIQUE — clic de hublot ===== */
+  /* ===== CLIC HUBLOT — claquet metallique court ===== */
   function playHublotClick(){
     if(!isSoundEnabled()) return;
     const ctx = _ensureAudio();
     if(!ctx) return;
-    try{
-      const t = ctx.currentTime;
-      const master = ctx.createGain();
-      master.gain.value = 0.38;
-      master.connect(ctx.destination);
 
-      const bufLen = Math.floor(ctx.sampleRate * 0.04);
-      const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for(let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
-      const noise = ctx.createBufferSource();
-      noise.buffer = buf;
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass'; bp.frequency.value = 2800; bp.Q.value = 2.2;
-      const gNoise = ctx.createGain();
-      gNoise.gain.setValueAtTime(0.7, t);
-      gNoise.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-      noise.connect(bp); bp.connect(gNoise); gNoise.connect(master);
-      noise.start(t); noise.stop(t + 0.045);
+    // Attend que le contexte tourne vraiment avant de programmer les sons
+    const jouer = () => {
+      try{
+        const t = ctx.currentTime;
+        // Gain principal
+        const master = ctx.createGain();
+        master.gain.value = 0.5;
+        master.connect(ctx.destination);
 
-      [135, 203].forEach((f, i) => {
-        const o = ctx.createOscillator(); o.type = 'sine';
-        o.frequency.setValueAtTime(f, t);
-        o.frequency.exponentialRampToValueAtTime(f * 0.92, t + 0.08);
-        const g = ctx.createGain();
-        g.gain.setValueAtTime(i === 0 ? 0.35 : 0.12, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        const lp = ctx.createBiquadFilter();
-        lp.type = 'lowpass'; lp.frequency.value = 500; lp.Q.value = 0.5;
-        o.connect(lp); lp.connect(g); g.connect(master);
-        o.start(t); o.stop(t + 0.09);
-      });
+        // 1) Impact : bruit blanc filtre (claquet metallique)
+        const buf = ctx.createBuffer(1, ctx.sampleRate * 0.03 | 0, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for(let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buf;
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 2;
+        const gn = ctx.createGain();
+        gn.gain.setValueAtTime(0.9, t);
+        gn.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+        noise.connect(bp); bp.connect(gn); gn.connect(master);
+        noise.start(t); noise.stop(t + 0.035);
 
-      const bufLen2 = Math.floor(ctx.sampleRate * 0.015);
-      const buf2 = ctx.createBuffer(1, bufLen2, ctx.sampleRate);
-      const data2 = buf2.getChannelData(0);
-      for(let i = 0; i < bufLen2; i++) data2[i] = Math.random() * 2 - 1;
-      const noise2 = ctx.createBufferSource();
-      noise2.buffer = buf2;
-      const bp2 = ctx.createBiquadFilter();
-      bp2.type = 'bandpass'; bp2.frequency.value = 3200; bp2.Q.value = 3;
-      const gNoise2 = ctx.createGain();
-      gNoise2.gain.setValueAtTime(0.0001, t);
-      gNoise2.gain.linearRampToValueAtTime(0.25, t + 0.035);
-      gNoise2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-      noise2.connect(bp2); bp2.connect(gNoise2); gNoise2.connect(master);
-      noise2.start(t); noise2.stop(t + 0.055);
-    }catch(e){}
+        // 2) Resonance metallique (2 tons courts)
+        const freqs = [1200, 800];
+        freqs.forEach((f, i) => {
+          const o = ctx.createOscillator();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(f, t + i * 0.02);
+          o.frequency.exponentialRampToValueAtTime(f * 0.7, t + i * 0.02 + 0.06);
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(i === 0 ? 0.15 : 0.08, t + i * 0.02);
+          g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.02 + 0.06);
+          o.connect(g); g.connect(master);
+          o.start(t + i * 0.02); o.stop(t + i * 0.02 + 0.065);
+        });
+      }catch(e){}
+    };
+
+    if(ctx.state === 'suspended'){
+      ctx.resume().then(jouer).catch(jouer);
+    }else{
+      jouer();
+    }
   }
 
   document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => { playHublotClick(); showRule(btn.dataset.rule, true); }));
