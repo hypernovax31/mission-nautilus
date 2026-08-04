@@ -4954,28 +4954,29 @@ function qrDataUri(text, opts){
   }
 
   /* ===== AUDIO : contexte unique =====
-     IMPORTANT : new AudioContext() ne marche que dans un geste utilisateur
-     (clic/tap). Si on le cree hors geste (ex: typewriter au chargement),
-     il reste "suspended" sur mobile et resume() echoue.
-     → _ensureAudio() ne fait QUE resumer un contexte existant
-     → playHublotClick() est SEUL endroit qui cree le contexte (clic = geste) */
+     Sur mobile, new AudioContext() dans un handler de clic peut rester
+     suspendu. On pre-cree le contexte au tout premier geste sur la page
+     (scroll, touch, clic) puis on le reutilise partout. */
   let _audioCtx = null;
 
   function _ensureAudio(){
-    if(!_audioCtx) return null;
+    if(!_audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return null;
+      try{ _audioCtx = new AC(); }catch(e){ return null; }
+    }
     if(_audioCtx.state === 'suspended') _audioCtx.resume();
     return _audioCtx;
   }
+  ['pointerdown','touchstart','click','keydown'].forEach(evt => {
+    document.addEventListener(evt, () => { _ensureAudio(); }, { once:true, passive:true });
+  });
 
   /* ===== CLIC HUBLOT — claquet metallique ===== */
   function playHublotClick(){
     if(!isSoundEnabled()) return;
-    if(!_audioCtx){
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if(!AC) return;
-      try{ _audioCtx = new AC(); }catch(e){ return; }
-    }
-    const ctx = _audioCtx;
+    const ctx = _ensureAudio();
+    if(!ctx) return;
 
     const jouer = () => {
       try{
@@ -5018,10 +5019,11 @@ function qrDataUri(text, opts){
       }catch(e){}
     };
 
-    if(ctx.state === 'suspended'){
-      ctx.resume().then(jouer).catch(jouer);
-    }else{
+    if(ctx.state === 'running'){
       jouer();
+    }else{
+      ctx.resume().then(jouer).catch(()=>{});
+      setTimeout(jouer, 150);
     }
   }
 
