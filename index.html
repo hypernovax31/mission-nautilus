@@ -4953,103 +4953,72 @@ function qrDataUri(text, opts){
     el.classList.toggle('is-done', lus >= total);
   }
 
-  /* ===== SYSTEME AUDIO : UN SEUL CONTEXTE, CREE DEPUIS UN GESTE =====
-     Le navigateur n'autorise un AudioContext QUE si new AudioContext()
-     ET resume() sont appeles depuis un handler de geste utilisateur.
-     On le cree DONC dans un listener capture au premier geste, et tous
-     les appels suivants (hublot, typewriter) l'utilisent tel quel. */
+  /* ===== SYSTEME AUDIO : CONTEXTE UNIQUE ===== */
   let _audioCtx = null;
-  let _audioReady = false;
-  function _bootAudio(){
-    if(_audioReady) return;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return;
-    try{
-      _audioCtx = new AC();
-      _audioCtx.resume().then(() => { _audioReady = true; }).catch(() => {});
-      _audioReady = true;
-    }catch(e){}
-  }
-  ['pointerdown','touchstart','keydown'].forEach(evt => {
-    document.addEventListener(evt, _bootAudio, { once:true, capture:true, passive:true });
-  });
 
-  /* ===== SON MECANIQUE NAUTIQUE — clic de hublot =====
-     Un claquement metallique court, comme une poignee de hublot qu'on
-     tourne ou un loquet de sas qu'on actionne. Matiere sonore :
-     bruit blanc filtre (impact metal) + resonance grave (corps en laiton).
-     Zero fichier a telecharger, genere a la volee par le navigateur. */
-  function playHublotClick(){
-    if(!isSoundEnabled()) return;
-    /* Si le contexte n'existe pas encore, on le cree ICI.
-       Un handler de clic EST un geste utilisateur valide. */
+  function _ensureAudio(){
     if(!_audioCtx){
       const AC = window.AudioContext || window.webkitAudioContext;
-      if(!AC) return;
-      try{ _audioCtx = new AC(); }catch(e){ return; }
+      if(!AC) return null;
+      try{ _audioCtx = new AC(); }catch(e){ return null; }
     }
-    const ctx = _audioCtx;
-    const go = () => {
-      try{
-        const t = ctx.currentTime;
-        const master = ctx.createGain();
-        master.gain.value = 0.38;
-        master.connect(ctx.destination);
+    if(_audioCtx.state === 'suspended') _audioCtx.resume();
+    return _audioCtx;
+  }
 
-        /* 1) Bruit blanc filtre passe-bande : l'impact metallique. */
-        const bufLen = Math.floor(ctx.sampleRate * 0.04);
-        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-        const data = buf.getChannelData(0);
-        for(let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
-        const noise = ctx.createBufferSource();
-        noise.buffer = buf;
-        const bp = ctx.createBiquadFilter();
-        bp.type = 'bandpass'; bp.frequency.value = 2800; bp.Q.value = 2.2;
-        const gNoise = ctx.createGain();
-        gNoise.gain.setValueAtTime(0.7, t);
-        gNoise.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-        noise.connect(bp); bp.connect(gNoise); gNoise.connect(master);
-        noise.start(t); noise.stop(t + 0.045);
+  /* ===== SON MECANIQUE NAUTIQUE — clic de hublot ===== */
+  function playHublotClick(){
+    if(!isSoundEnabled()) return;
+    const ctx = _ensureAudio();
+    if(!ctx) return;
+    try{
+      const t = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.value = 0.38;
+      master.connect(ctx.destination);
 
-        /* 2) Resonance grave du corps en laiton : 135 Hz + quinte. */
-        [135, 203].forEach((f, i) => {
-          const o = ctx.createOscillator(); o.type = 'sine';
-          o.frequency.setValueAtTime(f, t);
-          o.frequency.exponentialRampToValueAtTime(f * 0.92, t + 0.08);
-          const g = ctx.createGain();
-          g.gain.setValueAtTime(i === 0 ? 0.35 : 0.12, t);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-          const lp = ctx.createBiquadFilter();
-          lp.type = 'lowpass'; lp.frequency.value = 500; lp.Q.value = 0.5;
-          o.connect(lp); lp.connect(g); g.connect(master);
-          o.start(t); o.stop(t + 0.09);
-        });
+      const bufLen = Math.floor(ctx.sampleRate * 0.04);
+      const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 2800; bp.Q.value = 2.2;
+      const gNoise = ctx.createGain();
+      gNoise.gain.setValueAtTime(0.7, t);
+      gNoise.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      noise.connect(bp); bp.connect(gNoise); gNoise.connect(master);
+      noise.start(t); noise.stop(t + 0.045);
 
-        /* 3) Micro-rebond a 35 ms : le loquet qui rebondit une fois. */
-        const bufLen2 = Math.floor(ctx.sampleRate * 0.015);
-        const buf2 = ctx.createBuffer(1, bufLen2, ctx.sampleRate);
-        const data2 = buf2.getChannelData(0);
-        for(let i = 0; i < bufLen2; i++) data2[i] = Math.random() * 2 - 1;
-        const noise2 = ctx.createBufferSource();
-        noise2.buffer = buf2;
-        const bp2 = ctx.createBiquadFilter();
-        bp2.type = 'bandpass'; bp2.frequency.value = 3200; bp2.Q.value = 3;
-        const gNoise2 = ctx.createGain();
-        gNoise2.gain.setValueAtTime(0.0001, t);
-        gNoise2.gain.linearRampToValueAtTime(0.25, t + 0.035);
-        gNoise2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-        noise2.connect(bp2); bp2.connect(gNoise2); gNoise2.connect(master);
-        noise2.start(t); noise2.stop(t + 0.055);
+      [135, 203].forEach((f, i) => {
+        const o = ctx.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(f, t);
+        o.frequency.exponentialRampToValueAtTime(f * 0.92, t + 0.08);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(i === 0 ? 0.35 : 0.12, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        const lp = ctx.createBiquadFilter();
+        lp.type = 'lowpass'; lp.frequency.value = 500; lp.Q.value = 0.5;
+        o.connect(lp); lp.connect(g); g.connect(master);
+        o.start(t); o.stop(t + 0.09);
+      });
 
-        /* PAS de ctx.close() : le contexte est partage avec le typewriter.
-           Le fermer ici detruisait tous les sons suivants. */
-      }catch(e){ /* silencieux */ }
-    };
-    if(ctx.state === 'suspended'){
-      ctx.resume().then(go).catch(()=>{});
-    }else{
-      go();
-    }
+      const bufLen2 = Math.floor(ctx.sampleRate * 0.015);
+      const buf2 = ctx.createBuffer(1, bufLen2, ctx.sampleRate);
+      const data2 = buf2.getChannelData(0);
+      for(let i = 0; i < bufLen2; i++) data2[i] = Math.random() * 2 - 1;
+      const noise2 = ctx.createBufferSource();
+      noise2.buffer = buf2;
+      const bp2 = ctx.createBiquadFilter();
+      bp2.type = 'bandpass'; bp2.frequency.value = 3200; bp2.Q.value = 3;
+      const gNoise2 = ctx.createGain();
+      gNoise2.gain.setValueAtTime(0.0001, t);
+      gNoise2.gain.linearRampToValueAtTime(0.25, t + 0.035);
+      gNoise2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      noise2.connect(bp2); bp2.connect(gNoise2); gNoise2.connect(master);
+      noise2.start(t); noise2.stop(t + 0.055);
+    }catch(e){}
   }
 
   document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => { playHublotClick(); showRule(btn.dataset.rule, true); }));
@@ -5135,18 +5104,13 @@ function qrDataUri(text, opts){
   function _openTypeAudio(){
     if(_typeCtx) return _typeCtx;
     _typeLastAt = -1;
-    const ctx = _audioCtx;
+    const ctx = _ensureAudio();
     if(!ctx) return null;
     try{
       _typeCtx = ctx;
       _typeBus = ctx.createGain();
       _typeBus.gain.value = 0.45;
       _typeBus.connect(ctx.destination);
-      /* resume() est async : si le contexte est suspendu, on lance le
-         resume mais on ne bloque pas — le typewriter demarrera quand
-         le contexte sera pret. Les bips individuels verifient aussi
-         l'etat avant de jouer. */
-      if(ctx.state === 'suspended') ctx.resume().catch(()=>{});
       return _typeCtx;
     }catch(e){ _typeCtx = null; return null; }
   }
