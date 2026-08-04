@@ -4967,10 +4967,9 @@ function qrDataUri(text, opts){
     return _audioCtx;
   }
 
-  /* ===== CLIC HUBLOT — claquet metallique court ===== */
+  /* ===== CLIC HUBLOT — claquet metallique ===== */
   function playHublotClick(){
     if(!isSoundEnabled()) return;
-    // Cree le contexte ICI (dans un handler de clic = geste valide)
     if(!_audioCtx){
       const AC = window.AudioContext || window.webkitAudioContext;
       if(!AC) return;
@@ -4981,45 +4980,41 @@ function qrDataUri(text, opts){
     const jouer = () => {
       try{
         const t = ctx.currentTime;
-        const master = ctx.createGain();
-        master.gain.value = 0.6;
-        master.connect(ctx.destination);
 
-        // Impact metallique : 2 oscillateurs courts + bruit
-        // Oscillateur aigue (claquet metal)
+        // 1) Claquet metallique aigu (impact)
         const o1 = ctx.createOscillator();
-        o1.type = 'square';
-        o1.frequency.setValueAtTime(1800, t);
-        o1.frequency.exponentialRampToValueAtTime(600, t + 0.06);
+        o1.type = 'sine';
+        o1.frequency.setValueAtTime(2400, t);
+        o1.frequency.exponentialRampToValueAtTime(800, t + 0.05);
         const g1 = ctx.createGain();
-        g1.gain.setValueAtTime(0.3, t);
-        g1.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-        o1.connect(g1); g1.connect(master);
-        o1.start(t); o1.stop(t + 0.07);
+        g1.gain.setValueAtTime(0.4, t);
+        g1.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        o1.connect(g1); g1.connect(ctx.destination);
+        o1.start(t); o1.stop(t + 0.09);
 
-        // Oscillateur grave (resonance du metal)
+        // 2) Resonance metallique grave
         const o2 = ctx.createOscillator();
         o2.type = 'sine';
-        o2.frequency.setValueAtTime(400, t);
-        o2.frequency.exponentialRampToValueAtTime(200, t + 0.08);
+        o2.frequency.setValueAtTime(600, t + 0.01);
+        o2.frequency.exponentialRampToValueAtTime(200, t + 0.1);
         const g2 = ctx.createGain();
-        g2.gain.setValueAtTime(0.2, t);
-        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        o2.connect(g2); g2.connect(master);
-        o2.start(t); o2.stop(t + 0.09);
+        g2.gain.setValueAtTime(0.25, t + 0.01);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        o2.connect(g2); g2.connect(ctx.destination);
+        o2.start(t + 0.01); o2.stop(t + 0.11);
 
-        // Bruit blanc court (impact)
-        const bufLen = Math.floor(ctx.sampleRate * 0.02);
+        // 3) Bruit blanc court (impact)
+        const bufLen = Math.floor(ctx.sampleRate * 0.015);
         const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
         const d = buf.getChannelData(0);
         for(let i = 0; i < bufLen; i++) d[i] = Math.random() * 2 - 1;
         const noise = ctx.createBufferSource();
         noise.buffer = buf;
         const gn = ctx.createGain();
-        gn.gain.setValueAtTime(0.4, t);
-        gn.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
-        noise.connect(gn); gn.connect(master);
-        noise.start(t); noise.stop(t + 0.025);
+        gn.gain.setValueAtTime(0.5, t);
+        gn.gain.exponentialRampToValueAtTime(0.001, t + 0.015);
+        noise.connect(gn); gn.connect(ctx.destination);
+        noise.start(t); noise.stop(t + 0.02);
       }catch(e){}
     };
 
