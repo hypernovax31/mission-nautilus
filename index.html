@@ -4982,35 +4982,44 @@ function qrDataUri(text, opts){
       try{
         const t = ctx.currentTime;
         const master = ctx.createGain();
-        master.gain.value = 0.5;
+        master.gain.value = 0.6;
         master.connect(ctx.destination);
 
-        // 1) Impact : bruit blanc filtre (claquet metallique)
-        const buf = ctx.createBuffer(1, ctx.sampleRate * 0.03 | 0, ctx.sampleRate);
+        // Impact metallique : 2 oscillateurs courts + bruit
+        // Oscillateur aigue (claquet metal)
+        const o1 = ctx.createOscillator();
+        o1.type = 'square';
+        o1.frequency.setValueAtTime(1800, t);
+        o1.frequency.exponentialRampToValueAtTime(600, t + 0.06);
+        const g1 = ctx.createGain();
+        g1.gain.setValueAtTime(0.3, t);
+        g1.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+        o1.connect(g1); g1.connect(master);
+        o1.start(t); o1.stop(t + 0.07);
+
+        // Oscillateur grave (resonance du metal)
+        const o2 = ctx.createOscillator();
+        o2.type = 'sine';
+        o2.frequency.setValueAtTime(400, t);
+        o2.frequency.exponentialRampToValueAtTime(200, t + 0.08);
+        const g2 = ctx.createGain();
+        g2.gain.setValueAtTime(0.2, t);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        o2.connect(g2); g2.connect(master);
+        o2.start(t); o2.stop(t + 0.09);
+
+        // Bruit blanc court (impact)
+        const bufLen = Math.floor(ctx.sampleRate * 0.02);
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
         const d = buf.getChannelData(0);
-        for(let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        for(let i = 0; i < bufLen; i++) d[i] = Math.random() * 2 - 1;
         const noise = ctx.createBufferSource();
         noise.buffer = buf;
-        const bp = ctx.createBiquadFilter();
-        bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 2;
         const gn = ctx.createGain();
-        gn.gain.setValueAtTime(0.9, t);
-        gn.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
-        noise.connect(bp); bp.connect(gn); gn.connect(master);
-        noise.start(t); noise.stop(t + 0.035);
-
-        // 2) Resonance metallique (2 tons courts)
-        [1200, 800].forEach((f, i) => {
-          const o = ctx.createOscillator();
-          o.type = 'sine';
-          o.frequency.setValueAtTime(f, t + i * 0.02);
-          o.frequency.exponentialRampToValueAtTime(f * 0.7, t + i * 0.02 + 0.06);
-          const g = ctx.createGain();
-          g.gain.setValueAtTime(i === 0 ? 0.15 : 0.08, t + i * 0.02);
-          g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.02 + 0.06);
-          o.connect(g); g.connect(master);
-          o.start(t + i * 0.02); o.stop(t + i * 0.02 + 0.065);
-        });
+        gn.gain.setValueAtTime(0.4, t);
+        gn.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+        noise.connect(gn); gn.connect(master);
+        noise.start(t); noise.stop(t + 0.025);
       }catch(e){}
     };
 
