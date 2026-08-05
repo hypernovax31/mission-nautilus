@@ -4713,6 +4713,11 @@ function qrDataUri(text, opts){
         +   '<p class="ck-screen-desc">Le carnet de bord est scellé. L’équipage peut savourer sa remontée.</p>'
         + '</div>'
         + cockpitTrackHtml(currentTeam)
+        /* Le journal de bord de l'equipage s'affiche dans TOUS les etats,
+           pas seulement en navigation normale. Un matelot bloque, ou dont
+           l'equipage a termine, veut justement savoir ce que les autres
+           ont fait pendant ce temps. */
+        + cockpitHistoryHtml(currentTeam)
         + '</div>';
       return;
     }
@@ -4729,6 +4734,7 @@ function qrDataUri(text, opts){
         +     'Reprise possible le <b>' + esc(formatDate(currentTeam.lockedUntil)) + '</b>.</p>'
         + '</div>'
         + cockpitTrackHtml(currentTeam)
+        + cockpitHistoryHtml(currentTeam)
         + '</div>';
       return;
     }
@@ -4750,6 +4756,9 @@ function qrDataUri(text, opts){
         +     ' (' + esc(String(monLock.lastLockHours || '?')) + ' h de blocage).</p>'
         + '</div>'
         + cockpitTrackHtml(currentTeam)
+        /* Indispensable ici : c'est le matelot bloque qui a le plus besoin
+           de suivre la progression de son equipage pendant son attente. */
+        + cockpitHistoryHtml(currentTeam)
         + '</div>';
       return;
     }
