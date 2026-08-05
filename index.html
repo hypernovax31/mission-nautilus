@@ -5287,74 +5287,55 @@ function qrDataUri(text, opts){
     _typeLastAt = t;
 
     try{
-      /* NAPPE FEUTREE — le son restait trop clair et trop "bip".
-         Mesure du centre de gravite du spectre (la frequence autour de
-         laquelle l'energie se concentre, et ce que l'oreille interprete
-         comme le caractere clair ou sourd d'un son) :
-           ancien reglage : 745 Hz  -> percu comme un bip electronique
-           nouveau        : 251 Hz  -> percu comme une nappe feutree
-         Trois leviers, appliques ensemble :
-           1. hauteur descendue encore d'une octave et demie ;
-           2. l'octave SUPERIEURE (qui rendait le son pointu) est remplacee
-              par une SOUS-octave : au lieu d'ajouter de la brillance, elle
-              ajoute du corps et de la profondeur ;
-           3. filtre passe-bas resserre de 1800 Hz a 700 Hz. */
+      /* UNE SEULE NOTE PAR CARACTERE.
+         La version precedente empilait TROIS oscillateurs par frappe
+         (fondamentale + sous-octave + quinte) : 245 caracteres
+         declenchaient donc 735 sons simultanes. A 18 ms d'intervalle,
+         cela faisait jusqu'a une dizaine de voix qui sonnaient en meme
+         temps — d'ou un rendu epais, et un travail inutile pour le
+         telephone.
+
+         Desormais : UN caractere = UNE note, une seule voix.
+         Le timbre feutre est conserve autrement : au lieu d'ajouter des
+         oscillateurs, on utilise une ONDE TRIANGLE. Elle contient
+         naturellement de faibles harmoniques (qui decroissent tres vite,
+         en 1/n2), ce qui donne du corps a la note ; le filtre passe-bas
+         se charge ensuite d'en retirer tout ce qui pourrait piquer.
+         Resultat a l'oreille tres proche, pour un tiers des sons. */
       const fBase = fort ? 196 : 262;   // sol2 / do3
 
-      /* Fondamentale. La descente de hauteur est accentuee (-7 % au lieu
-         de -4 %) : c'est ce petit glissando vers le grave qui donne
-         l'impression d'un appareil qui "respire" plutot qu'un signal. */
       const o = ctx.createOscillator();
-      o.type = 'sine';
+      /* 'triangle' plutot que 'sine' : la sinusoide seule sonnait creuse
+         une fois privee de ses deux compagnes. Le triangle apporte le
+         corps qui manquait, sans durete. */
+      o.type = 'triangle';
+      /* Le petit glissando vers le grave (-7 %) est conserve : c'est lui
+         qui donne l'impression d'un appareil qui "respire". */
       o.frequency.setValueAtTime(fBase, t);
       o.frequency.exponentialRampToValueAtTime(fBase * 0.93, t + 0.065);
 
-      /* SOUS-octave : une octave EN DESSOUS. C'est elle qui apporte le
-         cote sourd et enveloppant, la ou l'ancienne octave superieure
-         apportait de la durete. */
-      const oSub = ctx.createOscillator();
-      oSub.type = 'sine';
-      oSub.frequency.setValueAtTime(fBase / 2, t);
-      oSub.frequency.exponentialRampToValueAtTime(fBase * 0.93 / 2, t + 0.065);
-      const gSub = ctx.createGain();
-      gSub.gain.value = fort ? 0.25 : 0.22;
-
-      /* Une quinte tres discrete (x1,5) : juste assez pour que le son ne
-         soit pas une sinusoide nue, sans reintroduire de brillance. */
-      const oQ = ctx.createOscillator();
-      oQ.type = 'sine';
-      oQ.frequency.setValueAtTime(fBase * 1.5, t);
-      oQ.frequency.exponentialRampToValueAtTime(fBase * 0.93 * 1.5, t + 0.065);
-      const gQ = ctx.createGain();
-      gQ.gain.value = fort ? 0.07 : 0.08;
-
-      /* Filtre passe-bas tres bas : tout ce qui pourrait encore piquer est
-         retire, y compris sur les petits haut-parleurs de telephone qui
-         accentuent naturellement les aigus. */
+      /* Filtre passe-bas tres bas : retire ce qui pourrait piquer, y
+         compris sur les petits haut-parleurs de telephone qui accentuent
+         naturellement les aigus. Legerement releve (le triangle a besoin
+         de ses premieres harmoniques pour garder du corps). */
       const lp = ctx.createBiquadFilter();
       lp.type = 'lowpass';
-      lp.frequency.value = fort ? 600 : 700;
+      lp.frequency.value = fort ? 700 : 820;
       lp.Q.value = 0.6;
 
       const g = ctx.createGain();
-      /* Duree allongee (65 ms) et attaque encore adoucie (12 ms) : une
-         note grave a besoin de plus de temps pour etre percue, et une
-         attaque lente supprime tout residu de claquement. Les notes se
-         chevauchent legerement, ce qui produit une nappe continue plutot
-         qu'une suite de points — exactement l'effet recherche. */
+      /* Duree 65 ms, attaque douce 12 ms : une note grave a besoin de
+         temps pour etre percue, et une attaque lente supprime tout
+         claquement. Niveau legerement remonte pour compenser la
+         disparition des deux voix d'appoint. */
       const dur = fort ? 0.075 : 0.065;
-      const pic = fort ? 0.62 : 0.55;
+      const pic = fort ? 0.70 : 0.62;
       g.gain.setValueAtTime(0.0001, t);
       g.gain.linearRampToValueAtTime(pic, t + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
 
-      o.connect(lp);
-      oSub.connect(gSub); gSub.connect(lp);
-      oQ.connect(gQ);     gQ.connect(lp);
-      lp.connect(g); g.connect(_typeBus);
-      o.start(t);    o.stop(t + dur + 0.01);
-      oSub.start(t); oSub.stop(t + dur + 0.01);
-      oQ.start(t);   oQ.stop(t + dur + 0.01);
+      o.connect(lp); lp.connect(g); g.connect(_typeBus);
+      o.start(t); o.stop(t + dur + 0.01);
     }catch(e){ /* son indisponible : le texte s'ecrit quand meme */ }
   }
 
@@ -5373,32 +5354,22 @@ function qrDataUri(text, opts){
          appartenir a la meme nappe feutree que la frappe, pas y trancher.
          Meme recette : sous-octave pour le corps, quinte discrete,
          filtre passe-bas serre, attaque lente. */
+      /* Deux notes montantes, meme facture que la frappe : UNE seule voix
+         chacune (onde triangle + filtre), au lieu des trois d'avant. */
       [[196, 0.05, 0.30, 800], [261.6, 0.16, 0.42, 850]].forEach(([f, dt, dur, fc]) => {
-        const t = ctx.currentTime + dt;
-        const o    = ctx.createOscillator();
-        const oSub = ctx.createOscillator();
-        const oQ   = ctx.createOscillator();
-        const g    = ctx.createGain();
-        const gSub = ctx.createGain();
-        const gQ   = ctx.createGain();
-        const lp   = ctx.createBiquadFilter();
-        o.type = 'sine';    o.frequency.value = f;
-        oSub.type = 'sine'; oSub.frequency.value = f / 2;
-        oQ.type = 'sine';   oQ.frequency.value = f * 1.5;
-        gSub.gain.value = 0.26;
-        gQ.gain.value   = 0.09;
+        const t  = ctx.currentTime + dt;
+        const o  = ctx.createOscillator();
+        const g  = ctx.createGain();
+        const lp = ctx.createBiquadFilter();
+        o.type = 'triangle';
+        o.frequency.value = f;
         lp.type = 'lowpass'; lp.frequency.value = fc; lp.Q.value = 0.6;
         g.gain.setValueAtTime(0.0001, t);
         /* Attaque tres douce (18 ms) : la note s'ouvre au lieu de claquer. */
-        g.gain.linearRampToValueAtTime(0.46, t + 0.018);
+        g.gain.linearRampToValueAtTime(0.52, t + 0.018);
         g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-        o.connect(lp);
-        oSub.connect(gSub); gSub.connect(lp);
-        oQ.connect(gQ);     gQ.connect(lp);
-        lp.connect(g); g.connect(_typeBus);
-        o.start(t);    o.stop(t + dur + 0.02);
-        oSub.start(t); oSub.stop(t + dur + 0.02);
-        oQ.start(t);   oQ.stop(t + dur + 0.02);
+        o.connect(lp); lp.connect(g); g.connect(_typeBus);
+        o.start(t); o.stop(t + dur + 0.02);
       });
     }catch(e){ /* silencieux */ }
   }
