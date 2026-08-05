@@ -919,9 +919,10 @@ function getLockedUntilISO(failCount) {
   return d.toISOString();
 }
 /* Blocage de tout l'equipage : ne subsiste que par decision d'un admin. */
-function isLocked(team) {
-  return team?.status === 'blocked' && team.lockedUntil && new Date(team.lockedUntil).getTime() > Date.now();
-}
+/* isLocked() a ete SUPPRIMEE : plus rien ne bloque une equipe entiere.
+   La page d'accueil en garde une version, uniquement pour deverrouiller
+   automatiquement une equipe restee bloquee en base par l'ancienne
+   version du jeu. */
 /* Fiche de blocage d'un matelot, rangee dans le document de l'equipe
    sous matelotLocks[memberKey] = { failCount, lockedUntil, lastLockHours }. */
 function getMatelotLock(team, key) {
@@ -1153,7 +1154,7 @@ window.Nautilus = {
   getCurrentMatelotCode, getMatelotByCode,
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, getSessionBrute, watchSession, createSession, updateSession, endSession, clearSession,
-  getLockHours, getLockedUntilISO, isLocked, getMatelotLock, isMatelotLocked, formatDate,
+  getLockHours, getLockedUntilISO, getMatelotLock, isMatelotLocked, formatDate,
   getMissionConfig,
   isTestMode,
   isSoundEnabled, getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
@@ -1507,9 +1508,9 @@ window.Nautilus = {
     /* Bandeau statut */
     const monBlocage = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
     const jeSuisBloque = state.me ? N.isMatelotLocked(t, state.me.memberKey) : false;
-    if (N.isLocked(t)) {
-      setStatus(`🔒 Équipage bloqué jusqu'à ${N.formatDate(t.lockedUntil)} — décision du poste de commandement.`, 'danger');
-    } else if (jeSuisBloque) {
+    /* PLUS DE CAS "equipage bloque" : depuis que le blocage est personnel,
+       plus rien ne bloque une equipe entiere. */
+    if (jeSuisBloque) {
       setStatus(`🔒 Tu es en surface jusqu'à ${N.formatDate(monBlocage.lockedUntil)} — ${monBlocage.failCount || 0} échec(s) personnel(s). L'équipage, lui, continue.`, 'danger');
     } else if (t.status === 'finished') {
       setStatus('🏆 Mission terminée. Carnet de bord scellé.', 'success');
@@ -1622,12 +1623,6 @@ window.Nautilus = {
     } else {
       if (state.timerHandle) { clearInterval(state.timerHandle); state.timerHandle = null; }
       majChronoTitre(210, 'Temps imparti');
-    }
-
-    /* Équipage bloqué (uniquement sur décision d'un administrateur) */
-    if (N.isLocked(t)) {
-      body.innerHTML = renderLockScreen(t);
-      return;
     }
 
     /* Blocage PERSONNEL : seul le matelot qui a échoué est repoussé en
@@ -2529,17 +2524,6 @@ window.Nautilus = {
     `;
   }
 
-  /* === ÉCRAN : locked (équipage bloqué par le poste de commandement) === */
-  function renderLockScreen(t) {
-    return `
-      <div class="lock-screen">
-        <h2>🔒 Équipage en surface</h2>
-        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">Le poste de commandement a mis tout l'équipage en attente. L'épreuve ne peut pas être tentée pour le moment.</p>
-        <div class="countdown-big">${esc(N.formatDate(t.lockedUntil))}</div>
-        <p class="lock-rule">⏳ Reprise du Palier 1 possible à cette heure.</p>
-      </div>
-    `;
-  }
 
   /* === ÉCRAN : transition palier suivant === */
   function renderNextStepPrompt(t) {

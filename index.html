@@ -4702,42 +4702,45 @@ function qrDataUri(text, opts){
     const stepNo    = Math.min(ids.indexOf(currentTeam.currentStep) + 1 || 1, ids.length);
     const fails     = Number(currentTeam.failCount || 0);
 
-    /* --- Mission terminee --- */
-    if(currentTeam.status==='finished'){
+    /* --- DERNIER PALIER FRANCHI : la mission est finie ---
+       Ce cas ne se declenche que lorsque l'equipage a franchi le DERNIER
+       palier. Tant qu'il en reste, on repasse par la navigation normale
+       qui annonce le palier suivant.
+
+       Auparavant, cet ecran dependait de status==='finished', un etat que
+       plus AUCUN code ne posait : il etait donc devenu inatteignable. On
+       se fie desormais a l'avancement reel, ce qui le rend a nouveau
+       utile — et juste. */
+    const tousLesPaliers = Object.keys(STEPS);
+    const dernierPalier  = tousLesPaliers[tousLesPaliers.length - 1];
+    const missionFinie   = currentTeam.status === 'finished'
+                        || (currentTeam.completedSteps || []).includes(dernierPalier);
+    if(missionFinie){
       box.innerHTML =
         '<div class="cockpit is-done">'
         + cockpitPlateHtml(currentTeam, 'Mission accomplie')
         + '<div class="ck-screen">'
         +   '<div class="ck-screen-label">Statut du Nautilus</div>'
         +   '<div class="ck-screen-value">SURFACE ATTEINTE</div>'
-        +   '<p class="ck-screen-desc">Le carnet de bord est scellé. L’équipage peut savourer sa remontée.</p>'
+        +   '<p class="ck-screen-desc">Tous les sas sont franchis. Le carnet de bord est scellé :<br>'
+        +     'l’équipage <b>' + esc(currentTeam.teamName) + '</b> a ramené le Nautilus à la surface.</p>'
         + '</div>'
         + cockpitTrackHtml(currentTeam)
-        /* Le journal de bord de l'equipage s'affiche dans TOUS les etats,
-           pas seulement en navigation normale. Un matelot bloque, ou dont
-           l'equipage a termine, veut justement savoir ce que les autres
-           ont fait pendant ce temps. */
+        /* Le journal de bord s'affiche dans TOUS les etats : un matelot
+           bloque, ou dont l'equipage a termine, veut justement savoir ce
+           que les autres ont fait pendant ce temps. */
         + cockpitHistoryHtml(currentTeam)
         + '</div>';
       return;
     }
 
-    /* --- Equipage bloque --- */
-    if(isLocked(currentTeam)){
-      box.innerHTML =
-        '<div class="cockpit is-locked">'
-        + cockpitPlateHtml(currentTeam, 'Remontée forcée')
-        + '<div class="ck-screen">'
-        +   '<div class="ck-screen-label"><span class="ck-alarm-lamp"></span>Statut du Nautilus</div>'
-        +   '<div class="ck-screen-value">PLONGÉE EN SILENCE</div>'
-        +   '<p class="ck-screen-desc">La transmission a été perdue dans les abysses.<br>'
-        +     'Reprise possible le <b>' + esc(formatDate(currentTeam.lockedUntil)) + '</b>.</p>'
-        + '</div>'
-        + cockpitTrackHtml(currentTeam)
-        + cockpitHistoryHtml(currentTeam)
-        + '</div>';
-      return;
-    }
+    /* PLUS D'ECRAN "EQUIPAGE BLOQUE".
+       Depuis que le blocage est PERSONNEL, plus rien dans le jeu ne
+       bloque une equipe entiere : ni un echec, ni un temps ecoule, ni une
+       demande d'indice. Le seul chemin restant etait un reglage manuel
+       depuis l'admin, lui aussi supprime.
+       Un matelot bloque voit l'ecran personnel ci-dessous ; ses
+       coequipiers, eux, continuent de jouer normalement. */
 
     /* --- Ce matelot est bloque, mais pas son equipage ---
        Il voit son heure de reprise ; ses camarades, eux, gardent le
@@ -6892,42 +6895,20 @@ function qrDataUri(text, opts){
       const teams = [];
       for(const t of effectiveTeams){ const team = await getTeam(t.code); if(team) teams.push(team); }
       box.innerHTML = teams.map(t => {
-        const locked = isLocked(t);
-        const lu = t.lockedUntil ? new Date(t.lockedUntil) : null;
-        const pad = n => String(n).padStart(2, '0');
-        const dtLocal = lu
-          ? `${lu.getFullYear()}-${pad(lu.getMonth()+1)}-${pad(lu.getDate())}T${pad(lu.getHours())}:${pad(lu.getMinutes())}`
-          : '';
+        /* PLUS DE BLOCAGE D'EQUIPE ENTIERE.
+           Le jeu ne bloque plus que le matelot fautif. Le reglage manuel
+           qui subsistait ici etait le dernier moyen de punir tout un
+           equipage : il contredisait la regle et n'avait plus lieu
+           d'etre. Cet onglet ne gere donc que les blocages PERSONNELS,
+           avec le compteur d'echecs pour information. */
         return `<div class="team" style="background:#fff" data-team="${esc(t.teamCode)}">
           <h3>${esc(t.teamName)} <span class="small" style="color:var(--muted)">(${esc(t.teamCode)})</span></h3>
-          <div class="small" style="margin-bottom:10px">Statut actuel : <b style="color:${locked ? 'var(--bad)' : '#075c39'}">${locked ? 'BLOQUÉE' : 'ACTIVE'}</b> · échecs : <b>${Number(t.failCount||0)}</b></div>
+          <div class="small" style="margin-bottom:10px">Échecs cumulés de l'équipage : <b>${Number(t.failCount||0)}</b></div>
           ${renderMatelotLocksHtml(t)}
-          <div class="admin-form-grid">
-            <label>Statut de l'équipe</label>
-            <select class="lk-status">
-              <option value="active" ${t.status !== 'blocked' ? 'selected' : ''}>🟢 Active (non bloquée)</option>
-              <option value="blocked" ${t.status === 'blocked' ? 'selected' : ''}>🔴 Bloquée (verrouillée)</option>
-            </select>
-            <label>Reprise autorisée</label>
-            <input type="datetime-local" class="lk-until" value="${dtLocal}">
-            <label>Échecs cumulés</label>
-            <input type="number" class="lk-fails" min="0" step="1" value="${Number(t.failCount||0)}" placeholder="0">
-          </div>
-          <div class="admin-actions-row">
-            <button class="primary lk-save" type="button">💾 Appliquer</button>
-            <button class="secondary lk-unlock" type="button">🔓 Débloquer maintenant</button>
-          </div>
         </div>`;
       }).join('');
       box.querySelectorAll('.team').forEach(teamEl => {
         const code = teamEl.dataset.team;
-        teamEl.querySelector('.lk-save').addEventListener('click', async () => {
-          const status = teamEl.querySelector('.lk-status').value;
-          const dtVal = teamEl.querySelector('.lk-until').value;
-          const fails = Number(teamEl.querySelector('.lk-fails').value || 0);
-          await adminUpdateLock(code, { status, lockedUntil: dtVal, failCount: fails });
-        });
-        teamEl.querySelector('.lk-unlock').addEventListener('click', () => adminUnlockTeam(code));
         teamEl.querySelectorAll('.lk-free-one').forEach(b =>
           b.addEventListener('click', () => adminUnlockMatelot(code, b.dataset.key)));
         teamEl.querySelector('.lk-free-all')?.addEventListener('click', () => adminUnlockMatelot(code, null));
@@ -6983,55 +6964,7 @@ function qrDataUri(text, opts){
     }
   }
 
-  async function adminUpdateLock(teamCode, patch){
-    if(!isAdminUnlocked()) return;
-    try{
-      const ref = doc(db,'teams',teamCode);
-      const snap = await getDoc(ref);
-      if(!snap.exists()) throw new Error('Équipe introuvable.');
-      const team = { teamCode, ...snap.data() };
-      const updates = { updatedAt: new Date().toISOString() };
-      if(patch.status === 'active'){
-        updates.status = 'active';
-        updates.lockedUntil = null;
-        updates.lastUnlockAt = new Date().toISOString();
-      }else{
-        updates.status = 'blocked';
-        if(patch.lockedUntil){
-          // datetime-local est en local time, on convertit en ISO UTC
-          const d = new Date(patch.lockedUntil);
-          if(!isNaN(d.getTime())) updates.lockedUntil = d.toISOString();
-        }else{
-          updates.lockedUntil = getLockedUntilISO(patch.failCount ?? 0);
-        }
-        updates.lastLockHours = getLockHours(patch.failCount ?? 0);
-      }
-      if(Number.isFinite(patch.failCount)) updates.failCount = Math.max(0, Math.floor(patch.failCount));
-      await updateDoc(ref, updates);
-      await renderAdminLocks();
-      await loadTeams();
-      endAdminSession(`✅ Blocage de ${team.teamName} mis à jour · session fermée`);
-    }catch(err){
-      console.error('adminUpdateLock:', err);
-      alert(`❌ Échec blocage : ${err.message || err}`);
-    }
-  }
 
-  async function adminUnlockTeam(teamCode){
-    if(!isAdminUnlocked()) return;
-    try{
-      const ref = doc(db,'teams',teamCode);
-      const snap = await getDoc(ref);
-      const teamName = snap.exists() ? snap.data().teamName : teamCode;
-      await updateDoc(ref, { status:'active', lockedUntil:null, updatedAt:new Date().toISOString(), lastUnlockAt:new Date().toISOString() });
-      await renderAdminLocks();
-      await loadTeams();
-      endAdminSession(`✅ ${teamName} débloquée · session fermée`);
-    }catch(err){
-      console.error('adminUnlockTeam:', err);
-      alert(`❌ Échec déblocage : ${err.message || err}`);
-    }
-  }
 
   /* ---------- TAB : O2 ---------- */
   function renderAdminOxygen(){
