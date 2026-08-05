@@ -4933,17 +4933,24 @@ function qrDataUri(text, opts){
     majProgressionHublots();
 
     if(shouldScroll){
-      /* On remonte sur la PLAQUE "Consignes de plongee", et non sur les
-         hublots eux-memes : le joueur voit ainsi le titre, les temoins de
-         progression, les quatre hublots ET le texte qui vient de s'ouvrir
-         dans un meme ecran. En visant les hublots, le titre partait
-         au-dessus de l'ecran et on perdait le repere.
-         Le degagement sous la barre fixe est assure par la regle CSS
-         scroll-margin-top de .rule-invite. */
+      /* On amene le HAUT DE LA RANGEE DE HUBLOTS en haut de l'ecran.
+
+         Deux corrections par rapport a la version precedente :
+         - la cible etait la plaque "Consignes de plongee", situee
+           au-dessus : les hublots se retrouvaient donc plus bas que
+           demande ;
+         - smartScroll() ne bougeait pas du tout si l'element etait deja
+           un peu visible. Or apres un premier clic on est justement dans
+           ce cas : le second clic ne repositionnait plus rien, et le
+           joueur avait l'impression que la page ne suivait pas.
+         On place donc la rangee explicitement, sans condition. */
       setTimeout(() => {
-        const cible = document.querySelector('.rule-invite')
-                   || document.getElementById('ruleCards');
-        smartScroll(cible);
+        const cible = document.getElementById('ruleCards')
+                   || document.querySelector('.mission-steps');
+        if(!cible) return;
+        const gap = 56;   // barre fixe du haut + un peu d'air
+        const y = window.pageYOffset + cible.getBoundingClientRect().top - gap;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }, 80);
     }
   }
@@ -5095,13 +5102,32 @@ function qrDataUri(text, opts){
     const go = () => {
       evts.forEach(e => document.removeEventListener(e, go, true));
       chargerSonHublot();
-      /* On amorce aussi les <audio> de repli : une lecture muette
-         immediatement mise en pause suffit a les debloquer sur iOS. */
+      /* On amorce les <audio> de repli pour les debloquer sur iOS.
+
+         BUG CORRIGE : un son de hublot s'entendait au TOUT PREMIER clic
+         n'importe ou dans la page. L'amorcage se voulait muet, mais entre
+         le play() et la mise en pause il s'ecoule au moins une image ;
+         sur mobile, ce delai suffisait a laisser passer un fragment
+         audible. Le volume etait de plus retabli immediatement, parfois
+         avant que la pause n'ait pris effet.
+         Triple precaution desormais : volume a zero EN PLUS de la
+         sourdine, lecture demarree a la toute fin du son (donc il n'y a
+         quasiment rien a jouer), et volume retabli seulement une fois la
+         pause effective. */
       hublotPool().forEach(a => {
-        const vol = a.volume;
+        const vol = (a.volume === 0 ? 1 : a.volume);
         a.muted = true;
+        a.volume = 0;
+        try{ if(a.duration && isFinite(a.duration)) a.currentTime = Math.max(0, a.duration - 0.01); }catch(e){}
         const p = a.play();
-        const fin = () => { a.pause(); try{ a.currentTime = 0; }catch(e){} a.muted = false; a.volume = vol; };
+        const fin = () => {
+          a.pause();
+          try{ a.currentTime = 0; }catch(e){}
+          /* On attend une image de plus avant de rendre le son audible :
+             sinon on redonne du volume a un element parfois encore en
+             train de s'arreter. */
+          requestAnimationFrame(() => { a.muted = false; a.volume = vol; });
+        };
         if(p && typeof p.then === 'function') p.then(fin).catch(fin); else fin();
       });
     };
@@ -5165,6 +5191,32 @@ function qrDataUri(text, opts){
      silence, et l'ambiance arrivait apres coup.
      Desormais il n'y a qu'un seul point de verite : des que le son devient
      REELLEMENT audible, on previent tout le monde en meme temps. */
+  /* ===== PREMIER GESTE DE L'UTILISATEUR =====
+     Tous les sons du web exigent un geste prealable. Plusieurs morceaux du
+     jeu en ont besoin (frappe de l'ordre de mission, son des hublots) :
+     ils partageaient jusqu'ici le signal de l'AMBIANCE, ce qui les rendait
+     muets des que celle-ci etait refusee. Ce petit registre les rend
+     independants : un seul endroit qui dit "l'utilisateur a agi". */
+  let _gesteRecu = false;
+  const _gesteCbs = [];
+  function surPremierGeste(cb){
+    if(_gesteRecu){ cb(); return; }
+    _gesteCbs.push(cb);
+  }
+  (function guetterPremierGeste(){
+    const evts = ['pointerdown','touchstart','mousedown','keydown','click'];
+    const go = () => {
+      if(_gesteRecu) return;
+      _gesteRecu = true;
+      evts.forEach(e => document.removeEventListener(e, go, true));
+      while(_gesteCbs.length){
+        const cb = _gesteCbs.shift();
+        try{ cb(); }catch(e){ /* un abonne casse ne bloque pas les autres */ }
+      }
+    };
+    evts.forEach(e => document.addEventListener(e, go, true));
+  })();
+
   let _audioAudible = false;
   const _audioReadyCbs = [];
   function whenAudioReady(cb){
@@ -5420,12 +5472,24 @@ function qrDataUri(text, opts){
       if(isSoundEnabled()) _openTypeAudio();
       setTimeout(tick, 40);
     };
-    const secours = setTimeout(lancer, 4000);
+
+    /* BUG CORRIGE : l'ecriture attendait que l'AMBIANCE OCEAN devienne
+       audible. Quand le navigateur la refusait — cas frequent : aucun
+       geste recu, onglet ouvert en arriere-plan, economiseur de donnees —
+       le signal n'arrivait jamais et le texte restait bloque sur son
+       premier caractere pendant 4 secondes, puis s'ecrivait en silence.
+       Le son de frappe n'a pourtant AUCUN besoin de l'ambiance : il lui
+       suffit d'un geste de l'utilisateur, comme tout son sur le web.
+       On part donc au premier geste reel, sans rien attendre d'autre. */
+    const secours = setTimeout(lancer, 2500);
     const attendreGeste = () => {
       if(!isSoundEnabled()){ lancer(); return; }   // sonar eteint : on ecrit tout de suite
       const AC = window.AudioContext || window.webkitAudioContext;
       if(!AC){ lancer(); return; }                 // pas de son possible
-      whenAudioReady(lancer);
+      /* Si un geste a DEJA eu lieu (le joueur a touche l'ecran avant
+         d'arriver ici), on demarre immediatement. */
+      if(_gesteRecu){ lancer(); return; }
+      surPremierGeste(lancer);
     };
     const tick = () => {
       if(i >= fullText.length){
@@ -5609,11 +5673,13 @@ function qrDataUri(text, opts){
       }));
     }
 
-    /* Filet de securite : si le bloc n'est jamais vu (ou si le navigateur
-       ne sait pas surveiller la visibilite), la jauge doit tout de meme
-       finir par afficher la verite. */
-    const secours = setTimeout(lancer, 6000);
-    const go = () => { clearTimeout(secours); lancer(); };
+    /* PLUS DE MINUTEUR DE SECOURS.
+       Il lancait l'animation au bout de 6 secondes MEME SI le bloc
+       n'avait jamais ete vu : la jauge se vidait donc dans le dos du
+       joueur, qui decouvrait ensuite une barre deja figee — exactement ce
+       qu'on voulait eviter. L'animation ne part QUE sur une visibilite
+       reelle, sans aucune exception de temps. */
+    const go = () => lancer();
 
     if(typeof IntersectionObserver === 'function'){
       const io = new IntersectionObserver(entries => {
@@ -5622,13 +5688,40 @@ function qrDataUri(text, opts){
         });
       }, { threshold: 0.35 });   // le bloc doit etre franchement a l'ecran
       io.observe(bloc);
-      /* Cas du rechargement en cours de page : le bloc peut deja etre
-         visible avant meme que l'observateur ne reponde. */
-      const r = bloc.getBoundingClientRect();
-      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-      if(vh && r.top < vh * 0.8 && r.bottom > 0){ io.disconnect(); go(); }
+
+      /* Filet de securite REPOSITIONNE : on ne declenche pas apres un
+         delai, on VERIFIE simplement de temps en temps si le bloc est
+         reellement a l'ecran. Cela couvre les navigateurs dont
+         l'observateur reste muet (bloc mesure avant la mise en page
+         finale, ressources retenues par une extension...), sans jamais
+         animer dans le vide. */
+      const verifier = () => {
+        if(parti){ clearInterval(minuteur); return; }
+        const r = bloc.getBoundingClientRect();
+        const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+        if(!vh || !r.height) return;
+        const visible = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+        if(visible / Math.min(r.height, vh) >= 0.35){
+          clearInterval(minuteur);
+          io.disconnect();
+          go();
+        }
+      };
+      const minuteur = setInterval(verifier, 400);
+      verifier();   // cas du rechargement alors qu'on est deja sur le bloc
     }else{
-      go();
+      /* Navigateur sans surveillance de visibilite : on se rabat sur le
+         defilement, meme principe — jamais d'animation a l'aveugle. */
+      const auScroll = () => {
+        const r = bloc.getBoundingClientRect();
+        const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+        if(vh && r.top < vh * 0.65 && r.bottom > 0){
+          window.removeEventListener('scroll', auScroll);
+          go();
+        }
+      };
+      window.addEventListener('scroll', auScroll, { passive:true });
+      auScroll();
     }
   })();
 
