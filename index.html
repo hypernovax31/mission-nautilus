@@ -1017,19 +1017,11 @@
       .sonar-screen{width:96px;height:96px;min-width:96px;flex-basis:96px}
     }
 
-
-
     /* Correction hublots : cercles parfaitement ronds + contenu centré */
-
-
 
     /* Alignement hublots : une ligne si l’écran le permet, texte sur une seule ligne */
 
-
-
     /* Hublots — répartition symétrique maximale selon la largeur visible */
-
-
 
     /* ===== ANIMATION RADAR HOLLYWOOD ===== */
     /* Le sonar occupe toute la largeur de la carte, bord a bord, comme le
@@ -3506,8 +3498,6 @@ function qrDataUri(text, opts){
     return siteUrl() + '?m=' + encodeURIComponent(cd);
   }
 
-
-
   function buildNoteText(name, code, teamName){
     /* Le lien inclut le code : l'ouvrir reprend la mission directement,
        sans rien saisir. C'est ce lien qu'il faut mettre en favori. */
@@ -5120,48 +5110,6 @@ function qrDataUri(text, opts){
     }
   }
 
-  /* PRE-CHARGEMENT AU PREMIER GESTE.
-     Le son est prepare des que le joueur touche l'ecran pour la premiere
-     fois — bien avant qu'il n'atteigne les hublots, qui sont plus bas dans
-     la page. Le tout premier clic sur un hublot a donc, lui aussi, son
-     son : c'est exactement le cas qui echouait le plus souvent. */
-  (function preparerSonHublot(){
-    const evts = ['pointerdown','touchstart','mousedown','keydown'];
-    const go = () => {
-      evts.forEach(e => document.removeEventListener(e, go, true));
-      chargerSonHublot();
-      /* On amorce les <audio> de repli pour les debloquer sur iOS.
-
-         BUG CORRIGE : un son de hublot s'entendait au TOUT PREMIER clic
-         n'importe ou dans la page. L'amorcage se voulait muet, mais entre
-         le play() et la mise en pause il s'ecoule au moins une image ;
-         sur mobile, ce delai suffisait a laisser passer un fragment
-         audible. Le volume etait de plus retabli immediatement, parfois
-         avant que la pause n'ait pris effet.
-         Triple precaution desormais : volume a zero EN PLUS de la
-         sourdine, lecture demarree a la toute fin du son (donc il n'y a
-         quasiment rien a jouer), et volume retabli seulement une fois la
-         pause effective. */
-      hublotPool().forEach(a => {
-        const vol = (a.volume === 0 ? 1 : a.volume);
-        a.muted = true;
-        a.volume = 0;
-        try{ if(a.duration && isFinite(a.duration)) a.currentTime = Math.max(0, a.duration - 0.01); }catch(e){}
-        const p = a.play();
-        const fin = () => {
-          a.pause();
-          try{ a.currentTime = 0; }catch(e){}
-          /* On attend une image de plus avant de rendre le son audible :
-             sinon on redonne du volume a un element parfois encore en
-             train de s'arreter. */
-          requestAnimationFrame(() => { a.muted = false; a.volume = vol; });
-        };
-        if(p && typeof p.then === 'function') p.then(fin).catch(fin); else fin();
-      });
-    };
-    evts.forEach(e => document.addEventListener(e, go, true));
-  })();
-
   document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => { playHublotClick(); showRule(btn.dataset.rule, true); }));
   showRule('embark', false);
 
@@ -5227,9 +5175,16 @@ function qrDataUri(text, opts){
      independants : un seul endroit qui dit "l'utilisateur a agi". */
   let _gesteRecu = false;
   const _gesteCbs = [];
-  function surPremierGeste(cb){
+  /* ORDRE DE DEMARRAGE DES SONS, impose et non subi :
+       1 = ambiance ocean
+       2 = frappe de l'ordre de mission
+       3 = preparation du son des hublots
+     Sans ce rang, l'ordre dependait de la position des blocs dans le
+     fichier : deplacer une fonction changeait silencieusement quel son
+     partait en premier. On le declare donc explicitement. */
+  function surPremierGeste(cb, rang){
     if(_gesteRecu){ cb(); return; }
-    _gesteCbs.push(cb);
+    _gesteCbs.push({ cb, rang: (typeof rang === 'number' ? rang : 9) });
   }
   (function guetterPremierGeste(){
     const evts = ['pointerdown','touchstart','mousedown','keydown','click'];
@@ -5237,12 +5192,56 @@ function qrDataUri(text, opts){
       if(_gesteRecu) return;
       _gesteRecu = true;
       evts.forEach(e => document.removeEventListener(e, go, true));
+      /* Tri par rang : l'ambiance d'abord, la frappe ensuite, les hublots
+         en dernier. */
+      _gesteCbs.sort((a, b) => a.rang - b.rang);
       while(_gesteCbs.length){
-        const cb = _gesteCbs.shift();
+        const { cb } = _gesteCbs.shift();
         try{ cb(); }catch(e){ /* un abonne casse ne bloque pas les autres */ }
       }
     };
     evts.forEach(e => document.addEventListener(e, go, true));
+  })();
+
+  /* ===== PREPARATION DU SON DES HUBLOTS =====
+
+     BUG CORRIGE (definitivement) : un son de hublot s'entendait au tout
+     premier clic, n'importe ou dans la page.
+
+     La version precedente "amorcait" les lecteurs <audio> au premier
+     geste : elle les lancait en sourdine puis les arretait aussitot, pour
+     les debloquer sur iOS. Malgre trois precautions (sourdine, volume a
+     zero, lecture positionnee a la fin du son), un fragment restait
+     audible : entre le lancement et l'arret il s'ecoule au moins une
+     image, et sur mobile cela suffit.
+
+     LA VRAIE SOLUTION : ne RIEN jouer du tout a l'amorcage.
+     Le chemin normal du son des hublots est Web Audio, qui n'a aucun
+     besoin de ce genre de reveil : il lui suffit que le contexte audio
+     existe et soit actif, ce qui ne produit aucun son. On se contente
+     donc de preparer le contexte et de telecharger le son. Les <audio>
+     de secours ne servent que si Web Audio est indisponible — cas ou ils
+     seront debloques par le clic sur le hublot lui-meme, qui est un vrai
+     geste utilisateur.
+
+     ORDRE DE DEMARRAGE DES SONS, comme demande :
+       1. l'ambiance  (des le chargement, ou au premier geste)
+       2. la frappe de l'ordre de mission
+       3. les hublots (uniquement au clic sur un hublot)
+     Le son des hublots n'est donc JAMAIS emis avant que le joueur n'en
+     touche un. */
+  (function preparerSonHublot(){
+    /* Rang 3 : APRES l'ambiance (1) et la frappe (2). */
+    surPremierGeste(() => {
+      /* Le contexte audio est cree et reveille : silencieux par nature.
+         C'est ce qui permettra au premier clic sur un hublot de sonner
+         immediatement, sans le temps de chargement. */
+      sfxContext();
+      /* Telechargement et decodage du son, en arriere-plan. Aucune
+         lecture n'est declenchee ici. */
+      chargerSonHublot();
+      /* AUCUN amorcage des <audio> : c'etait la source du parasite. */
+    }, 3);
   })();
 
   let _audioAudible = false;
@@ -5488,7 +5487,7 @@ function qrDataUri(text, opts){
       /* Si un geste a DEJA eu lieu (le joueur a touche l'ecran avant
          d'arriver ici), on demarre immediatement. */
       if(_gesteRecu){ lancer(); return; }
-      surPremierGeste(lancer);
+      surPremierGeste(lancer, 2);   // rang 2 : juste apres l'ambiance
     };
     const tick = () => {
       if(i >= fullText.length){
@@ -6131,6 +6130,13 @@ function qrDataUri(text, opts){
       document.removeEventListener(evt, activateAudioFromNavigation);
     });
   }
+
+  /* RANG 1 : l'ambiance passe AVANT tout le reste au premier geste.
+     Elle garde en plus ses propres ecouteurs ci-dessous, car elle doit
+     aussi pouvoir demarrer sur un simple defilement (qui n'est pas un
+     "geste" au sens des navigateurs, mais suffit a demasquer une lecture
+     deja amorcee en sourdine). */
+  surPremierGeste(() => { activateAudioFromNavigation(); }, 1);
 
   AUDIO_WAKE_EVENTS.forEach(evt => {
     window.addEventListener(evt, activateAudioFromNavigation, { passive:true });
