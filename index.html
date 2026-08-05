@@ -375,7 +375,12 @@
     }
     /* --- Encart d'embarquement : code matelot + QR alignes --- */
     .matelot-card{padding:clamp(16px,3.5vw,22px)}
-    .matelot-welcome{margin:0 0 14px;font-size:clamp(15px,2.4vw,17px);line-height:1.45}
+    .matelot-welcome{margin:0 0 8px;font-size:clamp(15px,2.4vw,17px);line-height:1.45}
+    /* Invitation a aller voir son equipage sur le sonar. Volontairement
+       plus discrete que le message de bienvenue : c'est une suggestion,
+       pas une consigne. */
+    .matelot-crewhint{margin:0 0 14px;font-size:clamp(13px,2vw,14.5px);line-height:1.5;opacity:.9}
+    .matelot-crewlink{color:var(--fnac);font-weight:900;text-decoration:underline;text-underline-offset:2px}
     /* Alerte : le message le plus important de l'ecran */
     /* Le retour a la ligne n'est plus force (plus de <br>) : la phrase
        tient sur UNE seule ligne quand l'ecran est assez large, et se
@@ -4202,6 +4207,14 @@ function qrDataUri(text, opts){
       $('registerMsg').innerHTML =
         '<div class="notice success matelot-card">' +
           '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
+          /* L'affectation est automatique : le matelot ne choisit pas son
+             equipage et ne sait donc pas qui l'accompagne. On l'envoie
+             voir le sonar, ou les equipages deja formes apparaissent.
+             Le lien fait defiler la page jusqu'au bloc (voir plus bas), au
+             lieu de laisser le joueur le chercher. */
+          '<p class="matelot-crewhint">&#x1F30A; Qui est déjà à bord avec toi ? ' +
+            'Va voir <a href="#equipagesEnMer" class="matelot-crewlink">Équipages en plongée</a> : ' +
+            'le sonar affiche les matelots prêts à partir.</p>' +
           '<div class="matelot-alert" role="alert">' +
             '<span class="matelot-alert-ico" aria-hidden="true">&#x26A0;</span>' +
             '<span>Ce code est <b>personnel</b> et à <b>usage unique</b> : il ne te sera <b>plus jamais affiché</b> &mdash; Note-le ou scanne le QR.</span>' +
@@ -4228,6 +4241,22 @@ function qrDataUri(text, opts){
       // son code, affiche juste au-dessus. Le bouton lui permet de
       // descendre au cockpit quand il est pret.
       renderEmbarkMissionButton(true);
+
+      /* Le lien "Equipages en plongee" fait DEFILER la page au lieu de
+         sauter d'un coup : un saut brutal, depuis une carte d'inscription
+         qui vient tout juste d'apparaitre, fait perdre le fil. Le
+         defilement montre le chemin parcouru.
+         Le degagement sous la barre fixe du haut est deja assure par la
+         regle scroll-margin-top de #equipagesEnMer. */
+      $('registerMsg').querySelector('.matelot-crewlink')
+        ?.addEventListener('click', (e) => {
+          const cible = document.getElementById('equipagesEnMer');
+          if(!cible) return;             // sans cible, on laisse le lien agir
+          e.preventDefault();
+          const gap = 56;
+          const y = window.pageYOffset + cible.getBoundingClientRect().top - gap;
+          window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+        });
 
       /* L'enregistrement en base se termine pendant que le matelot lit son
          code. On ne le fait pas attendre, MAIS on ne l'ignore pas : s'il
