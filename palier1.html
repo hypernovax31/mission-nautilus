@@ -1059,7 +1059,7 @@ function showToast(message, type = 'info', duration = 4000) {
 }
 
 /* ---------- LIVE BOARD (journal de bord temps réel) ---------- */
-function addLogEntry(text, kind = 'info') {
+function addLogEntry(text, kind = 'info', quand) {
   const list = document.getElementById('morse-log-list');
   if (!list) return;
   const colors = {
@@ -1069,24 +1069,54 @@ function addLogEntry(text, kind = 'info') {
     danger:  { dot: '#ff7b72', border: 'rgba(255,75,62,.55)' }
   };
   const c = colors[kind] || colors.info;
+
+  /* CHRONOLOGIE GARANTIE.
+
+     BUG CORRIGE : les lignes apparaissaient dans le desordre — on pouvait
+     lire "X a rejoint l'equipage" APRES ses echecs. Chaque ligne etait
+     simplement posee en haut de la liste au moment ou la fonction etait
+     appelee. Or certains messages sont ecrits APRES une reponse du
+     reseau (saveTeam...) et d'autres immediatement : un message rapide
+     doublait donc un message lent, et l'ordre affiche ne correspondait
+     plus a l'ordre reel des evenements.
+
+     Deux corrections :
+     - chaque ligne porte desormais l'INSTANT REEL de l'evenement. Un
+       appel peut fournir cet instant s'il a ete retarde par le reseau ;
+     - l'insertion se fait A LA BONNE PLACE dans la liste, en comparant
+       les horodatages, au lieu d'ajouter aveuglement en tete. */
+  const t = (quand instanceof Date) ? quand : new Date();
+  const heure = t.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
   const li = document.createElement('li');
   li.className = 'morse-log-entry';
+  li.dataset.t = String(t.getTime());
   li.style.cssText = `display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-left:3px solid ${c.border};background:rgba(0,0,0,.22);border-radius:8px;`;
-  /* BUG CORRIGE : le texte etait entierement echappe, si bien qu'une
-     entree contenant <b>...</b> affichait les balises EN CLAIR a l'ecran
-     ("Palier suivant ouvert : <b>Palier 2</b>."). On echappe toujours tout
-     — c'est indispensable, un nom de matelot est saisi librement et ne
-     doit jamais pouvoir injecter du code — PUIS on retablit uniquement
-     <b> et </b>, les deux seules balises autorisees ici. */
+
+  /* On echappe TOUT — un nom de matelot est saisi librement et ne doit
+     jamais pouvoir injecter du code — puis on retablit uniquement <b> et
+     </b>, les deux seules balises autorisees ici. */
   const texteRendu = esc(text)
     .replace(/&lt;b&gt;/g, '<b>')
     .replace(/&lt;\/b&gt;/g, '</b>');
+
   li.innerHTML = `
     <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.dot};box-shadow:0 0 8px ${c.dot};flex:0 0 10px;margin-top:5px;"></span>
     <span style="flex:1;color:#dff6ff;line-height:1.4;">${texteRendu}</span>
+    <span style="flex:0 0 auto;color:#7fa4b5;font-size:11px;font-family:Consolas,'Courier New',monospace;margin-top:3px;">${heure}</span>
   `;
-  list.prepend(li);
-  /* Limite à 20 entrées */
+
+  /* Insertion triee : la liste va du plus RECENT (en haut) au plus ancien.
+     On descend jusqu'a trouver une ligne plus ancienne que la notre. */
+  const ms = t.getTime();
+  let place = null;
+  for (const ligne of list.children) {
+    if (Number(ligne.dataset.t || 0) <= ms) { place = ligne; break; }
+  }
+  if (place) list.insertBefore(li, place);
+  else list.appendChild(li);
+
+  /* Limite a 20 entrees : on retire les plus ANCIENNES (en bas). */
   while (list.children.length > 20) list.removeChild(list.lastChild);
 }
 function clearLog() {
@@ -1422,10 +1452,15 @@ window.Nautilus = {
       /* Ajout comme nouveau membre */
       const member = { name: name.toUpperCase(), service, memberKey: key, registeredAt: new Date().toISOString() };
       const members = [...(state.team.members || []), member];
+      /* Instant releve AVANT l'ecriture reseau : la ligne du journal doit
+         porter l'heure de l'arrivee du matelot, pas celle de la reponse
+         du serveur — sinon elle se retrouve apres des evenements
+         pourtant posterieurs. */
+      const instantArrivee = new Date();
       try {
         await N.saveTeam(state.team, { members });
         state.me = { name: member.name, service, memberKey: key, clientId: N.getClientId() };
-        N.addLogEntry(`${member.name} a rejoint l'équipage.`, 'info');
+        N.addLogEntry(`${member.name} a rejoint l'équipage.`, 'info', instantArrivee);
       } catch (err) {
         $('identifyMsg').innerHTML = `<div class="status-banner danger">❌ Erreur : ${esc(err.message)}</div>`;
         return;
@@ -2101,7 +2136,6 @@ window.Nautilus = {
     } else {
       const newErrors = (state.session.errors || 0) + 1;
       const max = state.session.maxErrors || 3;
-      N.addLogEntry(`❌ ${state.me.name} s'est trompé (${newErrors}/${max} erreurs).`, 'danger');
       if (newErrors >= max) {
         /* ORDRE IMPORTANT : on bloque l'equipage AVANT de marquer la
            session perdue.
@@ -2119,10 +2153,9 @@ window.Nautilus = {
         const finKO = { state: 'lost', errors: newErrors, endReason: 'too_many_errors',
                         lastEvent: 'lost', endedAt: new Date().toISOString() };
         await N.updateSession(state.teamCode, finKO);
-        /* MESSAGE CORRIGE : il annoncait "L'equipage a epuise ses
-           chances", ce qui contredit la regle du jeu — un echec ne bloque
-           QUE son auteur, les autres matelots gardent la main. */
-        N.addLogEntry(`💀 ${state.me.name} a épuisé ses 3 chances. Un autre matelot peut reprendre l'épreuve.`, 'danger');
+        /* REDONDANCE SUPPRIMEE : blockMatelot() ecrit deja "X est repousse
+           en surface jusqu'a...". Annoncer en plus "X a epuise ses 3
+           chances" disait deux fois la meme chose, a une ligne d'ecart. */
         /* On applique la fin de partie EN MEMOIRE et on redessine.
 
            BUG CORRIGE : en partie d'essai, updateSession() n'ecrit rien
@@ -2201,6 +2234,11 @@ window.Nautilus = {
       name: state.me.name, failCount: nextFail, lastLockHours: hours,
       lockedUntil: until, reason: reason || '', blockedAt: new Date().toISOString()
     };
+    /* L'INSTANT est releve AVANT l'ecriture reseau. Sans cela, la ligne
+       portait l'heure de la REPONSE du serveur : un message ecrit plus
+       tard mais sans attente reseau la doublait dans le journal. C'est
+       precisement ce qui mettait la chronologie en desordre. */
+    const instant = new Date();
     /* failCount de l'equipe reste tenu a jour : il ne sert plus a calculer
        la duree, seulement a afficher le total des avaries sur le pupitre. */
     state.team = await N.saveTeam(state.team, {
@@ -2208,7 +2246,7 @@ window.Nautilus = {
       failCount: Number(state.team.failCount || 0) + 1,
       lastEvent: 'matelot_blocked'
     });
-    N.addLogEntry(`🔒 ${state.me.name} est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h). L'équipage peut reprendre le palier.`, 'danger');
+    N.addLogEntry(`🔒 ${state.me.name} est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h).`, 'danger', instant);
   }
 
   async function advanceTeam() {
@@ -2221,7 +2259,6 @@ window.Nautilus = {
     const update = { status: 'active', lockedUntil: null, completedSteps: completed, lastEvent: 'step_advanced' };
     if (next) { update.currentStep = next; }
     await N.saveTeam(state.team, update);
-    N.addLogEntry(`➡️ Palier suivant ouvert : <b>${N.STEPS[next]?.label || '?'}</b>.`, 'success');
     N.markHintsExhausted(state.word);
   }
 

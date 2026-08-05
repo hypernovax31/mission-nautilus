@@ -951,7 +951,6 @@
     .admin-form-grid>input[type="datetime-local"],.admin-form-grid>input[type="number"]{min-width:0;font-variant-numeric:tabular-nums}
     .admin-form-grid>.full{grid-column:1 / -1}
     /* Variante 6 colonnes pour O2 (3 paires label/input sur 1 ligne) */
-    .admin-form-grid-6{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)}
     /* En dessous de 860px la grille 4 colonnes comprimait les champs
        datetime-local sous leur largeur utile (~190px) : on bascule en
        2 colonnes plus tot. */
@@ -3838,122 +3837,6 @@ function qrDataUri(text, opts){
      de la chambre de pilotage. Elle s'affichait avant toute seule au
      retour par QR : penible a chaque visite, et le garde-fou cense
      l'eviter reposait sur une memoire que le telephone efface. */
-  /* NOTE : plus aucun bouton n'appelle cette fonction depuis que l'acces
-     "Ma fiche matelot" a ete retire du cockpit. Elle est conservee parce
-     qu'elle reste le moyen le plus simple de rouvrir la fiche complete
-     (image + enregistrement) si on veut la remettre quelque part.
-     La fiche du matelot reste accessible a l'inscription, par le bouton
-     "Agrandir" de la carte d'embarquement. */
-  async function ouvrirFicheMatelot(code){
-    const nom    = currentMatelot?.name || '';
-    const equipe = currentMatelot?.teamName || '';
-
-    const overlay = document.createElement('div');
-    overlay.className = 'fiche-modal';
-    overlay.innerHTML =
-      '<div class="fiche-box">' +
-        '<div class="fiche-head">&#x2693; Ta fiche de matelot</div>' +
-        '<div class="fiche-sub">Garde-la : ton code ne sera plus jamais affiche.</div>' +
-        '<div class="fiche-imgwrap"><div class="fiche-loading">Preparation de ta fiche…</div></div>' +
-        '<div class="fiche-hint">&#x1F4F2; Appui long sur l\'image pour l\'enregistrer dans tes photos</div>' +
-        '<div class="fiche-actions">' +
-          '<button type="button" id="ficheSave" class="fiche-btn fiche-btn-main">&#x1F4BE; Enregistrer ma fiche</button>' +
-          '<button type="button" id="ficheSaveTxt" class="fiche-btn">&#x1F4C4; Enregistrer le texte</button>' +
-          '<button type="button" id="ficheClose" class="fiche-btn">Fermer</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(overlay);
-
-    const fermer = () => { overlay.classList.add('out'); setTimeout(() => overlay.remove(), 250); };
-    overlay.addEventListener('click', e => { if(e.target === overlay) fermer(); });
-    overlay.querySelector('#ficheClose').addEventListener('click', fermer);
-
-    /* L'image est fabriquee ici meme (canvas), sans aucun appel reseau. */
-    let blob = null;
-    try{
-      blob = await buildMatelotCardPng(nom, code, equipe);
-      const url = URL.createObjectURL(blob);
-      overlay.querySelector('.fiche-imgwrap').innerHTML =
-        '<img class="fiche-img" src="' + url + '" alt="Fiche matelot ' + esc(code) + '">';
-    }catch(err){
-      console.warn('fiche image indisponible :', err);
-      /* Repli : si le dessin echoue, on montre au moins le code en clair
-         plutot qu'une fenetre vide. */
-      overlay.querySelector('.fiche-imgwrap').innerHTML =
-        '<div class="fiche-fallback"><div class="fiche-fallback-lab">Ton Code Matelot</div>' +
-        '<div class="code uppercase">' + esc(code) + '</div></div>';
-      overlay.querySelector('.fiche-hint').textContent = 'Note ce code : il ne sera plus affiche.';
-    }
-
-    overlay.querySelector('#ficheSave').addEventListener('click', async () => {
-      if(!blob){ showToast('Image indisponible — note ton code', 'linear-gradient(135deg,#9b1111,#b8322b)'); return; }
-      const file = new File([blob], 'matelot-' + code + '.png', { type: 'image/png' });
-      /* 1) Partage natif : c'est lui qui propose "Enregistrer l'image"
-            sur iPhone comme sur Android. */
-      try{
-        if(navigator.canShare && navigator.canShare({ files: [file] })){
-          await navigator.share({ files: [file], title: 'Mission Nautilus - Ta fiche de matelot' });
-          return;
-        }
-      }catch(err){
-        if(err && err.name === 'AbortError') return;   // annule par le matelot
-        console.warn('partage impossible, repli telechargement :', err);
-      }
-      /* 2) Repli : telechargement direct du fichier. */
-      try{
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'matelot-' + code + '.png';
-        document.body.appendChild(a); a.click(); a.remove();
-        showToast('&#x1F4C1; Fiche telechargee', 'linear-gradient(135deg,#075c39,#0a8a5a)');
-      }catch(err){
-        showToast(estOrdinateur()
-          ? 'Enregistrement impossible — fais un clic droit sur l\'image'
-          : 'Enregistrement impossible — fais un appui long sur l\'image',
-          'linear-gradient(135deg,#9b1111,#b8322b)');
-      }
-    });
-
-    /* Version TEXTE de la fiche (.txt).
-
-       Complement utile de l'image : une photo se perd dans la galerie et
-       son contenu ne se cherche pas. Le texte, lui, se colle dans Notes,
-       se retrouve par recherche, et le lien de reprise y est cliquable.
-       C'est exactement la meme fiche que celle du bouton Partager :
-       buildNoteText() est la seule source, donc aucune divergence. */
-    overlay.querySelector('#ficheSaveTxt').addEventListener('click', async () => {
-      const texte = buildNoteText(nom, code, equipe);
-      const fichier = 'Mission-Nautilus-' + code + '.txt';
-      const blobTxt = new Blob([texte], { type: 'text/plain;charset=utf-8' });
-
-      /* 1) Partage natif : sur telephone, c'est lui qui propose
-            "Enregistrer dans Fichiers" ou l'envoi vers Notes. */
-      try{
-        const f = new File([blobTxt], fichier, { type: 'text/plain' });
-        if(navigator.canShare && navigator.canShare({ files: [f] })){
-          await navigator.share({ files: [f], title: 'Mission Nautilus - Ta fiche de matelot', text: texte });
-          return;
-        }
-      }catch(err){
-        if(err && err.name === 'AbortError') return;   // annule par le matelot
-        console.warn('partage du texte impossible, repli telechargement :', err);
-      }
-
-      /* 2) Repli : telechargement direct (ordinateur, ou telephone sans
-            partage de fichiers). */
-      try{
-        const url = URL.createObjectURL(blobTxt);
-        const a = document.createElement('a');
-        a.href = url; a.download = fichier;
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
-        showToast('📄 Fiche texte enregistrée', 'linear-gradient(135deg,#075c39,#0a8a5a)');
-      }catch(err){
-        /* 3) Dernier recours : on montre le texte, a copier a la main. */
-        window.prompt('Copie ta fiche :', texte);
-      }
-    });
-  }
 
   async function viewMatelotQr(qrUrl, code){
     // Le QR contient le lien personnel de reprise : le scanner ouvre le
@@ -5279,21 +5162,6 @@ function qrDataUri(text, opts){
     }, 3);
   })();
 
-  let _audioAudible = false;
-  const _audioReadyCbs = [];
-  function whenAudioReady(cb){
-    if(_audioAudible){ cb(); return; }
-    _audioReadyCbs.push(cb);
-  }
-  function notifyAudioReady(){
-    if(_audioAudible) return;
-    _audioAudible = true;
-    while(_audioReadyCbs.length){
-      const cb = _audioReadyCbs.shift();
-      try{ cb(); }catch(e){ /* un abonne casse ne doit pas bloquer les autres */ }
-    }
-  }
-
   let _typeCtx = null;        // contexte audio dedie, cree puis referme
   let _typeBus = null;        // volume general de la frappe
   /* -1 et non 0 : sur un contexte audio tout neuf, currentTime vaut ~0.
@@ -5485,12 +5353,9 @@ function qrDataUri(text, opts){
        (10 ms), ils se fondent en un gresillement continu ; plus lent, la
        lecture traine. */
     const speed = 18; // ms par caractere
-    /* SYNCHRONISATION : le texte part en meme temps que le son.
-       On ne guette plus les gestes ici — c'est le systeme audio commun qui
-       previent quand le son devient reellement audible (voir
-       whenAudioReady). Ainsi l'ambiance ocean, les clics de frappe et
-       l'ecriture demarrent au meme instant, au lieu de trois horloges
-       independantes.
+    /* SYNCHRONISATION : le texte part au premier geste du joueur, via le
+       registre commun surPremierGeste() au rang 2 — juste apres
+       l'ambiance (rang 1), avant les hublots (rang 3).
        Filet de securite : si le son reste refuse au bout de 4 s (ou si le
        sonar est eteint), on ecrit quand meme, simplement sans bruit. Le
        texte fantome tient deja la place, donc aucune secousse a l'ecran. */
@@ -6125,9 +5990,6 @@ function qrDataUri(text, opts){
       a.muted = false;              // silenceEverything() l'avait coupe
       unmuteAlarms();
       startOceanAudio();
-      /* Le joueur vient d'allumer le sonar lui-meme : si l'ordre de mission
-         attendait encore le son pour s'ecrire, il part maintenant. */
-      notifyAudioReady();
     }
   }
 
@@ -6157,7 +6019,6 @@ function qrDataUri(text, opts){
     if(!started) return;          // refuse : on reste a l'ecoute
     _audioWakeDone = true;
     setSoundEnabled(true);        // memorise : le son est en marche
-    notifyAudioReady();           // demarre l'ordre de mission au meme instant
     AUDIO_WAKE_EVENTS.forEach(evt => {
       window.removeEventListener(evt, activateAudioFromNavigation, { capture:true });
       window.removeEventListener(evt, activateAudioFromNavigation);
@@ -6220,7 +6081,6 @@ function qrDataUri(text, opts){
     if(started){
       _audioWakeDone = true;
       setSoundEnabled(true);
-      notifyAudioReady();      // le texte peut s'ecrire : le son est la
       return;
     }
 
