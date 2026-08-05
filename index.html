@@ -379,7 +379,10 @@
     /* Invitation a aller voir son equipage sur le sonar. Volontairement
        plus discrete que le message de bienvenue : c'est une suggestion,
        pas une consigne. */
-    .matelot-crewhint{margin:0 0 14px;font-size:clamp(13px,2vw,14.5px);line-height:1.5;opacity:.9}
+    /* Marge du HAUT desormais : la phrase est en dernier dans la carte,
+       juste avant le bouton "REJOINDRE LE COCKPIT". Une marge basse
+       aurait ajoute un blanc inutile en fin de bloc. */
+    .matelot-crewhint{margin:16px 0 0;font-size:clamp(13px,2vw,14.5px);line-height:1.5;opacity:.9}
     .matelot-crewlink{color:var(--fnac);font-weight:900;text-decoration:underline;text-underline-offset:2px}
     /* Alerte : le message le plus important de l'ecran */
     /* Le retour a la ligne n'est plus force (plus de <br>) : la phrase
@@ -4090,14 +4093,6 @@ function qrDataUri(text, opts){
       $('registerMsg').innerHTML =
         '<div class="notice success matelot-card">' +
           '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
-          /* L'affectation est automatique : le matelot ne choisit pas son
-             equipage et ne sait donc pas qui l'accompagne. On l'envoie
-             voir le sonar, ou les equipages deja formes apparaissent.
-             Le lien fait defiler la page jusqu'au bloc (voir plus bas), au
-             lieu de laisser le joueur le chercher. */
-          '<p class="matelot-crewhint">&#x1F30A; Qui est déjà à bord avec toi ? ' +
-            'Va voir <a href="#equipagesEnMer" class="matelot-crewlink">Équipages en plongée</a> : ' +
-            'le sonar affiche les matelots prêts à partir.</p>' +
           /* ENCART ROUGE : la regle du Code Matelot, en clair.
              L'ancien texte tenait sur une ligne et disait surtout ce qu'il
              NE FALLAIT PAS oublier ("usage unique", "plus jamais
@@ -4142,6 +4137,17 @@ function qrDataUri(text, opts){
             '</div>' +
             matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
           '</div>' +
+          /* PLACEE EN DERNIER, juste avant le bouton "REJOINDRE LE COCKPIT".
+             Elle etait auparavant en haut de la carte, entre le message de
+             bienvenue et l'encart rouge : elle detournait le matelot AVANT
+             qu'il n'ait lu la regle du Code Matelot et note son code.
+             Ici, elle arrive une fois l'essentiel fait, au moment ou il
+             cherche justement quoi faire ensuite.
+             L'affectation etant automatique, il ne sait pas qui
+             l'accompagne : le lien l'emmene voir le sonar. */
+          '<p class="matelot-crewhint">&#x1F30A; Qui est déjà à bord avec toi ? ' +
+            'Va voir <a href="#equipagesEnMer" class="matelot-crewlink">Équipages en plongée</a> : ' +
+            'le sonar affiche les matelots prêts à partir.</p>' +
         '</div>';
       $('memberName').value = '';
       renderGame(false);
@@ -4621,12 +4627,9 @@ function qrDataUri(text, opts){
           text: '<b>' + esc(m.name) + '</b> embarqué' + (m.service ? ' (' + esc(m.service) + ')' : '') + '.' });
       }
     });
-    const done = team.completedSteps || [];
-    done.forEach((id, i) => {
-      const label = STEPS[id]?.label || id;
-      events.push({ t: 1000 + i, icon: '✅',
-        text: '<b>' + esc(label) + '</b> validé.' });
-    });
+    /* PAS de ligne "Palier N valide" : le cadran "Sas franchis" en donne
+       le nombre, et le bandeau de diodes montre EXACTEMENT lesquels sont
+       franchis. Trois fois la meme information sur le meme ecran. */
     const locks = team.matelotLocks || {};
     Object.entries(locks).forEach(([key, l]) => {
       if(!l || !l.lockedUntil) return;
@@ -4643,11 +4646,9 @@ function qrDataUri(text, opts){
         });
       }
     });
-    const fails = Number(team.failCount || 0);
-    if(fails > 0){
-      events.push({ t: 0, icon: '📊',
-        text: 'Total : <b>' + fails + '</b> échec' + (fails > 1 ? 's' : '') + ' au journal de bord.' });
-    }
+    /* PAS de ligne "Total : N echecs" : le cadran "Dommages" du poste de
+       pilotage, juste au-dessus, affiche deja ce chiffre. Le repeter en
+       toutes lettres deux centimetres plus bas n'apportait rien. */
     if(events.length === 0) return '';
     events.sort((a, b) => a.t - b.t);
     const items = events.map(e =>
