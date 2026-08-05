@@ -1086,7 +1086,13 @@ function addLogEntry(text, kind = 'info', quand) {
      - l'insertion se fait A LA BONNE PLACE dans la liste, en comparant
        les horodatages, au lieu d'ajouter aveuglement en tete. */
   const t = (quand instanceof Date) ? quand : new Date();
-  const heure = t.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  /* JOUR ET HEURE, meme format court que le journal du poste de pilotage
+     ("06/08 00:09"). Une epreuve peut etre reprise le lendemain apres un
+     blocage : sans le jour, deux lignes eloignees de 24 h affichaient la
+     meme chose. */
+  const p2 = (n) => String(n).padStart(2, '0');
+  const heure = p2(t.getDate()) + '/' + p2(t.getMonth() + 1) + ' '
+              + p2(t.getHours()) + ':' + p2(t.getMinutes());
 
   const li = document.createElement('li');
   li.className = 'morse-log-entry';
@@ -1102,8 +1108,8 @@ function addLogEntry(text, kind = 'info', quand) {
 
   li.innerHTML = `
     <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.dot};box-shadow:0 0 8px ${c.dot};flex:0 0 10px;margin-top:5px;"></span>
-    <span style="flex:1;color:#dff6ff;line-height:1.4;">${texteRendu}</span>
-    <span style="flex:0 0 auto;color:#7fa4b5;font-size:11px;font-family:Consolas,'Courier New',monospace;margin-top:3px;">${heure}</span>
+    <span style="flex:1;min-width:0;color:#dff6ff;line-height:1.4;">${texteRendu}</span>
+    <span style="flex:0 0 auto;color:rgba(142,231,255,.42);font-size:11px;font-family:Consolas,'Courier New',monospace;margin-top:3px;white-space:nowrap;">${heure}</span>
   `;
 
   /* Insertion triee : la liste va du plus RECENT (en haut) au plus ancien.

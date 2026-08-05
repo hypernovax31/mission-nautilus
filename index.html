@@ -4651,12 +4651,35 @@ function qrDataUri(text, opts){
        toutes lettres deux centimetres plus bas n'apportait rien. */
     if(events.length === 0) return '';
     events.sort((a, b) => a.t - b.t);
-    const items = events.map(e =>
-      '<li style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+
+    /* JOUR ET HEURE de chaque evenement, a droite de la ligne.
+       Format court "06/08 00:09" : la date complete prendrait trop de
+       place a cote du texte sur un telephone.
+       Garde-fou : un horodatage absent ou abime n'affiche rien du tout,
+       plutot qu'un "NaN/NaN" incomprehensible. */
+    const quand = (ms) => {
+      if(!ms || !isFinite(ms)) return '';
+      const d = new Date(ms);
+      if(isNaN(d.getTime())) return '';
+      const p2 = (n) => String(n).padStart(2, '0');
+      return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+    };
+
+    const items = events.map(e => {
+      const h = quand(e.t);
+      return '<li style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
       + '<span style="flex:0 0 auto;line-height:1.4">' + e.icon + '</span>'
-      + '<span style="flex:1;color:#cfe6f4;line-height:1.4;font-size:13px">' + e.text + '</span>'
-      + '</li>'
-    ).join('');
+      + '<span style="flex:1;min-width:0;color:#cfe6f4;line-height:1.4;font-size:13px">' + e.text + '</span>'
+      /* Volontairement DISCRET : plus petit, plus sombre, sans gras. La
+         date accompagne la lecture, elle ne doit pas la concurrencer.
+         `white-space:nowrap` empeche "06/08" et "00:09" de se retrouver
+         sur deux lignes ; `flex:0 0 auto` reserve sa largeur pour que le
+         texte de gauche ne la pousse jamais hors de l'ecran. */
+      + (h ? '<span style="flex:0 0 auto;color:rgba(142,231,255,.42);font-size:11px;'
+           + 'font-family:Consolas,\'Courier New\',monospace;line-height:1.55;'
+           + 'white-space:nowrap">' + h + '</span>' : '')
+      + '</li>';
+    }).join('');
     return '<div style="margin-top:14px;padding:12px 14px;background:rgba(0,0,0,.18);border:1px solid rgba(142,231,255,.12);border-radius:12px">'
       + '<div style="font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(142,231,255,.65);margin-bottom:8px">📜 Journal de bord</div>'
       + '<ul style="list-style:none;margin:0;padding:0">' + items + '</ul>'
