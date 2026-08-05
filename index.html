@@ -4957,13 +4957,149 @@ function qrDataUri(text, opts){
   /* ===== CLIC HUBLOT — fichier son pre-enregistre =====
      Le Web Audio API est trop capricieux sur mobile (AudioContext suspendu,
      resume() qui ne resout pas...). Un <audio> joue a tous les coups. */
+  /* ===== SON DU HUBLOT — VERSION FIABLE =====
+
+     L'ancienne version reposait sur UN SEUL <audio> qu'on rembobinait a
+     chaque clic (currentTime = 0, puis play()). Cinq raisons la faisaient
+     echouer par intermittence :
+
+     1. CLICS RAPPROCHES (tous navigateurs). Le son dure 0,8 s. Recliquer
+        avant la fin coupait la lecture en cours ; sur Safari, rembobiner
+        pendant une lecture fait carrement echouer le play() suivant.
+     2. iOS / Safari. Un <audio> n'est reellement debloque qu'apres un
+        play() issu d'un VRAI geste. Si le premier hublot touche etait le
+        tout premier geste de la page, deblocage et lecture se faisaient en
+        meme temps : la premiere fois restait muette.
+     3. iOS, interrupteur silencieux. Un <audio> obeit au petit bouton
+        lateral de l'iPhone. L'ambiance y echappe (elle demarre en
+        sourdine puis se demasque), mais pas un son court joue a la demande.
+     4. Chrome / Android. play() est refuse tant que la page n'a recu aucun
+        geste, et le .catch(()=>{}) avalait l'erreur sans laisser de trace.
+     5. Fichier WAV non compresse (69 Ko) : sur reseau lent, un clic
+        precoce arrivait avant la fin du telechargement.
+
+     Solution : Web Audio en premier choix (insensible au rembobinage, aux
+     lectures qui se chevauchent ET a l'interrupteur silencieux d'iOS),
+     avec les <audio> en repli. Le son est decode UNE fois et garde en
+     memoire ; chaque clic cree une source neuve, donc dix clics d'affilee
+     donnent dix sons qui se superposent proprement. */
+  let _hublotBuffer = null;      // son decode, pret a rejouer
+  let _hublotDecodage = null;    // decodage en cours (evite de le lancer 2x)
+  let _hublotPool = [];          // repli : plusieurs <audio> tournants
+  let _hublotPoolIdx = 0;
+
+  /* Contexte audio partage. Cree au PREMIER GESTE seulement : le creer au
+     chargement le laisserait "suspendu" sur la plupart des navigateurs. */
+  let _sfxCtx = null;
+  function sfxContext(){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    if(!_sfxCtx){
+      try{ _sfxCtx = new AC(); }catch(e){ return null; }
+    }
+    /* Safari suspend le contexte des que l'onglet passe en arriere-plan :
+       on le relance a chaque fois, sinon plus aucun son ne sort au retour. */
+    if(_sfxCtx.state === 'suspended') _sfxCtx.resume().catch(()=>{});
+    return _sfxCtx;
+  }
+
+  /* Telecharge et decode le son une seule fois. */
+  function chargerSonHublot(){
+    if(_hublotBuffer || _hublotDecodage) return _hublotDecodage;
+    const ctx = sfxContext();
+    if(!ctx) return null;
+    _hublotDecodage = fetch('assets/hublot-click.wav')
+      .then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error('HTTP ' + r.status)))
+      .then(buf => new Promise((ok, ko) => {
+        /* Safari ancien ne renvoie pas de promesse : on passe les deux
+           formes d'appel, celle qui existe sera utilisee. */
+        const p = ctx.decodeAudioData(buf, ok, ko);
+        if(p && typeof p.then === 'function') p.then(ok, ko);
+      }))
+      .then(b => { _hublotBuffer = b; return b; })
+      .catch(() => { _hublotDecodage = null; return null; });
+    return _hublotDecodage;
+  }
+
+  /* Repli : un petit groupe de <audio> qu'on utilise a tour de role, pour
+     que deux clics rapproches ne se coupent jamais l'un l'autre. */
+  function hublotPool(){
+    if(_hublotPool.length) return _hublotPool;
+    const source = document.getElementById('hublotClickAudio');
+    if(!source) return [];
+    _hublotPool = [source];
+    for(let i = 0; i < 3; i++){
+      const clone = source.cloneNode(true);
+      clone.removeAttribute('id');
+      source.parentNode.appendChild(clone);
+      _hublotPool.push(clone);
+    }
+    return _hublotPool;
+  }
+
   function playHublotClick(){
     if(!isSoundEnabled()) return;
-    const a = document.getElementById('hublotClickAudio');
-    if(!a) return;
-    a.currentTime = 0;
-    a.play().catch(()=>{});
+
+    /* 1er choix : Web Audio. Chaque clic cree sa propre source, donc
+       aucun conflit entre deux sons qui se chevauchent, et le petit
+       interrupteur silencieux de l'iPhone ne le coupe pas. */
+    const ctx = sfxContext();
+    if(ctx && _hublotBuffer){
+      try{
+        const src = ctx.createBufferSource();
+        src.buffer = _hublotBuffer;
+        const g = ctx.createGain();
+        g.gain.value = 0.9;
+        src.connect(g); g.connect(ctx.destination);
+        src.start(0);
+        return;
+      }catch(e){ /* on bascule sur le repli ci-dessous */ }
+    }
+    /* Pas encore decode : on lance le chargement pour les prochains clics
+       et on joue tout de suite avec un <audio>, pour ne pas rester muet. */
+    if(ctx && !_hublotBuffer) chargerSonHublot();
+
+    /* 2e choix : les <audio> tournants. On prend celui qui ne joue pas ;
+       on ne rembobine QUE celui-la, jamais une lecture en cours. */
+    const pool = hublotPool();
+    if(!pool.length) return;
+    let el = pool.find(a => a.paused || a.ended);
+    if(!el){ el = pool[_hublotPoolIdx % pool.length]; _hublotPoolIdx++; }
+    try{ el.currentTime = 0; }catch(e){ /* pas encore pret */ }
+    const p = el.play();
+    if(p && typeof p.catch === 'function'){
+      p.catch(() => {
+        /* Refus (souvent : aucun geste recu avant). On reessaie une fois
+           sur un autre lecteur ; si cela echoue encore, on renonce en
+           silence plutot que d'afficher une erreur au joueur. */
+        const autre = pool[(pool.indexOf(el) + 1) % pool.length];
+        if(autre && autre !== el) autre.play().catch(()=>{});
+      });
+    }
   }
+
+  /* PRE-CHARGEMENT AU PREMIER GESTE.
+     Le son est prepare des que le joueur touche l'ecran pour la premiere
+     fois — bien avant qu'il n'atteigne les hublots, qui sont plus bas dans
+     la page. Le tout premier clic sur un hublot a donc, lui aussi, son
+     son : c'est exactement le cas qui echouait le plus souvent. */
+  (function preparerSonHublot(){
+    const evts = ['pointerdown','touchstart','mousedown','keydown'];
+    const go = () => {
+      evts.forEach(e => document.removeEventListener(e, go, true));
+      chargerSonHublot();
+      /* On amorce aussi les <audio> de repli : une lecture muette
+         immediatement mise en pause suffit a les debloquer sur iOS. */
+      hublotPool().forEach(a => {
+        const vol = a.volume;
+        a.muted = true;
+        const p = a.play();
+        const fin = () => { a.pause(); try{ a.currentTime = 0; }catch(e){} a.muted = false; a.volume = vol; };
+        if(p && typeof p.then === 'function') p.then(fin).catch(fin); else fin();
+      });
+    };
+    evts.forEach(e => document.addEventListener(e, go, true));
+  })();
 
   document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => { playHublotClick(); showRule(btn.dataset.rule, true); }));
   showRule('embark', false);

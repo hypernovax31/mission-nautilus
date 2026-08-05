@@ -2101,7 +2101,7 @@ window.Nautilus = {
     } else {
       const newErrors = (state.session.errors || 0) + 1;
       const max = state.session.maxErrors || 3;
-      N.addLogEntry(`❌ ${state.me.name} a fait une erreur (${newErrors}/${max}).`, 'danger');
+      N.addLogEntry(`❌ ${state.me.name} s'est trompé (${newErrors}/${max} erreurs).`, 'danger');
       if (newErrors >= max) {
         /* ORDRE IMPORTANT : on bloque l'equipage AVANT de marquer la
            session perdue.
@@ -2119,7 +2119,10 @@ window.Nautilus = {
         const finKO = { state: 'lost', errors: newErrors, endReason: 'too_many_errors',
                         lastEvent: 'lost', endedAt: new Date().toISOString() };
         await N.updateSession(state.teamCode, finKO);
-        N.addLogEntry(`💀 L'équipage a épuisé ses chances. Remontée en surface forcée.`, 'danger');
+        /* MESSAGE CORRIGE : il annoncait "L'equipage a epuise ses
+           chances", ce qui contredit la regle du jeu — un echec ne bloque
+           QUE son auteur, les autres matelots gardent la main. */
+        N.addLogEntry(`💀 ${state.me.name} a épuisé ses 3 chances. Un autre matelot peut reprendre l'épreuve.`, 'danger');
         /* On applique la fin de partie EN MEMOIRE et on redessine.
 
            BUG CORRIGE : en partie d'essai, updateSession() n'ecrit rien
@@ -2432,13 +2435,17 @@ window.Nautilus = {
     const monLock = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
     const reason = s.endReason || 'lost';
     const reasonText = reason === 'timeout' ? "⏳ Le temps s'est écoulé." :
-                       reason === 'too_many_errors' ? "❌ Trop d'erreurs de traduction." : '💀 Épreuve perdue.';
+                       /* "Trop d'erreurs de traduction" : le joueur ne
+                          traduit rien, il ecoute un signal et le
+                          retranscrit. Et le titre laissait croire que
+                          toute l'equipe etait sanctionnee. */
+                       reason === 'too_many_errors' ? "❌ 3 erreurs : tu remontes en surface." : '💀 Épreuve perdue.';
     return `
       <div class="lock-screen">
         <h2>${reasonText}</h2>
         <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0 18px;">
-          <b>Toi seul</b> es repoussé en surface. L'équipage, lui, reste en plongée :
-          un autre matelot peut reprendre le palier dès maintenant.
+          L'équipage, lui, reste en plongée : un autre matelot peut reprendre
+          l'épreuve dès maintenant.
         </p>
         ${monLock?.lockedUntil
           ? `<p class="lock-rule">⏱️ Tu pourras réessayer le <b>${esc(N.formatDate(monLock.lockedUntil))}</b> (blocage de ${esc(String(monLock.lastLockHours || '?'))} h).</p>`
