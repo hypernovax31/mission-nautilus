@@ -392,6 +392,16 @@
       color:#8c1d11;font-weight:800;line-height:1.5;font-size:var(--fs-small)}
     @media(max-width:760px){ .matelot-alert{align-items:flex-start} }
     .matelot-alert-ico{flex:0 0 auto;font-size:20px;line-height:1.2}
+    /* Contenu de l'encart rouge : un titre puis trois regles numerotees,
+       chacune sur sa propre ligne. En un seul paragraphe, les trois se
+       melangeaient et le matelot n'en retenait aucune. */
+    .matelot-alert-txt{display:flex;flex-direction:column;gap:5px;min-width:0}
+    .matelot-alert-titre{font-size:calc(var(--fs-small) + 1px);letter-spacing:.01em}
+    .matelot-alert-l{font-weight:700;line-height:1.45}
+    .matelot-alert-l b{font-weight:900}
+    /* L'icone se cale en haut : sur trois lignes, la centrer verticalement
+       la detacherait du titre auquel elle se rapporte. */
+    .matelot-alert{align-items:flex-start}
     .matelot-reveal{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch;margin:0}
     .matelot-reveal-code{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
       text-align:center;padding:16px;background:#f7fbfd;border:1px solid #d6e4ec;border-radius:14px;min-width:0}
@@ -4205,9 +4215,31 @@ function qrDataUri(text, opts){
           '<p class="matelot-crewhint">&#x1F30A; Qui est déjà à bord avec toi ? ' +
             'Va voir <a href="#equipagesEnMer" class="matelot-crewlink">Équipages en plongée</a> : ' +
             'le sonar affiche les matelots prêts à partir.</p>' +
+          /* ENCART ROUGE : la regle du Code Matelot, en clair.
+             L'ancien texte tenait sur une ligne et disait surtout ce qu'il
+             NE FALLAIT PAS oublier ("usage unique", "plus jamais
+             affiche"), sans jamais expliquer A QUOI SERT ce code ni QUAND
+             on en a besoin. Le matelot le notait donc sans savoir
+             pourquoi — et beaucoup ne le notaient pas du tout.
+             Trois lignes desormais, dans l'ordre des questions qu'on se
+             pose : c'est quoi, qu'est-ce que j'en fais, pourquoi. */
           '<div class="matelot-alert" role="alert">' +
             '<span class="matelot-alert-ico" aria-hidden="true">&#x26A0;</span>' +
-            '<span>Ce code est <b>personnel</b> et à <b>usage unique</b> : il ne te sera <b>plus jamais affiché</b> &mdash; Note-le ou scanne le QR.</span>' +
+            '<div class="matelot-alert-txt">' +
+              '<b class="matelot-alert-titre">Ce code, c\'est ta place à bord.</b>' +
+              '<span class="matelot-alert-l">' +
+                '<b>1.</b> Il s\'affiche <b>une seule fois</b>, maintenant. ' +
+                'Note-le, ou enregistre le QR Code.' +
+              '</span>' +
+              '<span class="matelot-alert-l">' +
+                '<b>2.</b> Il est <b>personnel</b> : ne le donne à personne, ' +
+                'chaque matelot a le sien.' +
+              '</span>' +
+              '<span class="matelot-alert-l">' +
+                '<b>3.</b> Il te fait <b>revenir dans la partie</b> à tout moment, ' +
+                'depuis n\'importe quel téléphone. Sans lui, tu perds ta progression.' +
+              '</span>' +
+            '</div>' +
           '</div>' +
           '<div class="matelot-reveal">' +
             '<div class="matelot-reveal-code">' +
@@ -4217,9 +4249,12 @@ function qrDataUri(text, opts){
                  gestionnaire sur .code), mais rien ne l'indiquait : le
                  matelot le recopiait a la main. On le dit, et on precise
                  a quoi ce code sert plus tard. */
+              /* Une seule information ici : COMMENT copier le code.
+                 La phrase "Garde-le : c'est lui qui te fera remonter a
+                 bord" a ete retiree — elle repetait mot pour mot la
+                 regle 3 de l'encart rouge, situe juste au-dessus. */
               '<p class="matelot-code-help">' +
-                '<b>' + (estOrdinateur() ? 'Clique' : 'Appuie') + ' dessus pour le copier.</b><br>' +
-                'Garde-le : c\'est lui qui te fera remonter à bord si tu quittes le jeu.' +
+                '<b>' + (estOrdinateur() ? 'Clique' : 'Appuie') + ' dessus pour le copier.</b>' +
               '</p>' +
             '</div>' +
             matelotQrCardHtml(matelotCode, name, chosen.teamName, qrUrl, resumeLink) +
