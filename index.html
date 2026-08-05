@@ -4344,42 +4344,14 @@ function qrDataUri(text, opts){
     renderGame(res.justUnlocked);
     renderEmbarkMissionButton();
 
-    /* Defilement vers la chambre de pilotage.
-       BUG CORRIGE : il etait place APRES `await loadTeams()`. Cette lecture
-       prend souvent plus d'une seconde ET redessine les cartes d'equipage,
-       donc change la hauteur de la page : le defilement partait trop tard,
-       vers une position perimee, et semblait ne rien faire.
-       EXCEPTION : la reprise par QR gere deja son propre defilement. */
-    if(!skipScroll){
-      /* On s'arrete sur l'encart "Position actuelle" : c'est la donnee
-         que le matelot doit lire en arrivant, et le bouton de mission
-         suit juste en dessous. Aligner sur le haut du BLOC laissait le
-         bouton hors de l'ecran d'un telephone. */
-      const goCockpit = () => {
-        const cible = document.getElementById('cockpitPosition')
-                   || document.getElementById('gameCard');
-        cible?.scrollIntoView({ behavior:'smooth', block:'start' });
-      };
-      requestAnimationFrame(() => setTimeout(goCockpit, 60));
-      loadTeams().then(() => setTimeout(goCockpit, 120));
-    }else{
-      loadTeams();
-    }
-
-    /* Le matelot vient de saisir son code : on l'emmene directement a la
-       chambre de pilotage, sa mission l'y attend. Le court delai laisse le
-       temps au message de confirmation d'apparaitre et au cockpit d'etre
-       rempli par renderGame().
-
-       EXCEPTION : lors d'une reprise par QR, l'ecran rouge d'alarme est
-       encore affiche et la sequence gere DEJA son propre defilement a la
-       fin. Un second defilement partirait trop tot, pendant l'alarme. */
-    if(!skipScroll){
-      setTimeout(() => {
-        document.getElementById('gameCard')
-          ?.scrollIntoView({ behavior:'smooth', block:'start' });
-      }, 450);
-    }
+    /* Defilement vers la chambre de pilotage : UN SEUL appel.
+       Il y en avait trois auparavant, vers deux cibles differentes, d'ou
+       le rebond. scrollToCockpit() gere a lui seul le delai de mise en
+       page et le recalage apres le chargement des equipages.
+       EXCEPTION : la reprise par QR gere deja son propre defilement a la
+       fin de l'alarme ; en declencher un ici partirait trop tot. */
+    loadTeams();
+    if(!skipScroll) scrollToCockpit();
   }
 
   /**
@@ -5844,6 +5816,43 @@ function qrDataUri(text, opts){
      emploi et resterait affiche pour rien.
      D'ou le parametre `show` : seul l'appel de fin d'inscription le passe
      a true, tous les autres masquent le bouton. */
+  /* ===== DEFILEMENT VERS LA CHAMBRE DE PILOTAGE =====
+     UNE SEULE porte d'entree, pour UNE SEULE destination : le TITRE du
+     bloc "CHAMBRE DE PILOTAGE", aligne en haut de l'ecran.
+
+     BUG CORRIGE (rebond bas -> haut) : la saisie d'un Code Matelot lancait
+     TROIS defilements concurrents. Deux visaient #cockpitPosition, un
+     encart situe au BAS de la carte (apres la plaque, les cadrans et les
+     dommages) ; le troisieme, declenche 450 ms plus tard, visait le TITRE
+     de la carte, tout en haut. La page descendait donc trop bas, puis
+     REMONTAIT brutalement — exactement le rebond constate.
+
+     Ici, un seul appel possible et une seule cible. Les demandes trop
+     rapprochees sont fusionnees : si la page bouge encore (chargement des
+     equipages qui change la hauteur), on se recale sans repartir de zero. */
+  let _scrollCockpitTimer = null;
+  function scrollToCockpit(){
+    const cible = document.getElementById('gameCard');
+    if(!cible) return;
+
+    const aller = () => {
+      /* scroll-margin-top (--scroll-top-gap) place deja le titre sous la
+         barre fixe du haut : rien a calculer ici. */
+      cible.scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+
+    clearTimeout(_scrollCockpitTimer);
+    /* Un souffle avant de partir : le temps que renderGame() ait rempli la
+       carte, sinon on viserait une hauteur qui n'existe pas encore. */
+    _scrollCockpitTimer = setTimeout(() => {
+      aller();
+      /* La page continue de grandir pendant une seconde (cartes
+         d'equipage). On se RECALE une derniere fois — meme cible, donc
+         aucun aller-retour visible : au pire un leger ajustement. */
+      _scrollCockpitTimer = setTimeout(aller, 700);
+    }, 80);
+  }
+
   function renderEmbarkMissionButton(show){
     const box = $('embarkMissionAction');
     if(!box) return;
@@ -7276,17 +7285,12 @@ function qrDataUri(text, opts){
              On se fie desormais a `currentTeam`, qui dit sans ambiguite
              si la reprise a abouti. */
           if(currentTeam){
-            /* On s'arrete sur l'encart "Position actuelle".
-
-               Aligne sur le haut du BLOC, la chambre de pilotage remplit
-               tout l'ecran d'un telephone (plaque, cadrans, dommages,
-               position, diodes) et le bouton "LANCER LA MISSION" tombait
-               en dessous : le matelot arrivait sans voir quoi faire.
-               En partant de la position, le palier en cours et le bouton
-               sont tous les deux a l'ecran. */
-            const cible = document.getElementById('cockpitPosition')
-                       || document.getElementById('gameCard');
-            cible?.scrollIntoView({ behavior:'smooth', block:'start' });
+            /* Meme destination que la saisie manuelle du code : le TITRE
+               de la chambre de pilotage. Cette reprise visait auparavant
+               l'encart "Position actuelle", situe au bas de la carte : le
+               matelot arrivant par QR et celui saisissant son code ne
+               tombaient donc pas au meme endroit. */
+            scrollToCockpit();
           }else{
             // Code refuse : on montre la zone de reprise pour corriger.
             document.getElementById('retrouverEquipage')
