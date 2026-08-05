@@ -1646,8 +1646,15 @@
 </audio>
 <!-- Meme son, element distinct : l'annonce des equipages ne doit pas
      entrer en conflit avec l'alarme de mission (qui boucle 3 fois). -->
+<!-- ATTENTION : malgre son extension .wav, ce fichier est un MP3 (verifie
+     sur ses premiers octets : ff fb = trame MPEG audio). Annoncer
+     type="audio/wav" faisait REJETER la source par les navigateurs qui
+     verifient la coherence du type declare — le hublot restait muet chez
+     eux. On declare donc les deux types : le navigateur retient le
+     premier qu'il sait lire, et l'ordre place le vrai format en tete. -->
 <audio id="hublotClickAudio" preload="auto">
-  <source src="assets/hublot-click.wav" type="audio/wav">
+  <source src="assets/hublot-click.wav" type="audio/mpeg">
+  <source src="assets/hublot-click.wav">
 </audio>
 <audio id="revealAlarmAudio" preload="auto">
   <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
