@@ -283,10 +283,8 @@
     .morse-actions .secondary{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);}
     .morse-actions .primary{background:var(--fnac);color:#111;}
 
-    .morse-hints-zone{
-      padding:14px 16px;background:rgba(0,0,0,.22);
-      border:1px dashed rgba(142,231,255,.32);border-radius:16px;margin-bottom:12px;
-    }
+    /* .morse-hints-zone supprimé : wrapper inutile.
+       Le style (bordure pointillée) est porté par .morse-hints-grid. */
     .morse-hint-target{
       display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
       margin-bottom:10px;
@@ -301,7 +299,11 @@
     }
     .morse-hint-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
 
-    .morse-hints-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;}
+    .morse-hints-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;
+      padding:14px 16px;background:rgba(0,0,0,.22);
+      border:1px dashed rgba(142,231,255,.32);border-radius:16px;margin-bottom:12px;
+    }
     .morse-hint-card{
       padding:10px 12px;background:rgba(0,0,0,.32);
       border:1px solid rgba(142,231,255,.22);border-radius:10px;
@@ -1694,8 +1696,8 @@ window.Nautilus = {
           <li><span class="ico" aria-hidden="true">🤝</span>
             <span>Un autre matelot pourra alors reprendre l'épreuve à ta place.</span></li>
           <li class="warn"><span class="ico" aria-hidden="true">🆘</span>
-            <span>Bloqué ? Un <b>indice</b> est possible, mais il te coûte
-              <b>1 h de blocage</b>.</span></li>
+            <span>Bloqué ? Demande un <b>indice</b> — cela te coûte
+              <b>1 h de blocage</b> et tu remontes en surface.</span></li>
         </ul>
 
         <button class="brief-cta" id="takeLeadBtn">⚓ PRENDRE LES COMMANDES</button>
@@ -1892,14 +1894,13 @@ window.Nautilus = {
           <div id="morseFeedback"></div>
         </div>
 
-        <div class="morse-hints-zone">
-          <div class="morse-hint-target">
+        <div class="morse-hint-target">
             <div class="morse-hint-target-info">
-              ⚠️ <b>Demander un indice te coûte 1 h de blocage.</b><br>
-              L’indice s’affiche aussitôt, puis tu remontes en surface :
-              un autre matelot pourra reprendre le mini-jeu à ta place.
+              🆘 <b>Besoin d'aide ?</b> Tu peux demander un indice,
+              mais cela te coûte <b>1 h de blocage personnel</b> et tu
+              remontes en surface. Un coéquipier prendra ta place.
             </div>
-            <button class="morse-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '🔓 Tous les indices révélés' : '🆘 DEMANDER UN INDICE (−1 h)'}</button>
+            <button class="morse-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '✅ Tous les indices révélés' : '🆘 Demander un indice'}</button>
           </div>
           <div class="morse-hints-grid">
             ${hintCards.map((h, i) => `
@@ -1909,7 +1910,6 @@ window.Nautilus = {
               </div>
             `).join('')}
           </div>
-        </div>
       </div>
     `;
   }
@@ -2253,7 +2253,7 @@ window.Nautilus = {
     state.session = { ...(state.session || {}), ...patch };
 
     N.addLogEntry(`🆘 ${state.me.name} a demandé un indice. Il remonte en surface pour ${HINT_LOCK_HOURS} h.`, 'warning');
-    showFloatingHint(buildHintContent(idx), 9000);
+    showFloatingHint('🆘 Indice débloqué : ' + buildHintContent(idx), 10000);
 
     /* Blocage personnel, exactement le meme mecanisme que pour un echec :
        il s'ajoute a matelotLocks et n'affecte QUE ce matelot. La duree est
@@ -2289,7 +2289,7 @@ window.Nautilus = {
       blockedAt: new Date().toISOString()
     };
     state.team = await N.saveTeam(state.team, { matelotLocks: locks, lastEvent: 'matelot_hint_lock' });
-    N.showToast(`Indice obtenu. Tu remontes en surface jusqu’à ${N.formatDate(until)}.`, 'warning', 7000);
+    N.showToast(`🆘 Indice obtenu ! Tu remontes en surface jusqu’à ${N.formatDate(until)}. Un coéquipier peut reprendre.`, 'warning', 7000);
   }
 
   function buildHintContent(idx) {
@@ -2336,12 +2336,12 @@ window.Nautilus = {
             🔒 Seul <b>${esc(playerName)}</b> peut répondre.
           </div>
         </div>
-        <div class="morse-hints-zone">
+        
           <div class="morse-hint-target">
             <div class="morse-hint-target-info">
-              🧭 <b>Indices de l’équipage.</b> Seul le matelot aux commandes
-              peut en demander un — et cela lui coûte 1 h de blocage.
-              Ceux déjà obtenus restent visibles ici pour tous.
+              🧭 <b>Indices de l’équipage.</b> Les indices débloqués
+              s’affichent ici. Le matelot aux commandes peut en demander
+              un nouveau — cela lui coûte 1 h de blocage personnel.
             </div>
           </div>
           <div class="morse-hints-grid">
@@ -2361,7 +2361,6 @@ window.Nautilus = {
               </div>
             `).join('')}
           </div>
-        </div>
       </div>
     `;
     /* Bind timer + bouton indice */

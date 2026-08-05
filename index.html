@@ -232,7 +232,11 @@
     /* Le Code Matelot doit rester selectionnable en TOUTES circonstances,
        y compris si une protection anti-copie est reactivee plus tard. */
     .code,#matelotCodeDisplay{user-select:all !important;-webkit-user-select:all !important;-ms-user-select:all !important;-webkit-touch-callout:default !important;cursor:text}
-    html{scroll-behavior:smooth}
+    /* scroll-behavior:smooth SUPPRIME : c'etait la cause de TOUS les
+       rebonds de scroll. Avec cette propriete, scrollIntoView() anime
+       le defilement meme avec behavior:'instant', et toute modification
+       du DOM pendant l'animation creee un rebond visible. */
+    /* html{scroll-behavior:smooth} */
     body{
       margin:0;
       min-height:100vh;
@@ -468,7 +472,10 @@
     .hero-title{
       position:relative;
       z-index:1;
-      margin:20px 0 0;
+      margin:20px calc(-50vw + 50%) 0;
+      width:100vw;
+      padding:0 clamp(20px,4vw,52px);
+      text-align:center;
       max-width:none;
       font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
       font-size:clamp(46px,8.6vw,112px);
@@ -544,7 +551,8 @@
     #cockpitPosition,
     #embarquementMatelot,
     #retrouverEquipage,
-    #equipagesEnMer{scroll-margin-top:var(--scroll-top-gap)}
+    #equipagesEnMer,
+    #teamsBox{scroll-margin-top:var(--scroll-top-gap)}
 
     /* --- Plaque d'invitation --- */
     .rule-invite{
@@ -988,7 +996,7 @@
       header{min-height:auto;padding:18px 22px 26px}
       .brand{font-size:18px;margin-bottom:8px}
       .hero-kicker{font-size:var(--fs-tiny);padding:6px 10px}
-      .hero-title{margin-top:10px;font-size:clamp(38px,8vh,72px);line-height:.9;max-width:100%}
+      .hero-title{margin-top:10px;font-size:clamp(38px,8vh,72px);line-height:.9;max-width:100vw}
       .hero-line{margin-top:10px;font-size:clamp(18px,4.4vh,30px);line-height:1.1}
       .hero-actions{margin-top:22px;gap:14px}
       .hero-cta{padding:11px 16px;min-height:42px;font-size:13px}
@@ -1638,6 +1646,9 @@
 </audio>
 <!-- Meme son, element distinct : l'annonce des equipages ne doit pas
      entrer en conflit avec l'alarme de mission (qui boucle 3 fois). -->
+<audio id="hublotClickAudio" preload="auto">
+  <source src="assets/hublot-click.wav" type="audio/wav">
+</audio>
 <audio id="revealAlarmAudio" preload="auto">
   <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
 </audio>
@@ -1648,8 +1659,8 @@
 <div id="iosInstallBanner" class="ios-install-banner" style="display:none" role="dialog" aria-live="polite">
   <div class="b-ico">📲</div>
   <div class="b-text">
-    <b>Installe l'app sur ton iPhone</b> pour y acceder comme une vraie application, meme hors ligne.<br>
-    <span style="opacity:.75;font-size:12px">Bouton <b>Partager ⎙</b> <span class="ios-share-arrow">→</span> <b>Ajouter a l'ecran d'accueil ➕</b></span>
+    <b>Installe l'app sur ton écran d'accueil</b> pour y accéder comme une vraie application, même hors ligne.<br>
+    <span style="opacity:.75;font-size:12px">Bouton <b>Partager</b> <span class="ios-share-arrow">→</span> <b>Ajouter à l'écran d'accueil</b></span>
   </div>
   <div class="b-actions">
     <button class="b-help" id="iosBannerHelp" type="button">Comment ?</button>
@@ -2029,6 +2040,34 @@
     return !!(l && l.lockedUntil && new Date(l.lockedUntil).getTime() > Date.now());
   }
   function formatDate(iso){return iso?new Date(iso).toLocaleString('fr-FR'):'—';}
+
+  /* ===== DEFILEMENT INTELLIGENT =====
+     scrollIntoView() force le defilement MEME si l'element est deja visible
+     a l'ecran : un clic sur un hublot ou une carte provoque un saut alors
+     que l'utilisateur voit deja ce qu'il a clique.
+     smartScroll() ne defile QUE si l'element n'est pas (ou pas assez)
+     visible dans le viewport. Si l'element est deja a l'ecran avec assez
+     de marge, aucun glissement ne se produit.
+
+     VERROU ANTI-REBOND : un scroll programme (loadTeams, renderGame...)
+     peut changer la hauteur de la page pendant l'animation. Sans verrou,
+     un second appel corrigerait la position et produirait le "descend
+     trop / remonte ensuite" signale par le joueur. Le verrou bloque tout
+     nouveau scroll pendant 600 ms apres le precedent. */
+  function smartScroll(el){
+    if(!el) return;
+    /* Ne scrolle QUE si l'element n'est pas deja visible.
+       scrollIntoView sans behavior='auto' peut encore animer sur
+       certains navigateurs meme avec scroll-behavior supprime. */
+    const gap = 60;
+    const r = el.getBoundingClientRect();
+    if(r.top >= gap && r.bottom <= window.innerHeight) return;
+    const y = window.pageYOffset + r.top - gap;
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo({ top: Math.max(0, y), behavior: 'auto' });
+    document.documentElement.style.scrollBehavior = '';
+  }
+
   function onlineCount(team){
     const now = Date.now();
     const online = team.onlinePlayers || {};
@@ -2674,8 +2713,7 @@
       if(!code) return;
       clearBlipHighlights();
       highlightFromCard(code, true);
-      document.getElementById('radarStage')
-        ?.scrollIntoView({ behavior:'smooth', block:'center' });
+      smartScroll(document.getElementById('radarStage'));
       clearTimeout(_spotlightTimer);
       _spotlightTimer = setTimeout(() => highlightFromCard(code, false), 2000);
     });
@@ -2709,7 +2747,7 @@
       clearBlipHighlights();
       setBlipHighlight(code, true);
       const card = document.querySelector(`#teamsBox [data-team="${code}"]`);
-      if(card) card.scrollIntoView({ behavior:'smooth', block:'center' });
+      if(card) smartScroll(card);
       // Le halo s'eteint tout seul apres 1 s : c'est un repere, pas un etat.
       clearTimeout(_spotlightTimer);
       _spotlightTimer = setTimeout(() => setBlipHighlight(code, false), 1000);
@@ -3857,7 +3895,10 @@ function qrDataUri(text, opts){
         document.body.appendChild(a); a.click(); a.remove();
         showToast('&#x1F4C1; Fiche telechargee', 'linear-gradient(135deg,#075c39,#0a8a5a)');
       }catch(err){
-        showToast('Enregistrement impossible — fais un appui long sur l\'image', 'linear-gradient(135deg,#9b1111,#b8322b)');
+        showToast(estOrdinateur()
+          ? 'Enregistrement impossible — fais un clic droit sur l\'image'
+          : 'Enregistrement impossible — fais un appui long sur l\'image',
+          'linear-gradient(135deg,#9b1111,#b8322b)');
       }
     });
 
@@ -4344,14 +4385,26 @@ function qrDataUri(text, opts){
     renderGame(res.justUnlocked);
     renderEmbarkMissionButton();
 
-    /* Defilement vers la chambre de pilotage : UN SEUL appel.
-       Il y en avait trois auparavant, vers deux cibles differentes, d'ou
-       le rebond. scrollToCockpit() gere a lui seul le delai de mise en
-       page et le recalage apres le chargement des equipages.
+    /* Defilement vers la chambre de pilotage : UN SEUL appel, APRES
+       loadTeams().
+       Deux corrections fusionnees ici :
+       - il y avait autrefois TROIS defilements concurrents vers deux
+         cibles differentes, d'ou le rebond bas -> haut ;
+       - et ils partaient AVANT loadTeams(), qui redessine les cartes
+         d'equipage et change la hauteur de la page : la position visee
+         etait donc perimee au moment ou le mouvement se terminait.
+       On attend donc le chargement, puis 120 ms pour laisser le
+       navigateur peindre les nouvelles cartes, et on se place d'un coup
+       (smartScroll ne bouge meme pas si le titre est deja visible).
        EXCEPTION : la reprise par QR gere deja son propre defilement a la
        fin de l'alarme ; en declencher un ici partirait trop tot. */
-    loadTeams();
-    if(!skipScroll) scrollToCockpit();
+    if(!skipScroll){
+      loadTeams().then(() => {
+        setTimeout(() => smartScroll(document.getElementById('gameCard')), 120);
+      });
+    }else{
+      loadTeams();
+    }
   }
 
   /**
@@ -4608,6 +4661,63 @@ function qrDataUri(text, opts){
          + '</div>';
   }
 
+  /* ===== JOURNAL DE BORD DU COCKPIT =====
+     Affiche les evenements cles de l'avancement de l'equipage :
+     creation, embarquements, paliers valides, echecs, blocages. */
+  function cockpitHistoryHtml(team){
+    const events = [];
+    const now = Date.now();
+    if(team.createdAt){
+      events.push({ t: new Date(team.createdAt).getTime(), icon: '⚓',
+        text: 'Équipage <b>' + esc(team.teamName) + '</b> créé.' });
+    }
+    (team.members || []).forEach(m => {
+      if(m.registeredAt){
+        events.push({ t: new Date(m.registeredAt).getTime(), icon: '👤',
+          text: '<b>' + esc(m.name) + '</b> embarqué' + (m.service ? ' (' + esc(m.service) + ')' : '') + '.' });
+      }
+    });
+    const done = team.completedSteps || [];
+    done.forEach((id, i) => {
+      const label = STEPS[id]?.label || id;
+      events.push({ t: 1000 + i, icon: '✅',
+        text: '<b>' + esc(label) + '</b> validé.' });
+    });
+    const locks = team.matelotLocks || {};
+    Object.entries(locks).forEach(([key, l]) => {
+      if(!l || !l.lockedUntil) return;
+      const isActive = new Date(l.lockedUntil).getTime() > now;
+      if(l.blockedAt){
+        const isHint = l.reason === 'indice_demande';
+        events.push({
+          t: new Date(l.blockedAt).getTime(),
+          icon: isHint ? '🆘' : '❌',
+          text: '<b>' + esc(l.name || key) + '</b> '
+            + (isHint ? 'a demandé un indice' : 'a échoué')
+            + ' — surface jusqu\'au <b>' + esc(formatDate(l.lockedUntil)) + '</b>'
+            + (isActive ? '' : ' <span style="opacity:.5">(terminé)</span>')
+        });
+      }
+    });
+    const fails = Number(team.failCount || 0);
+    if(fails > 0){
+      events.push({ t: 0, icon: '📊',
+        text: 'Total : <b>' + fails + '</b> échec' + (fails > 1 ? 's' : '') + ' au journal de bord.' });
+    }
+    if(events.length === 0) return '';
+    events.sort((a, b) => a.t - b.t);
+    const items = events.map(e =>
+      '<li style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+      + '<span style="flex:0 0 auto;line-height:1.4">' + e.icon + '</span>'
+      + '<span style="flex:1;color:#cfe6f4;line-height:1.4;font-size:13px">' + e.text + '</span>'
+      + '</li>'
+    ).join('');
+    return '<div style="margin-top:14px;padding:12px 14px;background:rgba(0,0,0,.18);border:1px solid rgba(142,231,255,.12);border-radius:12px">'
+      + '<div style="font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(142,231,255,.65);margin-bottom:8px">📜 Journal de bord</div>'
+      + '<ul style="list-style:none;margin:0;padding:0">' + items + '</ul>'
+      + '</div>';
+  }
+
   function renderGame(justUnlocked=false){
     const box=$('gameBox');
     if(!currentTeam){
@@ -4747,6 +4857,7 @@ function qrDataUri(text, opts){
       +   '</div>'
 
       +   cockpitTrackHtml(currentTeam)
+      +   cockpitHistoryHtml(currentTeam)
       +   '<p class="ck-order">' + cockpitButtonIntro + '</p>'
       +   '<div class="ck-launch">'
       +     '<button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">' + cockpitButtonLabel + '</button>'
@@ -4769,7 +4880,7 @@ function qrDataUri(text, opts){
     },
     solve: {
       title: '2 — Décryptez',
-      text: 'Chaque palier ouvre un mini-jeu chronométré. Résolvez-le : la zone vous sera communiquée, où se cache le prochain QR Code.',
+      text: 'Chaque palier ouvre un mini-jeu chronométré. Résolvez-le : la zone de recherche vous sera communiquée, où se cache le prochain QR Code.',
       bullets: [
         'Le temps est compté, et chaque erreur vous coûte cher.'
       ]
@@ -4825,7 +4936,7 @@ function qrDataUri(text, opts){
       setTimeout(() => {
         const cible = document.querySelector('.rule-invite')
                    || document.getElementById('ruleCards');
-        cible?.scrollIntoView({behavior:'smooth', block:'start'});
+        smartScroll(cible);
       }, 80);
     }
   }
@@ -4843,7 +4954,18 @@ function qrDataUri(text, opts){
     el.classList.toggle('is-done', lus >= total);
   }
 
-  document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => showRule(btn.dataset.rule, true)));
+  /* ===== CLIC HUBLOT — fichier son pre-enregistre =====
+     Le Web Audio API est trop capricieux sur mobile (AudioContext suspendu,
+     resume() qui ne resout pas...). Un <audio> joue a tous les coups. */
+  function playHublotClick(){
+    if(!isSoundEnabled()) return;
+    const a = document.getElementById('hublotClickAudio');
+    if(!a) return;
+    a.currentTime = 0;
+    a.play().catch(()=>{});
+  }
+
+  document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => { playHublotClick(); showRule(btn.dataset.rule, true); }));
   showRule('embark', false);
 
   /**
@@ -4925,23 +5047,15 @@ function qrDataUri(text, opts){
 
   function _openTypeAudio(){
     if(_typeCtx) return _typeCtx;
-    _typeLastAt = -1;         // nouveau contexte : l'horloge repart de zero
+    _typeLastAt = -1;
     const AC = window.AudioContext || window.webkitAudioContext;
     if(!AC) return null;
     try{
       _typeCtx = new AC();
-      /* Plus rien a fabriquer : le bip numerique est une onde pure, le
-         navigateur la genere seul. On a supprime l'echantillon de bruit
-         blanc qui servait a l'ancien clic mecanique. */
       _typeBus = _typeCtx.createGain();
-      /* Volume general, recale avec la nouvelle duree de bip (28 ms).
-         0,105 avait ete choisi pour un bip de 8 ms ; allonger le bip sans
-         toucher au volume l'aurait laisse trop faible. A 0,45 le volume
-         PERCU est de -27,4 dB, soit environ 9 dB sous l'ambiance ocean :
-         nettement audible, present, sans jamais couvrir la lecture. */
       _typeBus.gain.value = 0.45;
       _typeBus.connect(_typeCtx.destination);
-      if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
+      if(_typeCtx.state === 'suspended') _typeCtx.resume();
       return _typeCtx;
     }catch(e){ _typeCtx = null; return null; }
   }
@@ -4949,9 +5063,8 @@ function qrDataUri(text, opts){
   function _closeTypeAudio(){
     if(!_typeCtx) return;
     const ctx = _typeCtx;
-    _typeCtx = null; _typeBus = null;
-    /* Petit delai : on laisse les derniers clics finir de sonner avant
-       de fermer, sinon la fin de phrase est coupee net. */
+    _typeBus = null;
+    _typeCtx = null;
     setTimeout(() => { try{ ctx.close(); }catch(e){} }, 400);
   }
 
@@ -5326,7 +5439,7 @@ function qrDataUri(text, opts){
       if(box){
         box.innerHTML = `<div class="notice warning"><b>Équipage requis.</b><br>Avant de lancer le premier mini-jeu, embarquez un matelot ou reprenez un équipage existant.</div>`;
       }
-      document.getElementById('embarquementMatelot')?.scrollIntoView({behavior:'smooth', block:'start'});
+      smartScroll(document.getElementById('embarquementMatelot'));
       return;
     }
     await loadMissionConfig();
@@ -5816,43 +5929,6 @@ function qrDataUri(text, opts){
      emploi et resterait affiche pour rien.
      D'ou le parametre `show` : seul l'appel de fin d'inscription le passe
      a true, tous les autres masquent le bouton. */
-  /* ===== DEFILEMENT VERS LA CHAMBRE DE PILOTAGE =====
-     UNE SEULE porte d'entree, pour UNE SEULE destination : le TITRE du
-     bloc "CHAMBRE DE PILOTAGE", aligne en haut de l'ecran.
-
-     BUG CORRIGE (rebond bas -> haut) : la saisie d'un Code Matelot lancait
-     TROIS defilements concurrents. Deux visaient #cockpitPosition, un
-     encart situe au BAS de la carte (apres la plaque, les cadrans et les
-     dommages) ; le troisieme, declenche 450 ms plus tard, visait le TITRE
-     de la carte, tout en haut. La page descendait donc trop bas, puis
-     REMONTAIT brutalement — exactement le rebond constate.
-
-     Ici, un seul appel possible et une seule cible. Les demandes trop
-     rapprochees sont fusionnees : si la page bouge encore (chargement des
-     equipages qui change la hauteur), on se recale sans repartir de zero. */
-  let _scrollCockpitTimer = null;
-  function scrollToCockpit(){
-    const cible = document.getElementById('gameCard');
-    if(!cible) return;
-
-    const aller = () => {
-      /* scroll-margin-top (--scroll-top-gap) place deja le titre sous la
-         barre fixe du haut : rien a calculer ici. */
-      cible.scrollIntoView({ behavior:'smooth', block:'start' });
-    };
-
-    clearTimeout(_scrollCockpitTimer);
-    /* Un souffle avant de partir : le temps que renderGame() ait rempli la
-       carte, sinon on viserait une hauteur qui n'existe pas encore. */
-    _scrollCockpitTimer = setTimeout(() => {
-      aller();
-      /* La page continue de grandir pendant une seconde (cartes
-         d'equipage). On se RECALE une derniere fois — meme cible, donc
-         aucun aller-retour visible : au pire un leger ajustement. */
-      _scrollCockpitTimer = setTimeout(aller, 700);
-    }, 80);
-  }
-
   function renderEmbarkMissionButton(show){
     const box = $('embarkMissionAction');
     if(!box) return;
@@ -5865,8 +5941,9 @@ function qrDataUri(text, opts){
     box.innerHTML = '<button class="hero-cta red cockpit-launch" type="button" id="embarkMissionBtn">'
       + 'REJOINDRE LE COCKPIT</button>';
     $('embarkMissionBtn')?.addEventListener('click', () => {
-      document.getElementById('gameCard')
-        ?.scrollIntoView({ behavior:'smooth', block:'start' });
+      /* Cible gameCard (le DEBUT du bloc cockpit). */
+      const cible = document.getElementById('gameCard');
+      smartScroll(cible);
     });
   }
 
@@ -5886,18 +5963,18 @@ function qrDataUri(text, opts){
      ici, a leur place logique. */
   async function launchSelectedPalier(){
     if(!currentTeam){
-      document.getElementById('embarquementMatelot')?.scrollIntoView({behavior:'smooth', block:'start'});
+      smartScroll(document.getElementById('embarquementMatelot'));
       return;
     }
     if(currentTeam.status === 'blocked'){
-      document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+      smartScroll(document.getElementById('gameCard'));
       return;
     }
     /* Blocage personnel : ce matelot-la ne peut pas relancer le palier,
        meme si son equipage, lui, reste libre de le faire. */
     if(isMatelotLocked(currentTeam, matelotKeyOf(currentMatelot))){
       renderGame();
-      document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+      smartScroll(document.getElementById('gameCard'));
       return;
     }
     startOceanAudio();
@@ -5936,20 +6013,20 @@ function qrDataUri(text, opts){
     $('nautilusAlarm')?.classList.remove('show');
     palierLaunchNotice = true;
     renderGame(false);
-    document.getElementById('gameCard')?.scrollIntoView({behavior:'smooth', block:'start'});
+    smartScroll(document.getElementById('gameCard'));
     updateFinalMissionButton();
   }
 
 
   function launchMission(){
     startOceanAudio();
-    document.getElementById('embarquementMatelot')?.scrollIntoView({behavior:'smooth', block:'start'});
+    smartScroll(document.getElementById('embarquementMatelot'));
     setTimeout(()=>$('memberName')?.focus(), 650);
   }
   $('launchMissionBtn')?.addEventListener('click', launchMission);
   $('resumeMissionBtn')?.addEventListener('click', () => {
     startOceanAudio();
-    document.getElementById('retrouverEquipage')?.scrollIntoView({behavior:'smooth', block:'start'});
+    smartScroll(document.getElementById('retrouverEquipage'));
     /* Focus auto sur l'input après le scroll pour faciliter la saisie */
     setTimeout(() => {
       const input = $('matelotCodeInput');
@@ -6096,7 +6173,7 @@ function qrDataUri(text, opts){
     const msg = $('adminUnlockMsg');
     if(msg){ msg.textContent = ''; msg.style.color = ''; }
     setTimeout(() => $('adminCodeInput')?.focus(), 80);
-    panel.scrollIntoView({behavior:'smooth', block:'start'});
+    smartScroll(panel);
   }
   function closeAdminPanel(){
     const panel = $('adminPanel');
@@ -7285,16 +7362,15 @@ function qrDataUri(text, opts){
              On se fie desormais a `currentTeam`, qui dit sans ambiguite
              si la reprise a abouti. */
           if(currentTeam){
-            /* Meme destination que la saisie manuelle du code : le TITRE
-               de la chambre de pilotage. Cette reprise visait auparavant
-               l'encart "Position actuelle", situe au bas de la carte : le
-               matelot arrivant par QR et celui saisissant son code ne
-               tombaient donc pas au meme endroit. */
-            scrollToCockpit();
+            /* Meme destination que la saisie manuelle du code : le
+               TITRE de la chambre de pilotage. Cette reprise visait
+               auparavant l'encart "Position actuelle", situe au bas de la
+               carte : le matelot arrivant par QR et celui saisissant son
+               code ne tombaient donc pas au meme endroit. */
+            smartScroll(document.getElementById('gameCard'));
           }else{
             // Code refuse : on montre la zone de reprise pour corriger.
-            document.getElementById('retrouverEquipage')
-              ?.scrollIntoView({behavior:'smooth', block:'start'});
+            smartScroll(document.getElementById('retrouverEquipage'));
           }
         }, settle);
       }
@@ -7354,64 +7430,64 @@ const showToast = (msg, color) => window.nautilusToast?.(msg, color);
 // Contenu par plateforme
 const PWA_CONTENT = {
   ios: {
-    title: 'Installe Mission Nautilus sur ton iPhone',
+    title: 'Installe Mission Nautilus sur ton écran d’accueil',
     subtitle: 'En 3 gestes, l’app sera sur ton écran d’accueil.',
     steps: [
-      { text: 'Toucher le bouton menu à droite de safari (rond avec trois points a l’intérieur)' },
-      { text: 'Appuie sur <b>Partager</b> en haut du menu', hint: 'Icône carré avec une flèche vers le haut' },
-      { text: 'Sélectionne <b>Ajouter à l’écran d’accueil</b>', hint: 'Puis confirme en appuyant sur Ajouter' }
+      { text: 'Dans Safari, appuie sur le bouton <b>Partager</b>', hint: 'En bas sur iPhone, en haut à gauche sur iPad — carré avec flèche vers le haut' },
+      { text: 'Fais défiler et choisis <b>Ajouter à l’écran d’accueil</b>', hint: 'L’option se trouve dans la liste des actions' },
+      { text: 'Confirme en appuyant sur <b>Ajouter</b> en haut à droite' }
     ],
-    tip: 'L’app apparaîtra avec son icône sous-marin sur ton Springboard, même hors ligne.'
+    tip: 'L’app apparaîtra sur ton écran d’accueil, même hors ligne.'
   },
   android: {
     title: 'Installe Mission Nautilus sur ton Android',
-    subtitle: 'Tu peux utiliser le menu du navigateur ou le prompt natif.',
+    subtitle: 'Le navigateur te proposera peut-être l’installation automatiquement.',
     steps: [
-      { text: 'Appuie sur le menu <b>⋮</b> en haut à droite de Chrome', hint: 'Trois petits points verticaux' },
-      { text: 'Choisis <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>', hint: 'Le libellé dépend de ta version de Chrome' },
+      { text: 'Si aucun bandeau n’apparaît, appuie sur le menu <b>⋮</b> en haut à droite', hint: 'Trois petits points verticaux' },
+      { text: 'Choisis <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>', hint: 'Le libellé dépend de ton navigateur' },
       { text: 'Confirme en appuyant sur <b>Installer</b>' }
     ],
-    tip: 'Sur Samsung Internet, le menu est différent : ☰ puis <b>Ajouter à l’accueil</b>.'
+    tip: 'Samsung Internet : menu ☰ → <b>Ajouter à l’écran d’accueil</b>. Firefox : menu ⋮ → <b>Installer</b>.'
   },
   macos: {
     title: 'Installe Mission Nautilus sur ton Mac',
-    subtitle: 'Safari te permet d’ajouter l’app au Dock.',
+    subtitle: 'Safari ou Chrome permettent l’ajout au Dock.',
     steps: [
-      { text: 'Dans Safari, va dans le menu <b>Fichier</b> en haut de l’écran' },
-      { text: 'Choisis <b>Ajouter au Dock…</b>', hint: 'Ou « Ajouter à la barre d’onglets » sur les anciennes versions' },
-      { text: 'Confirme en cliquant sur <b>Ajouter</b>' }
+      { text: '<b>Safari</b> : menu <b>Fichier → Ajouter au Dock…</b>', hint: 'En haut de l’écran' },
+      { text: '<b>Chrome</b> : icône <b>⊕ Installer</b> à droite de la barre d’adresse', hint: 'L’icône apparaît si le site est compatible' },
+      { text: 'Confirme en cliquant sur <b>Ajouter</b> ou <b>Installer</b>' }
     ],
-    tip: 'L’app s’ouvrira dans sa propre fenêtre, sans la barre d’adresse Safari.'
+    tip: 'L’app s’ouvrira dans sa propre fenêtre, sans la barre d’adresse.'
   },
   windows: {
-    title: 'Installe Mission Nautilus sur ton PC Windows',
-    subtitle: 'Utilise Microsoft Edge pour une installation complète.',
+    title: 'Installe Mission Nautilus sur ton PC',
+    subtitle: 'Chrome ou Edge permettent l’installation en un clic.',
     steps: [
-      { text: 'Ouvre cette page dans <b>Microsoft Edge</b> (pas Chrome)', hint: 'Edge gère les PWA nativement' },
-      { text: 'Clique sur le menu <b>⋯</b> en haut à droite' },
-      { text: 'Choisis <b>Applications</b> puis <b>Installer ce site en tant qu’application</b>' }
+      { text: '<b>Chrome</b> ou <b>Edge</b> : icône <b>⊕ Installer</b> à droite de la barre d’adresse', hint: 'Si l’icône n’apparaît pas, utilise le menu du navigateur' },
+      { text: 'Sinon, ouvre le menu <b>⋯</b> en haut à droite', hint: 'Trois points horizontaux' },
+      { text: 'Choisis <b>Applications → Installer ce site en tant qu’application</b>' }
     ],
-    tip: 'Sinon, ajoute cette page à tes favoris (<b>Ctrl + D</b>) pour y accéder rapidement.'
+    tip: 'Ou ajoute cette page à tes favoris (<b>Ctrl + D</b>).'
   },
   linux: {
     title: 'Installe Mission Nautilus sur ton Linux',
-    subtitle: 'Les PWA sont supportées sur Chromium, Edge et Brave.',
+    subtitle: 'Chrome, Chromium, Edge et Brave supportent les PWA.',
     steps: [
-      { text: 'Ouvre cette page dans <b>Chromium</b>, <b>Edge</b> ou <b>Brave</b>' },
-      { text: 'Clique sur l’icône <b>⊕ Installer</b> à droite de la barre d’adresse' },
+      { text: 'Ouvre cette page dans <b>Chrome</b>, <b>Chromium</b>, <b>Edge</b> ou <b>Brave</b>' },
+      { text: 'Clique sur l’icône <b>⊕ Installer</b> à droite de la barre d’adresse', hint: 'L’icône apparaît si le site est compatible PWA' },
       { text: 'Confirme l’installation' }
     ],
-    tip: 'Sinon, mets cette page en favori (<b>Ctrl + D</b>) pour y accéder rapidement.'
+    tip: 'Ou ajoute cette page en favori (<b>Ctrl + D</b>).'
   },
   other: {
     title: 'Installe Mission Nautilus',
-    subtitle: 'Pour profiter de l’expérience complète.',
+    subtitle: 'Pour profiter de l’expérience complète, même hors ligne.',
     steps: [
       { text: 'Ouvre cette page dans <b>Chrome</b>, <b>Edge</b> ou <b>Safari</b>' },
-      { text: 'Cherche l’option « Installer l’application » dans le menu' },
+      { text: 'Cherche l’option <b>« Installer l’application »</b> dans le menu du navigateur', hint: 'Ou l’icône ⊕ dans la barre d’adresse' },
       { text: 'Confirme l’installation' }
     ],
-    tip: 'Sinon, mets cette page en favori pour y accéder rapidement.'
+    tip: 'Ou ajoute cette page en favori pour y accéder rapidement.'
   }
 };
 
