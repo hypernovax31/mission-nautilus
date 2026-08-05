@@ -4933,20 +4933,19 @@ function qrDataUri(text, opts){
     majProgressionHublots();
 
     if(shouldScroll){
-      /* On amene le HAUT DE LA RANGEE DE HUBLOTS en haut de l'ecran.
+      /* On amene le HAUT DE LA PLAQUE "CONSIGNES DE PLONGEE" en haut de
+         l'ecran. Le joueur garde ainsi son repere sous les yeux : le
+         titre, les quatre temoins de progression, les quatre hublots, et
+         le texte qui vient de s'ouvrir juste en dessous.
 
-         Deux corrections par rapport a la version precedente :
-         - la cible etait la plaque "Consignes de plongee", situee
-           au-dessus : les hublots se retrouvaient donc plus bas que
-           demande ;
-         - smartScroll() ne bougeait pas du tout si l'element etait deja
-           un peu visible. Or apres un premier clic on est justement dans
-           ce cas : le second clic ne repositionnait plus rien, et le
-           joueur avait l'impression que la page ne suivait pas.
-         On place donc la rangee explicitement, sans condition. */
+         Le positionnement est EXPLICITE et sans condition. On n'utilise
+         volontairement pas smartScroll() ici : cette fonction ne bouge
+         pas si l'element est deja un peu visible — or c'est exactement le
+         cas des le deuxieme clic, et la page semblait alors ne plus
+         suivre. */
       setTimeout(() => {
-        const cible = document.getElementById('ruleCards')
-                   || document.querySelector('.mission-steps');
+        const cible = document.querySelector('.rule-invite')
+                   || document.getElementById('ruleCards');
         if(!cible) return;
         const gap = 56;   // barre fixe du haut + un peu d'air
         const y = window.pageYOffset + cible.getBoundingClientRect().top - gap;
