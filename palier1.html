@@ -1221,14 +1221,24 @@ window.Nautilus = {
 
     const fin = new Date(depart).getTime() + duree;
     let reste = Math.max(0, fin - Date.now());
-    const pct = Math.max(0, Math.min(100, Math.round((reste / duree) * 100)));
+    /* MEME CALCUL QUE LA PAGE D'ACCUEIL, au chiffre pres : arrondi au
+       plus proche, mais jamais "100 %" si du temps a ete consomme, ni
+       "0 %" s'il en reste. */
+    const ratio = reste / duree;
+    const pctBrut = ratio * 100;
+    const pct = pctBrut >= 100 ? 100
+              : pctBrut <= 0   ? 0
+              : Math.min(99, Math.max(1, Math.round(pctBrut)));
+    /* La barre suit la valeur non arrondie : descente continue plutot que
+       des sauts de 1 % toutes les 1 h 40. */
+    const pctPrecis = Math.max(0, Math.min(100, ratio * 100));
 
     const j = Math.floor(reste / 86400000); reste -= j * 86400000;
     const h = Math.floor(reste / 3600000);  reste -= h * 3600000;
     const m = Math.floor(reste / 60000);
 
     bar.hidden = false;
-    $('o2Fill').style.width = pct + '%';
+    $('o2Fill').style.width = pctPrecis.toFixed(3) + '%';
     $('o2Pct').textContent = pct + '%';
     $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m`;
     /* MEMES SEUILS QUE L'ACCUEIL : la jauge passait ici a l'orange a 40 %
