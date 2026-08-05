@@ -148,10 +148,14 @@
     .crew-member .crew-meta{font-size:11px;color:#9bc4d4;}
 
     /* === Bloc de l epreuve === */
+    /* CADRE RETIRE : ce bloc enveloppait le panneau sonar, la zone de
+       reponse et la zone des indices — qui ont DEJA chacun leur propre
+       fond, bordure et arrondi. Cela faisait un cadre de plus a
+       l'interieur de la carte, pour rien : cinq encadrements empiles a
+       l'ecran. Il ne sert plus que d'espaceur. */
     .morse-stepbox{
-      background:linear-gradient(135deg,#061524 0%,#0a2a40 60%,#03111f 100%);
-      color:#eaf8ff;border:1px solid rgba(142,231,255,.28);
-      border-radius:18px;padding:20px;margin-top:14px;
+      color:#eaf8ff;
+      display:grid;gap:14px;
     }
     .morse-header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
     .morse-header h3{margin:0;color:var(--fnac);font-size:clamp(18px,2.4vw,24px);letter-spacing:.04em;text-transform:uppercase;}
@@ -159,75 +163,72 @@
     .morse-timer-label{font-size:11px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:800;}
     .morse-timer{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,3.4vw,32px);font-weight:1000;color:#8ee7ff;text-shadow:0 0 14px rgba(142,231,255,.55);line-height:1;}
 
-    .morse-brief{margin:8px 0 16px;color:#bcd9e6;line-height:1.5;font-size:clamp(13px,1.8vw,15px);}
+    .morse-brief{margin:0;color:#bcd9e6;line-height:1.5;font-size:clamp(13px,1.8vw,15px);}
 
-    /* ===== BRIEFING DU PALIER — mise en page refaite =====
-       L'ancienne version empilait tout dans un seul paragraphe separe par
-       des <br> : sur telephone, les lignes se coupaient n'importe ou et les
-       consignes importantes se noyaient dans le texte. Chaque consigne est
-       desormais une LIGNE A PART ENTIERE, avec son icone alignee dans une
-       colonne fixe : le regard descend la liste sans se perdre. */
-    .brief-card{
-      background:linear-gradient(180deg,rgba(4,14,24,.72),rgba(6,22,36,.72));
-      border:1px solid rgba(142,231,255,.20);
-      border-radius:14px;padding:16px 18px;margin:14px 0 16px;
-    }
-    /* Bandeau "un seul matelot a la fois" : c'est la regle du jeu, pas une
-       consigne pratique. Il se detache donc du reste. */
-    .brief-rule{
-      display:flex;gap:10px;align-items:flex-start;
-      background:rgba(142,231,255,.09);
-      border:1px solid rgba(142,231,255,.28);
-      border-left:3px solid var(--cyan);
-      border-radius:10px;padding:11px 13px;margin:0 0 14px;
-      color:#dff6ff;font-size:clamp(12.5px,1.7vw,14px);line-height:1.45;
-    }
-    .brief-rule .ico{flex:0 0 auto;line-height:1.45}
+    /* ===== BRIEFING DU PALIER — mise en page A PLAT =====
+       Avant : jusqu'a SIX cadres emboites (carte, interieur, bloc epreuve,
+       bloc briefing, bandeau de regle, fond des consignes) pour lire cinq
+       lignes. Chacun avec fond, bordure, arrondi et marges : l'oeil
+       traversait quatre encadrements avant d'atteindre le texte.
+       Maintenant : AUCUNE boite imbriquee. Le contenu est pose directement
+       dans la carte. La hierarchie se lit a la typographie et a la
+       couleur, pas a des cadres. */
+    .brief{display:block}
+
+    /* Titre du briefing, prolonge par un filet ambre : il ouvre le bloc
+       sans avoir besoin de l'encadrer. */
     .brief-signature{
-      display:flex;align-items:center;gap:9px;margin:0 0 10px;
+      display:flex;align-items:center;gap:10px;margin:0 0 12px;
       color:var(--fnac);font-weight:900;letter-spacing:.05em;
       text-transform:uppercase;font-size:clamp(12px,1.7vw,14px);
     }
-    /* Trait de separation qui prolonge le titre jusqu'au bord : donne au
-       bloc l'allure d'un document officiel. */
     .brief-signature::after{
       content:"";flex:1 1 auto;height:1px;
       background:linear-gradient(90deg,rgba(245,176,39,.55),transparent);
     }
+
     .brief-intro{
-      margin:0 0 14px;color:#dff6ff;line-height:1.55;
+      margin:0 0 16px;color:#dff6ff;line-height:1.55;
       font-size:clamp(13px,1.8vw,15px);
     }
     .brief-intro b{color:var(--cyan)}
-    /* La liste des consignes : une grille a deux colonnes (icone / texte).
-       La colonne d'icones a une largeur FIXE, donc tous les textes
-       s'alignent verticalement, meme quand une consigne tient sur deux
-       lignes. Avec des <br> ce n'etait jamais le cas. */
-    .brief-list{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+
+    /* Les consignes : grille a deux colonnes (icone / texte). La colonne
+       d'icones a une largeur FIXE, donc tous les textes s'alignent
+       verticalement, meme quand une consigne tient sur deux lignes. */
+    .brief-list{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:11px}
     .brief-list li{
-      display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;
-      color:#cfe6ef;line-height:1.45;font-size:clamp(12.5px,1.7vw,14.5px);
+      display:grid;grid-template-columns:22px 1fr;gap:11px;align-items:start;
+      color:#cfe6ef;line-height:1.5;font-size:clamp(12.5px,1.7vw,14.5px);
     }
-    .brief-list li .ico{font-size:15px;line-height:1.45;text-align:center}
+    .brief-list li .ico{font-size:15px;line-height:1.5;text-align:center}
     .brief-list li b{color:#fff}
-    /* Les deux consignes de sanction (echec, indice) sont mises en retrait
-       visuel : meme liste, mais fond ambre discret pour signaler qu'elles
-       ont une consequence. */
+    /* Les deux consignes qui ont une CONSEQUENCE se distinguent par un
+       simple LISERE ambre a gauche, plus par un cadre complet : le poids
+       visuel est le meme, sans ajouter de boite. */
     .brief-list li.warn{
-      background:rgba(245,176,39,.09);
-      border:1px solid rgba(245,176,39,.22);
-      border-radius:9px;padding:8px 10px;margin-left:-10px;margin-right:-10px;
+      border-left:2px solid rgba(245,176,39,.5);
+      padding-left:11px;margin-left:-13px;
     }
     .brief-list li.warn b{color:#ffd36c}
+
+    /* Bouton pleine largeur : il n'a plus besoin d'une rangee dediee. */
+    .brief-cta{
+      display:block;width:100%;margin:0;height:46px;border:0;border-radius:12px;
+      background:var(--fnac);color:#111;font-family:inherit;
+      font-size:clamp(13px,1.9vw,15px);font-weight:900;letter-spacing:.02em;
+      cursor:pointer;
+    }
+    .brief-cta:disabled{opacity:.55;cursor:default}
+
     @media(max-width:430px){
-      .brief-card{padding:13px 14px}
-      .brief-list li{grid-template-columns:20px 1fr;gap:8px}
+      .brief-list li{grid-template-columns:19px 1fr;gap:9px}
     }
 
     .morse-sonar-panel{
       display:grid;grid-template-columns:140px 1fr;gap:16px;align-items:center;
       padding:16px;background:rgba(0,0,0,.32);
-      border:1px solid rgba(142,231,255,.18);border-radius:16px;margin-bottom:16px;
+      border:1px solid rgba(142,231,255,.18);border-radius:16px;
     }
     @media(max-width:560px){.morse-sonar-panel{grid-template-columns:1fr;justify-items:center;}}
     .morse-sonar-screen{
@@ -247,7 +248,7 @@
     .morse-counter{font-family:Consolas,"Courier New",monospace;font-size:13px;color:#9bc4d4;text-align:center;}
     .morse-counter b{color:var(--fnac);font-size:15px;}
 
-    .morse-answer-zone{background:rgba(0,0,0,.28);border:1px solid rgba(142,231,255,.18);border-radius:16px;padding:16px;margin-bottom:14px;}
+    .morse-answer-zone{background:rgba(0,0,0,.28);border:1px solid rgba(142,231,255,.18);border-radius:16px;padding:16px;}
     .morse-answer-label{display:block;font-size:11px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:8px;}
     /* Zone de reponse : un seul bandeau qui s'allonge au fil de la frappe.
        Les anciennes cases pre-dessinees (une par lettre) revelaient la
@@ -1661,45 +1662,43 @@ window.Nautilus = {
            La barre est libre — <b>${esc(me?.name || 'matelot')}</b>, tu peux reprendre l'épreuve.
          </div>`
       : '';
+    /* MISE EN PAGE A PLAT.
+       Il y avait jusqu'a SIX cadres emboites pour lire cinq lignes : la
+       carte, son interieur, le bloc de l'epreuve, le bloc du briefing, le
+       bandeau de la regle, et le fond des consignes importantes. Chacun
+       avec son fond, sa bordure, son arrondi et ses marges — l'oeil
+       traversait quatre encadrements avant d'atteindre le texte.
+       Ici, PLUS AUCUNE boite imbriquee : le contenu est pose directement
+       dans la carte. La hierarchie se lit a la typographie et a la
+       couleur, pas a des cadres. */
     return `
       ${banniere}
-      <div class="morse-stepbox">
-        <!-- Plus de titre ni de chrono ici : ils faisaient DOUBLON avec la
-             barre de titre de la carte, juste au-dessus ("EPREUVE DU
-             PALIER" + "Temps imparti 03:30"). Le briefing commence donc
-             directement. -->
-        <div class="brief-card">
-          <div class="brief-signature">⚓ Briefing du capitaine</div>
+      <div class="brief">
+        <div class="brief-signature">⚓ Briefing du capitaine</div>
 
-          <div class="brief-rule">
-            <span class="ico" aria-hidden="true">📋</span>
-            <span><b>Un seul matelot prend les commandes à la fois</b> ; les autres
-              suivent la progression depuis le journal de bord.</span>
-          </div>
+        <p class="brief-intro">
+          Le sas ne s'ouvrira qu'avec un mot de passe. Le capitaine te l'enverra
+          par le <b>sonar</b> : à toi de l'écouter et de le retranscrire.
+        </p>
 
-          <p class="brief-intro">
-            Le sas ne s'ouvrira qu'avec un mot de passe. Le capitaine te l'enverra
-            par le <b>sonar</b> : à toi de l'écouter et de le retranscrire.
-          </p>
+        <ul class="brief-list">
+          <li><span class="ico" aria-hidden="true">📋</span>
+            <span><b>Un seul matelot</b> prend les commandes à la fois ; les autres
+              suivent depuis le journal de bord.</span></li>
+          <li><span class="ico" aria-hidden="true">🎧</span>
+            <span>Le signal est faible : pense à monter le son 😉</span></li>
+          <li><span class="ico" aria-hidden="true">⏱️</span>
+            <span><b>3 minutes 30</b> pour répondre.</span></li>
+          <li class="warn"><span class="ico" aria-hidden="true">❌</span>
+            <span><b>3 erreurs</b> et tu es repoussé en surface.</span></li>
+          <li><span class="ico" aria-hidden="true">🤝</span>
+            <span>Un autre matelot pourra alors reprendre l'épreuve à ta place.</span></li>
+          <li class="warn"><span class="ico" aria-hidden="true">🆘</span>
+            <span>Bloqué ? Un <b>indice</b> est possible, mais il te coûte
+              <b>1 h de blocage</b>.</span></li>
+        </ul>
 
-          <ul class="brief-list">
-            <li><span class="ico" aria-hidden="true">🎧</span>
-              <span>Le signal est faible : pense à monter le son 😉</span></li>
-            <li><span class="ico" aria-hidden="true">⏱️</span>
-              <span><b>3 minutes 30</b> pour répondre.</span></li>
-            <li class="warn"><span class="ico" aria-hidden="true">❌</span>
-              <span><b>3 erreurs</b> et tu es repoussé en surface.</span></li>
-            <li><span class="ico" aria-hidden="true">🤝</span>
-              <span>Un autre matelot pourra alors reprendre l'épreuve à ta place.</span></li>
-            <li class="warn"><span class="ico" aria-hidden="true">🆘</span>
-              <span>Bloqué ? Un <b>indice</b> est possible, mais il te coûte
-                <b>1 h de blocage</b>.</span></li>
-          </ul>
-        </div>
-
-        <div class="morse-actions">
-          <button class="primary" id="takeLeadBtn" style="flex:1 1 100%;">⚓ PRENDRE LES COMMANDES</button>
-        </div>
+        <button class="brief-cta" id="takeLeadBtn">⚓ PRENDRE LES COMMANDES</button>
       </div>
     `;
   }
