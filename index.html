@@ -541,6 +541,63 @@
       line-height:1.18;
     }
     .body{padding:clamp(18px,3vw,28px)}
+
+    /* ===== JOURNAL DE BORD DU COCKPIT =====
+       Le titre etait un simple texte de 11 px en majuscules, plus petit
+       que les lignes qu'il annoncait : il se lisait comme une etiquette,
+       pas comme un titre. C'est desormais un vrai <h2>, a l'echelle des
+       autres titres du jeu, qui nomme en plus l'equipage concerne. */
+    .ck-journal{
+      margin-top:16px;padding:14px 16px;border-radius:12px;
+      background:rgba(0,0,0,.18);border:1px solid rgba(142,231,255,.12);
+    }
+    /* `.card .ck-journal-titre` et non `.ck-journal-titre` seul : la regle
+       `.card h2` (fond sombre, grand padding) est plus specifique qu'une
+       simple classe et l'emportait — le titre heritait du bandeau des
+       titres de carte. En prefixant par `.card`, on est a egalite de
+       specificite, et la regle qui vient APRES gagne. */
+    .card .ck-journal-titre{
+      margin:0 0 10px;padding:0;background:none;
+      display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+      font-size:clamp(14px,1.9vw,16px);line-height:1.25;
+      letter-spacing:.04em;text-transform:uppercase;
+      color:#dff6ff;font-weight:900;
+    }
+    /* Le titre proprement dit. Il herite de .ck-journal-titre, mais on le
+       nomme pour qu'aucune classe posee dans le HTML ne reste sans style
+       (piege classique : une classe fantome qu'on croit active). */
+    .ck-journal-nom{flex:0 0 auto}
+    /* Le nom de l'equipage : meme ligne, mais plus discret que le titre
+       lui-meme — c'est un complement, pas le sujet. */
+    .ck-journal-equipage{
+      font-size:clamp(11px,1.5vw,12.5px);font-weight:800;
+      letter-spacing:.06em;color:rgba(142,231,255,.62);
+      text-transform:none;
+    }
+    .ck-journal-liste{list-style:none;margin:0;padding:0}
+    .ck-journal-ligne{
+      display:flex;gap:9px;align-items:flex-start;
+      padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .ck-journal-ligne:last-child{border-bottom:0;padding-bottom:0}
+    .ck-journal-ico{flex:0 0 auto;line-height:1.45;font-size:14px}
+    /* min-width:0 : sans lui, un message long refuse de se couper et
+       POUSSE la date hors de l'ecran. */
+    .ck-journal-texte{flex:1;min-width:0;color:#cfe6f4;line-height:1.45;font-size:13.5px}
+    .ck-journal-texte b{color:#eaf8ff}
+    /* La date accompagne la lecture, elle ne la concurrence pas : plus
+       petite, plus sombre, sans gras. `white-space:nowrap` empeche
+       "06/08" et "00:09" de se retrouver sur deux lignes. */
+    .ck-journal-date{
+      flex:0 0 auto;color:rgba(142,231,255,.42);font-size:11px;
+      font-family:Consolas,"Courier New",monospace;line-height:1.65;
+      white-space:nowrap;
+    }
+    @media(max-width:430px){
+      .ck-journal{padding:12px 13px}
+      .ck-journal-texte{font-size:13px}
+    }
+
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.grid>div{display:flex;flex-direction:column;justify-content:flex-end}.boarding-grid{display:grid;grid-template-columns:50fr 15fr 35fr;gap:18px;align-items:end}.boarding-grid>div{min-width:0}.boarding-action button{width:100%;margin:0;height:52px}
 
     /* =====================================================================
@@ -4652,24 +4709,27 @@ function qrDataUri(text, opts){
       return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
     };
 
+    /* Le style vit dans la feuille CSS (.ck-journal-*), pas en attributs
+       ecrits a la main sur chaque element : une seule source, et une
+       interface qui reste coherente si on ajuste la police. */
     const items = events.map(e => {
       const h = quand(e.t);
-      return '<li style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-      + '<span style="flex:0 0 auto;line-height:1.4">' + e.icon + '</span>'
-      + '<span style="flex:1;min-width:0;color:#cfe6f4;line-height:1.4;font-size:13px">' + e.text + '</span>'
-      /* Volontairement DISCRET : plus petit, plus sombre, sans gras. La
-         date accompagne la lecture, elle ne doit pas la concurrencer.
-         `white-space:nowrap` empeche "06/08" et "00:09" de se retrouver
-         sur deux lignes ; `flex:0 0 auto` reserve sa largeur pour que le
-         texte de gauche ne la pousse jamais hors de l'ecran. */
-      + (h ? '<span style="flex:0 0 auto;color:rgba(142,231,255,.42);font-size:11px;'
-           + 'font-family:Consolas,\'Courier New\',monospace;line-height:1.55;'
-           + 'white-space:nowrap">' + h + '</span>' : '')
+      return '<li class="ck-journal-ligne">'
+      + '<span class="ck-journal-ico">' + e.icon + '</span>'
+      + '<span class="ck-journal-texte">' + e.text + '</span>'
+      + (h ? '<span class="ck-journal-date">' + h + '</span>' : '')
       + '</li>';
     }).join('');
-    return '<div style="margin-top:14px;padding:12px 14px;background:rgba(0,0,0,.18);border:1px solid rgba(142,231,255,.12);border-radius:12px">'
-      + '<div style="font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(142,231,255,.65);margin-bottom:8px">📜 Journal de bord</div>'
-      + '<ul style="list-style:none;margin:0;padding:0">' + items + '</ul>'
+    /* Le titre nomme l'EQUIPAGE concerne : sur un ecran ou l'on parle
+       deja de position, de sas et de dommages, "Journal de bord" tout
+       court ne disait pas de qui il s'agissait. C'est un vrai titre de
+       niveau 2 (<h2>), comme les autres titres de blocs du jeu. */
+    return '<div class="ck-journal">'
+      + '<h2 class="ck-journal-titre">'
+      +   '<span class="ck-journal-nom">📜 Journal de bord</span>'
+      +   '<span class="ck-journal-equipage">de l’équipage ' + esc(team.teamName || '—') + '</span>'
+      + '</h2>'
+      + '<ul class="ck-journal-liste">' + items + '</ul>'
       + '</div>';
   }
 
