@@ -1723,3 +1723,18 @@
       .pwa-step-num{flex-basis:26px;height:26px;width:26px;font-size:13px}
     }
   
+
+/* Réglage iPhone : le titre principal reste un vrai H1 dominant et ancré
+   à gauche malgré les règles de largeur du hero et le redimensionnement
+   automatique de Safari. */
+@media (max-width:640px){
+  .hero-title{
+    width:auto;
+    margin:20px 0 0;
+    padding:0;
+    text-align:left;
+    font-size:clamp(48px,15vw,82px);
+    line-height:.96;
+    -webkit-text-size-adjust:100%;
+  }
+}
