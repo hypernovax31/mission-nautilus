@@ -1,0 +1,48 @@
+rules_version = '2';
+
+// Mission Nautilus — regles Firestore
+//
+// Contexte : le jeu tourne sans authentification (les joueurs s'identifient
+// avec un Code Matelot, pas un compte Firebase). Les collections utilisees
+// sont donc ouvertes en lecture/ecriture, mais TOUT LE RESTE est refuse.
+//
+// Interet principal : empecher la recreation des collections mortes
+// (events, arrivals, members) supprimees du code, et bloquer la creation
+// de collections arbitraires par un client malveillant.
+//
+// Deploiement :  firebase deploy --only firestore:rules
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // teams/{code} : etat des equipages (progression, blocage, membres)
+    match /teams/{teamCode} {
+      allow read, write: if true;
+
+      // teams/{code}/matelots/{codeMatelot} : fiche detaillee d'un matelot
+      match /matelots/{matelotCode} {
+        allow read, write: if true;
+      }
+
+      // teams/{code}/morseSession/current : session partagee du palier 1
+      match /morseSession/{sessionId} {
+        allow read, write: if true;
+      }
+    }
+
+    // matelots/{codeMatelot} : index global Code Matelot -> equipe
+    match /matelots/{matelotCode} {
+      allow read, write: if true;
+    }
+
+    // game/config : configuration de partie (equipes actives, oxygene...)
+    match /game/{docId} {
+      allow read, write: if true;
+    }
+
+    // Tout le reste (dont events, arrivals, members) : refuse.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

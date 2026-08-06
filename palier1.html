@@ -1,0 +1,2713 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Nautilus — Palier 1</title>
+  <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
+  <style>
+    :root{
+      --fnac:#f5b027;
+      --abyss:#061524;
+      --deep:#0a2a40;
+      --surface:#0f4562;
+      --cyan:#8ee7ff;
+      --paper:#ffffff;
+      --bad:#b8322b;
+      --warn:#fff4d8;
+      --warnb:#e8c05f;
+      --successbg:#effff7;
+      --successb:#aee5ca;
+      --dangerbg:#fff0ee;
+      --dangerb:#efb2ac;
+    }
+    *{box-sizing:border-box}
+    /* PROTECTION-COPIE (desactivee) : selection de texte libre.
+       Pour la reactiver au dernier palier, decommenter la ligne ci-dessous.
+    body, button, .card, .notice, .stepbox, .morse-stepbox, .morse-log{user-select:none;-webkit-user-select:none} */
+    input, .code{user-select:text;-webkit-user-select:text}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Arial,Helvetica,sans-serif;
+      color:#eaf8ff;
+      background:
+        radial-gradient(circle at 16% 10%,rgba(142,231,255,.18),transparent 30%),
+        radial-gradient(circle at 86% 12%,rgba(245,176,39,.14),transparent 24%),
+        linear-gradient(180deg,#020812 0%,#071a2b 46%,#03111f 100%);
+    }
+    .topbar{
+      position:sticky;top:0;z-index:50;
+      display:flex;justify-content:space-between;align-items:center;
+      padding:12px 18px;background:rgba(2,8,18,.85);
+      border-bottom:2px solid var(--fnac);
+      backdrop-filter:blur(6px);
+    }
+    .topbar-left{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+    .topbar-back{
+      background:rgba(255,255,255,.08);color:#fff;
+      border:1px solid rgba(245,176,39,.5);border-radius:999px;
+      padding:8px 14px;font-weight:900;font-size:12px;
+      letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+    }
+    .topbar-back:hover{background:rgba(245,176,39,.85);color:#111;}
+    .topbar-title{font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;font-size:clamp(20px,3vw,30px);color:#fff;letter-spacing:.04em;text-transform:uppercase;text-shadow:2px 2px 0 #000;}
+    .topbar-info{display:flex;gap:14px;align-items:center;font-size:13px;color:#9bc4d4;flex-wrap:wrap;}
+    .topbar-info b{color:var(--fnac);}
+    main{max-width:1180px;margin:0 auto;padding:24px 18px 80px;display:grid;gap:18px;}
+    .card{
+      background:rgba(7,26,43,.85);
+      border:1px solid rgba(142,231,255,.25);
+      border-radius:22px;
+      box-shadow:0 18px 38px rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+    .card h2{
+      margin:0;padding:16px 20px;
+      background:linear-gradient(90deg,#101820,#253545);
+      color:#fff;font-size:18px;
+      border-bottom:1px solid rgba(142,231,255,.18);
+    }
+    /* Titre de carte en DEUX parties : l'intitule a gauche, le chrono a
+       droite. Le temps etait auparavant repete dans un second encart, a
+       l'interieur de la carte, juste sous ce titre — deux fois la meme
+       information a deux centimetres d'ecart. Il vit maintenant dans la
+       barre de titre, ou il reste visible quel que soit l'ecran affiche
+       (accueil de l'epreuve, jeu en cours, spectateur). */
+    .card-h2-split{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+    .card-h2-timer{display:flex;align-items:baseline;gap:8px;}
+    .card-h2-timer .lbl{
+      font-size:10px;color:#9bc4d4;letter-spacing:.09em;
+      text-transform:uppercase;font-weight:800;
+    }
+    .card-h2-timer .val{
+      font-family:Consolas,"Courier New",monospace;
+      font-size:clamp(18px,2.6vw,24px);font-weight:1000;color:#8ee7ff;
+      text-shadow:0 0 12px rgba(142,231,255,.5);line-height:1;
+    }
+    /* Chrono qui tourne : il vire a l'ambre sous 60 s, au rouge sous 20 s. */
+    .card-h2-timer.warn .val{color:#ffd36c;text-shadow:0 0 12px rgba(245,176,39,.55);}
+    .card-h2-timer.crit .val{color:#ff7b72;text-shadow:0 0 12px rgba(255,75,62,.6);}
+    @media(max-width:430px){
+      .card-h2-timer .lbl{display:none}
+    }
+    .body{padding:18px 20px;}
+
+    /* === Identification joueur === */
+    .identity-grid{
+      display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;
+    }
+    @media(max-width:680px){.identity-grid{grid-template-columns:1fr;}}
+    .identity-grid label{display:block;color:#9bc4d4;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;}
+    .identity-grid input,.identity-grid select{
+      width:100%;height:48px;padding:10px 12px;
+      background:rgba(0,0,0,.32);color:#fff;
+      border:1px solid rgba(142,231,255,.35);border-radius:12px;
+      font:inherit;font-weight:700;
+    }
+    .identity-grid input:focus,.identity-grid select:focus{outline:none;border-color:var(--fnac);box-shadow:0 0 0 3px rgba(245,176,39,.25);}
+    .identity-grid button{margin:0;height:48px;background:var(--fnac);color:#111;font-weight:1000;border-radius:12px;padding:0 20px;cursor:pointer;}
+
+    /* === Voyant "matelot aux commandes" ===
+       Pastille rouge qui clignote tant qu'un matelot joue reellement, et
+       qui s'eteint des que plus personne n'est aux commandes. Elle se voit
+       d'un coup d'oeil depuis n'importe quel ecran du mini-jeu.
+       Etat par defaut : ETEINTE (gris sombre, aucune animation), pour ne
+       pas laisser croire qu'une partie tourne alors que non. */
+    .dive-lamp{
+      display:inline-block;width:13px;height:13px;border-radius:50%;
+      vertical-align:middle;margin-left:10px;
+      background:#3a2626;
+      box-shadow:inset 0 0 4px rgba(0,0,0,.8);
+      transition:background .3s ease,box-shadow .3s ease;
+    }
+    .dive-lamp.on{
+      background:#ff4b3e;
+      box-shadow:0 0 10px rgba(255,75,62,.9),0 0 20px rgba(255,75,62,.5),inset 0 0 3px rgba(255,255,255,.4);
+      animation:diveLampBlink 1.1s ease-in-out infinite;
+    }
+    @keyframes diveLampBlink{
+      0%,100%{opacity:1}
+      50%{opacity:.28}
+    }
+    /* Respect du reglage "animations reduites" du telephone : la lampe
+       reste allumee en rouge, mais cesse de clignoter. */
+    @media (prefers-reduced-motion: reduce){
+      .dive-lamp.on{animation:none}
+    }
+
+    /* === Équipage === */
+    .crew{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px;}
+    .crew-member{
+      padding:10px 12px;background:rgba(0,0,0,.32);
+      border:1px solid rgba(142,231,255,.22);border-radius:12px;
+      display:flex;flex-direction:column;gap:4px;
+    }
+    .crew-member.self{border-color:var(--fnac);background:rgba(245,176,39,.12);}
+    .crew-member .crew-name{font-weight:900;color:#fff;}
+    .crew-member .crew-meta{font-size:11px;color:#9bc4d4;}
+
+    /* === Bloc de l epreuve === */
+    /* CADRE RETIRE : ce bloc enveloppait le panneau sonar, la zone de
+       reponse et la zone des indices — qui ont DEJA chacun leur propre
+       fond, bordure et arrondi. Cela faisait un cadre de plus a
+       l'interieur de la carte, pour rien : cinq encadrements empiles a
+       l'ecran. Il ne sert plus que d'espaceur. */
+    .morse-stepbox{
+      color:#eaf8ff;
+      display:grid;gap:14px;
+    }
+    .morse-header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
+    .morse-header h3{margin:0;color:var(--fnac);font-size:clamp(18px,2.4vw,24px);letter-spacing:.04em;text-transform:uppercase;}
+    .morse-timer-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+    .morse-timer-label{font-size:11px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:800;}
+    .morse-timer{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,3.4vw,32px);font-weight:1000;color:#8ee7ff;text-shadow:0 0 14px rgba(142,231,255,.55);line-height:1;}
+
+    .morse-brief{margin:0;color:#bcd9e6;line-height:1.5;font-size:clamp(13px,1.8vw,15px);}
+
+    /* ===== BRIEFING DU PALIER — mise en page A PLAT =====
+       Avant : jusqu'a SIX cadres emboites (carte, interieur, bloc epreuve,
+       bloc briefing, bandeau de regle, fond des consignes) pour lire cinq
+       lignes. Chacun avec fond, bordure, arrondi et marges : l'oeil
+       traversait quatre encadrements avant d'atteindre le texte.
+       Maintenant : AUCUNE boite imbriquee. Le contenu est pose directement
+       dans la carte. La hierarchie se lit a la typographie et a la
+       couleur, pas a des cadres. */
+    .brief{display:block}
+
+    /* Titre du briefing, prolonge par un filet ambre : il ouvre le bloc
+       sans avoir besoin de l'encadrer. */
+    .brief-signature{
+      display:flex;align-items:center;gap:10px;margin:0 0 12px;
+      color:var(--fnac);font-weight:900;letter-spacing:.05em;
+      text-transform:uppercase;font-size:clamp(12px,1.7vw,14px);
+    }
+    .brief-signature::after{
+      content:"";flex:1 1 auto;height:1px;
+      background:linear-gradient(90deg,rgba(245,176,39,.55),transparent);
+    }
+
+    .brief-intro{
+      margin:0 0 16px;color:#dff6ff;line-height:1.55;
+      font-size:clamp(13px,1.8vw,15px);
+    }
+    .brief-intro b{color:var(--cyan)}
+
+    /* Les consignes : grille a deux colonnes (icone / texte). La colonne
+       d'icones a une largeur FIXE, donc tous les textes s'alignent
+       verticalement, meme quand une consigne tient sur deux lignes. */
+    .brief-list{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:11px}
+    .brief-list li{
+      display:grid;grid-template-columns:22px 1fr;gap:11px;align-items:start;
+      color:#cfe6ef;line-height:1.5;font-size:clamp(12.5px,1.7vw,14.5px);
+    }
+    .brief-list li .ico{font-size:15px;line-height:1.5;text-align:center}
+    .brief-list li b{color:#fff}
+    /* Les deux consignes qui ont une CONSEQUENCE se distinguent par un
+       simple LISERE ambre a gauche, plus par un cadre complet : le poids
+       visuel est le meme, sans ajouter de boite. */
+    .brief-list li.warn{
+      border-left:2px solid rgba(245,176,39,.5);
+      padding-left:11px;margin-left:-13px;
+    }
+    .brief-list li.warn b{color:#ffd36c}
+
+    /* Bouton pleine largeur : il n'a plus besoin d'une rangee dediee. */
+    /* Avertissement chiffre avant de prendre la barre */
+    .risque{
+      margin:0 0 16px;padding:13px 15px;border-radius:12px;
+      background:rgba(4,16,26,.7);border:1px solid rgba(142,231,255,.20);
+      border-left:4px solid rgba(142,231,255,.55);
+    }
+    .risque.ambre{border-left-color:var(--fnac);background:rgba(245,176,39,.07)}
+    .risque.rouge{border-left-color:#ff4b3e;background:rgba(255,75,62,.08)}
+    .risque-titre{
+      font-size:clamp(12px,2.3vw,14px);font-weight:900;letter-spacing:.04em;
+      text-transform:uppercase;color:#fff;margin:0 0 8px;
+    }
+    .risque-l{margin:0;font-size:clamp(12.5px,1.8vw,14px);line-height:1.55;color:#cfe6f4}
+    .risque-l b{color:#fff}
+    .risque-h{font-size:1.12em;color:#ffd36c!important}
+    .risque.rouge .risque-h{color:#ff8f86!important}
+    .risque-l.aide{
+      margin-top:10px;padding:10px 12px;border-radius:9px;
+      background:rgba(91,255,156,.07);border-left:3px solid rgba(91,255,156,.55);
+      color:#c8ece0;
+    }
+    .risque-l.aide b{color:#8dffd0}
+    .bareme-liste{display:grid;gap:4px;margin:10px 0 0}
+    .bareme-l{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:6px 10px;border-radius:8px;font-size:12.5px;line-height:1.3;
+      background:rgba(142,231,255,.06);border-left:3px solid rgba(142,231,255,.45);
+      color:#cfe6f4;
+    }
+    .bareme-l.ambre{background:rgba(245,176,39,.09);border-left-color:var(--fnac);color:#ffe2a0}
+    .bareme-l.rouge{background:rgba(255,75,62,.11);border-left-color:#ff4b3e;color:#ffd0cd}
+    .bareme-l.actif{outline:1px solid rgba(255,255,255,.55);box-shadow:0 0 12px rgba(255,255,255,.18);font-weight:800}
+    .bareme-h{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+    .brief-cta{
+      display:block;width:100%;margin:0;height:46px;border:0;border-radius:12px;
+      background:var(--fnac);color:#111;font-family:inherit;
+      font-size:clamp(13px,1.9vw,15px);font-weight:900;letter-spacing:.02em;
+      cursor:pointer;
+    }
+    .brief-cta:disabled{opacity:.55;cursor:default}
+
+    @media(max-width:430px){
+      .brief-list li{grid-template-columns:19px 1fr;gap:9px}
+    }
+
+    .morse-sonar-panel{
+      display:grid;grid-template-columns:140px 1fr;gap:16px;align-items:center;
+      padding:16px;background:rgba(0,0,0,.32);
+      border:1px solid rgba(142,231,255,.18);border-radius:16px;
+    }
+    @media(max-width:560px){.morse-sonar-panel{grid-template-columns:1fr;justify-items:center;}}
+    .morse-sonar-screen{
+      position:relative;width:130px;height:130px;border-radius:50%;
+      background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.08),rgba(0,0,0,.25) 70%),#02120d;
+      border:3px solid rgba(91,255,156,.7);
+      box-shadow:0 0 18px rgba(91,255,156,.28),inset 0 0 18px rgba(91,255,156,.12);overflow:hidden;
+    }
+    .morse-sonar-screen:before{content:"";position:absolute;inset:22px;border:1px solid rgba(91,255,156,.22);border-radius:50%;box-shadow:0 0 0 18px rgba(91,255,156,.10),0 0 0 36px rgba(91,255,156,.06);}
+    .morse-sweep{position:absolute;left:50%;top:50%;width:50%;height:2px;background:linear-gradient(90deg,rgba(255,255,255,.95),rgba(91,255,156,.45),transparent);transform-origin:left center;animation:sonarRot 1.8s linear infinite;box-shadow:0 0 10px rgba(255,255,255,.7);}
+    @keyframes sonarRot{to{transform:rotate(360deg);}}
+    .morse-signal-light{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,#fff 0 5px,rgba(91,255,156,.7) 6px,transparent 12px);opacity:0;}
+    .morse-signal-light.on{opacity:1;}
+    .morse-controls{display:flex;flex-direction:column;gap:10px;align-items:stretch;}
+    .morse-listen-btn{width:100%;margin:0;background:var(--fnac);color:#111;font-weight:1000;border:0;border-radius:12px;padding:12px;font-size:15px;cursor:pointer;}
+    .morse-listen-btn:disabled{opacity:.45;cursor:not-allowed;}
+    .morse-counter{font-family:Consolas,"Courier New",monospace;font-size:13px;color:#9bc4d4;text-align:center;}
+    .morse-counter b{color:var(--fnac);font-size:15px;}
+
+    .morse-answer-zone{background:rgba(0,0,0,.28);border:1px solid rgba(142,231,255,.18);border-radius:16px;padding:16px;}
+    .morse-answer-label{display:block;font-size:11px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:8px;}
+    /* Zone de reponse : un seul bandeau qui s'allonge au fil de la frappe.
+       Les anciennes cases pre-dessinees (une par lettre) revelaient la
+       longueur du mot avant meme la premiere ecoute. */
+    .morse-typed{
+      min-height:52px;display:flex;align-items:center;justify-content:center;
+      flex-wrap:wrap;gap:2px;padding:8px 12px;margin-bottom:12px;
+      border-bottom:3px solid var(--fnac);border-radius:6px 6px 0 0;
+      background:rgba(255,255,255,.04);
+      font-family:Consolas,"Courier New",monospace;
+      font-size:clamp(20px,5vw,28px);font-weight:1000;letter-spacing:.18em;
+      color:#fff;text-shadow:0 0 10px rgba(142,231,255,.55);
+      word-break:break-all;transition:background .2s ease,color .2s ease;
+    }
+    .morse-typed-ph{color:rgba(155,196,212,.55);letter-spacing:0;font-size:20px;}
+    .morse-typed.wrong{background:rgba(255,75,62,.25);color:#ff7b72;}
+
+    .morse-keypad{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-width:480px;margin:0 auto 12px;}
+    @media(max-width:560px){.morse-keypad{grid-template-columns:repeat(6,1fr);}}
+    @media(max-width:380px){.morse-keypad{grid-template-columns:repeat(5,1fr);}}
+    .morse-key{
+      margin:0;padding:0;min-height:38px;
+      font-family:Consolas,"Courier New",monospace;font-size:16px;font-weight:1000;
+      background:rgba(142,231,255,.12);color:#8ee7ff;
+      border:1px solid rgba(142,231,255,.35);border-radius:8px;cursor:pointer;
+    }
+    .morse-key:hover:not(:disabled){background:rgba(142,231,255,.22);}
+    .morse-key:disabled{opacity:.3;cursor:not-allowed;}
+
+    .morse-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
+    .morse-actions button{margin:0;flex:1 1 130px;min-width:0;height:44px;border-radius:10px;font-weight:900;cursor:pointer;border:0;}
+    .morse-actions .secondary{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);}
+    .morse-actions .primary{background:var(--fnac);color:#111;}
+
+    /* .morse-hints-zone supprimé : wrapper inutile.
+       Le style (bordure pointillée) est porté par .morse-hints-grid. */
+    .morse-hint-target{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .morse-hint-target-info{color:#9bc4d4;font-size:12px;}
+    .morse-hint-target-info b{color:var(--fnac);}
+    .morse-hint-btn{
+      background:linear-gradient(135deg,#ffb74b,#f5b027);color:#111;
+      border:0;border-radius:10px;padding:11px 18px;font-weight:1000;cursor:pointer;
+      font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+      box-shadow:0 8px 18px rgba(245,176,39,.3);
+    }
+    .morse-hint-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+
+    .morse-hints-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;
+      padding:14px 16px;background:rgba(0,0,0,.22);
+      border:1px dashed rgba(142,231,255,.32);border-radius:16px;margin-bottom:12px;
+    }
+    .morse-hint-card{
+      padding:10px 12px;background:rgba(0,0,0,.32);
+      border:1px solid rgba(142,231,255,.22);border-radius:10px;
+      font-size:12px;line-height:1.45;color:#9bc4d4;
+      min-height:64px;
+    }
+    .morse-hint-card .morse-hint-card-label{color:#fff;font-weight:900;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+    .morse-hint-card.morse-hint-revealed{
+      background:rgba(91,255,156,.10);border-color:rgba(91,255,156,.5);color:#dfffe8;
+    }
+    .morse-hint-card.morse-hint-revealed .morse-hint-card-label{color:#5be09b;}
+
+    /* === Journal de bord === */
+    .morse-log{
+      background:rgba(0,0,0,.32);border:1px solid rgba(142,231,255,.18);
+      border-radius:16px;padding:14px;
+    }
+    .morse-log h3{margin:0 0 10px;color:var(--fnac);font-size:14px;letter-spacing:.06em;text-transform:uppercase;}
+    .morse-log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;}
+
+    /* === Lock screen === */
+    .lock-screen{text-align:center;padding:30px 20px;}
+    .lock-screen h2{color:#ff7b72;font-size:clamp(22px,4vw,32px);margin:0 0 10px;}
+    .lock-screen .countdown-big{font-family:Consolas,"Courier New",monospace;font-size:clamp(40px,9vw,80px);color:var(--fnac);font-weight:1000;text-shadow:0 0 18px rgba(245,176,39,.4);margin:16px 0;}
+    .lock-screen .lock-rule{color:#9bc4d4;font-size:13px;line-height:1.5;margin-top:14px;}
+
+    /* === Won screen === */
+    .won-screen{text-align:center;padding:30px 20px;}
+    .won-screen h2{color:#5be09b;font-size:clamp(26px,5vw,40px);margin:0 0 12px;}
+    .won-screen .reveal-code{
+      font-family:Consolas,"Courier New",monospace;font-size:clamp(28px,5vw,44px);
+      font-weight:1000;color:#111;background:var(--fnac);
+      border-radius:14px;padding:14px 22px;display:inline-block;margin:14px 0;
+      letter-spacing:.12em;
+    }
+    .won-screen .next-step-hint{color:#9bc4d4;font-size:14px;line-height:1.5;margin-top:10px;}
+
+    /* === Status banner === */
+    .status-banner{
+      padding:10px 14px;border-radius:12px;margin-bottom:12px;
+      font-size:13px;font-weight:800;line-height:1.45;
+    }
+    .status-banner.info{background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);color:#dff6ff;}
+    .status-banner.warning{background:rgba(245,176,39,.12);border:1px solid rgba(245,176,39,.45);color:#ffe2a0;}
+    .status-banner.danger{background:rgba(255,75,62,.14);border:1px solid rgba(255,75,62,.5);color:#ffd0cd;}
+    .status-banner.success{background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.45);color:#dfffe8;}
+
+    /* === Step access (code de palier) === */
+
+    /* ===== Reserve d'oxygene (haut de page) ===== */
+    .o2-bar{display:flex;align-items:center;gap:10px;margin:0 0 14px;
+      padding:9px 12px;border-radius:12px;
+      background:linear-gradient(135deg,rgba(5,16,28,.9),rgba(8,48,72,.9));
+      border:1px solid rgba(142,231,255,.22)}
+    .o2-label{flex:0 0 auto;font-size:10px;font-weight:900;letter-spacing:.09em;
+      text-transform:uppercase;color:#8ee7ff}
+    .o2-tube{position:relative;flex:1 1 auto;height:22px;border-radius:999px;
+      overflow:hidden;background:rgba(0,0,0,.45);
+      border:1px solid rgba(142,231,255,.28)}
+    /* La barre du haut est "sticky" (z-index 50) : elle reste collee en
+       haut quand on fait defiler. La jauge doit donc passer DESSOUS et
+       jamais par-dessus, d'ou un z-index volontairement plus bas. */
+    .o2-bar{position:relative;z-index:1}
+
+    /* MEMES COULEURS QUE LA JAUGE DE LA PAGE D'ACCUEIL (.oxygen-liquid).
+       Le mini-jeu affichait un degrade VERT alors que l'accueil affiche un
+       degrade BLEU : la meme reserve d'oxygene changeait donc de couleur
+       d'un ecran a l'autre, comme s'il s'agissait de deux informations
+       differentes. Les trois teintes ci-dessous sont copiees a
+       l'identique depuis index.html, etats d'alerte compris. */
+    .o2-fill{height:100%;width:100%;border-radius:999px;
+      background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);
+      box-shadow:0 0 12px rgba(142,231,255,.45),inset 0 0 10px rgba(255,255,255,.22);
+      transition:width .6s ease,background .6s ease}
+    /* Le pourcentage est ECRIT DANS la jauge, centre, avec un lisere noir
+       pour rester lisible aussi bien sur le vert que sur le fond sombre. */
+    .o2-pct{position:absolute;inset:0;display:flex;align-items:center;
+      justify-content:center;font-size:11px;font-weight:1000;color:#fff;
+      letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+    .o2-time{flex:0 0 auto;font-family:Consolas,"Courier New",monospace;
+      font-size:11px;font-weight:900;color:#cfe6ef;white-space:nowrap}
+    /* Alerte et niveau critique : memes degrades que sur l'accueil. */
+    .o2-bar.warn .o2-fill{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}
+    .o2-bar.crit .o2-fill{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c)}
+    @media(max-width:430px){
+      .o2-label{display:none}
+      .o2-time{font-size:10px}
+    }
+
+    /* === Animations === */
+    @keyframes slideInRight{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+    @keyframes slideOutRight{to{transform:translateX(120%);opacity:0;}}
+
+    .notif-floating{
+      position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);
+      z-index:10003;background:rgba(0,0,0,.92);color:#fff;
+      border:2px solid var(--fnac);border-radius:18px;padding:20px 28px;
+      font-size:clamp(16px,2.6vw,22px);font-weight:1000;text-align:center;
+      max-width:90vw;box-shadow:0 20px 50px rgba(0,0,0,.7);
+      opacity:0;pointer-events:none;transition:.3s opacity,.3s transform;
+    }
+    .notif-floating.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn">← Accueil</button>
+    <div class="topbar-title">Palier 1</div>
+  </div>
+  <!-- Le code technique de l'equipe (NEMO, NEDLAND...) n'apportait rien au
+       joueur : le nom de l'equipage figure juste a cote. Mention retiree. -->
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- Reserve d'oxygene : rappel permanent du compte a rebours commun aux
+       equipages. Le pourcentage est ecrit DANS la jauge, pour se lire d'un
+       coup d'oeil sans quitter le mini-jeu. -->
+  <div class="o2-bar" id="o2Bar" hidden>
+    <div class="o2-label">Réserve O₂</div>
+    <div class="o2-tube">
+      <div class="o2-fill" id="o2Fill"></div>
+      <span class="o2-pct" id="o2Pct">—</span>
+    </div>
+    <div class="o2-time" id="o2Time">—</div>
+  </div>
+
+  <!-- Section identification -->
+  <!-- Masque au depart : le matelot est identifie automatiquement par son
+       Code Matelot. Ce formulaire n'est reaffiche qu'en repli, si le code
+       est absent ou introuvable (voir autoIdentifyFromCode). Sans cela, il
+       apparaitrait une fraction de seconde avant de disparaitre. -->
+  <section class="card" id="identityCard" style="display:none">
+    <h2>👤 IDENTIFICATION MATELOT</h2>
+    <div class="body">
+      <p style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 12px;">
+        Pour rejoindre la partie, indique ton nom (et ton service). Si un équipier est déjà en plongée, tu le verras apparaître dans le journal de bord ci-dessous — tu prendras la main dès qu’il aura terminé.
+      </p>
+      <div class="identity-grid">
+        <div>
+          <label for="memberName">Ton nom</label>
+          <input id="memberName" placeholder="Ex. JULES VERNE" autocomplete="off" />
+        </div>
+        <div>
+          <label for="memberService">Ton service</label>
+          <select id="memberService">
+            <option>PE</option><option>PT</option><option>SAV</option>
+            <option>LOG</option><option>CAI</option><option>GAD</option><option>CODIR</option>
+          </select>
+        </div>
+        <button id="identifyBtn">Embarquer</button>
+      </div>
+      <div id="identifyMsg" style="margin-top:10px;"></div>
+    </div>
+  </section>
+
+  <!-- Pas de garde-fou d'URL : la sécurité est gérée par Firestore
+       (session liée à l'équipe + identification matelot obligatoire). -->
+
+  <!-- Statut équipe -->
+  <section class="card" id="teamCard" style="display:none;">
+    <h2>⚓ ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Un matelot est aux commandes"></span></h2>
+    <div class="body">
+      <div id="teamStatus" class="status-banner info">Connexion au sonar en cours…</div>
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- Journal de bord (live) -->
+  <section class="card" id="logCard" style="display:none;">
+    <h2>📜 JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3>Activité en direct</h3>
+        <ul id="morse-log-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Zone de jeu -->
+  <section class="card" id="gameCard" style="display:none;">
+    <h2 class="card-h2-split">
+      <span>🧪 ÉPREUVE DU PALIER</span>
+      <span class="card-h2-timer" id="gameCardTimer">
+        <span class="lbl">Temps imparti</span>
+        <span class="val" id="gameCardTimerVal">03:30</span>
+      </span>
+    </h2>
+    <div class="body" id="gameBody">
+      <div class="notice" style="background:rgba(11,52,78,.6);border:1px solid rgba(142,231,255,.3);color:#dff6ff;">
+        En attente d'un matelot pour rejoindre l'épreuve…
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="notif-floating" id="notifFloating"></div>
+
+<script type="module">
+/* === nautilus-core.js (inlined) === */
+/* =============================================================
+   NAUTILUS CORE — Module partagé entre toutes les pages palier.
+   Centralise : Firebase, audio helpers, math, format, live board.
+   ============================================================= */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+/* ---------- CONFIGURATION ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
+  authDomain: "mission-nautilus.firebaseapp.com",
+  projectId: "mission-nautilus",
+  storageBucket: "mission-nautilus.firebasestorage.app",
+  messagingSenderId: "444670686419",
+  appId: "1:444670686419:web:00d186940a2fb8c8c29026"
+};
+
+const TEAM_DEFS = [
+  { code: "NEMO",     name: "Nemo" },
+  { code: "NAUTILUS", name: "Nautilus" },
+  { code: "ARONNAX",  name: "Aronnax" },
+  { code: "NEDLAND",  name: "Ned Land" },
+  { code: "CALAMAR",  name: "Calamar" }
+];
+
+/* Définition officielle UIT-R M.1677-1 (caractères accentués inclus) */
+const MORSE_TABLE = {
+  A:'.-',   B:'-...', C:'-.-.', D:'-..',  E:'.',    F:'..-.', G:'--.',  H:'....',
+  I:'..',   J:'.---', K:'-.-',  L:'.-..', M:'--',   N:'-.',   O:'---',  P:'.--.',
+  Q:'--.-', R:'.-.',  S:'...',  T:'-',    U:'..-',  V:'...-', W:'.--', X:'-..-',
+  Y:'-.--', Z:'--..',
+  '0':'-----','1':'.----','2':'..---','3':'...--','4':'....-',
+  '5':'.....','6':'-....','7':'--...','8':'---..','9':'----.',
+  /* Caractères accentués selon UIT-R M.1677-1 */
+  'À':'.--.-', 'Ä':'.-.-', 'Å':'.--.-',
+  'É':'..-..', 'È':'.-..-',
+  'Ö':'---.',  'Ñ':'--.--',
+  'Ü':'..--',
+  'Ç':'-.-..',
+  'CH':'----'  /* digramme CH (suisse/allemand) */
+};
+
+const STEPS = {
+  start:     { label: "Palier 1", next: "livres" },
+  livres:    { label: "Palier 2", next: "son" },
+  son:       { label: "Palier 3", next: "zone51" },
+  zone51:    { label: "Palier 4", next: "occasion" },
+  occasion:  { label: "Palier 5", next: "papeterie" },
+  papeterie: { label: "Palier 6", next: "drone" },
+  drone:     { label: "Palier 7", next: "final" },
+  final:     { label: "Palier final", next: null }
+};
+
+/* Banque de mots : 40 mots, 7+ lettres, AVEC accents (UIT-R M.1677-1)
+   Chaque mot a un hint thématique interne (pour l'indice nº2 ou pour le log).
+   ATTENTION : ces mots varient l'épreuve (anti-triche par rejouabilité)
+   mais le LIEU DU QR DANS LE MAGASIN est FIXE — voir QR_LOCATION_HINT. */
+const MORSE_WORDS = [
+  { w:"NAUTILE",   h:"Animal marin à coquille spiralée" },
+  { w:"ABYSSES",   h:"Profondeurs inexplorées de l'océan" },
+  { w:"EPAVES",    h:"Épave = navire échoué au fond" },
+  { w:"EQUATEUR",  h:"Ligne imaginaire autour de la Terre" },
+  { w:"OCEANES",   h:"Vastes mers salées" },
+  { w:"RECIFAL",   h:"Qualifie un récif corallien" },
+  { w:"SOUSMARIN", h:"Bateau qui plonge sous l'eau" },
+  { w:"BARQUES",   h:"Petits bateaux de pêche" },
+  { w:"PHOQUES",   h:"Mammifères marins à nageoires" },
+  { w:"CETACES",   h:"Famille des baleines et dauphins" },
+  { w:"CORAIL",    h:"Animal qui forme les récifs" },
+  { w:"MEDUSES",   h:"Animaux gélatineux urticants" },
+  { w:"OURSINS",   h:"Petits animaux à piquants" },
+  { w:"CRUSTACE",  h:"Famille du crabe et de la crevette" },
+  { w:"BALEINES",  h:"Plus grands animaux marins" },
+  { w:"DAUPHINS",  h:"Cétacés intelligents et joueurs" },
+  { w:"REQUINS",   h:"Prédateurs au sourire de dents" },
+  { w:"ANCHOIS",   h:"Petits poissons bleus en banc" },
+  { w:"SARDINES",  h:"Petits poissons pêchés en boîte" },
+  { w:"MOULES",    h:"Mollusques des rochers" },
+  { w:"HUITRES",   h:"Mollusques précieux pour leurs perles" },
+  { w:"CREVETTES", h:"Petits crustacés roses" },
+  { w:"LANGOUSTE", h:"Grand crustacé à longues antennes" },
+  { w:"MAREEES",   h:"Mouvement quotidien de la mer" },
+  { w:"COURANTS",  h:"Flux d'eau continus dans l'océan" },
+  { w:"VAGUES",    h:"Elles roulent vers le rivage" },
+  { w:"ECUMES",    h:"Mousse blanche sur les crêtes" },
+  { w:"ALGUES",    h:"Végétaux marins" },
+  { w:"MANGROVE",  h:"Forêt des zones côtières tropicales" },
+  { w:"PROMENADE", h:"Chemin le long de la côte" },
+  { w:"PHARE",     h:"Tour qui guide les navires" },
+  { w:"MARINIER",  h:"Qui concerne les marins" },
+  { w:"PIRATES",   h:"Ecumeurs des mers du temps de la voile" },
+  { w:"FLIBUSTIER",h:"Pirate des Antilles" },
+  { w:"EQUIPAGES", h:"Équipes à bord d'un navire" },
+  { w:"MATELOTS",  h:"Marins d'équipage" },
+  { w:"CAPITAINE", h:"Commandant d'un navire" },
+  { w:"AMIRAUTE",  h:"Commandement supérieur de la marine" },
+  { w:"CHALUTIER", h:"Bateau de pêche au filet" },
+  { w:"SOUSMARINE",h:"Autre orthographe du sous-marin" }
+];
+
+/* Lieu FIXE du QR du palier 2 dans le magasin.
+   Ce texte est identique pour tous les mots tirés (le lieu ne dépend
+   pas du mot trouvé). C'est ici que l'équipe devra scanner
+   le QR pour obtenir le numéro secret du palier 2. */
+const QR_LOCATION_HINT = "📍 Direction la borne d'arcade au fond du magasin, derrière l'écran de démonstration.";
+
+/* ---------- INITIALISATION FIREBASE ---------- */
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ---------- HELPERS GÉNÉRIQUES ---------- */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const normalize = (s) => String(s || '').trim().toUpperCase();
+const memberKey = (name) => normalize(String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]/gi, ''));
+const simple = (s) => normalize(String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+function teamCodeFromInput(value) {
+  const wanted = simple(value);
+  const found = TEAM_DEFS.find(t => simple(t.code) === wanted || simple(t.name) === wanted);
+  return found ? found.code : String(value || '').trim();
+}
+function hashString(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+  return h;
+}
+
+/* Retrouve le mot d'une epreuve a partir de son empreinte (wordHash).
+
+   POURQUOI C'EST NECESSAIRE : le mot n'existait qu'en memoire vive, chez
+   le seul matelot qui avait lance l'epreuve. Des qu'il quittait la page
+   ou la rechargeait, ce mot etait perdu — l'indice "premiere lettre"
+   affichait alors un "?" et le bouton d'ecoute refusait de fonctionner,
+   alors que l'epreuve, elle, tournait toujours.
+   L'empreinte, elle, est bien enregistree dans la session. Comme les 40
+   mots de la banque ont des empreintes toutes differentes (verifie), on
+   remonte au mot sans ambiguite.
+   On ne stocke surtout PAS le mot en clair dans la session : n'importe
+   qui pourrait le lire et resoudre l'epreuve sans jouer. */
+function wordFromHash(hash) {
+  if (typeof hash !== 'number') return null;
+  const trouve = MORSE_WORDS.find(m => hashString(m.w) === hash);
+  return trouve ? trouve.w : null;
+}
+
+/* ---------- ROUTING PALIER (codes numériques) ---------- */
+/* Génère la série de codes : palier1 = 16 1 12 9 5 18 ; palier2 = +1 à chaque ; etc. */
+function getStepCode(stepId) {
+  /* Trouve l'index du palier (1-indexé) */
+  const stepKeys = Object.keys(STEPS);
+  const idx = stepKeys.indexOf(stepId);
+  if (idx < 0) return null;
+  /* "PALIER" = P(16) A(1) L(12) I(9) E(5) R(18) */
+  const base = [16, 1, 12, 9, 5, 18];
+  return base.map(n => n + idx).join('-');
+}
+function getStepIdFromCode(code) {
+  if (!code) return null;
+  const cleaned = String(code).replace(/[\s.-]/g, '');
+  if (cleaned.length !== 6) return null;
+  const digits = cleaned.split('').map(Number);
+  if (digits.some(isNaN)) return null;
+  /* Détermine l'offset : on cherche un idx tel que (16+idx, 1+idx, ..., 18+idx) = digits */
+  const offsets = digits.map((d, i) => d - [16,1,12,9,5,18][i]);
+  const offset = offsets[0];
+  if (!offsets.every(o => o === offset)) return null;
+  if (offset < 0 || offset >= Object.keys(STEPS).length) return null;
+  return Object.keys(STEPS)[offset];
+}
+
+/* ---------- SESSION COURANTE (équipage + identité joueur) ---------- */
+function getClientId() {
+  let id = localStorage.getItem('nautilusClientId');
+  if (!id) { id = 'P-' + Math.random().toString(36).slice(2, 10).toUpperCase(); localStorage.setItem('nautilusClientId', id); }
+  return id;
+}
+function getCurrentTeamCode() {
+  /* Lit ?code=XXX dans l'URL d'abord, puis localStorage */
+  const params = new URLSearchParams(location.search);
+  const fromUrl = params.get('code');
+  if (fromUrl) {
+    const clean = teamCodeFromInput(fromUrl);
+    localStorage.setItem('nautilusCurrentTeam', clean);
+    return clean;
+  }
+  return localStorage.getItem('nautilusCurrentTeam');
+}
+function setCurrentTeamCode(code) { localStorage.setItem('nautilusCurrentTeam', code); }
+
+/* Code Matelot transmis par la page d'accueil (?m=ABCD-1234), ou memorise
+   lors d'un passage precedent. Il permet d'identifier le joueur sans rien
+   lui redemander : il s'est deja connecte avec son code perso ou son lien
+   perso a l'embarquement. */
+function getCurrentMatelotCode() {
+  const params = new URLSearchParams(location.search);
+  const fromUrl = (params.get('m') || '').trim().toUpperCase();
+  if (fromUrl) {
+    localStorage.setItem('nautilusMatelotCode', fromUrl);
+    return fromUrl;
+  }
+  return (localStorage.getItem('nautilusMatelotCode') || '').trim().toUpperCase();
+}
+
+/* Retrouve la fiche du matelot (nom + service) a partir de son code.
+   Deux emplacements possibles, comme sur la page d'accueil :
+     1. teams/{equipe}/matelots/{code} : fiche complete
+     2. matelots/{code}                : index global (repli) */
+async function getMatelotByCode(teamCode, code) {
+  const cd = String(code || '').trim().toUpperCase();
+  if (!cd) return null;
+  try {
+    if (teamCode) {
+      const snap = await getDoc(doc(db, 'teams', teamCode, 'matelots', cd));
+      if (snap.exists()) return snap.data();
+    }
+    const idx = await getDoc(doc(db, 'matelots', cd));
+    if (idx.exists()) return idx.data();
+  } catch (e) { console.warn('getMatelotByCode:', e); }
+  return null;
+}
+
+/* ---------- ACCÈS FIRESTORE ---------- */
+async function getTeam(code) {
+  const cleanCode = teamCodeFromInput(code);
+  const snap = await getDoc(doc(db, 'teams', cleanCode));
+  return snap.exists() ? { teamCode: cleanCode, ...snap.data() } : null;
+}
+async function getTeamRealtime(code, callback) {
+  return onSnapshot(doc(db, 'teams', teamCodeFromInput(code)), (snap) => {
+    callback(snap.exists() ? { teamCode: teamCodeFromInput(code), ...snap.data() } : null);
+  });
+}
+/* ===== MODE TEST (compte fantome ZZZZ-0000) =====
+   Le compte de test doit pouvoir parcourir TOUT le jeu sans laisser la
+   moindre trace. Sans ce verrou, une partie d'essai perdue aurait bloque
+   une VRAIE equipe pendant 2 h, et une partie gagnee l'aurait fait avancer
+   au palier suivant.
+   Le verrou est place ici, dans les fonctions d'ecriture elles-memes :
+   toutes les ecritures existantes et futures sont ainsi couvertes, sans
+   avoir a y penser a chaque appel. */
+const TEST_MATELOT_CODE = 'ZZZZ-0000';
+
+function isTestMode() {
+  try { return (localStorage.getItem('nautilusMatelotCode') || '') === TEST_MATELOT_CODE; }
+  catch (e) { return false; }
+}
+
+/* Cette session appartient-elle au compte fantome ?
+
+   INCIDENT REEL : un vrai matelot s'est vu refuser l'entree avec le
+   message "TEST est aux commandes du protocole en cours". Une session
+   lancee par le compte de test etait restee enregistree en base, ecrite
+   AVANT la mise en place des verrous. Les verrous empechent d'en creer
+   de nouvelles, mais ne suppriment pas celles qui existaient deja.
+
+   On les reconnait donc a la lecture, et on les traite comme
+   inexistantes : une partie d'essai ne doit jamais apparaitre dans le
+   monde des vrais joueurs, ni les bloquer. */
+function isTestSession(session) {
+  if (!session) return false;
+  return session.startedByMatelot === TEST_MATELOT_CODE
+      || session.isTest === true
+      || session.startedByName === 'TEST';
+}
+
+/* Cette session est-elle PERIMEE ?
+
+   INCIDENT REEL : apres une remise a zero des progressions depuis le
+   panneau admin, un equipage se voyait accueilli par un chronometre a
+   00:00, sans pouvoir lancer quoi que ce soit.
+
+   Cause : le reset remet l'EQUIPE a neuf, mais la session du mini-jeu
+   vit dans un autre document (teams/{equipe}/morseSession/current) qui
+   n'etait pas touche. Une partie 'playing' commencee la veille restait
+   donc en base ; son temps etant depuis longtemps ecoule, le mini-jeu
+   affichait 00:00 et refusait de commencer.
+
+   Une partie 'playing' dont le temps imparti est depasse n'a plus aucun
+   sens : personne ne peut plus la jouer. On la considere donc comme
+   inexistante, ce qui laisse l'equipage repartir proprement. */
+function isStaleSession(session) {
+  if (!session) return false;
+
+  /* Une partie GAGNEE ou PERDUE reste enregistree en base pour que
+     l'ecran de resultat s'affiche. Mais elle ne doit pas s'imposer
+     indefiniment : sans limite de temps, l'equipage retrouvait
+     "epreuve validee" ou "partie terminee" a chaque visite, des jours
+     plus tard, sans jamais pouvoir relancer.
+
+     INCIDENT REEL : apres une remise a zero des progressions, l'ecran
+     de fin revenait quand meme, parce que le reset ne touchait pas ce
+     document.
+
+     On garde donc le resultat affiche pendant 30 minutes — largement de
+     quoi le lire et en parler entre matelots — puis la partie est
+     consideree comme terminee et l'equipage repart proprement. */
+  if (session.state === 'won' || session.state === 'lost') {
+    const fin = session.endedAt || session.lastEventAt || session.startedAt;
+    if (!fin) return true;
+    return (Date.now() - new Date(fin).getTime()) / 1000 > 1800;   // 30 min
+  }
+
+  if (session.state !== 'playing') return false;
+  if (!session.startedAt || !session.timeLimit) return true;   // session incomplete
+  const ecoule = (Date.now() - new Date(session.startedAt).getTime()) / 1000;
+  /* Marge d'une minute : on ne veut pas effacer une partie qui vient
+     tout juste d'expirer sous les yeux du joueur, l'ecran de defaite
+     doit pouvoir s'afficher normalement. */
+  return ecoule > (Number(session.timeLimit) + 60);
+}
+
+/* Session a ignorer : partie d'essai, ou partie perimee. */
+function isDeadSession(session) {
+  return isTestSession(session) || isStaleSession(session);
+}
+
+async function saveTeam(team, patch) {
+  if (!team || !team.teamCode) throw new Error('Équipe introuvable. Recharge la page.');
+  const updated = { ...patch, updatedAt: new Date().toISOString() };
+  // Mode test : on simule la mise a jour en memoire, rien n'est envoye.
+  if (isTestMode()) return { ...team, ...updated };
+  await updateDoc(doc(db, 'teams', team.teamCode), updated);
+  return { ...team, ...updated };
+}
+
+/* ---------- SESSION PARTAGÉE (sous-collection morseSession) ---------- */
+function sessionRef(teamCode) {
+  return doc(db, 'teams', teamCodeFromInput(teamCode), 'morseSession', 'current');
+}
+async function getSession(teamCode) {
+  const snap = await getDoc(sessionRef(teamCode));
+  const data = snap.exists() ? snap.data() : null;
+  /* Ni les parties d'essai, ni les parties perimees n'existent pour les
+     vrais joueurs. */
+  return isDeadSession(data) ? null : data;
+}
+/* Lecture BRUTE de la session, sans le filtre isDeadSession().
+   getSession() renvoie null pour une partie terminee ou perimee — c'est
+   voulu pour le jeu — mais on a besoin de relire une partie CLOSE pour y
+   recuperer les indices deja payes par l'equipage. */
+async function getSessionBrute(teamCode) {
+  const snap = await getDoc(sessionRef(teamCode));
+  return snap.exists() ? snap.data() : null;
+}
+function watchSession(teamCode, callback) {
+  return onSnapshot(sessionRef(teamCode), (snap) => {
+    const data = snap.exists() ? snap.data() : null;
+    callback(isDeadSession(data) ? null : data);
+  });
+}
+async function createSession(teamCode, data) {
+  if (isTestMode()) return;   // partie d'essai : aucune session partagee
+  /* Ceinture et bretelles : si une session du compte fantome parvenait
+     malgre tout jusqu'ici, elle serait au moins identifiable et donc
+     ignoree a la lecture. */
+  if (data && data.startedByMatelot === TEST_MATELOT_CODE) return;
+  await setDoc(sessionRef(teamCode), {
+    teamCode: teamCodeFromInput(teamCode),
+    state: 'playing',
+    startedAt: new Date().toISOString(),
+    attempts: 0,
+    errors: 0,
+    listensLeft: 3,
+    hintsRevealed: [false, false, false],
+    wordLength: 0,
+    wordHash: 0,
+    lastEvent: 'session_started',
+    lastEventAt: new Date().toISOString(),
+    ...data
+  });
+}
+async function updateSession(teamCode, patch) {
+  if (isTestMode()) return;
+  await updateDoc(sessionRef(teamCode), { ...patch, lastEventAt: new Date().toISOString() });
+}
+async function endSession(teamCode, reason) {
+  await updateSession(teamCode, { state: 'ended', endReason: reason, endedAt: new Date().toISOString() });
+}
+async function clearSession(teamCode) {
+  if (isTestMode()) return;
+  await setDoc(sessionRef(teamCode), { state: 'idle', clearedAt: new Date().toISOString() });
+}
+
+/* Configuration commune de la mission (game/config).
+   Contient notamment missionStartedAt : l'instant ou le premier matelot a
+   lance le palier 1, point de depart du compte a rebours des 7 jours. */
+async function getMissionConfig() {
+  try {
+    const snap = await getDoc(doc(db, 'game', 'config'));
+    return snap.exists() ? snap.data() : {};
+  } catch (e) { return null; }
+}
+
+/* ---------- BLOCAGE PROGRESSIF (PAR MATELOT) ---------- */
+/* REGLE DU JEU : un echec ne bloque QUE le matelot qui a echoue, jamais
+   tout l'equipage. Les autres peuvent reprendre le palier a tour de role.
+   Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e echec. */
+const LOCK_HOURS = [1, 2, 4, 8, 12];
+function getLockHours(failCount) {
+  const n = Math.max(1, Number(failCount) || 1);
+  return n <= LOCK_HOURS.length ? LOCK_HOURS[n - 1] : 24;
+}
+function getLockedUntilISO(failCount) {
+  const d = new Date();
+  d.setHours(d.getHours() + getLockHours(failCount));
+  return d.toISOString();
+}
+/* Blocage de tout l'equipage : ne subsiste que par decision d'un admin. */
+/* isLocked() a ete SUPPRIMEE : plus rien ne bloque une equipe entiere.
+   La page d'accueil en garde une version, uniquement pour deverrouiller
+   automatiquement une equipe restee bloquee en base par l'ancienne
+   version du jeu. */
+/* Fiche de blocage d'un matelot, rangee dans le document de l'equipe
+   sous matelotLocks[memberKey] = { failCount, lockedUntil, lastLockHours }. */
+function getMatelotLock(team, key) {
+  if (!team || !key) return null;
+  return (team.matelotLocks || {})[key] || null;
+}
+function isMatelotLocked(team, key) {
+  const l = getMatelotLock(team, key);
+  return !!(l && l.lockedUntil && new Date(l.lockedUntil).getTime() > Date.now());
+}
+function formatDate(iso) { return iso ? new Date(iso).toLocaleString('fr-FR') : '—'; }
+
+/* ---------- AUDIO WEB API ---------- */
+/* Le bouton "sonar" de la page d'accueil est l'interrupteur general du son
+   du jeu. Son etat est partage entre les pages via localStorage : si le
+   joueur a coupe le son, AUCUN bip du mini-jeu ne doit sortir ici non plus. */
+function isSoundEnabled() {
+  try { return localStorage.getItem('nautilusSoundOn') !== '0'; }
+  catch (e) { return true; }
+}
+
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!isSoundEnabled()) return null;   // sonar eteint : silence total
+  if (!_audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    _audioCtx = new AC();
+  }
+  return _audioCtx;
+}
+
+/* Tonalite du signal (point ou trait) sur le contexte courant */
+function playMorseTone(ctx, destination, freq, duration, startAt) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(0.32, startAt + 0.012);
+  gain.gain.setValueAtTime(0.32, startAt + duration - 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+  osc.connect(gain); gain.connect(destination);
+  osc.start(startAt); osc.stop(startAt + duration + 0.01);
+}
+
+/* Convertit un mot (avec accents) en séquence jouable */
+function wordToMorseSeq(word) {
+  const W = word.toUpperCase();
+  const seq = [];
+  for (let i = 0; i < W.length; i++) {
+    const ch = W[i];
+    /* Gestion du digramme CH */
+    if (ch === 'C' && W[i+1] === 'H' && MORSE_TABLE.CH) {
+      seq.push({ code: MORSE_TABLE.CH, letter: 'CH' });
+      i++;
+      continue;
+    }
+    const code = MORSE_TABLE[ch];
+    if (!code) continue;
+    seq.push({ code, letter: ch });
+  }
+  return seq;
+}
+
+/* Joue une sequence de signal a travers un noeud destination. */
+async function playMorseSequence(ctx, destination, word, opts = {}) {
+  const DOT = opts.dot ?? 0.18;
+  const DASH = DOT * 3;
+  const INTRA = DOT;
+  const INTER = DOT * 3;
+  const FREQ = opts.freq ?? 600;
+  const seq = wordToMorseSeq(word);
+  for (let i = 0; i < seq.length; i++) {
+    const item = seq[i];
+    const code = item.code;
+    let t = ctx.currentTime;
+    for (let s = 0; s < code.length; s++) {
+      const sign = code[s];
+      const dur = (sign === '.') ? DOT : DASH;
+      playMorseTone(ctx, destination, FREQ, dur, t);
+      t += dur;
+      if (s < code.length - 1) t += INTRA;
+    }
+    const letterDur = code.split('').reduce((acc, c) => acc + (c === '.' ? DOT : DASH), 0)
+      + (code.length - 1) * INTRA;
+    opts.onLetter && opts.onLetter(i, item);
+    await new Promise(r => setTimeout(r, letterDur * 1000));
+    if (i < seq.length - 1) await new Promise(r => setTimeout(r, INTER * 1000));
+  }
+}
+
+/* ---------- MOTS ALÉATOIRES (avec rotation post-épuisement) ---------- */
+const _usedWords = new Set();
+function pickWord() {
+  /* Si tous les mots ont été utilisés, on reset */
+  if (_usedWords.size >= MORSE_WORDS.length) _usedWords.clear();
+  const available = MORSE_WORDS.filter((_, i) => !_usedWords.has(i));
+  /* Mais on accède par index, pas par mot. Convertissons. */
+  const idx = Math.floor(Math.random() * available.length);
+  const realIdx = MORSE_WORDS.indexOf(available[idx]);
+  _usedWords.add(realIdx);
+  return MORSE_WORDS[realIdx];
+}
+function markHintsExhausted(word) {
+  /* Le mot sera changé à la prochaine partie */
+  const idx = MORSE_WORDS.findIndex(m => m.w === word);
+  if (idx >= 0) _usedWords.add(idx);
+}
+
+/* ---------- UI HELPERS (chambre de pilotage live) ---------- */
+function showToast(message, type = 'info', duration = 4000) {
+  let container = document.getElementById('nautilus-toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'nautilus-toast-container';
+    container.style.cssText = 'position:fixed;top:80px;right:14px;z-index:10002;display:flex;flex-direction:column;gap:8px;max-width:min(360px,92vw);';
+    document.body.appendChild(container);
+  }
+  const colors = {
+    info: { bg: 'rgba(11,52,78,.95)', border: 'rgba(142,231,255,.55)', color: '#eaf8ff' },
+    success: { bg: 'rgba(11,76,42,.95)', border: 'rgba(174,229,202,.6)', color: '#effff7' },
+    warning: { bg: 'rgba(76,38,11,.95)', border: 'rgba(232,192,95,.6)', color: '#fff4d8' },
+    danger:  { bg: 'rgba(76,11,11,.95)', border: 'rgba(255,75,62,.7)', color: '#fff' }
+  };
+  const c = colors[type] || colors.info;
+  const el = document.createElement('div');
+  el.style.cssText = `background:${c.bg};border:1px solid ${c.border};color:${c.color};border-radius:14px;padding:12px 14px;font-weight:800;font-size:13px;line-height:1.45;box-shadow:0 12px 28px rgba(0,0,0,.4);animation:slideInRight .3s ease;`;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'slideOutRight .3s ease forwards';
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+/* ---------- LIVE BOARD (journal de bord temps réel) ---------- */
+function addLogEntry(text, kind = 'info', quand) {
+  const list = document.getElementById('morse-log-list');
+  if (!list) return;
+  const colors = {
+    info:    { dot: '#8ee7ff', border: 'rgba(142,231,255,.4)' },
+    success: { dot: '#5be09b', border: 'rgba(91,255,156,.5)' },
+    warning: { dot: '#ffd36c', border: 'rgba(245,176,39,.5)' },
+    danger:  { dot: '#ff7b72', border: 'rgba(255,75,62,.55)' }
+  };
+  const c = colors[kind] || colors.info;
+
+  /* CHRONOLOGIE GARANTIE.
+
+     BUG CORRIGE : les lignes apparaissaient dans le desordre — on pouvait
+     lire "X a rejoint l'equipage" APRES ses echecs. Chaque ligne etait
+     simplement posee en haut de la liste au moment ou la fonction etait
+     appelee. Or certains messages sont ecrits APRES une reponse du
+     reseau (saveTeam...) et d'autres immediatement : un message rapide
+     doublait donc un message lent, et l'ordre affiche ne correspondait
+     plus a l'ordre reel des evenements.
+
+     Deux corrections :
+     - chaque ligne porte desormais l'INSTANT REEL de l'evenement. Un
+       appel peut fournir cet instant s'il a ete retarde par le reseau ;
+     - l'insertion se fait A LA BONNE PLACE dans la liste, en comparant
+       les horodatages, au lieu d'ajouter aveuglement en tete. */
+  const t = (quand instanceof Date) ? quand : new Date();
+  /* JOUR ET HEURE, meme format court que le journal du poste de pilotage
+     ("06/08 00:09"). Une epreuve peut etre reprise le lendemain apres un
+     blocage : sans le jour, deux lignes eloignees de 24 h affichaient la
+     meme chose. */
+  const p2 = (n) => String(n).padStart(2, '0');
+  const heure = p2(t.getDate()) + '/' + p2(t.getMonth() + 1) + ' '
+              + p2(t.getHours()) + ':' + p2(t.getMinutes());
+
+  const li = document.createElement('li');
+  li.className = 'morse-log-entry';
+  li.dataset.t = String(t.getTime());
+  li.style.cssText = `display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-left:3px solid ${c.border};background:rgba(0,0,0,.22);border-radius:8px;`;
+
+  /* On echappe TOUT — un nom de matelot est saisi librement et ne doit
+     jamais pouvoir injecter du code — puis on retablit uniquement <b> et
+     </b>, les deux seules balises autorisees ici. */
+  const texteRendu = esc(text)
+    .replace(/&lt;b&gt;/g, '<b>')
+    .replace(/&lt;\/b&gt;/g, '</b>');
+
+  li.innerHTML = `
+    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.dot};box-shadow:0 0 8px ${c.dot};flex:0 0 10px;margin-top:5px;"></span>
+    <span style="flex:1;min-width:0;color:#dff6ff;line-height:1.4;">${texteRendu}</span>
+    <span style="flex:0 0 auto;color:rgba(142,231,255,.42);font-size:11px;font-family:Consolas,'Courier New',monospace;margin-top:3px;white-space:nowrap;">${heure}</span>
+  `;
+
+  /* Insertion triee : la liste va du plus RECENT (en haut) au plus ancien.
+     On descend jusqu'a trouver une ligne plus ancienne que la notre. */
+  const ms = t.getTime();
+  let place = null;
+  for (const ligne of list.children) {
+    if (Number(ligne.dataset.t || 0) <= ms) { place = ligne; break; }
+  }
+  if (place) list.insertBefore(li, place);
+  else list.appendChild(li);
+
+  /* Limite a 20 entrees : on retire les plus ANCIENNES (en bas). */
+  while (list.children.length > 20) list.removeChild(list.lastChild);
+}
+function clearLog() {
+  const list = document.getElementById('morse-log-list');
+  if (list) list.innerHTML = '';
+}
+
+/* ---------- HEARTBEAT (mise à jour lastSeen du membre) ---------- */
+async function heartbeat(teamCode) {
+  // Mode test : ne pas apparaitre dans le compteur "en ligne" des joueurs.
+  if (isTestMode()) return;
+  const team = await getTeam(teamCode);
+  if (!team) return;
+  const online = { ...(team.onlinePlayers || {}), [getClientId()]: new Date().toISOString() };
+  await updateDoc(doc(db, 'teams', teamCode), { onlinePlayers: online, updatedAt: new Date().toISOString() });
+}
+
+/* ---------- EXPORT GLOBAL ---------- */
+window.Nautilus = {
+  /* Constantes */
+  TEAM_DEFS, MORSE_TABLE, MORSE_WORDS, STEPS, QR_LOCATION_HINT,
+  /* Firebase */
+  db, app,
+  /* Helpers */
+  $, esc, normalize, memberKey, simple, teamCodeFromInput, hashString,
+  getStepCode, getStepIdFromCode, wordFromHash,
+  getClientId, getCurrentTeamCode, setCurrentTeamCode,
+  getCurrentMatelotCode, getMatelotByCode,
+  getTeam, getTeamRealtime, saveTeam,
+  sessionRef, getSession, getSessionBrute, watchSession, createSession, updateSession, endSession, clearSession,
+  getLockHours, getLockedUntilISO, getMatelotLock, isMatelotLocked, formatDate,
+  getMissionConfig,
+  isTestMode,
+  isSoundEnabled, getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
+  pickWord, markHintsExhausted,
+  showToast, addLogEntry, clearLog, heartbeat
+};
+
+
+/* === 161129518.html script (inlined) === */
+/* nautilus-core.js inliné ci-dessus (définit $, esc, N via window.Nautilus).
+   On wrap le code palier dans une IIFE pour éviter les conflits de noms
+   avec les helpers du core ($ et esc). */
+(() => {
+  const N = window.Nautilus;
+  const esc = N.esc;
+
+  /* === État global === */
+  const state = {
+    teamCode: N.getCurrentTeamCode(),
+    me: null,                // { name, service, memberKey, clientId }
+    team: null,              // team doc Firestore
+    session: null,           // session doc Firestore
+    word: null,              // mot courant (uniquement si je suis le joueur actif)
+    role: 'spectator',       // 'player' | 'spectator' | 'idle'
+    timerHandle: null,
+    unsubSession: null,
+    unsubTeam: null,
+    hintFlashTimeout: null
+  };
+
+  /* === Helpers UI === */
+
+  function setStatus(text, kind = 'info') {
+    const el = $('teamStatus');
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'status-banner ' + kind;
+  }
+
+  /* ===== RESERVE D'OXYGENE (bandeau du haut) =====
+
+     Le compte a rebours des 7 jours est COMMUN a tous les equipages. Il
+     demarre quand le tout premier matelot lance le palier 1, et sa date
+     de depart vit dans game/config (missionStartedAt), ecrite par la page
+     d'accueil.
+
+     On la relit ici pour afficher la meme information pendant le mini-jeu :
+     le joueur voit ou en est la reserve sans quitter sa partie. Le
+     pourcentage est ecrit DANS la jauge.
+
+     Tant que la mission n'est pas lancee, le bandeau reste masque : il
+     n'aurait rien a montrer. */
+  let _o2Config = null;
+
+  /* MEME MEMOIRE QUE LA PAGE D'ACCUEIL (cle 'nautilusMissionConfig').
+     La jauge restait CACHEE tant que le serveur n'avait pas repondu : au
+     lancement du mini-jeu, elle apparaissait brutalement une seconde plus
+     tard, ce qui decalait toute la page sous les yeux du joueur.
+     On repart donc de la derniere configuration connue de l'appareil —
+     posee par la page d'accueil, que le matelot vient forcement de
+     traverser — puis on la corrige des la reponse du serveur. */
+  const MISSION_CFG_KEY = 'nautilusMissionConfig';
+
+  function configDepuisMemoire() {
+    try {
+      const brut = localStorage.getItem(MISSION_CFG_KEY);
+      if (!brut) return null;
+      const cfg = JSON.parse(brut);
+      if (cfg && (cfg.missionStartedAt === null || typeof cfg.missionStartedAt === 'string')) {
+        return cfg;
+      }
+    } catch (e) { /* memoire indisponible */ }
+    return null;
+  }
+
+  async function chargerConfigO2() {
+    const frais = await N.getMissionConfig();
+    /* Une lecture ratee (reseau coupe) renvoie null : dans ce cas on
+       GARDE la valeur memorisee plutot que d'effacer la jauge. */
+    if (frais) {
+      _o2Config = frais;
+      try {
+        localStorage.setItem(MISSION_CFG_KEY, JSON.stringify({
+          missionStartedAt: frais.missionStartedAt ?? null,
+          missionDurationMs: frais.missionDurationMs ?? null
+        }));
+      } catch (e) { /* sans consequence */ }
+    }
+  }
+
+  function majReserveO2() {
+    const bar = $('o2Bar');
+    if (!bar) return;
+    const depart = _o2Config?.missionStartedAt;
+    if (!depart) { bar.hidden = true; return; }
+
+    const duree = (typeof _o2Config?.missionDurationMs === 'number'
+                   && _o2Config.missionDurationMs > 0)
+      ? _o2Config.missionDurationMs
+      : 7 * 24 * 60 * 60 * 1000;
+
+    const fin = new Date(depart).getTime() + duree;
+    let reste = Math.max(0, fin - Date.now());
+    /* MEME CALCUL QUE LA PAGE D'ACCUEIL, au chiffre pres : arrondi au
+       plus proche, mais jamais "100 %" si du temps a ete consomme, ni
+       "0 %" s'il en reste. */
+    const ratio = reste / duree;
+    const pctBrut = ratio * 100;
+    const pct = pctBrut >= 100 ? 100
+              : pctBrut <= 0   ? 0
+              : Math.min(99, Math.max(1, Math.round(pctBrut)));
+    /* La barre suit la valeur non arrondie : descente continue plutot que
+       des sauts de 1 % toutes les 1 h 40. */
+    const pctPrecis = Math.max(0, Math.min(100, ratio * 100));
+
+    const j = Math.floor(reste / 86400000); reste -= j * 86400000;
+    const h = Math.floor(reste / 3600000);  reste -= h * 3600000;
+    const m = Math.floor(reste / 60000);
+
+    bar.hidden = false;
+    $('o2Fill').style.width = pctPrecis.toFixed(3) + '%';
+    $('o2Pct').textContent = pct + '%';
+    $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m`;
+    /* MEMES SEUILS QUE L'ACCUEIL : la jauge passait ici a l'orange a 40 %
+       et au rouge a 15 %, contre 50 % et 20 % sur la page d'accueil. Un
+       equipage a 45 % voyait donc du bleu sur un ecran et de l'orange sur
+       l'autre, au meme instant. */
+    bar.classList.toggle('warn', pct <= 50 && pct > 20);
+    bar.classList.toggle('crit', pct <= 20);
+  }
+
+  /* === Boot === */
+  (async function init() {
+    /* La reserve d'oxygene s'affiche des l'ouverture, puis se rafraichit
+       toutes les 30 s : inutile d'aller plus vite pour un compte a rebours
+       de 7 jours, et cela evite de solliciter le telephone pour rien. */
+    /* Affichage IMMEDIAT depuis la memoire, avant toute lecture reseau. */
+    _o2Config = configDepuisMemoire();
+    if (_o2Config) majReserveO2();
+
+    chargerConfigO2().then(() => {
+      majReserveO2();
+      setInterval(majReserveO2, 30000);
+      /* La date de depart peut etre posee pendant la partie (un autre
+         equipage lance la mission) : on la reverifie de temps en temps. */
+      setInterval(() => chargerConfigO2().then(majReserveO2), 120000);
+    });
+
+    /* 1) Vérifier équipe */
+    if (!state.teamCode) {
+      // Le message d'erreur vit dans ce bloc : il faut le rendre visible.
+      $('identityCard').style.display = 'block';
+      $('identifyMsg').innerHTML = `<div class="status-banner warning">⚠️ Aucun équipage détecté. <a href="index.html" style="color:var(--fnac);text-decoration:underline;">Retourne à l'accueil pour embarquer</a>.</div>`;
+      $('identifyBtn').disabled = true;
+    } else {
+      /* Affichage provisoire le temps que l'equipe se charge : on montre
+         des points de suspension plutot que le code technique (NEMO...),
+         que le joueur n'a pas besoin de voir. onTeamUpdate() y mettra
+         ensuite le vrai nom d'equipage. */
+      $('topTeam').textContent = '…';
+      $('identifyBtn').addEventListener('click', identify);
+      $('memberName').addEventListener('keydown', e => { if (e.key === 'Enter') identify(); });
+      /* Auto-remplir si on a déjà un nom en local */
+      const cached = localStorage.getItem('nautilusLastMember');
+      if (cached) {
+        try { const m = JSON.parse(cached); $('memberName').value = m.name || ''; $('memberService').value = m.service || 'PE'; } catch(e){}
+      }
+      /* Le drapeau du mode test doit etre pose AVANT de brancher l'ecoute
+         temps reel : sinon la premiere reponse de Firestore ecraserait
+         l'equipage fictif avant meme qu'il soit cree. */
+      state.isTest = (N.getCurrentMatelotCode() === 'ZZZZ-0000');
+
+      /* Charge l'équipe + branche les listeners live */
+      await attachTeamListener();
+
+      /* ===== IDENTIFICATION AUTOMATIQUE =====
+         Le matelot s'est deja identifie sur la page d'accueil, avec son
+         Code Matelot ou son lien personnel (QR). Lui redemander son nom et
+         son service ici n'a plus de sens : on retrouve sa fiche a partir
+         de son code et on entre directement dans le mini-jeu.
+         Le formulaire reste dans la page et sert de repli : il ne
+         s'affiche que si le code est absent ou introuvable (arrivee
+         directe sur cette page, code efface, base injoignable). */
+      const auto = await autoIdentifyFromCode();
+      if (!auto) {
+        // Repli : pas de code exploitable, on demande l'identite.
+        $('identityCard').style.display = 'block';
+      }
+    }
+  })();
+
+  // Ancienne fonction validateAccessCode supprimée (plus de garde-fou d'URL).
+
+  /* === Identification automatique par Code Matelot ===
+     Retrouve la fiche du matelot et entre dans le jeu sans rien demander.
+     Renvoie true si l'entree a reussi. */
+  async function autoIdentifyFromCode() {
+    const code = N.getCurrentMatelotCode();
+    if (!code) return false;                 // pas de code : on garde le formulaire
+
+    /* Compte de test (ZZZZ-0000) : il n'existe pas en base, on fabrique son
+       identite a la volee. Il n'est PAS ajoute a members[] : il doit rester
+       invisible pour les vrais joueurs. */
+    if (code === 'ZZZZ-0000') {
+      state.isTest = true;
+      state.me = {
+        name: 'TEST', service: 'CODIR',
+        memberKey: N.memberKey('TEST'),
+        clientId: N.getClientId(),
+        isTest: true
+      };
+      /* EQUIPAGE FICTIF : le compte fantome ne doit pas apparaitre dans une
+         vraie equipe, ni voir ses membres. On remplace donc l'equipage par
+         un equipage d'un seul matelot : lui-meme. Il joue ainsi exactement
+         comme un nouveau venu, seul a bord. */
+      /* Etat NEUF, et non une copie de la vraie equipe : sinon le testeur
+         heriterait de son blocage ou de sa progression, et se retrouverait
+         devant "Equipage en surface" ou "palier deja termine" au lieu de
+         pouvoir jouer. Il demarre comme un tout nouvel equipage. */
+      state.team = {
+        teamCode: state.teamCode,
+        teamName: 'Équipage de test',
+        currentStep: 'start',
+        status: 'active',
+        lockedUntil: null,
+        failCount: 0,
+        completedSteps: [],
+        onlinePlayers: {},
+        members: [{
+          name: 'TEST', service: 'CODIR',
+          memberKey: state.me.memberKey,
+          registeredAt: new Date().toISOString()
+        }]
+      };
+      state.session = null;   // aucune epreuve en cours au depart
+      $('topTeam').textContent = 'Équipage de test';
+      N.showToast('Mode test : partie d\'essai, rien n\'est enregistré.', 'info');
+      renderCrew();
+      $('identityCard').style.display = 'none';
+      showGame();
+      return true;
+    }
+
+    const fiche = await N.getMatelotByCode(state.teamCode, code);
+    if (!fiche || !fiche.name) return false; // code inconnu : repli sur le formulaire
+
+    /* Securite : le code doit appartenir a l'equipage de cette session.
+       Sinon un matelot d'une autre equipe pourrait jouer ici par erreur. */
+    if (fiche.teamCode && fiche.teamCode !== state.teamCode) return false;
+
+    const key = N.memberKey(fiche.name);
+    state.me = {
+      name: String(fiche.name).toUpperCase(),
+      service: fiche.service || 'PE',
+      memberKey: key,
+      clientId: N.getClientId()
+    };
+
+    /* Le matelot est deja inscrit dans l'equipe cote accueil. On ne
+       l'ajoute a members[] que s'il en est absent (cas d'une fiche creee
+       avant ce mecanisme). */
+    const already = (state.team?.members || []).some(m => m.memberKey === key);
+    if (!already && state.team) {
+      try {
+        await N.saveTeam(state.team, {
+          members: [...(state.team.members || []), {
+            name: state.me.name, service: state.me.service,
+            memberKey: key, registeredAt: new Date().toISOString()
+          }]
+        });
+      } catch (e) { console.warn('autoIdentify saveTeam:', e); }
+    }
+
+    localStorage.setItem('nautilusLastMember', JSON.stringify(state.me));
+    N.showToast(`Bienvenue à bord, ${state.me.name}.`, 'success');
+    renderCrew();
+
+    N.heartbeat(state.teamCode);
+    if (!state._heartbeatInterval) {
+      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode), 30000);
+    }
+
+    // Le formulaire n'a jamais besoin d'apparaitre : on le retire tout de suite.
+    $('identityCard').style.display = 'none';
+    showGame();
+    return true;
+  }
+
+  /* === Identification joueur === */
+  async function identify() {
+    const name = $('memberName').value.trim();
+    const service = $('memberService').value;
+    if (!name) { N.showToast('Indique ton nom pour embarquer.', 'warning'); return; }
+    if (!state.team) { N.showToast('Connexion à l\'équipage en cours…', 'warning'); return; }
+    const key = N.memberKey(name);
+    /* Vérifier si on n'est pas déjà membre */
+    const existing = (state.team.members || []).find(m => m.memberKey === key);
+    if (existing) {
+      /* On remplace l'identité locale (ré-embarquement) */
+      state.me = { name: existing.name, service: existing.service, memberKey: key, clientId: N.getClientId() };
+    } else {
+      /* Ajout comme nouveau membre */
+      const member = { name: name.toUpperCase(), service, memberKey: key, registeredAt: new Date().toISOString() };
+      const members = [...(state.team.members || []), member];
+      /* Instant releve AVANT l'ecriture reseau : la ligne du journal doit
+         porter l'heure de l'arrivee du matelot, pas celle de la reponse
+         du serveur — sinon elle se retrouve apres des evenements
+         pourtant posterieurs. */
+      const instantArrivee = new Date();
+      try {
+        await N.saveTeam(state.team, { members });
+        state.me = { name: member.name, service, memberKey: key, clientId: N.getClientId() };
+        N.addLogEntry(`${member.name} a rejoint l'équipage.`, 'info', instantArrivee);
+      } catch (err) {
+        $('identifyMsg').innerHTML = `<div class="status-banner danger">❌ Erreur : ${esc(err.message)}</div>`;
+        return;
+      }
+    }
+    /* Stocker en local pour auto-remplissage */
+    localStorage.setItem('nautilusLastMember', JSON.stringify(state.me));
+    $('identifyMsg').innerHTML = `<div class="status-banner success">✅ Bienvenue à bord, <b>${esc(state.me.name)}</b> !</div>`;
+    N.showToast(`${state.me.name} a embarqué.`, 'success');
+    renderCrew();
+    /* Heartbeat */
+    N.heartbeat(state.teamCode);
+    if (!state._heartbeatInterval) state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode), 30000);
+    /* Cacher l'identification */
+    setTimeout(() => { $('identityCard').style.display = 'none'; }, 1000);
+    showGame();
+  }
+
+  /* === Listeners live === */
+  async function attachTeamListener() {
+    if (state.unsubTeam) state.unsubTeam();
+    state.unsubTeam = N.getTeamRealtime(state.teamCode, (team) => {
+      if (!team) {
+        setStatus('Équipage introuvable.', 'danger');
+        return;
+      }
+      /* MODE TEST : on ignore les mises a jour de la vraie equipe, sinon
+         l'equipage fictif du testeur serait remplace par le vrai (et son
+         eventuel blocage s'appliquerait a la partie d'essai). */
+      if (state.isTest) return;
+      state.team = team;
+      onTeamUpdate();
+    });
+  }
+  function onTeamUpdate() {
+    const t = state.team;
+    $('topTeam').textContent = t.teamName || t.teamCode;
+    /* Bandeau statut */
+    const monBlocage = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
+    const jeSuisBloque = state.me ? N.isMatelotLocked(t, state.me.memberKey) : false;
+    /* PLUS DE CAS "equipage bloque" : depuis que le blocage est personnel,
+       plus rien ne bloque une equipe entiere. */
+    if (jeSuisBloque) {
+      setStatus(`🔒 Tu es en surface jusqu'à ${N.formatDate(monBlocage.lockedUntil)} — ${monBlocage.failCount || 0} échec(s) personnel(s). L'équipage, lui, continue.`, 'danger');
+    } else if (t.status === 'finished') {
+      setStatus('🏆 Mission terminée. Carnet de bord scellé.', 'success');
+    } else {
+      setStatus(`Position : ${N.STEPS[t.currentStep]?.label || t.currentStep} · ${(t.members||[]).length} membre(s) à bord.`, 'info');
+    }
+    renderCrew();
+    showGame();
+    /* BUG CORRIGE : showGame() ne redessine la zone de jeu que la premiere
+       fois (elle se contente ensuite de brancher l'ecoute de session). Un
+       changement venu du document d'equipe — notamment la pose ou la levee
+       d'un blocage PERSONNEL — n'apparaissait donc jamais a l'ecran tant
+       que la session ne bougeait pas. On redessine explicitement. */
+    if (state.me) renderGameArea();
+  }
+  function renderCrew() {
+    const list = $('crewList');
+    if (!list || !state.team) return;
+    const members = state.team.members || [];
+    list.innerHTML = members.map(m => {
+      const isMe = state.me && m.memberKey === state.me.memberKey;
+      return `
+        <div class="crew-member ${isMe ? 'self' : ''}">
+          <div class="crew-name">${esc(m.name)} ${isMe ? '(toi)' : ''}</div>
+          <div class="crew-meta">${esc(m.service || '—')}</div>
+        </div>
+      `;
+    }).join('') || `<div style="color:#9bc4d4;font-size:13px;grid-column:1/-1;">Aucun matelot encore inscrit.</div>`;
+  }
+
+  /* === Affichage principal du jeu === */
+  function showGame() {
+    if (!state.team) return;
+    if (!state.me) { return; } /* pas encore identifié */
+    $('teamCard').style.display = 'block';
+    $('logCard').style.display = 'block';
+    $('gameCard').style.display = 'block';
+
+    /* Branche le listener de session si pas déjà fait.
+       MODE TEST : surtout pas. La session d'essai vit uniquement en memoire ;
+       l'ecoute temps reel renverrait la session REELLE de l'equipe (ou null)
+       et ecraserait la partie en cours du testeur. */
+    if (!state.unsubSession && !state.isTest) {
+      state.unsubSession = N.watchSession(state.teamCode, onSessionUpdate);
+    }
+
+    /* BUG CORRIGE : sans ecoute temps reel, plus personne ne declenchait le
+       rendu de la zone de jeu. Le compte de test restait donc bloque sur le
+       texte d'attente "En attente d'un matelot..." et ne pouvait rien
+       tester. On dessine la zone tout de suite. */
+    if (state.isTest) renderGameArea();
+  }
+
+  function onSessionUpdate(session) {
+    state.session = session;
+    /* RESTAURATION DU MOT apres un retour sur le jeu.
+       Le mot ne vivait qu'en memoire vive : au moindre rechargement de la
+       page, ou en revenant depuis l'accueil, il etait perdu. L'indice
+       "premiere lettre" affichait alors "?" et le bouton d'ecoute
+       refusait de jouer le signal, alors que l'epreuve tournait toujours.
+       On le reconstruit ici, a partir de l'empreinte enregistree dans la
+       session, des qu'il manque. */
+    if (!state.word && session && typeof session.wordHash === 'number') {
+      const retrouve = N.wordFromHash(session.wordHash);
+      if (retrouve) state.word = retrouve;
+    }
+    /* Epreuve terminee : on oublie le mot, pour que la partie suivante ne
+       reparte pas avec l'ancien. */
+    if (!session || session.state !== 'playing') state.word = null;
+    renderGameArea();
+  }
+
+  /* Allume ou eteint le voyant rouge de l'encart "Equipage actif en
+     plongee". Il ne s'allume QUE si une epreuve est reellement en cours
+     (state 'playing') : ni une partie gagnee, ni une partie perdue, ni un
+     ecran d'attente ne doivent le faire clignoter. */
+  function majVoyantPlongee() {
+    const lamp = $('diveLamp');
+    if (!lamp) return;
+    const s = state.session;
+    const enCours = !!(s && s.state === 'playing');
+    lamp.classList.toggle('on', enCours);
+    lamp.setAttribute('title', enCours
+      ? `${s.startedByName || 'Un matelot'} est aux commandes`
+      : 'Aucun matelot aux commandes');
+  }
+
+  /* === Rendu de la zone de jeu === */
+  function renderGameArea() {
+    const body = $('gameBody');
+    if (!body) return;
+    const t = state.team;
+    const s = state.session;
+    const me = state.me;
+
+    /* Le voyant suit CHAQUE redessin : c'est le point de passage commun a
+       tous les changements d'etat (debut de partie, victoire, defaite,
+       indice demande, reprise par un autre matelot). Le placer ici evite
+       d'avoir a y penser dans chacun de ces cas. */
+    majVoyantPlongee();
+
+    /* Chrono de la barre de titre. Hors partie, il RETOMBE sur le temps
+       imparti (03:30) : sans cette remise a zero, il restait fige sur le
+       dernier temps affiche — un "00:07" trompeur apres une defaite, ou
+       le reliquat de la partie precedente sur l'ecran d'accueil.
+       Pendant une partie, ce sont les minuteries de bindPlayerEvents /
+       renderSpectatorScreen qui prennent le relais chaque demi-seconde. */
+    if (s && s.state === 'playing') {
+      majChronoTitre(computeRemaining(s), 'Temps restant');
+    } else {
+      if (state.timerHandle) { clearInterval(state.timerHandle); state.timerHandle = null; }
+      majChronoTitre(210, 'Temps imparti');
+    }
+
+    /* Blocage PERSONNEL : seul le matelot qui a échoué est repoussé en
+       surface. Les autres continuent de jouer normalement.
+       EXCEPTION : juste après sa défaite, on lui laisse d'abord l'écran
+       "trop d'erreurs" (qui indique déjà son heure de reprise), sinon il
+       passerait directement au verrou sans comprendre ce qui s'est passé. */
+    const jeViensDePerdre = !!(s && s.state === 'lost' && me
+      && (s.startedByMemberKey === me.memberKey || s.startedBy === me.clientId));
+    if (me && !jeViensDePerdre && N.isMatelotLocked(t, me.memberKey)) {
+      body.innerHTML = renderMatelotLockScreen(t, me);
+      return;
+    }
+    if (t.status === 'finished') {
+      body.innerHTML = `<div class="notice" style="background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.5);color:#dfffe8;">🏆 Mission terminée. L'équipage a atteint la surface.</div>`;
+      return;
+    }
+
+    /* Pas de session active → écran d'accueil du palier */
+    if (!s || s.state === 'idle' || s.state === 'ended') {
+      /* Palier deja franchi : on montre la suite du parcours.
+
+         On verifie AUSSI que l'equipage a bien quitte le palier 1
+         (currentStep). Sans cela, une equipe dont la liste des paliers
+         valides contenait 'start' alors qu'elle etait toujours au
+         palier 1 restait coincee sur "Palier 1 termine, prochaine
+         etape : Palier 1" — un ecran sans issue, qui invitait a passer
+         a une etape ou l'on se trouvait deja.
+         Cet etat incoherent peut venir d'une remise a zero partielle ou
+         d'une intervention manuelle en base. */
+      const dejaFranchi = (t.completedSteps || []).includes('start')
+                       && t.currentStep !== 'start';
+      if (dejaFranchi) {
+        body.innerHTML = renderNextStepPrompt(t);
+        return;
+      }
+      body.innerHTML = renderIdleScreen(t, me, null);
+      bindIdleEvents();
+      return;
+    }
+
+    /* Session en cours */
+    if (s.state === 'won') {
+      body.innerHTML = renderWonScreen(s, t);
+      return;
+    }
+
+    if (s.state === 'lost') {
+      /* NOUVELLE REGLE : l'echec n'appartient qu'a son auteur. Celui qui a
+         echoue voit l'ecran de defaite (il est de toute facon bloque et
+         intercepte plus haut). Les autres matelots ne restent pas coinces
+         devant : la barre est libre, ils peuvent reprendre le palier. */
+      const cestMoi = me && (s.startedByMemberKey === me.memberKey || s.startedBy === me.clientId);
+      if (cestMoi) { body.innerHTML = renderLostScreen(s, t); return; }
+      body.innerHTML = renderIdleScreen(t, me, s);
+      bindIdleEvents();
+      return;
+    }
+
+    /* Session "playing" */
+    if (s.startedBy === me.clientId || s.startedByMemberKey === me.memberKey) {
+      /* Je suis le joueur */
+      state.role = 'player';
+      body.innerHTML = renderPlayerScreen(s, t, me);
+      bindPlayerEvents();
+    } else {
+      /* Spectateur */
+      state.role = 'spectator';
+      body.innerHTML = renderSpectatorScreen(s, t, me);
+    }
+  }
+
+  /* ===== CE QU'UN NOUVEL ECHEC COUTERAIT A CE MATELOT =====
+     Le bareme double a chaque echec, mais il n'etait rappele NULLE PART au
+     moment de prendre la barre : le joueur decouvrait sa peine une fois
+     perdu. On l'affiche donc juste au-dessus du bouton, avec son chiffre a
+     LUI, et le nom des camarades qui risquent moins que lui. */
+  function risquePersonnelHtml(t, me) {
+    if (!t || !me) return '';
+    const locks     = t.matelotLocks || {};
+    const maCle     = me.memberKey;
+    const mesEchecs = Number(locks[maCle]?.failCount || 0);
+    const rang      = mesEchecs + 1;
+    const prochaine = N.getLockHours(rang);
+    const suivante  = N.getLockHours(rang + 1);
+
+    /* Coequipiers LIBRES qui risqueraient moins que moi. */
+    const moins = (t.members || [])
+      .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
+      .filter(m => m.cle && m.cle !== maCle && !N.isMatelotLocked(t, m.cle))
+      .map(m => ({ ...m, echecs: Number(locks[m.cle]?.failCount || 0) }))
+      .filter(m => N.getLockHours(m.echecs + 1) < prochaine)
+      .sort((a, b) => a.echecs - b.echecs);
+
+    const lignes = [1,2,3,4,5,6].map(n => {
+      const h    = N.getLockHours(n);
+      const cls  = h >= 12 ? ' rouge' : (h >= 4 ? ' ambre' : '');
+      const act  = (Math.min(rang, 6) === n) ? ' actif' : '';
+      const lab  = n === 6 ? '6ᵉ échec et suivants' : (n === 1 ? '1ᵉʳ échec' : n + 'ᵉ échec');
+      return `<div class="bareme-l${cls}${act}"><span>${lab}</span><span class="bareme-h">${h} h</span></div>`;
+    }).join('');
+
+    let aide;
+    if (moins.length) {
+      const noms = moins.slice(0, 3).map(m => `<b>${esc(m.nom)}</b>`).join(', ');
+      aide = `🤝 <b>Laisse-toi arrêter par ton équipage.</b> ${noms} `
+           + (moins.length > 1 ? 'risquent ' : 'risque ')
+           + `seulement <b>${N.getLockHours(moins[0].echecs + 1)} h</b> : `
+           + `mieux vaut ${moins.length > 1 ? 'que la barre leur revienne' : 'lui laisser la barre'}.`;
+    } else if (mesEchecs === 0) {
+      aide = `🤝 Ton compteur est vierge : tu es le mieux placé pour prendre le risque. `
+           + `Un matelot peut ainsi <b>se sacrifier</b> et encaisser les blocages pour protéger les autres.`;
+    } else {
+      aide = `🤝 Personne dans l'équipage ne risque moins que toi en ce moment : vas-y. `
+           + `Quand ton compteur sera lourd, laisse un camarade <b>se sacrifier</b> à ta place.`;
+    }
+
+    const niveau = prochaine >= 12 ? ' rouge' : (prochaine >= 4 ? ' ambre' : '');
+    return `
+      <div class="risque${niveau}">
+        <div class="risque-titre">⚠ Ce qu'un nouvel échec te coûterait</div>
+        <p class="risque-l">
+          ${mesEchecs === 0
+            ? `Ton compteur personnel est à <b>0 échec</b>.`
+            : `Tu as déjà <b>${mesEchecs} échec${mesEchecs > 1 ? 's' : ''}</b> à ton compteur personnel.`}
+          Si tu échoues ici, tu remontes en surface pour <b class="risque-h">${prochaine} h</b>${
+            prochaine >= 24 ? ' — le maximum.' : `, puis <b>${suivante} h</b> la fois suivante.`}
+          Ce compteur est <b>personnel</b> et ne se remet jamais à zéro.
+        </p>
+        <div class="bareme-liste">${lignes}</div>
+        <p class="risque-l aide">${aide}</p>
+      </div>
+    `;
+  }
+
+  /* === ÉCRAN : idle (pas de session en cours) === */
+  function renderIdleScreen(t, me, echecPrecedent) {
+    /* PLUS D'ENCART "Aucun protocole en cours".
+       Il n'annoncait rien d'utile : le joueur voit deja le briefing et le
+       bouton "PRENDRE LES COMMANDES" juste en dessous, donc que la barre
+       est libre. C'etait une ligne de plus a lire avant d'arriver a
+       l'essentiel.
+       Seul subsiste le bandeau utile : celui qui previent qu'un camarade
+       vient d'echouer et que la releve peut y aller. */
+    const banniere = echecPrecedent
+      ? `<div class="status-banner warning">
+           🔁 <b>${esc(echecPrecedent.startedByName || 'Un matelot')}</b> a échoué et remonte en surface : lui seul est bloqué.
+           La barre est libre — <b>${esc(me?.name || 'matelot')}</b>, tu peux reprendre l'épreuve.
+         </div>`
+      : '';
+    /* MISE EN PAGE A PLAT.
+       Il y avait jusqu'a SIX cadres emboites pour lire cinq lignes : la
+       carte, son interieur, le bloc de l'epreuve, le bloc du briefing, le
+       bandeau de la regle, et le fond des consignes importantes. Chacun
+       avec son fond, sa bordure, son arrondi et ses marges — l'oeil
+       traversait quatre encadrements avant d'atteindre le texte.
+       Ici, PLUS AUCUNE boite imbriquee : le contenu est pose directement
+       dans la carte. La hierarchie se lit a la typographie et a la
+       couleur, pas a des cadres. */
+    return `
+      ${banniere}
+      <div class="brief">
+        <div class="brief-signature">⚓ Briefing du capitaine</div>
+
+        <p class="brief-intro">
+          Le sas ne s'ouvrira qu'avec un mot de passe. Le capitaine te l'enverra
+          par le <b>sonar</b> : à toi de l'écouter et de le retranscrire.
+        </p>
+
+        <ul class="brief-list">
+          <li><span class="ico" aria-hidden="true">📋</span>
+            <span><b>Un seul matelot</b> prend les commandes à la fois ; les autres
+              suivent depuis le journal de bord.</span></li>
+          <li><span class="ico" aria-hidden="true">🎧</span>
+            <span>Le signal est faible : pense à monter le son 😉</span></li>
+          <li><span class="ico" aria-hidden="true">⏱️</span>
+            <span><b>3 minutes 30</b> pour répondre.</span></li>
+          <li class="warn"><span class="ico" aria-hidden="true">❌</span>
+            <span><b>3 erreurs</b> et tu es repoussé en surface.</span></li>
+          <li><span class="ico" aria-hidden="true">🤝</span>
+            <span>Un autre matelot pourra alors reprendre l'épreuve à ta place.</span></li>
+          <li class="warn"><span class="ico" aria-hidden="true">🆘</span>
+            <span>Bloqué ? Demande un <b>indice</b> — cela te coûte
+              <b>1 h de blocage</b> et tu remontes en surface.</span></li>
+        </ul>
+
+        ${risquePersonnelHtml(t, me)}
+
+        <button class="brief-cta" id="takeLeadBtn">⚓ PRENDRE LES COMMANDES</button>
+      </div>
+    `;
+  }
+  function bindIdleEvents() {
+    $('takeLeadBtn')?.addEventListener('click', startNewSession);
+  }
+
+  async function startNewSession() {
+    if (!state.me || !state.team) return;
+    /* Garde-fou : un matelot bloque ne peut pas reprendre les commandes,
+       meme en cliquant vite depuis un ecran affiche avant son blocage. */
+    if (N.isMatelotLocked(state.team, state.me.memberKey)) {
+      renderGameArea();
+      N.showToast('Tu es en surface : attends la fin de ton blocage.', 'warning');
+      return;
+    }
+    /* VERROU : UN SEUL MATELOT AUX COMMANDES.
+       Trois protections, car une seule ne suffit pas :
+
+       1. Double-clic / clics repetes. Le bouton est desactive DES le
+          premier clic. Sans cela, un joueur impatient qui tapote deux fois
+          lancait deux parties coup sur coup, la seconde ecrasant la
+          premiere.
+       2. Etat local. Si l'ecoute temps reel a deja signale une partie en
+          cours, inutile d'aller interroger le serveur : on refuse tout de
+          suite.
+       3. Verification aupres du serveur juste avant d'ecrire, pour le cas
+          ou deux matelots cliquent a la meme seconde depuis deux
+          telephones. */
+    const btnLead = $('takeLeadBtn');
+    if (btnLead) {
+      if (btnLead.disabled) return;          // clic deja en cours de traitement
+      btnLead.disabled = true;
+      btnLead.textContent = '⏳ Prise de commandes…';
+    }
+
+    /* Remet le bouton en etat si la prise de commandes echoue : sans cela,
+       un refus laissait le joueur devant un bouton mort. */
+    const rendreLaMain = (message) => {
+      if (message) N.showToast(message, 'warning', 5000);
+      renderGameArea();
+    };
+
+    if (state.session && state.session.state === 'playing') {
+      rendreLaMain(`${state.session.startedByName || 'Un autre matelot'} est déjà aux commandes.`);
+      return;
+    }
+
+    if (!state.isTest) {
+      const current = await N.getSession(state.teamCode);
+      if (current && current.state === 'playing') {
+        /* On garde la partie trouvee : l'ecran de spectateur s'affichera
+           tout de suite, au lieu de laisser le joueur sur un ecran
+           d'attente qui ne correspond plus a la realite. */
+        state.session = current;
+        rendreLaMain(`${current.startedByName || 'Un autre matelot'} est déjà aux commandes.`);
+        return;
+      }
+    }
+    /* INDICES DEJA ACQUIS : ils appartiennent a l'EQUIPAGE, pas a la
+       partie. Un matelot a paye 1 h de blocage pour les obtenir ; il
+       serait injuste que la releve reparte de zero et doive repayer.
+       On les reporte donc sur la nouvelle partie.
+       A noter : le mot change a chaque partie, mais les indices restent
+       justes — le nombre de lettres et la premiere lettre sont lus sur le
+       NOUVEAU mot au moment de l'affichage, jamais figes. */
+    let indicesAcquis = [false, false, false];
+    try {
+      const precedente = state.session
+        || (state.isTest ? null : await N.getSessionBrute(state.teamCode));
+      if (precedente && Array.isArray(precedente.hintsRevealed)) {
+        indicesAcquis = precedente.hintsRevealed.slice(0, 3);
+      }
+    } catch (e) { /* pas de partie precedente lisible : on repart a zero */ }
+
+    /* Choisir un mot et démarrer. Chaque mot a son indice géographique associé
+       (où se trouve le QR du palier 2 dans le magasin). */
+    const entry = N.pickWord();
+    state.word = entry.w;
+    state.typed = '';        // repart d'une reponse vide
+
+    /* MODE TEST : rien n'est ecrit dans Firestore, donc l'ecoute temps reel
+       ne renverra jamais de session. On la fabrique en memoire pour que la
+       partie se deroule exactement comme une vraie. */
+    if (state.isTest) {
+      state.session = {
+        teamCode: state.teamCode,
+        state: 'playing',
+        startedAt: new Date().toISOString(),
+        startedBy: state.me.clientId,
+        startedByName: state.me.name,
+        startedByMemberKey: state.me.memberKey,
+        wordLength: entry.w.length,
+        wordHash: N.hashString(entry.w),
+        listensLeft: 3,
+        attempts: 0,
+        errors: 0,
+        maxErrors: 3,
+        timeLimit: 210,
+        hintsRevealed: indicesAcquis,
+        startedWordHint: entry.h,
+        lastEvent: 'session_started'
+      };
+      N.addLogEntry(`⚓ <b>${state.me.name}</b> a pris les commandes. Épreuve en cours — personne d'autre ne peut jouer.`, 'warning');
+      /* renderGameArea() et non onSessionUpdate() : cette derniere REMPLACE
+         state.session par son argument, ce qui effacerait la session qu'on
+         vient de fabriquer. */
+      renderGameArea();
+      return;
+    }
+
+    await N.createSession(state.teamCode, {
+      startedBy: state.me.clientId,
+      startedByName: state.me.name,
+      startedByMemberKey: state.me.memberKey,
+      /* Signe la session avec le Code Matelot de celui qui l'a lancee.
+         Sert de garde-fou : une session du compte fantome devient ainsi
+         reconnaissable et sera ignoree par les vrais joueurs. */
+      startedByMatelot: N.getCurrentMatelotCode() || '',
+      wordLength: entry.w.length,
+      wordHash: N.hashString(entry.w),
+      listensLeft: 3,
+      attempts: 0,
+      errors: 0,
+      maxErrors: 3,
+      timeLimit: 210,        /* 3 min 30 */
+      hintsRevealed: indicesAcquis,
+      startedWordHint: entry.h,
+      lastEvent: 'session_started'
+    });
+    N.addLogEntry(`⚓ <b>${state.me.name}</b> a pris les commandes. Épreuve en cours — personne d'autre ne peut jouer.`, 'warning');
+  }
+
+  /* === ÉCRAN : joueur actif === */
+  function renderPlayerScreen(s, t, me) {
+    const remaining = computeRemaining(s);
+    const min = Math.floor(remaining / 60), sec = remaining % 60;
+    const listensLeft = s.listensLeft ?? 0;
+    const errors = s.errors ?? 0;
+    const maxErrors = s.maxErrors ?? 3;
+    const typed = state.typed || '';
+
+    /* Les indices sont la SEULE source d'aide. Tant qu'un indice n'est pas
+       demande, son contenu reste totalement cache : meme sa description
+       ne doit rien laisser deviner. */
+    const hintCards = [
+      /* L'indice nº1 annonce desormais son CONTENU dans l'encart, au lieu
+         de la formule enigmatique "Une recommandation officielle du
+         capitaine" qui n'aidait personne : le joueur ne savait meme pas de
+         quoi on lui parlait. On nomme directement la norme a consulter. */
+      { label: 'Indice nº1', body: 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' },
+      { label: 'Indice nº2', body: `Le mot compte <b>${s.wordLength || '?'} lettres</b>.` },
+      { label: 'Indice nº3', body: `Il commence par <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` }
+    ];
+    const allRevealed = s.hintsRevealed.every(Boolean);
+
+    return `
+      <div class="morse-stepbox">
+        <!-- Le chrono est affiche dans la barre de titre de la carte, pas
+             ici : une seule horloge a l'ecran, toujours au meme endroit. -->
+        <p class="morse-brief">
+          Écoute le signal et écris le mot qu'il épelle.
+        </p>
+
+        <div class="morse-sonar-panel">
+          <div class="morse-sonar-screen">
+            <div class="morse-sweep"></div>
+            <div class="morse-signal-light" id="morseVisual"></div>
+          </div>
+          <div class="morse-controls">
+            <button class="morse-listen-btn" id="morseListenBtn" ${listensLeft <= 0 ? 'disabled' : ''}>
+              ${listensLeft > 0 ? '▶️ Écouter le signal' : '🔇 Plus d\'écoute'}
+            </button>
+            <div class="morse-counter">Écoutes restantes : <b id="morseCounter">${listensLeft}</b> / 3</div>
+            <div class="morse-counter">Erreurs : <b style="color:${errors >= maxErrors - 1 ? '#ff7b72' : '#8ee7ff'};">${errors}</b> / ${maxErrors}</div>
+          </div>
+        </div>
+
+        <div class="morse-answer-zone">
+          <label class="morse-answer-label">Ta réponse</label>
+          <div class="morse-typed" id="morseTyped">${typed ? esc(typed) : '<span class="morse-typed-ph">—</span>'}</div>
+          <div class="morse-keypad" id="morseKeypad">
+            ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l =>
+              `<button type="button" class="morse-key" data-l="${l}">${l}</button>`).join('')}
+          </div>
+          <div class="morse-actions">
+            <button class="secondary" id="morseDeleteBtn">⌫ Effacer</button>
+            <button class="secondary" id="morseClearBtn">🧹 Tout effacer</button>
+            <button class="primary" id="morseSubmitBtn">⚓ Valider</button>
+          </div>
+          <div id="morseFeedback"></div>
+        </div>
+
+        <div class="morse-hint-target">
+            <div class="morse-hint-target-info">
+              🆘 <b>Besoin d'aide ?</b> Tu peux demander un indice,
+              mais cela te coûte <b>1 h de blocage personnel</b> et tu
+              remontes en surface. Un coéquipier prendra ta place.
+            </div>
+            <button class="morse-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '✅ Tous les indices révélés' : '🆘 Demander un indice'}</button>
+          </div>
+          <div class="morse-hints-grid">
+            ${hintCards.map((h, i) => `
+              <div class="morse-hint-card ${s.hintsRevealed[i] ? 'morse-hint-revealed' : ''}">
+                <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed[i] ? '✓' : '🔒'}</div>
+                <div>${s.hintsRevealed[i] ? h.body : '— non révélé —'}</div>
+              </div>
+            `).join('')}
+          </div>
+      </div>
+    `;
+  }
+
+  /* Temps restant de l'epreuve, en secondes.
+     RESTAUREE : cette fonction avait ete emportee lors de la reecriture de
+     l'ecran de jeu. Ses 4 appels subsistaient, si bien que l'affichage du
+     protocole levait "computeRemaining is not defined" : le mini-jeu ne
+     demarrait plus du tout. */
+  function computeRemaining(s) {
+    if (!s || !s.startedAt || !s.timeLimit) return 0;
+    const elapsed = Math.floor((Date.now() - new Date(s.startedAt).getTime()) / 1000);
+    return Math.max(0, s.timeLimit - elapsed);
+  }
+
+  /* === Événements joueur === */
+  /* RESTAUREE : ce verrou avait ete emporte lors de la refonte de l'ecran de
+     jeu. Sans lui, la premiere ligne de listenTransmission() levait
+     "_isPlaying is not defined" et AUCUN son ne sortait jamais. */
+  let _isPlaying = false;
+
+  /* Ecrit le temps dans la barre de titre de la carte (une seule horloge
+     a l'ecran, toujours au meme endroit). `libelle` distingue le temps
+     IMPARTI, affiche avant le depart, du temps RESTANT une fois lance. */
+  function majChronoTitre(secondes, libelle) {
+    const zone = $('gameCardTimer');
+    const val  = $('gameCardTimerVal');
+    if (!zone || !val) return;
+    const m = Math.floor(Math.max(0, secondes) / 60);
+    const sec = Math.max(0, secondes) % 60;
+    val.textContent = `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    const lbl = zone.querySelector('.lbl');
+    if (lbl && libelle) lbl.textContent = libelle;
+    /* Couleur d'alerte seulement quand le chrono tourne vraiment : avant
+       le depart, "03:30" ne doit pas s'afficher en rouge. */
+    const enCours = libelle === 'Temps restant';
+    zone.classList.toggle('warn', enCours && secondes <= 60 && secondes > 20);
+    zone.classList.toggle('crit', enCours && secondes <= 20);
+  }
+
+  function bindPlayerEvents() {
+    /* Timer live */
+    if (state.timerHandle) clearInterval(state.timerHandle);
+    state.timerHandle = setInterval(() => {
+      if (!state.session) return;
+      const rem = computeRemaining(state.session);
+      majChronoTitre(rem, 'Temps restant');
+      if (rem <= 0) onTimeOut();
+    }, 500);
+
+    /* Listen button */
+    $('morseListenBtn')?.addEventListener('click', listenTransmission);
+    /* Saisie libre : la reponse s'ecrit dans state.typed, sans case
+       pre-dessinee. Les anciennes cases revelaient le nombre de lettres du
+       mot avant meme la premiere ecoute. */
+    document.querySelectorAll('.morse-key').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.typed = (state.typed || '') + btn.dataset.l;
+        paintTyped();
+      });
+    });
+    $('morseDeleteBtn')?.addEventListener('click', () => {
+      state.typed = (state.typed || '').slice(0, -1);
+      paintTyped();
+    });
+    $('morseClearBtn')?.addEventListener('click', () => {
+      state.typed = '';
+      paintTyped();
+    });
+    /* Clavier physique : plus confortable sur ordinateur. */
+    if (state.keyHandler) document.removeEventListener('keydown', state.keyHandler);
+    state.keyHandler = (e) => {
+      if (!state.session || state.session.state !== 'playing') return;
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if (/^[a-zA-Z]$/.test(e.key)) {
+        state.typed = (state.typed || '') + e.key.toUpperCase();
+        paintTyped();
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        state.typed = (state.typed || '').slice(0, -1);
+        paintTyped();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        submitAnswer();
+      }
+    };
+    document.addEventListener('keydown', state.keyHandler);
+    $('morseSubmitBtn')?.addEventListener('click', submitAnswer);
+    $('morseHintBtn')?.addEventListener('click', requestHint);
+  }
+
+  async function listenTransmission() {
+    if (_isPlaying) return;
+    if (!state.session || state.session.listensLeft <= 0) return;
+    if (!state.word) {
+      /* Récupère le mot depuis le client (n'est connu que de celui qui a lancé la session) */
+      N.showToast('Session inaccessible. Recharge la page.', 'danger');
+      return;
+    }
+    _isPlaying = true;
+    const ctx = N.getAudioCtx();
+    if (!ctx) {
+      // Sonar eteint : on ne joue rien ET on ne consomme pas d'ecoute.
+      // On explique pourquoi, sinon le bouton semble casse.
+      _isPlaying = false;
+      if (!N.isSoundEnabled()) {
+        N.showToast('Le sonar est coupé : réactive-le sur la page d\'accueil pour entendre le signal.', 'danger');
+      }
+      return;
+    }
+    if (ctx.state === 'suspended') await ctx.resume();
+    const master = ctx.createGain();
+    master.gain.value = 0.55;
+    master.connect(ctx.destination);
+    /* Décrémente le compteur côté Firestore.
+       MODE TEST : rien n'est ecrit en base, donc l'ecoute temps reel ne
+       renverra aucune mise a jour. On decremente donc en memoire, sinon le
+       compteur resterait bloque a 3/3 pendant toute la partie d'essai. */
+    const left = Math.max(0, (state.session.listensLeft ?? 0) - 1);
+    if (state.isTest) {
+      state.session = { ...state.session, listensLeft: left, lastEvent: 'listen' };
+      const cnt = $('morseCounter');
+      if (cnt) cnt.textContent = String(left);
+      const lb = $('morseListenBtn');
+      if (lb && left <= 0) { lb.disabled = true; lb.textContent = '🔇 Plus d\'écoute'; }
+    } else {
+      await N.updateSession(state.teamCode, { listensLeft: left, lastEvent: 'listen' });
+    }
+    N.addLogEntry(`🔊 ${state.me.name} reçoit le signal (${left}/3 restantes).`, 'info');
+    const visual = $('morseVisual');
+    const setVisual = (on) => { if (visual) visual.classList.toggle('on', on); };
+    setVisual(true);
+    try {
+      await N.playMorseSequence(ctx, master, state.word, {
+        onLetter: () => { /* hook si besoin */ }
+      });
+    } catch (e) { console.error('Morse play error', e); }
+    setVisual(false);
+    _isPlaying = false;
+  }
+
+  function readAnswer() {
+    return (state.typed || '').toUpperCase();
+  }
+
+  /* Affiche la reponse en cours de saisie. */
+  function paintTyped() {
+    const el = $('morseTyped');
+    if (!el) return;
+    const v = state.typed || '';
+    el.innerHTML = v ? esc(v) : '<span class="morse-typed-ph">—</span>';
+    el.classList.remove('wrong');
+  }
+
+  async function submitAnswer() {
+    if (!state.session || !state.word) return;
+    const guess = readAnswer();
+    const target = state.word;
+    const fb = $('morseFeedback');
+    /* On ne compare PAS a la longueur du mot : le message reveleraiit
+       combien de lettres il reste a trouver. On refuse seulement une
+       reponse vide, et cela ne coute pas d'erreur. */
+    if (!guess) {
+      fb.innerHTML = `<div class="status-banner warning">⚠️ Écris d'abord ta réponse.</div>`;
+      return;
+    }
+    if (guess === target.toUpperCase()) {
+      await N.updateSession(state.teamCode, {
+        state: 'won',
+        endReason: 'solved',
+        lastEvent: 'solved',
+        endedAt: new Date().toISOString(),   /* repere pour savoir quand cet ecran a fait son temps */
+        revealedWord: target  /* stocké en clair sur la session pour l'écran de victoire uniquement */
+      });
+      N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe ! L'épreuve du sonar est validée.`, 'success');
+      N.showToast('Mot de passe déchiffré !', 'success');
+      /* Avance le palier côté équipe */
+      await advanceTeam();
+    } else {
+      const newErrors = (state.session.errors || 0) + 1;
+      const max = state.session.maxErrors || 3;
+      if (newErrors >= max) {
+        /* ORDRE IMPORTANT : on bloque l'equipage AVANT de marquer la
+           session perdue.
+
+           BUG CORRIGE : c'etait l'inverse. Passer la session a 'lost'
+           declenche aussitot le dessin de l'ecran de defaite, qui
+           affiche "Reprise possible le <date>". Or cette date n'etait
+           ecrite qu'ensuite, par blockMatelot(). Entre les deux, l'ecran se
+           dessinait sans date et affichait un simple tiret. Elle
+           n'apparaissait qu'au rafraichissement suivant, une seconde
+           plus tard — souvent jamais sous les yeux du joueur.
+           En bloquant d'abord, la date existe deja quand l'ecran
+           s'affiche. */
+        await blockMatelot('morse_too_many_errors');
+        const finKO = { state: 'lost', errors: newErrors, endReason: 'too_many_errors',
+                        lastEvent: 'lost', endedAt: new Date().toISOString() };
+        await N.updateSession(state.teamCode, finKO);
+        /* REDONDANCE SUPPRIMEE : blockMatelot() ecrit deja "X est repousse
+           en surface jusqu'a...". Annoncer en plus "X a epuise ses 3
+           chances" disait deux fois la meme chose, a une ligne d'ecart. */
+        /* On applique la fin de partie EN MEMOIRE et on redessine.
+
+           BUG CORRIGE : en partie d'essai, updateSession() n'ecrit rien
+           (c'est voulu, le compte fantome ne doit laisser aucune trace) et
+           aucune ecoute temps reel ne se declenche. L'ecran restait donc
+           bloque sur "PROTOCOLE EN COURS" apres la 3e erreur.
+           En partie reelle, cela fait simplement apparaitre l'ecran tout
+           de suite, sans attendre l'aller-retour reseau : le blocage etant
+           deja pose ci-dessus, la date de reprise s'affiche du premier
+           coup au lieu d'un tiret. */
+        state.session = { ...(state.session || {}), ...finKO };
+        renderGameArea();
+        return;
+      } else {
+        const essai = { errors: newErrors, attempts: (state.session.attempts || 0) + 1,
+                        lastEvent: 'wrong_answer' };
+        await N.updateSession(state.teamCode, essai);
+        /* Le compteur d'erreurs doit monter MEME en partie d'essai, ou
+           rien n'est ecrit en base. Sans cela, il restait a 0 et la 3e
+           erreur n'arrivait jamais : le compte fantome ne pouvait pas
+           tester l'echec du palier. */
+        state.session = { ...(state.session || {}), ...essai };
+        fb.innerHTML = `<div class="status-banner warning">❌ Mauvaise réponse. ${max - newErrors} chance(s) restante(s).</div>`;
+        /* On signale l'erreur SANS montrer quelles lettres sont fausses :
+           l'ancien surlignage lettre par lettre revenait a corriger la
+           reponse gratuitement. */
+        const el = $('morseTyped');
+        if (el) {
+          el.classList.add('wrong');
+          setTimeout(() => el.classList.remove('wrong'), 900);
+        }
+      }
+    }
+  }
+
+  async function onTimeOut() {
+    if (!state.session) return;
+    if (state.session.state !== 'playing') return;
+    /* Meme ordre que pour les 3 erreurs : le blocage d'abord, sinon
+       l'ecran de defaite s'affiche avant que la date de reprise existe. */
+    await blockMatelot('morse_timeout');
+    const finTemps = { state: 'lost', endReason: 'timeout', lastEvent: 'timeout',
+                       endedAt: new Date().toISOString() };
+    await N.updateSession(state.teamCode, finTemps);
+    N.addLogEntry(`⏳ Le temps est écoulé. L'épreuve a échoué.`, 'danger');
+    /* Meme raison que pour les 3 erreurs : sans cela, la partie d'essai
+       reste affichee comme "en cours" une fois le temps ecoule. */
+    state.session = { ...(state.session || {}), ...finTemps };
+    renderGameArea();
+  }
+
+  async function blockMatelot(reason) {
+    if (!state.team || !state.me) return;
+    /* NOUVELLE REGLE DU JEU : on ne bloque plus l'equipage entier, mais
+       UNIQUEMENT le matelot qui vient d'echouer. Son compteur d'echecs lui
+       est propre : son 1er echec coute 1 h, meme si ses camarades en ont
+       deja accumule. Les autres gardent l'acces au palier et peuvent le
+       reprendre chacun leur tour. */
+    const key = state.me.memberKey;
+    const ancien = N.getMatelotLock(state.team, key);
+    const nextFail = Number(ancien?.failCount || 0) + 1;
+    const hours = N.getLockHours(nextFail);
+    const until = N.getLockedUntilISO(nextFail);
+
+    /* BUG CORRIGE : le resultat de saveTeam() etait jete.
+       L'ecran de defaite affiche "Reprise possible le <lockedUntil>" en
+       lisant state.team. Cette variable n'etait mise a jour que par
+       l'ecoute temps reel de Firestore, qui arrive APRES le dessin de
+       l'ecran — et jamais du tout en partie d'essai. Le matelot voyait
+       donc "Reprise possible le —", sans savoir combien de temps il
+       etait bloque, alors que la date etait pourtant bien enregistree.
+       On garde desormais l'equipe renvoyee par saveTeam() : elle
+       contient deja le blocage. */
+    const locks = { ...(state.team.matelotLocks || {}) };
+    locks[key] = {
+      name: state.me.name, failCount: nextFail, lastLockHours: hours,
+      lockedUntil: until, reason: reason || '', blockedAt: new Date().toISOString()
+    };
+    /* L'INSTANT est releve AVANT l'ecriture reseau. Sans cela, la ligne
+       portait l'heure de la REPONSE du serveur : un message ecrit plus
+       tard mais sans attente reseau la doublait dans le journal. C'est
+       precisement ce qui mettait la chronologie en desordre. */
+    const instant = new Date();
+    /* failCount de l'equipe reste tenu a jour : il ne sert plus a calculer
+       la duree, seulement a afficher le total des avaries sur le pupitre. */
+    state.team = await N.saveTeam(state.team, {
+      matelotLocks: locks,
+      failCount: Number(state.team.failCount || 0) + 1,
+      lastEvent: 'matelot_blocked'
+    });
+    N.addLogEntry(`🔒 ${state.me.name} est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h).`, 'danger', instant);
+  }
+
+  async function advanceTeam() {
+    if (!state.team) return;
+    const completed = Array.from(new Set([...(state.team.completedSteps || []), 'start']));
+    const next = N.STEPS['start'].next;
+    /* Palier reussi : l'equipage avance. On leve un eventuel blocage
+       d'equipage (pose par un admin), mais PAS les blocages personnels :
+       ils suivent chaque matelot d'un palier a l'autre. */
+    const update = { status: 'active', lockedUntil: null, completedSteps: completed, lastEvent: 'step_advanced' };
+    if (next) { update.currentStep = next; }
+    await N.saveTeam(state.team, update);
+    N.markHintsExhausted(state.word);
+  }
+
+  /* === INDICE : REVELE AUSSITOT, MAIS COUTE 1 H DE BLOCAGE ===
+
+     ANCIEN FONCTIONNEMENT (supprime) : l'indice etait envoye a un AUTRE
+     matelot, tire au sort. Celui qui en avait besoin ne le voyait donc
+     jamais lui-meme, et devait esperer que son coequipier soit devant son
+     telephone pour le lui repeter. En pratique l'indice se perdait.
+     Le mode solo, lui, bloquait 24 h : une punition sans rapport avec le
+     service rendu.
+
+     NOUVELLE REGLE, la meme pour tout le monde :
+       - l'indice s'affiche IMMEDIATEMENT dans son encart, en clair ;
+       - son auteur est aussitot bloque 1 h et remonte en surface ;
+       - un autre matelot peut alors reprendre le mini-jeu.
+     L'indice reste acquis a l'equipage : celui qui prend la releve le
+     retrouve deja revele dans son encart. */
+  const HINT_LOCK_HOURS = 1;
+
+  async function requestHint() {
+    if (!state.session || !state.me) return;
+    const dispo = (state.session.hintsRevealed || [false, false, false])
+      .map((v, i) => v ? -1 : i).filter(i => i >= 0);
+    if (dispo.length === 0) { N.showToast('Tous les indices sont déjà révélés.', 'info'); return; }
+
+    /* Un seul indice a la fois, dans l'ordre : le nº1 est le plus general,
+       le nº3 le plus precis. Tirer au hasard pouvait donner d'emblee la
+       premiere lettre et vider l'epreuve de son interet. */
+    const idx = dispo[0];
+
+    const btn = $('morseHintBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Transmission…'; }
+
+    const hints = [...(state.session.hintsRevealed || [false, false, false])];
+    hints[idx] = true;
+    const patch = { hintsRevealed: hints, lastEvent: 'hint_revealed',
+                    lastHintBy: state.me.name, lastHintIndex: idx };
+    await N.updateSession(state.teamCode, patch);
+    /* En memoire aussi : en partie d'essai rien n'est ecrit en base, et en
+       partie reelle cela evite d'attendre l'aller-retour reseau. */
+    state.session = { ...(state.session || {}), ...patch };
+
+    N.addLogEntry(`🆘 ${state.me.name} a demandé un indice. Il remonte en surface pour ${HINT_LOCK_HOURS} h.`, 'warning');
+    showFloatingHint('🆘 Indice débloqué : ' + buildHintContent(idx), 10000);
+
+    /* Blocage personnel, exactement le meme mecanisme que pour un echec :
+       il s'ajoute a matelotLocks et n'affecte QUE ce matelot. La duree est
+       fixe (1 h) et ne fait pas monter le compteur d'echecs : demander de
+       l'aide n'est pas un echec. */
+    await blockMatelotForHint();
+
+    /* La session redevient libre : le mini-jeu en cours s'arrete pour tout
+       le monde, et le prochain matelot repart proprement. */
+    await N.updateSession(state.teamCode, {
+      state: 'ended', endReason: 'hint_taken', lastEvent: 'hint_taken',
+      endedAt: new Date().toISOString()
+    });
+    state.session = null;
+
+    renderGameArea();
+  }
+
+  /* Blocage de 1 h lie a la demande d'indice. Volontairement distinct de
+     blockMatelot() : pas d'incrementation du compteur d'echecs, duree fixe. */
+  async function blockMatelotForHint() {
+    if (!state.team || !state.me) return;
+    const key = state.me.memberKey;
+    const until = new Date(Date.now() + HINT_LOCK_HOURS * 3600 * 1000).toISOString();
+    const locks = { ...(state.team.matelotLocks || {}) };
+    const ancien = locks[key] || {};
+    locks[key] = {
+      name: state.me.name,
+      failCount: Number(ancien.failCount || 0),   // inchange : ce n'est pas un echec
+      lastLockHours: HINT_LOCK_HOURS,
+      lockedUntil: until,
+      reason: 'indice_demande',
+      blockedAt: new Date().toISOString()
+    };
+    state.team = await N.saveTeam(state.team, { matelotLocks: locks, lastEvent: 'matelot_hint_lock' });
+    N.showToast(`🆘 Indice obtenu ! Tu remontes en surface jusqu’à ${N.formatDate(until)}. Un coéquipier peut reprendre.`, 'warning', 7000);
+  }
+
+  function buildHintContent(idx) {
+    const s = state.session;
+    if (!s) return '';
+    if (idx === 0) return '📜 Le signal suit la <b>recommandation UIT-R M.1677-1</b>';
+    if (idx === 1) return `🔤 Le mot de passe contient <b>${s.wordLength || '?'} lettres</b>.`;
+    if (idx === 2) return `💡 Première lettre : <b>${state.word ? state.word[0] : (s.firstLetter || '?')}</b>`;
+    return '';
+  }
+
+  function showFloatingHint(content, duration) {
+    const el = $('notifFloating');
+    el.innerHTML = content;
+    el.classList.add('show');
+    clearTimeout(state.hintFlashTimeout);
+    state.hintFlashTimeout = setTimeout(() => el.classList.remove('show'), duration);
+  }
+
+  /* === ÉCRAN : spectateur === */
+  function renderSpectatorScreen(s, t, me) {
+    const remaining = computeRemaining(s);
+    const min = Math.floor(remaining / 60), sec = remaining % 60;
+    const playerName = s.startedByName || 'un matelot';
+    return `
+      <div class="status-banner warning">
+        👀 <b>${esc(me.name)}</b>, ce n'est pas ton tour : <b>${esc(playerName)}</b> est aux commandes. Suis sa progression — s'il échoue ou demande un indice, la barre te reviendra.
+      </div>
+      <div class="morse-stepbox">
+        <p class="morse-brief">Une épreuve est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — s'il échoue, il sera seul repoussé en surface et tu pourras prendre sa place.</p>
+        <div class="morse-sonar-panel">
+          <div class="morse-sonar-screen">
+            <div class="morse-sweep"></div>
+            <div class="morse-signal-light" id="morseVisual"></div>
+          </div>
+          <div class="morse-controls">
+            <div class="morse-counter">Écoutes restantes : <b>${s.listensLeft ?? 0}</b> / 3</div>
+            <div class="morse-counter">Erreurs : <b style="color:${(s.errors||0) >= (s.maxErrors||3) - 1 ? '#ff7b72' : '#8ee7ff'};">${s.errors || 0}</b> / ${s.maxErrors || 3}</div>
+            <div class="morse-counter">Tentatives : ${s.attempts || 0}</div>
+          </div>
+        </div>
+        <div class="morse-answer-zone">
+          <div class="status-banner info">
+            🔒 Seul <b>${esc(playerName)}</b> peut répondre.
+          </div>
+        </div>
+        
+          <div class="morse-hint-target">
+            <div class="morse-hint-target-info">
+              🧭 <b>Indices de l’équipage.</b> Les indices débloqués
+              s’affichent ici. Le matelot aux commandes peut en demander
+              un nouveau — cela lui coûte 1 h de blocage personnel.
+            </div>
+          </div>
+          <div class="morse-hints-grid">
+            ${[
+              { label: '🧭 Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' : '— non révélé —' },
+              /* BUG BLOQUANT CORRIGE : il manquait le "s." devant
+                 wordLength. La variable n'existait pas, donc TOUT l'ecran
+                 du spectateur plantait ("wordLength is not defined") des
+                 qu'un indice etait revele : le coequipier se retrouvait
+                 devant une zone de jeu vide, sans aucun message. */
+              { label: '🧭 Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${s.wordLength || '?'} caractères</b>.` : '— non révélé —' },
+              { label: '🧭 Indice nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '— non révélé —' }
+            ].map((h, i) => `
+              <div class="morse-hint-card ${s.hintsRevealed?.[i] ? 'morse-hint-revealed' : ''}">
+                <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed?.[i] ? '✓' : ''}</div>
+                <div>${h.body}</div>
+              </div>
+            `).join('')}
+          </div>
+      </div>
+    `;
+    /* Bind timer + bouton indice */
+    if (state.timerHandle) clearInterval(state.timerHandle);
+    state.timerHandle = setInterval(() => {
+      if (!state.session) return;
+      majChronoTitre(computeRemaining(state.session), 'Temps restant');
+    }, 500);
+    /* sendSpectatorHint() a ete SUPPRIMEE : un spectateur ne peut plus
+       envoyer d'indice. Seul le matelot aux commandes en demande, pour
+       lui-meme, en echange de 1 h de blocage. */
+  }
+
+  /* === ÉCRAN : victoire === */
+  function renderWonScreen(s, t) {
+    return `
+      <div class="won-screen">
+        <h2>🏆 Épreuve du sonar validée !</h2>
+        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">
+          L'équipage a remporté le Palier 1.<br>Le mot de passe a été noté en lieu sûr par <b>${esc(s.startedByName || 'un matelot')}</b>.
+        </p>
+
+        <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Thème de l'épreuve :</div>
+        <div style="color:#fff;font-size:18px;font-weight:900;line-height:1.4;max-width:480px;margin:0 auto 12px;">
+          🌊 <b>Décodage en mer</b> — le capitaine Nemo a intercepté un signal sous-marin qu'il fallait retranscrire.
+        </div>
+
+        <div style="margin:18px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Mot de passe :</div>
+        <div class="reveal-code">${esc(s.revealedWord || s.wordHash || '— —')}</div>
+
+        <div class="qr-hint-block" style="margin:24px 0 0;padding:18px 20px;background:linear-gradient(135deg,rgba(245,176,39,.12),rgba(245,176,39,.06));border:2px solid rgba(245,176,39,.55);border-radius:18px;max-width:540px;margin-left:auto;margin-right:auto;text-align:left;">
+          <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Indice de cachette</div>
+          <div style="color:#fff;font-size:15px;line-height:1.5;font-weight:700;margin-bottom:14px;">
+            ${N.QR_LOCATION_HINT}
+          </div>
+          <div style="border-top:1px dashed rgba(245,176,39,.4);padding-top:14px;margin-top:6px;">
+            <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📷 Action</div>
+            <div style="color:#fff;font-size:15px;line-height:1.5;font-weight:700;">
+              Scanne le QR pour découvrir le numéro secret.
+            </div>
+            <div style="color:#9bc4d4;font-size:13px;line-height:1.5;margin-top:6px;">
+              Tu auras besoin de ce numéro pour accéder au Palier 2.
+            </div>
+          </div>
+        </div>
+
+        <p class="next-step-hint" style="margin-top:20px;">
+          ⏭️ Une fois le numéro secret en main, ouvre la page du <b>Palier 2</b> et saisis-le.
+        </p>
+        <div style="margin-top:14px;">
+          <a href="1721310619.html" style="display:inline-block;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(142,231,255,.45);border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir la page du Palier 2</a>
+        </div>
+      </div>
+    `;
+  }
+
+  /* === ÉCRAN : défaite === */
+  function renderLostScreen(s, t) {
+    const monLock = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
+    const reason = s.endReason || 'lost';
+    const reasonText = reason === 'timeout' ? "⏳ Le temps s'est écoulé." :
+                       /* "Trop d'erreurs de traduction" : le joueur ne
+                          traduit rien, il ecoute un signal et le
+                          retranscrit. Et le titre laissait croire que
+                          toute l'equipe etait sanctionnee. */
+                       reason === 'too_many_errors' ? "❌ 3 erreurs : tu remontes en surface." : '💀 Épreuve perdue.';
+    return `
+      <div class="lock-screen">
+        <h2>${reasonText}</h2>
+        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0 18px;">
+          L'équipage, lui, reste en plongée : un autre matelot peut reprendre
+          l'épreuve dès maintenant.
+        </p>
+        ${monLock?.lockedUntil
+          ? `<p class="lock-rule">⏱️ Tu pourras réessayer le <b>${esc(N.formatDate(monLock.lockedUntil))}</b> (blocage de ${esc(String(monLock.lastLockHours || '?'))} h).</p>
+             ${prochainePeineHtml(t, monLock)}`
+          : `<p class="lock-rule">⏱️ Durée de ton blocage en cours de calcul…</p>`}
+        <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
+      </div>
+    `;
+  }
+
+  /* ===== ANNONCE DE LA PROCHAINE PEINE =====
+     Un matelot qui vient d'echouer doit savoir MAINTENANT ce que couterait
+     le prochain faux pas : c'est pendant son attente qu'il decidera s'il
+     repart lui-meme ou s'il passe la barre a un camarade plus leger.
+     Avant, cette information n'apparaissait nulle part : chacun decouvrait
+     sa peine apres coup, en la subissant. */
+  function prochainePeineHtml(t, l) {
+    const echecs = Number(l?.failCount || 0);
+    /* Un blocage pour indice n'augmente PAS le compteur d'echecs : la
+       prochaine peine se calcule donc sur echecs + 1 dans les deux cas. */
+    const suivante = N.getLockHours(echecs + 1);
+    const locks    = (t && t.matelotLocks) || {};
+    const moins    = ((t && t.members) || [])
+      .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
+      .filter(m => m.cle && m.cle !== (state.me && state.me.memberKey) && !N.isMatelotLocked(t, m.cle))
+      .map(m => ({ ...m, e: Number(locks[m.cle]?.failCount || 0) }))
+      .filter(m => N.getLockHours(m.e + 1) < suivante)
+      .sort((a, b) => a.e - b.e);
+
+    const aide = moins.length
+      ? `🤝 <b>Laisse ton équipage t'arrêter.</b> ${moins.slice(0,3).map(m => `<b>${esc(m.nom)}</b>`).join(', ')} `
+        + (moins.length > 1 ? 'risquent ' : 'risque ') + `seulement <b>${N.getLockHours(moins[0].e + 1)} h</b> : `
+        + `à la reprise, ${moins.length > 1 ? 'la barre devrait leur revenir' : 'la barre devrait lui revenir'}.`
+      : `🤝 Un matelot peut aussi <b>se sacrifier</b> et encaisser les blocages `
+        + `pour garder les compteurs des autres au plus bas.`;
+
+    return `
+      <p class="lock-rule" style="margin-top:8px;">
+        ⚠️ Au <b>prochain échec</b>, ton blocage passera à <b style="color:#ff8f86;font-size:1.12em;">${suivante} h</b>.
+        Ton compteur est personnel et ne se remet <b>jamais</b> à zéro.
+      </p>
+      <p class="lock-rule" style="margin-top:8px;background:rgba(91,255,156,.07);border-left:3px solid rgba(91,255,156,.55);padding:10px 12px;border-radius:9px;color:#c8ece0;">
+        ${aide}
+      </p>
+    `;
+  }
+
+  /* "1er echec", "2e echec"... : ecrire "1e" ferait faute. */
+  function ordinal(n) { return Number(n) === 1 ? '1ᵉʳ' : `${Number(n) || 1}ᵉ`; }
+
+  /* === ÉCRAN : blocage PERSONNEL (le matelot seul est en surface) === */
+  function renderMatelotLockScreen(t, me) {
+    const l = N.getMatelotLock(t, me.memberKey) || {};
+    /* Deux raisons possibles de se retrouver en surface, et il ne faut pas
+       les confondre : un ECHEC (trop d'erreurs ou temps ecoule) ou une
+       DEMANDE D'INDICE. Le message annoncait "Ton echec" dans les deux
+       cas, ce qui etait faux et vexant pour qui avait simplement demande
+       un coup de main. */
+    const parIndice = l.reason === 'indice_demande';
+    const intro = parIndice
+      ? 'Tu as obtenu ton indice : il reste acquis à tout l’équipage. En échange, tu remontes en surface — un autre matelot peut reprendre le palier.'
+      : 'Ton échec ne bloque que toi. Le reste de l’équipage peut tenter le palier pendant ce temps — un matelot à la fois.';
+    const detail = parIndice
+      ? `⏳ Tu pourras reprendre les commandes à cette heure (indice demandé &rarr; ${esc(String(l.lastLockHours || 1))} h).`
+      : `⏳ Tu pourras reprendre les commandes à cette heure (${esc(ordinal(l.failCount || 1))} échec &rarr; ${esc(String(l.lastLockHours || '?'))} h).`;
+    return `
+      <div class="lock-screen">
+        <h2>${parIndice ? '🧭' : '🔒'} ${esc(me.name)}, tu es en surface</h2>
+        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">
+          ${intro}
+        </p>
+        <div class="countdown-big">${esc(N.formatDate(l.lockedUntil))}</div>
+        <p class="lock-rule">${detail}</p>
+        ${prochainePeineHtml(t, l)}
+        <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
+      </div>
+    `;
+  }
+
+
+  /* === ÉCRAN : transition palier suivant === */
+  function renderNextStepPrompt(t) {
+    const nextStep = t.currentStep;
+    const nextLabel = N.STEPS[nextStep]?.label || '?';
+    const nextCode = N.getStepCode(nextStep);
+    return `
+      <div class="status-banner success">
+        ✅ <b>Palier 1 terminé.</b> L'équipage est prêt à passer au <b>${esc(nextLabel)}</b>.
+      </div>
+      <div class="stepbox" style="border-color:rgba(91,255,156,.45);background:rgba(91,255,156,.08);">
+        <h3 style="color:#5be09b;margin:0 0 10px;">🔎 Prochaine étape</h3>
+        <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Indice de cachette</div>
+        <div style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:14px;padding:12px 16px;margin:0 0 14px;color:#fff;font-size:14px;line-height:1.5;font-weight:800;">
+          ${N.QR_LOCATION_HINT}
+        </div>
+        <div style="color:#dff6ff;line-height:1.5;margin:0 0 10px;font-size:15px;">
+          📷 <b>Scanne le QR pour découvrir le numéro secret.</b>
+        </div>
+        <div style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 14px;">
+          Tu auras besoin de ce numéro pour accéder au <b>${esc(nextLabel)}</b>.
+        </div>
+        <a href="1721310619.html" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir la page du ${esc(nextLabel)}</a>
+      </div>
+    `;
+  }
+
+  /* === Bouton retour === */
+  $('backBtn').addEventListener('click', () => {
+    location.href = 'index.html';
+  });
+
+  /* === Cleanup === */
+  window.addEventListener('beforeunload', () => {
+    if (state.unsubSession) state.unsubSession();
+    if (state.unsubTeam) state.unsubTeam();
+    if (state.timerHandle) clearInterval(state.timerHandle);
+    if (state._heartbeatInterval) clearInterval(state._heartbeatInterval);
+  });
+
+})(); // Fin de l'IIFE du code palier
+
+</script>
+<!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu.
+     Une seule ligne a copier sur chaque nouvelle page : le script cree le
+     lecteur, le bouton et ses styles, et retient le choix du joueur. -->
+<script src="sonar-button.js" defer></script>
+</body>
+</html>
