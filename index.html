@@ -3113,71 +3113,6 @@ function qrDataUri(text, opts){
       + '</div>';
   }
 
-  /* ===== AVERTISSEMENT AVANT DE REPRENDRE LA BARRE =====
-     Le barème double à chaque échec, mais rien ne le rappelait AU MOMENT
-     où le matelot s'apprête à rejouer. Résultat : il découvrait sa peine
-     seulement après avoir perdu. Ici, avant même de cliquer, il lit
-     exactement ce qu'un nouvel échec lui coûterait — et, si un camarade
-     risque moins que lui, on le lui dit noir sur blanc. */
-  function risqueMatelotHtml(team, maCle){
-    if(!team || !maCle) return '';
-    const locks   = team.matelotLocks || {};
-    const monLock = locks[maCle] || null;
-    const mesEchecs = Number(monLock?.failCount || 0);
-    const prochaine = getLockHours(mesEchecs + 1);
-    const rang      = mesEchecs + 1;
-    /* "1er", "2e", "3e"... : ecrire "1e" ferait faute. */
-    const rangTexte = rang === 1 ? 'ton 1ᵉʳ échec' : ('ton ' + rang + 'ᵉ échec');
-
-    /* Qui, dans l'équipage, risque moins que moi en ce moment ?
-       On ne compte que les matelots libres : proposer la barre à quelqu'un
-       qui est lui-même en surface n'aurait aucun sens. */
-    const moins = (team.members || [])
-      .map(m => {
-        const k = m.memberKey || memberKey(m.name || '');
-        return { nom: m.name || '—', cle: k, lock: locks[k] || null };
-      })
-      .filter(m => m.cle && m.cle !== maCle)
-      .filter(m => !isMatelotLocked(team, m.cle))
-      .map(m => ({ ...m, echecs: Number(m.lock?.failCount || 0) }))
-      .filter(m => getLockHours(m.echecs + 1) < prochaine)
-      .sort((a, b) => a.echecs - b.echecs);
-
-    const niveau = prochaine >= 12 ? 'rouge' : (prochaine >= 4 ? 'ambre' : '');
-
-    let conseil;
-    if(moins.length){
-      const noms = moins.slice(0, 3).map(m => '<b>' + esc(m.nom) + '</b>').join(', ');
-      const eux  = getLockHours(moins[0].echecs + 1);
-      conseil = '🤝 <b>Laisse-toi arrêter par ton équipage.</b> ' + noms
-              + (moins.length > 1 ? ' risquent ' : ' risque ')
-              + 'seulement <b>' + eux + ' h</b> : si ' + (moins.length > 1 ? 'l’un d’eux prend' : 'il ou elle prend')
-              + ' la barre, l’équipage perd bien moins de temps en cas de faux pas.';
-    } else if(mesEchecs === 0){
-      conseil = '🤝 Ton compteur est vierge : tu es le mieux placé pour prendre le risque. '
-              + 'Un matelot peut ainsi <b>se sacrifier</b> et encaisser les blocages pour '
-              + 'garder les compteurs des autres au plus bas.';
-    } else {
-      conseil = '🤝 Personne dans l’équipage ne risque moins que toi en ce moment : '
-              + 'c’est à toi d’y aller. Plus tard, quand ton compteur sera lourd, '
-              + 'laisse un camarade <b>se sacrifier</b> à ta place.';
-    }
-
-    return '<div class="ck-risque' + (niveau ? ' ' + niveau : '') + '">'
-      + '<div class="ck-risque-titre">⚠ Ce qu’un nouvel échec te coûterait</div>'
-      + '<p class="ck-risque-l">'
-      +   (mesEchecs === 0
-            ? 'Ton compteur personnel est à <b>0 échec</b>. '
-            : 'Tu as déjà <b>' + mesEchecs + ' échec' + (mesEchecs > 1 ? 's' : '') + '</b> à ton compteur personnel. ')
-      +   'Si tu échoues (' + rangTexte + '), tu remontes en surface pour '
-      +   '<b class="ck-risque-h">' + prochaine + ' h</b>'
-      +   (prochaine >= 24 ? ' — le maximum.' : ', et la fois d’après ce sera <b>' + getLockHours(rang + 1) + ' h</b>.')
-      + '</p>'
-      + '<p class="ck-risque-l aide">' + conseil + '</p>'
-      + baremeBlocageHtml(Math.min(rang, 6))
-      + '</div>';
-  }
-
   function renderGame(justUnlocked=false){
     const box=$('gameBox');
     if(!currentTeam){
@@ -3344,7 +3279,6 @@ function qrDataUri(text, opts){
 
       +   cockpitTrackHtml(currentTeam)
       +   cockpitHistoryHtml(currentTeam)
-      +   risqueMatelotHtml(currentTeam, maCle)
       +   '<p class="ck-order">' + cockpitButtonIntro + '</p>'
       +   '<div class="ck-launch">'
       +     '<button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">' + cockpitButtonLabel + '</button>'

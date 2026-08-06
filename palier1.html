@@ -1301,69 +1301,6 @@ window.Nautilus = {
     }
   }
 
-  /* ===== CE QU'UN NOUVEL ECHEC COUTERAIT A CE MATELOT =====
-     Le bareme double a chaque echec, mais il n'etait rappele NULLE PART au
-     moment de prendre la barre : le joueur decouvrait sa peine une fois
-     perdu. On l'affiche donc juste au-dessus du bouton, avec son chiffre a
-     LUI, et le nom des camarades qui risquent moins que lui. */
-  function risquePersonnelHtml(t, me) {
-    if (!t || !me) return '';
-    const locks     = t.matelotLocks || {};
-    const maCle     = me.memberKey;
-    const mesEchecs = Number(locks[maCle]?.failCount || 0);
-    const rang      = mesEchecs + 1;
-    const prochaine = N.getLockHours(rang);
-    const suivante  = N.getLockHours(rang + 1);
-
-    /* Coequipiers LIBRES qui risqueraient moins que moi. */
-    const moins = (t.members || [])
-      .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
-      .filter(m => m.cle && m.cle !== maCle && !N.isMatelotLocked(t, m.cle))
-      .map(m => ({ ...m, echecs: Number(locks[m.cle]?.failCount || 0) }))
-      .filter(m => N.getLockHours(m.echecs + 1) < prochaine)
-      .sort((a, b) => a.echecs - b.echecs);
-
-    const lignes = [1,2,3,4,5,6].map(n => {
-      const h    = N.getLockHours(n);
-      const cls  = h >= 12 ? ' rouge' : (h >= 4 ? ' ambre' : '');
-      const act  = (Math.min(rang, 6) === n) ? ' actif' : '';
-      const lab  = n === 6 ? '6ᵉ échec et suivants' : (n === 1 ? '1ᵉʳ échec' : n + 'ᵉ échec');
-      return `<div class="bareme-l${cls}${act}"><span>${lab}</span><span class="bareme-h">${h} h</span></div>`;
-    }).join('');
-
-    let aide;
-    if (moins.length) {
-      const noms = moins.slice(0, 3).map(m => `<b>${esc(m.nom)}</b>`).join(', ');
-      aide = `🤝 <b>Laisse-toi arrêter par ton équipage.</b> ${noms} `
-           + (moins.length > 1 ? 'risquent ' : 'risque ')
-           + `seulement <b>${N.getLockHours(moins[0].echecs + 1)} h</b> : `
-           + `mieux vaut ${moins.length > 1 ? 'que la barre leur revienne' : 'lui laisser la barre'}.`;
-    } else if (mesEchecs === 0) {
-      aide = `🤝 Ton compteur est vierge : tu es le mieux placé pour prendre le risque. `
-           + `Un matelot peut ainsi <b>se sacrifier</b> et encaisser les blocages pour protéger les autres.`;
-    } else {
-      aide = `🤝 Personne dans l'équipage ne risque moins que toi en ce moment : vas-y. `
-           + `Quand ton compteur sera lourd, laisse un camarade <b>se sacrifier</b> à ta place.`;
-    }
-
-    const niveau = prochaine >= 12 ? ' rouge' : (prochaine >= 4 ? ' ambre' : '');
-    return `
-      <div class="risque${niveau}">
-        <div class="risque-titre">⚠ Ce qu'un nouvel échec te coûterait</div>
-        <p class="risque-l">
-          ${mesEchecs === 0
-            ? `Ton compteur personnel est à <b>0 échec</b>.`
-            : `Tu as déjà <b>${mesEchecs} échec${mesEchecs > 1 ? 's' : ''}</b> à ton compteur personnel.`}
-          Si tu échoues ici, tu remontes en surface pour <b class="risque-h">${prochaine} h</b>${
-            prochaine >= 24 ? ' — le maximum.' : `, puis <b>${suivante} h</b> la fois suivante.`}
-          Ce compteur est <b>personnel</b> et ne se remet jamais à zéro.
-        </p>
-        <div class="bareme-liste">${lignes}</div>
-        <p class="risque-l aide">${aide}</p>
-      </div>
-    `;
-  }
-
   /* === ÉCRAN : idle (pas de session en cours) === */
   function renderIdleScreen(t, me, echecPrecedent) {
     /* PLUS D'ENCART "Aucun protocole en cours".
@@ -1414,8 +1351,6 @@ window.Nautilus = {
             <span>Bloqué ? Demande un <b>indice</b> — cela te coûte
               <b>1 h de blocage</b> et tu remontes en surface.</span></li>
         </ul>
-
-        ${risquePersonnelHtml(t, me)}
 
         <button class="brief-cta" id="takeLeadBtn">⚓ PRENDRE LES COMMANDES</button>
       </div>
