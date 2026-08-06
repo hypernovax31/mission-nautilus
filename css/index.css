@@ -473,7 +473,7 @@
       margin:20px calc(-50vw + 50%) 0;
       width:100vw;
       padding:0 clamp(20px,4vw,52px);
-      text-align:center;
+      text-align:left;
       max-width:none;
       font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
       font-size:clamp(46px,8.6vw,112px);
