@@ -556,23 +556,22 @@
        simple classe et l'emportait — le titre heritait du bandeau des
        titres de carte. En prefixant par `.card`, on est a egalite de
        specificite, et la regle qui vient APRES gagne. */
+    /* Titre du journal, ALIGNE sur les autres titres de blocs du jeu
+       ("CHAMBRE DE PILOTAGE", "EQUIPAGES EN PLONGEE") : meme police, meme
+       casse, meme couleur, meme graisse. Seule la taille est un cran en
+       dessous — c'est un chapitre A L'INTERIEUR de la chambre de
+       pilotage, pas un bloc concurrent.
+       Le prefixe `.card` est indispensable : sans lui, la regle generale
+       `.card h2/h3` (fond sombre, grand padding) l'emporterait et le
+       titre heriterait du bandeau des titres de carte. */
     .card .ck-journal-titre{
-      margin:0 0 10px;padding:0;background:none;
-      display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
-      font-size:clamp(14px,1.9vw,16px);line-height:1.25;
-      letter-spacing:.04em;text-transform:uppercase;
-      color:#dff6ff;font-weight:900;
-    }
-    /* Le titre proprement dit. Il herite de .ck-journal-titre, mais on le
-       nomme pour qu'aucune classe posee dans le HTML ne reste sans style
-       (piege classique : une classe fantome qu'on croit active). */
-    .ck-journal-nom{flex:0 0 auto}
-    /* Le nom de l'equipage : meme ligne, mais plus discret que le titre
-       lui-meme — c'est un complement, pas le sujet. */
-    .ck-journal-equipage{
-      font-size:clamp(11px,1.5vw,12.5px);font-weight:800;
-      letter-spacing:.06em;color:rgba(142,231,255,.62);
-      text-transform:none;
+      margin:0 0 12px;padding:0 0 9px;background:none;
+      font-size:clamp(16px,2.1vw,19px);line-height:1.2;
+      letter-spacing:.05em;text-transform:uppercase;
+      color:#fff;font-weight:900;
+      /* Un filet sous le titre : il separe le chapitre de la liste sans
+         ajouter d'encadrement, et prolonge le regard vers les entrees. */
+      border-bottom:1px solid rgba(142,231,255,.18);
     }
     .ck-journal-liste{list-style:none;margin:0;padding:0}
     .ck-journal-ligne{
@@ -4724,11 +4723,18 @@ function qrDataUri(text, opts){
        deja de position, de sas et de dommages, "Journal de bord" tout
        court ne disait pas de qui il s'agissait. C'est un vrai titre de
        niveau 2 (<h2>), comme les autres titres de blocs du jeu. */
+    /* UN SEUL TITRE, d'un seul tenant : "JOURNAL DE BORD DE L'EQUIPAGE
+       NAUTILUS". Le nom de l'equipage etait auparavant dans un second
+       morceau, plus petit et d'une autre couleur : la phrase se lisait en
+       deux temps et le titre paraissait secondaire.
+       Il adopte desormais exactement la meme allure que les autres titres
+       du jeu ("CHAMBRE DE PILOTAGE", "EQUIPAGES EN PLONGEE") : majuscules,
+       blanc, meme taille. Le journal devient ainsi un vrai chapitre du
+       tableau de bord, sans quitter la chambre de pilotage. */
     return '<div class="ck-journal">'
-      + '<h2 class="ck-journal-titre">'
-      +   '<span class="ck-journal-nom">📜 Journal de bord</span>'
-      +   '<span class="ck-journal-equipage">de l’équipage ' + esc(team.teamName || '—') + '</span>'
-      + '</h2>'
+      + '<h3 class="ck-journal-titre">'
+      +   '📜 Journal de bord de l’équipage ' + esc(team.teamName || '—')
+      + '</h3>'
       + '<ul class="ck-journal-liste">' + items + '</ul>'
       + '</div>';
   }
