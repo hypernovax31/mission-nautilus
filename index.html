@@ -1334,19 +1334,6 @@
     .ck-gauge.amber .ck-dial-value{text-shadow:0 0 12px rgba(255,181,69,.85)}
     .ck-gauge.amber .ck-dial-unit{color:rgba(255,181,69,.9)}
 
-    /* Etat des dommages, sous les cadrans. Vert au repos, ambre des la
-       premiere erreur. */
-    .ck-hull{
-      margin:-4px 0 14px;padding:9px 12px;border-radius:10px;
-      background:rgba(106,255,192,.07);border:1px solid rgba(106,255,192,.22);
-      color:#a9e8cf;font-size:var(--fs-tiny);line-height:1.45;text-align:center;
-    }
-    .ck-hull b{color:var(--glass)}
-    .ck-hull.is-damaged{
-      background:rgba(255,181,69,.08);border-color:rgba(255,181,69,.3);color:#f0d3a4;
-    }
-    .ck-hull.is-damaged b{color:var(--amber)}
-
     /* Ecran de position : la donnee la plus importante */
     .ck-screen{
       position:relative;margin-bottom:14px;padding:14px 16px;border-radius:12px;
@@ -4817,15 +4804,13 @@ function qrDataUri(text, opts){
       +     '</div>'
       +   '</div>'
 
-      /* Etat des dommages, en clair : un chiffre seul ne dit pas si c'est
-         grave. Le ton suit le nombre d'erreurs. */
-      +   '<p class="ck-hull' + (fails > 0 ? ' is-damaged' : '') + '">'
-      +     (fails === 0
-        ? '&#x2713; <b>Aucun dommage.</b> La coque est intacte.'
-        : fails === 1
-        ? '&#x26A0; <b>1 erreur</b> consignée au journal de bord. Seul son auteur a été repoussé en surface.'
-        : '&#x26A0; <b>' + fails + ' erreurs</b> au journal de bord. Chaque échec ne bloque que son auteur : la relève prend la barre.')
-      +   '</p>'
+      /* PHRASE SUPPRIMEE : "3 erreurs au journal de bord. Chaque echec ne
+         bloque que son auteur : la releve prend la barre."
+         Elle repetait le chiffre du cadran "Dommages" situe JUSTE
+         au-dessus, et redisait la regle du jeu a chaque affichage — regle
+         deja expliquee au hublot IV "Survivez". Le journal de bord, plus
+         bas, precise en plus QUI est bloque et jusqu'a quand. Trois fois
+         la meme information sur le meme ecran. */
 
       /* Ecran principal : ou en est l'equipage, et ce qui l'attend.
          L'identifiant sert de point d'arrivee au defilement : c'est ici
