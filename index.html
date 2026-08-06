@@ -781,6 +781,40 @@
       box-shadow:0 0 8px rgba(245,176,39,.6);
     }
 
+    /* --- Bareme de blocage : une ligne par echec, duree a droite --- */
+    .bareme{margin:16px 0 0;padding:14px 16px;border-radius:12px;
+      background:rgba(4,16,26,.72);border:1px solid rgba(142,231,255,.18);}
+    .bareme-titre{
+      font-size:clamp(12px,2.4vw,14px);font-weight:900;letter-spacing:.04em;
+      text-transform:uppercase;color:#fff;margin-bottom:10px;
+    }
+    .bareme-liste{display:grid;gap:5px}
+    .bareme-l{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:7px 11px;border-radius:8px;font-size:var(--fs-small);line-height:1.3;
+      background:rgba(142,231,255,.06);border-left:3px solid rgba(142,231,255,.45);
+      color:#cfe6f4;
+    }
+    .bareme-l.ambre{background:rgba(245,176,39,.09);border-left-color:var(--amber);color:#ffe2a0}
+    .bareme-l.rouge{background:rgba(255,75,62,.11);border-left-color:#ff4b3e;color:#ffd0cd}
+    .bareme-l.actif{
+      outline:1px solid rgba(255,255,255,.55);
+      box-shadow:0 0 14px rgba(255,255,255,.18);font-weight:800;
+    }
+    .bareme-n{font-weight:700}
+    .bareme-h{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .bareme-note{
+      margin:11px 0 0!important;font-size:calc(var(--fs-small) - .5px)!important;
+      line-height:1.55!important;color:#a9c6d6!important;
+    }
+    .bareme-note b{color:#fff}
+    .bareme-note.entraide{
+      margin-top:10px!important;padding:10px 12px;border-radius:9px;
+      background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
+      color:#c8ece0!important;
+    }
+    .bareme-note.entraide b{color:#8dffd0}
+
     @media(max-width:620px){
       .mission-steps{grid-template-columns:repeat(2,1fr);gap:14px}
       button.mission-step{max-width:160px}
@@ -1438,6 +1472,34 @@
       background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
       font-size:var(--fs-small);line-height:1.5;color:#cfe6ef;
     }
+    /* Avertissement chiffre : ce qu'un nouvel echec couterait a CE matelot */
+    .ck-risque{
+      margin:0 0 14px;padding:13px 15px;border-radius:12px;
+      background:rgba(4,16,26,.7);border:1px solid rgba(142,231,255,.20);
+      border-left:4px solid rgba(142,231,255,.55);
+    }
+    .ck-risque.ambre{border-left-color:var(--amber);background:rgba(245,176,39,.07)}
+    .ck-risque.rouge{border-left-color:#ff4b3e;background:rgba(255,75,62,.08)}
+    .ck-risque-titre{
+      font-size:clamp(12px,2.4vw,14px);font-weight:900;letter-spacing:.04em;
+      text-transform:uppercase;color:#fff;margin-bottom:8px;
+    }
+    .ck-risque-l{margin:0;font-size:var(--fs-small);line-height:1.55;color:#cfe6f4}
+    .ck-risque-l b{color:#fff}
+    .ck-risque-h{font-size:1.12em;color:#ffd36c!important}
+    .ck-risque.rouge .ck-risque-h{color:#ff8f86!important}
+    .ck-risque-l.aide{
+      margin-top:10px;padding:10px 12px;border-radius:9px;
+      background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
+      color:#c8ece0;
+    }
+    .ck-risque-l.aide b{color:#8dffd0}
+    .ck-risque .bareme{background:transparent;border-color:rgba(142,231,255,.14);padding:12px 0 0}
+    .ck-risque .bareme .bareme-titre{display:none}
+    /* Les deux notes du bareme repetent ce que le paragraphe du dessus dit
+       deja avec les chiffres du matelot : inutile de les redire ici. */
+    .ck-risque .bareme .bareme-note{display:none}
+
     .ck-launch{display:flex;justify-content:center}
     /* Acces a la fiche du matelot, sous le bouton de mission. */
     .ck-launch .hero-cta{min-width:min(100%,380px)}
@@ -4739,6 +4801,71 @@ function qrDataUri(text, opts){
       + '</div>';
   }
 
+  /* ===== AVERTISSEMENT AVANT DE REPRENDRE LA BARRE =====
+     Le barème double à chaque échec, mais rien ne le rappelait AU MOMENT
+     où le matelot s'apprête à rejouer. Résultat : il découvrait sa peine
+     seulement après avoir perdu. Ici, avant même de cliquer, il lit
+     exactement ce qu'un nouvel échec lui coûterait — et, si un camarade
+     risque moins que lui, on le lui dit noir sur blanc. */
+  function risqueMatelotHtml(team, maCle){
+    if(!team || !maCle) return '';
+    const locks   = team.matelotLocks || {};
+    const monLock = locks[maCle] || null;
+    const mesEchecs = Number(monLock?.failCount || 0);
+    const prochaine = getLockHours(mesEchecs + 1);
+    const rang      = mesEchecs + 1;
+    /* "1er", "2e", "3e"... : ecrire "1e" ferait faute. */
+    const rangTexte = rang === 1 ? 'ton 1ᵉʳ échec' : ('ton ' + rang + 'ᵉ échec');
+
+    /* Qui, dans l'équipage, risque moins que moi en ce moment ?
+       On ne compte que les matelots libres : proposer la barre à quelqu'un
+       qui est lui-même en surface n'aurait aucun sens. */
+    const moins = (team.members || [])
+      .map(m => {
+        const k = m.memberKey || memberKey(m.name || '');
+        return { nom: m.name || '—', cle: k, lock: locks[k] || null };
+      })
+      .filter(m => m.cle && m.cle !== maCle)
+      .filter(m => !isMatelotLocked(team, m.cle))
+      .map(m => ({ ...m, echecs: Number(m.lock?.failCount || 0) }))
+      .filter(m => getLockHours(m.echecs + 1) < prochaine)
+      .sort((a, b) => a.echecs - b.echecs);
+
+    const niveau = prochaine >= 12 ? 'rouge' : (prochaine >= 4 ? 'ambre' : '');
+
+    let conseil;
+    if(moins.length){
+      const noms = moins.slice(0, 3).map(m => '<b>' + esc(m.nom) + '</b>').join(', ');
+      const eux  = getLockHours(moins[0].echecs + 1);
+      conseil = '🤝 <b>Laisse-toi arrêter par ton équipage.</b> ' + noms
+              + (moins.length > 1 ? ' risquent ' : ' risque ')
+              + 'seulement <b>' + eux + ' h</b> : si ' + (moins.length > 1 ? 'l’un d’eux prend' : 'il ou elle prend')
+              + ' la barre, l’équipage perd bien moins de temps en cas de faux pas.';
+    } else if(mesEchecs === 0){
+      conseil = '🤝 Ton compteur est vierge : tu es le mieux placé pour prendre le risque. '
+              + 'Un matelot peut ainsi <b>se sacrifier</b> et encaisser les blocages pour '
+              + 'garder les compteurs des autres au plus bas.';
+    } else {
+      conseil = '🤝 Personne dans l’équipage ne risque moins que toi en ce moment : '
+              + 'c’est à toi d’y aller. Plus tard, quand ton compteur sera lourd, '
+              + 'laisse un camarade <b>se sacrifier</b> à ta place.';
+    }
+
+    return '<div class="ck-risque' + (niveau ? ' ' + niveau : '') + '">'
+      + '<div class="ck-risque-titre">⚠ Ce qu’un nouvel échec te coûterait</div>'
+      + '<p class="ck-risque-l">'
+      +   (mesEchecs === 0
+            ? 'Ton compteur personnel est à <b>0 échec</b>. '
+            : 'Tu as déjà <b>' + mesEchecs + ' échec' + (mesEchecs > 1 ? 's' : '') + '</b> à ton compteur personnel. ')
+      +   'Si tu échoues (' + rangTexte + '), tu remontes en surface pour '
+      +   '<b class="ck-risque-h">' + prochaine + ' h</b>'
+      +   (prochaine >= 24 ? ' — le maximum.' : ', et la fois d’après ce sera <b>' + getLockHours(rang + 1) + ' h</b>.')
+      + '</p>'
+      + '<p class="ck-risque-l aide">' + conseil + '</p>'
+      + baremeBlocageHtml(Math.min(rang, 6))
+      + '</div>';
+  }
+
   function renderGame(justUnlocked=false){
     const box=$('gameBox');
     if(!currentTeam){
@@ -4809,12 +4936,28 @@ function qrDataUri(text, opts){
         +   '<div class="ck-screen-value">REMONTÉE FORCÉE</div>'
         +   '<p class="ck-screen-desc">Ton échec ne bloque que <b>toi</b> : le reste de l’équipage poursuit la plongée.<br>'
         +     'Tu pourras reprendre les commandes le <b>' + esc(formatDate(monLock.lockedUntil)) + '</b>'
-        +     ' (' + esc(String(monLock.lastLockHours || '?')) + ' h de blocage).</p>'
+        +     ' (' + esc(String(monLock.lastLockHours || '?')) + ' h de blocage).<br>'
+        /* On annonce DES MAINTENANT la peine suivante : c'est pendant
+           l'attente que le matelot decide s'il repartira lui-meme ou s'il
+           laissera un camarade au compteur plus leger prendre la barre. */
+        +     'Au prochain échec, ce sera <b class="ck-risque-h">'
+        +     getLockHours(Number(monLock.failCount || 0) + 1) + ' h</b>.</p>'
         + '</div>'
         + cockpitTrackHtml(currentTeam)
         /* Indispensable ici : c'est le matelot bloque qui a le plus besoin
            de suivre la progression de son equipage pendant son attente. */
         + cockpitHistoryHtml(currentTeam)
+        /* Le bareme complet, avec la ligne du PROCHAIN echec en
+           surbrillance : pendant l'attente, le matelot voit exactement ou
+           il en est sur l'echelle et ce qui l'attend s'il insiste. */
+        + '<div class="ck-risque rouge">'
+        +   '<div class="ck-risque-titre">⏳ L’échelle des blocages</div>'
+        +   baremeBlocageHtml(Math.min(Number(monLock.failCount || 0) + 1, 6))
+        +   '<p class="ck-risque-l aide">🤝 <b>Ne repars pas seul par fierté.</b> '
+        +     'À ta remontée, regarde qui a le compteur le plus léger : c’est à lui '
+        +     'de prendre la barre. Et si personne ne veut risquer gros, un matelot peut '
+        +     '<b>se sacrifier</b> et encaisser les blocages pour protéger les autres.</p>'
+        + '</div>'
         + '</div>';
       return;
     }
@@ -4889,6 +5032,7 @@ function qrDataUri(text, opts){
 
       +   cockpitTrackHtml(currentTeam)
       +   cockpitHistoryHtml(currentTeam)
+      +   risqueMatelotHtml(currentTeam, maCle)
       +   '<p class="ck-order">' + cockpitButtonIntro + '</p>'
       +   '<div class="ck-launch">'
       +     '<button class="hero-cta red cockpit-launch" id="cockpitMissionBtn">' + cockpitButtonLabel + '</button>'
@@ -4930,11 +5074,44 @@ function qrDataUri(text, opts){
       text: 'Un échec ne bloque QUE le matelot qui a échoué. L’équipage, lui, continue.',
       bullets: [
         'Dès que l’accès est libre, un autre matelot reprend le palier : chacun son tour.',
-        'Blocage personnel : 1 h, puis 2 h, 4 h, 8 h, 12 h, et 24 h dès le 6ᵉ échec.',
         '7 jours d’oxygène pour tous : à 0, le signal est perdu.'
-      ]
+      ],
+      /* Le barème doublait a chaque echec, mais c'etait ecrit sur une seule
+         ligne noyee dans les puces : personne ne realisait que le 4e echec
+         coute une nuit entiere. On le montre donc en TABLEAU, avec la duree
+         qui grossit visuellement d'une ligne a l'autre. */
+      html: baremeBlocageHtml()
     }
   };
+
+  /* ===== TABLEAU DU BAREME DE BLOCAGE =====
+     Une ligne par echec, la duree correspondante a droite. Les dernieres
+     lignes passent en rouge : le joueur doit VOIR que ca devient lourd
+     avant d'y arriver, pas le decouvrir apres. */
+  function baremeBlocageHtml(surbrillance){
+    const lignes = [1,2,3,4,5,6].map(n => {
+      const h    = getLockHours(n);
+      const cls  = h >= 12 ? ' rouge' : (h >= 4 ? ' ambre' : '');
+      const actif = (surbrillance && Number(surbrillance) === n) ? ' actif' : '';
+      const label = n === 6 ? '6ᵉ échec et suivants' : (n === 1 ? '1ᵉʳ échec' : n + 'ᵉ échec');
+      return '<div class="bareme-l' + cls + actif + '">'
+           +   '<span class="bareme-n">' + label + '</span>'
+           +   '<span class="bareme-h">' + h + ' h en surface</span>'
+           + '</div>';
+    }).join('');
+    return '<div class="bareme">'
+      +   '<div class="bareme-titre">⏳ Le temps de blocage double à chaque échec</div>'
+      +   '<div class="bareme-liste">' + lignes + '</div>'
+      +   '<p class="bareme-note">Ce compteur est <b>personnel</b> et ne se remet jamais à zéro '
+      +     'de toute la mission. Un matelot qui a déjà échoué 4 fois risque <b>8 h</b> au prochain '
+      +     'faux pas, alors qu’un camarade encore intact ne risque que <b>1 h</b>.</p>'
+      +   '<p class="bareme-note entraide">🤝 <b>Laissez-vous arrêter par l’équipage.</b> '
+      +     'Si tu accumules les échecs, passe la barre à quelqu’un dont le compteur est plus bas : '
+      +     'l’équipage perdra beaucoup moins de temps. Et à l’inverse, un matelot peut '
+      +     '<b>se sacrifier</b> et prendre le risque à la place des autres pour garder l’équipage à flot. '
+      +     'Ce n’est pas de la triche : c’est de la stratégie de plongée.</p>'
+      + '</div>';
+  }
 
   function showRule(key, shouldScroll=false){
     const rule = RULES[key] || RULES.embark;
@@ -4946,7 +5123,9 @@ function qrDataUri(text, opts){
     const bullets = (rule.bullets && rule.bullets.length)
       ? `<ul>${rule.bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`
       : '';
-    detail.innerHTML = `<h3>${esc(rule.title)}</h3><p>${esc(rule.text)}</p>${bullets}`;
+    /* rule.html : bloc mis en forme (tableau du bareme). Il est ecrit par
+       le jeu lui-meme, jamais saisi par un joueur : pas d'echappement. */
+    detail.innerHTML = `<h3>${esc(rule.title)}</h3><p>${esc(rule.text)}</p>${bullets}${rule.html || ''}`;
     document.querySelectorAll('.mission-step').forEach(btn => btn.classList.toggle('active', btn.dataset.rule === key));
 
     /* Le hublot est marque comme lu, et on met a jour le compteur.

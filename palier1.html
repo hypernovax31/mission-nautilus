@@ -213,6 +213,40 @@
     .brief-list li.warn b{color:#ffd36c}
 
     /* Bouton pleine largeur : il n'a plus besoin d'une rangee dediee. */
+    /* Avertissement chiffre avant de prendre la barre */
+    .risque{
+      margin:0 0 16px;padding:13px 15px;border-radius:12px;
+      background:rgba(4,16,26,.7);border:1px solid rgba(142,231,255,.20);
+      border-left:4px solid rgba(142,231,255,.55);
+    }
+    .risque.ambre{border-left-color:var(--fnac);background:rgba(245,176,39,.07)}
+    .risque.rouge{border-left-color:#ff4b3e;background:rgba(255,75,62,.08)}
+    .risque-titre{
+      font-size:clamp(12px,2.3vw,14px);font-weight:900;letter-spacing:.04em;
+      text-transform:uppercase;color:#fff;margin:0 0 8px;
+    }
+    .risque-l{margin:0;font-size:clamp(12.5px,1.8vw,14px);line-height:1.55;color:#cfe6f4}
+    .risque-l b{color:#fff}
+    .risque-h{font-size:1.12em;color:#ffd36c!important}
+    .risque.rouge .risque-h{color:#ff8f86!important}
+    .risque-l.aide{
+      margin-top:10px;padding:10px 12px;border-radius:9px;
+      background:rgba(91,255,156,.07);border-left:3px solid rgba(91,255,156,.55);
+      color:#c8ece0;
+    }
+    .risque-l.aide b{color:#8dffd0}
+    .bareme-liste{display:grid;gap:4px;margin:10px 0 0}
+    .bareme-l{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:6px 10px;border-radius:8px;font-size:12.5px;line-height:1.3;
+      background:rgba(142,231,255,.06);border-left:3px solid rgba(142,231,255,.45);
+      color:#cfe6f4;
+    }
+    .bareme-l.ambre{background:rgba(245,176,39,.09);border-left-color:var(--fnac);color:#ffe2a0}
+    .bareme-l.rouge{background:rgba(255,75,62,.11);border-left-color:#ff4b3e;color:#ffd0cd}
+    .bareme-l.actif{outline:1px solid rgba(255,255,255,.55);box-shadow:0 0 12px rgba(255,255,255,.18);font-weight:800}
+    .bareme-h{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+
     .brief-cta{
       display:block;width:100%;margin:0;height:46px;border:0;border-radius:12px;
       background:var(--fnac);color:#111;font-family:inherit;
@@ -1695,6 +1729,69 @@ window.Nautilus = {
     }
   }
 
+  /* ===== CE QU'UN NOUVEL ECHEC COUTERAIT A CE MATELOT =====
+     Le bareme double a chaque echec, mais il n'etait rappele NULLE PART au
+     moment de prendre la barre : le joueur decouvrait sa peine une fois
+     perdu. On l'affiche donc juste au-dessus du bouton, avec son chiffre a
+     LUI, et le nom des camarades qui risquent moins que lui. */
+  function risquePersonnelHtml(t, me) {
+    if (!t || !me) return '';
+    const locks     = t.matelotLocks || {};
+    const maCle     = me.memberKey;
+    const mesEchecs = Number(locks[maCle]?.failCount || 0);
+    const rang      = mesEchecs + 1;
+    const prochaine = N.getLockHours(rang);
+    const suivante  = N.getLockHours(rang + 1);
+
+    /* Coequipiers LIBRES qui risqueraient moins que moi. */
+    const moins = (t.members || [])
+      .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
+      .filter(m => m.cle && m.cle !== maCle && !N.isMatelotLocked(t, m.cle))
+      .map(m => ({ ...m, echecs: Number(locks[m.cle]?.failCount || 0) }))
+      .filter(m => N.getLockHours(m.echecs + 1) < prochaine)
+      .sort((a, b) => a.echecs - b.echecs);
+
+    const lignes = [1,2,3,4,5,6].map(n => {
+      const h    = N.getLockHours(n);
+      const cls  = h >= 12 ? ' rouge' : (h >= 4 ? ' ambre' : '');
+      const act  = (Math.min(rang, 6) === n) ? ' actif' : '';
+      const lab  = n === 6 ? '6ᵉ échec et suivants' : (n === 1 ? '1ᵉʳ échec' : n + 'ᵉ échec');
+      return `<div class="bareme-l${cls}${act}"><span>${lab}</span><span class="bareme-h">${h} h</span></div>`;
+    }).join('');
+
+    let aide;
+    if (moins.length) {
+      const noms = moins.slice(0, 3).map(m => `<b>${esc(m.nom)}</b>`).join(', ');
+      aide = `🤝 <b>Laisse-toi arrêter par ton équipage.</b> ${noms} `
+           + (moins.length > 1 ? 'risquent ' : 'risque ')
+           + `seulement <b>${N.getLockHours(moins[0].echecs + 1)} h</b> : `
+           + `mieux vaut ${moins.length > 1 ? 'que la barre leur revienne' : 'lui laisser la barre'}.`;
+    } else if (mesEchecs === 0) {
+      aide = `🤝 Ton compteur est vierge : tu es le mieux placé pour prendre le risque. `
+           + `Un matelot peut ainsi <b>se sacrifier</b> et encaisser les blocages pour protéger les autres.`;
+    } else {
+      aide = `🤝 Personne dans l'équipage ne risque moins que toi en ce moment : vas-y. `
+           + `Quand ton compteur sera lourd, laisse un camarade <b>se sacrifier</b> à ta place.`;
+    }
+
+    const niveau = prochaine >= 12 ? ' rouge' : (prochaine >= 4 ? ' ambre' : '');
+    return `
+      <div class="risque${niveau}">
+        <div class="risque-titre">⚠ Ce qu'un nouvel échec te coûterait</div>
+        <p class="risque-l">
+          ${mesEchecs === 0
+            ? `Ton compteur personnel est à <b>0 échec</b>.`
+            : `Tu as déjà <b>${mesEchecs} échec${mesEchecs > 1 ? 's' : ''}</b> à ton compteur personnel.`}
+          Si tu échoues ici, tu remontes en surface pour <b class="risque-h">${prochaine} h</b>${
+            prochaine >= 24 ? ' — le maximum.' : `, puis <b>${suivante} h</b> la fois suivante.`}
+          Ce compteur est <b>personnel</b> et ne se remet jamais à zéro.
+        </p>
+        <div class="bareme-liste">${lignes}</div>
+        <p class="risque-l aide">${aide}</p>
+      </div>
+    `;
+  }
+
   /* === ÉCRAN : idle (pas de session en cours) === */
   function renderIdleScreen(t, me, echecPrecedent) {
     /* PLUS D'ENCART "Aucun protocole en cours".
@@ -1745,6 +1842,8 @@ window.Nautilus = {
             <span>Bloqué ? Demande un <b>indice</b> — cela te coûte
               <b>1 h de blocage</b> et tu remontes en surface.</span></li>
         </ul>
+
+        ${risquePersonnelHtml(t, me)}
 
         <button class="brief-cta" id="takeLeadBtn">⚓ PRENDRE LES COMMANDES</button>
       </div>
@@ -2486,10 +2585,48 @@ window.Nautilus = {
           l'épreuve dès maintenant.
         </p>
         ${monLock?.lockedUntil
-          ? `<p class="lock-rule">⏱️ Tu pourras réessayer le <b>${esc(N.formatDate(monLock.lockedUntil))}</b> (blocage de ${esc(String(monLock.lastLockHours || '?'))} h).</p>`
+          ? `<p class="lock-rule">⏱️ Tu pourras réessayer le <b>${esc(N.formatDate(monLock.lockedUntil))}</b> (blocage de ${esc(String(monLock.lastLockHours || '?'))} h).</p>
+             ${prochainePeineHtml(t, monLock)}`
           : `<p class="lock-rule">⏱️ Durée de ton blocage en cours de calcul…</p>`}
         <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
       </div>
+    `;
+  }
+
+  /* ===== ANNONCE DE LA PROCHAINE PEINE =====
+     Un matelot qui vient d'echouer doit savoir MAINTENANT ce que couterait
+     le prochain faux pas : c'est pendant son attente qu'il decidera s'il
+     repart lui-meme ou s'il passe la barre a un camarade plus leger.
+     Avant, cette information n'apparaissait nulle part : chacun decouvrait
+     sa peine apres coup, en la subissant. */
+  function prochainePeineHtml(t, l) {
+    const echecs = Number(l?.failCount || 0);
+    /* Un blocage pour indice n'augmente PAS le compteur d'echecs : la
+       prochaine peine se calcule donc sur echecs + 1 dans les deux cas. */
+    const suivante = N.getLockHours(echecs + 1);
+    const locks    = (t && t.matelotLocks) || {};
+    const moins    = ((t && t.members) || [])
+      .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
+      .filter(m => m.cle && m.cle !== (state.me && state.me.memberKey) && !N.isMatelotLocked(t, m.cle))
+      .map(m => ({ ...m, e: Number(locks[m.cle]?.failCount || 0) }))
+      .filter(m => N.getLockHours(m.e + 1) < suivante)
+      .sort((a, b) => a.e - b.e);
+
+    const aide = moins.length
+      ? `🤝 <b>Laisse ton équipage t'arrêter.</b> ${moins.slice(0,3).map(m => `<b>${esc(m.nom)}</b>`).join(', ')} `
+        + (moins.length > 1 ? 'risquent ' : 'risque ') + `seulement <b>${N.getLockHours(moins[0].e + 1)} h</b> : `
+        + `à la reprise, ${moins.length > 1 ? 'la barre devrait leur revenir' : 'la barre devrait lui revenir'}.`
+      : `🤝 Un matelot peut aussi <b>se sacrifier</b> et encaisser les blocages `
+        + `pour garder les compteurs des autres au plus bas.`;
+
+    return `
+      <p class="lock-rule" style="margin-top:8px;">
+        ⚠️ Au <b>prochain échec</b>, ton blocage passera à <b style="color:#ff8f86;font-size:1.12em;">${suivante} h</b>.
+        Ton compteur est personnel et ne se remet <b>jamais</b> à zéro.
+      </p>
+      <p class="lock-rule" style="margin-top:8px;background:rgba(91,255,156,.07);border-left:3px solid rgba(91,255,156,.55);padding:10px 12px;border-radius:9px;color:#c8ece0;">
+        ${aide}
+      </p>
     `;
   }
 
@@ -2519,6 +2656,7 @@ window.Nautilus = {
         </p>
         <div class="countdown-big">${esc(N.formatDate(l.lockedUntil))}</div>
         <p class="lock-rule">${detail}</p>
+        ${prochainePeineHtml(t, l)}
         <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
       </div>
     `;
