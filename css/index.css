@@ -1786,3 +1786,16 @@
 .countdown-label{display:flex;flex-direction:column;gap:3px}
 .countdown-kicker{color:var(--fnac);font-size:.82em;letter-spacing:.10em;font-weight:1000}
 @media(max-width:900px){.countdown-block{align-items:flex-start}.countdown-label{text-align:left}}
+
+/* Surlignage sobre de l'encart explicatif : plus de trait lumineux animé
+   qui tourne autour du rectangle. */
+.rule-detail::after{display:none}
+.rule-detail.ring-active{
+  border-color:rgba(245,176,39,.88);
+  box-shadow:
+    0 0 0 3px rgba(245,176,39,.22),
+    0 0 22px rgba(245,176,39,.24),
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 16px 36px rgba(0,0,0,.42);
+  transition:border-color .25s ease,box-shadow .25s ease;
+}
