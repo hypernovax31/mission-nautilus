@@ -1799,3 +1799,31 @@
     0 16px 36px rgba(0,0,0,.42);
   transition:border-color .25s ease,box-shadow .25s ease;
 }
+
+/* Sélection courante : le hublot et son encart se répondent par une pulsation
+   très légère, sans effet de course autour du rectangle. */
+button.mission-step.active{
+  animation:selectedHublotLift 2.4s ease-in-out infinite;
+}
+button.mission-step.active::before{
+  animation:selectedHublotHalo 2.4s ease-in-out infinite;
+}
+.rule-detail.ring-active{
+  animation:selectedPanelHalo 2.4s ease-in-out infinite;
+}
+@keyframes selectedHublotLift{
+  0%,100%{transform:translateY(-1px)}
+  50%{transform:translateY(-4px)}
+}
+@keyframes selectedHublotHalo{
+  0%,100%{box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45),0 0 0 3px rgba(245,176,39,.22),0 0 25px rgba(245,176,39,.28)}
+  50%{box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45),0 0 0 4px rgba(245,176,39,.38),0 0 34px rgba(245,176,39,.46)}
+}
+@keyframes selectedPanelHalo{
+  0%,100%{box-shadow:0 0 0 3px rgba(245,176,39,.16),0 0 16px rgba(245,176,39,.16),inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.42)}
+  50%{box-shadow:0 0 0 4px rgba(245,176,39,.28),0 0 25px rgba(245,176,39,.30),inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.42)}
+}
+@media(prefers-reduced-motion:reduce){
+  button.mission-step.active,.rule-detail.ring-active{animation:none}
+  button.mission-step.active::before{animation:none}
+}
