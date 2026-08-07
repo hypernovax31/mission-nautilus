@@ -1,46 +1,44 @@
 rules_version = '2';
 
-// Mission Nautilus — regles Firestore
+// Mission Nautilus — règles Firestore
+// Les joueurs n'ont pas de compte visible : l'application ouvre une
+// authentification anonyme Firebase. Elle sert uniquement à distinguer un
+// client autorisé d'un appel totalement anonyme.
 //
-// Contexte : le jeu tourne sans authentification (les joueurs s'identifient
-// avec un Code Matelot, pas un compte Firebase). Les collections utilisees
-// sont donc ouvertes en lecture/ecriture, mais TOUT LE RESTE est refuse.
-//
-// Interet principal : empecher la recreation des collections mortes
-// (events, arrivals, members) supprimees du code, et bloquer la creation
-// de collections arbitraires par un client malveillant.
-//
-// Deploiement :  firebase deploy --only firestore:rules
+// Les lectures restent publiques pour permettre au radar et aux spectateurs
+// de fonctionner. Toutes les écritures exigent désormais une session
+// Firebase authentifiée. Pour une sécurité forte du panneau admin, il faudra
+// ensuite remplacer le code admin côté client par des custom claims ou une
+// Cloud Function.
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // teams/{code} : etat des equipages (progression, blocage, membres)
     match /teams/{teamCode} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.auth != null;
 
-      // teams/{code}/matelots/{codeMatelot} : fiche detaillee d'un matelot
       match /matelots/{matelotCode} {
-        allow read, write: if true;
+        allow read: if true;
+        allow write: if request.auth != null;
       }
 
-      // teams/{code}/morseSession/current : session partagee du palier 1
       match /morseSession/{sessionId} {
-        allow read, write: if true;
+        allow read: if true;
+        allow write: if request.auth != null;
       }
     }
 
-    // matelots/{codeMatelot} : index global Code Matelot -> equipe
     match /matelots/{matelotCode} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
-    // game/config : configuration de partie (equipes actives, oxygene...)
     match /game/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
-    // Tout le reste (dont events, arrivals, members) : refuse.
+    // Tout le reste est refusé.
     match /{document=**} {
       allow read, write: if false;
     }
