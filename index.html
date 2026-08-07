@@ -112,13 +112,6 @@
     <h2>RÉSERVE O₂</h2>
     <div class="body oxygen-dashboard">
       <div class="oxygen-meter">
-        <div class="oxygen-origin" aria-label="Le compte à rebours démarre au lancement du Palier 1">
-          <span class="oxygen-origin-key">T₀</span>
-          <span class="oxygen-origin-label">DÉPART</span>
-          <span class="oxygen-origin-arrow" aria-hidden="true">→</span>
-          <span class="oxygen-origin-step">PALIER 1</span>
-          <span class="oxygen-origin-common">COMMUN</span>
-        </div>
         <div class="oxygen-meter-top">
           <span>Niveau d’oxygène</span>
           <strong id="oxygenPercent">100%</strong>
@@ -133,7 +126,6 @@
             <div class="countdown-block">
             <div class="countdown-label">
               <span class="countdown-kicker">COMPTE À REBOURS</span>
-              <span class="countdown-scope" id="oxygenCountdownScope">DURÉE INITIALE · 7J</span>
             </div>
             <div class="countdown" id="oxygenCountdown">7J 00h00m00s</div>
           </div>
@@ -4106,7 +4098,7 @@ function qrDataUri(text, opts){
        le premier palier). L'ancien libelle disait "equipage en plongeon",
        une faute pour "plongee" — et il ne disait pas l'essentiel : que le
        chrono tourne pour tout le monde. */
-    status.textContent = 'Mission active — la course est lancée.';
+    status.textContent = 'La course est lancée.';
     bar.style.width = percentPrecis.toFixed(3) + '%';
     bar.classList.toggle('warning-level', percent <= 50 && percent > 20);
     bar.classList.toggle('critical', percent <= 20);
