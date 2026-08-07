@@ -3326,42 +3326,24 @@ function qrDataUri(text, opts){
 
   const RULES = {
     embark: {
-      title: '1 — Embarquez',
-      text: 'Inscris ton nom & ton service : le Nautilus t’affecte à un équipage et te remet ton Code Matelot personnel.',
-      bullets: [
-        'Ce code ne s’affiche qu’UNE fois : note-le ou scanne son QR.',
-        'C’est lui qui te fait remonter à bord, depuis n’importe quel appareil.',
-        'Tout l’équipage avance ensemble : un palier franchi l’est pour tous.'
-      ]
+      title: 'I — Embarquez',
+      text: 'Inscrivez votre nom et votre service : vous êtes automatiquement affecté à un équipage.',
+      bullets: []
     },
     solve: {
-      title: '2 — Décryptez',
-      text: 'Chaque palier ouvre un mini-jeu chronométré. Résolvez-le : la zone de recherche vous sera communiquée, où se cache le prochain QR Code.',
-      bullets: [
-        'Le temps est compté, et chaque erreur vous coûte cher.'
-      ]
+      title: 'II — Décryptez',
+      text: 'Résolvez les mini-jeux chronométrés. Un seul matelot prend les commandes à la fois.',
+      bullets: []
     },
     scan: {
-      title: '3 — Scannez',
-      text: 'Ensuite fouillez la zone du magasin : le QR Code ne viendra pas à vous.',
-      bullets: [
-        'Regardez absolument partout autour de la zone de recherche.',
-        'Scannez le QR Code trouvé : le palier suivant s’ouvre aussitôt.',
-        'Respectez le magasin, les clients et les équipes.'
-      ]
+      title: 'III — Scannez',
+      text: 'La victoire vous guide vers la zone de recherche d’un QR Code. Photographiez-le pour accéder au palier suivant.',
+      bullets: []
     },
     survive: {
-      title: '4 — Survivez',
-      text: 'Un échec ne bloque QUE le matelot qui a échoué. L’équipage, lui, continue.',
-      bullets: [
-        'Dès que l’accès est libre, un autre matelot reprend le palier : chacun son tour.',
-        '7 jours d’oxygène pour tous : à 0, le signal est perdu.'
-      ],
-      /* Le barème doublait a chaque echec, mais c'etait ecrit sur une seule
-         ligne noyee dans les puces : personne ne realisait que le 4e echec
-         coute une nuit entiere. On le montre donc en TABLEAU, avec la duree
-         qui grossit visuellement d'une ligne a l'autre. */
-      html: baremeBlocageHtml()
+      title: 'IV — Survivez',
+      text: 'En cas d’échec, le matelot aux commandes est immobilisé. Le reste de l’équipage continue la quête.',
+      bullets: []
     }
   };
 
