@@ -1756,3 +1756,28 @@
 .rule-detail.ring-active::after{opacity:1;animation:ruleDetailRing 2.1s linear infinite}
 @keyframes ruleDetailRing{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.rule-detail.ring-active::after{animation:none;opacity:.9}}
+
+/* Hiérarchie typographique du hero : H1 dominant, sous-titre limité au
+   niveau H2, y compris sur tablette et mobile en paysage. */
+.hero-title{font-size:clamp(54px,11vw,150px);line-height:1.02}
+.hero-line{
+  margin:18px 0 0;
+  font-size:clamp(18px,3vw,32px);
+  line-height:1.18;
+  font-weight:800;
+  text-align:left;
+  color:#eaf8ff;
+}
+.hero-line span{color:var(--fnac)}
+@media (max-width:640px){
+  .hero-title{font-size:clamp(48px,15vw,82px);line-height:.96}
+  .hero-line{font-size:clamp(18px,5vw,28px);line-height:1.12}
+}
+@media (orientation:landscape) and (max-height:620px){
+  .hero-title{font-size:clamp(56px,16vh,104px);line-height:.94}
+  .hero-line{font-size:clamp(18px,4.2vh,28px);line-height:1.08;margin-top:10px}
+}
+@media (orientation:landscape) and (max-height:430px){
+  .hero-title{font-size:clamp(48px,17vh,82px)}
+  .hero-line{font-size:clamp(16px,4.8vh,23px)}
+}
