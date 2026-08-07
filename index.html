@@ -123,8 +123,12 @@
         <div class="oxygen-scale"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
         <div class="oxygen-bottom">
           <div class="oxygen-state" id="oxygenState">PRESSION STABLE</div>
-          <div class="countdown-block">
-            <div class="countdown-label">Temps restant avant remontée à la surface</div>
+            <div class="countdown-block">
+            <div class="countdown-label">
+              <span class="countdown-kicker">Compte à rebours global</span>
+              <span>Temps restant avant la fin de la mission</span>
+            </div>
+            <div class="countdown-scope" id="oxygenCountdownScope">Commun à tous les équipages · 7 jours</div>
             <div class="countdown" id="oxygenCountdown">7J 00h00m00s</div>
           </div>
         </div>
@@ -4036,9 +4040,16 @@ function qrDataUri(text, opts){
     const pctEl = $('oxygenPercent');
     const bar = $('oxygenBar');
     const state = $('oxygenState');
+    const scope = $('oxygenCountdownScope');
     if(!el || !status || !bar) return;
 
     const startedAt = missionConfig?.missionStartedAt;
+    const durationForLabel = getMissionDurationMs();
+    const durationDays = durationForLabel / 86400000;
+    const durationText = Number.isInteger(durationDays)
+      ? `${durationDays} jour${durationDays > 1 ? 's' : ''}`
+      : `${Math.round(durationForLabel / 3600000)} heures`;
+    if(scope) scope.textContent = `Commun à tous les équipages · ${durationText}`;
     if(!startedAt){
       el.textContent = '7J 00h00m00s';
       status.textContent = 'En attente du premier signal…';

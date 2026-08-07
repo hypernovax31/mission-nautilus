@@ -1781,3 +1781,10 @@
   .hero-title{font-size:clamp(48px,17vh,82px)}
   .hero-line{font-size:clamp(16px,4.8vh,23px)}
 }
+
+/* Contexte du chrono O₂ : il s'agit du compte à rebours GLOBAL de la
+   mission, distinct du chrono court d'un mini-jeu. */
+.countdown-label{display:flex;flex-direction:column;gap:3px}
+.countdown-kicker{color:var(--fnac);font-size:.82em;letter-spacing:.10em;font-weight:1000}
+.countdown-scope{margin-top:1px;color:rgba(183,217,232,.78);font-size:var(--fs-tiny);font-weight:800;letter-spacing:.03em;text-align:right}
+@media(max-width:900px){.countdown-scope{text-align:left}.countdown-block{align-items:flex-start}.countdown-label{text-align:left}}
