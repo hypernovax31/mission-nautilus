@@ -3410,8 +3410,10 @@ function qrDataUri(text, opts){
     /* Signal visuel de lecture : le cadre fait circuler un trait lumineux
        à chaque hublot touché, pour relier clairement le bouton à son encart. */
     detail.classList.remove('ring-active');
-    void detail.offsetWidth; // relance l'animation même si le même hublot est retouché
-    detail.classList.add('ring-active');
+    if(shouldScroll){
+      void detail.offsetWidth; // relance l'effet si le même hublot est retouché
+      detail.classList.add('ring-active');
+    }
     document.querySelectorAll('.mission-step').forEach(btn => {
       const actif = btn.dataset.rule === key;
       btn.classList.toggle('active', actif);
