@@ -1738,3 +1738,21 @@
     -webkit-text-size-adjust:100%;
   }
 }
+
+/* Trait de liaison entre le hublot choisi et son encart de consigne. */
+.rule-detail::after{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  padding:2px;
+  border-radius:inherit;
+  background:conic-gradient(from 0deg,transparent 0deg 275deg,rgba(245,176,39,.12) 290deg,rgba(245,176,39,.98) 315deg,rgba(142,231,255,.95) 333deg,transparent 350deg 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:0;
+  pointer-events:none;
+}
+.rule-detail.ring-active::after{opacity:1;animation:ruleDetailRing 2.1s linear infinite}
+@keyframes ruleDetailRing{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.rule-detail.ring-active::after{animation:none;opacity:.9}}
