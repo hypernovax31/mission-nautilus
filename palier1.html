@@ -2230,7 +2230,7 @@ window.Nautilus = {
         </p>
         <div class="countdown-big">${esc(N.formatDate(l.lockedUntil))}</div>
         <p class="lock-rule">${detail}</p>
-        ${prochainePeineHtml(t, l)}
+        ${parIndice ? '' : prochainePeineHtml(t, l)}
         <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
       </div>
     `;
