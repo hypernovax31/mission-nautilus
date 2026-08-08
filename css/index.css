@@ -1925,3 +1925,9 @@ button.mission-step.active::before{
 .oxygen-end-sub{color:#ffd0cd;font-size:clamp(13px,2.5vw,18px)!important}
 @keyframes oxygenAlarmFlash{from{background-color:rgba(90,0,0,.68)}to{background-color:rgba(220,0,0,.34)}}
 @media(prefers-reduced-motion:reduce){.oxygen-end-alarm{animation:none}}
+
+/* Le fond du Nautilus reste visible derrière les blocs transparents. Le fond
+   plein du body masquait parfois l'image sur Safari/iPhone. */
+body{background:transparent}
+.ocean-wallpaper{z-index:0!important}
+header,main,footer{position:relative;z-index:1}
