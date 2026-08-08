@@ -2171,3 +2171,20 @@ button.mission-step:not(.active):hover .hublot-glass{
   background-color:transparent !important;
   box-shadow:none !important;
 }
+
+/* Hublots statiques : aucune animation ni effet dynamique. */
+button.mission-step,
+button.mission-step::before,
+button.mission-step .hublot-glass{
+  animation:none !important;
+  transition:none !important;
+}
+button.mission-step.active{
+  transform:none !important;
+}
+button.mission-step.active::before{
+  animation:none !important;
+  filter:none !important;
+  box-shadow:none !important;
+}
+button.mission-step.seen::after{display:none !important}
