@@ -2188,3 +2188,20 @@ button.mission-step.active::before{
   box-shadow:none !important;
 }
 button.mission-step.seen::after{display:none !important}
+
+/* Nettoyage définitif : les hublots ne portent plus aucun effet visuel
+   dynamique ou décoratif. */
+button.mission-step::before,
+button.mission-step:hover::before,
+button.mission-step.active::before{
+  box-shadow:none !important;
+  filter:none !important;
+}
+button.mission-step,
+button.mission-step:hover,
+button.mission-step.active{
+  animation:none !important;
+  transition:none !important;
+  transform:none !important;
+  filter:none !important;
+}
