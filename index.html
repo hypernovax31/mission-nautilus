@@ -4083,6 +4083,7 @@ function qrDataUri(text, opts){
       el.textContent = '7J 00h00m00s';
       status.textContent = 'En attente du premier signal…';
       bar.style.width = '100%';
+      bar.style.backgroundSize = '100% 100%';
       bar.classList.remove('warning-level','critical');
       if(pctEl) pctEl.textContent = '100%';
       if(state){state.textContent='PRESSION STABLE';state.className='oxygen-state';}
@@ -4129,6 +4130,10 @@ function qrDataUri(text, opts){
        chrono tourne pour tout le monde. */
     status.innerHTML = 'La mission est lancée… Quel équipage trouvera le <i>Nautilus</i> avant l’épuisement des réserves d’air ?';
     bar.style.width = percentPrecis.toFixed(3) + '%';
+    /* Le dégradé est calculé sur la largeur totale du tube, puis recadré
+       par la largeur restante : les couleurs déjà consommées disparaissent
+       réellement au lieu de se réétirer sur la partie restante. */
+    bar.style.backgroundSize = (percentPrecis > 0 ? (10000 / percentPrecis).toFixed(3) : '100') + '% 100%';
     bar.classList.toggle('warning-level', percent <= 50 && percent > 20);
     bar.classList.toggle('critical', percent <= 20);
     if(pctEl) pctEl.textContent = percent + '%';
@@ -4156,6 +4161,7 @@ function qrDataUri(text, opts){
     function lancer(){
       if(parti) return;
       parti = true;
+      bar.style.backgroundSize = '100% 100%';
       /* Pendant l'état plein, la jauge doit rester au bleu 100 %.
          La couleur cible ne doit apparaître qu'en même temps que la vidange. */
       /* Deux images d'attente : le navigateur doit avoir pris en compte la

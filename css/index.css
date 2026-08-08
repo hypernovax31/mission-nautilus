@@ -1902,3 +1902,7 @@ button.mission-step.active::before{
 .oxygen-liquid{
   background:linear-gradient(90deg,#5b0000 0%,#ff4b3e 20%,#f5b027 50%,#18c8ff 80%,#b8f4ff 100%) !important;
 }
+
+/* La jauge est une fenêtre sur l'échelle complète : lorsque sa largeur
+   diminue, la partie de droite du dégradé est réellement coupée. */
+.oxygen-liquid{background-size:100% 100%;transition:width 1.4s cubic-bezier(.22,.9,.3,1),background-size 1.4s cubic-bezier(.22,.9,.3,1),filter .3s ease}
