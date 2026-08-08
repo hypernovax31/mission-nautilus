@@ -2338,3 +2338,21 @@ button.mission-step:not(.active):hover .hublot-glass{
   background-size:auto,auto,38px 38px,38px 38px;
   opacity:.85;
 }
+
+/* Quadrillage en perspective pour la zone ÉQUIPAGES EN PLONGÉE. Le premier
+   quadrillage reste plat en fond ; celui-ci apporte la profondeur façon
+   pont de sonar sans recouvrir le contenu. */
+#equipagesEnMer::after{
+  content:"";
+  position:absolute;
+  left:-12%;right:-12%;bottom:-8%;height:58%;
+  z-index:0;
+  pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg,rgba(142,231,255,.16) 0 1px,transparent 1px 42px),
+    repeating-linear-gradient(0deg,rgba(142,231,255,.14) 0 1px,transparent 1px 42px);
+  transform:perspective(520px) rotateX(58deg) scale(1.18);
+  transform-origin:center bottom;
+  opacity:.42;
+}
+#equipagesEnMer > *{position:relative;z-index:1}
