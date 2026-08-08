@@ -6372,3 +6372,31 @@ window.PWAInstall = { openInstallModal, PWA_PLATFORM };
 </script>
 </body>
 </html>
+
+<script>
+/* Safari iPhone : simulation du wallpaper fixe à l'intérieur des hublots.
+   background-attachment:fixed n'étant pas fiable sur les éléments enfants,
+   on recalcule sa position par rapport à la fenêtre pendant le défilement. */
+(function syncMobileHublotWallpaper(){
+  const isTouch = () => window.matchMedia('(pointer: coarse)').matches;
+  let frame = null;
+  function sync(){
+    frame = null;
+    if(!isTouch()) return;
+    document.querySelectorAll('.mission-step:not(.active) .hublot-glass').forEach(glass => {
+      const top = glass.getBoundingClientRect().top;
+      glass.style.backgroundAttachment = 'scroll';
+      glass.style.backgroundSize = '100vw auto';
+      glass.style.backgroundPosition = `center ${Math.round(-top)}px`;
+    });
+  }
+  function requestSync(){
+    if(frame === null) frame = requestAnimationFrame(sync);
+  }
+  window.addEventListener('scroll', requestSync, {passive:true});
+  window.addEventListener('resize', requestSync, {passive:true});
+  document.addEventListener('click', requestSync, true);
+  window.addEventListener('load', requestSync, {once:true});
+  requestSync();
+})();
+</script>

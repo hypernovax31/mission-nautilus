@@ -2310,3 +2310,10 @@ button.mission-step:not(.active):hover .hublot-glass{
   background-attachment:fixed !important;
   background-color:transparent !important;
 }
+
+/* Sur mobile, la position est pilotée par syncMobileHublotWallpaper(). */
+@media (pointer:coarse){
+  button.mission-step:not(.active) .hublot-glass{
+    background-attachment:scroll !important;
+  }
+}
