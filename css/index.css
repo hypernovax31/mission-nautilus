@@ -2098,3 +2098,16 @@ button.mission-step.active:hover .hublot-glass{
   background:#0b2535 !important;
   background-image:none !important;
 }
+
+/* Au survol d'un hublot non sélectionné, on conserve le fond marin mais on
+   renforce son opacité. Le hublot sélectionné reste, lui, opaque et uni. */
+button.mission-step:not(.active):hover .hublot-glass{
+  background-image:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.14),transparent 52%),
+    linear-gradient(160deg,rgba(8,40,61,.78),rgba(3,19,31,.88)),
+    url('../assets/fond-nautilus.jpg') !important;
+  background-position:center,center,center top;
+  background-repeat:no-repeat;
+  background-size:auto,auto,100vw auto;
+  background-attachment:scroll,scroll,fixed;
+}
