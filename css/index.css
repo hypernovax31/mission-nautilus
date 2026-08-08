@@ -2137,3 +2137,13 @@ button.mission-step.active .hublot-glass{
   background-image:none !important;
   background-attachment:scroll !important;
 }
+
+/* Aucun effet à l’intérieur du verre : pas de reflet, halo, flou ni ombre
+   interne. Le repos montre seulement le wallpaper ; le survol et la
+   sélection restent des surfaces unies. */
+.hublot-glass{
+  box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+.hublot-glass::after{display:none !important}
