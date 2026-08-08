@@ -2147,3 +2147,15 @@ button.mission-step.active .hublot-glass{
   backdrop-filter:none !important;
 }
 .hublot-glass::after{display:none !important}
+
+/* Survol sans animation : le hublot change seulement d’état visuel, sans
+   déplacement, zoom, filtre ni transition. */
+button.mission-step:hover{
+  transform:none !important;
+  filter:none !important;
+  transition:none !important;
+}
+button.mission-step:hover::before{
+  filter:none !important;
+  transition:none !important;
+}
