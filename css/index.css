@@ -1827,3 +1827,65 @@ button.mission-step.active::before{
   button.mission-step.active,.rule-detail.ring-active{animation:none}
   button.mission-step.active::before{animation:none}
 }
+
+/* Tableau O₂ : deux informations prioritaires, visibles d'un coup d'œil.
+   La jauge et le temps restant occupent le premier plan ; le statut reste
+   secondaire. */
+.oxygen-meter{
+  padding:clamp(16px,3vw,26px);
+}
+.oxygen-meter-top{
+  margin-bottom:12px;
+  align-items:center;
+}
+.oxygen-meter-top span{
+  font-size:clamp(14px,2.2vw,21px);
+}
+.oxygen-meter-top strong{
+  font-size:clamp(32px,6vw,52px);
+}
+.oxygen-status{
+  margin:0 0 12px;
+  font-size:clamp(12px,1.7vw,15px);
+  line-height:1.35;
+}
+.oxygen-tube{height:46px}
+.oxygen-bottom{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:end;
+  gap:clamp(14px,3vw,28px);
+  margin-top:18px;
+}
+.oxygen-state{
+  align-self:end;
+  white-space:nowrap;
+}
+.countdown-block{
+  align-items:flex-end;
+  gap:5px;
+}
+.countdown-label{
+  align-items:flex-end;
+  gap:2px;
+}
+.countdown-kicker{
+  font-size:clamp(11px,1.5vw,14px);
+  letter-spacing:.08em;
+}
+.countdown{
+  font-size:clamp(34px,6vw,56px);
+  line-height:1;
+  letter-spacing:.01em;
+}
+@media(max-width:600px){
+  .oxygen-bottom{
+    grid-template-columns:1fr;
+    gap:14px;
+    justify-items:center;
+  }
+  .oxygen-state{justify-self:center}
+  .countdown-block,
+  .countdown-label{align-items:center;text-align:center}
+  .countdown{font-size:clamp(34px,10vw,48px)}
+}
