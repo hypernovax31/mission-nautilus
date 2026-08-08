@@ -749,11 +749,11 @@
       letter-spacing:.05em;text-transform:uppercase;
       text-shadow:0 0 16px rgba(245,176,39,.35);
     }
-    .rule-detail p{margin:0;font-size:var(--fs-small);line-height:1.6;color:#cfe6f4}
+    .rule-detail p{margin:0;font-size:clamp(15px,2.2vw,19px);line-height:1.5;color:#cfe6f4}
     .rule-detail ul{margin:12px 0 0;padding:0;list-style:none}
     .rule-detail li{
       position:relative;margin:7px 0;padding-left:20px;
-      font-size:var(--fs-small);line-height:1.5;color:#b9d6e6;
+      font-size:clamp(14px,2vw,17px);line-height:1.5;color:#b9d6e6;
     }
     .rule-detail li::before{
       content:"";position:absolute;left:3px;top:.55em;width:7px;height:7px;
