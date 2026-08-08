@@ -2090,3 +2090,11 @@ button.mission-step.active:hover .hublot-glass{
   background-size:auto,auto,auto;
   background-attachment:scroll;
 }
+
+/* Au survol : aucun fond marin dans le verre, uniquement une surface
+   sombre unie pour garder le libellé parfaitement lisible. */
+button.mission-step:hover .hublot-glass,
+button.mission-step.active:hover .hublot-glass{
+  background:#0b2535 !important;
+  background-image:none !important;
+}
