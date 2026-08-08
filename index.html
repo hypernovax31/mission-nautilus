@@ -108,6 +108,31 @@
     </div>
   </section>
 
+  <section class="card" id="embarquementMatelot">
+    <h2>⚓ EMBARQUEMENT MATELOT</h2>
+    <div class="body">
+      <div class="boarding-grid">
+        <div><label>Ton nom</label><input id="memberName" placeholder="Ex. JULES VERNE" autocomplete="off"></div>
+        <div><label for="memberService">Ton service</label><select id="memberService" required><option value="" selected disabled>Ex. PE</option><option value="PE">PE</option><option value="PT">PT</option><option value="SAV">SAV</option><option value="LOG">LOG</option><option value="CAI">CAI</option><option value="GAD">GAD</option><option value="CODIR">CODIR</option></select></div>
+        <div class="boarding-action"><button class="primary" id="registerBtn">Monter à bord</button></div>
+      </div>
+      <div id="registerMsg"></div>
+      <div id="embarkMissionAction" class="cockpit-action" style="display:none"></div>
+    </div>
+  </section>
+
+  <section class="card" id="retrouverEquipage">
+    <h2>🧭 REPRENDS LA MISSION</h2>
+    <div class="body">
+      <div class="grid">
+        <div><label for="matelotCodeInput">Code Matelot</label><input id="matelotCodeInput" placeholder="Ex. ABCD-1234" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="9" style="text-transform:uppercase;letter-spacing:.06em"></div>
+        <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
+      </div>
+      <p class="small">Déjà inscrit ? Saisis ton <b>Code Matelot</b> pour reprendre la mission. Tu peux aussi scanner ton QR.</p>
+      <div id="joinMsg"></div>
+    </div>
+  </section>
+
   <section class="card countdown-card" id="oxygenPanel">
     <h2>RÉSERVE O₂</h2>
     <div class="body oxygen-dashboard">
@@ -131,31 +156,6 @@
           </div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <section class="card" id="embarquementMatelot">
-    <h2>⚓ EMBARQUEMENT MATELOT</h2>
-    <div class="body">
-      <div class="boarding-grid">
-        <div><label>Ton nom</label><input id="memberName" placeholder="Ex. JULES VERNE" autocomplete="off"></div>
-        <div><label for="memberService">Ton service</label><select id="memberService" required><option value="" selected disabled>Ex. PE</option><option value="PE">PE</option><option value="PT">PT</option><option value="SAV">SAV</option><option value="LOG">LOG</option><option value="CAI">CAI</option><option value="GAD">GAD</option><option value="CODIR">CODIR</option></select></div>
-        <div class="boarding-action"><button class="primary" id="registerBtn">Monter à bord</button></div>
-      </div>
-      <div id="registerMsg"></div>
-      <div id="embarkMissionAction" class="cockpit-action" style="display:none"></div>
-    </div>
-  </section>
-
-  <section class="card" id="retrouverEquipage">
-    <h2>🧭 REPRENDS LA MISSION</h2>
-    <div class="body">
-      <div class="grid">
-        <div><label for="matelotCodeInput">Code Matelot</label><input id="matelotCodeInput" placeholder="Ex. ABCD-1234" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="9" style="text-transform:uppercase;letter-spacing:.06em"></div>
-        <div style="align-self:end"><button class="primary" id="joinBtn">Reprendre la plongée</button></div>
-      </div>
-      <p class="small">Déjà inscrit ? Saisis ton <b>Code Matelot</b> pour reprendre la mission. Tu peux aussi scanner ton QR.</p>
-      <div id="joinMsg"></div>
     </div>
   </section>
 
