@@ -907,6 +907,7 @@ window.Nautilus = {
 
     bar.hidden = false;
     $('o2Fill').style.width = pctPrecis.toFixed(3) + '%';
+    $('o2Fill').style.background = oxygenColor(pct);
     $('o2Pct').textContent = pct + '%';
     $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m`;
     /* MEMES SEUILS QUE L'ACCUEIL : la jauge passait ici a l'orange a 40 %
