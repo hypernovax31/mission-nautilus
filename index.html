@@ -466,17 +466,20 @@
      un second appel corrigerait la position et produirait le "descend
      trop / remonte ensuite" signale par le joueur. Le verrou bloque tout
      nouveau scroll pendant 600 ms apres le precedent. */
-  function smartScroll(el){
+  function smartScroll(el, smooth=false){
     if(!el) return;
-    /* Ne scrolle QUE si l'element n'est pas deja visible.
-       scrollIntoView sans behavior='auto' peut encore animer sur
-       certains navigateurs meme avec scroll-behavior supprime. */
-    const gap = 60;
+    /* La barre fixe contient "Installer l'app" et "Activer le sonar".
+       On mesure sa vraie hauteur sur chaque appareil, puis on garde
+       exactement 3 px d'air sous son bord inférieur. */
+    const topbar = document.querySelector('.top-bar');
+    const gap = topbar
+      ? Math.ceil(topbar.getBoundingClientRect().bottom + 3)
+      : 3;
     const r = el.getBoundingClientRect();
     if(r.top >= gap && r.bottom <= window.innerHeight) return;
     const y = window.pageYOffset + r.top - gap;
-    document.documentElement.style.scrollBehavior = 'auto';
-    window.scrollTo({ top: Math.max(0, y), behavior: 'auto' });
+    document.documentElement.style.scrollBehavior = smooth ? 'smooth' : 'auto';
+    window.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'auto' });
     document.documentElement.style.scrollBehavior = '';
   }
 
@@ -4794,13 +4797,13 @@ function qrDataUri(text, opts){
 
   function launchMission(){
     startOceanAudio();
-    smartScroll(document.getElementById('embarquementMatelot'));
+    smartScroll(document.getElementById('embarquementMatelot'), true);
     setTimeout(()=>$('memberName')?.focus(), 650);
   }
   $('launchMissionBtn')?.addEventListener('click', launchMission);
   $('resumeMissionBtn')?.addEventListener('click', () => {
     startOceanAudio();
-    smartScroll(document.getElementById('retrouverEquipage'));
+    smartScroll(document.getElementById('retrouverEquipage'), true);
     /* Focus auto sur l'input après le scroll pour faciliter la saisie */
     setTimeout(() => {
       const input = $('matelotCodeInput');
