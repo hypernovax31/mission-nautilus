@@ -2435,3 +2435,17 @@ button.mission-step:not(.active):hover .hublot-glass{
   .hero-meta .brand{font-size:clamp(9px,3vw,15px);letter-spacing:.04em}
   .hero-meta .hero-kicker{padding:5px 7px;font-size:clamp(7px,2.35vw,12px);letter-spacing:.04em}
 }
+
+/* Hublot sélectionné : voile sombre à 60 %, tout en conservant le wallpaper
+   visible derrière le verre. */
+button.mission-step.active .hublot-glass,
+button.mission-step.active:hover .hublot-glass{
+  background-image:
+    linear-gradient(rgba(11,37,53,.60),rgba(11,37,53,.60)),
+    url('../assets/fond-nautilus.jpg') !important;
+  background-position:center top,center top !important;
+  background-repeat:no-repeat !important;
+  background-size:100vw auto,100vw auto !important;
+  background-attachment:fixed, fixed !important;
+  background-color:transparent !important;
+}

@@ -6385,7 +6385,7 @@ window.PWAInstall = { openInstallModal, PWA_PLATFORM };
   function sync(){
     frame = null;
     if(!isTouch()) return;
-    document.querySelectorAll('.mission-step:not(.active) .hublot-glass').forEach(glass => {
+    document.querySelectorAll('.mission-step .hublot-glass').forEach(glass => {
       const top = glass.getBoundingClientRect().top;
       /* Safari iOS ignore les valeurs inline normales lorsqu'une règle
          responsive est marquée !important : on impose ici la position
