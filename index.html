@@ -4036,6 +4036,9 @@ function qrDataUri(text, opts){
   }
 
   function oxygenColor(percent){
+    /* Une seule couleur cible est calculée à partir du pourcentage. Le
+       dégradé reste dans cette famille de couleur : il ne peut donc pas
+       afficher du bleu sous 50 %, ni du rouge au-dessus de 50 %. */
     const stops = [
       [0, [91, 0, 0]],
       [20, [255, 75, 62]],
@@ -4044,30 +4047,17 @@ function qrDataUri(text, opts){
       [100, [184, 244, 255]]
     ];
     const p = Math.max(0, Math.min(100, Number(percent) || 0));
-    let a = stops[0], b = stops[stops.length - 1];
+    let low = stops[0], high = stops[stops.length - 1];
     for(let i = 0; i < stops.length - 1; i++){
-      if(p >= stops[i][0] && p <= stops[i + 1][0]){ a = stops[i]; b = stops[i + 1]; break; }
+      if(p >= stops[i][0] && p <= stops[i + 1][0]){
+        low = stops[i]; high = stops[i + 1]; break;
+      }
     }
-    const t = (p - a[0]) / Math.max(1, b[0] - a[0]);
-    const rgb = a[1].map((v, i) => Math.round(v + (b[1][i] - v) * t));
-    /* Le dégradé suit les seuils réellement traversés : à 50 %, par
-       exemple, il montre bleu très clair → cyan → ambre, et non simplement
-       bleu → ambre. La dernière couleur correspond exactement au niveau. */
-    const palette = [
-      [100, [184, 244, 255]],
-      [80, [24, 200, 255]],
-      [50, [245, 176, 39]],
-      [20, [255, 75, 62]],
-      [0, [91, 0, 0]]
-    ];
-    const visible = palette.filter(([level]) => level > p);
-    visible.push([p, rgb]);
-    const span = Math.max(1, 100 - p);
-    const stopsCss = visible.map(([level, color]) => {
-      const position = ((100 - level) / span) * 100;
-      return `rgb(${color.join(',')}) ${position.toFixed(2)}%`;
-    }).join(',');
-    return `linear-gradient(90deg,${stopsCss})`;
+    const t = (p - low[0]) / Math.max(1, high[0] - low[0]);
+    const rgb = low[1].map((v, i) => Math.round(v + (high[1][i] - v) * t));
+    const dark = rgb.map(v => Math.round(v * .78));
+    const light = rgb.map(v => Math.round(v + (255 - v) * .25));
+    return `linear-gradient(90deg,rgb(${dark.join(',')}),rgb(${rgb.join(',')}),rgb(${light.join(',')}))`;
   }
 
   function updateCountdown(){
