@@ -2003,3 +2003,10 @@ button.mission-step.active .hublot-glass{
     radial-gradient(circle at 50% 115%,rgba(245,176,39,.20),transparent 60%),
     linear-gradient(160deg,rgba(13,53,82,.40),rgba(1,10,18,.54));
 }
+
+/* Le panneau des consignes devient lui aussi plus transparent : sans cela,
+   le fond sombre de la carte se trouvait derrière le verre et masquait le
+   wallpaper avant même d'arriver au hublot. */
+.intro-card{
+  background:linear-gradient(135deg,rgba(5,16,28,.40),rgba(12,53,77,.42));
+}
