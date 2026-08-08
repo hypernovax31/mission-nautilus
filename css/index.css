@@ -2317,3 +2317,24 @@ button.mission-step:not(.active):hover .hublot-glass{
     background-attachment:scroll !important;
   }
 }
+
+/* Le quadrillage de l'Ordre de mission devient aussi le décor du bloc
+   Équipages en plongée, sans modifier son contenu ni son radar. */
+#equipagesEnMer{
+  position:relative;
+  isolation:isolate;
+}
+#equipagesEnMer::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 20%,rgba(142,231,255,.18),transparent 26%),
+    radial-gradient(circle at 82% 70%,rgba(245,176,39,.14),transparent 22%),
+    linear-gradient(90deg,rgba(142,231,255,.05) 1px,transparent 1px),
+    linear-gradient(rgba(142,231,255,.045) 1px,transparent 1px);
+  background-size:auto,auto,38px 38px,38px 38px;
+  opacity:.85;
+}
