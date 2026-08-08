@@ -2377,3 +2377,28 @@ button.mission-step:not(.active):hover .hublot-glass{
   opacity:.42;
 }
 #radarStage > *{position:relative;z-index:1}
+
+/* Transparence uniforme des panneaux : 5 % du wallpaper reste visible,
+   tandis que le contenu, les textes et les bordures restent pleinement
+   lisibles. */
+.card{
+  background-color:rgba(255,255,255,.95);
+}
+.intro-card{
+  background:linear-gradient(135deg,rgba(5,16,28,.95),rgba(12,53,77,.95));
+}
+.countdown-card,
+#equipagesEnMer,
+.final-cta{
+  background:linear-gradient(135deg,rgba(5,16,28,.95),rgba(8,48,72,.95));
+}
+.team,
+.admin-pane{
+  background:rgba(255,255,255,.95);
+}
+.cockpit,
+.rule-detail,
+.oxygen-meter,
+.radar-stage{
+  background-color:rgba(5,16,28,.95);
+}
