@@ -4202,14 +4202,36 @@ function qrDataUri(text, opts){
       if(parti) return;
       parti = true;
       bar.style.backgroundSize = '100% 100%';
-      /* Pendant l'état plein, la jauge doit rester au bleu 100 %.
-         La couleur cible ne doit apparaître qu'en même temps que la vidange. */
-      /* Deux images d'attente : le navigateur doit avoir pris en compte la
-         largeur de depart (100 %) AVANT qu'on la change, sinon il passe
-         directement a la valeur finale sans animer. */
+      bar.style.background = oxygenColor(100);
+      /* La jauge entre dans le champ à 100 %.  On fait évoluer largeur ET
+         couleur ensemble jusqu'au pourcentage réel : les seuils bleu,
+         ambre et rouge sont réellement traversés sous les yeux du joueur,
+         au lieu d'un changement direct vers la couleur finale. */
+      const debut = missionConfig?.missionStartedAt
+        ? new Date(missionConfig.missionStartedAt).getTime()
+        : null;
+      const duree = getMissionDurationMs();
+      const cible = debut
+        ? Math.max(0, Math.min(100, (debut + duree - Date.now()) / duree * 100))
+        : 100;
       requestAnimationFrame(() => requestAnimationFrame(() => {
         bar.classList.remove('o2-attente');
-        updateCountdown();          // applique la vraie valeur -> la barre descend
+        bar.style.transition = 'none';
+        const depart = performance.now();
+        const dureeAnimation = 1400;
+        const jouer = maintenant => {
+          const progression = Math.min(1, (maintenant - depart) / dureeAnimation);
+          const niveau = 100 - ((100 - cible) * progression);
+          bar.style.width = niveau.toFixed(3) + '%';
+          bar.style.background = oxygenColor(niveau);
+          if(progression < 1){
+            requestAnimationFrame(jouer);
+          }else{
+            bar.style.transition = '';
+            updateCountdown();
+          }
+        };
+        requestAnimationFrame(jouer);
       }));
     }
 
