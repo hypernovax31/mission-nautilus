@@ -2245,3 +2245,17 @@ button.mission-step .hublot-glass{z-index:1}
     background-color:transparent !important;
   }
 }
+
+/* Typographie globale du jeu : Exo 2 partout, sauf le H1 principal et
+   l'ordre de mission typewriter qui gardent leur identité propre. */
+body, body *{
+  font-family:'Exo 2',Arial,Helvetica,sans-serif;
+}
+.hero-title,
+.hero-title *{
+  font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
+}
+.typewriter,
+.typewriter *{
+  font-family:Consolas,"Courier New",monospace;
+}
