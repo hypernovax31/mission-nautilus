@@ -2036,3 +2036,7 @@ button.mission-step.active .hublot-glass{
   background-size:auto,auto,auto,100vw auto;
   background-attachment:scroll,scroll,scroll,fixed;
 }
+
+/* Le bloc ORDRE DE MISSION reprend la même opacité que les autres blocs
+   sombres de l'interface. */
+.intro-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(12,53,77,.80))}
