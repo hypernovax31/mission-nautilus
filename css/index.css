@@ -1940,3 +1940,14 @@ header,main,footer{position:relative;z-index:1}
 }
 @media(max-width:640px){.hero-line{font-size:clamp(15px,4.5vw,25px)}}
 @media(orientation:landscape) and (max-height:620px){.hero-line{font-size:clamp(15px,3.8vh,24px)}}
+
+/* Sous-titre lisible : la science-fiction reste portée par le décor,
+   tandis que le texte privilégie la lecture immédiate. */
+.hero-line{
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:clamp(17px,2.6vw,29px);
+  font-weight:800;
+  letter-spacing:.01em;
+}
+@media(max-width:640px){.hero-line{font-size:clamp(16px,4.7vw,26px)}}
+@media(orientation:landscape) and (max-height:620px){.hero-line{font-size:clamp(16px,4vh,25px)}}
