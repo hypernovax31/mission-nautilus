@@ -2356,3 +2356,24 @@ button.mission-step:not(.active):hover .hublot-glass{
   opacity:.42;
 }
 #equipagesEnMer > *{position:relative;z-index:1}
+
+/* Le radar possède son propre fond opaque : le quadrillage du parent ne
+   traversait donc pas cette zone. On le redessine au-dessus de ce fond,
+   mais sous le sonar et ses informations. */
+#radarStage{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+}
+#radarStage::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg,rgba(142,231,255,.12) 0 1px,transparent 1px 42px),
+    repeating-linear-gradient(0deg,rgba(142,231,255,.10) 0 1px,transparent 1px 42px);
+  opacity:.42;
+}
+#radarStage > *{position:relative;z-index:1}
