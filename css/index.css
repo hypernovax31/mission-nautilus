@@ -2224,3 +2224,10 @@ button.mission-step .hublot-glass{z-index:1}
     background-image:none !important;
   }
 }
+
+/* Police du sous-titre : lisible, mais avec une touche science-fiction. */
+.hero-line{
+  font-family:'Exo 2',Arial,Helvetica,sans-serif;
+  font-weight:600;
+  letter-spacing:.015em;
+}
