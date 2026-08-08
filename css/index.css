@@ -2297,3 +2297,16 @@ button.mission-step.active:hover .hublot-glass{
   background-attachment:scroll !important;
   box-shadow:none !important;
 }
+
+/* Effet hublot du bureau : l’image reste attachée à la fenêtre, tandis que
+   le hublot se déplace avec la page. Le wallpaper semble ainsi défiler par
+   transparence derrière le verre, au lieu d’être collé au hublot. */
+button.mission-step:not(.active) .hublot-glass,
+button.mission-step:not(.active):hover .hublot-glass{
+  background-image:url('../assets/fond-nautilus.jpg') !important;
+  background-position:center top !important;
+  background-repeat:no-repeat !important;
+  background-size:100vw auto !important;
+  background-attachment:fixed !important;
+  background-color:transparent !important;
+}
