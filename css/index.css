@@ -1931,3 +1931,12 @@ button.mission-step.active::before{
 body{background:transparent}
 .ocean-wallpaper{z-index:0!important}
 header,main,footer{position:relative;z-index:1}
+
+/* Sous-titre du hero : un cran sous le H1, avec une signature science-fiction. */
+.hero-line{
+  font-family:'Orbitron',Consolas,"Courier New",monospace;
+  font-size:clamp(16px,2.5vw,28px);
+  letter-spacing:.035em;
+}
+@media(max-width:640px){.hero-line{font-size:clamp(15px,4.5vw,25px)}}
+@media(orientation:landscape) and (max-height:620px){.hero-line{font-size:clamp(15px,3.8vh,24px)}}
