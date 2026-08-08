@@ -2276,3 +2276,24 @@ button.mission-step:not(.active) .hublot-glass{
     background-size:cover !important;
   }
 }
+
+/* Rendu unique des hublots sur toutes les plateformes : aucune règle
+   mobile séparée, afin que Safari, PC et Mac utilisent exactement le même
+   état au repos, au survol et à la sélection. */
+button.mission-step:not(.active) .hublot-glass,
+button.mission-step:not(.active):hover .hublot-glass{
+  background-image:url('../assets/fond-nautilus.jpg') !important;
+  background-position:center !important;
+  background-repeat:no-repeat !important;
+  background-size:cover !important;
+  background-attachment:scroll !important;
+  background-color:transparent !important;
+  box-shadow:none !important;
+}
+button.mission-step.active .hublot-glass,
+button.mission-step.active:hover .hublot-glass{
+  background:#0b2535 !important;
+  background-image:none !important;
+  background-attachment:scroll !important;
+  box-shadow:none !important;
+}
