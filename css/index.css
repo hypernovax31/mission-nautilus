@@ -1900,7 +1900,7 @@ button.mission-step.active::before{
    animée révèle progressivement cette échelle sans rendre la jauge
    uniforme. */
 .oxygen-liquid{
-  background:linear-gradient(90deg,#5b0000 0%,#ff4b3e 20%,#f5b027 50%,#18c8ff 80%,#b8f4ff 100%) !important;
+  background:linear-gradient(90deg,#5b0000 0%,#ff4b3e 20%,#f5b027 50%,#18c8ff 80%,#b8f4ff 100%);
 }
 
 /* La jauge est une fenêtre sur l'échelle complète : lorsque sa largeur

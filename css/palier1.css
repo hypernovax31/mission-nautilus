@@ -450,7 +450,7 @@
 
 /* Même échelle couleur que la réserve de la page d'accueil. */
 .o2-fill{
-  background:linear-gradient(90deg,#5b0000 0%,#ff4b3e 20%,#f5b027 50%,#18c8ff 80%,#b8f4ff 100%) !important;
+  background:linear-gradient(90deg,#5b0000 0%,#ff4b3e 20%,#f5b027 50%,#18c8ff 80%,#b8f4ff 100%);
 }
 
 .o2-fill{background-size:100% 100%;transition:width .6s ease,background-size .6s ease,filter .3s ease}
