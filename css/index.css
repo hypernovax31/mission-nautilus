@@ -2040,3 +2040,21 @@ button.mission-step.active .hublot-glass{
 /* Le bloc ORDRE DE MISSION reprend la même opacité que les autres blocs
    sombres de l'interface. */
 .intro-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(12,53,77,.80))}
+
+/* Verre des hublots légèrement renforcé : le wallpaper reste visible, mais
+   le texte gagne en contraste. La sélection ajoute une couche supplémentaire
+   pour distinguer clairement le hublot actif. */
+.hublot-glass{
+  background-image:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.14),transparent 52%),
+    radial-gradient(circle at 50% 120%,rgba(30,180,190,.18),transparent 62%),
+    linear-gradient(160deg,rgba(8,40,61,.48),rgba(3,19,31,.60)),
+    url('../assets/fond-nautilus.jpg');
+}
+button.mission-step.active .hublot-glass{
+  background-image:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.18),transparent 52%),
+    radial-gradient(circle at 50% 115%,rgba(245,176,39,.24),transparent 60%),
+    linear-gradient(160deg,rgba(13,53,82,.58),rgba(1,10,18,.70)),
+    url('../assets/fond-nautilus.jpg');
+}
