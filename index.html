@@ -150,7 +150,7 @@
           <div class="oxygen-state" id="oxygenState">PRESSION STABLE</div>
             <div class="countdown-block">
             <div class="countdown-label">
-              <span class="countdown-kicker" id="oxygenInitialDuration">COMPTE À REBOURS — Temps initial : 7 jours</span>
+              <span class="countdown-kicker" id="oxygenInitialDuration">COMPTE À REBOURS — Durée initiale : 7 jours</span>
             </div>
             <div class="countdown" id="oxygenCountdown">7J 00h00m00s</div>
           </div>
@@ -3969,20 +3969,23 @@ function qrDataUri(text, opts){
   const MISSION_DURATION_MS_DEFAULT = 7 * 24 * 60 * 60 * 1000;
   function formatInitialDuration(ms){
     const totalMinutes = Math.max(0, Math.round(Number(ms || MISSION_DURATION_MS_DEFAULT) / 60000));
-    const jours = Math.floor(totalMinutes / 1440);
-    const heures = Math.floor((totalMinutes % 1440) / 60);
-    const minutes = totalMinutes % 60;
+    const mois = Math.floor(totalMinutes / (30 * 1440));
+    const resteJours = totalMinutes % (30 * 1440);
+    const jours = Math.floor(resteJours / 1440);
+    const heures = Math.floor((resteJours % 1440) / 60);
+    const minutes = resteJours % 60;
     const morceaux = [];
+    if(mois) morceaux.push(mois + ' mois');
     if(jours) morceaux.push(jours + ' jour' + (jours > 1 ? 's' : ''));
-    if(heures) morceaux.push(heures + ' h');
-    if(!jours && !heures && minutes) morceaux.push(minutes + ' min');
-    return morceaux.join(' ') || '0 min';
+    if(heures) morceaux.push(heures + ' heure' + (heures > 1 ? 's' : ''));
+    if(!mois && !jours && !heures && minutes) morceaux.push(minutes + ' minute' + (minutes > 1 ? 's' : ''));
+    return morceaux.join(' ') || '0 minute';
   }
 
   function updateInitialDurationLabel(){
     const el = $('oxygenInitialDuration');
     if(!el) return;
-    el.textContent = 'COMPTE À REBOURS — Temps initial : ' + formatInitialDuration(getMissionDurationMs());
+    el.textContent = 'COMPTE À REBOURS — Durée initiale : ' + formatInitialDuration(getMissionDurationMs());
   }
 
   function getMissionDurationMs(){
