@@ -4102,7 +4102,7 @@ function qrDataUri(text, opts){
        le premier palier). L'ancien libelle disait "equipage en plongeon",
        une faute pour "plongee" — et il ne disait pas l'essentiel : que le
        chrono tourne pour tout le monde. */
-    status.textContent = 'La course est lancée.';
+    status.innerHTML = 'La mission est lancée… Quel équipage trouvera le <i>Nautilus</i> avant l’épuisement des réserves d’air ?';
     bar.style.width = percentPrecis.toFixed(3) + '%';
     bar.classList.toggle('warning-level', percent <= 50 && percent > 20);
     bar.classList.toggle('critical', percent <= 20);
