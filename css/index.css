@@ -2231,3 +2231,17 @@ button.mission-step .hublot-glass{z-index:1}
   font-weight:600;
   letter-spacing:.015em;
 }
+
+/* Sur écran tactile, :hover peut rester actif après un tap sur Safari. On
+   neutralise cet état pour garder le même rendu qu’à la souris : le hublot
+   ne devient opaque qu’après une vraie sélection (classe .active). */
+@media (hover:none), (pointer:coarse){
+  button.mission-step:not(.active):hover .hublot-glass{
+    background-image:url('../assets/fond-nautilus.jpg') !important;
+    background-position:center top !important;
+    background-repeat:no-repeat !important;
+    background-size:100vw auto !important;
+    background-attachment:fixed !important;
+    background-color:transparent !important;
+  }
+}

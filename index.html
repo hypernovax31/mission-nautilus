@@ -102,7 +102,7 @@
         <span class="rule-invite-count" id="ruleProgress"><i></i><i></i><i></i><i></i></span>
       </div>
       <div class="mission-steps" id="ruleCards">
-        <button type="button" class="mission-step active" data-rule="embark">
+        <button type="button" class="mission-step" data-rule="embark">
           <span class="hublot-glass"><span class="num">I</span><b>Embarquez</b></span>
         </button>
         <button type="button" class="mission-step" data-rule="solve">
@@ -3406,7 +3406,7 @@ function qrDataUri(text, opts){
       detail.classList.add('ring-active');
     }
     document.querySelectorAll('.mission-step').forEach(btn => {
-      const actif = btn.dataset.rule === key;
+      const actif = shouldScroll && btn.dataset.rule === key;
       btn.classList.toggle('active', actif);
       btn.setAttribute('aria-current', actif ? 'step' : 'false');
     });
