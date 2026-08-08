@@ -1988,3 +1988,18 @@ button.mission-step.active .hublot-glass{
     radial-gradient(circle at 50% 115%,rgba(245,176,39,.28),transparent 60%),
     linear-gradient(160deg,rgba(13,53,82,.60),rgba(1,10,18,.74));
 }
+
+/* Transparence renforcée : le verre garde sa teinte, mais le wallpaper
+   reste clairement perceptible derrière chaque hublot. */
+.hublot-glass{
+  background:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.12),transparent 52%),
+    radial-gradient(circle at 50% 120%,rgba(30,180,190,.14),transparent 62%),
+    linear-gradient(160deg,rgba(8,40,61,.34),rgba(3,19,31,.48));
+}
+button.mission-step.active .hublot-glass{
+  background:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.16),transparent 52%),
+    radial-gradient(circle at 50% 115%,rgba(245,176,39,.20),transparent 60%),
+    linear-gradient(160deg,rgba(13,53,82,.40),rgba(1,10,18,.54));
+}
