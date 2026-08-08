@@ -2111,3 +2111,11 @@ button.mission-step:not(.active):hover .hublot-glass{
   background-size:auto,auto,100vw auto;
   background-attachment:scroll,scroll,fixed;
 }
+
+/* Au survol : aucun fond d'image dans le hublot. */
+button.mission-step:hover .hublot-glass,
+button.mission-step:hover .hublot-glass:hover{
+  background:#0b2535 !important;
+  background-image:none !important;
+  background-attachment:scroll !important;
+}
