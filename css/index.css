@@ -2159,3 +2159,15 @@ button.mission-step:hover::before{
   filter:none !important;
   transition:none !important;
 }
+
+/* Le survol ne provoque plus aucun changement sur un hublot non sélectionné :
+   il conserve exactement son état au repos. */
+button.mission-step:not(.active):hover .hublot-glass{
+  background-image:url('../assets/fond-nautilus.jpg') !important;
+  background-position:center top !important;
+  background-repeat:no-repeat !important;
+  background-size:100vw auto !important;
+  background-attachment:fixed !important;
+  background-color:transparent !important;
+  box-shadow:none !important;
+}
