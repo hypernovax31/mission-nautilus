@@ -2119,3 +2119,21 @@ button.mission-step:hover .hublot-glass:hover{
   background-image:none !important;
   background-attachment:scroll !important;
 }
+
+/* Intérieur simplifié des hublots : aucune superposition décorative au repos,
+   uniquement le wallpaper. Au survol ou à la sélection, surface sombre. */
+.hublot-glass,
+button.mission-step.active .hublot-glass{
+  background-image:url('../assets/fond-nautilus.jpg') !important;
+  background-position:center top !important;
+  background-repeat:no-repeat !important;
+  background-size:100vw auto !important;
+  background-attachment:fixed !important;
+}
+button.mission-step:hover .hublot-glass,
+button.mission-step.active:hover .hublot-glass,
+button.mission-step.active .hublot-glass{
+  background:#0b2535 !important;
+  background-image:none !important;
+  background-attachment:scroll !important;
+}
