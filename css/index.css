@@ -1951,3 +1951,23 @@ header,main,footer{position:relative;z-index:1}
 }
 @media(max-width:640px){.hero-line{font-size:clamp(16px,4.7vw,26px)}}
 @media(orientation:landscape) and (max-height:620px){.hero-line{font-size:clamp(16px,4vh,25px)}}
+
+/* Sélection des hublots : retour simple et immédiat.
+   Pas de pulsation permanente : le hublot choisi et son encart portent le
+   même contour ambre, ce qui explique clairement le lien entre les deux. */
+button.mission-step.active{
+  transform:translateY(-3px);
+  animation:none;
+  outline:3px solid var(--fnac);
+  outline-offset:5px;
+}
+button.mission-step.active::before{
+  animation:none;
+  filter:brightness(1.16);
+  box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45),0 0 0 4px rgba(245,176,39,.42),0 0 26px rgba(245,176,39,.34);
+}
+.rule-detail.ring-active{
+  animation:none;
+  border-color:rgba(245,176,39,.92);
+  box-shadow:0 0 0 3px rgba(245,176,39,.24),0 0 18px rgba(245,176,39,.22),inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.42);
+}
