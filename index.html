@@ -4050,8 +4050,11 @@ function qrDataUri(text, opts){
     }
     const t = (p - a[0]) / Math.max(1, b[0] - a[0]);
     const rgb = a[1].map((v, i) => Math.round(v + (b[1][i] - v) * t));
-    const shadow = rgb.map(v => Math.round(v * .72));
-    return `linear-gradient(90deg,rgb(${shadow.join(',')}),rgb(${rgb.join(',')}))`;
+    /* Le début de la jauge reste toujours bleu très clair, comme à 100 %.
+       L'extrémité évolue vers la couleur du niveau courant : la jauge
+       affiche donc un vrai dégradé pendant toute sa consommation. */
+    const start = [184, 244, 255];
+    return `linear-gradient(90deg,rgb(${start.join(',')}),rgb(${rgb.join(',')}))`;
   }
 
   function updateCountdown(){
