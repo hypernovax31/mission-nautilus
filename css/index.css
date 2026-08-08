@@ -2259,3 +2259,20 @@ body, body *{
 .typewriter *{
   font-family:Consolas,"Courier New",monospace;
 }
+
+/* Safari iPhone ne gère pas correctement background-attachment: fixed sur
+   un élément enfant. Les hublots devenaient alors opaques ou remplis de
+   laiton. Une image locale, défilante et couvrante donne le même rendu sur
+   PC, Mac, tablette et iPhone. */
+button.mission-step:not(.active) .hublot-glass{
+  background-attachment:scroll !important;
+  background-position:center !important;
+  background-size:cover !important;
+}
+@media (hover:none), (pointer:coarse){
+  button.mission-step:not(.active):hover .hublot-glass{
+    background-attachment:scroll !important;
+    background-position:center !important;
+    background-size:cover !important;
+  }
+}
