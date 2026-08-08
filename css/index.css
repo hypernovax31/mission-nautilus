@@ -2010,3 +2010,29 @@ button.mission-step.active .hublot-glass{
 .intro-card{
   background:linear-gradient(135deg,rgba(5,16,28,.40),rgba(12,53,77,.42));
 }
+
+/* Le bloc reste intact : le verre reprend uniquement le wallpaper dans sa
+   propre surface, afin de le laisser visible malgré le fond opaque de la
+   carte qui se trouve derrière les hublots. */
+.hublot-glass{
+  background-image:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.12),transparent 52%),
+    radial-gradient(circle at 50% 120%,rgba(30,180,190,.14),transparent 62%),
+    linear-gradient(160deg,rgba(8,40,61,.34),rgba(3,19,31,.48)),
+    url('../assets/fond-nautilus.jpg');
+  background-position:center,center,center,center top;
+  background-repeat:no-repeat;
+  background-size:auto,auto,auto,100vw auto;
+  background-attachment:scroll,scroll,scroll,fixed;
+}
+button.mission-step.active .hublot-glass{
+  background-image:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.16),transparent 52%),
+    radial-gradient(circle at 50% 115%,rgba(245,176,39,.20),transparent 60%),
+    linear-gradient(160deg,rgba(13,53,82,.40),rgba(1,10,18,.54)),
+    url('../assets/fond-nautilus.jpg');
+  background-position:center,center,center,center top;
+  background-repeat:no-repeat;
+  background-size:auto,auto,auto,100vw auto;
+  background-attachment:scroll,scroll,scroll,fixed;
+}
