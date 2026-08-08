@@ -6392,7 +6392,7 @@ window.PWAInstall = { openInstallModal, PWA_PLATFORM };
          calculée, sinon l'image devient une copie décalée du wallpaper. */
       glass.style.setProperty('background-attachment', 'scroll', 'important');
       glass.style.setProperty('background-size', '100vw auto', 'important');
-      glass.style.setProperty('background-position', `center ${Math.round(-top)}px`, 'important');
+      glass.style.setProperty('background-position', `${Math.round(-glass.getBoundingClientRect().left)}px ${Math.round(-top)}px`, 'important');
     });
   }
   function requestSync(){
