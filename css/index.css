@@ -2070,3 +2070,23 @@ button.mission-step.active .hublot-glass{
   background-size:auto,auto,auto;
   background-attachment:scroll;
 }
+
+/* Au survol aussi, le verre devient opaque : le wallpaper reste réservé
+   aux hublots au repos. */
+button.mission-step:hover .hublot-glass{
+  background-image:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.16),transparent 52%),
+    linear-gradient(160deg,rgba(8,40,61,.90),rgba(3,19,31,.96));
+  background-position:center,center;
+  background-size:auto,auto;
+  background-attachment:scroll;
+}
+button.mission-step.active:hover .hublot-glass{
+  background-image:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.18),transparent 52%),
+    radial-gradient(circle at 50% 115%,rgba(245,176,39,.30),transparent 60%),
+    linear-gradient(160deg,rgba(13,53,82,.94),rgba(1,10,18,.98));
+  background-position:center,center,center;
+  background-size:auto,auto,auto;
+  background-attachment:scroll;
+}
