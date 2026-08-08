@@ -4158,6 +4158,9 @@ function qrDataUri(text, opts){
     function lancer(){
       if(parti) return;
       parti = true;
+      /* Pendant l'état plein, la jauge doit rester au bleu 100 %.
+         La couleur cible ne doit apparaître qu'en même temps que la vidange. */
+      bar.style.background = oxygenColor(100);
       /* Deux images d'attente : le navigateur doit avoir pris en compte la
          largeur de depart (100 %) AVANT qu'on la change, sinon il passe
          directement a la valeur finale sans animer. */
