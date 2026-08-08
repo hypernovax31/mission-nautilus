@@ -296,7 +296,7 @@
           </div>
           <div class="admin-actions-row">
             <button class="primary" id="adminO2Apply" type="button">💾 Appliquer la modification</button>
-            <button class="secondary" id="adminO2Reset" type="button">♻️ Reset à maintenant (7j)</button>
+            <button class="secondary" id="adminO2Reset" type="button">♻️ Reset à maintenant (durée initiale)</button>
             <button class="danger" id="adminO2Clear" type="button">🛑 Arrêter la mission</button>
           </div>
         </div>
@@ -5566,15 +5566,19 @@ function qrDataUri(text, opts){
   async function adminResetOxygenToNow(){
     if(!isAdminUnlocked()) return;
     const startedAt = new Date().toISOString();
+    /* Le reset conserve la durée initiale actuellement configurée :
+       modifier la date de départ ne doit jamais remettre la mission à 7 jours
+       par défaut. */
+    const durationMs = getMissionDurationMs();
     await setDoc(doc(db,'game','config'), {
       missionStartedAt: startedAt,
-      missionDurationMs: 7 * 24 * 60 * 60 * 1000,
+      missionDurationMs: durationMs,
       updatedAt: new Date().toISOString()
     }, {merge:true});
-    missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: 7 * 24 * 60 * 60 * 1000 };
+    missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: durationMs };
     updateCountdown();
     renderAdminOxygen();
-    endAdminSession('✅ O₂ reset à maintenant (7j) · session fermée');
+    endAdminSession(`✅ O₂ reset à maintenant (${formatInitialDuration(durationMs)}) · session fermée`);
   }
   async function adminClearOxygen(){
     if(!isAdminUnlocked()) return;
