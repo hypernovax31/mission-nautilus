@@ -318,11 +318,7 @@
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>
             <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>
-            <button class="secondary" id="cleanupFieldsBtn" type="button" style="margin:0">🧹 Nettoyer les champs obsolètes</button>
-            <button class="secondary" id="cleanupTestSessionsBtn" type="button" style="margin:0">👻 Purger les parties de test</button>
-            <button class="secondary" id="adminSelfTestBtn" type="button" style="margin:0">🧪 Tester le mode Admin</button>
           </div>
-          <div id="adminSelfTestResult" class="small" style="margin-top:10px"></div>
           <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>Le nettoyage retire « migratedFrom », un reste de l'ancienne migration des identifiants d'équipe : sans effet sur le jeu.</p>
         </div>
       </div>
@@ -4906,9 +4902,6 @@ function qrDataUri(text, opts){
     }
   });
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
-  $('cleanupFieldsBtn')?.addEventListener('click', cleanupObsoleteFields);
-  $('cleanupTestSessionsBtn')?.addEventListener('click', cleanupTestSessions);
-  $('adminSelfTestBtn')?.addEventListener('click', runAdminSelfTests);
   $('adminDesignerBtn')?.addEventListener('click', renderDesignerAccess);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
 
