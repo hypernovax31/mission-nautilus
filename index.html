@@ -6387,9 +6387,12 @@ window.PWAInstall = { openInstallModal, PWA_PLATFORM };
     if(!isTouch()) return;
     document.querySelectorAll('.mission-step:not(.active) .hublot-glass').forEach(glass => {
       const top = glass.getBoundingClientRect().top;
-      glass.style.backgroundAttachment = 'scroll';
-      glass.style.backgroundSize = '100vw auto';
-      glass.style.backgroundPosition = `center ${Math.round(-top)}px`;
+      /* Safari iOS ignore les valeurs inline normales lorsqu'une règle
+         responsive est marquée !important : on impose ici la position
+         calculée, sinon l'image devient une copie décalée du wallpaper. */
+      glass.style.setProperty('background-attachment', 'scroll', 'important');
+      glass.style.setProperty('background-size', '100vw auto', 'important');
+      glass.style.setProperty('background-position', `center ${Math.round(-top)}px`, 'important');
     });
   }
   function requestSync(){
@@ -6397,7 +6400,7 @@ window.PWAInstall = { openInstallModal, PWA_PLATFORM };
   }
   window.addEventListener('scroll', requestSync, {passive:true});
   window.addEventListener('resize', requestSync, {passive:true});
-  document.addEventListener('click', requestSync, true);
+  document.addEventListener('click', () => setTimeout(requestSync, 0), true);
   window.addEventListener('load', requestSync, {once:true});
   requestSync();
 })();
