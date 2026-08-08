@@ -2402,3 +2402,36 @@ button.mission-step:not(.active):hover .hublot-glass{
 .radar-stage{
   background-color:rgba(5,16,28,.95);
 }
+
+/* Ligne d'identité du hero : marque et message restent toujours côte à côte. */
+.hero-meta{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:clamp(8px,2vw,18px);
+  width:100%;
+  white-space:nowrap;
+}
+.hero-meta .brand{
+  flex:0 1 auto;
+  margin:0;
+  font-size:clamp(12px,2.4vw,24px);
+  white-space:nowrap;
+}
+.hero-meta .hero-kicker{
+  flex:0 1 auto;
+  min-width:0;
+  max-width:none;
+  padding:7px 10px;
+  font-size:clamp(9px,1.6vw,15px);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+@media(max-width:520px){
+  .hero-meta{gap:6px}
+  .hero-meta .brand{font-size:clamp(9px,3vw,15px);letter-spacing:.04em}
+  .hero-meta .hero-kicker{padding:5px 7px;font-size:clamp(7px,2.35vw,12px);letter-spacing:.04em}
+}
