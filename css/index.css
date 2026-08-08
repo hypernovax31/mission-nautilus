@@ -2058,3 +2058,15 @@ button.mission-step.active .hublot-glass{
     linear-gradient(160deg,rgba(13,53,82,.58),rgba(1,10,18,.70)),
     url('../assets/fond-nautilus.jpg');
 }
+
+/* Hublot sélectionné : surface opaque, sans reprise du wallpaper, pour
+   distinguer immédiatement la consigne active. */
+button.mission-step.active .hublot-glass{
+  background-image:
+    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.18),transparent 52%),
+    radial-gradient(circle at 50% 115%,rgba(245,176,39,.30),transparent 60%),
+    linear-gradient(160deg,rgba(13,53,82,.94),rgba(1,10,18,.98));
+  background-position:center,center,center;
+  background-size:auto,auto,auto;
+  background-attachment:scroll;
+}
