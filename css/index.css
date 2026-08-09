@@ -654,83 +654,11 @@
       justify-items:center;align-items:start;
     }
 
-    /* --- Le hublot : anneau de laiton rive --- */
-    button.mission-step{
-      position:relative;margin:0;padding:0;border:0;background:none;
-      width:100%;max-width:190px;aspect-ratio:1/1;border-radius:50%;
-      cursor:pointer;isolation:isolate;-webkit-tap-highlight-color:transparent;
-      transition:transform .32s cubic-bezier(.2,.9,.3,1.2);
-    }
-    button.mission-step::before{
-      content:"";position:absolute;inset:0;border-radius:50%;
-      background:
-        radial-gradient(circle at 50% 7%,rgba(255,238,190,.95) 0 1.6px,transparent 2px),
-        radial-gradient(circle at 93% 50%,rgba(255,238,190,.95) 0 1.6px,transparent 2px),
-        radial-gradient(circle at 50% 93%,rgba(255,238,190,.95) 0 1.6px,transparent 2px),
-        radial-gradient(circle at 7% 50%,rgba(255,238,190,.95) 0 1.6px,transparent 2px),
-        radial-gradient(circle at 80% 20%,rgba(255,238,190,.8) 0 1.4px,transparent 2px),
-        radial-gradient(circle at 20% 80%,rgba(255,238,190,.8) 0 1.4px,transparent 2px),
-        radial-gradient(circle at 80% 80%,rgba(255,238,190,.8) 0 1.4px,transparent 2px),
-        radial-gradient(circle at 20% 20%,rgba(255,238,190,.8) 0 1.4px,transparent 2px),
-        conic-gradient(from 210deg,#3a2a10,#c9973f 18%,#7a5a20 34%,#f0cd85 52%,#6b4d18 68%,#c9973f 84%,#3a2a10);
-      box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45);
-      transition:filter .3s ease,box-shadow .3s ease;
-    }
-    .hublot-glass{
-      position:absolute;inset:11%;border-radius:50%;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      gap:5px;text-align:center;overflow:hidden;
-      background:
-        radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.20),transparent 52%),
-        radial-gradient(circle at 50% 120%,rgba(30,180,190,.30),transparent 62%),
-        linear-gradient(160deg,#08283d 0%,#03131f 60%,#010a12 100%);
-      box-shadow:inset 0 0 26px rgba(0,0,0,.85),inset 0 3px 12px rgba(255,255,255,.10),
-                 inset 0 -6px 18px rgba(0,60,80,.5);
-      transition:background .3s ease;
-    }
-    .hublot-glass::after{
-      content:"";position:absolute;left:-40%;top:-70%;width:120%;height:120%;
-      border-radius:50%;pointer-events:none;transform:rotate(-14deg);
-      background:linear-gradient(115deg,rgba(255,255,255,.16) 0 36%,transparent 62%);
-    }
-    .mission-step .num{
-      font-family:Consolas,"Courier New",monospace;
-      font-size:clamp(11px,2.2vw,14px);font-weight:900;letter-spacing:.2em;
-      color:rgba(245,176,39,.9);line-height:1;
-      text-shadow:0 0 12px rgba(245,176,39,.55);
-    }
-    .mission-step b{
-      font-size:clamp(11px,2.4vw,16px);font-weight:1000;line-height:1.1;
-      letter-spacing:.03em;text-transform:uppercase;color:#eaf8ff;
-      padding:0 8%;text-shadow:0 2px 10px rgba(0,0,0,.8);
-    }
 
-    button.mission-step:hover{transform:translateY(-4px) scale(1.03)}
-    button.mission-step:hover::before{filter:brightness(1.18)}
-    button.mission-step:focus-visible{outline:3px solid var(--fnac);outline-offset:5px}
 
-    /* Hublot ACTIF : lampe allumee derriere le verre. */
-    button.mission-step.active::before{
-      box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45),
-                 0 0 0 3px rgba(245,176,39,.30),0 0 34px rgba(245,176,39,.45);
-    }
-    button.mission-step.active .hublot-glass{
-      background:
-        radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.24),transparent 52%),
-        radial-gradient(circle at 50% 115%,rgba(245,176,39,.42),transparent 60%),
-        linear-gradient(160deg,#0d3552 0%,#06202f 60%,#010a12 100%);
-    }
-    button.mission-step.active b{color:#fff}
 
-    /* Deja lu : fine couronne verte sur l'anneau. Les grosses pastilles
-       posees au milieu du hublot faisaient tache. */
-    button.mission-step.seen::after{
-      content:"";position:absolute;inset:6%;border-radius:50%;
-      border:2px solid rgba(91,224,155,.55);
-      box-shadow:0 0 14px rgba(91,224,155,.35);pointer-events:none;
-    }
-
-    /* --- Panneau de consigne : ecran de commande --- */
+/* Deja lu : fine couronne verte sur l'anneau. Les grosses pastilles
+/* --- Panneau de consigne : ecran de commande --- */
     .rule-detail{
       position:relative;margin-top:20px;padding:22px 24px;border-radius:18px;
       color:#dff1fb;overflow:hidden;
@@ -797,18 +725,14 @@
 
     @media(max-width:620px){
       .mission-steps{grid-template-columns:repeat(2,1fr);gap:14px}
-      button.mission-step{max-width:160px}
-      .rule-detail{padding:16px;border-left-width:4px}
+.rule-detail{padding:16px;border-left-width:4px}
       .rule-invite{padding:12px 14px}
     }
     @media(max-width:360px){
       .mission-steps{gap:10px}
-      .mission-step b{font-size:11px}
-    }
+}
     @media (prefers-reduced-motion: reduce){
-      button.mission-step,.rule-detail{transition:none;animation:none}
-      button.mission-step:hover{transform:none}
-    }
+}
 
     .intro-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(12,53,77,.80));border:1px solid rgba(245,176,39,.28);color:#eaf8ff;position:relative;overflow:hidden}
     .intro-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 20%,rgba(142,231,255,.18),transparent 26%),radial-gradient(circle at 82% 70%,rgba(245,176,39,.14),transparent 22%),linear-gradient(90deg,rgba(142,231,255,.05) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.045) 1px,transparent 1px);background-size:auto,auto,38px 38px,38px 38px;pointer-events:none;opacity:.85}
@@ -1800,32 +1724,12 @@
   transition:border-color .25s ease,box-shadow .25s ease;
 }
 
-/* Sélection courante : le hublot et son encart se répondent par une pulsation
-   très légère, sans effet de course autour du rectangle. */
-button.mission-step.active{
-  animation:selectedHublotLift 2.4s ease-in-out infinite;
-}
-button.mission-step.active::before{
-  animation:selectedHublotHalo 2.4s ease-in-out infinite;
-}
 .rule-detail.ring-active{
   animation:selectedPanelHalo 2.4s ease-in-out infinite;
 }
-@keyframes selectedHublotLift{
-  0%,100%{transform:translateY(-1px)}
-  50%{transform:translateY(-4px)}
-}
-@keyframes selectedHublotHalo{
-  0%,100%{box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45),0 0 0 3px rgba(245,176,39,.22),0 0 25px rgba(245,176,39,.28)}
-  50%{box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45),0 0 0 4px rgba(245,176,39,.38),0 0 34px rgba(245,176,39,.46)}
-}
-@keyframes selectedPanelHalo{
-  0%,100%{box-shadow:0 0 0 3px rgba(245,176,39,.16),0 0 16px rgba(245,176,39,.16),inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.42)}
-  50%{box-shadow:0 0 0 4px rgba(245,176,39,.28),0 0 25px rgba(245,176,39,.30),inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.42)}
+50%{box-shadow:0 0 0 4px rgba(245,176,39,.28),0 0 25px rgba(245,176,39,.30),inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.42)}
 }
 @media(prefers-reduced-motion:reduce){
-  button.mission-step.active,.rule-detail.ring-active{animation:none}
-  button.mission-step.active::before{animation:none}
 }
 
 /* Tableau O₂ : deux informations prioritaires, visibles d'un coup d'œil.
@@ -1952,57 +1856,13 @@ header,main,footer{position:relative;z-index:1}
 @media(max-width:640px){.hero-line{font-size:clamp(16px,4.7vw,26px)}}
 @media(orientation:landscape) and (max-height:620px){.hero-line{font-size:clamp(16px,4vh,25px)}}
 
-/* Sélection des hublots : retour simple et immédiat.
-   Pas de pulsation permanente : le hublot choisi et son encart portent le
-   même contour ambre, ce qui explique clairement le lien entre les deux. */
-button.mission-step.active{
-  transform:translateY(-3px);
-  animation:none;
-  outline:3px solid var(--fnac);
-  outline-offset:5px;
-}
-button.mission-step.active::before{
-  animation:none;
-  filter:brightness(1.16);
-  box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45),0 0 0 4px rgba(245,176,39,.42),0 0 26px rgba(245,176,39,.34);
-}
 .rule-detail.ring-active{
   animation:none;
   border-color:rgba(245,176,39,.92);
   box-shadow:0 0 0 3px rgba(245,176,39,.24),0 0 18px rgba(245,176,39,.22),inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.42);
 }
 
-/* Verre des hublots : légèrement transparent pour laisser deviner le
-   wallpaper sous-marin, comme un véritable hublot. */
-.hublot-glass{
-  background:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.18),transparent 52%),
-    radial-gradient(circle at 50% 120%,rgba(30,180,190,.22),transparent 62%),
-    linear-gradient(160deg,rgba(8,40,61,.58),rgba(3,19,31,.72));
-  -webkit-backdrop-filter:blur(2px) saturate(1.12);
-  backdrop-filter:blur(2px) saturate(1.12);
-}
-button.mission-step.active .hublot-glass{
-  background:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.22),transparent 52%),
-    radial-gradient(circle at 50% 115%,rgba(245,176,39,.28),transparent 60%),
-    linear-gradient(160deg,rgba(13,53,82,.60),rgba(1,10,18,.74));
-}
 
-/* Transparence renforcée : le verre garde sa teinte, mais le wallpaper
-   reste clairement perceptible derrière chaque hublot. */
-.hublot-glass{
-  background:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.12),transparent 52%),
-    radial-gradient(circle at 50% 120%,rgba(30,180,190,.14),transparent 62%),
-    linear-gradient(160deg,rgba(8,40,61,.34),rgba(3,19,31,.48));
-}
-button.mission-step.active .hublot-glass{
-  background:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.16),transparent 52%),
-    radial-gradient(circle at 50% 115%,rgba(245,176,39,.20),transparent 60%),
-    linear-gradient(160deg,rgba(13,53,82,.40),rgba(1,10,18,.54));
-}
 
 /* Le panneau des consignes devient lui aussi plus transparent : sans cela,
    le fond sombre de la carte se trouvait derrière le verre et masquait le
@@ -2011,219 +1871,30 @@ button.mission-step.active .hublot-glass{
   background:linear-gradient(135deg,rgba(5,16,28,.40),rgba(12,53,77,.42));
 }
 
-/* Le bloc reste intact : le verre reprend uniquement le wallpaper dans sa
-   propre surface, afin de le laisser visible malgré le fond opaque de la
-   carte qui se trouve derrière les hublots. */
-.hublot-glass{
-  background-image:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.12),transparent 52%),
-    radial-gradient(circle at 50% 120%,rgba(30,180,190,.14),transparent 62%),
-    linear-gradient(160deg,rgba(8,40,61,.34),rgba(3,19,31,.48)),
-    url('../assets/fond-nautilus.jpg');
-  background-position:center,center,center,center top;
-  background-repeat:no-repeat;
-  background-size:auto,auto,auto,100vw auto;
-  background-attachment:scroll,scroll,scroll,fixed;
-}
-button.mission-step.active .hublot-glass{
-  background-image:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.16),transparent 52%),
-    radial-gradient(circle at 50% 115%,rgba(245,176,39,.20),transparent 60%),
-    linear-gradient(160deg,rgba(13,53,82,.40),rgba(1,10,18,.54)),
-    url('../assets/fond-nautilus.jpg');
-  background-position:center,center,center,center top;
-  background-repeat:no-repeat;
-  background-size:auto,auto,auto,100vw auto;
-  background-attachment:scroll,scroll,scroll,fixed;
-}
-
 /* Le bloc ORDRE DE MISSION reprend la même opacité que les autres blocs
    sombres de l'interface. */
 .intro-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(12,53,77,.80))}
 
-/* Verre des hublots légèrement renforcé : le wallpaper reste visible, mais
-   le texte gagne en contraste. La sélection ajoute une couche supplémentaire
-   pour distinguer clairement le hublot actif. */
-.hublot-glass{
-  background-image:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.14),transparent 52%),
-    radial-gradient(circle at 50% 120%,rgba(30,180,190,.18),transparent 62%),
-    linear-gradient(160deg,rgba(8,40,61,.48),rgba(3,19,31,.60)),
-    url('../assets/fond-nautilus.jpg');
-}
-button.mission-step.active .hublot-glass{
-  background-image:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.18),transparent 52%),
-    radial-gradient(circle at 50% 115%,rgba(245,176,39,.24),transparent 60%),
-    linear-gradient(160deg,rgba(13,53,82,.58),rgba(1,10,18,.70)),
-    url('../assets/fond-nautilus.jpg');
-}
 
-/* Hublot sélectionné : surface opaque, sans reprise du wallpaper, pour
-   distinguer immédiatement la consigne active. */
-button.mission-step.active .hublot-glass{
-  background-image:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.18),transparent 52%),
-    radial-gradient(circle at 50% 115%,rgba(245,176,39,.30),transparent 60%),
-    linear-gradient(160deg,rgba(13,53,82,.94),rgba(1,10,18,.98));
-  background-position:center,center,center;
-  background-size:auto,auto,auto;
-  background-attachment:scroll;
-}
 
-/* Au survol aussi, le verre devient opaque : le wallpaper reste réservé
-   aux hublots au repos. */
-button.mission-step:hover .hublot-glass{
-  background-image:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.16),transparent 52%),
-    linear-gradient(160deg,rgba(8,40,61,.90),rgba(3,19,31,.96));
-  background-position:center,center;
-  background-size:auto,auto;
-  background-attachment:scroll;
-}
-button.mission-step.active:hover .hublot-glass{
-  background-image:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.18),transparent 52%),
-    radial-gradient(circle at 50% 115%,rgba(245,176,39,.30),transparent 60%),
-    linear-gradient(160deg,rgba(13,53,82,.94),rgba(1,10,18,.98));
-  background-position:center,center,center;
-  background-size:auto,auto,auto;
-  background-attachment:scroll;
-}
 
-/* Au survol : aucun fond marin dans le verre, uniquement une surface
-   sombre unie pour garder le libellé parfaitement lisible. */
-button.mission-step:hover .hublot-glass,
-button.mission-step.active:hover .hublot-glass{
-  background:#0b2535 !important;
-  background-image:none !important;
-}
 
-/* Au survol d'un hublot non sélectionné, on conserve le fond marin mais on
-   renforce son opacité. Le hublot sélectionné reste, lui, opaque et uni. */
-button.mission-step:not(.active):hover .hublot-glass{
-  background-image:
-    radial-gradient(ellipse at 30% 22%,rgba(255,255,255,.14),transparent 52%),
-    linear-gradient(160deg,rgba(8,40,61,.78),rgba(3,19,31,.88)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center,center,center top;
-  background-repeat:no-repeat;
-  background-size:auto,auto,100vw auto;
-  background-attachment:scroll,scroll,fixed;
-}
 
-/* Au survol : aucun fond d'image dans le hublot. */
-button.mission-step:hover .hublot-glass,
-button.mission-step:hover .hublot-glass:hover{
-  background:#0b2535 !important;
-  background-image:none !important;
-  background-attachment:scroll !important;
-}
 
-/* Intérieur simplifié des hublots : aucune superposition décorative au repos,
-   uniquement le wallpaper. Au survol ou à la sélection, surface sombre. */
-.hublot-glass,
-button.mission-step.active .hublot-glass{
-  background-image:url('../assets/fond-nautilus.jpg') !important;
-  background-position:center top !important;
-  background-repeat:no-repeat !important;
-  background-size:100vw auto !important;
-  background-attachment:fixed !important;
-}
-button.mission-step:hover .hublot-glass,
-button.mission-step.active:hover .hublot-glass,
-button.mission-step.active .hublot-glass{
-  background:#0b2535 !important;
-  background-image:none !important;
-  background-attachment:scroll !important;
-}
 
-/* Aucun effet à l’intérieur du verre : pas de reflet, halo, flou ni ombre
-   interne. Le repos montre seulement le wallpaper ; le survol et la
-   sélection restent des surfaces unies. */
-.hublot-glass{
-  box-shadow:none !important;
-  -webkit-backdrop-filter:none !important;
-  backdrop-filter:none !important;
-}
-.hublot-glass::after{display:none !important}
 
-/* Survol sans animation : le hublot change seulement d’état visuel, sans
-   déplacement, zoom, filtre ni transition. */
-button.mission-step:hover{
-  transform:none !important;
-  filter:none !important;
-  transition:none !important;
-}
-button.mission-step:hover::before{
-  filter:none !important;
-  transition:none !important;
-}
 
-/* Le survol ne provoque plus aucun changement sur un hublot non sélectionné :
-   il conserve exactement son état au repos. */
-button.mission-step:not(.active):hover .hublot-glass{
-  background-image:url('../assets/fond-nautilus.jpg') !important;
-  background-position:center top !important;
-  background-repeat:no-repeat !important;
-  background-size:100vw auto !important;
-  background-attachment:fixed !important;
-  background-color:transparent !important;
-  box-shadow:none !important;
-}
 
-/* Hublots statiques : aucune animation ni effet dynamique. */
-button.mission-step,
-button.mission-step::before,
-button.mission-step .hublot-glass{
-  animation:none !important;
-  transition:none !important;
-}
-button.mission-step.active{
-  transform:none !important;
-}
-button.mission-step.active::before{
-  animation:none !important;
-  filter:none !important;
-  box-shadow:none !important;
-}
-button.mission-step.seen::after{display:none !important}
 
-/* Nettoyage définitif : les hublots ne portent plus aucun effet visuel
-   dynamique ou décoratif. */
-button.mission-step::before,
-button.mission-step:hover::before,
-button.mission-step.active::before{
-  box-shadow:none !important;
-  filter:none !important;
-}
-button.mission-step,
-button.mission-step:hover,
-button.mission-step.active{
-  animation:none !important;
-  transition:none !important;
-  transform:none !important;
-  filter:none !important;
-}
 
-/* Mobile : le verre doit toujours rester au-dessus de l’anneau métallique.
-   Cela évite qu’un hublot actif paraisse entièrement rempli de laiton. */
-button.mission-step::before{z-index:0}
-button.mission-step .hublot-glass{z-index:1}
-@media(max-width:640px){
-  button.mission-step .hublot-glass{
-    background-image:url('../assets/fond-nautilus.jpg') !important;
-    background-position:center top !important;
-    background-size:100vw auto !important;
-    background-repeat:no-repeat !important;
-    background-attachment:fixed !important;
-  }
-  button.mission-step.active .hublot-glass,
-  button.mission-step:hover .hublot-glass{
-    background:#0b2535 !important;
-    background-image:none !important;
-  }
-}
+
+
+
+
+
+
+
+
 
 /* Police du sous-titre : lisible, mais avec une touche science-fiction. */
 .hero-line{
@@ -2236,14 +1907,6 @@ button.mission-step .hublot-glass{z-index:1}
    neutralise cet état pour garder le même rendu qu’à la souris : le hublot
    ne devient opaque qu’après une vraie sélection (classe .active). */
 @media (hover:none), (pointer:coarse){
-  button.mission-step:not(.active):hover .hublot-glass{
-    background-image:url('../assets/fond-nautilus.jpg') !important;
-    background-position:center top !important;
-    background-repeat:no-repeat !important;
-    background-size:100vw auto !important;
-    background-attachment:fixed !important;
-    background-color:transparent !important;
-  }
 }
 
 /* Typographie globale du jeu : Exo 2 partout, sauf le H1 principal et
@@ -2259,63 +1922,12 @@ body, body *{
 .typewriter *{
   font-family:Consolas,"Courier New",monospace;
 }
-
-/* Safari iPhone ne gère pas correctement background-attachment: fixed sur
-   un élément enfant. Les hublots devenaient alors opaques ou remplis de
-   laiton. Une image locale, défilante et couvrante donne le même rendu sur
-   PC, Mac, tablette et iPhone. */
-button.mission-step:not(.active) .hublot-glass{
-  background-attachment:scroll !important;
-  background-position:center !important;
-  background-size:cover !important;
-}
 @media (hover:none), (pointer:coarse){
-  button.mission-step:not(.active):hover .hublot-glass{
-    background-attachment:scroll !important;
-    background-position:center !important;
-    background-size:cover !important;
-  }
 }
 
-/* Rendu unique des hublots sur toutes les plateformes : aucune règle
-   mobile séparée, afin que Safari, PC et Mac utilisent exactement le même
-   état au repos, au survol et à la sélection. */
-button.mission-step:not(.active) .hublot-glass,
-button.mission-step:not(.active):hover .hublot-glass{
-  background-image:url('../assets/fond-nautilus.jpg') !important;
-  background-position:center !important;
-  background-repeat:no-repeat !important;
-  background-size:cover !important;
-  background-attachment:scroll !important;
-  background-color:transparent !important;
-  box-shadow:none !important;
-}
-button.mission-step.active .hublot-glass,
-button.mission-step.active:hover .hublot-glass{
-  background:#0b2535 !important;
-  background-image:none !important;
-  background-attachment:scroll !important;
-  box-shadow:none !important;
-}
-
-/* Effet hublot du bureau : l’image reste attachée à la fenêtre, tandis que
-   le hublot se déplace avec la page. Le wallpaper semble ainsi défiler par
-   transparence derrière le verre, au lieu d’être collé au hublot. */
-button.mission-step:not(.active) .hublot-glass,
-button.mission-step:not(.active):hover .hublot-glass{
-  background-image:url('../assets/fond-nautilus.jpg') !important;
-  background-position:center top !important;
-  background-repeat:no-repeat !important;
-  background-size:100vw auto !important;
-  background-attachment:fixed !important;
-  background-color:transparent !important;
-}
 
 /* Sur mobile, la position est pilotée par syncMobileHublotWallpaper(). */
 @media (pointer:coarse){
-  button.mission-step:not(.active) .hublot-glass{
-    background-attachment:scroll !important;
-  }
 }
 
 /* Le quadrillage de l'Ordre de mission devient aussi le décor du bloc
@@ -2436,55 +2048,12 @@ button.mission-step:not(.active):hover .hublot-glass{
   .hero-meta .hero-kicker{padding:5px 7px;font-size:clamp(7px,2.35vw,12px);letter-spacing:.04em}
 }
 
-/* Hublot sélectionné : voile sombre à 60 %, tout en conservant le wallpaper
-   visible derrière le verre. */
-button.mission-step.active .hublot-glass,
-button.mission-step.active:hover .hublot-glass{
-  background-image:
-    linear-gradient(rgba(11,37,53,.60),rgba(11,37,53,.60)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center top,center top !important;
-  background-repeat:no-repeat !important;
-  background-size:100vw auto,100vw auto !important;
-  background-attachment:fixed, fixed !important;
-  background-color:transparent !important;
-}
 
-/* Poignée de sas : un repère physique plutôt qu'une consigne supplémentaire. */
-.hublot-lock{
-  position:absolute;
-  left:50%;
-  bottom:10%;
-  width:22px;
-  height:22px;
-  transform:translateX(-50%);
-  border:2px solid rgba(245,176,39,.88);
-  border-radius:50%;
-  background:rgba(3,19,31,.82);
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.35);
-}
-.hublot-lock::before,
-.hublot-lock::after{
-  content:"";
-  position:absolute;
-  left:50%;
-  top:50%;
-  background:#ffd36c;
-  border-radius:2px;
-  transform:translate(-50%,-50%);
-}
-.hublot-lock::before{width:3px;height:14px}
-.hublot-lock::after{width:14px;height:3px}
-button.mission-step.active .hublot-lock{
-  border-color:#fff;
-  background:#f5b027;
-}
-button.mission-step.active .hublot-lock::before,
-button.mission-step.active .hublot-lock::after{background:#111}
+
+
+
+
 @media(max-width:430px){
-  .hublot-lock{width:18px;height:18px;bottom:9%}
-  .hublot-lock::before{height:11px}
-  .hublot-lock::after{width:11px}
 }
 
 /* Avant le premier toucher, aucun voyant ni texte explicatif ne s'affiche. */
@@ -2492,21 +2061,6 @@ button.mission-step.active .hublot-lock::after{background:#111}
 #ruleProgress.has-selection{visibility:visible;opacity:1}
 .rule-detail{display:none}
 .rule-detail.is-visible{display:block}
-
-/* Au contact, le verre du hublot devient semi-opaque (60 %) tout en
-   laissant deviner le wallpaper derrière. */
-button.mission-step.active .hublot-glass,
-button.mission-step.active:hover .hublot-glass{
-  background-image:
-    linear-gradient(rgba(11,37,53,.60),rgba(11,37,53,.60)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center top,center top !important;
-  background-repeat:no-repeat !important;
-  background-size:100vw auto,100vw auto !important;
-  background-attachment:fixed,fixed !important;
-  background-color:transparent !important;
-}
-
 /* Sur mobile, les voyants reprennent exactement la géométrie des hublots :
    I / II en haut, III / IV en bas. */
 @media(max-width:640px){
@@ -2545,37 +2099,6 @@ button.mission-step.active:hover .hublot-glass{
   #ruleProgress i.on::after{color:#062b1b}
 }
 
-/* Verre de sous-marin : transparent au repos, plus dense sur le hublot
-   sélectionné. Le reflet reste présent dans les deux états. */
-button.mission-step .hublot-glass,
-button.mission-step:not(.active):hover .hublot-glass{
-  background-image:
-    linear-gradient(115deg,rgba(255,255,255,.16) 0 18%,transparent 42%),
-    radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.12),transparent 48%),
-    linear-gradient(rgba(11,37,53,.10),rgba(11,37,53,.10)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center,center,center,center top !important;
-  background-repeat:no-repeat !important;
-  background-size:120% 120%,auto,auto,100vw auto !important;
-  background-attachment:scroll,scroll,scroll,fixed !important;
-  background-color:transparent !important;
-  box-shadow:inset 0 0 18px rgba(142,231,255,.18) !important;
-}
-button.mission-step.active .hublot-glass,
-button.mission-step.active:hover .hublot-glass{
-  background-image:
-    linear-gradient(115deg,rgba(255,255,255,.24) 0 18%,transparent 42%),
-    radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.18),transparent 48%),
-    linear-gradient(rgba(11,37,53,.55),rgba(11,37,53,.55)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center,center,center,center top !important;
-  background-repeat:no-repeat !important;
-  background-size:120% 120%,auto,auto,100vw auto !important;
-  background-attachment:scroll,scroll,scroll,fixed !important;
-  background-color:transparent !important;
-  box-shadow:inset 0 0 22px rgba(255,211,108,.42),0 0 0 3px rgba(245,176,39,.38) !important;
-}
-
 /* Les quatre voyants restent sur une seule ligne et correspondent toujours
    aux hublots I, II, III et IV dans cet ordre. */
 #ruleProgress{
@@ -2597,23 +2120,6 @@ button.mission-step.active:hover .hublot-glass{
     height:22px;
   }
 }
-
-/* Hublot fermé : transparence réduite à 20 % (voile sombre à 80 %),
-   tout en conservant un léger reflet de verre. */
-button.mission-step:not(.active) .hublot-glass,
-button.mission-step:not(.active):hover .hublot-glass{
-  background-image:
-    linear-gradient(115deg,rgba(255,255,255,.12) 0 16%,transparent 38%),
-    linear-gradient(rgba(11,37,53,.80),rgba(11,37,53,.80)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center,center,center top !important;
-  background-repeat:no-repeat !important;
-  background-size:120% 120%,auto,100vw auto !important;
-  background-attachment:scroll,scroll,fixed !important;
-  background-color:transparent !important;
-  box-shadow:inset 0 0 16px rgba(142,231,255,.20) !important;
-}
-
 /* Voyants universels : même rendu et même numérotation sur PC, Mac, Linux,
    Android et iPhone. */
 #ruleProgress{
@@ -2655,20 +2161,6 @@ button.mission-step:not(.active):hover .hublot-glass{
 /* Mobile : le hublot actif conserve un effet de verre translucide. La
    sélection est signalée par le contour, pas par un remplissage ambre plein. */
 @media(max-width:640px){
-  button.mission-step.active .hublot-glass,
-  button.mission-step.active:hover .hublot-glass{
-    background-image:
-      linear-gradient(115deg,rgba(255,255,255,.24) 0 18%,transparent 42%),
-      radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.18),transparent 48%),
-      linear-gradient(rgba(11,37,53,.55),rgba(11,37,53,.55)),
-      url('../assets/fond-nautilus.jpg') !important;
-    background-position:center,center,center,center top !important;
-    background-repeat:no-repeat !important;
-    background-size:120% 120%,auto,auto,100vw auto !important;
-    background-attachment:scroll,scroll,scroll,scroll !important;
-    background-color:transparent !important;
-    box-shadow:inset 0 0 22px rgba(142,231,255,.28) !important;
-  }
 }
 
 /* L'Ordre de mission ne doit pas masquer le wallpaper : son panneau reste
@@ -2683,48 +2175,6 @@ button.mission-step:not(.active):hover .hublot-glass{
   opacity:1 !important;
 }
 
-/* Hublots fermés : verre épais, transparent et lisible sur toutes les
-   plateformes. Le wallpaper reste visible avec un reflet qui attire l'œil,
-   sans remplissage opaque avant interaction. */
-button.mission-step:not(.active) .hublot-glass,
-button.mission-step:not(.active):hover .hublot-glass{
-  background-image:
-    linear-gradient(115deg,rgba(255,255,255,.24) 0 14%,transparent 38%),
-    radial-gradient(ellipse at 28% 18%,rgba(255,255,255,.18),transparent 46%),
-    linear-gradient(rgba(11,37,53,.12),rgba(11,37,53,.12)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center,center,center,center top !important;
-  background-repeat:no-repeat !important;
-  background-size:125% 125%,auto,auto,100vw auto !important;
-  background-attachment:scroll,scroll,scroll,fixed !important;
-  background-color:transparent !important;
-  box-shadow:
-    inset 0 0 0 3px rgba(220,250,255,.26),
-    inset 0 0 22px rgba(142,231,255,.28),
-    0 0 10px rgba(142,231,255,.12) !important;
-}
-
-/* Au clic/toucher, le hublot reste un verre sous-marin : aucun remplissage
-   ambre métallique. La sélection est indiquée par le contour, pas par le
-   fond intérieur. */
-button.mission-step.active .hublot-glass,
-button.mission-step.active:hover .hublot-glass{
-  background-image:
-    linear-gradient(115deg,rgba(255,255,255,.28) 0 14%,transparent 38%),
-    radial-gradient(ellipse at 28% 18%,rgba(255,255,255,.20),transparent 46%),
-    linear-gradient(rgba(11,37,53,.55),rgba(11,37,53,.55)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center,center,center,center top !important;
-  background-repeat:no-repeat !important;
-  background-size:125% 125%,auto,auto,100vw auto !important;
-  background-attachment:scroll,scroll,scroll,fixed !important;
-  background-color:transparent !important;
-  box-shadow:
-    inset 0 0 0 3px rgba(220,250,255,.36),
-    inset 0 0 24px rgba(142,231,255,.34),
-    0 0 12px rgba(142,231,255,.18) !important;
-}
-
 /* Évite la bande blanche au bas de la page : le fond de secours du document
    reprend la teinte des abysses lorsque le wallpaper ne couvre pas chaque
    pixel de l'écran Safari. */
@@ -2732,111 +2182,14 @@ html{background:#03111f}
 body{background:transparent}
 .site-footer{background:transparent}
 
-/* État actif définitif : aucun ton ambre dans l’intérieur du hublot. La
-   sélection repose sur un verre sombre neutre et un contour clair. */
-button.mission-step.active .hublot-glass,
-button.mission-step.active:hover .hublot-glass{
-  background-image:
-    linear-gradient(115deg,rgba(255,255,255,.28) 0 14%,transparent 38%),
-    radial-gradient(ellipse at 28% 18%,rgba(255,255,255,.20),transparent 46%),
-    linear-gradient(rgba(11,37,53,.55),rgba(11,37,53,.55)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-color:transparent !important;
-  box-shadow:inset 0 0 0 3px rgba(220,250,255,.36),inset 0 0 24px rgba(142,231,255,.34) !important;
-}
-button.mission-step.active .hublot-lock{
-  background:rgba(11,37,53,.72) !important;
-  border-color:#dff6ff !important;
-}
-button.mission-step.active .hublot-lock::before,
-button.mission-step.active .hublot-lock::after{background:#dff6ff !important}
 
-/* Garde-fou final : l'état sélectionné ne peut plus afficher le métal ambre,
-   même si Safari ignore une image ou un état précédent. */
-button.mission-step.active .hublot-glass,
-button.mission-step.active:hover .hublot-glass{
-  background:#0b2535 !important;
-  background-image:none !important;
-  background-attachment:scroll !important;
-  box-shadow:inset 0 0 0 3px rgba(220,250,255,.36),inset 0 0 24px rgba(142,231,255,.34) !important;
-}
-button.mission-step.active .hublot-lock{
-  background:#0b2535 !important;
-  border-color:#dff6ff !important;
-}
 
-/* Suppression définitive de la source du remplissage métallique : le pseudo-
-   élément qui dessinait l'anneau de laiton ne peint plus l'intérieur du
-   bouton. */
-button.mission-step::before{
-  background:none !important;
-  box-shadow:none !important;
-}
 
-/* Couronne extérieure réaliste : laiton brossé, rivets intégrés et centre
-   évidé. Le métal reste uniquement sur le contour, jamais dans le verre. */
-button.mission-step::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 5%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 95% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 50% 95%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 5% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 80% 20%,rgba(255,238,190,.82) 0 1.7px,transparent 2.2px),
-    radial-gradient(circle at 20% 80%,rgba(255,238,190,.82) 0 1.7px,transparent 2.2px),
-    radial-gradient(circle at 80% 80%,rgba(255,238,190,.82) 0 1.7px,transparent 2.2px),
-    radial-gradient(circle at 20% 20%,rgba(255,238,190,.82) 0 1.7px,transparent 2.2px),
-    conic-gradient(from 210deg,#291b08 0deg,#8b6424 12deg,#e4bd69 25deg,#6b4815 39deg,#c9973f 53deg,#f0d38d 67deg,#6b4815 82deg,#b27c2d 100deg,#321f08 120deg,#b27c2d 145deg,#f0d38d 165deg,#6b4815 190deg,#d1a34e 215deg,#432a0c 240deg,#c9973f 270deg,#f0d38d 300deg,#6b4815 330deg,#291b08 360deg);
-  -webkit-mask:radial-gradient(circle,transparent 0 84%,#000 84.5% 100%);
-  mask:radial-gradient(circle,transparent 0 84%,#000 84.5% 100%);
-  box-shadow:0 10px 22px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.18);
-  animation:none !important;
-  transition:none !important;
-}
-button.mission-step.active::before{
-  filter:brightness(1.12) !important;
-  box-shadow:0 10px 22px rgba(0,0,0,.55),0 0 0 3px rgba(142,231,255,.34),inset 0 0 0 1px rgba(255,255,255,.24) !important;
-}
 
-/* Couronne réaliste du hublot : le laiton reste uniquement sur l’anneau
-   extérieur. Le masque central empêche tout remplissage métallique de
-   recouvrir le verre et ses effets intérieurs. */
-button.mission-step::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  z-index:0;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 7%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 93% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 50% 93%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 7% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    conic-gradient(from 210deg,#302314,#c9973f 18%,#76531d 34%,#e3bd68 52%,#5b4016 68%,#c9973f 84%,#302314);
-  -webkit-mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%);
-  mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%);
-  box-shadow:0 10px 22px rgba(0,0,0,.42),0 0 0 1px rgba(0,0,0,.55);
-}
-button.mission-step.active::before{
-  filter:brightness(1.12);
-  box-shadow:0 10px 22px rgba(0,0,0,.42),0 0 0 3px rgba(142,231,255,.36),0 0 18px rgba(142,231,255,.18);
-}
 
-/* Rétablit la couronne du hublot après la règle de neutralisation précédente. */
-button.mission-step::before{
-  background:
-    radial-gradient(circle at 50% 7%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 93% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 50% 93%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 7% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    conic-gradient(from 210deg,#302314,#c9973f 18%,#76531d 34%,#e3bd68 52%,#5b4016 68%,#c9973f 84%,#302314) !important;
-  -webkit-mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%) !important;
-  mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%) !important;
-  box-shadow:0 10px 22px rgba(0,0,0,.42),0 0 0 1px rgba(0,0,0,.55) !important;
-}
+
+
+
 
 #ruleProgress i{cursor:pointer}
 #ruleProgress i:focus-visible{outline:2px solid #8ee7ff;outline-offset:3px}
