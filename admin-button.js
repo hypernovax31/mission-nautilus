@@ -24,6 +24,11 @@
   };
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  /* La page Classement n'initialise pas elle-même l'authentification. Sans
+     cette session anonyme, le panneau est visible mais ses actions d'écriture
+     sont refusées par les règles Firestore sur les pages hors accueil. */
+  const authReady = signInAnonymously(auth)
+    .catch(error => console.warn('Firebase Auth anonyme indisponible:', error));
   const db = getFirestore(app);
 
 

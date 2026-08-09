@@ -82,6 +82,9 @@
     /* Inputs / selects : pas de débordement dans les grilles */
     #adminPanel input,#adminPanel select{min-width:0;max-width:100%;box-sizing:border-box}
     #adminLocked input{min-width:0}
+
+    /* Sur mobile, les sous-champs et les actions restent lisibles. */
+    @media(max-width:639px){
       .me-sub{grid-template-columns:1fr !important;gap:6px}
       .me-actions,.tt-actions{justify-self:stretch;width:100%}
       .me-actions .me-save,.me-actions .me-del,.tt-actions .tt-save,.tt-actions .tt-del{flex:1}
@@ -90,6 +93,8 @@
     /* Mobile très petit : l'input mot de passe garde une largeur saine */
     @media(max-width:360px){
       #adminCodeInput{font-size:13px !important;letter-spacing:.1em !important}
+    }
+
     .site-footer.admin-open{opacity:0;pointer-events:none;height:0;padding:0;margin:0;overflow:hidden}
     #adminFabBtn{position:static;width:24px;height:24px;border-radius:50%;background:transparent;color:rgba(120,140,160,.28);border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none;backdrop-filter:none;transition:.3s color,.3s opacity;padding:0;opacity:.45;-webkit-tap-highlight-color:transparent;user-select:none;flex:0 0 auto}
     #adminFabBtn svg{width:11px;height:11px;transition:transform .4s cubic-bezier(.4,1.4,.6,1)}
