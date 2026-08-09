@@ -151,3 +151,31 @@ button.mission-step.active .hublot-rim{
   .hublot-rim{border-width:10px}
   .hublot-rim::after{inset:4px}
 }
+
+/* Couronne finale, dessinée directement par le stylesheet dédié : aucun
+   élément HTML supplémentaire ni ancienne règle de contour ne peut la
+   masquer. */
+button.mission-step::before{
+  display:block !important;
+  content:"" !important;
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border:14px solid #9b7027;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 3%,#f6d98b 0 3px,transparent 3.5px),
+    radial-gradient(circle at 85% 15%,#f6d98b 0 3px,transparent 3.5px),
+    radial-gradient(circle at 97% 50%,#f6d98b 0 3px,transparent 3.5px),
+    radial-gradient(circle at 85% 85%,#f6d98b 0 3px,transparent 3.5px),
+    radial-gradient(circle at 50% 97%,#f6d98b 0 3px,transparent 3.5px),
+    radial-gradient(circle at 15% 85%,#f6d98b 0 3px,transparent 3.5px),
+    radial-gradient(circle at 3% 50%,#f6d98b 0 3px,transparent 3.5px),
+    radial-gradient(circle at 15% 15%,#f6d98b 0 3px,transparent 3.5px),
+    conic-gradient(from 215deg,#30200d,#d0a348 16%,#6b4815 31%,#f0c96d 48%,#654314 66%,#bd8b32 83%,#30200d);
+  box-shadow:inset 0 0 0 2px rgba(30,18,5,.72),inset 0 0 0 6px rgba(245,210,126,.26),0 8px 16px rgba(0,0,0,.48),0 0 0 2px rgba(38,25,9,.86) !important;
+  pointer-events:none;
+}
+button.mission-step::before::after{display:none}
+button.mission-step.active::before{border-color:#c9973f}
+@media(max-width:430px){button.mission-step::before{border-width:10px}}
