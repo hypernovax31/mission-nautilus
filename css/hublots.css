@@ -179,3 +179,17 @@ button.mission-step::before{
 button.mission-step::before::after{display:none}
 button.mission-step.active::before{border-color:#c9973f}
 @media(max-width:430px){button.mission-step::before{border-width:10px}}
+
+/* Interdit absolu : aucun métal ambre au centre du verre. La couronne est
+   masquée au centre et le hublot actif reçoit une surface neutre. */
+button.mission-step::before{
+  -webkit-mask:radial-gradient(circle,transparent 0 82%,#000 83% 100%) !important;
+  mask:radial-gradient(circle,transparent 0 82%,#000 83% 100%) !important;
+}
+button.mission-step.active .hublot-glass,
+button.mission-step.active:hover .hublot-glass{
+  background:#0b2535 !important;
+  background-image:none !important;
+  background-attachment:scroll !important;
+  box-shadow:inset 0 0 0 3px rgba(220,250,255,.36),inset 0 0 24px rgba(142,231,255,.34) !important;
+}
