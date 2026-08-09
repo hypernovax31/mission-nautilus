@@ -32,7 +32,7 @@
      Le script tente d'abord le son audible (enableSoundAtLoad) et, en cas de
      refus, garde cette lecture muette prete a etre demasquee instantanement
      au premier geste, quel qu'il soit. -->
-<audio id="ambianceAudio" loop preload="auto" autoplay muted playsinline>
+<audio id="ambianceAudio" loop preload="metadata" autoplay muted playsinline>
   <source src="assets/ambiance-sonar.mp3" type="audio/mpeg">
 </audio>
 <audio id="alarmAudio" preload="auto">
@@ -2383,16 +2383,9 @@ function qrDataUri(text, opts){
     const _btnLabel = $('registerBtn').textContent;
     $('registerBtn').textContent = 'Ouverture du sas…';
     try{
-      /* VITESSE : ensureTeams() renvoie desormais l'etat des equipes, et il
-         a lui-meme lu la collection. Une seule lecture au lieu de deux.
-
-         `true` = on IGNORE le cache de 30 s. C'est indispensable ici : si
-         deux matelots s'inscrivent coup sur coup sur le meme telephone (le
-         cas classique du poste d'accueil), le second lirait une liste
-         `members[]` datant d'avant le premier et l'ecraserait en
-         reecrivant le tableau. Ailleurs, le cache est sans danger : il ne
-         sert qu'a l'affichage. */
-      const allTeams = await ensureTeams(true);
+      /* VITESSE : réutilise la lecture des équipes déjà lancée au chargement.
+         Cela évite une seconde lecture réseau au moment de l'inscription. */
+      const allTeams = await ensureTeams();
 
       // 1) Genere un Code Matelot unique (4 lettres + 4 chiffres)
       const usedCodes = new Set();
@@ -6126,13 +6119,9 @@ function qrDataUri(text, opts){
        fixait un ecran rouge, alors que sa fiche aurait pu s'afficher tout
        de suite. Elles tournent desormais en arriere-plan. */
     const accueilPret = (async () => {
-      /* cleanupObsoleteTeams() lit deja game/config : on REUTILISE sa
-         lecture au lieu d'en lancer une seconde pour le meme document.
-         Une lecture reseau economisee, donc autant de temps gagne avant
-         l'affichage de la reserve d'oxygene. */
-      let cfgSnap = null;
-      try { cfgSnap = await cleanupObsoleteTeams(); } catch(e) { console.warn('cleanup error:', e); }
-      await loadMissionConfig(cfgSnap);
+      /* Les deux préparations indépendantes partent ensemble : le premier
+         affichage ne doit pas attendre les opérations de nettoyage. */
+      await Promise.all([loadMissionConfig(), loadTeams()]);
       updateCountdown();
       /* PAS D'ALARME AU CHARGEMENT.
          L'ecran rouge se declenchait des l'ouverture de la page quand la
@@ -6143,7 +6132,6 @@ function qrDataUri(text, opts){
          `seenAlarmAt` reste tenu a jour par refreshMissionConfig(), qui
          signale le lancement officiel aux equipages DEJA sur la page. */
       seenAlarmAt = missionConfig?.missionStartedAt || seenAlarmAt;
-      await loadTeams();
       renderGame(false);
     })();
 
