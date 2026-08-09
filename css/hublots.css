@@ -199,3 +199,38 @@ button.mission-step.active:hover .hublot-glass{
 .mission-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,2.2vw,22px);margin:22px 0 0;justify-items:center;align-items:start}
 @media(max-width:620px){.mission-steps{grid-template-columns:repeat(2,1fr);gap:14px}}
 @media(max-width:360px){.mission-steps{gap:10px}}
+
+/* Extérieur restauré : proportions du hublot Nautilus d’origine, avec une
+   couronne large et rivetée. Le verre intérieur reste piloté séparément. */
+button.mission-step{
+  border:0 !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+button.mission-step::before{
+  display:block !important;
+  content:"" !important;
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border:0;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 7%,rgba(255,238,190,.95) 0 1.8px,transparent 2.5px),
+    radial-gradient(circle at 93% 50%,rgba(255,238,190,.95) 0 1.8px,transparent 2.5px),
+    radial-gradient(circle at 50% 93%,rgba(255,238,190,.95) 0 1.8px,transparent 2.5px),
+    radial-gradient(circle at 7% 50%,rgba(255,238,190,.95) 0 1.8px,transparent 2.5px),
+    radial-gradient(circle at 80% 20%,rgba(255,238,190,.8) 0 1.5px,transparent 2.2px),
+    radial-gradient(circle at 20% 80%,rgba(255,238,190,.8) 0 1.5px,transparent 2.2px),
+    radial-gradient(circle at 80% 80%,rgba(255,238,190,.8) 0 1.5px,transparent 2.2px),
+    radial-gradient(circle at 20% 20%,rgba(255,238,190,.8) 0 1.5px,transparent 2.2px),
+    conic-gradient(from 210deg,#3a2a10,#c9973f 18%,#7a5a20 34%,#f0cd85 52%,#6b4d18 68%,#c9973f 84%,#3a2a10) !important;
+  -webkit-mask:radial-gradient(circle,transparent 0 77%,#000 78% 100%) !important;
+  mask:radial-gradient(circle,transparent 0 77%,#000 78% 100%) !important;
+  box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45) !important;
+  pointer-events:none;
+}
+button.mission-step.active::before{
+  filter:brightness(1.08);
+  box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 0 3px rgba(245,176,39,.35) !important;
+}
