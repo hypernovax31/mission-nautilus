@@ -2544,3 +2544,34 @@ button.mission-step.active:hover .hublot-glass{
   }
   #ruleProgress i.on::after{color:#062b1b}
 }
+
+/* Verre de sous-marin : transparent au repos, plus dense sur le hublot
+   sélectionné. Le reflet reste présent dans les deux états. */
+button.mission-step .hublot-glass,
+button.mission-step:not(.active):hover .hublot-glass{
+  background-image:
+    linear-gradient(115deg,rgba(255,255,255,.16) 0 18%,transparent 42%),
+    radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.12),transparent 48%),
+    linear-gradient(rgba(11,37,53,.10),rgba(11,37,53,.10)),
+    url('../assets/fond-nautilus.jpg') !important;
+  background-position:center,center,center,center top !important;
+  background-repeat:no-repeat !important;
+  background-size:120% 120%,auto,auto,100vw auto !important;
+  background-attachment:scroll,scroll,scroll,fixed !important;
+  background-color:transparent !important;
+  box-shadow:inset 0 0 18px rgba(142,231,255,.18) !important;
+}
+button.mission-step.active .hublot-glass,
+button.mission-step.active:hover .hublot-glass{
+  background-image:
+    linear-gradient(115deg,rgba(255,255,255,.24) 0 18%,transparent 42%),
+    radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.18),transparent 48%),
+    linear-gradient(rgba(245,176,39,.80),rgba(245,176,39,.80)),
+    url('../assets/fond-nautilus.jpg') !important;
+  background-position:center,center,center,center top !important;
+  background-repeat:no-repeat !important;
+  background-size:120% 120%,auto,auto,100vw auto !important;
+  background-attachment:scroll,scroll,scroll,fixed !important;
+  background-color:transparent !important;
+  box-shadow:inset 0 0 22px rgba(255,211,108,.42),0 0 0 3px rgba(245,176,39,.38) !important;
+}
