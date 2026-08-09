@@ -105,6 +105,14 @@
 </main>
 
 <div class="notif-floating" id="notifFloating"></div>
+<div class="oxygen-end-alarm" id="oxygenEndAlarm" aria-live="assertive" aria-hidden="true">
+  <div class="oxygen-end-panel">
+    <div class="oxygen-end-title">RÉSERVES ÉPUISÉES</div>
+    <p>Tous les équipages remontent à la surface.</p>
+    <div class="oxygen-end-count" id="oxygenEndCount">5</div>
+    <p class="oxygen-end-sub">Remontée générale dans…</p>
+  </div>
+</div>
 
 <script type="module">
 /* === nautilus-core.js (inlined) === */
@@ -814,6 +822,38 @@ window.Nautilus = {
      Tant que la mission n'est pas lancee, le bandeau reste masque : il
      n'aurait rien a montrer. */
   let _o2Config = null;
+  let oxygenEndAlarmShown = null;
+  let oxygenEndAlarmTimer = null;
+
+  function showOxygenEndAlarm(endAt){
+    const key = String(endAt);
+    if(oxygenEndAlarmShown === key) return;
+    oxygenEndAlarmShown = key;
+    const overlay = $('oxygenEndAlarm');
+    const count = $('oxygenEndCount');
+    if(!overlay || !count) return;
+    clearInterval(oxygenEndAlarmTimer);
+    let remaining = 5;
+    count.textContent = remaining;
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+    const audio = new Audio('assets/Submarine_alarm.mp3');
+    audio.loop = true;
+    audio.volume = 0.82;
+    if (N.isSoundEnabled()) audio.play().catch(() => {});
+    oxygenEndAlarmTimer = setInterval(() => {
+      remaining -= 1;
+      if(remaining <= 0){
+        clearInterval(oxygenEndAlarmTimer);
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden','true');
+        audio.pause();
+        audio.currentTime = 0;
+        return;
+      }
+      count.textContent = remaining;
+    },1000);
+  }
 
   /* MEME MEMOIRE QUE LA PAGE D'ACCUEIL (cle 'nautilusMissionConfig').
      La jauge restait CACHEE tant que le serveur n'avait pas repondu : au
@@ -888,6 +928,7 @@ window.Nautilus = {
       : 7 * 24 * 60 * 60 * 1000;
 
     const fin = new Date(depart).getTime() + duree;
+    if(Date.now() >= fin) showOxygenEndAlarm(fin);
     let reste = Math.max(0, fin - Date.now());
     /* MEME CALCUL QUE LA PAGE D'ACCUEIL, au chiffre pres : arrondi au
        plus proche, mais jamais "100 %" si du temps a ete consomme, ni
