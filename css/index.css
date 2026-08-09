@@ -2731,3 +2731,22 @@ button.mission-step.active:hover .hublot-glass{
 html{background:#03111f}
 body{background:transparent}
 .site-footer{background:transparent}
+
+/* État actif définitif : aucun ton ambre dans l’intérieur du hublot. La
+   sélection repose sur un verre sombre neutre et un contour clair. */
+button.mission-step.active .hublot-glass,
+button.mission-step.active:hover .hublot-glass{
+  background-image:
+    linear-gradient(115deg,rgba(255,255,255,.28) 0 14%,transparent 38%),
+    radial-gradient(ellipse at 28% 18%,rgba(255,255,255,.20),transparent 46%),
+    linear-gradient(rgba(11,37,53,.55),rgba(11,37,53,.55)),
+    url('../assets/fond-nautilus.jpg') !important;
+  background-color:transparent !important;
+  box-shadow:inset 0 0 0 3px rgba(220,250,255,.36),inset 0 0 24px rgba(142,231,255,.34) !important;
+}
+button.mission-step.active .hublot-lock{
+  background:rgba(11,37,53,.72) !important;
+  border-color:#dff6ff !important;
+}
+button.mission-step.active .hublot-lock::before,
+button.mission-step.active .hublot-lock::after{background:#dff6ff !important}
