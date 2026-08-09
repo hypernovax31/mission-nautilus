@@ -3424,6 +3424,20 @@ function qrDataUri(text, opts){
       const actif = shouldScroll && btn.dataset.rule === key;
       btn.classList.toggle('active', actif);
       btn.setAttribute('aria-current', actif ? 'step' : 'false');
+      const glass = btn.querySelector('.hublot-glass');
+      if(glass){
+        if(actif){
+          /* Inline + !important : Safari iPhone ne doit pas pouvoir
+             remplacer l'opacité active par une règle :hover persistante. */
+          glass.style.setProperty('background-image',
+            "linear-gradient(rgba(11,37,53,.60),rgba(11,37,53,.60)),url('../assets/fond-nautilus.jpg')",
+            'important');
+          glass.style.setProperty('background-color','transparent','important');
+        }else{
+          glass.style.removeProperty('background-image');
+          glass.style.removeProperty('background-color');
+        }
+      }
     });
 
     /* Le hublot est marque comme lu, et on met a jour le compteur.
