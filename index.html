@@ -4129,7 +4129,9 @@ function qrDataUri(text, opts){
     count.textContent = remaining;
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
-    /* Silence immédiat de toute la page avant l'alarme finale. */
+    /* Silence immédiat de toute la page avant l'alarme finale, y compris
+       le contexte Web Audio du typewriter et ses notes déjà programmées. */
+    try{ _closeTypeAudio(); }catch(e){}
     silenceEverything();
     unmuteAlarms();
     playSubmarineAlarm(5000);
