@@ -4008,12 +4008,18 @@ function qrDataUri(text, opts){
     lancer(document.visibilityState === 'visible');
   }
 
-  const orderObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if(entry.isIntersecting) startMissionOrderTypewriter();
-    });
-  }, {threshold: .35});
-  if($('missionOrderText')) orderObserver.observe($('missionOrderText'));
+  /* Départ maîtrisé : l'ordre et ses bips commencent exactement une seconde
+     après le chargement complet, plutôt qu'au premier scroll ou au premier
+     clic. Si l'onglet n'est pas visible à cet instant, le texte s'écrit sans
+     programmer de bips (voir le test visibilityState ci-dessus). */
+  function scheduleMissionOrderTypewriter(){
+    const startAfterOneSecond = () => {
+      setTimeout(startMissionOrderTypewriter, 1000);
+    };
+    if(document.readyState === 'complete') startAfterOneSecond();
+    else window.addEventListener('load', startAfterOneSecond, { once:true });
+  }
+  if($('missionOrderText')) scheduleMissionOrderTypewriter();
 
   const MISSION_DURATION_MS_DEFAULT = 7 * 24 * 60 * 60 * 1000;
   function formatInitialDuration(ms){
