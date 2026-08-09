@@ -2189,10 +2189,10 @@ body, body *{
 @media(max-width:640px){
 }
 
-/* L'Ordre de mission ne doit pas masquer le wallpaper : son panneau reste
-   lisible, mais laisse davantage de profondeur visible derrière les hublots. */
+/* Ordre de mission : un fond plus dense améliore la lecture, tout en
+   conservant la grille et les reflets propres au panneau. */
 .intro-card{
-  background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(12,53,77,.80));
+  background:linear-gradient(135deg,rgba(5,16,28,.92),rgba(12,53,77,.92));
 }
 
 /* Les voyants numérotés restent visibles dès l'arrivée sur la page. */
