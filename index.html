@@ -3474,11 +3474,14 @@ function qrDataUri(text, opts){
   function majProgressionHublots(){
     const el = $('ruleProgress');
     if(!el) return;
-    const total = document.querySelectorAll('.mission-step').length || 4;
-    const lus   = document.querySelectorAll('.mission-step.seen').length;
-    /* 4 temoins lumineux facon tableau de bord, plutot qu'un compteur
-       ecrit : on allume ceux qui correspondent aux consignes deja lues. */
-    el.querySelectorAll('i').forEach((t, k) => t.classList.toggle('on', k < lus));
+    const steps = Array.from(document.querySelectorAll('.mission-step'));
+    const total = steps.length || 4;
+    const lus   = steps.filter(btn => btn.classList.contains('seen')).length;
+    /* Chaque voyant suit désormais SON hublot, même si le joueur les ouvre
+       dans le désordre : le voyant III s'allume pour le hublot III. */
+    el.querySelectorAll('i').forEach((voyant, k) => {
+      voyant.classList.toggle('on', !!steps[k]?.classList.contains('seen'));
+    });
     el.classList.toggle('is-done', lus >= total);
   }
 
