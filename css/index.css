@@ -2764,3 +2764,11 @@ button.mission-step.active .hublot-lock{
   background:#0b2535 !important;
   border-color:#dff6ff !important;
 }
+
+/* Suppression définitive de la source du remplissage métallique : le pseudo-
+   élément qui dessinait l'anneau de laiton ne peint plus l'intérieur du
+   bouton. */
+button.mission-step::before{
+  background:none !important;
+  box-shadow:none !important;
+}
