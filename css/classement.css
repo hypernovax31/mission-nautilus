@@ -104,3 +104,14 @@ html,body{width:100%;min-width:100%;min-height:100%;margin:0}
   letter-spacing:-.03em;
   line-height:1.1;
 }
+
+/* Le titre et le classement utilisent toute la largeur de la fenêtre. */
+.results-hero,
+.podium,
+.fleet-results,
+.results-foot{
+  width:100%;
+  max-width:none;
+}
+.results-hero h1{width:100%;max-width:none}
+.podium-row{width:100%;max-width:none}
