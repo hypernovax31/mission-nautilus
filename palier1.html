@@ -822,8 +822,27 @@ window.Nautilus = {
      Tant que la mission n'est pas lancee, le bandeau reste masque : il
      n'aurait rien a montrer. */
   let _o2Config = null;
+  let finalAlarmAudio = null;
   let oxygenEndAlarmShown = null;
   let oxygenEndAlarmTimer = null;
+
+  function primeFinalAlarm(){
+    if(finalAlarmAudio) return;
+    finalAlarmAudio = new Audio('assets/Submarine_alarm.mp3');
+    finalAlarmAudio.preload = 'auto';
+    finalAlarmAudio.muted = true;
+    finalAlarmAudio.volume = 0;
+    const p = finalAlarmAudio.play();
+    if(p && p.then) p.then(() => {
+      finalAlarmAudio.pause();
+      finalAlarmAudio.currentTime = 0;
+      finalAlarmAudio.muted = false;
+      finalAlarmAudio.volume = .82;
+    }).catch(() => {});
+  }
+  ['pointerdown','touchstart','click','keydown'].forEach(type => {
+    document.addEventListener(type, primeFinalAlarm, {capture:true, passive:true});
+  });
 
   function showOxygenEndAlarm(endAt){
     const key = String(endAt);
@@ -841,8 +860,9 @@ window.Nautilus = {
     document.querySelectorAll('audio').forEach(a => {
       try{ a.pause(); a.muted = true; a.currentTime = 0; }catch(e){}
     });
-    const audio = new Audio('assets/Submarine_alarm.mp3');
+    const audio = finalAlarmAudio || new Audio('assets/Submarine_alarm.mp3');
     audio.loop = true;
+    audio.preload = 'auto';
     audio.volume = 0.82;
     audio.play().catch(() => {});
     oxygenEndAlarmTimer = setInterval(() => {

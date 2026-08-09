@@ -4118,6 +4118,31 @@ function qrDataUri(text, opts){
 
   let oxygenEndAlarmShown = null;
   let oxygenEndAlarmTimer = null;
+  let finalAlarmPrimed = false;
+
+  /* Les navigateurs mobiles refusent une lecture déclenchée par un timer
+     si le fichier audio n'a jamais été amorcé par un geste. On prépare le
+     lecteur en silence au premier geste, sans produire de son. */
+  function primeFinalAlarm(){
+    if(finalAlarmPrimed) return;
+    const audio = $('alarmAudio');
+    if(!audio) return;
+    audio.muted = true;
+    audio.volume = 0;
+    const promise = audio.play();
+    if(promise && promise.then){
+      promise.then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = false;
+        audio.volume = .82;
+        finalAlarmPrimed = true;
+      }).catch(() => {});
+    }
+  }
+  ['pointerdown','touchstart','click','keydown'].forEach(type => {
+    document.addEventListener(type, primeFinalAlarm, {capture:true, passive:true});
+  });
 
   function showOxygenEndAlarm(endAt){
     const key = String(endAt);
