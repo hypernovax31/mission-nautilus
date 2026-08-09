@@ -3564,6 +3564,10 @@ function qrDataUri(text, opts){
   }
 
   function playHublotClick(){
+    if(_skipInitialHublotSfx){
+      _skipInitialHublotSfx = false;
+      return;
+    }
     if(!isSoundEnabled()) return;
 
     /* 1er choix : Web Audio. Chaque clic cree sa propre source, donc
@@ -3685,6 +3689,10 @@ function qrDataUri(text, opts){
      muets des que celle-ci etait refusee. Ce petit registre les rend
      independants : un seul endroit qui dit "l'utilisateur a agi". */
   let _gesteRecu = false;
+  /* Le tout premier geste sert uniquement à démarrer l'ambiance. Les sons
+     d'interface (frappe de l'ordre, hublot) ne doivent jamais s'y greffer. */
+  let _pageInteractionSoundsReady = false;
+  let _skipInitialHublotSfx = false;
   const _gesteCbs = [];
   /* ORDRE DE DEMARRAGE DES SONS, impose et non subi :
        1 = ambiance ocean
@@ -3699,9 +3707,12 @@ function qrDataUri(text, opts){
   }
   (function guetterPremierGeste(){
     const evts = ['pointerdown','touchstart','mousedown','keydown','click'];
-    const go = () => {
+    const go = event => {
       if(_gesteRecu) return;
       _gesteRecu = true;
+      /* Si le premier geste vise un hublot, son bruitage est ignoré une fois :
+         le seul son audible au démarrage reste ambiance-sonar.mp3. */
+      _skipInitialHublotSfx = Boolean(event?.target?.closest?.('.mission-step, #ruleProgress i'));
       evts.forEach(e => document.removeEventListener(e, go, true));
       /* Tri par rang : l'ambiance d'abord, la frappe ensuite, les hublots
          en dernier. */
@@ -3710,6 +3721,8 @@ function qrDataUri(text, opts){
         const { cb } = _gesteCbs.shift();
         try{ cb(); }catch(e){ /* un abonne casse ne bloque pas les autres */ }
       }
+      /* Les interactions suivantes peuvent à nouveau produire leurs SFX. */
+      setTimeout(() => { _pageInteractionSoundsReady = true; }, 0);
     };
     evts.forEach(e => document.addEventListener(e, go, true));
   })();
@@ -3954,14 +3967,15 @@ function qrDataUri(text, opts){
        sonar est eteint), on ecrit quand meme, simplement sans bruit. Le
        texte fantome tient deja la place, donc aucune secousse a l'ecran. */
     let parti = false;
+    /* Si l'ordre démarre à cause du premier clic de la page, il reste
+       visuel : ce premier geste est réservé à ambiance-sonar.mp3. */
+    let typewriterSoundAllowed = false;
     const lancer = () => {
       if(parti || _typewriterCancelled) return;
       parti = true;
       clearTimeout(secours);
-      /* Le contexte audio est ouvert AVANT le premier caractere : sans
-         cela, sa creation (quelques millisecondes) decalait le tout
-         premier clic par rapport a la premiere lettre. */
-      if(isSoundEnabled()) _openTypeAudio();
+      typewriterSoundAllowed = isSoundEnabled() && _pageInteractionSoundsReady;
+      if(typewriterSoundAllowed) _openTypeAudio();
       setTimeout(tick, 40);
     };
 
@@ -3989,7 +4003,7 @@ function qrDataUri(text, opts){
         textNode.nodeValue = fullText;
         caretEl.remove();          // termine : plus de curseur
         /* Retour de chariot, puis on rend la carte son au telephone. */
-        _typeDing();
+        if(typewriterSoundAllowed) _typeDing();
         _closeTypeAudio();
         /* Termine : le texte affiche est identique au fantome. On rend le
            texte au flux normal et on retire le fantome, pour ne pas garder
@@ -4010,7 +4024,7 @@ function qrDataUri(text, opts){
       const dernier = fullText[i - 1] || '';
       /* Les caracteres invisibles (espaces, retours) ne sonnent pas :
          sinon on entendrait un bip sans rien voir apparaitre. */
-      if(dernier.trim()) _typeClick('.,;:!?—'.includes(dernier));
+      if(typewriterSoundAllowed && dernier.trim()) _typeClick('.,;:!?—'.includes(dernier));
       setTimeout(tick, speed);
     };
     attendreGeste();
