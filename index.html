@@ -3391,6 +3391,17 @@ function qrDataUri(text, opts){
     const rule = RULES[key] || RULES.embark;
     const detail = $('ruleDetail');
     if(!detail) return;
+    /* Au chargement, aucun hublot n'est encore ouvert : l'encart reste
+       vide et caché. Il n'apparaît qu'après un clic ou un toucher réel. */
+    if(!shouldScroll){
+      detail.innerHTML = '';
+      detail.classList.remove('is-visible','ring-active');
+      document.querySelectorAll('.mission-step').forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-current','false');
+      });
+      return;
+    }
     /* Une fiche peut n'avoir aucune puce (ex. "Scannez") : dans ce cas on
        n'insere pas de <ul>, sinon le navigateur reserve une puce vide et
        laisse un blanc disgracieux sous le texte. */
@@ -3400,6 +3411,8 @@ function qrDataUri(text, opts){
     /* rule.html : bloc mis en forme (tableau du bareme). Il est ecrit par
        le jeu lui-meme, jamais saisi par un joueur : pas d'echappement. */
     detail.innerHTML = `<h3>${esc(rule.title)}</h3><p>${esc(rule.text)}</p>${bullets}${rule.html || ''}`;
+    detail.classList.add('is-visible');
+    $('ruleProgress')?.classList.add('has-selection');
     /* Signal visuel de lecture : le cadre fait circuler un trait lumineux
        à chaque hublot touché, pour relier clairement le bouton à son encart. */
     detail.classList.remove('ring-active');

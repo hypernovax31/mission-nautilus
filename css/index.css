@@ -2486,3 +2486,23 @@ button.mission-step.active .hublot-lock::after{background:#111}
   .hublot-lock::before{height:11px}
   .hublot-lock::after{width:11px}
 }
+
+/* Avant le premier toucher, aucun voyant ni texte explicatif ne s'affiche. */
+#ruleProgress{visibility:hidden;opacity:0;transition:opacity .2s ease}
+#ruleProgress.has-selection{visibility:visible;opacity:1}
+.rule-detail{display:none}
+.rule-detail.is-visible{display:block}
+
+/* Au contact, le verre du hublot devient semi-opaque (60 %) tout en
+   laissant deviner le wallpaper derrière. */
+button.mission-step.active .hublot-glass,
+button.mission-step.active:hover .hublot-glass{
+  background-image:
+    linear-gradient(rgba(11,37,53,.60),rgba(11,37,53,.60)),
+    url('../assets/fond-nautilus.jpg') !important;
+  background-position:center top,center top !important;
+  background-repeat:no-repeat !important;
+  background-size:100vw auto,100vw auto !important;
+  background-attachment:fixed,fixed !important;
+  background-color:transparent !important;
+}
