@@ -2724,3 +2724,10 @@ button.mission-step.active:hover .hublot-glass{
     inset 0 0 24px rgba(142,231,255,.34),
     0 0 12px rgba(142,231,255,.18) !important;
 }
+
+/* Évite la bande blanche au bas de la page : le fond de secours du document
+   reprend la teinte des abysses lorsque le wallpaper ne couvre pas chaque
+   pixel de l'écran Safari. */
+html{background:#03111f}
+body{background:transparent}
+.site-footer{background:transparent}
