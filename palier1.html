@@ -1398,10 +1398,9 @@ window.Nautilus = {
     let aide;
     if (moins.length) {
       const noms = moins.slice(0, 3).map(m => `<b>${esc(m.nom)}</b>`).join(', ');
-      aide = `🤝 <b>Laisse-toi arrêter par ton équipage.</b> ${noms} `
-           + (moins.length > 1 ? 'risquent ' : 'risque ')
-           + `seulement <b>${N.getLockHours(moins[0].echecs + 1)} h</b> : `
-           + `mieux vaut ${moins.length > 1 ? 'que la barre leur revienne' : 'lui laisser la barre'}.`;
+      aide = `🤝 <b>Pour continuer : passe la barre à ${noms}.</b> `
+           + (moins.length > 1 ? 'Ils risquent ' : 'Il risque ')
+           + `seulement <b>${N.getLockHours(moins[0].echecs + 1)} h</b>.`;
     } else if (mesEchecs === 0) {
       aide = `🤝 Ton compteur est vierge : tu es le mieux placé pour prendre le risque. `
            + `Un matelot peut ainsi <b>se sacrifier</b> et encaisser les blocages pour protéger les autres.`;
@@ -2218,8 +2217,7 @@ window.Nautilus = {
       <div class="lock-screen">
         <h2>${reasonText}</h2>
         <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0 18px;">
-          L'équipage, lui, reste en plongée : un autre matelot peut reprendre
-          l'épreuve dès maintenant.
+          Ton équipage peut continuer. Un autre matelot peut reprendre l’épreuve.
         </p>
         ${monLock?.lockedUntil
           ? `<p class="lock-rule">⏱️ Tu pourras réessayer le <b>${esc(N.formatDate(monLock.lockedUntil))}</b> (blocage de ${esc(String(monLock.lastLockHours || '?'))} h).</p>
@@ -2250,11 +2248,9 @@ window.Nautilus = {
       .sort((a, b) => a.e - b.e);
 
     const aide = moins.length
-      ? `🤝 <b>Laisse ton équipage t'arrêter.</b> ${moins.slice(0,3).map(m => `<b>${esc(m.nom)}</b>`).join(', ')} `
-        + (moins.length > 1 ? 'risquent ' : 'risque ') + `seulement <b>${N.getLockHours(moins[0].e + 1)} h</b> : `
-        + `à la reprise, ${moins.length > 1 ? 'la barre devrait leur revenir' : 'la barre devrait lui revenir'}.`
-      : `🤝 Un matelot peut aussi <b>se sacrifier</b> et encaisser les blocages `
-        + `pour garder les compteurs des autres au plus bas.`;
+      ? `🤝 <b>Pour continuer : passe la barre à ${moins.slice(0,3).map(m => `<b>${esc(m.nom)}</b>`).join(', ')}.</b> `
+        + (moins.length > 1 ? 'Ils risquent ' : 'Il risque ') + `seulement <b>${N.getLockHours(moins[0].e + 1)} h</b>.`
+      : `🤝 Pour continuer, laisse un autre matelot prendre la barre.`;
 
     return `
       <p class="lock-rule" style="margin-top:8px;">
