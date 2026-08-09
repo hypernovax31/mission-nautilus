@@ -2772,3 +2772,31 @@ button.mission-step::before{
   background:none !important;
   box-shadow:none !important;
 }
+
+/* Couronne extérieure réaliste : laiton brossé, rivets intégrés et centre
+   évidé. Le métal reste uniquement sur le contour, jamais dans le verre. */
+button.mission-step::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 5%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 95% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 50% 95%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 5% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 80% 20%,rgba(255,238,190,.82) 0 1.7px,transparent 2.2px),
+    radial-gradient(circle at 20% 80%,rgba(255,238,190,.82) 0 1.7px,transparent 2.2px),
+    radial-gradient(circle at 80% 80%,rgba(255,238,190,.82) 0 1.7px,transparent 2.2px),
+    radial-gradient(circle at 20% 20%,rgba(255,238,190,.82) 0 1.7px,transparent 2.2px),
+    conic-gradient(from 210deg,#291b08 0deg,#8b6424 12deg,#e4bd69 25deg,#6b4815 39deg,#c9973f 53deg,#f0d38d 67deg,#6b4815 82deg,#b27c2d 100deg,#321f08 120deg,#b27c2d 145deg,#f0d38d 165deg,#6b4815 190deg,#d1a34e 215deg,#432a0c 240deg,#c9973f 270deg,#f0d38d 300deg,#6b4815 330deg,#291b08 360deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 84%,#000 84.5% 100%);
+  mask:radial-gradient(circle,transparent 0 84%,#000 84.5% 100%);
+  box-shadow:0 10px 22px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.18);
+  animation:none !important;
+  transition:none !important;
+}
+button.mission-step.active::before{
+  filter:brightness(1.12) !important;
+  box-shadow:0 10px 22px rgba(0,0,0,.55),0 0 0 3px rgba(142,231,255,.34),inset 0 0 0 1px rgba(255,255,255,.24) !important;
+}
