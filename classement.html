@@ -72,8 +72,7 @@
         podium.innerHTML='<div class="results-empty">Aucun équipage n’a encore été enregistré.</div>';
         return;
       }
-      podium.innerHTML = `<div class="podium-title">🏆 Les équipages au sommet</div>
-        <div class="podium-row">${podiumCard(teams[1],2)}${podiumCard(teams[0],1)}${podiumCard(teams[2],3)}</div>`;
+      podium.innerHTML = `<div class="podium-row">${podiumCard(teams[1],2)}${podiumCard(teams[0],1)}${podiumCard(teams[2],3)}</div>`;
       const rest = teams.slice(3);
       $('fleetResults').innerHTML = rest.length ? `<h2>Autres équipages</h2><ol>${rest.map((t,i)=>`<li><span>${i+4}</span><b>${esc(t.teamName)}</b><em>${esc(crewLabel(t))} · ${esc(stepLabel(t))}</em></li>`).join('')}</ol>` : '';
     }
