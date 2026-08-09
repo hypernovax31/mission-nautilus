@@ -228,7 +228,9 @@
     </div>
   </section>
 
-  <section class="card" id="adminPanel" style="display:none;padding:0;border:0;background:transparent;box-shadow:none">
+  
+</main>
+<section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">
     <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">
       <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>
       <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">
@@ -338,7 +340,6 @@
       </div>
     </div>
   </section>
-</main>
 
 <!-- Pied de page ancré : l'engrenage scrolle avec la page -->
 <footer class="site-footer" role="contentinfo">
@@ -5119,8 +5120,14 @@ function qrDataUri(text, opts){
   function openAdminPanel(){
     const panel = $('adminPanel');
     if(!panel) return;
+    // Overlay fixe : on affiche la classe .open (CSS), plus besoin de
+    // faire defiler la page vers le bas du document.
+    panel.classList.add('open');
     panel.style.display = '';
     $('adminFabBtn')?.classList.add('active');
+    // Verrouille le scroll de la page derriere la modale.
+    document.body.classList.add('admin-modal-open');
+    document.body.style.overflow = 'hidden';
     // Cache le footer (l'engrenage ne doit pas rester visible pendant qu'on tape le code)
     document.querySelector('.site-footer')?.classList.add('admin-open');
     // TOUJOURS demander le code à chaque clic sur l'engrenage.
@@ -5131,16 +5138,21 @@ function qrDataUri(text, opts){
     const msg = $('adminUnlockMsg');
     if(msg){ msg.textContent = ''; msg.style.color = ''; }
     setTimeout(() => $('adminCodeInput')?.focus(), 80);
-    smartScroll(panel);
   }
   function closeAdminPanel(){
     const panel = $('adminPanel');
-    if(panel) panel.style.display = 'none';
+    if(panel){ panel.classList.remove('open'); panel.style.display = 'none'; }
+    document.body.classList.remove('admin-modal-open');
+    document.body.style.overflow = '';
     $('adminFabBtn')?.classList.remove('active');
     document.querySelector('.site-footer')?.classList.remove('admin-open');
     // Toujours purger la session à la fermeture (volatil, pas de 30 min)
     closeAdminSession();
   }
+  // Ferme la modale quand on clique sur le fond sombre (pas sur la carte).
+  $('adminPanel')?.addEventListener('click', e => {
+    if(e.target === $('adminPanel')) closeAdminPanel();
+  });
   /**
    * Vide le champ code admin de manière agressive (mémoire JS + DOM).
    * Appelé après chaque action admin sensible (endAdminSession), sur tentative
@@ -6111,8 +6123,8 @@ function qrDataUri(text, opts){
   document.addEventListener('keydown', e => {
     if(e.ctrlKey && e.altKey && (e.key === 'M' || e.key === 'm')){
       e.preventDefault();
-      if($('adminPanel')?.style.display === 'none' || !$('adminPanel')?.style.display) openAdminPanel();
-      else closeAdminPanel();
+      if($('adminPanel')?.classList.contains('open')) closeAdminPanel();
+      else openAdminPanel();
     }
   });
 
