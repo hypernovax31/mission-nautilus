@@ -3694,13 +3694,9 @@ function qrDataUri(text, opts){
   let _pageInteractionSoundsReady = false;
   let _skipInitialHublotSfx = false;
   const _gesteCbs = [];
-  /* ORDRE DE DEMARRAGE DES SONS, impose et non subi :
-       1 = ambiance ocean
-       2 = frappe de l'ordre de mission
-       3 = preparation du son des hublots
-     Sans ce rang, l'ordre dependait de la position des blocs dans le
-     fichier : deplacer une fonction changeait silencieusement quel son
-     partait en premier. On le declare donc explicitement. */
+  /* Ordre au premier geste : l'ambiance passe avant la préparation muette
+     des hublots. La frappe de l'ordre de mission est traitée séparément au
+     chargement, uniquement si l'onglet est visible. */
   function surPremierGeste(cb, rang){
     if(_gesteRecu){ cb(); return; }
     _gesteCbs.push({ cb, rang: (typeof rang === 'number' ? rang : 9) });
@@ -3714,8 +3710,7 @@ function qrDataUri(text, opts){
          le seul son audible au démarrage reste ambiance-sonar.mp3. */
       _skipInitialHublotSfx = Boolean(event?.target?.closest?.('.mission-step, #ruleProgress i'));
       evts.forEach(e => document.removeEventListener(e, go, true));
-      /* Tri par rang : l'ambiance d'abord, la frappe ensuite, les hublots
-         en dernier. */
+      /* Tri par rang : ambiance d'abord, puis préparation muette des hublots. */
       _gesteCbs.sort((a, b) => a.rang - b.rang);
       while(_gesteCbs.length){
         const { cb } = _gesteCbs.shift();
@@ -3748,14 +3743,11 @@ function qrDataUri(text, opts){
      seront debloques par le clic sur le hublot lui-meme, qui est un vrai
      geste utilisateur.
 
-     ORDRE DE DEMARRAGE DES SONS, comme demande :
-       1. l'ambiance  (des le chargement, ou au premier geste)
-       2. la frappe de l'ordre de mission
-       3. les hublots (uniquement au clic sur un hublot)
-     Le son des hublots n'est donc JAMAIS emis avant que le joueur n'en
-     touche un. */
+     Au premier geste, seule l'ambiance devient audible. Les hublots sont
+     seulement préparés en silence et leur son ne sort qu'à partir d'un clic
+     ultérieur sur un hublot. */
   (function preparerSonHublot(){
-    /* Rang 3 : APRES l'ambiance (1) et la frappe (2). */
+    /* Rang 3 : après l'ambiance ; cette préparation reste silencieuse. */
     surPremierGeste(() => {
       /* Le contexte audio est cree et reveille : silencieux par nature.
          C'est ce qui permettra au premier clic sur un hublot de sonner
@@ -3787,7 +3779,10 @@ function qrDataUri(text, opts){
       _typeBus = _typeCtx.createGain();
       _typeBus.gain.value = 0.45;
       _typeBus.connect(_typeCtx.destination);
-      if(_typeCtx.state === 'suspended') _typeCtx.resume();
+      /* Au chargement, certains navigateurs gardent le contexte suspendu.
+         On tente la reprise sans erreur visible ; si elle est refusée, le
+         texte continue simplement sans bip. */
+      if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
       return _typeCtx;
     }catch(e){ _typeCtx = null; return null; }
   }
@@ -3960,43 +3955,22 @@ function qrDataUri(text, opts){
        (10 ms), ils se fondent en un gresillement continu ; plus lent, la
        lecture traine. */
     const speed = 18; // ms par caractere
-    /* SYNCHRONISATION : le texte part au premier geste du joueur, via le
-       registre commun surPremierGeste() au rang 2 — juste apres
-       l'ambiance (rang 1), avant les hublots (rang 3).
-       Filet de securite : si le son reste refuse au bout de 4 s (ou si le
-       sonar est eteint), on ecrit quand meme, simplement sans bruit. Le
-       texte fantome tient deja la place, donc aucune secousse a l'ecran. */
+    /* L'ordre démarre dès son affichage. Ses bips ne sont tentés qu'au
+       chargement d'un onglet réellement visible : une page ouverte en
+       arrière-plan reste entièrement silencieuse et ne rattrape pas les
+       bips au premier clic. */
     let parti = false;
-    /* Si l'ordre démarre à cause du premier clic de la page, il reste
-       visuel : ce premier geste est réservé à ambiance-sonar.mp3. */
     let typewriterSoundAllowed = false;
-    const lancer = () => {
+    let secours = null;
+    const lancer = allowSound => {
       if(parti || _typewriterCancelled) return;
       parti = true;
-      clearTimeout(secours);
-      typewriterSoundAllowed = isSoundEnabled() && _pageInteractionSoundsReady;
+      if(secours) clearTimeout(secours);
+      typewriterSoundAllowed = Boolean(allowSound) && isSoundEnabled();
       if(typewriterSoundAllowed) _openTypeAudio();
       setTimeout(tick, 40);
     };
 
-    /* BUG CORRIGE : l'ecriture attendait que l'AMBIANCE OCEAN devienne
-       audible. Quand le navigateur la refusait — cas frequent : aucun
-       geste recu, onglet ouvert en arriere-plan, economiseur de donnees —
-       le signal n'arrivait jamais et le texte restait bloque sur son
-       premier caractere pendant 4 secondes, puis s'ecrivait en silence.
-       Le son de frappe n'a pourtant AUCUN besoin de l'ambiance : il lui
-       suffit d'un geste de l'utilisateur, comme tout son sur le web.
-       On part donc au premier geste reel, sans rien attendre d'autre. */
-    const secours = setTimeout(lancer, 2500);
-    const attendreGeste = () => {
-      if(!isSoundEnabled()){ lancer(); return; }   // sonar eteint : on ecrit tout de suite
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if(!AC){ lancer(); return; }                 // pas de son possible
-      /* Si un geste a DEJA eu lieu (le joueur a touche l'ecran avant
-         d'arriver ici), on demarre immediatement. */
-      if(_gesteRecu){ lancer(); return; }
-      surPremierGeste(lancer, 2);   // rang 2 : juste apres l'ambiance
-    };
     const tick = () => {
       if(_typewriterCancelled) return;
       if(i >= fullText.length){
@@ -4027,7 +4001,11 @@ function qrDataUri(text, opts){
       if(typewriterSoundAllowed && dernier.trim()) _typeClick('.,;:!?—'.includes(dernier));
       setTimeout(tick, speed);
     };
-    attendreGeste();
+
+    /* `visibilityState` reflète ce que le joueur voit réellement : les bips
+       ne sont donc jamais planifiés dans un autre onglet ou une fenêtre
+       masquée. L'animation textuelle, elle, reste disponible partout. */
+    lancer(document.visibilityState === 'visible');
   }
 
   const orderObserver = new IntersectionObserver((entries) => {
