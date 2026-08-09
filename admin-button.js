@@ -10,7 +10,7 @@
    Le panneau s'affiche donc sur la page où l'on se trouve, comme sur index.html.
 ============================================================================ */
 
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -22,7 +22,11 @@
     messagingSenderId: "444670686419",
     appId: "1:444670686419:web:00d186940a2fb8c8c29026"
   };
-  const app = initializeApp(firebaseConfig);
+  /* Les pages Palier et Classement initialisent déjà Firebase dans leur
+     module principal. Réutiliser l'application par défaut évite l'exception
+     "Firebase App named '[DEFAULT]' already exists", qui interrompait le
+     script AVANT l'injection et l'ouverture de la modale. */
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const auth = getAuth(app);
   /* La page Classement n'initialise pas elle-même l'authentification. Sans
      cette session anonyme, le panneau est visible mais ses actions d'écriture
@@ -79,7 +83,7 @@
       link.rel = 'stylesheet';
       // Versionné pour ne jamais réutiliser l'ancienne feuille corrompue du
       // cache PWA sur les pages palier et classement.
-      link.href = 'css/admin.css?v=2';
+      link.href = 'css/admin.css?v=3';
       document.head.appendChild(link);
     }
     const wrap = document.createElement('div');
