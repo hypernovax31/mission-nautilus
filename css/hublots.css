@@ -1,33 +1,71 @@
-/* Mission Nautilus — rendu unique des hublots */
+/* Mission Nautilus — hublots
+   Rendu unique : une couronne extérieure simple, lisible et réaliste.
+*/
+
+.mission-steps{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:clamp(10px,2.2vw,22px);
+  margin:22px 0 0;
+  justify-items:center;
+  align-items:start;
+}
 
 button.mission-step{
   position:relative;
   isolation:isolate;
   width:100%;
   max-width:190px;
-  aspect-ratio:1/1;
+  aspect-ratio:1;
   min-height:0;
   margin:0;
   padding:0;
-  cursor:pointer;
-  border:10px double #c9973f !important;
-  border-style:double !important;
+  border:0 !important;
   border-radius:50%;
-  outline:2px solid #4a3215;
-  outline-offset:2px;
-  background:none !important;
-  box-shadow:0 10px 22px rgba(0,0,0,.42),inset 0 0 0 1px rgba(0,0,0,.55) !important;
+  background:transparent !important;
+  cursor:pointer;
   transform:none !important;
-  filter:none !important;
   transition:none !important;
   animation:none !important;
 }
 
-/* Aucun pseudo-élément métallique : le contour est la vraie bordure ci-dessus. */
-button.mission-step::before,
-button.mission-step::after{display:none !important}
+/* Couronne extérieure : deux anneaux métalliques, sans remplissage central. */
+button.mission-step::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border:10px solid #9b7027;
+  border-radius:50%;
+  background:transparent;
+  box-shadow:
+    inset 0 0 0 2px #f0cd85,
+    inset 0 0 0 6px #5b4016,
+    0 0 0 2px #30200d,
+    0 10px 22px rgba(0,0,0,.52);
+  pointer-events:none;
+}
 
-/* Verre au repos : wallpaper et reflet, sans remplissage opaque. */
+/* Rivets fixes : huit points autour de la couronne. */
+button.mission-step::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border-radius:50%;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 4%,#f6d98b 0 2px,transparent 2.5px),
+    radial-gradient(circle at 85% 15%,#f6d98b 0 2px,transparent 2.5px),
+    radial-gradient(circle at 96% 50%,#f6d98b 0 2px,transparent 2.5px),
+    radial-gradient(circle at 85% 85%,#f6d98b 0 2px,transparent 2.5px),
+    radial-gradient(circle at 50% 96%,#f6d98b 0 2px,transparent 2.5px),
+    radial-gradient(circle at 15% 85%,#f6d98b 0 2px,transparent 2.5px),
+    radial-gradient(circle at 4% 50%,#f6d98b 0 2px,transparent 2.5px),
+    radial-gradient(circle at 15% 15%,#f6d98b 0 2px,transparent 2.5px);
+}
+
+/* Verre au repos : wallpaper visible, reflet discret, aucune animation. */
 button.mission-step:not(.active) .hublot-glass,
 button.mission-step:not(.active):hover .hublot-glass{
   position:absolute;
@@ -41,19 +79,17 @@ button.mission-step:not(.active):hover .hublot-glass{
   overflow:hidden;
   border-radius:50%;
   background-image:
-    linear-gradient(115deg,rgba(255,255,255,.24) 0 14%,transparent 38%),
+    linear-gradient(115deg,rgba(255,255,255,.22) 0 14%,transparent 38%),
     linear-gradient(rgba(11,37,53,.12),rgba(11,37,53,.12)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center,center,center top !important;
-  background-repeat:no-repeat !important;
-  background-size:125% 125%,auto,100vw auto !important;
-  background-attachment:scroll,scroll,fixed !important;
-  background-color:transparent !important;
-  box-shadow:inset 0 0 0 3px rgba(220,250,255,.26),inset 0 0 22px rgba(142,231,255,.28) !important;
-  backdrop-filter:none !important;
+    url('../assets/fond-nautilus.jpg');
+  background-position:center,center,center top;
+  background-repeat:no-repeat;
+  background-size:125% 125%,auto,100vw auto;
+  background-attachment:scroll,scroll,fixed;
+  box-shadow:inset 0 0 0 3px rgba(220,250,255,.28),inset 0 0 20px rgba(142,231,255,.28);
 }
 
-/* Verre sélectionné : même wallpaper, voile neutre, aucun ambre intérieur. */
+/* Verre sélectionné : voile neutre ; aucune peinture ambre au centre. */
 button.mission-step.active .hublot-glass,
 button.mission-step.active:hover .hublot-glass{
   position:absolute;
@@ -67,205 +103,53 @@ button.mission-step.active:hover .hublot-glass{
   overflow:hidden;
   border-radius:50%;
   background-image:
-    linear-gradient(115deg,rgba(255,255,255,.28) 0 14%,transparent 38%),
+    linear-gradient(115deg,rgba(255,255,255,.26) 0 14%,transparent 38%),
     linear-gradient(rgba(11,37,53,.55),rgba(11,37,53,.55)),
-    url('../assets/fond-nautilus.jpg') !important;
-  background-position:center,center,center top !important;
-  background-repeat:no-repeat !important;
-  background-size:125% 125%,auto,100vw auto !important;
-  background-attachment:scroll,scroll,fixed !important;
-  background-color:transparent !important;
-  box-shadow:inset 0 0 0 3px rgba(220,250,255,.36),inset 0 0 24px rgba(142,231,255,.34) !important;
-  backdrop-filter:none !important;
+    url('../assets/fond-nautilus.jpg');
+  background-position:center,center,center top;
+  background-repeat:no-repeat;
+  background-size:125% 125%,auto,100vw auto;
+  background-attachment:scroll,scroll,fixed;
+  box-shadow:inset 0 0 0 3px rgba(220,250,255,.38),inset 0 0 22px rgba(142,231,255,.34);
 }
 
-/* Le verrou reste neutre à la sélection. */
+/* Le contour sélectionné devient ambre plus lumineux, sans changer le verre. */
+button.mission-step.active::before{
+  border-color:#c9973f;
+  box-shadow:
+    inset 0 0 0 2px #ffe29a,
+    inset 0 0 0 6px #6b4d18,
+    0 0 0 3px rgba(245,176,39,.35),
+    0 10px 22px rgba(0,0,0,.52);
+}
+
 .hublot-lock{z-index:2}
 button.mission-step.active .hublot-lock{
-  background:#0b2535 !important;
-  border-color:#dff6ff !important;
+  background:#0b2535;
+  border-color:#dff6ff;
 }
 button.mission-step.active .hublot-lock::before,
-button.mission-step.active .hublot-lock::after{background:#dff6ff !important}
+button.mission-step.active .hublot-lock::after{background:#dff6ff}
 
-button.mission-step.active{
-  border-color:#f5b027 !important;
-  box-shadow:0 0 0 3px rgba(245,176,39,.34),0 10px 22px rgba(0,0,0,.42) !important;
-}
-
-@media(max-width:640px){
-  button.mission-step .hublot-glass,
-  button.mission-step:hover .hublot-glass{
-    background-attachment:scroll,scroll,scroll !important;
-  }
-}
-
-
-/* Texte et accessibilite du hublot. */
-.mission-step .num{font-family:Consolas,"Courier New",monospace;font-size:clamp(11px,2.2vw,14px);font-weight:900;letter-spacing:.2em;color:rgba(245,176,39,.9);line-height:1}
+.mission-step .num{font:900 clamp(11px,2.2vw,14px)/1 Consolas,"Courier New",monospace;letter-spacing:.2em;color:rgba(245,176,39,.9)}
 .mission-step b{font-size:clamp(11px,2.4vw,16px);font-weight:1000;line-height:1.1;letter-spacing:.03em;text-transform:uppercase;color:#eaf8ff;padding:0 8%;text-shadow:0 2px 10px rgba(0,0,0,.8)}
 button.mission-step:focus-visible{outline:3px solid #8ee7ff;outline-offset:5px}
 
-/* Couronne réaliste indépendante du verre : structure extérieure de hublot
-   avec cerclage, contre-cerclage et rivets. */
-button.mission-step{
-  border:0 !important;
-  outline:none !important;
-  box-shadow:none !important;
-}
-.hublot-rim{
-  position:absolute;
-  inset:0;
-  z-index:0;
-  display:block;
-  border-radius:50%;
-  border:14px solid #9b7027;
-  background:
-    radial-gradient(circle at 50% 3%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 85% 15%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 97% 50%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 85% 85%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 50% 97%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 15% 85%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 3% 50%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 15% 15%,#f6d98b 0 3px,transparent 3.5px),
-    conic-gradient(from 215deg,#30200d,#d0a348 16%,#6b4815 31%,#f0c96d 48%,#654314 66%,#bd8b32 83%,#30200d);
-  box-shadow:
-    inset 0 0 0 2px rgba(30,18,5,.72),
-    inset 0 0 0 6px rgba(245,210,126,.26),
-    0 8px 16px rgba(0,0,0,.48),
-    0 0 0 2px rgba(38,25,9,.86);
-  pointer-events:none;
-}
-.hublot-rim::after{
-  content:"";
-  position:absolute;
-  inset:6px;
-  border:2px solid rgba(35,22,7,.72);
-  border-radius:50%;
-  box-shadow:inset 0 1px 0 rgba(255,240,180,.35);
-}
-.hublot-glass{z-index:1}
-button.mission-step.active .hublot-rim{
-  border-color:#c9973f;
-  box-shadow:
-    inset 0 0 0 2px rgba(30,18,5,.72),
-    inset 0 0 0 6px rgba(255,220,130,.34),
-    0 0 0 3px rgba(245,176,39,.48),
-    0 8px 18px rgba(0,0,0,.5);
-}
-@media(max-width:430px){
-  .hublot-rim{border-width:10px}
-  .hublot-rim::after{inset:4px}
-}
-
-/* Couronne finale, dessinée directement par le stylesheet dédié : aucun
-   élément HTML supplémentaire ni ancienne règle de contour ne peut la
-   masquer. */
-button.mission-step::before{
-  display:block !important;
-  content:"" !important;
-  position:absolute;
-  inset:0;
-  z-index:0;
-  border:14px solid #9b7027;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 3%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 85% 15%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 97% 50%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 85% 85%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 50% 97%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 15% 85%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 3% 50%,#f6d98b 0 3px,transparent 3.5px),
-    radial-gradient(circle at 15% 15%,#f6d98b 0 3px,transparent 3.5px),
-    conic-gradient(from 215deg,#30200d,#d0a348 16%,#6b4815 31%,#f0c96d 48%,#654314 66%,#bd8b32 83%,#30200d);
-  box-shadow:inset 0 0 0 2px rgba(30,18,5,.72),inset 0 0 0 6px rgba(245,210,126,.26),0 8px 16px rgba(0,0,0,.48),0 0 0 2px rgba(38,25,9,.86) !important;
-  pointer-events:none;
-}
-button.mission-step::before::after{display:none}
-button.mission-step.active::before{border-color:#c9973f}
-@media(max-width:430px){button.mission-step::before{border-width:10px}}
-
-/* Interdit absolu : aucun métal ambre au centre du verre. La couronne est
-   masquée au centre et le hublot actif reçoit une surface neutre. */
-button.mission-step::before{
-  -webkit-mask:radial-gradient(circle,transparent 0 82%,#000 83% 100%) !important;
-  mask:radial-gradient(circle,transparent 0 82%,#000 83% 100%) !important;
-}
-button.mission-step.active .hublot-glass,
-button.mission-step.active:hover .hublot-glass{
-  background:#0b2535 !important;
-  background-image:none !important;
-  background-attachment:scroll !important;
-  box-shadow:inset 0 0 0 3px rgba(220,250,255,.36),inset 0 0 24px rgba(142,231,255,.34) !important;
-}
-
-
-/* Géométrie responsive des quatre hublots. */
-.mission-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,2.2vw,22px);margin:22px 0 0;justify-items:center;align-items:start}
-@media(max-width:620px){.mission-steps{grid-template-columns:repeat(2,1fr);gap:14px}}
-@media(max-width:360px){.mission-steps{gap:10px}}
-
-/* Extérieur restauré : proportions du hublot Nautilus d’origine, avec une
-   couronne large et rivetée. Le verre intérieur reste piloté séparément. */
-button.mission-step{
-  border:0 !important;
-  outline:none !important;
-  box-shadow:none !important;
-}
-button.mission-step::before{
-  display:block !important;
-  content:"" !important;
-  position:absolute;
-  inset:0;
-  z-index:0;
-  border:0;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 7%,rgba(255,238,190,.95) 0 1.8px,transparent 2.5px),
-    radial-gradient(circle at 93% 50%,rgba(255,238,190,.95) 0 1.8px,transparent 2.5px),
-    radial-gradient(circle at 50% 93%,rgba(255,238,190,.95) 0 1.8px,transparent 2.5px),
-    radial-gradient(circle at 7% 50%,rgba(255,238,190,.95) 0 1.8px,transparent 2.5px),
-    radial-gradient(circle at 80% 20%,rgba(255,238,190,.8) 0 1.5px,transparent 2.2px),
-    radial-gradient(circle at 20% 80%,rgba(255,238,190,.8) 0 1.5px,transparent 2.2px),
-    radial-gradient(circle at 80% 80%,rgba(255,238,190,.8) 0 1.5px,transparent 2.2px),
-    radial-gradient(circle at 20% 20%,rgba(255,238,190,.8) 0 1.5px,transparent 2.2px),
-    conic-gradient(from 210deg,#3a2a10,#c9973f 18%,#7a5a20 34%,#f0cd85 52%,#6b4d18 68%,#c9973f 84%,#3a2a10) !important;
-  -webkit-mask:radial-gradient(circle,transparent 0 77%,#000 78% 100%) !important;
-  mask:radial-gradient(circle,transparent 0 77%,#000 78% 100%) !important;
-  box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.45) !important;
-  pointer-events:none;
-}
-button.mission-step.active::before{
-  filter:brightness(1.08);
-  box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 0 3px rgba(245,176,39,.35) !important;
-}
-
-/* Version finale de la coque extérieure : un véritable cerclage épais,
-   visible sur tous les navigateurs, avec joint sombre et filet de laiton. */
-button.mission-step{
-  border:12px solid #9b7027 !important;
-  outline:2px solid #3a2810 !important;
-  outline-offset:2px;
-  box-shadow:
-    inset 0 0 0 2px rgba(245,210,126,.35),
-    0 8px 18px rgba(0,0,0,.55) !important;
-}
-button.mission-step.active{
-  border-color:#c9973f !important;
-  outline-color:#f5b027 !important;
-  box-shadow:
-    inset 0 0 0 2px rgba(255,230,150,.45),
-    0 0 0 3px rgba(245,176,39,.28),
-    0 8px 18px rgba(0,0,0,.55) !important;
-}
-@media(max-width:430px){button.mission-step{border-width:9px !important}}
-
-/* Dimensions minimales : le hublot reste un vrai cercle lisible, y compris
-   quand le style général des boutons est adapté au mobile. */
 @media(max-width:620px){
+  .mission-steps{grid-template-columns:repeat(2,1fr);gap:14px}
   button.mission-step{max-width:170px}
   .mission-step .num{font-size:clamp(12px,3vw,15px)}
   .mission-step b{font-size:clamp(12px,3.2vw,17px)}
+}
+@media(max-width:430px){
+  button.mission-step::before{border-width:8px}
+  .mission-steps{gap:10px}
+}
+@media(max-width:360px){button.mission-step{max-width:150px}}
+@media(max-width:640px){
+  button.mission-step .hublot-glass,
+  button.mission-step:hover .hublot-glass,
+  button.mission-step.active .hublot-glass{
+    background-attachment:scroll,scroll,scroll;
+  }
 }
