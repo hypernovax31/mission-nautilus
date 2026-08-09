@@ -153,3 +153,47 @@ button.mission-step:focus-visible{outline:3px solid #8ee7ff;outline-offset:5px}
     background-attachment:scroll,scroll,scroll;
   }
 }
+
+/* Couronne mécanique renforcée : trois niveaux de cerclage et douze rivets
+   régulièrement espacés, comme une vraie plaque de hublot rivetée. */
+button.mission-step::before{
+  border-width:11px;
+  border-color:#a87929;
+  box-shadow:
+    inset 0 0 0 2px #f6d98b,
+    inset 0 0 0 5px #5b4016,
+    inset 0 0 0 8px #c9973f,
+    0 0 0 2px #30200d,
+    0 10px 22px rgba(0,0,0,.58) !important;
+}
+button.mission-step::after{
+  display:block;
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border-radius:50%;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 3%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 75% 7%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 93% 25%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 97% 50%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 93% 75%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 75% 93%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 50% 97%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 25% 93%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 7% 75%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 3% 50%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 7% 25%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px),
+    radial-gradient(circle at 25% 7%,#fff0b0 0 2.2px,#6b4d18 2.3px 3.4px,transparent 3.5px);
+}
+button.mission-step.active::before{
+  border-color:#c9973f;
+  box-shadow:
+    inset 0 0 0 2px #ffe29a,
+    inset 0 0 0 5px #6b4d18,
+    inset 0 0 0 8px #d5a94f,
+    0 0 0 3px rgba(245,176,39,.35),
+    0 10px 22px rgba(0,0,0,.58) !important;
+}
