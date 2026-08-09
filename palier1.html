@@ -916,16 +916,13 @@ window.Nautilus = {
     }
   }
 
-  /* Même échelle que sur l'accueil : 50 paliers fixes du rouge abyssal
-     (0 %) au bleu blanc (100 %). */
+  /* Même échelle que sur l'accueil : 50 paliers du bleu très foncé
+     (0 %) au bleu franc (50 %), puis au blanc (100 %). */
   const OXYGEN_COLOR_LEVEL_COUNT = 50;
   const OXYGEN_COLOR_ANCHORS = [
-    [0,   [81, 0, 11]],
-    [22,  [169, 11, 49]],
-    [45,  [198, 61, 105]],
-    [65,  [103, 108, 201]],
-    [82,  [25, 142, 215]],
-    [100, [234, 251, 255]]
+    [0,   [3, 18, 50]],
+    [50,  [43, 136, 222]],
+    [100, [255, 255, 255]]
   ];
 
   function buildOxygenGradient(){
