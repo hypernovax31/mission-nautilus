@@ -79,8 +79,8 @@ button.mission-step.active .hublot-lock::before,
 button.mission-step.active .hublot-lock::after{background:#dff6ff !important}
 
 button.mission-step.active{
-  border-color:#8ee7ff !important;
-  box-shadow:0 0 0 3px rgba(142,231,255,.34),0 10px 22px rgba(0,0,0,.42) !important;
+  border-color:#f5b027 !important;
+  box-shadow:0 0 0 3px rgba(245,176,39,.34),0 10px 22px rgba(0,0,0,.42) !important;
 }
 
 @media(max-width:640px){
