@@ -4154,8 +4154,6 @@ function qrDataUri(text, opts){
     clearInterval(oxygenEndAlarmTimer);
     let remaining = 5;
     count.textContent = remaining;
-    overlay.classList.add('show');
-    overlay.setAttribute('aria-hidden', 'false');
     /* Silence immédiat de toute la page avant l'alarme finale, y compris
        le contexte Web Audio du typewriter et ses notes déjà programmées.
        Les timers de frappe sont aussi annulés pour qu'aucun bip ne reparte
@@ -4164,7 +4162,11 @@ function qrDataUri(text, opts){
     try{ _closeTypeAudio(); }catch(e){}
     silenceEverything();
     unmuteAlarms();
+    /* Lance l'alarme AVANT d'afficher l'animation : les deux démarrent
+       ensemble au même instant. */
     playSubmarineAlarm(5000, true);
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden', 'false');
     oxygenEndAlarmTimer = setInterval(() => {
       remaining -= 1;
       if(remaining <= 0){
