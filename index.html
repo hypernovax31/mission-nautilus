@@ -4129,6 +4129,9 @@ function qrDataUri(text, opts){
     count.textContent = remaining;
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
+    /* Silence immédiat de toute la page avant l'alarme finale. */
+    silenceEverything();
+    unmuteAlarms();
     playSubmarineAlarm(5000);
     oxygenEndAlarmTimer = setInterval(() => {
       remaining -= 1;

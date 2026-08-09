@@ -837,6 +837,10 @@ window.Nautilus = {
     count.textContent = remaining;
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden','false');
+    /* Coupe tous les sons déjà joués par la page avant l'alarme finale. */
+    document.querySelectorAll('audio').forEach(a => {
+      try{ a.pause(); a.muted = true; a.currentTime = 0; }catch(e){}
+    });
     const audio = new Audio('assets/Submarine_alarm.mp3');
     audio.loop = true;
     audio.volume = 0.82;
