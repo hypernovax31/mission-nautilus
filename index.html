@@ -4126,6 +4126,7 @@ function qrDataUri(text, opts){
         clearInterval(oxygenEndAlarmTimer);
         overlay.classList.remove('show');
         overlay.setAttribute('aria-hidden', 'true');
+        window.location.href = 'classement.html';
         return;
       }
       count.textContent = remaining;

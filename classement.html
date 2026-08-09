@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#030811">
+  <title>Mission Nautilus — Classement final</title>
+  <link rel="stylesheet" href="css/classement.css?v=1">
+</head>
+<body>
+  <div class="result-wallpaper" aria-hidden="true"></div>
+  <main class="results-shell">
+    <header class="results-hero">
+      <div class="results-kicker">MISSION NAUTILUS · FIN DE PLONGÉE</div>
+      <h1>LE CLASSEMENT FINAL</h1>
+      <p>Les réserves sont épuisées. Voici les équipages qui sont allés le plus loin.</p>
+    </header>
+    <section class="podium" id="podium" aria-live="polite">
+      <div class="results-loading">Le sonar établit le classement…</div>
+    </section>
+    <section class="fleet-results" id="fleetResults"></section>
+    <p class="results-foot">Merci à tous les équipages. Le Nautilus vous attend pour une prochaine mission.</p>
+  </main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const app = initializeApp({
+      apiKey:"AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
+      authDomain:"mission-nautilus.firebaseapp.com",
+      projectId:"mission-nautilus",
+      storageBucket:"mission-nautilus.firebasestorage.app",
+      messagingSenderId:"444670686419",
+      appId:"1:444670686419:web:00d186940a2fb8c8c29026"
+    });
+    const db = getFirestore(app);
+    const STEPS = ['start','livres','son','zone51','occasion','papeterie','drone','final'];
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    function progressOf(team){ return Array.isArray(team.completedSteps) ? team.completedSteps.length : 0; }
+    function progressDate(team){
+      const dates = Object.values(team.progressionAt || {}).filter(Boolean).map(v => new Date(v).getTime()).filter(Number.isFinite);
+      if(dates.length) return Math.max(...dates);
+      return new Date(team.finishedAt || team.updatedAt || team.createdAt || 0).getTime() || Number.MAX_SAFE_INTEGER;
+    }
+    function stepLabel(team){
+      const n = progressOf(team);
+      return n >= STEPS.length ? 'Mission terminée' : `${n} palier${n > 1 ? 's' : ''} franchi${n > 1 ? 's' : ''}`;
+    }
+    function sortTeams(teams){
+      return teams.filter(t => t && t.teamName).sort((a,b) => progressOf(b)-progressOf(a) || progressDate(a)-progressDate(b) || String(a.teamName).localeCompare(String(b.teamName),'fr'));
+    }
+    function podiumCard(team, rank){
+      if(!team) return '<div class="podium-empty"></div>';
+      const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
+      return `<article class="podium-card rank-${rank}">
+        <div class="podium-medal">${medal}</div>
+        <div class="podium-rank">${rank}<sup>e</sup></div>
+        <h2>${esc(team.teamName)}</h2>
+        <div class="podium-progress">${esc(stepLabel(team))}</div>
+        <div class="podium-spark"></div>
+      </article>`;
+    }
+    function render(teams){
+      const podium = $('podium');
+      if(!teams.length){
+        podium.innerHTML='<div class="results-empty">Aucun équipage n’a encore été enregistré.</div>';
+        return;
+      }
+      podium.innerHTML = `<div class="podium-title">🏆 Les équipages au sommet</div>
+        <div class="podium-row">${podiumCard(teams[1],2)}${podiumCard(teams[0],1)}${podiumCard(teams[2],3)}</div>`;
+      const rest = teams.slice(3);
+      $('fleetResults').innerHTML = rest.length ? `<h2>Autres équipages</h2><ol>${rest.map((t,i)=>`<li><span>${i+4}</span><b>${esc(t.teamName)}</b><em>${esc(stepLabel(t))}</em></li>`).join('')}</ol>` : '';
+    }
+    try {
+      const snap = await getDocs(collection(db,'teams'));
+      render(sortTeams(snap.docs.map(d => ({teamCode:d.id,...d.data()}))));
+    } catch(e){
+      $('podium').innerHTML='<div class="results-empty">Le classement est momentanément indisponible.</div>';
+      console.error(e);
+    }
+  </script>
+</body>
+</html>
