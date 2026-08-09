@@ -1,37 +1,23 @@
-/* =====================================================================
-   HUBLOTS — source unique du rendu
-   Un anneau de laiton dehors, un verre transparent dedans.
-   ===================================================================== */
-button.mission-step,
-button.mission-step:hover,
-button.mission-step.active{
+/* Mission Nautilus — rendu unique des hublots */
+
+button.mission-step{
   position:relative;
   isolation:isolate;
+  border:6px solid #c9973f !important;
+  border-radius:50%;
+  background:none !important;
+  box-shadow:0 10px 22px rgba(0,0,0,.42),inset 0 0 0 1px rgba(0,0,0,.55) !important;
   transform:none !important;
   filter:none !important;
-  animation:none !important;
   transition:none !important;
+  animation:none !important;
 }
 
-/* Couronne extérieure uniquement : elle ne peint jamais le centre. */
-button.mission-step::before{
-  content:"" !important;
-  position:absolute;
-  inset:0;
-  z-index:0;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 7%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 93% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 50% 93%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    radial-gradient(circle at 7% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
-    conic-gradient(from 210deg,#302314,#c9973f 18%,#76531d 34%,#e3bd68 52%,#5b4016 68%,#c9973f 84%,#302314) !important;
-  -webkit-mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%) !important;
-  mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%) !important;
-  box-shadow:0 10px 22px rgba(0,0,0,.42),0 0 0 1px rgba(0,0,0,.55) !important;
-}
+/* Aucun pseudo-élément métallique : le contour est la vraie bordure ci-dessus. */
+button.mission-step::before,
+button.mission-step::after{display:none !important}
 
-/* Verre au repos : wallpaper visible et reflet clair. */
+/* Verre au repos : wallpaper et reflet, sans remplissage opaque. */
 button.mission-step:not(.active) .hublot-glass,
 button.mission-step:not(.active):hover .hublot-glass{
   position:absolute;
@@ -55,10 +41,9 @@ button.mission-step:not(.active):hover .hublot-glass{
   background-color:transparent !important;
   box-shadow:inset 0 0 0 3px rgba(220,250,255,.26),inset 0 0 22px rgba(142,231,255,.28) !important;
   backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
 }
 
-/* Verre sélectionné : voile neutre, jamais ambre. */
+/* Verre sélectionné : même wallpaper, voile neutre, aucun ambre intérieur. */
 button.mission-step.active .hublot-glass,
 button.mission-step.active:hover .hublot-glass{
   position:absolute;
@@ -82,23 +67,10 @@ button.mission-step.active:hover .hublot-glass{
   background-color:transparent !important;
   box-shadow:inset 0 0 0 3px rgba(220,250,255,.36),inset 0 0 24px rgba(142,231,255,.34) !important;
   backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
 }
 
-/* Reflet unique du verre. */
-.hublot-glass::after{
-  content:"" !important;
-  position:absolute;
-  left:-40%;
-  top:-70%;
-  width:120%;
-  height:120%;
-  border-radius:50%;
-  pointer-events:none;
-  transform:rotate(-14deg);
-  background:linear-gradient(115deg,rgba(255,255,255,.16) 0 36%,transparent 62%) !important;
-}
-
+/* Le verrou reste neutre à la sélection. */
+.hublot-lock{z-index:2}
 button.mission-step.active .hublot-lock{
   background:#0b2535 !important;
   border-color:#dff6ff !important;
@@ -106,23 +78,14 @@ button.mission-step.active .hublot-lock{
 button.mission-step.active .hublot-lock::before,
 button.mission-step.active .hublot-lock::after{background:#dff6ff !important}
 
-@media (max-width:640px){
-  button.mission-step:not(.active) .hublot-glass,
-  button.mission-step:not(.active):hover .hublot-glass,
-  button.mission-step.active .hublot-glass,
-  button.mission-step.active:hover .hublot-glass{
-    background-attachment:scroll,scroll,scroll !important;
-  }
-}
-
-/* Contour de secours fiable : une bordure réelle remplace le masque CSS,
-   parfois ignoré par Safari. */
-button.mission-step{
-  border:6px solid #c9973f !important;
-  box-shadow:0 10px 22px rgba(0,0,0,.42),inset 0 0 0 1px rgba(0,0,0,.55) !important;
-}
-button.mission-step::before{display:none !important}
 button.mission-step.active{
   border-color:#8ee7ff !important;
   box-shadow:0 0 0 3px rgba(142,231,255,.34),0 10px 22px rgba(0,0,0,.42) !important;
+}
+
+@media(max-width:640px){
+  button.mission-step .hublot-glass,
+  button.mission-step:hover .hublot-glass{
+    background-attachment:scroll,scroll,scroll !important;
+  }
 }
