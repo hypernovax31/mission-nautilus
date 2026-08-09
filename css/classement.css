@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700;800;900&family=Orbitron:wght@600;700;800&display=swap');
+:root{--gold:#f5b027;--cyan:#8ee7ff;--green:#5be09b;--ink:#030811;--panel:rgba(4,19,32,.88)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--ink);color:#eaf8ff;font-family:'Exo 2',Arial,sans-serif}body{overflow-x:hidden}.result-wallpaper{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,rgba(1,6,14,.68),rgba(1,8,16,.92)),url('../assets/fond-nautilus.jpg') center top/cover no-repeat;filter:saturate(.9)}.result-wallpaper:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(142,231,255,.04) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.04) 1px,transparent 1px);background-size:42px 42px;opacity:.5}.results-shell{position:relative;z-index:1;width:min(1120px,calc(100% - 28px));margin:0 auto;padding:clamp(28px,7vw,72px) 0 50px}.results-hero{text-align:center}.results-kicker{color:var(--gold);font-size:clamp(11px,2vw,15px);font-weight:900;letter-spacing:.18em}.results-hero h1{margin:14px 0 8px;font:900 clamp(40px,8vw,92px)/.95 Orbitron,Arial,sans-serif;letter-spacing:.02em;color:#fff;text-shadow:4px 4px 0 #02040a,0 0 26px rgba(245,176,39,.35)}.results-hero p{margin:0 auto;color:#cfe6f4;font-size:clamp(15px,2.3vw,21px)}.podium{margin-top:clamp(30px,6vw,62px)}.podium-title{text-align:center;color:#ffd36c;font-size:clamp(15px,2.5vw,22px);font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}.podium-row{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:clamp(10px,2.4vw,24px);align-items:end}.podium-card{position:relative;min-height:250px;padding:24px 14px 20px;text-align:center;border:1px solid rgba(142,231,255,.28);border-radius:22px;background:linear-gradient(180deg,rgba(8,39,59,.84),rgba(2,13,23,.94));box-shadow:0 18px 36px rgba(0,0,0,.4);overflow:hidden}.podium-card:before{content:"";position:absolute;left:10%;right:10%;bottom:-55px;height:120px;border-radius:50%;background:radial-gradient(ellipse,rgba(142,231,255,.2),transparent 68%)}.podium-card.rank-1{min-height:330px;border:3px solid var(--gold);background:linear-gradient(180deg,rgba(75,48,12,.72),rgba(20,14,4,.96));box-shadow:0 0 0 5px rgba(245,176,39,.12),0 0 45px rgba(245,176,39,.45),0 24px 45px rgba(0,0,0,.5);animation:winnerGlow 2.4s ease-in-out infinite alternate}.podium-card.rank-2{border-color:rgba(192,202,211,.65)}.podium-card.rank-3{border-color:rgba(180,113,65,.65)}.podium-medal{position:relative;z-index:1;font-size:clamp(34px,6vw,58px);line-height:1;margin-bottom:6px}.podium-rank{position:relative;z-index:1;color:rgba(255,255,255,.5);font:900 clamp(30px,5vw,58px)/1 Orbitron,Arial,sans-serif}.podium-rank sup{font-size:.35em}.podium-card h2{position:relative;z-index:1;margin:14px 0 8px;color:#fff;font-size:clamp(19px,3vw,32px);line-height:1.05}.rank-1 h2{color:#ffd36c;font-size:clamp(24px,4vw,42px)}.podium-progress{position:relative;z-index:1;color:#bcd9e6;font-size:14px;font-weight:700}.podium-spark{position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 0 38%,rgba(255,255,255,.08) 45%,transparent 54%);transform:translateX(-100%);animation:spark 4s ease-in-out infinite}.rank-2 .podium-spark,.rank-3 .podium-spark{display:none}.fleet-results{margin:36px auto 0;width:min(680px,100%)}.fleet-results h2{margin:0 0 10px;color:#ffd36c;font-size:18px}.fleet-results ol{list-style:none;margin:0;padding:0}.fleet-results li{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid rgba(142,231,255,.14);color:#cfe6f4}.fleet-results li span{color:var(--cyan);font-weight:900}.fleet-results li b{color:#fff}.fleet-results li em{font-style:normal;color:#9bc4d4;font-size:13px}.results-foot{text-align:center;margin:36px 0 0;color:#9bc4d4;font-size:14px}.results-loading,.results-empty{padding:34px;text-align:center;color:#bcd9e6;border:1px solid rgba(142,231,255,.2);border-radius:18px;background:var(--panel)}@keyframes winnerGlow{to{box-shadow:0 0 0 7px rgba(245,176,39,.16),0 0 65px rgba(245,176,39,.7),0 24px 45px rgba(0,0,0,.5)}}@keyframes spark{55%,100%{transform:translateX(120%)}}@media(prefers-reduced-motion:reduce){.podium-card.rank-1,.podium-spark{animation:none}}@media(max-width:640px){.podium-row{grid-template-columns:1fr 1.12fr 1fr;gap:6px}.podium-card{min-height:190px;padding:16px 6px}.podium-card.rank-1{min-height:245px}.podium-card h2{font-size:16px;overflow-wrap:anywhere}.rank-1 h2{font-size:21px}.podium-progress{font-size:11px}.podium-rank{font-size:30px}.podium-medal{font-size:34px}.fleet-results li{grid-template-columns:28px 1fr}.fleet-results li em{grid-column:2}}
+.podium-crew{position:relative;z-index:1;margin-top:9px;color:#ffe2a0;font-size:clamp(12px,1.8vw,15px);line-height:1.35;font-weight:700;overflow-wrap:anywhere}.rank-1 .podium-crew{color:#fff1bd;font-size:clamp(13px,2vw,17px)}
+
+/* Le titre final reste sur une seule ligne, avec une taille qui s'adapte à
+   la largeur disponible sur mobile et tablette. */
+.results-hero h1{
+  white-space:nowrap;
+  font-size:clamp(9px,3.5vw,42px);
+  letter-spacing:0;
+  line-height:1;
+}
+
+/* Classement centré sur tous les écrans. */
+.results-hero h1{text-align:center;margin-left:auto;margin-right:auto}
+.podium-row{justify-items:center}
+.podium-card{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.fleet-results{text-align:center}
+.fleet-results ol{width:min(680px,100%);margin:0 auto}
+.fleet-results li{text-align:center}
+
+/* Le titre complet reste entièrement contenu dans le viewport : sa taille
+   se calcule sur la largeur disponible, sans retour à la ligne. */
+.results-hero h1{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:clip;
+  font-size:min(42px,2.25vw);
+  letter-spacing:-.01em;
+}
+
+/* Liste des équipages hors podium : hiérarchie claire entre rang, équipe,
+   équipiers et progression. */
+.fleet-results li{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  gap:14px;
+  align-items:center;
+  padding:14px 16px;
+  text-align:left;
+  background:rgba(4,19,32,.58);
+  border:1px solid rgba(142,231,255,.16);
+  border-radius:12px;
+  margin:7px 0;
+}
+.fleet-rank{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  border:1px solid rgba(245,176,39,.5);
+  border-radius:50%;
+  color:#ffd36c;
+  font:900 16px/1 Orbitron,Arial,sans-serif;
+}
+.fleet-team{min-width:0;display:flex;flex-direction:column;gap:3px;text-align:left}
+.fleet-team b{color:#fff;font-size:18px;letter-spacing:.04em;text-transform:uppercase}
+.fleet-team em{font-style:normal;color:#cfe6f4;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.fleet-results li small{color:#8ee7ff;font-size:12px;font-weight:800;white-space:nowrap}
+@media(max-width:560px){
+  .fleet-results li{grid-template-columns:34px minmax(0,1fr);gap:10px;padding:12px}
+  .fleet-results li small{grid-column:2;justify-self:start}
+  .fleet-team b{font-size:16px}
+  .fleet-team em{font-size:12px}
+}
+
+/* Le titre reste entièrement visible et le classement est centré dans la
+   fenêtre, verticalement comme horizontalement. */
+.results-shell{
+  min-height:100svh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.results-hero h1{
+  width:100%;
+  font-size:clamp(7px,2vw,32px);
+  text-align:center;
+  white-space:nowrap;
+}
+.results-hero,
+.podium,
+.fleet-results,
+.results-foot{width:100%;margin-left:auto;margin-right:auto}
+.podium{margin-top:clamp(24px,5vw,48px)}
+
+/* La page de classement occupe toute la fenêtre visible. */
+html,body{width:100%;min-width:100%;min-height:100%;margin:0}
+.results-shell{width:100%;max-width:none;min-height:100svh;padding:clamp(24px,5vw,64px) clamp(14px,3vw,44px) 40px}
+.results-hero,.podium,.fleet-results,.results-foot{max-width:1120px}
+
+/* Le libellé complet reste lisible dans la fenêtre : aucune découpe, aucune
+   troncature, et une taille calculée sur la largeur réelle disponible. */
+.results-hero h1{
+  display:block;
+  width:100%;
+  max-width:100%;
+  overflow:visible;
+  text-overflow:clip;
+  font-size:clamp(6px,1.8vw,32px);
+  letter-spacing:-.03em;
+  line-height:1.1;
+}
