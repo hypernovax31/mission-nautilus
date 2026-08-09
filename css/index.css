@@ -2750,3 +2750,17 @@ button.mission-step.active .hublot-lock{
 }
 button.mission-step.active .hublot-lock::before,
 button.mission-step.active .hublot-lock::after{background:#dff6ff !important}
+
+/* Garde-fou final : l'état sélectionné ne peut plus afficher le métal ambre,
+   même si Safari ignore une image ou un état précédent. */
+button.mission-step.active .hublot-glass,
+button.mission-step.active:hover .hublot-glass{
+  background:#0b2535 !important;
+  background-image:none !important;
+  background-attachment:scroll !important;
+  box-shadow:inset 0 0 0 3px rgba(220,250,255,.36),inset 0 0 24px rgba(142,231,255,.34) !important;
+}
+button.mission-step.active .hublot-lock{
+  background:#0b2535 !important;
+  border-color:#dff6ff !important;
+}
