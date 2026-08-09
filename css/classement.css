@@ -19,3 +19,14 @@
 .fleet-results{text-align:center}
 .fleet-results ol{width:min(680px,100%);margin:0 auto}
 .fleet-results li{text-align:center}
+
+/* Le titre complet reste entièrement contenu dans le viewport : sa taille
+   se calcule sur la largeur disponible, sans retour à la ligne. */
+.results-hero h1{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:clip;
+  font-size:min(42px,2.25vw);
+  letter-spacing:-.01em;
+}
