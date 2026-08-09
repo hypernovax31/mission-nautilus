@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=4">
+  <link rel="stylesheet" href="css/palier1.css?v=5">
 
 </head>
 <body>
@@ -35,32 +35,31 @@
     <div class="o2-time" id="o2Time">—</div>
   </div>
 
-  <!-- Section identification -->
-  <!-- Masque au depart : le matelot est identifie automatiquement par son
-       Code Matelot. Ce formulaire n'est reaffiche qu'en repli, si le code
-       est absent ou introuvable (voir autoIdentifyFromCode). Sans cela, il
-       apparaitrait une fraction de seconde avant de disparaitre. -->
+  <!-- Accès direct au palier : aucune identité n'est déduite d'une ancienne
+       session du navigateur. Le matelot reprend avec son Code Matelot, comme
+       depuis l'accueil, ou retourne s'inscrire s'il n'en possède pas encore. -->
   <section class="card" id="identityCard" style="display:none">
     <h2>👤 IDENTIFICATION MATELOT</h2>
     <div class="body">
-      <p style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 12px;">
-        Inscris ton nom et ton service pour rejoindre l’équipage.
-      </p>
-      <div class="identity-grid">
-        <div>
-          <label for="memberName">Ton nom</label>
-          <input id="memberName" placeholder="Ex. JULES VERNE" autocomplete="off" />
+      <div class="direct-resume-panel">
+        <div class="direct-resume-heading">
+          <span class="direct-resume-icon" aria-hidden="true">🧭</span>
+          <div>
+            <p>REPRENDRE LA MISSION</p>
+            <h3>Retrouve ta place à bord</h3>
+          </div>
         </div>
-        <div>
-          <label for="memberService">Ton service</label>
-          <select id="memberService">
-            <option>PE</option><option>PT</option><option>SAV</option>
-            <option>LOG</option><option>CAI</option><option>GAD</option><option>CODIR</option>
-          </select>
+        <p class="direct-resume-lead">Entre ton Code Matelot personnel pour rejoindre directement ton équipage et reprendre le palier.</p>
+        <div class="direct-resume-form">
+          <div>
+            <label for="matelotCodeInput">Code Matelot</label>
+            <input id="matelotCodeInput" placeholder="Ex. ABCD-1234" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="9" />
+          </div>
+          <button id="resumeDirectBtn" type="button">🧭 Reprendre la mission</button>
         </div>
-        <button id="identifyBtn">Embarquer</button>
+        <div id="identifyMsg" class="direct-resume-message" aria-live="polite"></div>
       </div>
-      <div id="identifyMsg" style="margin-top:10px;"></div>
+      <p class="direct-resume-new">Nouveau matelot ? <a href="index.html">Retourne à l'accueil pour embarquer et recevoir ton Code Matelot.</a></p>
     </div>
   </section>
 
@@ -798,9 +797,17 @@ window.Nautilus = {
   const N = window.Nautilus;
   const esc = N.esc;
 
+  /* Une URL nue (palier1.html) reste neutre : elle ne réutilise jamais la
+     dernière identité du navigateur. Seul un lien personnel contenant le
+     code d'équipe ET le Code Matelot peut reprendre automatiquement. */
+  const palierParams = new URLSearchParams(location.search);
+  const hasPersonalResumeLink = Boolean(
+    palierParams.get('code') && (palierParams.get('m') || palierParams.get('matelot'))
+  );
+
   /* === État global === */
   const state = {
-    teamCode: N.getCurrentTeamCode(),
+    teamCode: hasPersonalResumeLink ? N.getCurrentTeamCode() : null,
     me: null,                // { name, service, memberKey, clientId }
     team: null,              // team doc Firestore
     session: null,           // session doc Firestore
@@ -1033,50 +1040,135 @@ window.Nautilus = {
       setInterval(() => chargerConfigO2().then(majReserveO2), 120000);
     });
 
-    /* 1) Vérifier équipe */
+    setupDirectResumeForm();
+
+    /* 1) Un lien personnel (?code=…&m=…) reprend automatiquement le
+       matelot. Une URL nue ouvre le formulaire de reprise par Code Matelot. */
     if (!state.teamCode) {
-      // Le message d'erreur vit dans ce bloc : il faut le rendre visible.
       $('identityCard').style.display = 'block';
-      $('identifyMsg').innerHTML = `<div class="status-banner warning">⚠️ Aucun équipage détecté. <a href="index.html" style="color:var(--fnac);text-decoration:underline;">Retourne à l'accueil pour embarquer</a>.</div>`;
-      $('identifyBtn').disabled = true;
+      $('topTeam').textContent = '—';
     } else {
-      /* Affichage provisoire le temps que l'equipe se charge : on montre
-         des points de suspension plutot que le code technique (NEMO...),
-         que le joueur n'a pas besoin de voir. onTeamUpdate() y mettra
-         ensuite le vrai nom d'equipage. */
+      /* Affichage provisoire le temps que l'équipe se charge : on montre
+         des points de suspension plutôt que le code technique. */
       $('topTeam').textContent = '…';
-      $('identifyBtn').addEventListener('click', identify);
-      $('memberName').addEventListener('keydown', e => { if (e.key === 'Enter') identify(); });
-      /* Auto-remplir si on a déjà un nom en local */
-      const cached = localStorage.getItem('nautilusLastMember');
-      if (cached) {
-        try { const m = JSON.parse(cached); $('memberName').value = m.name || ''; $('memberService').value = m.service || 'PE'; } catch(e){}
-      }
-      /* Le drapeau du mode test doit etre pose AVANT de brancher l'ecoute
-         temps reel : sinon la premiere reponse de Firestore ecraserait
-         l'equipage fictif avant meme qu'il soit cree. */
       state.isTest = (N.getCurrentMatelotCode() === 'ZZZZ-0000');
 
-      /* Charge l'équipe + branche les listeners live */
+      /* Charge l'équipe + branche les listeners live. */
       await attachTeamListener();
 
-      /* ===== IDENTIFICATION AUTOMATIQUE =====
-         Le matelot s'est deja identifie sur la page d'accueil, avec son
-         Code Matelot ou son lien personnel (QR). Lui redemander son nom et
-         son service ici n'a plus de sens : on retrouve sa fiche a partir
-         de son code et on entre directement dans le mini-jeu.
-         Le formulaire reste dans la page et sert de repli : il ne
-         s'affiche que si le code est absent ou introuvable (arrivee
-         directe sur cette page, code efface, base injoignable). */
+      /* Un Code Matelot présent dans un lien personnel ouvre directement
+         la partie. S'il est invalide, on bascule vers le même formulaire
+         de reprise que pour une URL nue. */
       const auto = await autoIdentifyFromCode();
       if (!auto) {
-        // Repli : pas de code exploitable, on demande l'identite.
         $('identityCard').style.display = 'block';
+        setDirectResumeMessage('Ce lien ne permet pas de retrouver un matelot. Entre ton Code Matelot personnel.', 'error');
       }
     }
   })();
 
   // Ancienne fonction validateAccessCode supprimée (plus de garde-fou d'URL).
+
+  const DIRECT_MATELOT_CODE_RE = /^[A-Z]{4}-[0-9]{4}$/;
+
+  function setDirectResumeMessage(message, kind='') {
+    const box = $('identifyMsg');
+    if (!box) return;
+    box.textContent = message || '';
+    box.className = 'direct-resume-message' + (kind ? ` ${kind}` : '');
+  }
+
+  function formatDirectMatelotCode(raw) {
+    const up = String(raw || '').toUpperCase();
+    const found = up.match(/[A-Z]{4}\s*-?\s*[0-9]{4}/);
+    const source = (found && up.length > 9) ? found[0] : up;
+    let letters = '', digits = '';
+    for (const character of source) {
+      if (letters.length < 4) {
+        if (character >= 'A' && character <= 'Z') letters += character;
+        continue;
+      }
+      if (digits.length < 4 && character >= '0' && character <= '9') digits += character;
+    }
+    if (letters.length < 4) return letters;
+    if (!digits.length && !source.includes('-')) return letters;
+    return letters + '-' + digits;
+  }
+
+  function setupDirectResumeForm() {
+    const input = $('matelotCodeInput');
+    const button = $('resumeDirectBtn');
+    if (!input || !button || button.dataset.bound === '1') return;
+    button.dataset.bound = '1';
+    button.addEventListener('click', resumeDirectMission);
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') resumeDirectMission();
+    });
+    input.addEventListener('input', event => {
+      const next = formatDirectMatelotCode(event.target.value);
+      if (next !== event.target.value) event.target.value = next;
+    });
+  }
+
+  async function resumeDirectMission() {
+    const input = $('matelotCodeInput');
+    const button = $('resumeDirectBtn');
+    if (!input || !button) return;
+    const code = String(input.value || '').trim().toUpperCase();
+
+    if (!code) {
+      setDirectResumeMessage('Entre ton Code Matelot pour reprendre la mission.', 'error');
+      input.focus();
+      return;
+    }
+    if (!DIRECT_MATELOT_CODE_RE.test(code)) {
+      setDirectResumeMessage('Format attendu : 4 lettres, un tiret, puis 4 chiffres. Exemple : ABCD-1234.', 'error');
+      input.focus();
+      return;
+    }
+
+    button.disabled = true;
+    setDirectResumeMessage('Recherche de ta place à bord…', 'loading');
+    try {
+      let teamCode;
+      if (code === 'ZZZZ-0000') {
+        teamCode = N.TEAM_DEFS[0]?.code || 'NEMO';
+      } else {
+        const indexSnap = await getDoc(doc(N.db, 'matelots', code));
+        if (!indexSnap.exists()) {
+          setDirectResumeMessage('Code Matelot introuvable. Vérifie ta saisie ou demande de l’aide à l’organisation.', 'error');
+          input.focus();
+          return;
+        }
+        teamCode = indexSnap.data().teamCode;
+      }
+
+      const team = await N.getTeam(teamCode);
+      if (!team) {
+        setDirectResumeMessage('Cet équipage est introuvable. Retourne à l’accueil ou contacte l’organisation.', 'error');
+        return;
+      }
+
+      state.teamCode = team.teamCode;
+      state.team = team;
+      state.isTest = code === 'ZZZZ-0000';
+      N.setCurrentTeamCode(team.teamCode);
+      localStorage.setItem('nautilusMatelotCode', code);
+      await attachTeamListener();
+
+      const identified = await autoIdentifyFromCode();
+      if (!identified) {
+        setDirectResumeMessage('Ce Code Matelot ne correspond pas à cet équipage. Vérifie ta saisie.', 'error');
+        return;
+      }
+      input.value = '';
+    } catch (error) {
+      console.error('resumeDirectMission:', error);
+      setDirectResumeMessage('La reprise est momentanément indisponible. Réessaie dans un instant.', 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
 
   /* === Identification automatique par Code Matelot ===
      Retrouve la fiche du matelot et entre dans le jeu sans rien demander.
@@ -1171,49 +1263,6 @@ window.Nautilus = {
     $('identityCard').style.display = 'none';
     showGame();
     return true;
-  }
-
-  /* === Identification joueur === */
-  async function identify() {
-    const name = $('memberName').value.trim();
-    const service = $('memberService').value;
-    if (!name) { N.showToast('Indique ton nom pour embarquer.', 'warning'); return; }
-    if (!state.team) { N.showToast('Connexion à l\'équipage en cours…', 'warning'); return; }
-    const key = N.memberKey(name);
-    /* Vérifier si on n'est pas déjà membre */
-    const existing = (state.team.members || []).find(m => m.memberKey === key);
-    if (existing) {
-      /* On remplace l'identité locale (ré-embarquement) */
-      state.me = { name: existing.name, service: existing.service, memberKey: key, clientId: N.getClientId() };
-    } else {
-      /* Ajout comme nouveau membre */
-      const member = { name: name.toUpperCase(), service, memberKey: key, registeredAt: new Date().toISOString() };
-      const members = [...(state.team.members || []), member];
-      /* Instant releve AVANT l'ecriture reseau : la ligne du journal doit
-         porter l'heure de l'arrivee du matelot, pas celle de la reponse
-         du serveur — sinon elle se retrouve apres des evenements
-         pourtant posterieurs. */
-      const instantArrivee = new Date();
-      try {
-        await N.saveTeam(state.team, { members });
-        state.me = { name: member.name, service, memberKey: key, clientId: N.getClientId() };
-        N.addLogEntry(`${member.name} a rejoint l'équipage.`, 'info', instantArrivee);
-      } catch (err) {
-        $('identifyMsg').innerHTML = `<div class="status-banner danger">❌ Erreur : ${esc(err.message)}</div>`;
-        return;
-      }
-    }
-    /* Stocker en local pour auto-remplissage */
-    localStorage.setItem('nautilusLastMember', JSON.stringify(state.me));
-    $('identifyMsg').innerHTML = `<div class="status-banner success">✅ Bienvenue à bord, <b>${esc(state.me.name)}</b> !</div>`;
-    N.showToast(`${state.me.name} a embarqué.`, 'success');
-    renderCrew();
-    /* Heartbeat */
-    N.heartbeat(state.teamCode);
-    if (!state._heartbeatInterval) state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode), 30000);
-    /* Cacher l'identification */
-    setTimeout(() => { $('identityCard').style.display = 'none'; }, 1000);
-    showGame();
   }
 
   /* === Listeners live === */
