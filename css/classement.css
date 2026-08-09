@@ -30,3 +30,39 @@
   font-size:min(42px,2.25vw);
   letter-spacing:-.01em;
 }
+
+/* Liste des équipages hors podium : hiérarchie claire entre rang, équipe,
+   équipiers et progression. */
+.fleet-results li{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  gap:14px;
+  align-items:center;
+  padding:14px 16px;
+  text-align:left;
+  background:rgba(4,19,32,.58);
+  border:1px solid rgba(142,231,255,.16);
+  border-radius:12px;
+  margin:7px 0;
+}
+.fleet-rank{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  border:1px solid rgba(245,176,39,.5);
+  border-radius:50%;
+  color:#ffd36c;
+  font:900 16px/1 Orbitron,Arial,sans-serif;
+}
+.fleet-team{min-width:0;display:flex;flex-direction:column;gap:3px;text-align:left}
+.fleet-team b{color:#fff;font-size:18px;letter-spacing:.04em;text-transform:uppercase}
+.fleet-team em{font-style:normal;color:#cfe6f4;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.fleet-results li small{color:#8ee7ff;font-size:12px;font-weight:800;white-space:nowrap}
+@media(max-width:560px){
+  .fleet-results li{grid-template-columns:34px minmax(0,1fr);gap:10px;padding:12px}
+  .fleet-results li small{grid-column:2;justify-self:start}
+  .fleet-team b{font-size:16px}
+  .fleet-team em{font-size:12px}
+}
