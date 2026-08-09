@@ -1244,8 +1244,8 @@
     const admin = mountAdminLogic();
     const style = document.createElement('style');
     style.textContent = `
-      #nautilusAdminShortcut{position:fixed;left:14px;bottom:14px;z-index:11000;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(142,231,255,.35);border-radius:50%;background:rgba(3,17,31,.78);color:rgba(142,231,255,.65);text-decoration:none;font-size:16px;opacity:.72;box-shadow:0 4px 12px rgba(0,0,0,.28)}
-      #nautilusAdminShortcut:hover{opacity:1;color:#f5b027;border-color:#f5b027}
+      #nautilusAdminShortcut{position:fixed;left:14px;bottom:14px;z-index:11000;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:rgba(142,231,255,.5);text-decoration:none;font-size:16px;opacity:.05;box-shadow:none;outline:none;-webkit-tap-highlight-color:transparent}
+      #nautilusAdminShortcut:hover,#nautilusAdminShortcut:focus{opacity:.05;color:rgba(142,231,255,.5);border:none;outline:none}
     `;
     document.head.appendChild(style);
     const gear = document.createElement('button');
