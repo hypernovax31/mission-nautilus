@@ -2597,3 +2597,19 @@ button.mission-step.active:hover .hublot-glass{
     height:22px;
   }
 }
+
+/* Hublot fermé : transparence réduite à 20 % (voile sombre à 80 %),
+   tout en conservant un léger reflet de verre. */
+button.mission-step:not(.active) .hublot-glass,
+button.mission-step:not(.active):hover .hublot-glass{
+  background-image:
+    linear-gradient(115deg,rgba(255,255,255,.12) 0 16%,transparent 38%),
+    linear-gradient(rgba(11,37,53,.80),rgba(11,37,53,.80)),
+    url('../assets/fond-nautilus.jpg') !important;
+  background-position:center,center,center top !important;
+  background-repeat:no-repeat !important;
+  background-size:120% 120%,auto,100vw auto !important;
+  background-attachment:scroll,scroll,fixed !important;
+  background-color:transparent !important;
+  box-shadow:inset 0 0 16px rgba(142,231,255,.20) !important;
+}
