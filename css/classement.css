@@ -11,3 +11,11 @@
   letter-spacing:0;
   line-height:1;
 }
+
+/* Classement centré sur tous les écrans. */
+.results-hero h1{text-align:center;margin-left:auto;margin-right:auto}
+.podium-row{justify-items:center}
+.podium-card{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.fleet-results{text-align:center}
+.fleet-results ol{width:min(680px,100%);margin:0 auto}
+.fleet-results li{text-align:center}
