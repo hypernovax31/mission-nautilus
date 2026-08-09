@@ -3755,6 +3755,7 @@ function qrDataUri(text, opts){
   })();
 
   let _typeCtx = null;        // contexte audio dedie, cree puis referme
+  let _typewriterCancelled = false;
   let _typeBus = null;        // volume general de la frappe
   /* -1 et non 0 : sur un contexte audio tout neuf, currentTime vaut ~0.
      Avec 0 comme valeur de depart, le test anti-saturation ci-dessous
@@ -3953,7 +3954,7 @@ function qrDataUri(text, opts){
        texte fantome tient deja la place, donc aucune secousse a l'ecran. */
     let parti = false;
     const lancer = () => {
-      if(parti) return;
+      if(parti || _typewriterCancelled) return;
       parti = true;
       clearTimeout(secours);
       /* Le contexte audio est ouvert AVANT le premier caractere : sans
@@ -3982,6 +3983,7 @@ function qrDataUri(text, opts){
       surPremierGeste(lancer, 2);   // rang 2 : juste apres l'ambiance
     };
     const tick = () => {
+      if(_typewriterCancelled) return;
       if(i >= fullText.length){
         textNode.nodeValue = fullText;
         caretEl.remove();          // termine : plus de curseur
@@ -4130,7 +4132,10 @@ function qrDataUri(text, opts){
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
     /* Silence immédiat de toute la page avant l'alarme finale, y compris
-       le contexte Web Audio du typewriter et ses notes déjà programmées. */
+       le contexte Web Audio du typewriter et ses notes déjà programmées.
+       Les timers de frappe sont aussi annulés pour qu'aucun bip ne reparte
+       au clic suivant. */
+    _typewriterCancelled = true;
     try{ _closeTypeAudio(); }catch(e){}
     silenceEverything();
     unmuteAlarms();
