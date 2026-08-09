@@ -114,3 +114,15 @@ button.mission-step.active .hublot-lock::after{background:#dff6ff !important}
     background-attachment:scroll,scroll,scroll !important;
   }
 }
+
+/* Contour de secours fiable : une bordure réelle remplace le masque CSS,
+   parfois ignoré par Safari. */
+button.mission-step{
+  border:6px solid #c9973f !important;
+  box-shadow:0 10px 22px rgba(0,0,0,.42),inset 0 0 0 1px rgba(0,0,0,.55) !important;
+}
+button.mission-step::before{display:none !important}
+button.mission-step.active{
+  border-color:#8ee7ff !important;
+  box-shadow:0 0 0 3px rgba(142,231,255,.34),0 10px 22px rgba(0,0,0,.42) !important;
+}
