@@ -2800,3 +2800,27 @@ button.mission-step.active::before{
   filter:brightness(1.12) !important;
   box-shadow:0 10px 22px rgba(0,0,0,.55),0 0 0 3px rgba(142,231,255,.34),inset 0 0 0 1px rgba(255,255,255,.24) !important;
 }
+
+/* Couronne réaliste du hublot : le laiton reste uniquement sur l’anneau
+   extérieur. Le masque central empêche tout remplissage métallique de
+   recouvrir le verre et ses effets intérieurs. */
+button.mission-step::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 7%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 93% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 50% 93%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 7% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    conic-gradient(from 210deg,#302314,#c9973f 18%,#76531d 34%,#e3bd68 52%,#5b4016 68%,#c9973f 84%,#302314);
+  -webkit-mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%);
+  mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%);
+  box-shadow:0 10px 22px rgba(0,0,0,.42),0 0 0 1px rgba(0,0,0,.55);
+}
+button.mission-step.active::before{
+  filter:brightness(1.12);
+  box-shadow:0 10px 22px rgba(0,0,0,.42),0 0 0 3px rgba(142,231,255,.36),0 0 18px rgba(142,231,255,.18);
+}
