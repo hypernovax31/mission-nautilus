@@ -2824,3 +2824,16 @@ button.mission-step.active::before{
   filter:brightness(1.12);
   box-shadow:0 10px 22px rgba(0,0,0,.42),0 0 0 3px rgba(142,231,255,.36),0 0 18px rgba(142,231,255,.18);
 }
+
+/* Rétablit la couronne du hublot après la règle de neutralisation précédente. */
+button.mission-step::before{
+  background:
+    radial-gradient(circle at 50% 7%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 93% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 50% 93%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    radial-gradient(circle at 7% 50%,rgba(255,238,190,.95) 0 2px,transparent 2.5px),
+    conic-gradient(from 210deg,#302314,#c9973f 18%,#76531d 34%,#e3bd68 52%,#5b4016 68%,#c9973f 84%,#302314) !important;
+  -webkit-mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%) !important;
+  mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%) !important;
+  box-shadow:0 10px 22px rgba(0,0,0,.42),0 0 0 1px rgba(0,0,0,.55) !important;
+}
