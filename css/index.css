@@ -2703,3 +2703,24 @@ button.mission-step:not(.active):hover .hublot-glass{
     inset 0 0 22px rgba(142,231,255,.28),
     0 0 10px rgba(142,231,255,.12) !important;
 }
+
+/* Au clic/toucher, le hublot reste un verre sous-marin : aucun remplissage
+   ambre métallique. La sélection est indiquée par le contour, pas par le
+   fond intérieur. */
+button.mission-step.active .hublot-glass,
+button.mission-step.active:hover .hublot-glass{
+  background-image:
+    linear-gradient(115deg,rgba(255,255,255,.28) 0 14%,transparent 38%),
+    radial-gradient(ellipse at 28% 18%,rgba(255,255,255,.20),transparent 46%),
+    linear-gradient(rgba(11,37,53,.55),rgba(11,37,53,.55)),
+    url('../assets/fond-nautilus.jpg') !important;
+  background-position:center,center,center,center top !important;
+  background-repeat:no-repeat !important;
+  background-size:125% 125%,auto,auto,100vw auto !important;
+  background-attachment:scroll,scroll,scroll,fixed !important;
+  background-color:transparent !important;
+  box-shadow:
+    inset 0 0 0 3px rgba(220,250,255,.36),
+    inset 0 0 24px rgba(142,231,255,.34),
+    0 0 12px rgba(142,231,255,.18) !important;
+}
