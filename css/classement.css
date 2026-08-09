@@ -86,3 +86,8 @@
 .fleet-results,
 .results-foot{width:100%;margin-left:auto;margin-right:auto}
 .podium{margin-top:clamp(24px,5vw,48px)}
+
+/* La page de classement occupe toute la fenêtre visible. */
+html,body{width:100%;min-width:100%;min-height:100%;margin:0}
+.results-shell{width:100%;max-width:none;min-height:100svh;padding:clamp(24px,5vw,64px) clamp(14px,3vw,44px) 40px}
+.results-hero,.podium,.fleet-results,.results-foot{max-width:1120px}
