@@ -4139,7 +4139,7 @@ function qrDataUri(text, opts){
     try{ _closeTypeAudio(); }catch(e){}
     silenceEverything();
     unmuteAlarms();
-    playSubmarineAlarm(5000);
+    playSubmarineAlarm(5000, true);
     oxygenEndAlarmTimer = setInterval(() => {
       remaining -= 1;
       if(remaining <= 0){
@@ -4393,10 +4393,10 @@ function qrDataUri(text, opts){
     setTimeout(() => alarm.classList.remove('show'), durationMs || 9500);
   }
 
-  function playSubmarineAlarm(durationMs){
-    // Sonar eteint = silence total : l'alarme reste muette (l'ecran rouge,
-    // lui, s'affiche quand meme).
-    if(!isSoundEnabled()) return;
+  function playSubmarineAlarm(durationMs, force=false){
+    // L'alarme de fin peut être forcée : elle doit annoncer la remontée
+    // générale même si le sonar d'ambiance a été coupé auparavant.
+    if(!force && !isSoundEnabled()) return;
     const alarmAudio = document.getElementById('alarmAudio');
     if(!alarmAudio) return;
 
@@ -4404,7 +4404,9 @@ function qrDataUri(text, opts){
     alarmAudio.currentTime = 0;
     alarmAudio.muted = false;
     alarmAudio.preload = 'auto';
+    alarmAudio.muted = false;
     alarmAudio.volume = 0.82;
+    alarmAudio.load();
     alarmAudio.dataset.loopCount = '0';
 
     // Le son dure ~2 s : on le repete pour couvrir la duree demandee,

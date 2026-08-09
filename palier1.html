@@ -844,7 +844,7 @@ window.Nautilus = {
     const audio = new Audio('assets/Submarine_alarm.mp3');
     audio.loop = true;
     audio.volume = 0.82;
-    if (N.isSoundEnabled()) audio.play().catch(() => {});
+    audio.play().catch(() => {});
     oxygenEndAlarmTimer = setInterval(() => {
       remaining -= 1;
       if(remaining <= 0){
