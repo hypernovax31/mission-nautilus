@@ -3,7 +3,8 @@
 button.mission-step{
   position:relative;
   isolation:isolate;
-  border:6px solid #c9973f !important;
+  border:8px solid #c9973f !important;
+  border-style:solid !important;
   border-radius:50%;
   background:none !important;
   box-shadow:0 10px 22px rgba(0,0,0,.42),inset 0 0 0 1px rgba(0,0,0,.55) !important;
