@@ -48,6 +48,10 @@
       const n = progressOf(team);
       return n >= STEPS.length ? 'Mission terminée' : `${n} palier${n > 1 ? 's' : ''} franchi${n > 1 ? 's' : ''}`;
     }
+    function crewLabel(team){
+      const names = (team.members || []).map(m => m.name).filter(Boolean);
+      return names.length ? names.join(' · ') : 'Équipage non renseigné';
+    }
     function sortTeams(teams){
       return teams.filter(t => t && t.teamName).sort((a,b) => progressOf(b)-progressOf(a) || progressDate(a)-progressDate(b) || String(a.teamName).localeCompare(String(b.teamName),'fr'));
     }
@@ -59,6 +63,7 @@
         <div class="podium-rank">${rank}<sup>e</sup></div>
         <h2>${esc(team.teamName)}</h2>
         <div class="podium-progress">${esc(stepLabel(team))}</div>
+        <div class="podium-crew">${esc(crewLabel(team))}</div>
         <div class="podium-spark"></div>
       </article>`;
     }
@@ -71,7 +76,7 @@
       podium.innerHTML = `<div class="podium-title">🏆 Les équipages au sommet</div>
         <div class="podium-row">${podiumCard(teams[1],2)}${podiumCard(teams[0],1)}${podiumCard(teams[2],3)}</div>`;
       const rest = teams.slice(3);
-      $('fleetResults').innerHTML = rest.length ? `<h2>Autres équipages</h2><ol>${rest.map((t,i)=>`<li><span>${i+4}</span><b>${esc(t.teamName)}</b><em>${esc(stepLabel(t))}</em></li>`).join('')}</ol>` : '';
+      $('fleetResults').innerHTML = rest.length ? `<h2>Autres équipages</h2><ol>${rest.map((t,i)=>`<li><span>${i+4}</span><b>${esc(t.teamName)}</b><em>${esc(crewLabel(t))} · ${esc(stepLabel(t))}</em></li>`).join('')}</ol>` : '';
     }
     try {
       const snap = await getDocs(collection(db,'teams'));

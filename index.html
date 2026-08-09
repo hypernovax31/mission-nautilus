@@ -4402,6 +4402,8 @@ function qrDataUri(text, opts){
 
     alarmAudio.pause();
     alarmAudio.currentTime = 0;
+    alarmAudio.muted = false;
+    alarmAudio.preload = 'auto';
     alarmAudio.volume = 0.82;
     alarmAudio.dataset.loopCount = '0';
 
