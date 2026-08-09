@@ -2837,3 +2837,6 @@ button.mission-step::before{
   mask:radial-gradient(circle,transparent 0 83%,#000 84% 100%) !important;
   box-shadow:0 10px 22px rgba(0,0,0,.42),0 0 0 1px rgba(0,0,0,.55) !important;
 }
+
+#ruleProgress i{cursor:pointer}
+#ruleProgress i:focus-visible{outline:2px solid #8ee7ff;outline-offset:3px}

@@ -102,7 +102,7 @@
       <div class="rule-invite">
         <span class="rule-invite-eyebrow">Consignes de plongée</span>
         <span class="rule-invite-main">Inspectez les 4 hublots du <i>Nautilus</i> pour prendre connaissance de votre feuille de route.</span>
-        <span class="rule-invite-count" id="ruleProgress" aria-label="Progression des hublots"><i aria-label="Hublot I"></i><i aria-label="Hublot II"></i><i aria-label="Hublot III"></i><i aria-label="Hublot IV"></i></span>
+        <span class="rule-invite-count" id="ruleProgress" aria-label="Progression des hublots"><i role="button" tabindex="0" aria-label="Hublot I"></i><i role="button" tabindex="0" aria-label="Hublot II"></i><i role="button" tabindex="0" aria-label="Hublot III"></i><i role="button" tabindex="0" aria-label="Hublot IV"></i></span>
       </div>
       <div class="mission-steps" id="ruleCards">
         <button type="button" class="mission-step" data-rule="embark">
@@ -3611,6 +3611,23 @@ function qrDataUri(text, opts){
   }
 
   document.querySelectorAll('.mission-step').forEach(btn => btn.addEventListener('click', () => { playHublotClick(); showRule(btn.dataset.rule, true); }));
+  /* Les voyants numérotés sont aussi des commandes : leur ordre suit celui
+     des hublots et ils ouvrent exactement la même fiche descriptive. */
+  ['embark','solve','scan','survive'].forEach((key, index) => {
+    const voyant = document.querySelectorAll('#ruleProgress i')[index];
+    voyant?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      playHublotClick();
+      showRule(key, true);
+    });
+    voyant?.addEventListener('keydown', (event) => {
+      if(event.key === 'Enter' || event.key === ' '){
+        event.preventDefault();
+        playHublotClick();
+        showRule(key, true);
+      }
+    });
+  });
   showRule('embark', false);
 
   /**
