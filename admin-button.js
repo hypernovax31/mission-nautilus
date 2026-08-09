@@ -33,19 +33,60 @@
 
 
 
+  /* Filet de sécurité : le panneau reste une vraie modale même si la feuille
+     CSS externe arrive en retard, est absente du cache PWA ou est bloquée.
+     Les styles complets restent dans css/admin.css. */
+  const ADMIN_MODAL_FALLBACK_CSS = `
+    #adminPanel.nautilus-admin-modal{
+      position:fixed !important; inset:0 !important; z-index:12000 !important;
+      display:none !important; flex-direction:column; align-items:center;
+      justify-content:center; margin:0 !important; padding:clamp(10px,2vw,24px);
+      overflow:hidden; border:0; border-radius:0 !important;
+      background:rgba(2,8,18,.82); box-sizing:border-box;
+    }
+    #adminPanel.nautilus-admin-modal.open{display:flex !important}
+    #adminPanel.nautilus-admin-modal > h2{
+      width:100%; max-width:900px; margin:0; padding:13px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      color:#ffb4ad; background:linear-gradient(90deg,#3a0a08,#7a1812);
+      border:1px solid rgba(245,176,39,.5); border-bottom:0;
+      border-radius:16px 16px 0 0; box-sizing:border-box;
+    }
+    #adminPanel.nautilus-admin-modal > .body{
+      width:100%; max-width:900px; max-height:calc(100dvh - 150px);
+      overflow-y:auto; padding:14px 16px; box-sizing:border-box;
+      color:#13202b; background:linear-gradient(180deg,#f2f8fc,#fff);
+      border:1px solid rgba(245,176,39,.5); border-top:0;
+      border-radius:0 0 16px 16px;
+    }
+  `;
+
+  function ensureAdminModalFallbackStyles(){
+    if(document.getElementById('nautilusAdminModalFallbackCss')) return;
+    const style = document.createElement('style');
+    style.id = 'nautilusAdminModalFallbackCss';
+    style.textContent = ADMIN_MODAL_FALLBACK_CSS;
+    document.head.appendChild(style);
+  }
+
   const ADMIN_PANEL_HTML = '<section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">\n    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">\n      <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>\n      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">\n        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>\n      </button>\n    </h2>\n    <div class="body">\n      <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l\'équipe d\'organisation. Accès par code uniquement.</p>\n      <div class="hr"></div>\n      <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">\n        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d\'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d\'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>\n        <span id="adminUnlockMsg" class="small" style="width:100%"></span>\n      </div>\n      <div id="adminWorkspace" style="display:none">\n        <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">\n          <span class="small" style="color:#075c39;font-weight:900">✅ Session admin active</span>\n        </div>\n\n        <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:linear-gradient(135deg,rgba(11,52,78,.08),rgba(245,176,39,.08));">\n          <div style="font-weight:900;color:#163f58;margin-bottom:4px">🧪 MODE CONCEPTEUR</div>\n          <div class="small" style="margin-bottom:9px">Prévisualise les paliers sans modifier la progression réelle d’une équipe.</div>\n          <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧭 Afficher l’accès aux paliers</button>\n          <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>\n        </div>\n\n        <div class="admin-tabs" role="tablist">\n          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Membres</span><span class="lbl-mobile" aria-label="Membres">👥</span></button>\n          <button class="admin-tab" data-tab="teams" type="button" role="tab"><span class="lbl-desktop">🚢 Équipes</span><span class="lbl-mobile" aria-label="Équipes">🚢</span></button>\n          <button class="admin-tab" data-tab="locks" type="button" role="tab"><span class="lbl-desktop">🔒 Blocages</span><span class="lbl-mobile" aria-label="Blocages">🔒</span></button>\n          <button class="admin-tab" data-tab="oxygen" type="button" role="tab"><span class="lbl-desktop">⏱️ O₂</span><span class="lbl-mobile" aria-label="O₂">⏱️</span></button>\n          <button class="admin-tab" data-tab="danger" type="button" role="tab"><span class="lbl-desktop">⚠️ Danger</span><span class="lbl-mobile" aria-label="Danger">⚠️</span></button>\n        </div>\n\n        <!-- TAB: MEMBRES -->\n        <div class="admin-pane" data-pane="members">\n          <div class="row" style="margin-bottom:10px;align-items:center">\n            <span class="small" style="flex:1">Modifie le nom, le service ou l\'équipage d\'un matelot, ou supprime-le.</span>\n            <button class="secondary" id="adminReloadBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">↻ Recharger</button>\n          </div>\n          <div class="admin-add-member">\n            <div class="admin-add-title">➕ Ajouter un matelot</div>\n            <div class="admin-form-grid">\n              <label for="adminNewMemberName">Nom</label>\n              <input id="adminNewMemberName" type="text" maxlength="32" placeholder="Ex. JULES VERNE" autocomplete="off">\n              <label for="adminNewMemberSvc">Service</label>\n              <select id="adminNewMemberSvc"><option value="" selected disabled>Ex. PE</option></select>\n              <label for="adminNewMemberTeam">Équipage</label>\n              <select id="adminNewMemberTeam"><option value="" selected disabled>Choisir…</option></select>\n            </div>\n            <div class="admin-actions-row">\n              <button class="primary" id="adminAddMemberBtn" type="button">➕ Ajouter le matelot</button>\n            </div>\n            <div id="adminAddMemberMsg"></div>\n          </div>\n          <div id="adminMembersBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: BLOCAGES -->\n        <div class="admin-pane" data-pane="locks" style="display:none">\n          <p class="small" style="margin-bottom:10px">Pour chaque équipe : activer/désactiver le blocage, ou modifier la date/heure de reprise autorisée.</p>\n          <div id="adminLocksBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: O2 -->\n        <div class="admin-pane" data-pane="oxygen" style="display:none">\n          <p class="small" style="margin-bottom:10px">Le compte à rebours de la réserve O₂ (durée de la mission) peut être réinitialisé, ou décalé en modifiant la date/heure de départ.</p>\n          <div class="admin-o2-status">\n            <div class="admin-o2-row"><span>État actuel</span><strong id="adminO2Now">—</strong></div>\n            <div class="admin-o2-row"><span>Statut</span><span class="admin-o2-badge" id="adminO2State">—</span></div>\n            <div class="admin-o2-row"><span>Temps restant</span><strong id="adminO2Countdown">—</strong></div>\n          </div>\n          <div class="admin-form-grid admin-o2-form">\n            <label for="adminO2Date">Date de départ</label>\n            <input id="adminO2Date" type="datetime-local">\n            <label for="adminO2Days">Durée (jours)</label>\n            <input id="adminO2Days" type="number" min="0" step="1" value="7">\n            <label for="adminO2Hours">Durée (heures)</label>\n            <input id="adminO2Hours" type="number" min="0" max="23" step="1" value="0">\n          </div>\n          <div class="admin-actions-row">\n            <button class="primary" id="adminO2Apply" type="button">💾 Appliquer la modification</button>\n            <button class="secondary" id="adminO2Reset" type="button">♻️ Reset à maintenant (durée initiale)</button>\n            <button class="danger" id="adminO2Clear" type="button">🛑 Arrêter la mission</button>\n          </div>\n        </div>\n\n        <!-- TAB: EQUIPES -->\n        <div class="admin-pane" data-pane="teams" style="display:none">\n          <p class="small" style="margin-bottom:10px">Ajoute, renomme ou supprime une équipe. La suppression purge le doc Firestore correspondant et l\'ajoute à la liste des codes obsolètes (nettoyés à chaque init).</p>\n          <div id="adminTeamsBox" class="teamlist"></div>\n          <div class="hr"></div>\n          <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">\n            <div style="flex:1;min-width:220px"><label for="adminNewTeamName">Nom de la nouvelle équipe</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" maxlength="24" autocomplete="off"></div>\n            <button class="primary" id="adminAddTeamBtn" type="button" style="margin:0">➕ Ajouter</button>\n          </div>\n        </div>\n\n        <!-- TAB: DANGER -->\n        <div class="admin-pane" data-pane="danger" style="display:none">\n          <p style="margin:0 0 12px;font-weight:900;color:#9b1111">⚠️ Zone sensible — actions irréversibles</p>\n          <div style="display:flex;gap:10px;flex-wrap:wrap">\n            <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>\n            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>\n          </div>\n          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>Le nettoyage retire « migratedFrom », un reste de l\'ancienne migration des identifiants d\'équipe : sans effet sur le jeu.</p>\n        </div>\n      </div>\n    </div>\n  </section>';
   function injectAdminPanel(){
     if(document.getElementById('adminPanel')) return;
+    ensureAdminModalFallbackStyles();
     if(!document.getElementById('nautilusAdminCss')){
       const link = document.createElement('link');
       link.id = 'nautilusAdminCss';
       link.rel = 'stylesheet';
-      link.href = 'css/admin.css';
+      // Versionné pour ne jamais réutiliser l'ancienne feuille corrompue du
+      // cache PWA sur les pages palier et classement.
+      link.href = 'css/admin.css?v=2';
       document.head.appendChild(link);
     }
     const wrap = document.createElement('div');
     wrap.innerHTML = ADMIN_PANEL_HTML;
-    document.body.appendChild(wrap.firstElementChild);
+    const panel = wrap.firstElementChild;
+    panel.classList.add('nautilus-admin-modal');
+    document.body.appendChild(panel);
   }
 
   /* Logique du panneau. Regroupée dans une fonction : exécutée seulement sur les
