@@ -2651,3 +2651,22 @@ button.mission-step:not(.active):hover .hublot-glass{
 }
 #ruleProgress i.on::after{color:#062b1b}
 @media(max-width:360px){#ruleProgress{gap:4px}#ruleProgress i{flex-basis:23px;width:23px}}
+
+/* Mobile : le hublot actif conserve un effet de verre translucide. La
+   sélection est signalée par le contour, pas par un remplissage ambre plein. */
+@media(max-width:640px){
+  button.mission-step.active .hublot-glass,
+  button.mission-step.active:hover .hublot-glass{
+    background-image:
+      linear-gradient(115deg,rgba(255,255,255,.24) 0 18%,transparent 42%),
+      radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.18),transparent 48%),
+      linear-gradient(rgba(11,37,53,.55),rgba(11,37,53,.55)),
+      url('../assets/fond-nautilus.jpg') !important;
+    background-position:center,center,center,center top !important;
+    background-repeat:no-repeat !important;
+    background-size:120% 120%,auto,auto,100vw auto !important;
+    background-attachment:scroll,scroll,scroll,scroll !important;
+    background-color:transparent !important;
+    box-shadow:inset 0 0 22px rgba(142,231,255,.28) !important;
+  }
+}
