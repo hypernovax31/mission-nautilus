@@ -2506,3 +2506,41 @@ button.mission-step.active:hover .hublot-glass{
   background-attachment:fixed,fixed !important;
   background-color:transparent !important;
 }
+
+/* Sur mobile, les voyants reprennent exactement la géométrie des hublots :
+   I / II en haut, III / IV en bas. */
+@media(max-width:640px){
+  #ruleProgress{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(48px,1fr));
+    gap:6px;
+    width:min(112px,34vw);
+    margin-top:4px;
+  }
+  #ruleProgress i{
+    position:relative;
+    width:auto;
+    height:22px;
+    border-radius:6px;
+    background:rgba(255,255,255,.14);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
+  }
+  #ruleProgress i::after{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:rgba(255,255,255,.56);
+    font:900 10px/1 Consolas,"Courier New",monospace;
+  }
+  #ruleProgress i:nth-child(1)::after{content:"I"}
+  #ruleProgress i:nth-child(2)::after{content:"II"}
+  #ruleProgress i:nth-child(3)::after{content:"III"}
+  #ruleProgress i:nth-child(4)::after{content:"IV"}
+  #ruleProgress i.on{
+    background:linear-gradient(90deg,#0a8a5a,#5be09b);
+    box-shadow:0 0 10px rgba(91,224,155,.65);
+  }
+  #ruleProgress i.on::after{color:#062b1b}
+}
