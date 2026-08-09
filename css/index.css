@@ -2613,3 +2613,41 @@ button.mission-step:not(.active):hover .hublot-glass{
   background-color:transparent !important;
   box-shadow:inset 0 0 16px rgba(142,231,255,.20) !important;
 }
+
+/* Voyants universels : même rendu et même numérotation sur PC, Mac, Linux,
+   Android et iPhone. */
+#ruleProgress{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+#ruleProgress i{
+  position:relative;
+  flex:0 0 25px;
+  width:25px;
+  height:22px;
+  border-radius:6px;
+  background:rgba(255,255,255,.14);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
+}
+#ruleProgress i::after{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:rgba(255,255,255,.56);
+  font:900 10px/1 Consolas,"Courier New",monospace;
+}
+#ruleProgress i:nth-child(1)::after{content:"I"}
+#ruleProgress i:nth-child(2)::after{content:"II"}
+#ruleProgress i:nth-child(3)::after{content:"III"}
+#ruleProgress i:nth-child(4)::after{content:"IV"}
+#ruleProgress i.on{
+  background:linear-gradient(90deg,#0a8a5a,#5be09b);
+  box-shadow:0 0 10px rgba(91,224,155,.65);
+}
+#ruleProgress i.on::after{color:#062b1b}
+@media(max-width:360px){#ruleProgress{gap:4px}#ruleProgress i{flex-basis:23px;width:23px}}
