@@ -4896,6 +4896,15 @@ function qrDataUri(text, opts){
     }
   });
 
+  /* Retour depuis l'historique / cache du navigateur : ce chemin ne déclenche
+     pas toujours visibilitychange, mais doit retrouver l'ambiance lui aussi. */
+  window.addEventListener('pageshow', () => {
+    const a = _ambiance();
+    if(!_soundOffByUser && a && a.paused && a.dataset.userPaused !== '1'){
+      startOceanAudio();
+    }
+  });
+
   /* Bouton de mission affiche DANS le bloc embarquement, une fois le
      matelot inscrit ou reconnecte. Le libelle suit l'avancement reel :
      "LANCER LA MISSION" tant que l'equipe est au depart, puis

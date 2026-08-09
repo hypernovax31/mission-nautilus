@@ -221,11 +221,32 @@
     }
   }
 
+  /* Reprend l'ambiance à chaque retour sur la page (chargement, retour du
+     cache navigateur, mise au premier plan). Un refus d'autoplay ne crée
+     jamais de bruit parasite : on amorce seulement la lecture muette puis
+     le scroll ou le clic suivant la rend audible. */
+  function wakeAmbiance() {
+    if (audible || !soundAllowed()) return;
+    start().then(function (ok) {
+      if (!ok) prime();
+    });
+  }
+
   /* ---------- Demarrage ---------- */
   function init() {
     injectStyles();
     buildAudio();
     buildButton();
+
+    /* Tous les chemins de navigation doivent tenter l'ambiance : premier
+       chargement, retour depuis le cache, retour sur l'onglet et activité
+       réelle (scroll/clic, gérée plus bas). */
+    audio.addEventListener('pause', function () { paint(false); });
+    window.addEventListener('pageshow', wakeAmbiance, { passive: true });
+    window.addEventListener('focus', wakeAmbiance, { passive: true });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') wakeAmbiance();
+    });
 
     if (!soundAllowed()) { silence(); return; }
 
