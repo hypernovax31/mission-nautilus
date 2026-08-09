@@ -246,6 +246,17 @@ function teamCodeFromInput(value) {
   const found = TEAM_DEFS.find(t => simple(t.code) === wanted || simple(t.name) === wanted);
   return found ? found.code : String(value || '').trim();
 }
+/* Le code Firestore reste ARONNAX pour ne casser aucun lien, mais le nom
+   affiché est toujours le nom propre « Aronnax », y compris si une ancienne
+   fiche d'équipe contient encore le code tout en majuscules. */
+function displayTeamName(team) {
+  const code = team?.teamCode || team?.code || '';
+  const defined = TEAM_DEFS.find(t => t.code === code);
+  return defined?.name || team?.teamName || code || '—';
+}
+function withDisplayTeamName(team) {
+  return team ? { ...team, teamName: displayTeamName(team) } : null;
+}
 function hashString(s) {
   let h = 0;
   for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
@@ -350,11 +361,13 @@ async function getMatelotByCode(teamCode, code) {
 async function getTeam(code) {
   const cleanCode = teamCodeFromInput(code);
   const snap = await getDoc(doc(db, 'teams', cleanCode));
-  return snap.exists() ? { teamCode: cleanCode, ...snap.data() } : null;
+  return snap.exists() ? withDisplayTeamName({ teamCode: cleanCode, ...snap.data() }) : null;
 }
 async function getTeamRealtime(code, callback) {
   return onSnapshot(doc(db, 'teams', teamCodeFromInput(code)), (snap) => {
-    callback(snap.exists() ? { teamCode: teamCodeFromInput(code), ...snap.data() } : null);
+    callback(snap.exists()
+      ? withDisplayTeamName({ teamCode: teamCodeFromInput(code), ...snap.data() })
+      : null);
   });
 }
 /* ===== MODE TEST (compte fantome ZZZZ-0000) =====
@@ -1221,7 +1234,7 @@ window.Nautilus = {
   }
   function onTeamUpdate() {
     const t = state.team;
-    $('topTeam').textContent = t.teamName || t.teamCode;
+    $('topTeam').textContent = displayTeamName(t);
     /* Bandeau statut */
     const monBlocage = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
     const jeSuisBloque = state.me ? N.isMatelotLocked(t, state.me.memberKey) : false;
@@ -2220,7 +2233,7 @@ window.Nautilus = {
         <div class="won-badge" aria-hidden="true">🏆</div>
         <h2>Épreuve validée !</h2>
         <p style="color:#dfffe8;font-size:16px;line-height:1.5;margin:8px 0;">
-          <b>${esc(t?.teamName || 'L’équipage')}</b> vient de franchir le sas du Palier 1.
+          <b>${esc(t ? displayTeamName(t) : 'L’équipage')}</b> vient de franchir le sas du Palier 1.
         </p>
         <p style="color:#bcd9e6;font-size:14px;line-height:1.5;margin:6px 0;">
           Bravo à <b>${esc(s.startedByName || 'l’équipage')}</b> pour le déchiffrage du signal.
@@ -2407,6 +2420,6 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js" defer></script>
-<script src="admin-button.js?v=3" type="module"></script>
+<script src="admin-button.js?v=4" type="module"></script>
 </body>
 </html>

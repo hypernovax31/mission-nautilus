@@ -51,8 +51,13 @@
       const names = (team.members || []).map(m => m.name).filter(Boolean);
       return names.length ? names.join(' · ') : 'Équipage non renseigné';
     }
+    /* Les identifiants techniques restent en majuscules dans Firestore. Le
+       classement affiche toujours le nom propre de l'équipage. */
+    function displayTeamName(team){
+      return team?.teamCode === 'ARONNAX' ? 'Aronnax' : (team?.teamName || team?.teamCode || '—');
+    }
     function sortTeams(teams){
-      return teams.filter(t => t && t.teamName).sort((a,b) => progressOf(b)-progressOf(a) || progressDate(a)-progressDate(b) || String(a.teamName).localeCompare(String(b.teamName),'fr'));
+      return teams.filter(t => t && (t.teamName || t.teamCode)).sort((a,b) => progressOf(b)-progressOf(a) || progressDate(a)-progressDate(b) || displayTeamName(a).localeCompare(displayTeamName(b),'fr'));
     }
     function podiumCard(team, rank){
       if(!team) return '<div class="podium-empty"></div>';
@@ -60,7 +65,7 @@
       return `<article class="podium-card rank-${rank}">
         <div class="podium-medal">${medal}</div>
         <div class="podium-rank">${rank}<sup>e</sup></div>
-        <h2>${esc(team.teamName)}</h2>
+        <h2>${esc(displayTeamName(team))}</h2>
         <div class="podium-progress">${esc(stepLabel(team))}</div>
         <div class="podium-crew">${esc(crewLabel(team))}</div>
         <div class="podium-spark"></div>
@@ -77,7 +82,7 @@
       $('fleetResults').innerHTML = rest.length ? `<h2>Autres équipages</h2><ol>${rest.map((t,i)=>`<li>
   <span class="fleet-rank">${i+4}</span>
   <div class="fleet-team">
-    <b>${esc(t.teamName)}</b>
+    <b>${esc(displayTeamName(t))}</b>
     <em>${esc(crewLabel(t))}</em>
   </div>
   <small>${esc(stepLabel(t))}</small>
@@ -91,6 +96,6 @@
       console.error(e);
     }
   </script>
-<script src="admin-button.js?v=3" type="module"></script>
+<script src="admin-button.js?v=4" type="module"></script>
 </body>
 </html>

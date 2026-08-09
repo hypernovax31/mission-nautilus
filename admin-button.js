@@ -545,11 +545,16 @@
         ? preloaded.map(t => ({ teamCode: t.teamCode, data: t }))
         : (await getDocs(collection(db,'teams'))).docs.map(d => ({ teamCode: d.id, data: d.data() }));
       effectiveTeams = rows
-        .map(r => ({
-          code: r.teamCode,
-          name: (r.data.teamName || r.teamCode),
-          memberCount: (r.data.members || []).length
-        }))
+        .map(r => {
+          const defaultTeam = TEAM_DEFS.find(t => t.code === r.teamCode);
+          return {
+            code: r.teamCode,
+            // Le code ARONNAX reste la clé Firestore, mais l'interface doit
+            // présenter le nom propre « Aronnax » sur chaque palier.
+            name: defaultTeam?.name || r.data.teamName || r.teamCode,
+            memberCount: (r.data.members || []).length
+          };
+        })
         .sort((a, b) => {
           // Equipes par defaut d'abord, dans l'ordre de TEAM_DEFS, puis les autres
           const ia = TEAM_DEFS.findIndex(t => t.code === a.code);
