@@ -89,3 +89,9 @@ button.mission-step.active{
     background-attachment:scroll,scroll,scroll !important;
   }
 }
+
+
+/* Texte et accessibilite du hublot. */
+.mission-step .num{font-family:Consolas,"Courier New",monospace;font-size:clamp(11px,2.2vw,14px);font-weight:900;letter-spacing:.2em;color:rgba(245,176,39,.9);line-height:1}
+.mission-step b{font-size:clamp(11px,2.4vw,16px);font-weight:1000;line-height:1.1;letter-spacing:.03em;text-transform:uppercase;color:#eaf8ff;padding:0 8%;text-shadow:0 2px 10px rgba(0,0,0,.8)}
+button.mission-step:focus-visible{outline:3px solid #8ee7ff;outline-offset:5px}
