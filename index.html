@@ -4432,12 +4432,16 @@ function qrDataUri(text, opts){
     }
   }
 
-  function showNautilusAlarm(startedAt, durationMs){
+  function showNautilusAlarm(startedAt, durationMs, forceSound=false){
     seenAlarmAt = startedAt;
     const alarm = $('nautilusAlarm');
     if(!alarm) return;
     alarm.classList.add('show');
-    playSubmarineAlarm(durationMs);
+    /* Le lancement d'un palier est un geste volontaire : l'alarme doit donc
+       accompagner l'animation, même si le sonar d'ambiance a été coupé.
+       Les alertes reçues passivement depuis Firestore restent, elles,
+       soumises au choix sonore du joueur. */
+    playSubmarineAlarm(durationMs, forceSound);
     setTimeout(() => alarm.classList.remove('show'), durationMs || 9500);
   }
 
@@ -4987,9 +4991,11 @@ function qrDataUri(text, opts){
       return;
     }
 
-    /* Paliers suivants : pas encore de page dediee, on reste sur le cockpit. */
-    showNautilusAlarm('launch-' + Date.now());
-    await wait(9600);
+    /* Mission 2 et paliers suivants : le clic doit TOUJOURS déclencher
+       ensemble l'écran d'alerte et son alarme, même si le sonar d'ambiance
+       est coupé. La séquence reste volontairement courte avant le cockpit. */
+    showNautilusAlarm('launch-' + Date.now(), 5000, true);
+    await wait(5000);
     $('nautilusAlarm')?.classList.remove('show');
     palierLaunchNotice = true;
     renderGame(false);
