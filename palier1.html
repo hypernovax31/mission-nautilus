@@ -73,11 +73,12 @@
   <!-- Pas de garde-fou d'URL : la sécurité est gérée par Firestore
        (session liée à l'équipe + identification matelot obligatoire). -->
 
-  <!-- Statut équipe -->
+  <!-- Statut équipe : PLUS DE BANDEAU ("Connexion au sonar en cours…"
+       a été supprimé). L'encart n'affiche QUE les matelots connectés en
+       live (présence par clé matelot, voir renderCrew). -->
   <section class="card" id="teamCard" style="display:none;">
     <h2>⚓ ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Un matelot est aux commandes"></span></h2>
     <div class="body">
-      <div id="teamStatus" class="status-banner info">Connexion au sonar en cours…</div>
       <div class="crew" id="crewList"></div>
     </div>
   </section>
@@ -703,13 +704,22 @@ const addLogEntry = window.JournalDeBord.addLogEntry;
 const clearLog    = window.JournalDeBord.clearLog;
 
 /* ---------- HEARTBEAT (mise à jour lastSeen du membre) ---------- */
-async function heartbeat(teamCode) {
+async function heartbeat(teamCode, memberKey = null) {
   // Mode test : ne pas apparaitre dans le compteur "en ligne" des joueurs.
   if (isTestMode()) return;
   const team = await getTeam(teamCode);
   if (!team) return;
-  const online = { ...(team.onlinePlayers || {}), [getClientId()]: new Date().toISOString() };
-  await updateDoc(doc(db, 'teams', teamCode), { onlinePlayers: online, updatedAt: new Date().toISOString() });
+  const now = new Date().toISOString();
+  const patch = {
+    onlinePlayers: { ...(team.onlinePlayers || {}), [getClientId()]: now },
+    updatedAt: now
+  };
+  /* Presence PAR MATELOT (et non par appareil) : plusieurs matelots se
+     succedent sur un meme telephone, clientId ne peut donc pas dire QUI
+     est en live. onlineMatelots[memberKey] = date du dernier signe de vie ;
+     renderCrew() n'affiche que les cles fraiches. */
+  if (memberKey) patch.onlineMatelots = { ...(team.onlineMatelots || {}), [memberKey]: now };
+  await updateDoc(doc(db, 'teams', teamCode), patch);
 }
 
 /* ---------- EXPORT GLOBAL ---------- */
@@ -766,12 +776,10 @@ window.Nautilus = {
 
   /* === Helpers UI === */
 
-  function setStatus(text, kind = 'info') {
-    const el = $('teamStatus');
-    if (!el) return;
-    el.textContent = text;
-    el.className = 'status-banner ' + kind;
-  }
+  /* setStatus SUPPRIME avec le bandeau « Connexion au sonar en cours… » :
+     l'encart equipage n'accueille plus aucun texte d'etat, seulement la
+     liste des matelots connectes en live. Les rares messages encore
+     utiles (apercu admin, equipage introuvable) passent par un toast. */
 
   /* ===== RESERVE D'OXYGENE (bandeau du haut) =====
 
@@ -1091,7 +1099,7 @@ window.Nautilus = {
       defaite: 'retour en surface (défaite)',
       blocage: 'blocage personnel du matelot'
     };
-    setStatus(`🧪 APERÇU ADMIN — ${titres[mode] || mode}. Aucune donnée réelle, aucune écriture.`, 'warning');
+    N.showToast(`🧪 APERÇU ADMIN — ${titres[mode] || mode}. Aucune donnée réelle, aucune écriture.`, 'warning', 9000);
 
     if (mode === 'victoire') {
       const s = { ...sessionBase, state: 'won', endReason: 'solved', errors: 2, revealedWord: 'BALEINES' };
@@ -1354,9 +1362,12 @@ window.Nautilus = {
        absence, on me le dit tout de suite. */
     annoncerBlocageLeve(state.team);
 
-    N.heartbeat(state.teamCode);
+    /* Presence en live : la cle MATELOT est transmise, pas seulement
+       l'appareil (onlineMatelots). Si le matelot change sur ce poste,
+       le prochain battement mettra a jour la bonne cle. */
+    N.heartbeat(state.teamCode, state.me && state.me.memberKey);
     if (!state._heartbeatInterval) {
-      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode), 30000);
+      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 30000);
     }
 
     // Le formulaire n'a jamais besoin d'apparaitre : on le retire tout de suite.
@@ -1370,7 +1381,7 @@ window.Nautilus = {
     if (state.unsubTeam) state.unsubTeam();
     state.unsubTeam = N.getTeamRealtime(state.teamCode, (team) => {
       if (!team) {
-        setStatus('Équipage introuvable.', 'danger');
+        N.showToast('Équipage introuvable.', 'danger', 8000);
         return;
       }
       /* MODE TEST : on ignore les mises a jour de la vraie equipe, sinon
@@ -1384,18 +1395,9 @@ window.Nautilus = {
   function onTeamUpdate() {
     const t = state.team;
     $('topTeam').textContent = displayTeamName(t);
-    /* Bandeau statut */
-    const monBlocage = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
-    const jeSuisBloque = state.me ? N.isMatelotLocked(t, state.me.memberKey) : false;
-    /* PLUS DE CAS "equipage bloque" : depuis que le blocage est personnel,
-       plus rien ne bloque une equipe entiere. */
-    if (jeSuisBloque) {
-      setStatus(`🔒 Tu es en surface jusqu'à ${N.formatDate(monBlocage.lockedUntil)} — ${monBlocage.failCount || 0} échec(s) personnel(s). L'équipage, lui, continue.`, 'danger');
-    } else if (t.status === 'finished') {
-      setStatus('🏆 Mission terminée. Carnet de bord scellé.', 'success');
-    } else {
-      setStatus(`Position : ${N.STEPS[t.currentStep]?.label || t.currentStep} · ${(t.members||[]).length} membre(s) à bord.`, 'info');
-    }
+    /* PLUS DE BANDEAU DE STATUT dans l'encart equipage : le blocage d'un
+       matelot s'affiche sur son ecran de blocage, la fin de mission sur
+       l'accueil. Ici, on ne garde que la liste des matelots connectes. */
     renderCrew();
     showGame();
     /* BUG CORRIGE : showGame() ne redessine la zone de jeu que la premiere
@@ -1434,9 +1436,8 @@ window.Nautilus = {
 
     const msg = `✅ ${state.me.name}, ton équipage a validé une épreuve en ton absence. `
               + `Ton blocage est levé : tu peux reprendre la mission sans délai !`;
-    /* Le bandeau d'état vert est posé APRÈS le setStatus() standard de
-       onTeamUpdate : notre message le remplace jusqu'au prochain événement. */
-    setStatus(msg, 'success');
+    /* Toast seul (12 s) : le bandeau de statut a ete supprime avec
+       « Connexion au sonar en cours… ». */
     N.showToast(msg, 'success', 12000);
     N.addLogEntry(`🔓 <b>${state.me.name}</b> est débloqué : l'équipage a validé une épreuve en son absence.`, 'success');
 
@@ -1450,19 +1451,37 @@ window.Nautilus = {
         .catch(() => { /* l'accusé repassera au prochain chargement */ });
     }
   }
+  /* Fraicheur acceptee d'un signe de vie : battement toutes les 30 s,
+     on tolère deux battements manques (3 x 30 s) avant de considerer
+     le matelot deconnecte. */
+  const PRESENCE_FRAICHE_MS = 90 * 1000;
+
+  /* === ÉQUIPAGE ACTIF EN PLONGÉE : uniquement les matelots EN LIVE ===
+     On n'affiche plus tout l'equipage : seuls les matelots dont le
+     battement de presence (onlineMatelots[memberKey]) est frais. Moi, je
+     suis connecte par definition — y compris en mode test, ou le
+     battement est volontairement coupe. */
   function renderCrew() {
     const list = $('crewList');
     if (!list || !state.team) return;
     const members = state.team.members || [];
-    list.innerHTML = members.map(m => {
-      const isMe = state.me && m.memberKey === state.me.memberKey;
+    const vus = state.team.onlineMatelots || {};
+    const maintenant = Date.now();
+    const connectes = members.filter(m => {
+      const cle = m.memberKey || N.memberKey(m.name || '');
+      if (state.me && cle === state.me.memberKey) return true; // moi : connecté
+      const vu = vus[cle] ? new Date(vus[cle]).getTime() : 0;
+      return (maintenant - vu) < PRESENCE_FRAICHE_MS;
+    });
+    list.innerHTML = connectes.map(m => {
+      const isMe = state.me && (m.memberKey === state.me.memberKey);
       return `
         <div class="crew-member ${isMe ? 'self' : ''}">
           <div class="crew-name">${esc(m.name)} ${isMe ? '(toi)' : ''}</div>
           <div class="crew-meta">${esc(m.service || '—')}</div>
         </div>
       `;
-    }).join('') || `<div style="color:#9bc4d4;font-size:13px;grid-column:1/-1;">Aucun matelot encore inscrit.</div>`;
+    }).join('') || `<div style="color:#9bc4d4;font-size:13px;grid-column:1/-1;">Aucun matelot connecté pour le moment.</div>`;
   }
 
   /* === QUI EST L'AUTEUR DE LA SESSION ? — par la CLÉ MATELOT, jamais
@@ -2747,16 +2766,16 @@ window.Nautilus = {
        demande d'indice. L'indice reste acquis à l'équipage et n'est jamais
        présenté comme une faute. */
     const parIndice = l.reason === 'indice_demande';
-    const lead = parIndice
-      ? 'Indice envoyé à l’équipage.'
-      : 'Ta plongée s’arrête là. La mission continue.';
+    const lead = 'Ta plongée s’arrête là. La mission continue.';
     return `
       <section class="lock-screen lock-screen--active" aria-live="polite">
         <div class="lock-heading">
           <span class="lock-heading-icon" aria-hidden="true">${parIndice ? '🧭' : '↟'}</span>
           <div>
             <p class="lock-kicker">${parIndice ? 'INDICE TRANSMIS' : 'BLOCAGE PERSONNEL'}</p>
-            <h2>${esc(me.name)}, tu remontes en surface</h2>
+            <h2>${parIndice
+              ? 'Indice acquis pour l’équipage'
+              : `${esc(me.name)}, tu remontes en surface`}</h2>
           </div>
         </div>
         <p class="lock-lead">${lead}</p>
