@@ -4706,8 +4706,6 @@ function qrDataUri(text, opts){
     }
   }
 
-  function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
-
   async function startMissionOfficial(withAlarm=true){
     startOceanAudio();
     if(withAlarm) showNautilusAlarm('launch-' + Date.now());
@@ -4789,6 +4787,79 @@ function qrDataUri(text, opts){
 
     alarmAudio.play().catch(() => {
       console.log("Lecture de l’alarme bloquée par le navigateur.");
+    });
+  }
+
+  /* ===== Alarme de lancement : passages COMPLETS =====
+     Le bouton du cockpit (LANCER / REPRENDRE LA MISSION) fait sonner
+     Submarine_alarm.mp3 DEUX FOIS jusqu'au bout — jamais coupée par un
+     minuteur — sous l'écran rouge, puis rend la main : c'est l'appelant
+     qui enchaîne sur la navigation RÉELLE vers la page du palier courant
+     (palier1.html, portail QR du palier 3+, etc.).
+
+     La promesse se résout :
+       • normalement, à la fin du dernier passage (événement "ended") ;
+       • sans son (toggle coupé et non forcé) : après la durée estimée
+         des passages, pour laisser vivre l'animation rouge ;
+       • en dernier recours, via un garde-fou : si le mp3 ne termine
+         jamais sur l'appareil, le lancement n'est JAMAIS piégé. */
+  const ALARMES_LANCEMENT = 2;         // 2 alarmes complètes (≈ 4,1 s)
+
+  function alarmesLancementComplets(nbFois = ALARMES_LANCEMENT, force = false){
+    return new Promise(resolve => {
+      const alarm = $('nautilusAlarm');
+      if(alarm) alarm.classList.add('show');
+      const passages = Math.max(1, nbFois | 0);
+      const alarmAudio = document.getElementById('alarmAudio');
+      let gardeFou = null;
+      let termine = false;
+
+      const fin = () => {
+        if(termine) return;
+        termine = true;
+        clearTimeout(gardeFou);
+        if(alarmAudio){
+          alarmAudio.onended = null;
+          alarmAudio.onerror = null;
+          try{ alarmAudio.pause(); alarmAudio.currentTime = 0; }catch(e){}
+        }
+        if(alarm) alarm.classList.remove('show');
+        resolve();
+      };
+
+      if(!alarmAudio || (!force && !isSoundEnabled())){
+        /* Son impossible ou coupé : l'écran rouge vit quand même le
+           temps de deux alarmes (≈ 2,1 s chacune) avant de naviguer. */
+        gardeFou = setTimeout(fin, passages * 2100);
+        return;
+      }
+
+      let restants = passages;
+      /* Chaque passage joue le fichier EN ENTIER : le suivant n'est
+         déclenché que par "ended" du précédent — aucune coupure. */
+      alarmAudio.onended = () => {
+        restants -= 1;
+        if(restants > 0){
+          alarmAudio.currentTime = 0;
+          alarmAudio.play().catch(fin);
+        }else{
+          fin();
+        }
+      };
+      alarmAudio.onerror = fin;
+      /* Garde-fou : certains appareils ne renvoient jamais "ended".
+         La navigation ne doit JAMAIS dépendre du bon vouloir audio. */
+      gardeFou = setTimeout(fin, passages * 2600 + 600);
+
+      try{
+        alarmAudio.pause();
+        alarmAudio.currentTime = 0;
+        alarmAudio.muted = false;
+        alarmAudio.preload = 'auto';
+        alarmAudio.volume = 0.82;
+        alarmAudio.load();
+        alarmAudio.play().catch(fin);
+      }catch(e){ fin(); }
     });
   }
 
@@ -5372,22 +5443,24 @@ function qrDataUri(text, opts){
        pas retarder l'entree dans le mini-jeu. */
     startMissionOfficial(false).catch(e => console.warn('depart mission:', e));
 
-    /* Palier 1 : ecran rouge + alarme pendant 5 s, puis page du mini-jeu.
+    /* Palier 1 : écran rouge + 2 alarmes COMPLETES (Submarine_alarm.mp3
+       joué deux fois jusqu'au bout, jamais coupé), puis navigation RÉELLE
+       vers la page du palier courant — ici le mini-jeu.
        On transmet le Code Matelot : le mini-jeu sait alors qui joue et ne
        redemande ni nom ni service. */
     if(effectiveCurrentStep(currentTeam) === 'start'){
       const mc = currentMatelot?.codeMatelot || '';
       const url = `palier1.html?code=${encodeURIComponent(currentTeam.teamCode)}`
                 + (mc ? `&m=${encodeURIComponent(mc)}` : '');
-      showNautilusAlarm('launch-' + Date.now(), 5000);
-      await wait(5000);
-      $('nautilusAlarm')?.classList.remove('show');
+      seenAlarmAt = 'launch-' + Date.now();
+      await alarmesLancementComplets(ALARMES_LANCEMENT, false);
       location.href = url;
       return;
     }
 
-    /* PALIERS SUIVANTS : mêmes 5 s d'alerte, puis navigation vers la PAGE
-       DU PALIER COURANT — palier 2 = portail QR (1721310619.html), etc.
+    /* PALIERS SUIVANTS : même rituel (2 alarmes complètes), puis
+       navigation vers la PAGE DU PALIER COURANT — palier 2 = portail QR
+       (1721310619.html), etc.
        Le routage se fait sur l'ÉTAPE EFFECTIVE (completedSteps corrigé) :
        jamais vers un palier déjà validé.
 
@@ -5395,9 +5468,8 @@ function qrDataUri(text, opts){
        sur l'accueil sans jamais naviguer. « REPRENDRE LA MISSION » au
        palier 2 affichait l'alarme et ne lançait aucune page. */
     const pagePalier = palierPageUrl(effectiveCurrentStep(currentTeam));
-    showNautilusAlarm('launch-' + Date.now(), 5000, true);
-    await wait(5000);
-    $('nautilusAlarm')?.classList.remove('show');
+    seenAlarmAt = 'launch-' + Date.now();
+    await alarmesLancementComplets(ALARMES_LANCEMENT, true);
     if(pagePalier){
       location.href = pagePalier;
       return;
