@@ -107,7 +107,8 @@
         0 0 0 1px rgba(var(--team-glow,143,164,181),.20),
         0 8px 22px rgba(var(--team-glow,143,164,181),.28),
         0 2px 6px rgba(0,0,0,.06);
-      transition:box-shadow .3s ease,border-color .3s ease;
+      /* Pas de transition ici : au départ du pointeur, le halo s'éteint
+         immédiatement au lieu de laisser une traînée lumineuse. */
     }
     .team.team-reveal::after{
       content:"";position:absolute;inset:0;z-index:-2;pointer-events:none;
@@ -123,6 +124,9 @@
     }
     @media (hover:hover){
       .team.team-reveal:hover{
+        /* Transition uniquement à l'entrée : aucune animation résiduelle
+           quand le pointeur quitte la carte. */
+        transition:box-shadow .3s ease,border-color .3s ease;
         border-color:rgba(var(--team-glow,143,164,181),.85);
         box-shadow:
           0 0 0 1px rgba(var(--team-glow,143,164,181),.35),
