@@ -1465,6 +1465,18 @@ window.Nautilus = {
     }).join('') || `<div style="color:#9bc4d4;font-size:13px;grid-column:1/-1;">Aucun matelot encore inscrit.</div>`;
   }
 
+  /* === QUI EST L'AUTEUR DE LA SESSION ? — par la CLÉ MATELOT, jamais
+     par l'appareil ===
+     GROS BUG CORRIGÉ : clientId identifie le TÉLÉPHONE (localStorage de
+     l'appareil), pas le matelot. Quand plusieurs matelots se succèdent
+     sur le même appareil — test admin avec « l'équipe Nautilus »,
+     dépannage d'un camarade… — chacun était reconnu comme l'auteur de
+     la partie perdue (« Tu passes la barre » sans moyen de rejouer) :
+     tout l'équipage avait l'air bloqué, alors que la règle ne bloque
+     QUE le fautif. Sur une partie en cours, c'était pire : le second
+     matelot apparaissait AUX COMMANDES. La clé matelot est la seule
+     identité fiable ; clientId ne sert que de repli pour une vieille
+     session sans startedByMemberKey. */
   /* === Affichage principal du jeu === */
   function showGame() {
     if (!state.team) return;
@@ -1523,6 +1535,24 @@ window.Nautilus = {
   }
 
   /* === Rendu de la zone de jeu === */
+  /* === QUI EST L'AUTEUR DE LA SESSION ? — par la CLÉ MATELOT, jamais
+     par l'appareil ===
+     GROS BUG CORRIGÉ : clientId identifie le TÉLÉPHONE (localStorage de
+     l'appareil), pas le matelot. Quand plusieurs matelots se succèdent
+     sur le même appareil — test admin avec « l'équipe Nautilus »,
+     dépannage d'un camarade… — chacun était reconnu comme l'auteur de
+     la partie perdue (« Tu passes la barre » sans moyen de rejouer) :
+     tout l'équipage avait l'air bloqué, alors que la règle ne bloque
+     QUE le fautif. Sur une partie en cours, c'était pire : le second
+     matelot apparaissait AUX COMMANDES. La clé matelot est la seule
+     identité fiable ; clientId ne sert que de repli pour une vieille
+     session sans startedByMemberKey. */
+  function estAuteurSession(s, me) {
+    if (!s || !me) return false;
+    if (s.startedByMemberKey) return s.startedByMemberKey === me.memberKey;
+    return s.startedBy === me.clientId;
+  }
+
   function renderGameArea() {
     const body = $('gameBody');
     if (!body) return;
@@ -1554,8 +1584,12 @@ window.Nautilus = {
        EXCEPTION : juste après sa défaite, on lui laisse d'abord l'écran
        "trop d'erreurs" (qui indique déjà son heure de reprise), sinon il
        passerait directement au verrou sans comprendre ce qui s'est passé. */
-    const jeViensDePerdre = !!(s && s.state === 'lost' && me
-      && (s.startedByMemberKey === me.memberKey || s.startedBy === me.clientId));
+    /* Blocage PERSONNEL : seul le matelot qui a échoué est repoussé en
+       surface. Les autres continuent de jouer normalement.
+       EXCEPTION : juste après sa défaite, on lui laisse d'abord l'écran
+       "trop d'erreurs" (qui indique déjà son heure de reprise), sinon il
+       passerait directement au verrou sans comprendre ce qui s'est passé. */
+    const jeViensDePerdre = !!(s && s.state === 'lost' && estAuteurSession(s, me));
     if (me && !jeViensDePerdre && N.isMatelotLocked(t, me.memberKey)) {
       body.innerHTML = renderMatelotLockScreen(t, me);
       return;
@@ -1606,15 +1640,17 @@ window.Nautilus = {
          echoue voit l'ecran de defaite (il est de toute facon bloque et
          intercepte plus haut). Les autres matelots ne restent pas coinces
          devant : la barre est libre, ils peuvent reprendre le palier. */
-      const cestMoi = me && (s.startedByMemberKey === me.memberKey || s.startedBy === me.clientId);
+      const cestMoi = estAuteurSession(s, me);
       if (cestMoi) { body.innerHTML = renderLostScreen(s, t); return; }
       body.innerHTML = renderIdleScreen(t, me, s);
       bindIdleEvents();
       return;
     }
 
-    /* Session "playing" */
-    if (s.startedBy === me.clientId || s.startedByMemberKey === me.memberKey) {
+    /* Session "playing" : l'AUTEUR est reconnu par sa clé matelot, jamais
+       par l'appareil (estAuteurSession) — sinon, sur un téléphone partagé,
+       un autre matelot se retrouvait aux commandes de la partie. */
+    if (estAuteurSession(s, me)) {
       /* Je suis le joueur */
       state.role = 'player';
       body.innerHTML = renderPlayerScreen(s, t, me);
