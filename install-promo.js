@@ -100,20 +100,28 @@
 
   /* ---------- styles injectés ---------- */
   var CSS = ''
-    + '.ip-overlay{position:fixed;inset:0;z-index:99970;display:grid;place-items:center;padding:18px;'
+    /* LAYOUT 100 % FLEX, sans dependre d'aucun heritage de la page :
+       overlay = flex centre, carte = colonne centree, et CHAQUE texte
+       porte son propre text-align:center. (Correctif : le texte
+       apparaissait decale quand la page hote imposait son alignement.) */
+    + '.ip-overlay{position:fixed;inset:0;z-index:99970;display:flex;align-items:center;justify-content:center;'
+    + 'padding:18px;box-sizing:border-box;width:100vw;height:100vh;margin:0;'
     + 'background:radial-gradient(ellipse at 50% 20%,rgba(6,22,38,.55),rgba(2,6,14,.9));'
     + 'opacity:0;transition:opacity .45s ease;}'
     + '.ip-overlay.ip-in{opacity:1}'
     + '.ip-overlay.ip-out{opacity:0}'
-    + '.ip-card{width:min(94vw,430px);border-radius:20px;padding:18px 18px 14px;box-sizing:border-box;text-align:center;'
+    + '.ip-card{display:flex;flex-direction:column;align-items:center;'
+    + 'width:min(94vw,430px);max-width:100%;box-sizing:border-box;text-align:center;'
+    + 'border-radius:20px;padding:20px 20px 14px;'
     + 'background:linear-gradient(160deg,rgba(8,26,44,.97),rgba(4,12,24,.97));'
     + 'border:1px solid rgba(245,176,39,.55);box-shadow:0 26px 60px rgba(0,0,0,.6),inset 0 0 40px rgba(142,231,255,.05);'
     + 'transform:translateY(14px) scale(.97);transition:transform .45s cubic-bezier(.2,.9,.3,1.15);'
-    + 'color:#dff3fb;font-family:inherit}'
+    + 'color:#dff3fb;font-family:inherit;margin:0}'
     + '.ip-overlay.ip-in .ip-card{transform:translateY(0) scale(1)}'
 
     /* Le hublot : scène ronde, cerclage laiton, deux mers superposées */
-    + '.ip-scene{position:relative;width:min(64vw,230px);aspect-ratio:1;margin:0 auto 12px;border-radius:50%;overflow:hidden;'
+    + '.ip-scene{position:relative;width:min(58vw,215px);aspect-ratio:1;margin:0 auto 14px;flex:0 0 auto;'
+    + 'border-radius:50%;overflow:hidden;'
     + 'border:10px solid #6b5122;box-shadow:0 0 0 3px #3a2c10,0 10px 30px rgba(0,0,0,.55),inset 0 0 34px rgba(0,0,0,.55);background:#0a1a2a}'
     + '.ip-mer-scene{position:absolute;inset:0;transition:opacity 1.3s ease}'
 
@@ -148,14 +156,18 @@
     + '.ip-card.ip-est-calme .ip-tempete{opacity:0}'
     + '.ip-card.ip-est-calme .ip-calme{opacity:1}'
 
-    /* Textes et actions */
-    + '.ip-titre{margin:2px 0 6px;color:#fff;font-size:clamp(18px,5vw,23px);line-height:1.15}'
-    + '.ip-sub{margin:0 0 14px;color:#bfe0ee;font-size:13.5px;line-height:1.5}'
-    + '.ip-sub b{color:#ffe2a0}'
-    + '.ip-cta{display:inline-block;width:100%;box-sizing:border-box;padding:13px 14px;border:0;border-radius:13px;cursor:pointer;'
+    /* Textes et actions : centre explicitement, largeur bridee pour que
+       les lignes restent equilibrees. ATTENTION : le texte s'appelle
+       .ip-intro — PAS .ip-sub : cette classe designe le sous-marin et sa
+       position:absolute cassait la mise en page (texte flottant au
+       milieu de l'ecran ). */
+    + '.ip-titre{margin:2px auto 6px;width:100%;max-width:360px;text-align:center;color:#fff;font-size:clamp(18px,5vw,23px);line-height:1.15}'
+    + '.ip-intro{margin:0 auto 14px;width:100%;max-width:330px;text-align:center;color:#bfe0ee;font-size:13.5px;line-height:1.5}'
+    + '.ip-intro b{color:#ffe2a0}'
+    + '.ip-cta{display:block;width:100%;box-sizing:border-box;padding:13px 14px;border:0;border-radius:13px;cursor:pointer;text-align:center;'
     + 'background:linear-gradient(135deg,#f5b027,#d89020);color:#111;font-size:15px;font-weight:1000;letter-spacing:.01em;'
     + 'box-shadow:0 8px 22px rgba(245,176,39,.35);animation:ipCta 1.8s ease-in-out infinite}'
-    + '.ip-later{display:block;margin:10px auto 0;padding:4px 8px;border:0;background:none;cursor:pointer;'
+    + '.ip-later{display:block;margin:10px auto 0;padding:4px 8px;border:0;background:none;cursor:pointer;text-align:center;'
     + 'color:#8fb6c8;font-size:12.5px;font-weight:700;text-decoration:underline dotted}'
     + '.ip-later:hover{color:#cfe8f4}'
 
@@ -211,7 +223,7 @@
     overlay.innerHTML = '<div class="ip-card">'
       + sceneHtml()
       + '<h2 class="ip-titre">🌊 Évite les tumultes de l’océan</h2>'
-      + '<p class="ip-sub">Dans un simple onglet, le Nautilus affronte les caprices du réseau : '
+      + '<p class="ip-intro">Dans un simple onglet, le Nautilus affronte les caprices du réseau : '
       + 'chargements lents, page perdue en route… Installe l’application sur ton écran d’accueil '
       + 'pour une <b>navigation en eaux sereines</b> : ouverture d’un geste, plein écran, '
       + 'résistante aux coupures.</p>'
@@ -241,7 +253,7 @@
     var card = overlay.querySelector('.ip-card');
     if (card) card.classList.add('ip-est-calme');
     var t = overlay.querySelector('.ip-titre');
-    var s = overlay.querySelector('.ip-sub');
+    var s = overlay.querySelector('.ip-intro');
     var cta = overlay.querySelector('.ip-cta');
     if (titre && t) t.textContent = titre;
     if (sousTitre && s) s.innerHTML = sousTitre;
