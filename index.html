@@ -1105,6 +1105,21 @@
       .forEach(el => el.classList.remove('blip-active', 'blip-flash'));
   }
 
+  /* Survol ponctuel d'un point : un seul effet sur le point (le flash) et
+     le halo de sa carte associée. Le halo statique blip-active est réservé
+     aux clics, afin d'éviter un double halo qui persisterait à la sortie. */
+  function setRadarPointHoverHighlight(teamCode, on){
+    const box = document.getElementById('teamsBox');
+    const card = box && box.querySelector(`[data-team="${teamCode}"]`);
+    if(card) card.classList.toggle('team-spotlight', on);
+    const idx = _blipByTeam[teamCode];
+    const blip = idx && document.getElementById('radarBlip' + idx);
+    if(blip){
+      blip.classList.toggle('blip-flash', on);
+      if(!on) blip.classList.remove('blip-active');
+    }
+  }
+
   /* Depuis une carte, seul le point correspondant clignote sur le sonar.
      La carte garde son halo CSS :hover natif, qui disparaît strictement dès
      la sortie de souris. Ne pas lui appliquer .team-spotlight ici, sinon ce
@@ -1161,22 +1176,26 @@
   (function wireBlipToCard(){
     const screen = document.querySelector('.radar-screen-big');
     if(!screen) return;
+    const blipOf = e => e.target.closest && e.target.closest('.radar-blip');
     const teamOf = e => {
-      const b = e.target.closest && e.target.closest('.radar-blip');
-      return (b && b.dataset.team) ? b.dataset.team : null;
+      const blip = blipOf(e);
+      return (blip && blip.dataset.team) ? blip.dataset.team : null;
     };
 
-    // Survol souris uniquement : sur mobile, 'pointerover' se declenche au
-    // toucher et laisserait le halo allume apres le depart du doigt.
+    /* Survol souris uniquement. Comme pour les cartes, pointerout remonte
+       lors du passage entre les éléments internes d'un même point : seules
+       les vraies entrées/sorties du point doivent modifier le halo. */
     screen.addEventListener('pointerover', e => {
       if(e.pointerType !== 'mouse') return;
-      const code = teamOf(e);
-      if(code) setBlipHighlight(code, true);
+      const blip = blipOf(e);
+      if(!blip || blip.contains(e.relatedTarget)) return;
+      setRadarPointHoverHighlight(blip.dataset.team, true);
     });
     screen.addEventListener('pointerout', e => {
       if(e.pointerType !== 'mouse') return;
-      const code = teamOf(e);
-      if(code) setBlipHighlight(code, false);
+      const blip = blipOf(e);
+      if(!blip || blip.contains(e.relatedTarget)) return;
+      setRadarPointHoverHighlight(blip.dataset.team, false);
     });
 
     // Clic / toucher : on met en evidence et on descend jusqu'a la carte.
