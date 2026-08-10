@@ -9,6 +9,10 @@
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
+  <!-- Journal de bord « Activité en direct », code COMMUN à tous les
+       paliers (extrait mot pour mot de cette page). Chargé avant le
+       module ci-dessous : window.JournalDeBord est prêt à temps. -->
+  <script src="journal-bord.js?v=1" defer></script>
 
 </head>
 <body>
@@ -689,77 +693,14 @@ function showToast(message, type = 'info', duration = 4000) {
   }, duration);
 }
 
-/* ---------- LIVE BOARD (journal de bord temps réel) ---------- */
-function addLogEntry(text, kind = 'info', quand) {
-  const list = document.getElementById('morse-log-list');
-  if (!list) return;
-  const colors = {
-    info:    { dot: '#8ee7ff', border: 'rgba(142,231,255,.4)' },
-    success: { dot: '#5be09b', border: 'rgba(91,255,156,.5)' },
-    warning: { dot: '#ffd36c', border: 'rgba(245,176,39,.5)' },
-    danger:  { dot: '#ff7b72', border: 'rgba(255,75,62,.55)' }
-  };
-  const c = colors[kind] || colors.info;
-
-  /* CHRONOLOGIE GARANTIE.
-
-     BUG CORRIGE : les lignes apparaissaient dans le desordre — on pouvait
-     lire "X a rejoint l'equipage" APRES ses echecs. Chaque ligne etait
-     simplement posee en haut de la liste au moment ou la fonction etait
-     appelee. Or certains messages sont ecrits APRES une reponse du
-     reseau (saveTeam...) et d'autres immediatement : un message rapide
-     doublait donc un message lent, et l'ordre affiche ne correspondait
-     plus a l'ordre reel des evenements.
-
-     Deux corrections :
-     - chaque ligne porte desormais l'INSTANT REEL de l'evenement. Un
-       appel peut fournir cet instant s'il a ete retarde par le reseau ;
-     - l'insertion se fait A LA BONNE PLACE dans la liste, en comparant
-       les horodatages, au lieu d'ajouter aveuglement en tete. */
-  const t = (quand instanceof Date) ? quand : new Date();
-  /* JOUR ET HEURE, meme format court que le journal du poste de pilotage
-     ("06/08 00:09"). Une epreuve peut etre reprise le lendemain apres un
-     blocage : sans le jour, deux lignes eloignees de 24 h affichaient la
-     meme chose. */
-  const p2 = (n) => String(n).padStart(2, '0');
-  const heure = p2(t.getDate()) + '/' + p2(t.getMonth() + 1) + ' '
-              + p2(t.getHours()) + ':' + p2(t.getMinutes());
-
-  const li = document.createElement('li');
-  li.className = 'morse-log-entry';
-  li.dataset.t = String(t.getTime());
-  li.style.cssText = `display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-left:3px solid ${c.border};background:rgba(0,0,0,.22);border-radius:8px;`;
-
-  /* On echappe TOUT — un nom de matelot est saisi librement et ne doit
-     jamais pouvoir injecter du code — puis on retablit uniquement <b> et
-     </b>, les deux seules balises autorisees ici. */
-  const texteRendu = esc(text)
-    .replace(/&lt;b&gt;/g, '<b>')
-    .replace(/&lt;\/b&gt;/g, '</b>');
-
-  li.innerHTML = `
-    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.dot};box-shadow:0 0 8px ${c.dot};flex:0 0 10px;margin-top:5px;"></span>
-    <span style="flex:1;min-width:0;color:#dff6ff;line-height:1.4;">${texteRendu}</span>
-    <span style="flex:0 0 auto;color:rgba(142,231,255,.42);font-size:11px;font-family:Consolas,'Courier New',monospace;margin-top:3px;white-space:nowrap;">${heure}</span>
-  `;
-
-  /* Insertion triee : la liste va du plus RECENT (en haut) au plus ancien.
-     On descend jusqu'a trouver une ligne plus ancienne que la notre. */
-  const ms = t.getTime();
-  let place = null;
-  for (const ligne of list.children) {
-    if (Number(ligne.dataset.t || 0) <= ms) { place = ligne; break; }
-  }
-  if (place) list.insertBefore(li, place);
-  else list.appendChild(li);
-
-  /* Limite a 20 entrees : on retire les plus ANCIENNES (en bas). */
-  while (list.children.length > 20) list.removeChild(list.lastChild);
-}
-function clearLog() {
-  const list = document.getElementById('morse-log-list');
-  if (list) list.innerHTML = '';
-}
+/* ---------- LIVE BOARD (journal de bord temps reel) ----------
+   Le code vit desormais dans journal-bord.js, EXTRAIT MOT POUR MOT
+   de cette page et PARTAGE avec tous les paliers (meme suivi, memes
+   « Activites en direct » partout : portail QR du Palier 2, futurs
+   paliers...). On garde ici les memes noms de fonctions : toute la
+   page, y compris window.Nautilus, fonctionne a l'identique. */
+const addLogEntry = window.JournalDeBord.addLogEntry;
+const clearLog    = window.JournalDeBord.clearLog;
 
 /* ---------- HEARTBEAT (mise à jour lastSeen du membre) ---------- */
 async function heartbeat(teamCode) {

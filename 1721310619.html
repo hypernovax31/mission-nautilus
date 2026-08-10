@@ -89,8 +89,25 @@
       <a class="gate-home" href="index.html">🏠 Retour à l'accueil</a>
     </div>
   </section>
+
+  <!-- Journal de bord (live) : le MÊME code que le Palier 1, fourni par
+       journal-bord.js. Visible en permanence : le portail est la salle
+       d'attente du palier, son activité se lit ici en direct. -->
+  <section class="card" id="logCard">
+    <h2>📜 JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3>Activité en direct</h3>
+        <ul id="morse-log-list"></ul>
+      </div>
+    </div>
+  </section>
 </main>
 
+<!-- Journal de bord « Activité en direct », code COMMUN à tous les
+     paliers. Script classique SANS defer, juste avant le script du
+     portail : window.JournalDeBord est garanti prêt à l'exécution. -->
+<script src="journal-bord.js?v=1"></script>
 <script>
 /* =============================================================
    PALIER 2 — PORTAIL D'ACCÈS (scellé par QR Code)
@@ -111,6 +128,13 @@
   var UNLOCK_KEY = 'nautilusUnlock:palier:' + CODE_CHIFFRES;
 
   var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------- JOURNAL DE BORD — suivi en direct ----------
+     LE MÊME code que le Palier 1 (journal-bord.js, partagé) : chaque
+     événement du portail est consigné sous « Activité en direct ». */
+  function journal(texte, kind) {
+    if (window.JournalDeBord) window.JournalDeBord.addLogEntry(texte, kind || 'info');
+  }
 
   /* ---------- Vérification du code / du contenu du QR ----------
      Le QR peut porter le code pur, la forme séparée par des tirets,
@@ -148,12 +172,15 @@
     message('❌ Ce code n’ouvre pas le sas du Palier 2. Vise le QR Code de la zone de recherche (ou sa photo), ou vérifie le numéro.', 'danger');
   }
 
-  function verifier(payload) {
+  function verifier(payload, source) {
+    var origine = source || 'QR Code';
     if (payloadUnlocks(payload)) {
       message('✅ Code reconnu : ouverture du sas…', 'success');
+      journal('✅ <b>Code reconnu</b> (' + origine + ') : le sas du Palier 2 s’ouvre.', 'success');
       setTimeout(showUnlocked, 450);
     } else {
       refuser();
+      journal('❌ Code refusé (' + origine + ') — le sas du Palier 2 reste scellé.', 'danger');
     }
   }
 
@@ -174,10 +201,12 @@
     message('');
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       message('📷 Caméra indisponible sur cet appareil : importe la PHOTO du QR Code, ou entre le numéro secret.', 'warning');
+      journal('📷 Caméra indisponible sur cet appareil.', 'warning');
       return;
     }
     if (!lecteurQrPret()) {
       message('📷 Le lecteur QR n’a pas pu se charger (connexion ?). Importe la PHOTO du QR Code, ou entre le numéro secret.', 'warning');
+      journal('📷 Lecteur QR indisponible (connexion ?).', 'warning');
       return;
     }
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
@@ -191,10 +220,12 @@
         video.play().catch(function () {});
         scanning = true;
         majBoutonCamera(true);
+        journal('📷 Caméra activée — scan du QR Code en cours…', 'info');
         tick();
       })
       .catch(function () {
         message('📷 Caméra refusée. Autorise l’accès, ou importe la PHOTO du QR Code.', 'warning');
+        journal('📷 Accès caméra refusé.', 'warning');
       });
   }
 
@@ -227,7 +258,7 @@
         try {
           var img = ctx.getImageData(0, 0, w, h);
           var trouve = window.jsQR && window.jsQR(img.data, w, h, { inversionAttempts: 'attemptBoth' });
-          if (trouve && trouve.data) { verifier(trouve.data); return; }
+          if (trouve && trouve.data) { verifier(trouve.data, 'scan caméra'); return; }
         } catch (e) { /* image illisible : on continue de viser */ }
       }
     }
@@ -240,8 +271,10 @@
     if (!fichier) return;
     if (!lecteurQrPret()) {
       message('🖼️ Le lecteur QR n’a pas pu se charger (connexion ?). Zoome bien sur la photo et réessaie, ou entre le numéro secret.', 'warning');
+      journal('🖼️ Lecteur QR indisponible : la photo n’a pas pu être lue.', 'warning');
       return;
     }
+    journal('🖼️ Photo du QR Code importée — lecture en cours…', 'info');
     var lecteur = new FileReader();
     lecteur.onload = function () {
       var img = new Image();
@@ -259,16 +292,19 @@
           var data = ctx.getImageData(0, 0, w, h);
           var trouve = window.jsQR(data.data, w, h, { inversionAttempts: 'attemptBoth' });
           if (trouve && trouve.data) {
-            verifier(trouve.data);
+            verifier(trouve.data, 'photo importée');
           } else {
             message('🖼️ Aucun QR Code lisible sur cette photo. Recadre-la sur le code, ou entre le numéro secret.', 'warning');
+            journal('🖼️ Aucun QR Code lisible sur la photo importée.', 'warning');
           }
         } catch (e) {
           message('🖼️ Photo illisible. Réessaie avec un cliché plus net, ou entre le numéro secret.', 'warning');
+          journal('🖼️ Photo illisible : le décodage a échoué.', 'warning');
         }
       };
       img.onerror = function () {
         message('🖼️ Ce fichier n’est pas une image lisible. Choisis la photo du QR Code.', 'danger');
+        journal('🖼️ Fichier refusé : ce n’est pas une image.', 'danger');
       };
       img.src = String(lecteur.result || '');
     };
@@ -280,15 +316,18 @@
 
   /* ---------- Câblage ---------- */
   $('backBtn').addEventListener('click', function () { location.href = 'index.html'; });
-  $('gateCamBtn').addEventListener('click', function () { scanning ? stopCamera() : startCamera(); });
+  $('gateCamBtn').addEventListener('click', function () {
+    if (scanning) { stopCamera(); journal('⏹ Caméra arrêtée.', 'info'); }
+    else startCamera();
+  });
   $('gateImportBtn').addEventListener('click', function () { $('gateFile').click(); });
   $('gateFile').addEventListener('change', function (e) {
     importerPhoto(e.target.files && e.target.files[0]);
     e.target.value = '';   // même photo deux fois de suite = même combat, on réarme
   });
-  $('gateCodeBtn').addEventListener('click', function () { verifier($('gateCodeInput').value); });
+  $('gateCodeBtn').addEventListener('click', function () { verifier($('gateCodeInput').value, 'numéro secret'); });
   $('gateCodeInput').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); verifier($('gateCodeInput').value); }
+    if (e.key === 'Enter') { e.preventDefault(); verifier($('gateCodeInput').value, 'numéro secret'); }
   });
   document.addEventListener('visibilitychange', function () { if (document.hidden) stopCamera(); });
   window.addEventListener('beforeunload', stopCamera);
@@ -296,16 +335,24 @@
   /* Équipage affiché en barre du haut (simple mémoire de la navigation). */
   (function () {
     var noms = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land', CALAMAR: 'Calamar' };
+    var equipage = null;
     try {
       var code = localStorage.getItem('nautilusCurrentTeam');
-      if (code && $('topTeam')) $('topTeam').textContent = noms[code] || code;
+      if (code) equipage = noms[code] || code;
+      if (equipage && $('topTeam')) $('topTeam').textContent = equipage;
     } catch (e) {}
+    /* Journal de bord : première ligne du suivi en direct — l'équipage
+       vient de franchir la porte du portail. */
+    journal('🛡️ Portail du <b>Palier 2</b> atteint'
+      + (equipage ? ' par l’équipage <b>' + equipage + '</b>' : '')
+      + ' : en attente du QR Code de la zone de recherche.', 'info');
   })();
 
   /* Retour sur la page avec le sas déjà ouvert : on le montre tel quel. */
   if (isUnlocked()) {
     $('gateCard').hidden = true;
     $('gateUnlocked').hidden = false;
+    journal('🔓 Sas déjà ouvert sur cet appareil : le portail déverrouillé s’affiche directement.', 'success');
   }
 })();
 </script>

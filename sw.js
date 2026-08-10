@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v190';
+const CACHE_NAME = 'nautilus-v191';
 const PRECACHE = [
   './',
   './index.html',
@@ -16,6 +16,7 @@ const PRECACHE = [
   './sonar-button.js?v=3',
   './admin-button.js?v=5',
   './palier-annonces.js?v=1',
+  './journal-bord.js?v=1',
   './assets/fond-nautilus.jpg',
   './assets/ambiance-sonar.mp3',
   './assets/Victoire.mp3',
