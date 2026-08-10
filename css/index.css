@@ -108,6 +108,20 @@
       padding-bottom:10px;
       border-bottom:1px solid rgba(var(--team-glow,143,164,181),.30);
     }
+    /* Halo de repérage : visible uniquement sous la souris, soit directement
+       sur la carte, soit quand le point radar associé est survolé. */
+    @media (hover:hover){
+      .team.team-reveal:hover,
+      .team.team-reveal.team-radar-hover{
+        border-color:rgba(var(--team-glow,143,164,181),1);
+        box-shadow:
+          0 0 0 2px rgba(var(--team-glow,143,164,181),.42),
+          0 0 26px 7px rgba(var(--team-glow,143,164,181),.52),
+          0 8px 20px rgba(0,0,0,.16);
+      }
+      /* L'entrée est douce ; la classe est retirée immédiatement à la sortie. */
+      .team.team-reveal:hover{transition:box-shadow .22s ease,border-color .22s ease;}
+    }
     @media (prefers-contrast: more){
       .team::before{opacity:0}
     }
@@ -1485,8 +1499,8 @@
     @keyframes centerPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}50%{transform:translate(-50%,-50%) scale(1.4);opacity:.7}}
 
     /* Révélation des équipages : apparition par fondu et déplacement léger.
-       Aucun halo coloré n'est appliqué aux cartes, ni à leur découverte,
-       ni au survol de la carte ou du point radar correspondant. */
+       Le halo reste réservé aux survols réels de la carte ou du point radar,
+       jamais à la découverte elle-même. */
     .teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
     .team-reveal{
       opacity:0;transform:translateY(28px) scale(.92);

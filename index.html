@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=11">
+  <link rel="stylesheet" href="css/index.css?v=12">
   <link rel="stylesheet" href="css/hublots.css?v=13">
 
 </head>
@@ -1110,14 +1110,14 @@
   }
 
   /* ===== LIEN POINT DU SONAR <-> CARTE DE L'EQUIPAGE =====
-     Les cartes restent volontairement sans halo. Le survol sert seulement
-     à allumer le point correspondant sur le radar, jamais à modifier la
-     carte elle-même. */
-  function setHoverHighlight(teamCode, on){
+     Le même halo coloré relie les deux surfaces : survoler la carte éclaire
+     son point, survoler le point éclaire sa carte. Aucun clic ne le conserve. */
+  function setHoverHighlight(teamCode, on, source){
     const box = document.getElementById('teamsBox');
     const card = box && box.querySelector(`[data-team="${teamCode}"]`);
-    /* Nettoie les anciennes classes de halo d'une version précédente. */
-    if(card) card.classList.remove('team-radar-hover', 'team-spotlight');
+    /* La carte utilise :hover pour son propre survol. Depuis le radar, une
+       classe dédiée reproduit exactement ce halo puis disparaît à la sortie. */
+    if(card) card.classList.toggle('team-radar-hover', Boolean(on && source === 'radar'));
 
     const idx = _blipByTeam[teamCode];
     const blip = idx && document.getElementById('radarBlip' + idx);
@@ -1125,11 +1125,11 @@
   }
 
   function highlightFromCard(teamCode, on){
-    setHoverHighlight(teamCode, on);
+    setHoverHighlight(teamCode, on, 'card');
   }
 
   function highlightFromRadar(teamCode, on){
-    setHoverHighlight(teamCode, on);
+    setHoverHighlight(teamCode, on, 'radar');
   }
 
   (function wireCardToBlip(){
