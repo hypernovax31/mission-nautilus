@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Nautilus — Palier 2</title>
+  <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
+  <link rel="stylesheet" href="css/palier1.css?v=7">
+  <link rel="stylesheet" href="css/palier2.css?v=1">
+  <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
+       connexion : la saisie manuelle du numéro secret prend alors le
+       relais. -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
+    <div class="topbar-title">Palier 2</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <section class="card gate-hero">
+    <h2>🔒 PALIER 2 — ZONE SCELLÉE</h2>
+    <div class="body">
+      <div class="status-banner warning">
+        ⛔ Ce palier est verrouillé. <b>Sans le QR Code de la zone de recherche, cette page reste bloquée</b> et personne ne peut progresser vers le palier suivant.
+      </div>
+      <p class="gate-lead">
+        Rendez-vous dans la <b>zone de recherche</b> (voir l'écran « Épreuve validée ! » du palier précédent),
+        trouvez le <b>QR Code</b> qui s'y cache, puis présentez-le ici : il est la <b>clé d'entrée</b> du Palier 2.
+      </p>
+    </div>
+  </section>
+
+  <section class="card" id="gateCard">
+    <h2>📷 SCELLÉ D'ACCÈS — QR CODE</h2>
+    <div class="body">
+
+      <p class="gate-scan-lead"><b>Scannez le QR Code</b> dans l'encart ci-dessous, ou importez-en la photo.</p>
+      <div class="gate-scanbox" id="gateScanbox">
+        <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
+        <canvas id="gateCanvas" hidden></canvas>
+        <div class="gate-cam-placeholder" id="gateCamPlaceholder" aria-hidden="true">
+          <span class="gate-cam-icon">📷</span>
+          <span>Caméra en veille — vise le QR Code pour ouvrir le sas.</span>
+        </div>
+        <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
+      </div>
+
+      <div class="gate-actions">
+        <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
+        <!-- Bouton demandé : import de la PHOTO du QR Code, placé sous
+             l'encart de scan. Sert quand l'équipage a photographié le QR
+             pour continuer plus tard. -->
+        <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">🖼️ IMPORTER PHOTO du QR CODE</button>
+        <input type="file" id="gateFile" accept="image/*" hidden>
+      </div>
+
+      <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
+
+      <div class="gate-manual">
+        <label for="gateCodeInput">… ou entre ici le <b>numéro secret</b> découvert avec le QR Code :</label>
+        <div class="gate-manual-row">
+          <input id="gateCodeInput" placeholder="Ex. 17-2-13-10-6-19" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="numeric" />
+          <button type="button" class="gate-btn gate-btn--unlock" id="gateCodeBtn">🔓 Déverrouiller</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="card gate-unlocked" id="gateUnlocked" hidden>
+    <h2>✅ PALIER 2 DÉVERROUILLÉ</h2>
+    <div class="body">
+      <div class="status-banner success">
+        ✅ <b>Scellé levé !</b> Le QR Code a ouvert le sas du Palier 2 sur cet appareil.
+      </div>
+      <p class="gate-lead">
+        ⏳ <b>L'épreuve du Palier 2 arrive.</b> L'organisation la dévoilera ici très prochainement :
+        gardez cette page sous la main.
+      </p>
+      <a class="gate-home" href="index.html">🏠 Retour à l'accueil</a>
+    </div>
+  </section>
+</main>
+
+<script>
+/* =============================================================
+   PALIER 2 — PORTAIL D'ACCÈS (scellé par QR Code)
+   -------------------------------------------------------------
+   Règle d'or : SANS le QR Code, la page reste bloquée pour tout le
+   monde. Le QR livre le « numéro secret » du palier, qui seul lève
+   le scellé. Le code attendu se reconstitue ici EXACTEMENT comme
+   dans le moteur du jeu : « PALIER » = P(16) A(1) L(12) I(9) E(5)
+   R(18), palier n → +n−1 sur chaque chiffre. Palier 2 →
+   17-2-13-10-6-19, soit 1721310619 — le nom même de cette page.
+   ============================================================= */
+(function () {
+  'use strict';
+  var PALIER_INDEX = 2;                  // cette page = Palier 2
+  var base = [16, 1, 12, 9, 5, 18];      // P A L I E R
+  var parties = base.map(function (n) { return String(n + (PALIER_INDEX - 1)); });
+  var CODE_CHIFFRES = parties.join('');       // "1721310619"
+  var UNLOCK_KEY = 'nautilusUnlock:palier:' + CODE_CHIFFRES;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------- Vérification du code / du contenu du QR ----------
+     Le QR peut porter le code pur, la forme séparée par des tirets,
+     ou une URL complète (…/1721310619.html…). On ne regarde que les
+     chiffres : si la série attendue s'y trouve, le sas s'ouvre. */
+  function payloadUnlocks(payload) {
+    if (!payload) return false;
+    var chiffres = String(payload).replace(/\D+/g, '');
+    return chiffres.indexOf(CODE_CHIFFRES) !== -1;
+  }
+
+  function isUnlocked() {
+    try { return localStorage.getItem(UNLOCK_KEY) === 'ok'; } catch (e) { return false; }
+  }
+  function persistUnlock() {
+    try { localStorage.setItem(UNLOCK_KEY, 'ok'); } catch (e) {}
+  }
+
+  function message(texte, kind) {
+    var el = $('gateMsg');
+    if (!el) return;
+    el.textContent = texte || '';
+    el.className = 'gate-msg' + (texte ? ' is-' + (kind || 'info') : '');
+  }
+
+  function showUnlocked(source) {
+    persistUnlock();
+    stopCamera();
+    $('gateCard').hidden = true;
+    $('gateUnlocked').hidden = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function refuser(source) {
+    message('❌ Ce code n’ouvre pas le sas du Palier 2. Vise le QR Code de la zone de recherche (ou sa photo), ou vérifie le numéro.', 'danger');
+  }
+
+  function verifier(payload) {
+    if (payloadUnlocks(payload)) {
+      message('✅ Code reconnu : ouverture du sas…', 'success');
+      setTimeout(showUnlocked, 450);
+    } else {
+      refuser();
+    }
+  }
+
+  /* ---------- Caméra + jsQR ---------- */
+  var stream = null;
+  var scanning = false;
+
+  function lecteurQrPret() {
+    return typeof window.jsQR === 'function';
+  }
+
+  function majBoutonCamera(actif) {
+    var btn = $('gateCamBtn');
+    if (btn) btn.textContent = actif ? '⏹ ARRÊTER LA CAMÉRA' : '📸 ACTIVER LA CAMÉRA';
+  }
+
+  function startCamera() {
+    message('');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      message('📷 Caméra indisponible sur cet appareil : importe la PHOTO du QR Code, ou entre le numéro secret.', 'warning');
+      return;
+    }
+    if (!lecteurQrPret()) {
+      message('📷 Le lecteur QR n’a pas pu se charger (connexion ?). Importe la PHOTO du QR Code, ou entre le numéro secret.', 'warning');
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .then(function (s) {
+        stream = s;
+        var video = $('gateCam');
+        video.srcObject = s;
+        video.hidden = false;
+        $('gateCamPlaceholder').hidden = true;
+        $('gateScanStatus').textContent = 'Vise le QR Code…';
+        video.play().catch(function () {});
+        scanning = true;
+        majBoutonCamera(true);
+        tick();
+      })
+      .catch(function () {
+        message('📷 Caméra refusée. Autorise l’accès, ou importe la PHOTO du QR Code.', 'warning');
+      });
+  }
+
+  function stopCamera() {
+    scanning = false;
+    if (stream) {
+      stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+      stream = null;
+    }
+    var video = $('gateCam');
+    if (video) { try { video.pause(); } catch (e) {} video.srcObject = null; video.hidden = true; }
+    var ph = $('gateCamPlaceholder');
+    if (ph) ph.hidden = false;
+    var st = $('gateScanStatus');
+    if (st) st.textContent = '';
+    majBoutonCamera(false);
+  }
+
+  function tick() {
+    if (!scanning) return;
+    var video = $('gateCam');
+    var canvas = $('gateCanvas');
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      var w = video.videoWidth, h = video.videoHeight;
+      if (w > 0 && h > 0) {
+        if (canvas.width !== w) canvas.width = w;
+        if (canvas.height !== h) canvas.height = h;
+        var ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(video, 0, 0, w, h);
+        try {
+          var img = ctx.getImageData(0, 0, w, h);
+          var trouve = window.jsQR && window.jsQR(img.data, w, h, { inversionAttempts: 'attemptBoth' });
+          if (trouve && trouve.data) { verifier(trouve.data); return; }
+        } catch (e) { /* image illisible : on continue de viser */ }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* ---------- IMPORT PHOTO du QR CODE ---------- */
+  function importerPhoto(fichier) {
+    message('');
+    if (!fichier) return;
+    if (!lecteurQrPret()) {
+      message('🖼️ Le lecteur QR n’a pas pu se charger (connexion ?). Zoome bien sur la photo et réessaie, ou entre le numéro secret.', 'warning');
+      return;
+    }
+    var lecteur = new FileReader();
+    lecteur.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        /* On borne la taille : au-delà, le décodage rame sur mobile. */
+        var MAX = 1400;
+        var ratio = Math.min(1, MAX / Math.max(img.width, img.height));
+        var w = Math.max(1, Math.round(img.width * ratio));
+        var h = Math.max(1, Math.round(img.height * ratio));
+        var canvas = $('gateCanvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          var data = ctx.getImageData(0, 0, w, h);
+          var trouve = window.jsQR(data.data, w, h, { inversionAttempts: 'attemptBoth' });
+          if (trouve && trouve.data) {
+            verifier(trouve.data);
+          } else {
+            message('🖼️ Aucun QR Code lisible sur cette photo. Recadre-la sur le code, ou entre le numéro secret.', 'warning');
+          }
+        } catch (e) {
+          message('🖼️ Photo illisible. Réessaie avec un cliché plus net, ou entre le numéro secret.', 'warning');
+        }
+      };
+      img.onerror = function () {
+        message('🖼️ Ce fichier n’est pas une image lisible. Choisis la photo du QR Code.', 'danger');
+      };
+      img.src = String(lecteur.result || '');
+    };
+    lecteur.onerror = function () {
+      message('🖼️ Photo illisible. Réessaie avec un cliché plus net, ou entre le numéro secret.', 'warning');
+    };
+    lecteur.readAsDataURL(fichier);
+  }
+
+  /* ---------- Câblage ---------- */
+  $('backBtn').addEventListener('click', function () { location.href = 'index.html'; });
+  $('gateCamBtn').addEventListener('click', function () { scanning ? stopCamera() : startCamera(); });
+  $('gateImportBtn').addEventListener('click', function () { $('gateFile').click(); });
+  $('gateFile').addEventListener('change', function (e) {
+    importerPhoto(e.target.files && e.target.files[0]);
+    e.target.value = '';   // même photo deux fois de suite = même combat, on réarme
+  });
+  $('gateCodeBtn').addEventListener('click', function () { verifier($('gateCodeInput').value); });
+  $('gateCodeInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); verifier($('gateCodeInput').value); }
+  });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) stopCamera(); });
+  window.addEventListener('beforeunload', stopCamera);
+
+  /* Équipage affiché en barre du haut (simple mémoire de la navigation). */
+  (function () {
+    var noms = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land', CALAMAR: 'Calamar' };
+    try {
+      var code = localStorage.getItem('nautilusCurrentTeam');
+      if (code && $('topTeam')) $('topTeam').textContent = noms[code] || code;
+    } catch (e) {}
+  })();
+
+  /* Retour sur la page avec le sas déjà ouvert : on le montre tel quel. */
+  if (isUnlocked()) {
+    $('gateCard').hidden = true;
+    $('gateUnlocked').hidden = false;
+  }
+})();
+</script>
+<!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
+<script src="sonar-button.js?v=3" defer></script>
+<script src="admin-button.js?v=4" type="module"></script>
+</body>
+</html>

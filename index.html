@@ -22,6 +22,11 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="css/index.css?v=16">
   <link rel="stylesheet" href="css/hublots.css?v=13">
+  <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
+       partagées par toutes les pages du jeu. Chargé AVANT le module
+       principal : les scripts différés s'exécutent dans l'ordre du
+       document, et le module l'utilise dès son démarrage. -->
+  <script src="palier-annonces.js?v=1" defer></script>
 
 </head>
 <body>
@@ -351,7 +356,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   /* Supprime les equipes retirees via le panneau admin (game/config.obsoleteTeams),
      pour qu'elles ne soient pas recreees au chargement suivant. */
@@ -625,6 +630,32 @@
     }
     return {team,justUnlocked:false};
   }
+
+  /* ===== ANNONCE « UN ÉQUIPAGE A FRANCHI UN PALIER » =====
+     Sur la page d'accueil, tous les équipages en ligne sont prévenus en
+     direct : un message vert à halo clignotant apparaît une fois dans un
+     coin de la fenêtre, accompagné de Victoire.mp3 (règles audio du jeu).
+     Les équipages en retard sur ce palier reçoivent un encouragement. */
+  function initAnnoncesPaliers(){
+    if(!(window.NautilusAnnonces && typeof window.NautilusAnnonces.handleTeamsSnapshot==='function')) return;
+    try{
+      onSnapshot(collection(db,'teams'), (snap) => {
+        const equipes = [];
+        snap.forEach(d => equipes.push({ teamCode: d.id, ...d.data() }));
+        window.NautilusAnnonces.handleTeamsSnapshot(equipes, {
+          myTeamCode: currentTeam ? currentTeam.teamCode : null,
+          myCompletedSteps: (currentTeam && currentTeam.completedSteps) || [],
+          skipOwn: false,
+          resolveName: (t) => {
+            const def = TEAM_DEFS.find(x => x.code === t.teamCode);
+            return (def && def.name) || t.teamName || t.teamCode;
+          },
+          withSound: true
+        });
+      }, () => { /* annonces indisponibles : la mission continue sans */ });
+    }catch(e){ /* idem */ }
+  }
+  initAnnoncesPaliers();
 
   /**
    * Charge les equipes et gere leur apparition.

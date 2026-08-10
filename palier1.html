@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=6">
+  <link rel="stylesheet" href="css/palier1.css?v=7">
+  <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
+       partagées par toutes les pages du jeu. -->
+  <script src="palier-annonces.js?v=1" defer></script>
 
 </head>
 <body>
@@ -123,7 +126,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot
+  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ---------- CONFIGURATION ---------- */
@@ -219,11 +222,12 @@ const MORSE_WORDS = [
   { w:"SOUSMARINE",h:"Autre orthographe du sous-marin" }
 ];
 
-/* Lieu FIXE du QR du palier 2 dans le magasin.
-   Ce texte est identique pour tous les mots tirés (le lieu ne dépend
-   pas du mot trouvé). C'est ici que l'équipe devra scanner
-   le QR pour obtenir le numéro secret du palier 2. */
-const QR_LOCATION_HINT = "📍 Direction la borne d'arcade au fond du magasin, derrière l'écran de démonstration.";
+/* Indication de direction vers la zone de recherche du QR du palier.
+   Elle est fournie par l'organisation (l'admin) au démarrage de chaque
+   palier : tant qu'elle n'est pas communiquée, on affiche une attente.
+   == PENSE-BÊTE ADMIN : renseigner cette direction dès que le prochain
+      palier commence (la demander à l'organisation si besoin). */
+const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
 
 /* ---------- INITIALISATION FIREBASE ---------- */
 const app = initializeApp(firebaseConfig);
@@ -1302,6 +1306,9 @@ window.Nautilus = {
     localStorage.setItem('nautilusLastMember', JSON.stringify(state.me));
     N.showToast(`Bienvenue à bord, ${state.me.name}.`, 'success');
     renderCrew();
+    /* Reconnexion personnelle : si l'équipage a levé mon blocage pendant
+       ma pause, on me le dit tout de suite. */
+    annoncerBlocageLeve(state.team);
 
     N.heartbeat(state.teamCode);
     if (!state._heartbeatInterval) {
@@ -1353,6 +1360,51 @@ window.Nautilus = {
        d'un blocage PERSONNEL — n'apparaissait donc jamais a l'ecran tant
        que la session ne bougeait pas. On redessine explicitement. */
     if (state.me) renderGameArea();
+    annoncerBlocageLeve(t);
+  }
+
+  /* ===== « TU ES DÉBLOQUÉ » À LA RECONNEXION D'UN MATELOT =====
+     Cas visé : le matelot avait échoué et était bloqué en surface ; entre-
+     temps, son équipage a validé une épreuve (advanceTeam a alors levé son
+     blocage et posé liftedByStep). À sa reconnexion personnelle, il DOIT
+     recevoir un message clair : il peut reprendre la mission sans délai.
+     Affiché une seule fois par levée de blocage et par appareil, puis
+     accusé en base (liftedAckAt) pour ne pas resservir le message
+     indéfiniment. */
+  let _blocageLeveVu = '';   // liftedAt déjà annoncé dans CETTE page
+  function annoncerBlocageLeve(t) {
+    if (!t || !state.me || state.isTest) return;
+    const l = N.getMatelotLock(t, state.me.memberKey);
+    if (!l || !l.liftedByStep) return;
+    /* Levée déjà reconnue ? */
+    const liftedMs = l.liftedAt ? new Date(l.liftedAt).getTime() : 0;
+    if (l.liftedAckAt && new Date(l.liftedAckAt).getTime() >= liftedMs) return;
+    const marque = String(l.liftedAt || l.liftedByStep);
+    if (_blocageLeveVu === marque) return;
+    /* Ceinture locale : si l'accusé en base s'est perdu (coupure réseau),
+       la mémoire de l'appareil empêche de re-montrer le message. */
+    const cle = 'nautilusBlocageLeveVu:' + t.teamCode + ':' + state.me.memberKey;
+    try { if (localStorage.getItem(cle) === marque) return; } catch (e) {}
+    _blocageLeveVu = marque;
+    try { localStorage.setItem(cle, marque); } catch (e) {}
+
+    const msg = `✅ ${state.me.name}, ton équipage a validé une épreuve pendant ta pause. `
+              + `Ton blocage est levé : tu peux reprendre la mission sans délai !`;
+    /* Le bandeau d'état vert est posé APRÈS le setStatus() standard de
+       onTeamUpdate : notre message le remplace jusqu'au prochain événement. */
+    setStatus(msg, 'success');
+    N.showToast(msg, 'success', 12000);
+    N.addLogEntry(`🔓 <b>${state.me.name}</b> est débloqué : l'équipage a validé une épreuve pendant sa pause.`, 'success');
+
+    /* Accusé en base (silencieux) : le message ne reviendra plus. */
+    const key = state.me.memberKey;
+    const locks = { ...((state.team || t).matelotLocks || {}) };
+    if (locks[key]) {
+      locks[key] = { ...locks[key], liftedAckAt: new Date().toISOString() };
+      N.saveTeam(state.team || t, { matelotLocks: locks })
+        .then((nt) => { if (nt && state.team) state.team = nt; })
+        .catch(() => { /* l'accusé repassera au prochain chargement */ });
+    }
   }
   function renderCrew() {
     const list = $('crewList');
@@ -1495,6 +1547,8 @@ window.Nautilus = {
     /* Session en cours */
     if (s.state === 'won') {
       body.innerHTML = renderWonScreen(s, t);
+      bindWonScreenEvents();
+      jouerSonVictoire(s);
       return;
     }
 
@@ -2136,12 +2190,42 @@ window.Nautilus = {
     const completed = Array.from(new Set([...(state.team.completedSteps || []), 'start']));
     const next = N.STEPS['start'].next;
     /* Palier reussi : l'equipage avance. On leve un eventuel blocage
-       d'equipage (pose par un admin), mais PAS les blocages personnels :
-       ils suivent chaque matelot d'un palier a l'autre. */
-    const update = { status: 'active', lockedUntil: null, completedSteps: completed, lastEvent: 'step_advanced' };
+       d'equipage (pose par un admin), ET — NOUVELLE REGLE DE REJOUABILITE —
+       tous les blocages PERSONNELS : quand un matelot reussit une epreuve,
+       tous les autres matelots de l'equipage reprennent la quete. Leur
+       compteur d'echecs (failCount) est conserve : seule la mise a l'ecart
+       s'efface. Le pase `liftedByStep` permettra, a la RECONNEXION d'un
+       matelot qui etait bloque, de lui afficher le message lui annoncant
+       qu'il peut reprendre la mission sans delai. */
+    const update = {
+      status: 'active', lockedUntil: null, completedSteps: completed,
+      lastEvent: 'step_advanced',
+      /* Repères d'annonce : lus par palier-annonces.js sur TOUTES les
+         pages, pour prévenir les autres équipages en ligne (message vert
+         à halo clignotant + Victoire.mp3) qu'un équipage a franchi un
+         palier. */
+      lastStepCompleted: 'start',
+      lastStepCompletedAt: new Date().toISOString(),
+      lastStepCompletedBy: state.me ? state.me.name : 'Un matelot',
+      lastStepCompletedLabel: N.STEPS['start'].label
+    };
     if (next) { update.currentStep = next; }
-    await N.saveTeam(state.team, update);
+    const maintenant = Date.now();
+    const locks = { ...(state.team.matelotLocks || {}) };
+    let leves = 0;
+    Object.keys(locks).forEach((k) => {
+      const l = locks[k];
+      if (l && l.lockedUntil && new Date(l.lockedUntil).getTime() > maintenant) {
+        locks[k] = { ...l, lockedUntil: null, liftedByStep: 'start', liftedAt: update.lastStepCompletedAt };
+        leves++;
+      }
+    });
+    if (leves > 0) { update.matelotLocks = locks; }
+    state.team = await N.saveTeam(state.team, update);
     N.markHintsExhausted(state.word);
+    if (leves > 0) {
+      N.addLogEntry(`🔓 Palier franchi : ${leves} matelot(s) bloqué(s) en surface reprennent la quête.`, 'success');
+    }
   }
 
   /* === INDICE : REVELE AUSSITOT, MAIS COUTE 1 H DE BLOCAGE ===
@@ -2316,9 +2400,73 @@ window.Nautilus = {
        lui-meme, en echange de 1 h de blocage. */
   }
 
-  /* === ÉCRAN : victoire === */
+  /* ===== HELPERS « PALIER SUIVANT » ===== */
+
+  /* La mission du palier en une phrase courte — utilisée dans le message
+     « Bravo à … pour {mission} » de l'écran de victoire. */
+  const STEP_MISSIONS = {
+    start: 'le déchiffrage du signal morse'
+  };
+  function missionDuPalier(stepId) {
+    return STEP_MISSIONS[stepId] || 'cette épreuve';
+  }
+
+  /* Libellé du bouton d'accès au palier suivant :
+     « PASSER AU 2EME PALIER », « PASSER AU 3EME PALIER »… et, pour le
+     tout dernier, « PASSER AU PALIER FINAL ». */
+  function nextStepActionLabel(stepId) {
+    if (!stepId) return 'PASSER AU PALIER SUIVANT';
+    if (stepId === 'final') return 'PASSER AU PALIER FINAL';
+    const idx = Object.keys(N.STEPS).indexOf(stepId);   // 0 = Palier 1
+    if (idx > 0) return `PASSER AU ${idx + 1}EME PALIER`;
+    return 'PASSER AU PALIER SUIVANT';
+  }
+
+  /* Page du palier : le nom du fichier EST le code du palier, sans
+     séparateurs (« 1721310619.html » pour le palier 2). Sans ce code —
+     donc sans le QR Code de la zone — la page reste verrouillée et
+     personne ne peut progresser vers le palier suivant. */
+  function nextStepPageUrl(stepId) {
+    const code = N.getStepCode(stepId);
+    return code ? code.replace(/-/g, '') + '.html' : 'index.html';
+  }
+
+  /* Panneau « DIRECTION VERS LA ZONE DE RECHERCHE », partagé par l'écran
+     de victoire (repliable) et l'écran de reprise de la mission. */
+  function directionPanelHtml(nextStep, opts = {}) {
+    const nextLabel = N.STEPS[nextStep]?.label || 'palier suivant';
+    const action = nextStepActionLabel(nextStep);
+    const url = nextStepPageUrl(nextStep);
+    const id = opts.id || 'wonDirectionPanel';
+    return `
+      <div class="won-direction" id="${esc(id)}"${opts.collapsed ? ' hidden' : ''}>
+        <h3 class="won-direction-title">📍 DIRECTION VERS LA ZONE DE RECHERCHE</h3>
+        <p class="won-direction-line"><span class="won-direction-label">Indication de direction :</span> ${esc(N.QR_LOCATION_HINT)}</p>
+        <div class="won-direction-steps">
+          <p class="won-direction-sub">Sur place :</p>
+          <ol>
+            <li>Repérez le <b>QR Code</b> de la zone.</li>
+            <li>Cliquez sur le bouton <b>« ${esc(action)} »</b> pour passer au prochain palier.</li>
+            <li><b>Scannez le QR Code</b> dans l’encart prévu à cet effet (ou importez-en la photo).</li>
+          </ol>
+        </div>
+        <div class="won-direction-remind">
+          📷 <b>L’équipage souhaite poursuivre maintenant ?</b> Une fois le QR Code trouvé,
+          ouvrez la page du prochain palier et scannez-le.<br>
+          <b>Vous préférez faire une pause ?</b> Prenez le QR Code en photo et gardez-le
+          précieusement : c’est la <b>clé d’entrée du ${esc(nextLabel)}</b> — sans lui,
+          la page restera verrouillée et personne ne pourra progresser.
+        </div>
+        <a class="won-next-btn" href="${esc(url)}">⏭️ ${esc(action)}</a>
+      </div>
+    `;
+  }
+
+  /* === ÉCRAN : victoire ===
+     Phrase d'accueil volontairement FIGÉE (un « pop » animé se rejouait en
+     boucle à chaque rafraîchissement de l'écran — bug signalé) : plus
+     aucune animation sur « Épreuve validée ! ». */
   function renderWonScreen(s, t) {
-    const word = s.revealedWord || s.wordHash || '— —';
     const listens = Math.max(0, 3 - Number(s.listensLeft ?? 0));
     const errors = Number(s.errors || 0);
     const started = s.startedAt ? new Date(s.startedAt).getTime() : Date.now();
@@ -2326,34 +2474,62 @@ window.Nautilus = {
     const duration = Math.max(0, Math.round((finished - started) / 1000));
     const mins = Math.floor(duration / 60);
     const secs = String(duration % 60).padStart(2, '0');
+    const equipe = t ? displayTeamName(t) : 'l’équipage';
+    const mission = missionDuPalier('start');
+    const nextStep = N.STEPS['start'].next;
     return `
       <div class="won-screen celebration">
         <div class="won-badge" aria-hidden="true">🏆</div>
         <h2>Épreuve validée !</h2>
-        <p style="color:#dfffe8;font-size:16px;line-height:1.5;margin:8px 0;">
-          <b>${esc(t ? displayTeamName(t) : 'L’équipage')}</b> vient de franchir le sas du Palier 1.
-        </p>
-        <p style="color:#bcd9e6;font-size:14px;line-height:1.5;margin:6px 0;">
-          Bravo à <b>${esc(s.startedByName || 'l’équipage')}</b> pour le déchiffrage du signal.
-        </p>
+        <p class="won-line">Tout l’équipage « ${esc(equipe)} » franchit le sas du <b>Palier 1</b>.</p>
+        <p class="won-line won-line--bravo">Bravo à <b>${esc(s.startedByName || 'l’équipage')}</b> pour « ${esc(mission)} ».</p>
         <div class="won-stats" aria-label="Bilan de l’épreuve">
           <div class="won-stat"><strong>${mins}:${secs}</strong><span>Temps utilisé</span></div>
           <div class="won-stat"><strong>${listens}/3</strong><span>Écoutes utilisées</span></div>
           <div class="won-stat"><strong>${errors}</strong><span>Erreur${errors > 1 ? 's' : ''}</span></div>
         </div>
-        <div style="margin:20px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Mot de passe transmis</div>
-        <div class="reveal-code">${esc(word)}</div>
-        <div class="won-next">
-          <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Prochaine mission</div>
-          <div style="color:#fff;font-size:15px;line-height:1.5;font-weight:700;margin-bottom:12px;">${N.QR_LOCATION_HINT}</div>
-          <div style="border-top:1px dashed rgba(245,176,39,.4);padding-top:12px;color:#fff;font-size:14px;line-height:1.5;">
-            📷 Scanne le QR pour découvrir le numéro secret du <b>Palier 2</b>.
-          </div>
+        <div class="won-unlock-note">🔓 <b>Tout l’équipage reprend la quête.</b> Si un matelot
+          était bloqué en surface après un échec, son blocage est levé : il peut rejouer sans attendre.</div>
+        <div class="won-actions">
+          <button type="button" class="won-continue-btn" id="wonContinueBtn" aria-expanded="true" aria-controls="wonDirectionPanel">🧭 CONTINUER VERS LE PALIER SUIVANT</button>
         </div>
-        <p class="next-step-hint" style="margin-top:20px;">⏭️ Quand le numéro est en main, ouvre la page du Palier 2.</p>
-        <a href="1721310619.html" style="display:inline-block;margin-top:8px;background:var(--fnac);color:#111;border-radius:12px;padding:12px 24px;font-weight:900;text-decoration:none;">Ouvrir le Palier 2 →</a>
+        ${directionPanelHtml(nextStep, { id: 'wonDirectionPanel' })}
       </div>
     `;
+  }
+
+  /* Bouton « CONTINUER VERS LE PALIER SUIVANT » de l'écran de victoire :
+     plie/déplie le panneau de direction, pour REVOIR à tout moment les
+     informations nécessaires pour localiser le QR Code — y compris quand
+     l'équipage a choisi de ne pas poursuivre tout de suite. */
+  function bindWonScreenEvents() {
+    const btn = document.getElementById('wonContinueBtn');
+    const panel = document.getElementById('wonDirectionPanel');
+    if (!btn || !panel) return;
+    btn.addEventListener('click', () => {
+      const ouvert = !panel.hidden;
+      panel.hidden = ouvert;
+      btn.setAttribute('aria-expanded', String(!ouvert));
+      if (!ouvert) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  /* Son de victoire, UNE FOIS par épreuve gagnée et par appareil
+     (même gabarit de règles que partout : geste + fenêtre visible +
+     sonar allumé — géré dans palier-annonces.js). */
+  let _victoireJoueePour = null;
+  function jouerSonVictoire(s) {
+    const marque = String(s.endedAt || s.startedAt || 'won');
+    if (_victoireJoueePour === marque) return;
+    _victoireJoueePour = marque;
+    const cle = 'nautilusVictoireJouee:' + (state.teamCode || '?');
+    try {
+      if (localStorage.getItem(cle) === marque) return;
+      localStorage.setItem(cle, marque);
+    } catch (e) { /* mémoire indisponible : le son pourra rejouer */ }
+    if (window.NautilusAnnonces && typeof window.NautilusAnnonces.playVictorySound === 'function') {
+      window.NautilusAnnonces.playVictorySound();
+    }
   }
 
   /* === ÉCRAN : retour en surface après une tentative === */
@@ -2472,29 +2648,19 @@ window.Nautilus = {
   }
 
 
-  /* === ÉCRAN : transition palier suivant === */
+  /* === ÉCRAN : transition palier suivant ===
+     L'équipage revient sur la page après avoir validé : on lui re-sert le
+     panneau « DIRECTION VERS LA ZONE DE RECHERCHE », pour qu'il retrouve
+     les informations de localisation du QR Code sans rien redemander. */
   function renderNextStepPrompt(t) {
     const nextStep = t.currentStep;
     const nextLabel = N.STEPS[nextStep]?.label || '?';
-    const nextCode = N.getStepCode(nextStep);
     return `
       <div class="status-banner success">
         ✅ <b>Palier 1 terminé.</b> L'équipage est prêt à passer au <b>${esc(nextLabel)}</b>.
       </div>
-      <div class="stepbox" style="border-color:rgba(91,255,156,.45);background:rgba(91,255,156,.08);">
-        <h3 style="color:#5be09b;margin:0 0 10px;">🔎 Prochaine étape</h3>
-        <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Indice de cachette</div>
-        <div style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:14px;padding:12px 16px;margin:0 0 14px;color:#fff;font-size:14px;line-height:1.5;font-weight:800;">
-          ${N.QR_LOCATION_HINT}
-        </div>
-        <div style="color:#dff6ff;line-height:1.5;margin:0 0 10px;font-size:15px;">
-          📷 <b>Scanne le QR pour découvrir le numéro secret.</b>
-        </div>
-        <div style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 14px;">
-          Tu auras besoin de ce numéro pour accéder au <b>${esc(nextLabel)}</b>.
-        </div>
-        <a href="1721310619.html" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir la page du ${esc(nextLabel)}</a>
-      </div>
+      <p class="won-palier-line">Tout l’équipage « ${esc(displayTeamName(t))} » a franchi le sas du <b>Palier 1</b>.</p>
+      ${directionPanelHtml(nextStep, { id: 'promptDirectionPanel' })}
     `;
   }
 
@@ -2502,6 +2668,34 @@ window.Nautilus = {
   $('backBtn').addEventListener('click', () => {
     location.href = 'index.html';
   });
+
+  /* ===== ANNONCE « UN ÉQUIPAGE A FRANCHI UN PALIER » =====
+     Tous les équipages en ligne sont prévenus en direct, ici compris —
+     et au chargement de la page (« reprise d'un mini-jeu »), tout
+     palier franchi depuis la dernière visite de CET appareil est
+     annoncé une fois, dans un coin de la fenêtre (message vert à halo
+     clignotant, Victoire.mp3 si les règles audio le permettent).
+     skipOwn : MON équipage voit déjà son propre écran de victoire. */
+  function initAnnoncesPaliers() {
+    if (!(window.NautilusAnnonces && typeof window.NautilusAnnonces.handleTeamsSnapshot === 'function')) return;
+    try {
+      onSnapshot(collection(N.db, 'teams'), (snap) => {
+        const equipes = [];
+        snap.forEach((d) => equipes.push({ teamCode: d.id, ...d.data() }));
+        window.NautilusAnnonces.handleTeamsSnapshot(equipes, {
+          myTeamCode: state.teamCode || null,
+          myCompletedSteps: (state.team && state.team.completedSteps) || [],
+          skipOwn: true,
+          resolveName: (t) => {
+            const def = (N.TEAM_DEFS || []).find((x) => x.code === t.teamCode);
+            return (def && def.name) || t.teamName || t.teamCode;
+          },
+          withSound: true
+        });
+      }, (err) => { console.warn('Annonces paliers:', err); });
+    } catch (e) { console.warn('Annonces paliers indisponibles:', e); }
+  }
+  initAnnoncesPaliers();
 
   /* === Cleanup === */
   window.addEventListener('beforeunload', () => {
