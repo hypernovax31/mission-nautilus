@@ -1115,21 +1115,26 @@
   (function wireCardToBlip(){
     const box = document.getElementById('teamsBox');
     if(!box) return;
+    const cardOf = e => e.target.closest && e.target.closest('.team-reveal');
     const teamOf = e => {
-      const c = e.target.closest && e.target.closest('.team-reveal');
-      return (c && c.dataset.team) ? c.dataset.team : null;
+      const card = cardOf(e);
+      return (card && card.dataset.team) ? card.dataset.team : null;
     };
 
-    // Survol souris seulement (au toucher, 'pointerover' resterait allume).
+    /* Survol souris seulement. `pointerout` remonte aussi lorsque la souris
+       passe d'un enfant à un autre dans la même carte : on l'ignore pour ne
+       pas réanimer le halo. Seule une vraie sortie de carte l'éteint. */
     box.addEventListener('pointerover', e => {
       if(e.pointerType !== 'mouse') return;
-      const code = teamOf(e);
-      if(code) highlightFromCard(code, true);
+      const card = cardOf(e);
+      if(!card || card.contains(e.relatedTarget)) return;
+      highlightFromCard(card.dataset.team, true);
     });
     box.addEventListener('pointerout', e => {
       if(e.pointerType !== 'mouse') return;
-      const code = teamOf(e);
-      if(code) highlightFromCard(code, false);
+      const card = cardOf(e);
+      if(!card || card.contains(e.relatedTarget)) return;
+      highlightFromCard(card.dataset.team, false);
     });
 
     /* Clic sur la carte : on remonte au sonar pour voir le point clignoter,
