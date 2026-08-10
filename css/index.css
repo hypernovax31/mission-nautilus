@@ -1113,34 +1113,35 @@
       /* Repère neutre au repos : aucun halo flou hors survol. */
       box-shadow:0 0 0 2px rgba(var(--blip-glow,91,255,156),.92);
     }
-    /* Le point « pop » une seule fois à la découverte ; il ne conserve pas
-       de pulsation ni de halo après l'animation. */
+    /* Découverte synchronisée avec Victoire.mp3 (~4,1 s) : le point reste
+       net et blanc, puis trois ondes fines se déploient comme un vrai écho
+       sonar. On évite le gros disque coloré de l'ancienne animation. */
     .radar-blip.blip-pop{
-      width:20px;height:20px;background:#fff;
-      animation:blipPop .5s cubic-bezier(.2,1.4,.4,1) both;
+      width:16px;height:16px;background:#fff;
+      animation:victoryBlipCore var(--victory-echo-duration,4.1s) cubic-bezier(.18,.82,.26,1) both;
     }
-    /* L'onde de choc porte elle aussi la couleur de l'equipage : au moment
-       de la detection, c'est le signal le plus visible a l'ecran. */
     .radar-blip.blip-pop::after{
-      content:"";position:absolute;left:50%;top:50%;width:20px;height:20px;
-      margin:-10px 0 0 -10px;border-radius:50%;
-      border:3px solid rgba(var(--blip-glow,91,255,156),.95);
-      animation:blipWave 1.4s ease-out both;pointer-events:none;
+      content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;
+      margin:-9px 0 0 -9px;border-radius:50%;pointer-events:none;
+      border:2px solid rgba(var(--blip-glow,91,255,156),.90);
+      box-shadow:
+        0 0 0 9px rgba(var(--blip-glow,91,255,156),.30),
+        0 0 0 22px rgba(var(--blip-glow,91,255,156),.14);
+      animation:victorySonarEcho var(--victory-echo-duration,4.1s) cubic-bezier(.12,.72,.24,1) both;
     }
-    /* Le centrage translate(-50%,-50%) est repris dans chaque etape :
-       une animation sur transform remplace la valeur de base. */
-    @keyframes blipPop{
-      0%{transform:translate(-50%,-50%) scale(0);opacity:0}
-      55%{transform:translate(-50%,-50%) scale(1.55);opacity:1}
-      100%{transform:translate(-50%,-50%) scale(1);opacity:1}
+    @keyframes victoryBlipCore{
+      0%{transform:translate(-50%,-50%) scale(.20);opacity:0}
+      7%{transform:translate(-50%,-50%) scale(1.32);opacity:1}
+      15%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}
     }
-    @keyframes blipWave{
-      0%{transform:scale(1);opacity:.85}
-      100%{transform:scale(4.6);opacity:0}
+    @keyframes victorySonarEcho{
+      0%{transform:scale(.22);opacity:0}
+      8%{opacity:.95}
+      35%{transform:scale(2.1);opacity:.60}
+      68%{transform:scale(3.8);opacity:.25}
+      100%{transform:scale(5.4);opacity:0}
     }
     @media (prefers-reduced-motion: reduce){
-      /* Sans animation, il faut remettre le centrage a la main : c'est
-         blipPop qui le portait pendant la pulsation. */
       .radar-blip.blip-pop{animation:none;transform:translate(-50%,-50%)}
       .radar-blip.blip-pop::after{animation:none;opacity:0}
     }

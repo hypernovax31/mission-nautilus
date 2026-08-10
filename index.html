@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=9">
+  <link rel="stylesheet" href="css/index.css?v=10">
   <link rel="stylesheet" href="css/hublots.css?v=13">
 
 </head>
@@ -1323,8 +1323,13 @@
       await waitForSweepOver(blipAngle(blipIdx), sweepTimeout);
       isFirstReveal = false;
 
-      // b) Le point blanc "pop" au passage du faisceau, en meme temps que le son
-      if(blipEl) blipEl.classList.add('revealed', 'blip-pop');
+      /* b) Le point blanc et ses trois ondes démarrent avec Victoire.mp3.
+         La durée CSS reprend celle du signal afin que l'écho ne s'éteigne
+         pas avant la fin de l'annonce sonore. */
+      if(blipEl){
+        blipEl.style.setProperty('--victory-echo-duration', `${REVEAL_SOUND_FALLBACK_MS}ms`);
+        blipEl.classList.add('revealed', 'blip-pop');
+      }
 
       /* c) La carte suit le point de tres pres : 0,33 s plus tard.
          Avant, on attendait la FIN de l'alarme (~2,1 s) : le lien entre le
