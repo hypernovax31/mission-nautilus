@@ -2835,7 +2835,21 @@ function qrDataUri(text, opts){
     const welcome = m.isTest
       ? '&#x2705; <b>Mode test</b> — tu explores le jeu librement. Rien n\'est enregistré.'
       : '&#x2705; <b>' + esc(m.name) + '</b>, matelot de l\'équipage <b>' + esc(t.teamName) + '</b>, reprends la plongée.';
-    $('joinMsg').innerHTML = '<div class="notice success">' + welcome + unlockMsg + '</div>';
+    /* REPRISE LÀ OÙ L'ÉQUIPAGE S'EST ARRÊTÉ, EN UN CLIC.
+       L'équipage a déjà franchi au moins un palier : le message de
+       bienvenue propose AUSSI le lien direct vers la page du palier en
+       cours (ex. : Nemo au Palier 2 → portail « QR Code demandé »). Sans
+       ce raccourci, le matelot devait deviner qu'il fallait ensuite
+       cliquer le bouton rouge du poste de pilotage. */
+    const etapeReelle = effectiveCurrentStep(t);
+    const pageReprise = etapeReelle !== 'start' ? palierPageUrl(etapeReelle) : null;
+    const lienReprise = pageReprise
+      ? '<div style="margin-top:12px;text-align:center">'
+        + '<a href="' + pageReprise + '" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:12px 22px;font-weight:900;text-decoration:none;font-size:14px;letter-spacing:.03em;text-transform:uppercase">⏭️ Reprendre au « ' + esc(STEPS[etapeReelle]?.label || 'palier en cours') + ' »</a>'
+        + '<div class="small" style="margin-top:6px">La page du palier demandera le <b>QR Code</b> — prépare ta photo.</div>'
+        + '</div>'
+      : '';
+    $('joinMsg').innerHTML = '<div class="notice success">' + welcome + unlockMsg + lienReprise + '</div>';
     renderGame(res.justUnlocked);
     renderEmbarkMissionButton();
 
@@ -5281,7 +5295,29 @@ function qrDataUri(text, opts){
     renderEmbarkMissionButton();
     const btn = $('cockpitMissionBtn');
     if(!btn) return;
-    btn.textContent = currentTeam?.currentStep === 'start' ? 'LANCER LA MISSION' : 'REPRENDRE LA MISSION';
+    /* Même repère que la navigation : l'étape EFFECTIVE. Un palier validé
+       fait toujours basculer le libellé sur « REPRENDRE LA MISSION ». */
+    btn.textContent = effectiveCurrentStep(currentTeam) === 'start' ? 'LANCER LA MISSION' : 'REPRENDRE LA MISSION';
+  }
+
+  /* Étape réellement en cours de l'équipage.
+     Source de vérité : currentStep. MAIS on corrige le cas où le palier
+     annoncé serait déjà marqué franchi (completedSteps) sans que
+     currentStep ait suivi — remise à zéro partielle ou retouche manuelle
+     en base. Sans cette correction, « REPRENDRE LA MISSION » pouvait
+     renvoyer vers un palier déjà validé au lieu de la page où l'équipage
+     s'est arrêté (ex. : Nemo au Palier 2 → portail QR). */
+  function effectiveCurrentStep(team){
+    if(!team) return 'start';
+    let step = team.currentStep || 'start';
+    const done = team.completedSteps || [];
+    const ids = Object.keys(STEPS);
+    let guard = 0;
+    while(done.includes(step) && STEPS[step] && STEPS[step].next && guard < ids.length){
+      step = STEPS[step].next;
+      guard++;
+    }
+    return step;
   }
 
   /* Page d'un palier à partir de son identifiant d'étape.
@@ -5339,7 +5375,7 @@ function qrDataUri(text, opts){
     /* Palier 1 : ecran rouge + alarme pendant 5 s, puis page du mini-jeu.
        On transmet le Code Matelot : le mini-jeu sait alors qui joue et ne
        redemande ni nom ni service. */
-    if(currentTeam.currentStep === 'start'){
+    if(effectiveCurrentStep(currentTeam) === 'start'){
       const mc = currentMatelot?.codeMatelot || '';
       const url = `palier1.html?code=${encodeURIComponent(currentTeam.teamCode)}`
                 + (mc ? `&m=${encodeURIComponent(mc)}` : '');
@@ -5352,11 +5388,13 @@ function qrDataUri(text, opts){
 
     /* PALIERS SUIVANTS : mêmes 5 s d'alerte, puis navigation vers la PAGE
        DU PALIER COURANT — palier 2 = portail QR (1721310619.html), etc.
+       Le routage se fait sur l'ÉTAPE EFFECTIVE (completedSteps corrigé) :
+       jamais vers un palier déjà validé.
 
        BUG CORRIGÉ : cette branche jouait l'alerte... puis rendait la main
        sur l'accueil sans jamais naviguer. « REPRENDRE LA MISSION » au
        palier 2 affichait l'alarme et ne lançait aucune page. */
-    const pagePalier = palierPageUrl(currentTeam.currentStep);
+    const pagePalier = palierPageUrl(effectiveCurrentStep(currentTeam));
     showNautilusAlarm('launch-' + Date.now(), 5000, true);
     await wait(5000);
     $('nautilusAlarm')?.classList.remove('show');
