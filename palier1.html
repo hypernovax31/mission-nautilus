@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=14">
+  <link rel="stylesheet" href="css/palier1.css?v=15">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
@@ -1176,10 +1176,13 @@ window.Nautilus = {
 
   const DIRECT_MATELOT_CODE_RE = /^[A-Z]{4}-[0-9]{4}$/;
 
-  function setDirectResumeMessage(message, kind='') {
+  function setDirectResumeMessage(message, kind='', asHtml=false) {
     const box = $('identifyMsg');
     if (!box) return;
-    box.textContent = message || '';
+    /* asHtml reserve aux messages construits par NOUS (nom du matelot
+       deja echappe avec esc() a l'appel). Jamais d'entree brute. */
+    if (asHtml) box.innerHTML = message;
+    else box.textContent = message || '';
     box.className = 'direct-resume-message' + (kind ? ` ${kind}` : '');
   }
 
@@ -1261,7 +1264,9 @@ window.Nautilus = {
       localStorage.setItem('nautilusMatelotCode', code);
       await attachTeamListener();
 
-      const identified = await autoIdentifyFromCode();
+      /* avecSalut : le matelot vient de taper son code — son nom
+         s'affiche en gros et en or avant la bascule sur le jeu. */
+      const identified = await autoIdentifyFromCode(true);
       if (!identified) {
         setDirectResumeMessage('Ce Code Matelot ne correspond pas à cet équipage. Vérifie ta saisie.', 'error');
         return;
@@ -1278,7 +1283,7 @@ window.Nautilus = {
   /* === Identification automatique par Code Matelot ===
      Retrouve la fiche du matelot et entre dans le jeu sans rien demander.
      Renvoie true si l'entree a reussi. */
-  async function autoIdentifyFromCode() {
+  async function autoIdentifyFromCode(avecSalut = false) {
     const code = N.getCurrentMatelotCode();
     if (!code) return false;                 // pas de code : on garde le formulaire
 
@@ -1368,6 +1373,16 @@ window.Nautilus = {
     N.heartbeat(state.teamCode, state.me && state.me.memberKey);
     if (!state._heartbeatInterval) {
       state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 30000);
+    }
+
+    /* MISE EN EVIDENCE DU NOM pour un retour : quand le matelot vient de
+       taper son Code Matelot (avecSalut), son NOM s'affiche en gros et en
+       or dans la carte pendant 1,6 s avant la bascule sur le jeu — il
+       voit immediatement que la place retrouvee, c'est bien la sienne.
+       La reprise par lien personnel, elle, garde le seul toast. */
+    if (avecSalut) {
+      setDirectResumeMessage(`⚓ Bon retour à bord, <b class="dr-name">${esc(state.me.name)}</b> !`, 'retour', true);
+      await new Promise(r => setTimeout(r, 1600));
     }
 
     // Le formulaire n'a jamais besoin d'apparaitre : on le retire tout de suite.

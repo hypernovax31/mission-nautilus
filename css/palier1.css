@@ -124,6 +124,18 @@
     .direct-resume-message:not(:empty){margin-top:12px;padding:10px 12px;border-radius:11px;font-size:13px;font-weight:800;line-height:1.45;}
     .direct-resume-message.error{border:1px solid rgba(255,123,114,.42);color:#ffd0cd;background:rgba(255,75,62,.11);}
     .direct-resume-message.loading{border:1px solid rgba(142,231,255,.3);color:#c3eaf7;background:rgba(142,231,255,.08);}
+    /* Salut du matelot qui revient : bandeau or, nom en TRES gros. */
+    .direct-resume-message.retour{
+      border:1px solid rgba(245,176,39,.6);color:#ffe9bd;background:rgba(245,176,39,.12);
+      font-size:16px;text-align:center;padding:13px 14px;
+      animation:drRetour .5s cubic-bezier(.2,.9,.3,1.2);
+    }
+    .direct-resume-message.retour .dr-name{
+      display:inline-block;color:var(--fnac);font-size:1.35em;font-weight:1000;
+      letter-spacing:.03em;text-shadow:0 0 14px rgba(245,176,39,.5);
+    }
+    @keyframes drRetour{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+    @media (prefers-reduced-motion:reduce){.direct-resume-message.retour{animation:none}}
     .direct-resume-new{margin:14px auto 0;max-width:700px;color:#9bc4d4;font-size:12px;font-weight:700;line-height:1.45;text-align:center;}
     .direct-resume-new a{color:var(--fnac);font-weight:900;text-underline-offset:3px;}
     @media(max-width:560px){.direct-resume-form{grid-template-columns:1fr}.direct-resume-form button{width:100%;}.direct-resume-panel{padding:16px}.direct-resume-icon{width:42px;height:42px;font-size:20px;}}
@@ -163,7 +175,8 @@
       border:1px solid rgba(142,231,255,.22);border-radius:12px;
       display:flex;flex-direction:column;gap:4px;
     }
-    .crew-member.self{border-color:var(--fnac);background:rgba(245,176,39,.12);}
+    .crew-member.self{border:2px solid var(--fnac);background:rgba(245,176,39,.12);box-shadow:0 0 14px rgba(245,176,39,.22);}
+    .crew-member.self .crew-name{color:var(--fnac);text-shadow:0 0 10px rgba(245,176,39,.4);}
     .crew-member .crew-name{font-weight:900;color:#fff;}
     .crew-member .crew-meta{font-size:11px;color:#9bc4d4;}
 
