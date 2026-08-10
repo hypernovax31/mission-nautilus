@@ -102,29 +102,11 @@
       /* Pas de transition ici : au départ du pointeur, le halo s'éteint
          immédiatement au lieu de laisser une traînée lumineuse. */
     }
-    .team.team-reveal::after{
-      content:"";position:absolute;inset:0;z-index:-2;pointer-events:none;
-      border-radius:inherit;
-      background:linear-gradient(135deg,var(--team-tint,#dfe8ee) 0%,transparent 62%);
-      opacity:.10;
-    }
     /* Bandeau colore en haut de carte : renforce la reconnaissance */
     .team.team-reveal>div:first-child{
       position:relative;
       padding-bottom:10px;
       border-bottom:1px solid rgba(var(--team-glow,143,164,181),.30);
-    }
-    @media (hover:hover){
-      .team.team-reveal:hover{
-        /* Transition uniquement à l'entrée : aucune animation résiduelle
-           quand le pointeur quitte la carte. */
-        transition:box-shadow .3s ease,border-color .3s ease;
-        border-color:rgba(var(--team-glow,143,164,181),.85);
-        box-shadow:
-          0 0 0 1px rgba(var(--team-glow,143,164,181),.35),
-          0 12px 30px rgba(var(--team-glow,143,164,181),.42),
-          0 2px 6px rgba(0,0,0,.08);
-      }
     }
     @media (prefers-contrast: more){
       .team::before{opacity:0}
@@ -1494,44 +1476,16 @@
 
     @keyframes centerPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}50%{transform:translate(-50%,-50%) scale(1.4);opacity:.7}}
 
-    /* Reveal des equipages (style hollywood: slide+fade+glow) */
+    /* Révélation des équipages : apparition par fondu et déplacement léger.
+       Aucun halo coloré n'est appliqué aux cartes, ni à leur découverte,
+       ni au survol de la carte ou du point radar correspondant. */
     .teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
-    /* Apparition d'une carte : le halo prend la couleur de l'equipage
-       (avant, toutes les equipes surgissaient dans le meme halo vert du
-       sonar, ce qui ne disait rien de l'equipe qui venait d'arriver). */
     .team-reveal{
       opacity:0;transform:translateY(28px) scale(.92);
       transition:opacity .55s ease,transform .55s cubic-bezier(.2,.9,.3,1.2);
     }
-    .team-reveal.in{
-      opacity:1;transform:translateY(0) scale(1);
-      animation:teamGlint 1.4s ease both;
-    }
+    .team-reveal.in{opacity:1;transform:translateY(0) scale(1);}
     .team-reveal.out{opacity:0;transform:translateY(-12px) scale(.96);transition:opacity .45s ease,transform .45s ease}
-
-    /* On anime box-shadow plutot que drop-shadow : le halo epouse alors le
-       contour arrondi de la carte au lieu de baver autour du bloc. */
-    @keyframes teamGlint{
-      0%{box-shadow:0 2px 6px rgba(0,0,0,.10);}
-      35%{
-        box-shadow:
-          0 0 0 1px rgba(var(--team-glow,143,164,181),.45),
-          0 0 34px 10px rgba(var(--team-glow,143,164,181),.75),
-          0 8px 26px rgba(var(--team-glow,143,164,181),.45);
-      }
-      100%{box-shadow:0 2px 6px rgba(0,0,0,.10);}
-    }
-    /* Survol d'un point radar : la carte associée reçoit le même halo léger
-       que son propre :hover. Cette classe est retirée immédiatement à la
-       sortie du point ; elle ne sert jamais aux clics. */
-    .team.team-reveal.team-radar-hover{
-      border-color:rgba(var(--team-glow,143,164,181),.85);
-      box-shadow:
-        0 0 0 1px rgba(var(--team-glow,143,164,181),.35),
-        0 12px 30px rgba(var(--team-glow,143,164,181),.42),
-        0 2px 6px rgba(0,0,0,.08);
-      animation:none;
-    }
     /* Le point du sonar montre qu'il est cliquable et repond au survol.
        Deux precautions indispensables :
        1) le balayage, la grille et les anneaux sont dessines APRES les
@@ -1565,12 +1519,6 @@
     }
     .radar-blip:focus-visible{outline:2px solid #fff;outline-offset:3px}
     .team.team-reveal{cursor:pointer}
-
-    /* Accessibilite / batterie : pas de pulsation de halo si l'utilisateur
-       demande des animations reduites. */
-    @media (prefers-reduced-motion: reduce){
-      .team-reveal.in{animation:none}
-    }
 
 
     /* ===== Modale d'installation PWA ===== */

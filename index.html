@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=8">
+  <link rel="stylesheet" href="css/index.css?v=9">
   <link rel="stylesheet" href="css/hublots.css?v=13">
 
 </head>
@@ -1027,16 +1027,11 @@
     active.forEach(t => {
       const existing = box.querySelector(`[data-team="${t.teamCode}"]`);
       if(existing){
-        /* La carte est reconstruite à chaque rafraîchissement. Si le point
-           radar est réellement sous la souris, on conserve seulement ce
-           léger état de survol sur la nouvelle carte — jamais un halo figé. */
-        const wasRadarHovered = existing.classList.contains('team-radar-hover');
+        /* La carte est reconstruite à chaque rafraîchissement, sans recopier
+           aucun état visuel temporaire : aucun halo ne peut être conservé. */
         existing.outerHTML = teamCardHtml(t);
         const newEl = box.querySelector(`[data-team="${t.teamCode}"]`);
-        if(newEl){
-          newEl.classList.add('in');
-          if(wasRadarHovered) newEl.classList.add('team-radar-hover');
-        }
+        if(newEl) newEl.classList.add('in');
         // L'equipage a peut-etre change de palier : son point glisse vers
         // le centre (ou reste en place s'il n'a pas avance).
         const bIdx = _blipByTeam[t.teamCode];
@@ -1081,15 +1076,14 @@
   }
 
   /* ===== LIEN POINT DU SONAR <-> CARTE DE L'EQUIPAGE =====
-     Un seul effet léger existe pendant un survol réel. Il est retiré dès
-     que le pointeur quitte la carte ou le point : aucun minuteur, clic ou
-     re-rendu ne peut conserver un halo après coup. */
-  function setHoverHighlight(teamCode, on, source){
+     Les cartes restent volontairement sans halo. Le survol sert seulement
+     à allumer le point correspondant sur le radar, jamais à modifier la
+     carte elle-même. */
+  function setHoverHighlight(teamCode, on){
     const box = document.getElementById('teamsBox');
     const card = box && box.querySelector(`[data-team="${teamCode}"]`);
-    /* Sur une carte, le halo est fourni uniquement par :hover. Depuis le
-       radar, on ajoute la même intensité via une classe dédiée. */
-    if(card) card.classList.toggle('team-radar-hover', Boolean(on && source === 'radar'));
+    /* Nettoie les anciennes classes de halo d'une version précédente. */
+    if(card) card.classList.remove('team-radar-hover', 'team-spotlight');
 
     const idx = _blipByTeam[teamCode];
     const blip = idx && document.getElementById('radarBlip' + idx);
@@ -1097,11 +1091,11 @@
   }
 
   function highlightFromCard(teamCode, on){
-    setHoverHighlight(teamCode, on, 'card');
+    setHoverHighlight(teamCode, on);
   }
 
   function highlightFromRadar(teamCode, on){
-    setHoverHighlight(teamCode, on, 'radar');
+    setHoverHighlight(teamCode, on);
   }
 
   (function wireCardToBlip(){
