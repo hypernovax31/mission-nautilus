@@ -5284,6 +5284,19 @@ function qrDataUri(text, opts){
     btn.textContent = currentTeam?.currentStep === 'start' ? 'LANCER LA MISSION' : 'REPRENDRE LA MISSION';
   }
 
+  /* Page d'un palier à partir de son identifiant d'étape.
+     Convention : le palier 1 conserve son nom historique (palier1.html) ;
+     les suivants portent leur code sans séparateurs (« P A L I E R » =
+     16-1-12-9-5-18, palier n → +n−1 par chiffre ; palier 2 =
+     1721310619.html). Même formule que nextStepPageUrl() de palier1.html.
+     Renvoie null si l'étape est inconnue. */
+  function palierPageUrl(stepId){
+    const idx = Object.keys(STEPS).indexOf(stepId);
+    if(idx < 0) return null;
+    if(idx === 0) return 'palier1.html';
+    return [16,1,12,9,5,18].map(n => String(n + idx)).join('') + '.html';
+  }
+
   /* Lancement du palier depuis le cockpit.
 
      Cette fonction existait EN DOUBLE : une premiere version ici, puis une
@@ -5337,12 +5350,21 @@ function qrDataUri(text, opts){
       return;
     }
 
-    /* Mission 2 et paliers suivants : le clic doit TOUJOURS déclencher
-       ensemble l'écran d'alerte et son alarme, même si le sonar d'ambiance
-       est coupé. La séquence reste volontairement courte avant le cockpit. */
+    /* PALIERS SUIVANTS : mêmes 5 s d'alerte, puis navigation vers la PAGE
+       DU PALIER COURANT — palier 2 = portail QR (1721310619.html), etc.
+
+       BUG CORRIGÉ : cette branche jouait l'alerte... puis rendait la main
+       sur l'accueil sans jamais naviguer. « REPRENDRE LA MISSION » au
+       palier 2 affichait l'alarme et ne lançait aucune page. */
+    const pagePalier = palierPageUrl(currentTeam.currentStep);
     showNautilusAlarm('launch-' + Date.now(), 5000, true);
     await wait(5000);
     $('nautilusAlarm')?.classList.remove('show');
+    if(pagePalier){
+      location.href = pagePalier;
+      return;
+    }
+    /* Étape inconnue (filet de sécurité) : retour au cockpit. */
     palierLaunchNotice = true;
     renderGame(false);
     smartScroll(document.getElementById('gameCard'));
