@@ -1350,8 +1350,8 @@ window.Nautilus = {
     localStorage.setItem('nautilusLastMember', JSON.stringify(state.me));
     N.showToast(`Bienvenue à bord, ${state.me.name}.`, 'success');
     renderCrew();
-    /* Reconnexion personnelle : si l'équipage a levé mon blocage pendant
-       ma pause, on me le dit tout de suite. */
+    /* Reconnexion personnelle : si l'équipage a levé mon blocage en mon
+       absence, on me le dit tout de suite. */
     annoncerBlocageLeve(state.team);
 
     N.heartbeat(state.teamCode);
@@ -1432,13 +1432,13 @@ window.Nautilus = {
     _blocageLeveVu = marque;
     try { localStorage.setItem(cle, marque); } catch (e) {}
 
-    const msg = `✅ ${state.me.name}, ton équipage a validé une épreuve pendant ta pause. `
+    const msg = `✅ ${state.me.name}, ton équipage a validé une épreuve en ton absence. `
               + `Ton blocage est levé : tu peux reprendre la mission sans délai !`;
     /* Le bandeau d'état vert est posé APRÈS le setStatus() standard de
        onTeamUpdate : notre message le remplace jusqu'au prochain événement. */
     setStatus(msg, 'success');
     N.showToast(msg, 'success', 12000);
-    N.addLogEntry(`🔓 <b>${state.me.name}</b> est débloqué : l'équipage a validé une épreuve pendant sa pause.`, 'success');
+    N.addLogEntry(`🔓 <b>${state.me.name}</b> est débloqué : l'équipage a validé une épreuve en son absence.`, 'success');
 
     /* Accusé en base (silencieux) : le message ne reviendra plus. */
     const key = state.me.memberKey;
@@ -2567,7 +2567,7 @@ window.Nautilus = {
         <div class="won-direction-remind">
           📷 <b>L’équipage souhaite poursuivre maintenant ?</b> Une fois le QR Code trouvé,
           ouvrez la page du prochain palier et scannez-le.<br>
-          <b>Vous préférez faire une pause ?</b> Prenez le QR Code en photo et gardez-le
+          <b>Vous reprendrez plus tard ?</b> Prenez le QR Code en photo et gardez-le
           précieusement : c’est la <b>clé d’entrée du ${esc(nextLabel)}</b> — sans lui,
           la page restera verrouillée et personne ne pourra progresser.
         </div>
@@ -2682,7 +2682,7 @@ window.Nautilus = {
   /* ===== LIGNES DE BLOCAGE (partagées) =====
      Le MEME trio de lignes courtes, pleine largeur, sert la page
      d'erreurs (RETOUR EN SURFACE) et la page de blocage personnel
-     (PAUSE PERSONNELLE) : meme information, meme formulation.
+     (BLOCAGE PERSONNEL) : meme information, meme formulation.
      variante = 'echec' | 'indice' — pour l'indice, la 3e ligne rappelle
      que l'indice reste acquis a l'equipage au lieu d'annoncer la
      prochaine peine.
@@ -2697,7 +2697,7 @@ window.Nautilus = {
     return `
         <div class="lock-ligne lock-ligne--pause">
           <span class="lock-ligne-ico" aria-hidden="true">⏱</span>
-          <span>Ta pause : <b>${esc(String(hours))} h</b> — reprise <b>${esc(N.formatDate(monLock.lockedUntil))}</b>.</span>
+          <span>En surface : <b>${esc(String(hours))} h</b> — retour <b>${esc(N.formatDate(monLock.lockedUntil))}</b>.</span>
         </div>
         <div class="lock-ligne lock-ligne--relais">
           <span class="lock-ligne-ico" aria-hidden="true">⚓</span>
@@ -2714,7 +2714,7 @@ window.Nautilus = {
         : `
         <div class="lock-ligne lock-ligne--next">
           <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
-          <span>Prochain échec : <b>${esc(String(suivante))} h</b> de pause (compteur personnel).</span>
+          <span>Prochain échec : <b>${esc(String(suivante))} h</b> en surface (compteur personnel).</span>
         </div>`);
   }
 
@@ -2736,9 +2736,11 @@ window.Nautilus = {
   /* === ÉCRAN : blocage PERSONNEL (le matelot seul est en surface) ===
      PAGE ALLEGEE : meme pattern concis que l'ecran « RETOUR EN SURFACE » —
      une accroche d'UNE ligne, puis les trois lignes pleine largeur
-     (pause / relais / suite). Supprimes : le pavé d'introduction, la carte
-     « prochaine prise de commande » et les deux cartes cote a cote
-     (illisibles sur telephone). */
+     (surface / relais / suite). Supprimes : le pavé d'introduction, la
+     carte « prochaine prise de commande » et les deux cartes cote a cote
+     (illisibles sur telephone).
+     VOCABULAIRE : plus JAMAIS le mot « pause » ici — on parle de
+     remontée en surface, comme partout ailleurs dans le jeu. */
   function renderMatelotLockScreen(t, me) {
     const l = N.getMatelotLock(t, me.memberKey) || {};
     /* Deux raisons possibles de se retrouver en surface : un échec ou une
@@ -2747,14 +2749,14 @@ window.Nautilus = {
     const parIndice = l.reason === 'indice_demande';
     const lead = parIndice
       ? 'Indice envoyé à l’équipage.'
-      : 'La mission garde le cap pendant ta pause.';
+      : 'Ta plongée s’arrête là. La mission continue.';
     return `
       <section class="lock-screen lock-screen--active" aria-live="polite">
         <div class="lock-heading">
           <span class="lock-heading-icon" aria-hidden="true">${parIndice ? '🧭' : '↟'}</span>
           <div>
-            <p class="lock-kicker">${parIndice ? 'INDICE TRANSMIS' : 'PAUSE PERSONNELLE'}</p>
-            <h2>${esc(me.name)}, prends un peu d'air</h2>
+            <p class="lock-kicker">${parIndice ? 'INDICE TRANSMIS' : 'BLOCAGE PERSONNEL'}</p>
+            <h2>${esc(me.name)}, tu remontes en surface</h2>
           </div>
         </div>
         <p class="lock-lead">${lead}</p>
