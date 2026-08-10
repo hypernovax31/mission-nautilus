@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=16">
+  <link rel="stylesheet" href="css/palier1.css?v=17">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
@@ -2176,13 +2176,38 @@ window.Nautilus = {
     }
     N.addLogEntry(`🔊 ${state.me.name} reçoit le signal (${left}/3 restantes).`, 'info');
     const visual = $('morseVisual');
-    const setVisual = (on) => { if (visual) visual.classList.toggle('on', on); };
+    const ecran = visual && visual.closest ? visual.closest('.morse-sonar-screen') : null;
+    const setVisual = (on) => {
+      if (visual) visual.classList.toggle('on', on);
+      if (!on && ecran) ecran.style.removeProperty('--amp');
+    };
     setVisual(true);
+    /* SYNCHRO PARFAITE AVEC LE SON : l'Analyseur lit l'amplitude REELLE
+       du morse frame par frame ; --amp fait prendre de la hauteur a
+       l'onde au rythme exact des ti et des ta (silence = onde aplatie). */
+    const analyseur = ctx.createAnalyser();
+    analyseur.fftSize = 128;
+    master.connect(analyseur);
+    const echantillons = new Uint8Array(analyseur.fftSize);
+    let rafOnde = 0;
+    const suivreAmplitude = () => {
+      analyseur.getByteTimeDomainData(echantillons);
+      let crete = 0;
+      for (let i = 0; i < echantillons.length; i++) {
+        const d = Math.abs(echantillons[i] - 128);
+        if (d > crete) crete = d;
+      }
+      if (ecran) ecran.style.setProperty('--amp', (0.25 + Math.min(1, crete / 64) * 1.95).toFixed(3));
+      rafOnde = requestAnimationFrame(suivreAmplitude);
+    };
+    rafOnde = requestAnimationFrame(suivreAmplitude);
     try {
       await N.playMorseSequence(ctx, master, state.word, {
         onLetter: () => { /* hook si besoin */ }
       });
     } catch (e) { console.error('Morse play error', e); }
+    cancelAnimationFrame(rafOnde);
+    try { master.disconnect(analyseur); } catch (e) { /* deja debranche */ }
     setVisual(false);
     _isPlaying = false;
   }
