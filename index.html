@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=12">
+  <link rel="stylesheet" href="css/index.css?v=13">
   <link rel="stylesheet" href="css/hublots.css?v=13">
 
 </head>
@@ -1054,6 +1054,10 @@
   const REVEAL_SOUND_FALLBACK_MS = 4100; // durée approchée de Victoire.mp3 si l'événement ended ne vient pas
   const CARD_AFTER_BLIP_MS = 330;        // delai entre le point et sa carte
 
+  function prefersReducedMotion(){
+    return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
   /* La durée réelle du son, si ses métadonnées sont déjà chargées, sert de
      repère aux trois ondes. Sinon le repli garde le rythme de Victoire.mp3. */
   function victorySoundDurationMs(){
@@ -1357,14 +1361,15 @@
       await waitForSweepOver(blipAngle(blipIdx), sweepTimeout);
       isFirstReveal = false;
 
-      /* b) Victoire.mp3 et les trois ondes démarrent dans la même séquence.
-         Les anneaux reprennent la durée connue du signal : leur dernier
-         écho s'éteint juste avec l'annonce sonore. */
+      /* b) En mode normal, Victoire.mp3 et les trois ondes démarrent dans
+         la même séquence. En mode réduit : silence total et un seul fondu
+         rapide du point, sans écho ni pulsation. */
+      const reducedMotion = prefersReducedMotion();
       const victoryDuration = victorySoundDurationMs();
-      const alarmDone = playAlarmOnce();
+      const alarmDone = reducedMotion ? Promise.resolve() : playAlarmOnce();
       if(blipEl){
         blipEl.classList.add('revealed', 'blip-pop');
-        startVictoryEchoes(blipEl, victoryDuration);
+        if(!reducedMotion) startVictoryEchoes(blipEl, victoryDuration);
       }
 
       /* c) La carte suit le point de très près : 0,33 s plus tard. Le délai

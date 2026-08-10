@@ -1162,8 +1162,19 @@
       72%{opacity:.30}
       100%{transform:translate(-50%,-50%) scale(5.8);opacity:0}
     }
+    /* Mode « réduire les animations » : pas de son, pas d'échos ni de
+       pulsation. Le point apparaît avec un seul mouvement court, régulier
+       et centré pour rester lisible sans devenir brutal. */
+    @keyframes reducedMotionBlipAppear{
+      0%{transform:translate(-50%,-50%) scale(.58);opacity:0}
+      65%{transform:translate(-50%,-50%) scale(1.06);opacity:1}
+      100%{transform:translate(-50%,-50%) scale(1);opacity:1}
+    }
     @media (prefers-reduced-motion: reduce){
-      .radar-blip.blip-pop{animation:none;transform:translate(-50%,-50%)}
+      .radar-blip.blip-pop{
+        transition:none !important;
+        animation:reducedMotionBlipAppear .30s cubic-bezier(.2,.8,.3,1) both;
+      }
       .radar-blip .blip-echo{display:none}
     }
     /* POSITION DES POINTS = AVANCEMENT DANS LE JEU
