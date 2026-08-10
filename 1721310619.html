@@ -39,6 +39,19 @@
     </div>
   </section>
 
+  <!-- Journal de bord (live) : EN HAUT DE PAGE, juste sous le héros
+       « ZONE SCELLÉE » et au-dessus du sas — la même place que sur le
+       Palier 1, où le journal précède la carte de l'épreuve -->
+  <section class="card" id="logCard">
+    <h2>📜 JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3>Activité en direct</h3>
+        <ul id="morse-log-list"></ul>
+      </div>
+    </div>
+  </section>
+
   <section class="card" id="gateCard">
     <h2>📷 SCELLÉ D'ACCÈS — QR CODE</h2>
     <div class="body">
@@ -87,19 +100,6 @@
         gardez cette page sous la main.
       </p>
       <a class="gate-home" href="index.html">🏠 Retour à l'accueil</a>
-    </div>
-  </section>
-
-  <!-- Journal de bord (live) : le MÊME code que le Palier 1, fourni par
-       journal-bord.js. Visible en permanence : le portail est la salle
-       d'attente du palier, son activité se lit ici en direct. -->
-  <section class="card" id="logCard">
-    <h2>📜 JOURNAL DE BORD</h2>
-    <div class="body">
-      <div class="morse-log">
-        <h3>Activité en direct</h3>
-        <ul id="morse-log-list"></ul>
-      </div>
     </div>
   </section>
 </main>
