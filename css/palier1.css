@@ -514,7 +514,6 @@
 /* ===== Écran « Épreuve validée ! » : nouveaux blocs ===== */
 .won-line{color:#dfffe8;font-size:16px;line-height:1.5;margin:8px 0}
 .won-line--bravo{color:#bcd9e6;font-size:14px;margin:6px 0}
-.won-palier-line{color:#dfffe8;font-size:15px;line-height:1.5;margin:4px 0 12px;text-align:center;font-weight:700}
 .won-unlock-note{background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.5);color:#dfffe8;border-radius:14px;padding:10px 14px;max-width:560px;margin:6px auto 0;font-size:13.5px;line-height:1.5}
 .won-actions{margin:18px 0 0}
 .won-continue-btn{display:inline-block;background:rgba(245,176,39,.12);border:2px solid rgba(245,176,39,.6);color:#ffd36c;border-radius:12px;padding:12px 22px;font-weight:900;font-size:14px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:background .2s}

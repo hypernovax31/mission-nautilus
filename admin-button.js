@@ -335,9 +335,12 @@
     [
       ['victoire', '🏆 Épreuve validée (victoire)'],
       ['defaite', '↟ Retour en surface (défaite)'],
-      ['blocage', '🔒 Blocage personnel d’un matelot'],
-      ['suite', '🧭 Transition vers le palier suivant']
-    ].forEach(([mode, titre]) => {
+      ['blocage', '🔒 Blocage personnel d’un matelot']
+    ]
+    /* L'apercu « transition vers le palier suivant » a ete supprime avec
+       l'ecran : un matelot dont l'equipage a valide le palier est desormais
+       RENVOYE directement sur la page du palier courant, il n'y a plus
+       d'ecran intermediaire a previsualiser. */.forEach(([mode, titre]) => {
       lignes.push(ligne(titre, 'aperçu', lien(`palier1.html?apercu=${mode}&k=${k}`, 'Aperçu'), true));
     });
     lignes.push(sectionHtml('EFFETS (sur cette page)'));

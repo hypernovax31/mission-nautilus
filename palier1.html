@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=8">
+  <link rel="stylesheet" href="css/palier1.css?v=9">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
@@ -1019,7 +1019,7 @@ window.Nautilus = {
 
   /* ===== APERÇU ADMIN — TEST DES ÉCRANS SANS JOUER =====
      Ouvert depuis le panneau admin (« Tester toutes les pages ») :
-        palier1.html?apercu=victoire|defaite|blocage|suite&k=<clé>
+        palier1.html?apercu=victoire|defaite|blocage&k=<clé>
      Tout est factice et local : AUCUNE lecture ni écriture de partie,
      l'écran servi est le même que celui des vrais joueurs.
      La clé prouve la provenance du panneau admin ; elle dérive du code
@@ -1055,8 +1055,8 @@ window.Nautilus = {
     const plus1h = new Date(maintenant + 3600e3).toISOString();
     const team = {
       teamCode: 'NEMO', teamName: 'Nemo',
-      currentStep: mode === 'suite' ? 'livres' : 'start',
-      completedSteps: mode === 'suite' ? ['start'] : [],
+      currentStep: 'start',
+      completedSteps: [],
       status: 'active', failCount: 1,
       matelotLocks: {
         DEMO: { name: 'DÉMO', failCount: 1, lastLockHours: 1, lockedUntil: plus1h, reason: 'morse_too_many_errors', blockedAt: new Date(maintenant - 600e3).toISOString() }
@@ -1089,8 +1089,7 @@ window.Nautilus = {
     const titres = {
       victoire: 'victoire « Épreuve validée ! »',
       defaite: 'retour en surface (défaite)',
-      blocage: 'blocage personnel du matelot',
-      suite: 'transition vers le palier suivant'
+      blocage: 'blocage personnel du matelot'
     };
     setStatus(`🧪 APERÇU ADMIN — ${titres[mode] || mode}. Aucune donnée réelle, aucune écriture.`, 'warning');
 
@@ -1103,10 +1102,8 @@ window.Nautilus = {
       body.innerHTML = renderLostScreen({ ...sessionBase, state: 'lost', endReason: 'too_many_errors' }, team);
     } else if (mode === 'blocage') {
       body.innerHTML = renderMatelotLockScreen(team, me);
-    } else if (mode === 'suite') {
-      body.innerHTML = renderNextStepPrompt(team);
     } else {
-      body.innerHTML = `<div class="notice">🧪 Aperçu « ${esc(mode)} » inconnu. Valeurs possibles : victoire, defaite, blocage, suite.</div>`;
+      body.innerHTML = `<div class="notice">🧪 Aperçu « ${esc(mode)} » inconnu. Valeurs possibles : victoire, defaite, blocage.</div>`;
     }
   }
 
@@ -1570,20 +1567,25 @@ window.Nautilus = {
 
     /* Pas de session active → écran d'accueil du palier */
     if (!s || s.state === 'idle' || s.state === 'ended') {
-      /* Palier deja franchi : on montre la suite du parcours.
+      /* GARDE-FOU « palier déjà franchi » : un matelot d'un équipage déjà
+         plus loin arrive encore ici (favori, historique, retour
+         navigateur, ancien onglet…). Sans cette intervention, il verrait
+         l'écran d'accueil du Palier 1 et pourrait REJOUER un palier déjà
+         validé (double validation, fausse annonce, progression cassée).
 
-         On verifie AUSSI que l'equipage a bien quitte le palier 1
-         (currentStep). Sans cela, une equipe dont la liste des paliers
-         valides contenait 'start' alors qu'elle etait toujours au
-         palier 1 restait coincee sur "Palier 1 termine, prochaine
-         etape : Palier 1" — un ecran sans issue, qui invitait a passer
-         a une etape ou l'on se trouvait deja.
-         Cet etat incoherent peut venir d'une remise a zero partielle ou
-         d'une intervention manuelle en base. */
+         L'ancien écran passif « 🧭 Transition vers le palier suivant »
+         est SUPPRIMÉ : on ENVOIE directement le matelot sur la page du
+         palier courant de son équipage — exactement comme le bouton
+         « REPRENDRE LA MISSION » de l'accueil. location.replace (et non
+         href) : cette page ne reste pas dans l'historique, le bouton
+         « retour » du navigateur ne peut pas y revenir en boucle.
+         nextStepPageUrl() pointe vers le portail du palier courant (le
+         nom du fichier EST le code du palier ; les pages des paliers
+         suivent toutes cette convention). */
       const dejaFranchi = (t.completedSteps || []).includes('start')
                        && t.currentStep !== 'start';
       if (dejaFranchi) {
-        body.innerHTML = renderNextStepPrompt(t);
+        location.replace(nextStepPageUrl(t.currentStep));
         return;
       }
       body.innerHTML = renderIdleScreen(t, me, null);
@@ -2695,21 +2697,12 @@ window.Nautilus = {
   }
 
 
-  /* === ÉCRAN : transition palier suivant ===
-     L'équipage revient sur la page après avoir validé : on lui re-sert le
-     panneau « DIRECTION VERS LA ZONE DE RECHERCHE », pour qu'il retrouve
-     les informations de localisation du QR Code sans rien redemander. */
-  function renderNextStepPrompt(t) {
-    const nextStep = t.currentStep;
-    const nextLabel = N.STEPS[nextStep]?.label || '?';
-    return `
-      <div class="status-banner success">
-        ✅ <b>Palier 1 terminé.</b> L'équipage est prêt à passer au <b>${esc(nextLabel)}</b>.
-      </div>
-      <p class="won-palier-line">Tout l’équipage « ${esc(displayTeamName(t))} » a franchi le sas du <b>Palier 1</b>.</p>
-      ${directionPanelHtml(nextStep, { id: 'promptDirectionPanel' })}
-    `;
-  }
+  /* === ÉCRAN SUPPRIMÉ : « transition vers le palier suivant » ===
+     Il ne montrait plus que le panneau de direction — déjà présent sur
+     l'écran de victoire ET sur le portail du palier suivant. Un matelot
+     dont l'équipage a validé le Palier 1 est désormais RENVOYÉ
+     directement vers la page du palier courant (garde-fou dans le
+     rendu, voir « GARDE-FOU palier déjà franchi »). */
 
   /* === Bouton retour === */
   $('backBtn').addEventListener('click', () => {
@@ -2759,6 +2752,6 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=3" defer></script>
-<script src="admin-button.js?v=5" type="module"></script>
+<script src="admin-button.js?v=6" type="module"></script>
 </body>
 </html>
