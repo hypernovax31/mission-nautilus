@@ -1310,10 +1310,13 @@
       let soundOn = true;
       try{ soundOn = localStorage.getItem('nautilusSoundOn') !== '0'; }catch(e){ /* ignore */ }
       if(!soundOn){ setTimeout(resolve, REVEAL_SOUND_FALLBACK_MS); return; }
-      /* Le seul son autorise AVANT le premier clic reste l'ambiance sonar :
-         une decouverte d'equipage survenant des le chargement attend que
-         le joueur ait clique pour jouer son annonce. */
+      /* L'annonce d'un equipage ne joue qu'APRES un geste sur la page —
+         CLIC, TOUCHER, SCROLL ou DEPLACEMENT DE SOURIS — et uniquement si
+         la fenetre est VISIBLE. Avant cela (ou onglet masque) : la
+         decouverte reste animee, mais silencieuse, et la sequence garde
+         exactement le meme rythme. */
       if(!_pageInteractionSoundsReady){ setTimeout(resolve, REVEAL_SOUND_FALLBACK_MS); return; }
+      if(document.visibilityState !== 'visible'){ setTimeout(resolve, REVEAL_SOUND_FALLBACK_MS); return; }
       const a = document.getElementById('revealAlarmAudio') || document.getElementById('alarmAudio');
       if(!a){ setTimeout(resolve, REVEAL_SOUND_FALLBACK_MS); return; }
       let done = false;
@@ -3757,7 +3760,8 @@ function qrDataUri(text, opts){
      independants : un seul endroit qui dit "l'utilisateur a agi". */
   let _gesteRecu = false;
   /* Le tout premier geste sert uniquement à démarrer l'ambiance. Les sons
-     d'interface (frappe de l'ordre, hublot) ne doivent jamais s'y greffer. */
+     d'interface (frappe de l'ordre, hublot, annonce d'équipage) ne doivent
+     jamais s'y greffer. */
   let _pageInteractionSoundsReady = false;
   let _skipInitialHublotSfx = false;
   const _gesteCbs = [];
@@ -3769,7 +3773,13 @@ function qrDataUri(text, opts){
     _gesteCbs.push({ cb, rang: (typeof rang === 'number' ? rang : 9) });
   }
   (function guetterPremierGeste(){
-    const evts = ['pointerdown','touchstart','mousedown','keydown','click'];
+    /* Déclencheurs retenus : CLIC, TOUCHER (écran tactile), DEFILEMENT
+       (molette, glissement, scroll) et simple DEPLACEMENT DE LA SOURIS.
+       Remarque : un scroll peut aussi être émis par un retour d'historique
+       ou une ancre, sans geste réel — les navigateurs refusent alors la
+       lecture et tout reste silencieux : le déblocage reste sans danger. */
+    const evts = ['pointerdown','touchstart','mousedown','keydown','click',
+      'scroll','wheel','touchmove','mousemove'];
     const go = event => {
       if(_gesteRecu) return;
       _gesteRecu = true;
@@ -3882,14 +3892,21 @@ function qrDataUri(text, opts){
      ponctuation, qui sonnent un peu plus creux sur une vraie machine. */
   function _typeClick(fort){
     if(!isSoundEnabled()) return;
-    /* REGLE STRICTE : le bruit de la frappe ne demarre qu'apres un CLIC
-       sur la page, et uniquement si la fenetre est VISIBLE. Le seul son
-       autorise au chargement reste l'ambiance sonar ; tant que le joueur
-       n'a pas clique, le texte s'ecrit en silence. */
+    /* REGLE STRICTE : le bruit de la frappe ne demarre qu'apres un geste
+       sur la page — CLIC, TOUCHER, SCROLL ou DEPLACEMENT DE SOURIS — et
+       uniquement si la fenetre est VISIBLE. Le seul son autorise au
+       chargement reste l'ambiance sonar ; tant que le joueur n'a pas
+       bouge, le texte s'ecrit en silence. */
     if(!_pageInteractionSoundsReady) return;
     if(document.visibilityState !== 'visible') return;
     const ctx = _openTypeAudio();
     if(!ctx) return;
+    /* Deblocage par scroll/souris seuls : les navigateurs stricts ne les
+       comptent pas comme geste et gardent le contexte suspendu. On retente
+       la reprise a CHAQUE frappe — le premier vrai clic l'accorde — et on
+       saute ce bip-ci : aucune note programmee pendant la suspension,
+       donc aucune rafale de rattrapage au reveil du contexte. */
+    if(ctx.state === 'suspended'){ ctx.resume().catch(()=>{}); return; }
     /* GARDE-FOU QUI DECALE AU LIEU DE JETER.
        L'ancienne version abandonnait purement et simplement le bip quand
        deux caracteres tombaient trop pres. Mesure sur l'ordre de mission :
