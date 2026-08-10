@@ -3787,6 +3787,18 @@ function qrDataUri(text, opts){
     }catch(e){ _typeCtx = null; return null; }
   }
 
+  /* Certains navigateurs accordent l'audio quelques instants après le média
+     d'ambiance muet. On retente donc brièvement le contexte des bips pendant
+     l'animation, sans jamais attendre un clic ni jouer hors écran. */
+  function _retryTypeAudioWhileTyping(){
+    [280, 900, 2200].forEach(delay => {
+      setTimeout(() => {
+        if(!_typeCtx || _typewriterCancelled || document.visibilityState !== 'visible') return;
+        if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
+      }, delay);
+    });
+  }
+
   function _closeTypeAudio(){
     if(!_typeCtx) return;
     const ctx = _typeCtx;
@@ -3967,7 +3979,10 @@ function qrDataUri(text, opts){
       parti = true;
       if(secours) clearTimeout(secours);
       typewriterSoundAllowed = Boolean(allowSound) && isSoundEnabled();
-      if(typewriterSoundAllowed) _openTypeAudio();
+      if(typewriterSoundAllowed){
+        _openTypeAudio();
+        _retryTypeAudioWhileTyping();
+      }
       setTimeout(tick, 40);
     };
 
@@ -4609,6 +4624,8 @@ function qrDataUri(text, opts){
   let _primedSilently = false;   // la lecture muette anticipee tourne
   let _audioWakeDone = false;    // le son est reellement audible
   let _primeIdleTimer = null;    // coupe la lecture muette si inutilisee
+  let _autoplayRecoveryTimer = null;
+  let _autoplayRecoveryAttempt = 0;
   /* Le sonar a-t-il ete eteint volontairement ? Repris du precedent
      passage sur le site : le silence doit survivre au rechargement. */
   let _soundOffByUser = (() => {
@@ -4630,6 +4647,8 @@ function qrDataUri(text, opts){
   /* Coupe net toutes les sources sonores de la page : les trois lecteurs
      <audio> (ambiance, alarme de mission, annonce d'equipage). */
   function silenceEverything(){
+    clearTimeout(_autoplayRecoveryTimer);
+    _autoplayRecoveryTimer = null;
     document.querySelectorAll('audio').forEach(a => {
       try{
         a.pause();
@@ -4665,16 +4684,43 @@ function qrDataUri(text, opts){
     if(p && typeof p.then === 'function'){
       p.then(() => {
         _primedSilently = true;
+        _autoplayRecoveryAttempt = 0;
         // Filet de securite : si personne n'active le son dans les 45 s,
         // on coupe la lecture muette pour rendre la batterie au telephone.
         clearTimeout(_primeIdleTimer);
         _primeIdleTimer = setTimeout(unprimeOceanAudio, 45000);
+        scheduleAmbianceAutoplayRecovery();
       }).catch(() => { _primedSilently = false; });
     }
   }
 
+  /* Après l'amorçage muet, on tente automatiquement de rendre l'ambiance
+     audible. Cela fonctionne sur les navigateurs qui acceptent le démarrage
+     après un média muet ; les navigateurs stricts gardent simplement le
+     lecteur prêt pour le prochain geste sans produire de parasite. */
+  function scheduleAmbianceAutoplayRecovery(){
+    if(_soundOffByUser || _audioWakeDone || !_primedSilently || document.visibilityState !== 'visible') return;
+    const delays = [650, 1800, 4200];
+    if(_autoplayRecoveryAttempt >= delays.length) return;
+    clearTimeout(_autoplayRecoveryTimer);
+    const delay = delays[_autoplayRecoveryAttempt++];
+    _autoplayRecoveryTimer = setTimeout(async () => {
+      _autoplayRecoveryTimer = null;
+      if(_soundOffByUser || _audioWakeDone || !_primedSilently || document.visibilityState !== 'visible') return;
+      const started = await startOceanAudio();
+      if(started){
+        _audioWakeDone = true;
+        setSoundEnabled(true);
+      }else{
+        scheduleAmbianceAutoplayRecovery();
+      }
+    }, delay);
+  }
+
   /* Arrete la lecture muette (economie de batterie). */
   function unprimeOceanAudio(){
+    clearTimeout(_autoplayRecoveryTimer);
+    _autoplayRecoveryTimer = null;
     const a = _ambiance();
     if(!a || _audioWakeDone) return;
     if(_primedSilently && a.muted){
@@ -4707,7 +4753,12 @@ function qrDataUri(text, opts){
       // passer une image puis on verifie qu'il joue toujours.
       return new Promise(resolve => setTimeout(resolve, 80)).then(() => {
         if(a.paused){
-          return a.play().then(() => { setSonarButtonState(true); return true; })
+          return a.play().then(() => {
+            clearTimeout(_autoplayRecoveryTimer);
+            _autoplayRecoveryTimer = null;
+            setSonarButtonState(true);
+            return true;
+          })
                          .catch(() => {
                            // Refus : on repart en sourdine pour rester pret
                            // pour le prochain geste (clic notamment).
@@ -4718,6 +4769,8 @@ function qrDataUri(text, opts){
                            return false;
                          });
         }
+        clearTimeout(_autoplayRecoveryTimer);
+        _autoplayRecoveryTimer = null;
         setSonarButtonState(true);
         return true;
       });
@@ -4728,6 +4781,8 @@ function qrDataUri(text, opts){
     a.muted = false;
     a.volume = OCEAN_VOLUME;
     return a.play().then(() => {
+      clearTimeout(_autoplayRecoveryTimer);
+      _autoplayRecoveryTimer = null;
       setSonarButtonState(true);
       return true;
     }).catch(() => {

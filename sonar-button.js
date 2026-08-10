@@ -53,6 +53,8 @@
   var btn = null;
   var primed = false;      // lecture muette lancee (deblocage anticipe)
   var audible = false;     // le son sort vraiment
+  var autoWakeTimer = null;
+  var autoWakeAttempt = 0;
 
   function soundAllowed() {
     // Autorise par defaut : seul un refus explicite coupe le son.
@@ -179,15 +181,42 @@
     audio.muted = true;
     audio.volume = 0;
     var p = audio.play();
-    if (p && p.then) p.then(function () { primed = true; }).catch(function () { primed = false; });
+    if (p && p.then) p.then(function () {
+      primed = true;
+      autoWakeAttempt = 0;
+      scheduleAutoWake();
+    }).catch(function () { primed = false; });
+  }
+
+  /* Le média muet est parfois autorisé avant l'audio audible. On profite de
+     cette fenêtre pour retenter automatiquement l'ambiance quelques fois,
+     sans attendre un scroll ou un clic. Les navigateurs stricts restent
+     silencieux jusqu'au prochain geste, conformément à leur politique. */
+  function scheduleAutoWake() {
+    if (!primed || audible || !soundAllowed() || document.visibilityState !== 'visible') return;
+    var delays = [650, 1800, 4200];
+    if (autoWakeAttempt >= delays.length) return;
+    clearTimeout(autoWakeTimer);
+    var delay = delays[autoWakeAttempt++];
+    autoWakeTimer = setTimeout(function () {
+      autoWakeTimer = null;
+      if (!primed || audible || !soundAllowed() || document.visibilityState !== 'visible') return;
+      start().then(function (ok) {
+        if (!ok) scheduleAutoWake();
+      });
+    }, delay);
   }
 
   function start() {
     if (!audio || !soundAllowed()) return Promise.resolve(false);
     audio.muted = false;
     audio.volume = VOLUME;
-    if (primed && !audio.paused) { paint(true); return Promise.resolve(true); }
+    if (primed && !audio.paused) {
+      clearTimeout(autoWakeTimer); autoWakeTimer = null;
+      paint(true); return Promise.resolve(true);
+    }
     return audio.play().then(function () {
+      clearTimeout(autoWakeTimer); autoWakeTimer = null;
       paint(true);
       return true;
     }).catch(function () {
@@ -205,6 +234,7 @@
     for (var i = 0; i < list.length; i++) {
       try { list[i].pause(); list[i].muted = true; } catch (e) { /* pas pret */ }
     }
+    clearTimeout(autoWakeTimer); autoWakeTimer = null;
     primed = false;
     paint(false);
   }
