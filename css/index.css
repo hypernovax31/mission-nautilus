@@ -91,22 +91,14 @@
       opacity:.07;
     }
     /* IDENTITE VISUELLE DES EQUIPAGES
-       Chaque carte porte la couleur de son equipage sur TOUT son contour
-       (et non plus un simple liseré a gauche), avec un halo exterieur de
-       cette meme couleur. Objectif : reconnaitre un equipage d'un coup
-       d'oeil, sans avoir a lire son nom. */
+       Chaque carte porte la couleur de son équipage sur son contour. Le
+       halo coloré est réservé au survol : ainsi il apparaît clairement à
+       l'entrée et disparaît totalement quand la souris quitte la carte. */
     .team.team-reveal{
-      /* Les couleurs de halo ont ete eclaircies pour bien ressortir sur le
-         fond noir du sonar. Sur le fond BLANC des cartes, un trait clair
-         s'efface : on monte donc l'opacite du contour a 85 % pour garder
-         un trait franc. La barre de gauche, elle, garde la teinte sombre
-         d'origine (tint), parfaitement lisible sur blanc. */
       border:2px solid rgba(var(--team-glow,143,164,181),.85);
       border-left:7px solid var(--team-tint,#dfe8ee);
-      box-shadow:
-        0 0 0 1px rgba(var(--team-glow,143,164,181),.20),
-        0 8px 22px rgba(var(--team-glow,143,164,181),.28),
-        0 2px 6px rgba(0,0,0,.06);
+      /* Ombre neutre uniquement au repos : aucun halo résiduel coloré. */
+      box-shadow:0 2px 6px rgba(0,0,0,.10);
       /* Pas de transition ici : au départ du pointeur, le halo s'éteint
          immédiatement au lieu de laisser une traînée lumineuse. */
     }
@@ -1543,24 +1535,14 @@
     /* On anime box-shadow plutot que drop-shadow : le halo epouse alors le
        contour arrondi de la carte au lieu de baver autour du bloc. */
     @keyframes teamGlint{
-      0%{
-        box-shadow:
-          0 0 0 1px rgba(var(--team-glow,143,164,181),.20),
-          0 0 0 0 rgba(var(--team-glow,143,164,181),.55),
-          0 8px 22px rgba(var(--team-glow,143,164,181),.28);
-      }
+      0%{box-shadow:0 2px 6px rgba(0,0,0,.10);}
       35%{
         box-shadow:
           0 0 0 1px rgba(var(--team-glow,143,164,181),.45),
           0 0 34px 10px rgba(var(--team-glow,143,164,181),.75),
           0 8px 26px rgba(var(--team-glow,143,164,181),.45);
       }
-      100%{
-        box-shadow:
-          0 0 0 1px rgba(var(--team-glow,143,164,181),.20),
-          0 8px 22px rgba(var(--team-glow,143,164,181),.28),
-          0 2px 6px rgba(0,0,0,.06);
-      }
+      100%{box-shadow:0 2px 6px rgba(0,0,0,.10);}
     }
     /* ===== Mise en evidence depuis le sonar =====
        Survol ou clic sur un point blanc : la carte de l'equipage s'entoure
