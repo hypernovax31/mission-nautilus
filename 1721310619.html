@@ -6,9 +6,9 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=18">
-  <link rel="stylesheet" href="css/palier2.css?v=2">
+  <link rel="stylesheet" href="css/palier2.css?v=3">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
-       connexion : la saisie manuelle du numéro secret prend alors le
+       connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 
@@ -78,16 +78,6 @@
 
       <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
 
-      <div class="gate-manual">
-        <label for="gateCodeInput">… ou entre ici le <b>numéro secret</b> découvert avec le QR Code :</label>
-        <div class="gate-manual-row">
-          <!-- Pas d'exemple de numéro dans la barre de saisie : le
-               numéro secret ne doit JAMAIS être suggéré par la page. -->
-          <input id="gateCodeInput" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="numeric" />
-          <button type="button" class="gate-btn gate-btn--unlock" id="gateCodeBtn">🔓 Déverrouiller</button>
-        </div>
-      </div>
-
     </div>
   </section>
 
@@ -113,7 +103,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=1"></script>
+<script src="palier-sas.js?v=2"></script>
 <script>window.NautilusSas.init(2);</script>
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
 <script src="sonar-button.js?v=3" defer></script>

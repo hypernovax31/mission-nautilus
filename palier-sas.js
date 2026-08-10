@@ -20,7 +20,7 @@
      <section class="card gate-hero">
        <h2 id="sasHeroTitle">🔒 PALIER n — ZONE SCELLÉE</h2> …
      </section>
-     <section class="card" id="gateCard">… QR / photo / numéro …</section>
+     <section class="card" id="gateCard">… QR / photo …</section>
      <section class="card gate-unlocked" id="gateUnlocked" hidden>
        <h2 id="sasUnlockedTitle">✅ PALIER n DÉVERROUILLÉ</h2> …
      </section>
@@ -31,14 +31,14 @@
        (le héros n'est jamais masqué, scellé ou pas) ;
      • tant que le sas est fermé, tout élément .sas-protege reste
        caché : IMPOSSIBLE de toucher au mini-jeu ;
-     • déblocage = QR caméra, PHOTO du QR importée, ou numéro secret ;
+     • déblocage = QR caméra, ou PHOTO du QR importée ;
      • une fois ouvert, on le mémorise sur l'appareil
        (localStorage), l'équipage n'a pas à refaire le scan à chaque
        visite — le héros « ZONE SCELLÉE » reste visible en rappel ;
      • chaque événement est consigné dans le JOURNAL DE BORD commun
        (journal-bord.js, « Activité en direct »).
 
-   Utilisation : <script src="palier-sas.js?v=1"></script>
+   Utilisation : <script src="palier-sas.js?v=2"></script>
                  <script>NautilusSas.init(2);</script>   // n = palier
    ============================================================= */
 (function () {
@@ -143,12 +143,12 @@
     function startCamera() {
       message('');
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        message('📷 Caméra indisponible sur cet appareil : importe la PHOTO du QR Code, ou entre le numéro secret.', 'warning');
+        message('📷 Caméra indisponible sur cet appareil : importe la PHOTO du QR Code.', 'warning');
         journal('📷 Caméra indisponible sur cet appareil.', 'warning');
         return;
       }
       if (!lecteurQrPret()) {
-        message('📷 Le lecteur QR n’a pas pu se charger (connexion ?). Importe la PHOTO du QR Code, ou entre le numéro secret.', 'warning');
+        message('📷 Le lecteur QR n’a pas pu se charger (connexion ?). Importe la PHOTO du QR Code.', 'warning');
         journal('📷 Lecteur QR indisponible (connexion ?).', 'warning');
         return;
       }
@@ -213,7 +213,7 @@
       message('');
       if (!fichier) return;
       if (!lecteurQrPret()) {
-        message('🖼️ Le lecteur QR n’a pas pu se charger (connexion ?). Zoome bien sur la photo et réessaie, ou entre le numéro secret.', 'warning');
+        message('🖼️ Le lecteur QR n’a pas pu se charger (connexion ?). Zoome bien sur la photo et réessaie.', 'warning');
         journal('🖼️ Lecteur QR indisponible : la photo n’a pas pu être lue.', 'warning');
         return;
       }
@@ -237,11 +237,11 @@
             if (trouve && trouve.data) {
               verifier(trouve.data, 'photo importée');
             } else {
-              message('🖼️ Aucun QR Code lisible sur cette photo. Recadre-la sur le code, ou entre le numéro secret.', 'warning');
+              message('🖼️ Aucun QR Code lisible sur cette photo. Recadre-la sur le code et réessaie.', 'warning');
               journal('🖼️ Aucun QR Code lisible sur la photo importée.', 'warning');
             }
           } catch (e) {
-            message('🖼️ Photo illisible. Réessaie avec un cliché plus net, ou entre le numéro secret.', 'warning');
+            message('🖼️ Photo illisible. Réessaie avec un cliché plus net.', 'warning');
             journal('🖼️ Photo illisible : le décodage a échoué.', 'warning');
           }
         };
@@ -252,7 +252,7 @@
         img.src = String(lecteur.result || '');
       };
       lecteur.onerror = function () {
-        message('🖼️ Photo illisible. Réessaie avec un cliché plus net, ou entre le numéro secret.', 'warning');
+        message('🖼️ Photo illisible. Réessaie avec un cliché plus net.', 'warning');
       };
       lecteur.readAsDataURL(fichier);
     }
@@ -272,14 +272,9 @@
       importerPhoto(e.target.files && e.target.files[0]);
       e.target.value = '';   // même photo deux fois de suite = même combat, on réarme
     });
-    var codeBtn = $('gateCodeBtn');
-    var codeInput = $('gateCodeInput');
-    if (codeBtn && codeInput) {
-      codeBtn.addEventListener('click', function () { verifier(codeInput.value, 'numéro secret'); });
-      codeInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); verifier(codeInput.value, 'numéro secret'); }
-      });
-    }
+    /* La SAISIE MANUSCRITE du numéro secret (gateCodeBtn/gateCodeInput)
+       a été SUPPRIMÉE de la page : seules la caméra et la photo du QR
+       Code lèvent désormais le scellé. */
     document.addEventListener('visibilitychange', function () { if (document.hidden) stopCamera(); });
     window.addEventListener('beforeunload', stopCamera);
 

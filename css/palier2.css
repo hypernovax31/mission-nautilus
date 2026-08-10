@@ -53,9 +53,6 @@
 .gate-btn--cam:hover{ background:rgba(142,231,255,.24); color:#fff; }
 .gate-btn--import{ background:var(--fnac); color:#111; border-color:transparent; }
 .gate-btn--import:hover{ filter:brightness(1.08); }
-.gate-btn--unlock{ background:#111; color:var(--fnac); border-color:rgba(245,176,39,.65); }
-.gate-btn--unlock:hover{ background:#1c1206; }
-
 .gate-msg{
   margin-top:12px; font-size:13px; font-weight:800; line-height:1.5;
   border-radius:12px; padding:0;
@@ -66,16 +63,8 @@
 .gate-msg.is-danger{ color:#ffd0cd; background:rgba(255,75,62,.14); border:1px solid rgba(255,75,62,.5); padding:10px 12px; }
 .gate-msg.is-success{ color:#dfffe8; background:rgba(91,255,156,.10); border:1px solid rgba(91,255,156,.5); padding:10px 12px; }
 
-.gate-manual{ margin-top:16px; border-top:1px dashed rgba(245,176,39,.35); padding-top:14px; }
-.gate-manual label{ display:block; color:#9bc4d4; font-size:12.5px; font-weight:800; margin-bottom:8px; }
-.gate-manual-row{ display:flex; gap:10px; flex-wrap:wrap; }
-.gate-manual-row input{
-  flex:1 1 200px; min-width:0;
-  background:rgba(2,10,18,.7); color:#fff;
-  border:1px solid rgba(245,176,39,.4); border-radius:12px;
-  padding:12px 14px; font-size:15px; font-weight:700; letter-spacing:.08em;
-}
-.gate-manual-row input:focus{ outline:none; border-color:var(--fnac); box-shadow:0 0 0 3px rgba(245,176,39,.18); }
+/* L'encart de saisie manuscrite du numéro secret (.gate-manual) a été
+   SUPPRIMÉ : caméra ou photo du QR Code uniquement. Styles retirés. */
 
 .gate-unlocked{ border-color:rgba(91,255,156,.5); }
 .gate-unlocked h2{ color:#5be09b; }
