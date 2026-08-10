@@ -3899,6 +3899,11 @@ function qrDataUri(text, opts){
        bouge, le texte s'ecrit en silence. */
     if(!_pageInteractionSoundsReady) return;
     if(document.visibilityState !== 'visible') return;
+    /* Ordre de mission sorti de la fenetre : coupure immediate — meme
+       regle que le sonar d'« EQUIPAGES EN PLONGEE ». La reprise est
+       automatique : la premiere lettre frappee une fois le bloc revenu
+       sous les yeux ressonne. */
+    if(!_typewriterOnScreen) return;
     const ctx = _openTypeAudio();
     if(!ctx) return;
     /* Deblocage par scroll/souris seuls : les navigateurs stricts ne les
@@ -3981,7 +3986,8 @@ function qrDataUri(text, opts){
      Meme matiere sonore que les bips de frappe (sinus + octave discrete,
      filtres), pour que la fin appartienne au meme instrument. */
   function _typeDing(){
-    if(!isSoundEnabled() || !_typeCtx) return;
+    /* La clochette de fin obeit a la meme coupure hors ecran que les bips. */
+    if(!isSoundEnabled() || !_typeCtx || !_typewriterOnScreen) return;
     try{
       const ctx = _typeCtx;
       /* Meme facture que les bips : sinusoides filtrees, plus de carre.
@@ -4011,6 +4017,63 @@ function qrDataUri(text, opts){
       });
     }catch(e){ /* silencieux */ }
   }
+
+  /* ===== FRAPPE : COUPEE HORS ECRAN, REPRISE AU RETOUR =====
+     Meme regle que le sonar du bloc « EQUIPAGES EN PLONGEE » : ses effets
+     sonores se coupent des que l'ordre de mission n'est plus visible dans
+     la fenetre et reprennent au retour sous les yeux. Les bips sont
+     planifies lettre par lettre : couper revient a ne plus en programmer
+     tant que le bloc est hors de vue — la reprise est donc instantanee
+     des la premiere lettre visible a nouveau. L'animation du texte, elle,
+     continue normalement (le joueur la retrouve a jour). */
+  let _typewriterOnScreen = false;
+  (function watchTypewriterVisibility(){
+    const target = $('missionOrderText');
+    /* Pas de bloc sur la page : on conserve le comportement historique. */
+    if(!target){ _typewriterOnScreen = true; return; }
+
+    /* Visible = au moins un pixel a l'ecran : "coupe des qu'il n'est plus
+       visible" — la coupure n'attend aucun seuil intermediaire. */
+    function apply(){
+      const r = target.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      _typewriterOnScreen = Boolean(vh) && r.bottom > 0 && r.top < vh;
+    }
+
+    /* Comme pour le radar : le suivi du defilement n'existe QUE pendant
+       que le bloc est un peu a l'ecran, pour menager la batterie ; des
+       qu'il en sort, l'observateur seul veille au retour. */
+    let ticking = false;
+    function onMove(){
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { ticking = false; apply(); });
+    }
+    let listening = false;
+    function listen(on){
+      if(on === listening) return;
+      listening = on;
+      const fn = on ? window.addEventListener : window.removeEventListener;
+      fn.call(window, 'scroll', onMove, { passive:true });
+      fn.call(window, 'resize', onMove, { passive:true });
+      fn.call(window, 'orientationchange', onMove, { passive:true });
+    }
+
+    if(typeof IntersectionObserver === 'function'){
+      new IntersectionObserver(entries => {
+        entries.forEach(en => listen(en.isIntersecting));
+        apply();
+      }, { threshold: [0] }).observe(target);
+    }else{
+      listen(true);   // vieux navigateur : suivi continu
+    }
+
+    apply();          // etat de depart (page rechargee deja defilee)
+    window.addEventListener('load', apply, { once:true });
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'visible') apply();
+    });
+  })();
 
   function startMissionOrderTypewriter(){
     const el = $('missionOrderText');
