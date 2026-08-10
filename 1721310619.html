@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=18">
-  <link rel="stylesheet" href="css/palier2.css?v=1">
+  <link rel="stylesheet" href="css/palier2.css?v=2">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : la saisie manuelle du numéro secret prend alors le
        relais. -->
@@ -53,7 +53,7 @@
   </section>
 
   <section class="card" id="gateCard">
-    <h2>📷 SCELLÉ D'ACCÈS — QR CODE</h2>
+    <h2>📷 QR CODE D'ACCÈS</h2>
     <div class="body">
 
       <p class="gate-scan-lead"><b>Scannez le QR Code</b> dans l'encart ci-dessous, ou importez-en la photo.</p>
@@ -69,10 +69,10 @@
 
       <div class="gate-actions">
         <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
-        <!-- Bouton demandé : import de la PHOTO du QR Code, placé sous
-             l'encart de scan. Sert quand l'équipage a photographié le QR
-             pour continuer plus tard. -->
-        <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">🖼️ IMPORTER PHOTO du QR CODE</button>
+        <!-- Import du QR Code photographié : placé sous l'encart de scan.
+             Sert quand l'équipage a photographié le QR pour continuer
+             plus tard. -->
+        <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
         <input type="file" id="gateFile" accept="image/*" hidden>
       </div>
 
@@ -81,7 +81,9 @@
       <div class="gate-manual">
         <label for="gateCodeInput">… ou entre ici le <b>numéro secret</b> découvert avec le QR Code :</label>
         <div class="gate-manual-row">
-          <input id="gateCodeInput" placeholder="Ex. 17-2-13-10-6-19" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="numeric" />
+          <!-- Pas d'exemple de numéro dans la barre de saisie : le
+               numéro secret ne doit JAMAIS être suggéré par la page. -->
+          <input id="gateCodeInput" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="numeric" />
           <button type="button" class="gate-btn gate-btn--unlock" id="gateCodeBtn">🔓 Déverrouiller</button>
         </div>
       </div>
