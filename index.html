@@ -38,8 +38,8 @@
 <audio id="alarmAudio" preload="auto">
   <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
 </audio>
-<!-- Meme son, element distinct : l'annonce des equipages ne doit pas
-     entrer en conflit avec l'alarme de mission (qui boucle 3 fois). -->
+<!-- Son dédié au bloc « Équipages en plongée » : la découverte d'un
+     équipage joue Victoire.mp3 sans toucher à l'alarme de mission. -->
 <!-- ATTENTION : malgre son extension .wav, ce fichier est un MP3 (verifie
      sur ses premiers octets : ff fb = trame MPEG audio). Annoncer
      type="audio/wav" faisait REJETER la source par les navigateurs qui
@@ -51,7 +51,7 @@
   <source src="assets/hublot-click.wav">
 </audio>
 <audio id="revealAlarmAudio" preload="auto">
-  <source src="assets/Submarine_alarm.mp3" type="audio/mpeg">
+  <source src="assets/Victoire.mp3" type="audio/mpeg">
 </audio>
 <div class="top-bar">
   <button id="installPwaBtn" class="install-pwa-btn btn-pulse" type="button" title="Installer l'app sur mon écran d'accueil">📲&nbsp;<span class="tb-label">Installer&nbsp;l'app</span></button>
@@ -637,7 +637,7 @@
    *   on synchronise sans relancer l'animation radar.
    */
   let _knownTeams = {}; // teamCode -> { hasMembers: bool, revealedAt: number }
-  // File de revelation : une equipe est annoncee par cycle d'alarme.
+  // File de révélation : une équipe est annoncée par son signal de victoire.
   let _revealQueue = [];        // codes en attente d'annonce
   let _revealedCodes = new Set(); // codes deja annonces
   let _revealRunning = false;   // une annonce est en cours
@@ -668,8 +668,8 @@
   function setRadarPaused(paused){
     const stage = document.getElementById('radarStage');
     if(stage) stage.classList.toggle('anim-idle', paused);
-    // L'alarme d'annonce est mise en pause elle aussi : si le joueur revient,
-    // le son reprend ou il en etait au lieu d'avoir joue dans le vide.
+    // Le signal de victoire est mis en pause lui aussi : si le joueur revient,
+    // le son reprend où il en était au lieu d'avoir joué dans le vide.
     const a = document.getElementById('revealAlarmAudio');
     if(a){
       if(paused){ if(!a.paused) a.pause(); }
@@ -1053,11 +1053,11 @@
     processRevealQueue();
   }
 
-  /* ---------- Revelation sequencee : 1 equipe par cycle d'alarme ----------
-     Chaque nouvelle equipe apparait sur le sonar sous forme de point blanc
-     qui "pop", accompagne du son Submarine_alarm. La carte de l'equipe
-     s'affiche a la FIN du son, puis on enchaine avec la suivante. */
-  const REVEAL_SOUND_FALLBACK_MS = 2100; // duree du mp3 (~2,06 s) si l'event 'ended' ne vient pas
+  /* ---------- Révélation séquencée : 1 équipage par signal de victoire ----------
+     Chaque nouvel équipage apparaît sur le sonar sous forme de point blanc
+     qui « pop », accompagné exclusivement de assets/Victoire.mp3. La carte
+     suit le point sans modifier l'alarme utilisée par le reste du jeu. */
+  const REVEAL_SOUND_FALLBACK_MS = 4100; // durée approchée de Victoire.mp3 si l'événement ended ne vient pas
   const CARD_AFTER_BLIP_MS = 330;        // delai entre le point et sa carte
 
   /* Attente qui ne s'ecoule QUE pendant que le bloc est sous les yeux.
@@ -1246,7 +1246,7 @@
     }
   }
 
-  /* Joue l'alarme une seule fois et resout a la fin du son. */
+  /* Joue le signal de victoire une seule fois et résout à la fin du son. */
   function playAlarmOnce(){
     return new Promise(resolve => {
       // Sonar eteint : pas de son, mais l'animation garde son rythme
