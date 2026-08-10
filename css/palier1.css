@@ -247,25 +247,44 @@
     }
     .risque-l{margin:0;font-size:clamp(12.5px,1.8vw,14px);line-height:1.55;color:#cfe6f4}
     .risque-l b{color:#fff}
-    .risque-h{font-size:1.12em;color:#ffd36c!important}
-    .risque.rouge .risque-h{color:#ff8f86!important}
+    /* Le chiffre qui compte, en tres gros : la peine du prochain echec.
+       Bleu glace tant que la peine est legere, ambre a partir de 4 h,
+       rouge des 12 h — la couleur suit la gravite. */
+    .risque-hero{display:flex;align-items:center;gap:14px;margin-top:2px}
+    .risque-hero-val{
+      flex:0 0 auto;font-size:clamp(34px,8vw,46px);font-weight:1000;line-height:1;
+      color:#8ee7ff;white-space:nowrap;font-variant-numeric:tabular-nums;
+      text-shadow:0 0 18px rgba(142,231,255,.4);
+    }
+    .risque.ambre .risque-hero-val{color:#ffd36c;text-shadow:0 0 18px rgba(245,176,39,.45)}
+    .risque.rouge .risque-hero-val{color:#ff8f86;text-shadow:0 0 18px rgba(255,75,62,.5)}
+    .risque-hero-lab{font-size:13px;font-weight:800;color:#fff;line-height:1.35}
+    .risque-hero-lab small{display:block;margin-top:3px;color:#9bc4d4;font-size:11.5px;font-weight:700;line-height:1.35}
+    .risque-hero-lab small b{color:#cfe6f4}
     .risque-l.aide{
       margin-top:10px;padding:10px 12px;border-radius:9px;
       background:rgba(91,255,156,.07);border-left:3px solid rgba(91,255,156,.55);
       color:#c8ece0;
     }
     .risque-l.aide b{color:#8dffd0}
-    .bareme-liste{display:grid;gap:4px;margin:10px 0 0}
+    /* Echelle des blocages : grille compacte de petites cases au lieu de
+       six longues lignes ; la case active porte la pastille « toi ». */
+    .bareme-liste{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:10px 0 0}
     .bareme-l{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:6px 10px;border-radius:8px;font-size:12.5px;line-height:1.3;
+      display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;
+      padding:6px 9px;border-radius:8px;font-size:11.5px;line-height:1.25;
       background:rgba(142,231,255,.06);border-left:3px solid rgba(142,231,255,.45);
       color:#cfe6f4;
     }
     .bareme-l.ambre{background:rgba(245,176,39,.09);border-left-color:var(--fnac);color:#ffe2a0}
     .bareme-l.rouge{background:rgba(255,75,62,.11);border-left-color:#ff4b3e;color:#ffd0cd}
-    .bareme-l.actif{outline:1px solid rgba(255,255,255,.55);box-shadow:0 0 12px rgba(255,255,255,.18);font-weight:800}
-    .bareme-h{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .bareme-l.actif{outline:1px solid rgba(255,255,255,.55);box-shadow:0 0 12px rgba(255,255,255,.18)}
+    .bareme-h{font-size:14px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .bareme-now{
+      font-style:normal;margin-left:5px;padding:1px 5px;border-radius:99px;
+      background:rgba(255,255,255,.16);color:#fff;font-size:9.5px;font-weight:1000;
+      letter-spacing:.06em;text-transform:uppercase;vertical-align:1px;
+    }
 
     .brief-cta{
       display:block;width:100%;margin:0;height:46px;border:0;border-radius:12px;
