@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=7">
+  <link rel="stylesheet" href="css/index.css?v=8">
   <link rel="stylesheet" href="css/hublots.css?v=13">
 
 </head>
@@ -1013,7 +1013,7 @@
         if(bi){
           const b = $('radarBlip' + bi);
           if(b){
-            b.classList.remove('revealed', 'blip-pop', 'blip-active');
+            b.classList.remove('revealed', 'blip-pop', 'blip-hover');
             delete b.dataset.team;
             b.removeAttribute('role');
             b.removeAttribute('tabindex');
@@ -1027,16 +1027,15 @@
     active.forEach(t => {
       const existing = box.querySelector(`[data-team="${t.teamCode}"]`);
       if(existing){
-        /* La carte est reconstruite a chaque rafraichissement (toutes les
-           60 s). Si le joueur survolait justement ce point, la mise en
-           evidence disparaitrait sous ses yeux : on la reporte sur la
-           nouvelle carte. */
-        const wasLit = existing.classList.contains('team-spotlight');
+        /* La carte est reconstruite à chaque rafraîchissement. Si le point
+           radar est réellement sous la souris, on conserve seulement ce
+           léger état de survol sur la nouvelle carte — jamais un halo figé. */
+        const wasRadarHovered = existing.classList.contains('team-radar-hover');
         existing.outerHTML = teamCardHtml(t);
         const newEl = box.querySelector(`[data-team="${t.teamCode}"]`);
         if(newEl){
           newEl.classList.add('in');
-          if(wasLit) newEl.classList.add('team-spotlight');
+          if(wasRadarHovered) newEl.classList.add('team-radar-hover');
         }
         // L'equipage a peut-etre change de palier : son point glisse vers
         // le centre (ou reste en place s'il n'a pas avance).
@@ -1082,58 +1081,28 @@
   }
 
   /* ===== LIEN POINT DU SONAR <-> CARTE DE L'EQUIPAGE =====
-     Survoler (souris) ou toucher/cliquer un point blanc met en evidence la
-     carte de l'equipage correspondant : elle s'entoure d'un halo de SA
-     couleur. Au clic, la page defile en douceur jusqu'a la carte : sur un
-     telephone, elle est souvent bien plus bas que le sonar. */
-  function setBlipHighlight(teamCode, on){
+     Un seul effet léger existe pendant un survol réel. Il est retiré dès
+     que le pointeur quitte la carte ou le point : aucun minuteur, clic ou
+     re-rendu ne peut conserver un halo après coup. */
+  function setHoverHighlight(teamCode, on, source){
     const box = document.getElementById('teamsBox');
     const card = box && box.querySelector(`[data-team="${teamCode}"]`);
-    if(card) card.classList.toggle('team-spotlight', on);
+    /* Sur une carte, le halo est fourni uniquement par :hover. Depuis le
+       radar, on ajoute la même intensité via une classe dédiée. */
+    if(card) card.classList.toggle('team-radar-hover', Boolean(on && source === 'radar'));
+
     const idx = _blipByTeam[teamCode];
     const blip = idx && document.getElementById('radarBlip' + idx);
-    // Le point clignote, que la mise en evidence vienne du sonar ou de la
-    // carte : le comportement est le meme dans les deux sens.
-    if(blip) blip.classList.toggle('blip-active', on);
-    if(blip) blip.classList.toggle('blip-flash', on);
+    if(blip) blip.classList.toggle('blip-hover', Boolean(on));
   }
 
-  function clearBlipHighlights(){
-    document.querySelectorAll('.team-spotlight')
-      .forEach(el => el.classList.remove('team-spotlight'));
-    document.querySelectorAll('.blip-active, .blip-flash')
-      .forEach(el => el.classList.remove('blip-active', 'blip-flash'));
+  function highlightFromCard(teamCode, on){
+    setHoverHighlight(teamCode, on, 'card');
   }
 
-  /* Survol ponctuel d'un point : un seul effet sur le point (le flash) et
-     le halo de sa carte associée. Le halo statique blip-active est réservé
-     aux clics, afin d'éviter un double halo qui persisterait à la sortie. */
-  function setRadarPointHoverHighlight(teamCode, on){
-    const box = document.getElementById('teamsBox');
-    const card = box && box.querySelector(`[data-team="${teamCode}"]`);
-    if(card) card.classList.toggle('team-spotlight', on);
-    const idx = _blipByTeam[teamCode];
-    const blip = idx && document.getElementById('radarBlip' + idx);
-    if(blip){
-      blip.classList.toggle('blip-flash', on);
-      if(!on) blip.classList.remove('blip-active');
-    }
+  function highlightFromRadar(teamCode, on){
+    setHoverHighlight(teamCode, on, 'radar');
   }
-
-  /* Depuis une carte, seul le point correspondant clignote sur le sonar.
-     La carte garde son halo CSS :hover natif, qui disparaît strictement dès
-     la sortie de souris. Ne pas lui appliquer .team-spotlight ici, sinon ce
-     halo JavaScript peut survivre à un re-rendu de la liste. */
-  function highlightBlipFromCard(teamCode, on){
-    const idx = _blipByTeam[teamCode];
-    const blip = idx && document.getElementById('radarBlip' + idx);
-    if(blip){
-      blip.classList.toggle('blip-active', on);
-      blip.classList.toggle('blip-flash', on);
-    }
-  }
-  const highlightFromCard = highlightBlipFromCard;
-  let _spotlightTimer = null;   // minuteur unique de la mise en evidence
 
   (function wireCardToBlip(){
     const box = document.getElementById('teamsBox');
@@ -1160,16 +1129,12 @@
       highlightFromCard(card.dataset.team, false);
     });
 
-    /* Clic sur la carte : on remonte au sonar pour voir le point clignoter,
-       sinon la mise en evidence se produirait hors de l'ecran. */
+    /* Un clic sert seulement à rejoindre le radar : le halo reste strictement
+       réservé au survol de la souris. */
     box.addEventListener('click', e => {
       const code = teamOf(e);
       if(!code) return;
-      clearBlipHighlights();
-      highlightFromCard(code, true);
       smartScroll(document.getElementById('radarStage'));
-      clearTimeout(_spotlightTimer);
-      _spotlightTimer = setTimeout(() => highlightFromCard(code, false), 2000);
     });
   })();
 
@@ -1189,26 +1154,21 @@
       if(e.pointerType !== 'mouse') return;
       const blip = blipOf(e);
       if(!blip || blip.contains(e.relatedTarget)) return;
-      setRadarPointHoverHighlight(blip.dataset.team, true);
+      highlightFromRadar(blip.dataset.team, true);
     });
     screen.addEventListener('pointerout', e => {
       if(e.pointerType !== 'mouse') return;
       const blip = blipOf(e);
       if(!blip || blip.contains(e.relatedTarget)) return;
-      setRadarPointHoverHighlight(blip.dataset.team, false);
+      highlightFromRadar(blip.dataset.team, false);
     });
 
-    // Clic / toucher : on met en evidence et on descend jusqu'a la carte.
+    // Clic / toucher : navigation vers la carte, sans halo persistant.
     screen.addEventListener('click', e => {
       const code = teamOf(e);
       if(!code) return;
-      clearBlipHighlights();
-      setBlipHighlight(code, true);
       const card = document.querySelector(`#teamsBox [data-team="${code}"]`);
       if(card) smartScroll(card);
-      // Le halo s'eteint tout seul apres 1 s : c'est un repere, pas un etat.
-      clearTimeout(_spotlightTimer);
-      _spotlightTimer = setTimeout(() => setBlipHighlight(code, false), 1000);
     });
 
     // Accessibilite : meme comportement au clavier.
