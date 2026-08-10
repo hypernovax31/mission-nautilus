@@ -57,6 +57,11 @@
       box-shadow:0 18px 38px rgba(0,0,0,.35);
       overflow:hidden;
     }
+    /* Carte « 🧪 ÉPREUVE DU PALIER » : au clic sur ⚓ PRENDRE LES
+       COMMANDES, la fenêtre glisse jusqu'à son DÉBUT (haut de la
+       fenêtre). Cette marge de défilement dégage la barre du haut
+       (sticky, ~62 px) pour que le titre ne passe jamais dessous. */
+    #gameCard{scroll-margin-top:74px;}
     .card h2{
       margin:0;padding:16px 20px;
       background:linear-gradient(90deg,#101820,#253545);

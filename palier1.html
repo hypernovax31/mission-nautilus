@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=9">
+  <link rel="stylesheet" href="css/palier1.css?v=10">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
@@ -1733,7 +1733,17 @@ window.Nautilus = {
     `;
   }
   function bindIdleEvents() {
-    $('takeLeadBtn')?.addEventListener('click', startNewSession);
+    $('takeLeadBtn')?.addEventListener('click', () => {
+      /* SCROLL AUTO : le bouton se lit en BAS du briefing ; dès le clic,
+         on ramène le DÉBUT de l'encart « 🧪 ÉPREUVE DU PALIER » (gameCard)
+         en haut de la fenêtre, pour ouvrir l'épreuve « au propre ».
+         Le scroll-margin-top de la carte dégage la barre du haut
+         (position sticky) : le titre n'est jamais caché dessous.
+         On déclenche AVANT startNewSession : le défilement est fluide
+         pendant que la session démarre en arrière-plan. */
+      $('gameCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      startNewSession();
+    });
   }
 
   async function startNewSession() {
