@@ -266,9 +266,13 @@
     var t = overlay.querySelector('.ip-titre');
     var s = overlay.querySelector('.ip-intro');
     var cta = overlay.querySelector('.ip-cta');
+    var later = overlay.querySelector('.ip-later');
     if (titre && t) t.textContent = titre;
     if (sousTitre && s) s.innerHTML = sousTitre;
     if (cta) { cta.style.display = 'none'; }
+    /* « Continuer dans les tumultes » n'a plus de sens une fois les eaux
+       sereines atteintes : la phrase disparaît avec la tempête. */
+    if (later) { later.style.display = 'none'; }
     if (autoFermerMs) setTimeout(fermer, autoFermerMs);
   }
 
