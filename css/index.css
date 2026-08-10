@@ -112,7 +112,8 @@
        sur la carte, soit quand le point radar associé est survolé. */
     @media (hover:hover){
       .team.team-reveal:hover,
-      .team.team-reveal.team-radar-hover{
+      .team.team-reveal.team-radar-hover,
+      .team.team-reveal.team-click-highlight{
         border-color:rgba(var(--team-glow,143,164,181),1);
         box-shadow:
           0 0 0 2px rgba(var(--team-glow,143,164,181),.42),

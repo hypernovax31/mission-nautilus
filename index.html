@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=13">
+  <link rel="stylesheet" href="css/index.css?v=14">
   <link rel="stylesheet" href="css/hublots.css?v=13">
 
 </head>
@@ -1136,6 +1136,20 @@
     setHoverHighlight(teamCode, on, 'radar');
   }
 
+  /* Le clic donne le même repère que le survol, y compris sur tactile. Le
+     halo est volontairement bref : il confirme la sélection sans devenir un
+     état permanent lorsque le clic entraîne un défilement vers le radar. */
+  let _cardClickHaloTimer = null;
+  function flashCardClickHalo(teamCode){
+    const card = document.querySelector(`#teamsBox [data-team="${teamCode}"]`);
+    if(!card) return;
+    card.classList.add('team-click-highlight');
+    clearTimeout(_cardClickHaloTimer);
+    _cardClickHaloTimer = setTimeout(() => {
+      card.classList.remove('team-click-highlight');
+    }, 1300);
+  }
+
   (function wireCardToBlip(){
     const box = document.getElementById('teamsBox');
     if(!box) return;
@@ -1161,11 +1175,12 @@
       highlightFromCard(card.dataset.team, false);
     });
 
-    /* Un clic sert seulement à rejoindre le radar : le halo reste strictement
-       réservé au survol de la souris. */
+    /* Clic sur la carte : même halo de confirmation, puis navigation vers
+       le point sonar correspondant. */
     box.addEventListener('click', e => {
       const code = teamOf(e);
       if(!code) return;
+      flashCardClickHalo(code);
       smartScroll(document.getElementById('radarStage'));
     });
   })();
@@ -1195,10 +1210,12 @@
       highlightFromRadar(blip.dataset.team, false);
     });
 
-    // Clic / toucher : navigation vers la carte, sans halo persistant.
+    // Clic / toucher : même halo de confirmation autour de la carte, puis
+    // navigation vers elle pour relier clairement le point à l'équipage.
     screen.addEventListener('click', e => {
       const code = teamOf(e);
       if(!code) return;
+      flashCardClickHalo(code);
       const card = document.querySelector(`#teamsBox [data-team="${code}"]`);
       if(card) smartScroll(card);
     });
