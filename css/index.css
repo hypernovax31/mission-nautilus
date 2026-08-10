@@ -112,8 +112,7 @@
        sur la carte, soit quand le point radar associé est survolé. */
     @media (hover:hover){
       .team.team-reveal:hover,
-      .team.team-reveal.team-radar-hover,
-      .team.team-reveal.team-click-highlight{
+      .team.team-reveal.team-radar-hover{
         border-color:rgba(var(--team-glow,143,164,181),1);
         box-shadow:
           0 0 0 2px rgba(var(--team-glow,143,164,181),.42),
@@ -122,6 +121,19 @@
       }
       /* L'entrée est douce ; la classe est retirée immédiatement à la sortie. */
       .team.team-reveal:hover{transition:box-shadow .22s ease,border-color .22s ease;}
+    }
+    /* Clic ou toucher : exactement le même halo qu'au survol, MAIS hors du
+       media (hover:hover) ci-dessus — sinon il n'existerait jamais sur les
+       écrans tactiles, où :hover n'est pas disponible. La transition donne
+       la même entrée douce ; le retrait reste net, comme à la sortie du
+       survol. */
+    .team.team-reveal.team-click-highlight{
+      border-color:rgba(var(--team-glow,143,164,181),1);
+      box-shadow:
+        0 0 0 2px rgba(var(--team-glow,143,164,181),.42),
+        0 0 26px 7px rgba(var(--team-glow,143,164,181),.52),
+        0 8px 20px rgba(0,0,0,.16);
+      transition:box-shadow .22s ease,border-color .22s ease;
     }
     @media (prefers-contrast: more){
       .team::before{opacity:0}
@@ -1544,8 +1556,12 @@
     }
     .radar-grid,.radar-rings,.radar-sweep-big{pointer-events:none}
     /* Survol léger et fixe du point radar : un seul halo, sans pulsation,
-       retiré immédiatement quand la souris quitte le point. */
-    .radar-blip.blip-hover{
+       retiré immédiatement quand la souris quitte le point.
+       .blip-click-halo reproduit exactement ce rendu au clic ou au toucher
+       (classe séparée pour que le minuteur du clic ne puisse jamais éteindre
+       un vrai survol de souris encore en cours). */
+    .radar-blip.blip-hover,
+    .radar-blip.blip-click-halo{
       animation:none !important;
       box-shadow:
         0 0 0 5px rgba(var(--blip-glow,91,255,156),.88),

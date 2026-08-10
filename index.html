@@ -1136,18 +1136,33 @@
     setHoverHighlight(teamCode, on, 'radar');
   }
 
-  /* Le clic donne le même repère que le survol, y compris sur tactile. Le
-     halo est volontairement bref : il confirme la sélection sans devenir un
-     état permanent lorsque le clic entraîne un défilement vers le radar. */
-  let _cardClickHaloTimer = null;
+  /* Le clic ou le toucher donne EXACTEMENT le même repère que le survol :
+     la carte et son point sonar s'entourent tous les deux du halo coloré,
+     y compris sur écran tactile où le survol n'existe pas. Le halo est
+     volontairement bref : il confirme la sélection sans devenir un état
+     permanent lorsque le clic entraîne un défilement vers l'autre surface.
+     Un minuteur par élément : deux clics rapides sur des équipages
+     différents ne laissent jamais un halo coincé. */
+  const _clickHaloTimers = new Map();
+  function flashClickHalo(el, cls){
+    if(!el) return;
+    el.classList.add(cls);
+    clearTimeout(_clickHaloTimers.get(el));
+    _clickHaloTimers.set(el, setTimeout(() => {
+      el.classList.remove(cls);
+      _clickHaloTimers.delete(el);
+    }, 1300));
+  }
   function flashCardClickHalo(teamCode){
-    const card = document.querySelector(`#teamsBox [data-team="${teamCode}"]`);
-    if(!card) return;
-    card.classList.add('team-click-highlight');
-    clearTimeout(_cardClickHaloTimer);
-    _cardClickHaloTimer = setTimeout(() => {
-      card.classList.remove('team-click-highlight');
-    }, 1300);
+    flashClickHalo(
+      document.querySelector(`#teamsBox [data-team="${teamCode}"]`),
+      'team-click-highlight'
+    );
+    const idx = _blipByTeam[teamCode];
+    flashClickHalo(
+      idx ? document.getElementById('radarBlip' + idx) : null,
+      'blip-click-halo'
+    );
   }
 
   (function wireCardToBlip(){
