@@ -1732,17 +1732,34 @@ window.Nautilus = {
       </div>
     `;
   }
+  /* SCROLL AUTO « PRENDRE LES COMMANDES ».
+     Le bouton se lit en bas du briefing : au clic, la fenetre glisse
+     jusqu'au DEBUT de l'encart « 🧪 ÉPREUVE DU PALIER », plaque en haut
+     de l'ecran (sous la barre — scroll-margin-top dans palier1.css).
+     Trois regles :
+       1) au clic : le depart de la glissade ne depend pas du reseau ;
+       2) apres le redessin : la session remplace le briefing par
+          l'epreuve — on RE-cale le haut de la carte, au cas ou le
+          premier appel aurait ete coupe par le changement de contenu
+          (350 ms couvre le mode test, 900 ms le reseau reel) ;
+       3) repli instantane pour les navigateurs sans options objet.
+     NOTE TEST : sur un grand ecran de bureau ou la page ENTIERE tient
+     dans la fenetre, il n'y a rien a faire defiler : aucun mouvement
+     n'est visible, c'est normal. L'effet se constate sur telephone (ou
+     fenetre etroite) : l'epreuve arrive alors sous les yeux du matelot. */
+  function glisserVersEpreuve(){
+    const carte = $('gameCard');
+    if (!carte) return;
+    try { carte.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    catch (e) { try { carte.scrollIntoView(true); } catch (_) {} }
+  }
+
   function bindIdleEvents() {
     $('takeLeadBtn')?.addEventListener('click', () => {
-      /* SCROLL AUTO : le bouton se lit en BAS du briefing ; dès le clic,
-         on ramène le DÉBUT de l'encart « 🧪 ÉPREUVE DU PALIER » (gameCard)
-         en haut de la fenêtre, pour ouvrir l'épreuve « au propre ».
-         Le scroll-margin-top de la carte dégage la barre du haut
-         (position sticky) : le titre n'est jamais caché dessous.
-         On déclenche AVANT startNewSession : le défilement est fluide
-         pendant que la session démarre en arrière-plan. */
-      $('gameCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      glisserVersEpreuve();
       startNewSession();
+      setTimeout(glisserVersEpreuve, 350);
+      setTimeout(glisserVersEpreuve, 900);
     });
   }
 
