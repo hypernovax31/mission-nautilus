@@ -4250,31 +4250,56 @@ function qrDataUri(text, opts){
 
   let oxygenEndAlarmShown = null;
   let oxygenEndAlarmTimer = null;
-  let finalAlarmPrimed = false;
 
-  /* Les navigateurs mobiles refusent une lecture déclenchée par un timer
-     si le fichier audio n'a jamais été amorcé par un geste. On prépare le
-     lecteur en silence au premier geste, sans produire de son. */
-  function primeFinalAlarm(){
-    if(finalAlarmPrimed) return;
-    const audio = $('alarmAudio');
-    if(!audio) return;
-    audio.muted = true;
-    audio.volume = 0;
-    const promise = audio.play();
-    if(promise && promise.then){
-      promise.then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.muted = false;
-        audio.volume = .82;
-        finalAlarmPrimed = true;
-      }).catch(() => {});
-    }
+  /* ===== ALARME DE FIN DE MISSION : PREPARATION SILENCIEUSE =====
+     Cette alarme est declenchee par un MINUTEUR (fin de l'oxygene), jamais
+     par un geste. L'ancien amorcage "play() muet puis pause()" au premier
+     geste laissait echapper un fragment audible de Submarine_alarm.mp3 a
+     CHAQUE chargement de page sur mobile (iPhone) — le meme parasite que
+     celui des hublots, corrige ailleurs en appliquant la meme regle :
+     NE RIEN JOUER DU TOUT pour preparer un son.
+     On telecharge et decode le fichier en silence au premier geste ; la
+     lecture passera par Web Audio (contexte deja debloque par les gestes
+     du joueur), sans jamais reveiller le lecteur <audio>. */
+  let _alarmeFinBuffer = null;      // son decode, pret a jouer
+  let _alarmeFinDecodage = null;    // decodage en cours (evite les doublons)
+
+  function chargerSonAlarmeFin(){
+    if(_alarmeFinBuffer || _alarmeFinDecodage) return _alarmeFinDecodage;
+    const ctx = sfxContext();
+    if(!ctx) return null;
+    _alarmeFinDecodage = fetch('assets/Submarine_alarm.mp3')
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(buf => ctx.decodeAudioData(buf))
+      .then(dec => { _alarmeFinBuffer = dec; return dec; })
+      .catch(() => { _alarmeFinDecodage = null; return null; });
+    return _alarmeFinDecodage;
   }
-  ['pointerdown','touchstart','click','keydown'].forEach(type => {
-    document.addEventListener(type, primeFinalAlarm, {capture:true, passive:true});
-  });
+
+  /* Joue l'alarme en boucle pendant `dureeMs` via Web Audio. Renvoie false
+     si le buffer n'est pas pret : l'appelant bascule alors sur le lecteur
+     <audio> classique (ordinateur, ou decode indisponible). */
+  function jouerAlarmeFinWebAudio(dureeMs){
+    if(!_alarmeFinBuffer) return false;
+    const ctx = sfxContext();
+    if(!ctx) return false;
+    try{
+      const src = ctx.createBufferSource();
+      src.buffer = _alarmeFinBuffer;
+      src.loop = true;
+      const g = ctx.createGain();
+      g.gain.value = 0.82;
+      src.connect(g);
+      g.connect(ctx.destination);
+      src.start();
+      src.stop(ctx.currentTime + Math.max(1, dureeMs || 5000) / 1000);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  /* Preparation au premier geste : TELECHARGEMENT + DECODAGE uniquement.
+     Aucune lecture, donc aucun fragment audible possible. */
+  surPremierGeste(() => { chargerSonAlarmeFin(); }, 3);
 
   function showOxygenEndAlarm(endAt){
     const key = String(endAt);
@@ -4295,8 +4320,13 @@ function qrDataUri(text, opts){
     silenceEverything();
     unmuteAlarms();
     /* Lance l'alarme AVANT d'afficher l'animation : les deux démarrent
-       ensemble au même instant. */
-    playSubmarineAlarm(5000, true);
+       ensemble au même instant. Priorité au chemin Web Audio (décodé en
+       silence au premier geste) : il ne réveille jamais le lecteur
+       <audio> — non amorcé sur mobile, il y serait refusé ou parasite.
+       Repli <audio> pour les ordinateurs si le buffer n'est pas prêt. */
+    if(!jouerAlarmeFinWebAudio(5000)){
+      playSubmarineAlarm(5000, true);
+    }
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
     oxygenEndAlarmTimer = setInterval(() => {

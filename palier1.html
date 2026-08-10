@@ -842,23 +842,43 @@ window.Nautilus = {
      Tant que la mission n'est pas lancee, le bandeau reste masque : il
      n'aurait rien a montrer. */
   let _o2Config = null;
-  let finalAlarmAudio = null;
   let oxygenEndAlarmShown = null;
   let oxygenEndAlarmTimer = null;
 
+  /* ===== ALARME DE FIN D'OXYGENE : PREPARATION SILENCIEUSE =====
+     Cette alarme part d'un MINUTEUR (compte a rebours), jamais d'un
+     geste. L'ancien amorcage "play() muet puis pause()" au premier geste
+     laissait echapper un fragment audible de Submarine_alarm.mp3 a CHAQUE
+     chargement de la page sur mobile (iPhone) — meme parasite que celui
+     corrige pour les hublots, remede identique : NE RIEN JOUER DU TOUT
+     pour preparer un son. On telecharge et decode le fichier en silence
+     au premier geste ; la lecture passera par Web Audio. Le contexte
+     dedie est cree et debloque DANS ce premier geste : la lecture
+     declenchee plus tard par le minuteur restera autorisee. */
+  let _finAlarmCtx = null;            // contexte dedie a l'alarme de fin
+  let _finAlarmBuf = null;            // son decode, pret a jouer
+  let _finAlarmLoading = null;        // decodage en cours (anti-doublon)
+  let _finAlarmLiveSrc = null;        // source Web Audio en cours de jeu
+  let _finAlarmFallbackAudio = null;  // lecteur <audio> de repli en cours
+
+  function _finAlarmAudioCtx(){
+    if(_finAlarmCtx) return _finAlarmCtx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    try{ _finAlarmCtx = new AC(); }catch(e){ return null; }
+    if(_finAlarmCtx.state === 'suspended') _finAlarmCtx.resume().catch(()=>{});
+    return _finAlarmCtx;
+  }
+
   function primeFinalAlarm(){
-    if(finalAlarmAudio) return;
-    finalAlarmAudio = new Audio('assets/Submarine_alarm.mp3');
-    finalAlarmAudio.preload = 'auto';
-    finalAlarmAudio.muted = true;
-    finalAlarmAudio.volume = 0;
-    const p = finalAlarmAudio.play();
-    if(p && p.then) p.then(() => {
-      finalAlarmAudio.pause();
-      finalAlarmAudio.currentTime = 0;
-      finalAlarmAudio.muted = false;
-      finalAlarmAudio.volume = .82;
-    }).catch(() => {});
+    if(_finAlarmBuf || _finAlarmLoading) return;
+    const ctx = _finAlarmAudioCtx();
+    if(!ctx) return;   // Web Audio indisponible : le repli <audio> suffira
+    _finAlarmLoading = fetch('assets/Submarine_alarm.mp3')
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(buf => ctx.decodeAudioData(buf))
+      .then(dec => { _finAlarmBuf = dec; })
+      .catch(() => { _finAlarmLoading = null; });
   }
   ['pointerdown','touchstart','click','keydown'].forEach(type => {
     document.addEventListener(type, primeFinalAlarm, {capture:true, passive:true});
@@ -880,19 +900,48 @@ window.Nautilus = {
     document.querySelectorAll('audio').forEach(a => {
       try{ a.pause(); a.muted = true; a.currentTime = 0; }catch(e){}
     });
-    const audio = finalAlarmAudio || new Audio('assets/Submarine_alarm.mp3');
-    audio.loop = true;
-    audio.preload = 'auto';
-    audio.volume = 0.82;
-    audio.play().catch(() => {});
+    /* Lecture prioritaire en Web Audio (buffer decode en silence au
+       premier geste) : zero parasite a l'amorcage ET lecture autorisee
+       depuis le minuteur. Repli : le lecteur <audio> classique, pour les
+       ordinateurs ou si le decode n'a pas abouti. */
+    let finJouee = false;
+    const finCtx = _finAlarmAudioCtx();
+    if(finCtx && _finAlarmBuf){
+      try{
+        const src = finCtx.createBufferSource();
+        src.buffer = _finAlarmBuf;
+        src.loop = true;
+        const g = finCtx.createGain();
+        g.gain.value = 0.82;
+        src.connect(g);
+        g.connect(finCtx.destination);
+        src.start();
+        _finAlarmLiveSrc = src;
+        finJouee = true;
+      }catch(e){ finJouee = false; }
+    }
+    if(!finJouee){
+      _finAlarmFallbackAudio = new Audio('assets/Submarine_alarm.mp3');
+      _finAlarmFallbackAudio.loop = true;
+      _finAlarmFallbackAudio.preload = 'auto';
+      _finAlarmFallbackAudio.volume = 0.82;
+      _finAlarmFallbackAudio.play().catch(() => {});
+    }
     oxygenEndAlarmTimer = setInterval(() => {
       remaining -= 1;
       if(remaining <= 0){
         clearInterval(oxygenEndAlarmTimer);
         overlay.classList.remove('show');
         overlay.setAttribute('aria-hidden','true');
-        audio.pause();
-        audio.currentTime = 0;
+        if(_finAlarmLiveSrc){
+          try{ _finAlarmLiveSrc.stop(); }catch(e){}
+          _finAlarmLiveSrc = null;
+        }
+        if(_finAlarmFallbackAudio){
+          _finAlarmFallbackAudio.pause();
+          _finAlarmFallbackAudio.currentTime = 0;
+          _finAlarmFallbackAudio = null;
+        }
         window.location.href = 'classement.html';
         return;
       }
