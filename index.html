@@ -4824,10 +4824,18 @@ function qrDataUri(text, opts){
      lecteur prêt pour le prochain geste sans produire de parasite. */
   function scheduleAmbianceAutoplayRecovery(){
     if(_soundOffByUser || _audioWakeDone || !_primedSilently || document.visibilityState !== 'visible') return;
+    /* OBJECTIF : l'ambiance audible SANS le moindre geste, dès que le
+       navigateur l'autorise. Certains n'accordent le son qu'après quelques
+       secondes de présence sur la page : au lieu d'abandonner après trois
+       essais (~7 s), on retente TANTES les 5 s tant que l'amorce muette
+       est en vie. C'est elle qui borne la boucle : elle est coupée à 45 s
+       sans geste (batterie), et ce minuteur vérifie son existence avant
+       chaque nouvelle tentative — la boucle s'arrête donc seule. */
     const delays = [650, 1800, 4200];
-    if(_autoplayRecoveryAttempt >= delays.length) return;
+    const delay = _autoplayRecoveryAttempt < delays.length
+      ? delays[_autoplayRecoveryAttempt++]
+      : 5000;
     clearTimeout(_autoplayRecoveryTimer);
-    const delay = delays[_autoplayRecoveryAttempt++];
     _autoplayRecoveryTimer = setTimeout(async () => {
       _autoplayRecoveryTimer = null;
       if(_soundOffByUser || _audioWakeDone || !_primedSilently || document.visibilityState !== 'visible') return;
