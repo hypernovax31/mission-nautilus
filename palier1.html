@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=12">
+  <link rel="stylesheet" href="css/palier1.css?v=13">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
@@ -2659,29 +2659,10 @@ window.Nautilus = {
       : reason === 'too_many_errors'
         ? '3 erreurs sur cette tentative'
         : 'Tentative interrompue';
-    let lignes;
-    if (monLock?.lockedUntil) {
-      const hours = Number(monLock.lastLockHours || 1);
-      const { suivante, relais, relayHours } = peineEtRelais(t, monLock);
-      const noms = relais.slice(0, 3).map(m => esc(m.nom)).join(', ');
-      lignes = `
-        <div class="lock-ligne lock-ligne--pause">
-          <span class="lock-ligne-ico" aria-hidden="true">⏱</span>
-          <span>Ta pause : <b>${esc(String(hours))} h</b> — reprise <b>${esc(N.formatDate(monLock.lockedUntil))}</b>.</span>
-        </div>
-        <div class="lock-ligne lock-ligne--relais">
-          <span class="lock-ligne-ico" aria-hidden="true">⚓</span>
-          <span>${noms
-            ? `<b>${noms}</b> ${relais.length > 1 ? 'peuvent' : 'peut'} reprendre <b>dès maintenant</b> (risque ${esc(String(relayHours))} h).`
-            : `La barre est libre : <b>un autre matelot</b> peut reprendre <b>dès maintenant</b>.`}</span>
-        </div>
-        <div class="lock-ligne lock-ligne--next">
-          <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
-          <span>Prochain échec : <b>${esc(String(suivante))} h</b> de pause (compteur personnel).</span>
-        </div>`;
-    } else {
-      lignes = `<div class="lock-ligne"><span class="lock-ligne-ico" aria-hidden="true">⏱</span><span>Calcul de ta disponibilité…</span></div>`;
-    }
+    /* Les lignes sont CONSTRUITES PAR LA MEME FONCTION que la page
+       « Blocage personnel » : formulation identique, jamais de double
+       maintenance (lignesBlocageHtml). */
+    const lignes = lignesBlocageHtml(t, monLock, 'echec');
     return `
       <section class="lock-screen lock-screen--lost" aria-live="polite">
         <div class="lock-heading">
@@ -2698,27 +2679,43 @@ window.Nautilus = {
     `;
   }
 
-  /* ===== ANNONCE DE LA PROCHAINE PEINE =====
-     Un matelot qui vient d'echouer doit savoir MAINTENANT ce que couterait
-     le prochain faux pas : c'est pendant son attente qu'il decidera s'il
-     repart lui-meme ou s'il passe la barre a un camarade plus leger.
-     Avant, cette information n'apparaissait nulle part : chacun decouvrait
-     sa peine apres coup, en la subissant.
-
-     Le CALCUL est partage (peineEtRelais) entre la page d'erreurs
-     allegee (trois lignes) et l'ecran de pause personnelle detaille. */
-  function lockResumeCard(lock, label){
-    const hours = Number(lock?.lastLockHours || 1);
+  /* ===== LIGNES DE BLOCAGE (partagées) =====
+     Le MEME trio de lignes courtes, pleine largeur, sert la page
+     d'erreurs (RETOUR EN SURFACE) et la page de blocage personnel
+     (PAUSE PERSONNELLE) : meme information, meme formulation.
+     variante = 'echec' | 'indice' — pour l'indice, la 3e ligne rappelle
+     que l'indice reste acquis a l'equipage au lieu d'annoncer la
+     prochaine peine.
+     Le CALCUL (peineEtRelais) reste commun aux deux pages. */
+  function lignesBlocageHtml(t, monLock, variante) {
+    if (!monLock?.lockedUntil) {
+      return `<div class="lock-ligne"><span class="lock-ligne-ico" aria-hidden="true">⏱</span><span>Calcul de ta disponibilité…</span></div>`;
+    }
+    const hours = Number(monLock.lastLockHours || 1);
+    const { suivante, relais, relayHours } = peineEtRelais(t, monLock);
+    const noms = relais.slice(0, 3).map(m => esc(m.nom)).join(', ');
     return `
-      <section class="lock-resume-card">
-        <span class="lock-resume-icon" aria-hidden="true">⏱</span>
-        <div>
-          <span class="lock-card-label">${esc(label)}</span>
-          <strong class="lock-resume-date">${esc(N.formatDate(lock.lockedUntil))}</strong>
-          <span class="lock-resume-duration">Blocage personnel · ${esc(String(hours))} h</span>
+        <div class="lock-ligne lock-ligne--pause">
+          <span class="lock-ligne-ico" aria-hidden="true">⏱</span>
+          <span>Ta pause : <b>${esc(String(hours))} h</b> — reprise <b>${esc(N.formatDate(monLock.lockedUntil))}</b>.</span>
         </div>
-      </section>
-    `;
+        <div class="lock-ligne lock-ligne--relais">
+          <span class="lock-ligne-ico" aria-hidden="true">⚓</span>
+          <span>${noms
+            ? `<b>${noms}</b> ${relais.length > 1 ? 'peuvent' : 'peut'} reprendre <b>dès maintenant</b> (risque ${esc(String(relayHours))} h).`
+            : `La barre est libre : <b>un autre matelot</b> peut reprendre <b>dès maintenant</b>.`}</span>
+        </div>`
+      + (variante === 'indice'
+        ? `
+        <div class="lock-ligne">
+          <span class="lock-ligne-ico" aria-hidden="true">✓</span>
+          <span>L'indice reste disponible pour <b>tout l'équipage</b>.</span>
+        </div>`
+        : `
+        <div class="lock-ligne lock-ligne--next">
+          <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
+          <span>Prochain échec : <b>${esc(String(suivante))} h</b> de pause (compteur personnel).</span>
+        </div>`);
   }
 
   function peineEtRelais(t, l) {
@@ -2736,45 +2733,21 @@ window.Nautilus = {
     return { suivante, relais, relayHours: relais[0] ? N.getLockHours(relais[0].echecs + 1) : null };
   }
 
-  function prochainePeineHtml(t, l) {
-    const { suivante, relais, relayHours } = peineEtRelais(t, l);
-    const firstRelay = relais[0];
-    const relayNames = relais.slice(0, 3).map(m => esc(m.nom)).join(', ');
-
-    return `
-      <div class="lock-next-grid">
-        <section class="lock-next-card lock-next-card--risk">
-          <span class="lock-card-label">AU PROCHAIN ÉCHEC</span>
-          <strong>${esc(String(suivante))} h</strong>
-          <p>Ton temps de surface passera à cette durée.</p>
-          <small>Le compteur reste personnel.</small>
-        </section>
-        <section class="lock-next-card lock-next-card--relay">
-          <span class="lock-card-label">RELAIS CONSEILLÉ</span>
-          ${firstRelay
-            ? `<strong>${relayNames}</strong>
-               <p>${relais.length > 1 ? 'Peuvent' : 'Peut'} reprendre la barre. Risque le plus faible : <b>${esc(String(relayHours))} h</b>.</p>`
-            : `<strong>Un coéquipier</strong>
-               <p>Passe la barre à un autre matelot pour que l'équipage poursuive.</p>`}
-        </section>
-      </div>
-    `;
-  }
-
-  /* === ÉCRAN : blocage PERSONNEL (le matelot seul est en surface) === */
+  /* === ÉCRAN : blocage PERSONNEL (le matelot seul est en surface) ===
+     PAGE ALLEGEE : meme pattern concis que l'ecran « RETOUR EN SURFACE » —
+     une accroche d'UNE ligne, puis les trois lignes pleine largeur
+     (pause / relais / suite). Supprimes : le pavé d'introduction, la carte
+     « prochaine prise de commande » et les deux cartes cote a cote
+     (illisibles sur telephone). */
   function renderMatelotLockScreen(t, me) {
     const l = N.getMatelotLock(t, me.memberKey) || {};
     /* Deux raisons possibles de se retrouver en surface : un échec ou une
        demande d'indice. L'indice reste acquis à l'équipage et n'est jamais
        présenté comme une faute. */
     const parIndice = l.reason === 'indice_demande';
-    /* TEXTE REFAIT : trois battements courts au lieu d'une phrase abstraite.
-       Le matelot doit comprendre en 2 secondes : (1) seul LUI est en pause,
-       (2) la mission continue sans lui, (3) la barre est libre tout de
-       suite pour un camarade. */
     const lead = parIndice
-      ? 'Indice envoyé à l’équipage. Pendant ta pause, un camarade peut prendre les commandes à ta place.'
-      : 'Ta pause ne retient que toi : la mission garde le cap. La barre est libre — un camarade peut déjà prendre les commandes.';
+      ? 'Indice envoyé à l’équipage.'
+      : 'La mission garde le cap pendant ta pause.';
     return `
       <section class="lock-screen lock-screen--active" aria-live="polite">
         <div class="lock-heading">
@@ -2785,10 +2758,7 @@ window.Nautilus = {
           </div>
         </div>
         <p class="lock-lead">${lead}</p>
-        ${lockResumeCard(l, 'Prochaine prise de commande')}
-        ${parIndice
-          ? `<div class="lock-hint-note"><span aria-hidden="true">✓</span> L'indice reste disponible pour tout l'équipage.</div>`
-          : prochainePeineHtml(t, l)}
+        <div class="lock-lignes">${lignesBlocageHtml(t, l, parIndice ? 'indice' : 'echec')}</div>
         <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
       </section>
     `;
