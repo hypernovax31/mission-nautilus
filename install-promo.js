@@ -223,11 +223,8 @@
     overlay.innerHTML = '<div class="ip-card">'
       + sceneHtml()
       + '<h2 class="ip-titre">🌊 Évite les tumultes de l’océan</h2>'
-      + '<p class="ip-intro">Dans un simple onglet, le Nautilus affronte les caprices du réseau : '
-      + 'chargements lents, page perdue en route… Installe l’application sur ton écran d’accueil '
-      + 'pour une <b>navigation en eaux sereines</b> : ouverture d’un geste, plein écran, '
-      + 'résistante aux coupures.</p>'
-      + '<button type="button" class="ip-cta">⚓ Installer — cap sur les eaux sereines</button>'
+      + '<p class="ip-intro">Installe l’appli sur ton écran d’accueil pour naviguer en eaux sereines.</p>'
+      + '<button type="button" class="ip-cta">⚓ Installer l’appli</button>'
       + '<button type="button" class="ip-later">Continuer dans les tumultes</button>'
       + '</div>';
     document.body.appendChild(overlay);
@@ -278,7 +275,7 @@
     }
     /* 2) Instructions manuelles (iOS, macOS Safari, autres) : on reutilise
           la modale detaillee de la page d'accueil — jamais de copie. */
-    passerAuCalme('🌞 Cap mis sur les eaux sereines !', 'Encore un geste, expliqué juste après…', 1400);
+    passerAuCalme('🌞 Cap mis sur les eaux sereines !', 'La suite s’affiche juste après.', 1400);
     ecrireSnooze();
     setTimeout(function () {
       fermer();
