@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=17">
+  <link rel="stylesheet" href="css/palier1.css?v=18">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
@@ -1696,64 +1696,11 @@ window.Nautilus = {
     }
   }
 
-  function risquePersonnelHtml(t, me) {
-    if (!t || !me) return '';
-    const locks     = t.matelotLocks || {};
-    const maCle     = me.memberKey;
-    const mesEchecs = Number(locks[maCle]?.failCount || 0);
-    const rang      = mesEchecs + 1;
-    const prochaine = N.getLockHours(rang);
-
-    /* Coequipiers LIBRES qui risqueraient moins que moi. */
-    const moins = (t.members || [])
-      .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
-      .filter(m => m.cle && m.cle !== maCle && !N.isMatelotLocked(t, m.cle))
-      .map(m => ({ ...m, echecs: Number(locks[m.cle]?.failCount || 0) }))
-      .filter(m => N.getLockHours(m.echecs + 1) < prochaine)
-      .sort((a, b) => a.echecs - b.echecs);
-
-    const lignes = [1,2,3,4,5,6].map(n => {
-      const h    = N.getLockHours(n);
-      const cls  = h >= 12 ? ' rouge' : (h >= 4 ? ' ambre' : '');
-      const act  = (Math.min(rang, 6) === n) ? ' actif' : '';
-      const lab  = n === 6 ? '6ᵉ et +' : (n === 1 ? '1ᵉʳ échec' : n + 'ᵉ échec');
-      return `<div class="bareme-l${cls}${act}"><span>${lab}</span>`
-           + `<span class="bareme-h">${h} h${act ? ' <i class="bareme-now">toi</i>' : ''}</span></div>`;
-    }).join('');
-
-    let aide;
-    if (moins.length) {
-      const noms = moins.slice(0, 3).map(m => `<b>${esc(m.nom)}</b>`).join(', ');
-      aide = `🤝 <b>Passe la barre</b> à ${noms} : `
-           + (moins.length > 1 ? `risque le plus faible — <b>${N.getLockHours(moins[0].echecs + 1)} h</b>.`
-                              : `il ne risque que <b>${N.getLockHours(moins[0].echecs + 1)} h</b>.`);
-    } else if (mesEchecs === 0) {
-      aide = `🤝 Compteur vierge : tu es le mieux placé pour <b>te sacrifier</b> et protéger les autres.`;
-    } else {
-      aide = `🤝 Personne ne risque moins que toi : fonce. Un camarade <b>se sacrifiera</b> à ta place un autre jour.`;
-    }
-
-    /* MISE EN PAGE REFAITE : plus de long pavé de phrases. Le chiffre qui
-       compte (la peine du prochain échec) est en TRES gros, a cote d'une
-       etiquette courte ; le bareme devient une grille compacte ou la case
-       « toi » montre ou le matelot se situe sur l'echelle ; le conseil
-       tient en une ligne. Tout se lit en un coup d'oeil, en plein jeu. */
-    const niveau = prochaine >= 12 ? ' rouge' : (prochaine >= 4 ? ' ambre' : '');
-    return `
-      <div class="risque${niveau}">
-        <div class="risque-titre">⚠ Ce qu'un nouvel échec te coûterait</div>
-        <div class="risque-hero">
-          <b class="risque-hero-val">${prochaine} h</b>
-          <span class="risque-hero-lab">
-            de remontée en surface si tu échoues ici.
-            <small>Compteur personnel : <b>${mesEchecs} échec${mesEchecs > 1 ? 's' : ''}</b> — jamais remis à zéro.</small>
-          </span>
-        </div>
-        <div class="bareme-liste">${lignes}</div>
-        <p class="risque-l aide">${aide}</p>
-      </div>
-    `;
-  }
+  /* L'ENCART « ⚠ Ce qu'un nouvel échec te coûterait » A ÉTÉ SUPPRIMÉ de
+     l'épreuve (fonction risquePersonnelHtml retirée) : l'écran de jeu va
+     à l'essentiel — le signal, la réponse, les indices. Les conséquences
+     d'un échec restent expliquées là où elles comptent : sur l'écran de
+     blocage (lignesBlocageHtml) et dans le briefing avant la partie. */
 
   /* === ÉCRAN : idle (pas de session en cours) === */
   function renderIdleScreen(t, me, echecPrecedent) {
@@ -2027,8 +1974,6 @@ window.Nautilus = {
           </div>
           <div id="morseFeedback"></div>
         </div>
-
-        ${risquePersonnelHtml(t, me)}
 
         <div class="morse-hint-target">
             <div class="morse-hint-target-info">
