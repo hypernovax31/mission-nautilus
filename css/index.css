@@ -125,6 +125,7 @@
     .anim-idle .radar-center,
     .anim-idle .radar-blip,
     .anim-idle .radar-blip::after,
+    .anim-idle .radar-blip .blip-echo,
     .anim-idle .radar-rings,
     .anim-idle.radar-stage{animation-play-state:paused !important}
 
@@ -152,7 +153,8 @@
     .offscreen .radar-stage:not(.anim-idle) .radar-sweep-big,
     .offscreen .radar-stage:not(.anim-idle) .radar-center,
     .offscreen .radar-stage:not(.anim-idle) .radar-blip,
-    .offscreen .radar-stage:not(.anim-idle) .radar-blip::after{
+    .offscreen .radar-stage:not(.anim-idle) .radar-blip::after,
+    .offscreen .radar-stage:not(.anim-idle) .radar-blip .blip-echo{
       animation-play-state:running !important;
     }
 
@@ -1113,37 +1115,42 @@
       /* Repère neutre au repos : aucun halo flou hors survol. */
       box-shadow:0 0 0 2px rgba(var(--blip-glow,91,255,156),.92);
     }
-    /* Découverte synchronisée avec Victoire.mp3 (~4,1 s) : le point reste
-       net et blanc, puis trois ondes fines se déploient comme un vrai écho
-       sonar. On évite le gros disque coloré de l'ancienne animation. */
+    /* Découverte synchronisée avec Victoire.mp3 (~4,1 s). Les trois ondes
+       sont de vrais éléments centrés sur le point : plus de box-shadow mis
+       à l'échelle, qui était coûteux à peindre et semblait décalé. */
     .radar-blip.blip-pop{
       width:16px;height:16px;background:#fff;
-      animation:victoryBlipCore var(--victory-echo-duration,4.1s) cubic-bezier(.18,.82,.26,1) both;
+      /* Empêche la transition width/height du blip de se battre avec le
+         transform de l'apparition : source principale du mouvement saccadé. */
+      transition:none !important;
+      animation:victoryBlipCore .42s cubic-bezier(.18,.82,.26,1) both;
     }
-    .radar-blip.blip-pop::after{
-      content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;
-      margin:-9px 0 0 -9px;border-radius:50%;pointer-events:none;
-      border:2px solid rgba(var(--blip-glow,91,255,156),.90);
-      box-shadow:
-        0 0 0 9px rgba(var(--blip-glow,91,255,156),.30),
-        0 0 0 22px rgba(var(--blip-glow,91,255,156),.14);
-      animation:victorySonarEcho var(--victory-echo-duration,4.1s) cubic-bezier(.12,.72,.24,1) both;
+    .radar-blip.blip-pop::after{content:none;}
+    .radar-blip .blip-echo{
+      position:absolute;left:50%;top:50%;width:14px;height:14px;
+      /* translate(-50%,-50%) assure le centrage exact : pas de marge
+         négative en plus, qui décalerait l'onde hors du point. */
+      margin:0;border:2px solid rgba(var(--blip-glow,91,255,156),.92);
+      border-radius:50%;pointer-events:none;opacity:0;
+      transform:translate(-50%,-50%) scale(.35);
+      transform-origin:center;will-change:transform,opacity;
+      animation:victorySonarEcho var(--echo-duration,1.6s) cubic-bezier(.16,.72,.25,1) both;
+      animation-delay:var(--echo-delay,0ms);
     }
     @keyframes victoryBlipCore{
-      0%{transform:translate(-50%,-50%) scale(.20);opacity:0}
-      7%{transform:translate(-50%,-50%) scale(1.32);opacity:1}
-      15%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}
+      0%{transform:translate(-50%,-50%) scale(.42);opacity:0}
+      55%{transform:translate(-50%,-50%) scale(1.12);opacity:1}
+      100%{transform:translate(-50%,-50%) scale(1);opacity:1}
     }
     @keyframes victorySonarEcho{
-      0%{transform:scale(.22);opacity:0}
-      8%{opacity:.95}
-      35%{transform:scale(2.1);opacity:.60}
-      68%{transform:scale(3.8);opacity:.25}
-      100%{transform:scale(5.4);opacity:0}
+      0%{transform:translate(-50%,-50%) scale(.35);opacity:0}
+      9%{opacity:.92}
+      72%{opacity:.30}
+      100%{transform:translate(-50%,-50%) scale(5.8);opacity:0}
     }
     @media (prefers-reduced-motion: reduce){
       .radar-blip.blip-pop{animation:none;transform:translate(-50%,-50%)}
-      .radar-blip.blip-pop::after{animation:none;opacity:0}
+      .radar-blip .blip-echo{display:none}
     }
     /* POSITION DES POINTS = AVANCEMENT DANS LE JEU
        Les points ne sont plus places en dur : le script calcule leur

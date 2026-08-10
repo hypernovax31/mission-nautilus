@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=10">
+  <link rel="stylesheet" href="css/index.css?v=11">
   <link rel="stylesheet" href="css/hublots.css?v=13">
 
 </head>
@@ -1054,6 +1054,40 @@
   const REVEAL_SOUND_FALLBACK_MS = 4100; // durée approchée de Victoire.mp3 si l'événement ended ne vient pas
   const CARD_AFTER_BLIP_MS = 330;        // delai entre le point et sa carte
 
+  /* La durée réelle du son, si ses métadonnées sont déjà chargées, sert de
+     repère aux trois ondes. Sinon le repli garde le rythme de Victoire.mp3. */
+  function victorySoundDurationMs(){
+    const audio = document.getElementById('revealAlarmAudio');
+    const ms = Number(audio?.duration) * 1000;
+    return Number.isFinite(ms) && ms > 800 ? Math.round(ms) : REVEAL_SOUND_FALLBACK_MS;
+  }
+
+  function clearVictoryEchoes(blipEl){
+    blipEl?.querySelectorAll('.blip-echo').forEach(echo => echo.remove());
+  }
+
+  /* Trois anneaux DOM indépendants : chacun a son propre transform centré.
+     Cette structure évite les anneaux saccadés ou décentrés créés par les
+     box-shadow animés de l'ancienne version. */
+  function startVictoryEchoes(blipEl, soundDurationMs){
+    if(!blipEl) return;
+    clearVictoryEchoes(blipEl);
+    const waveDuration = Math.max(900, Math.round(soundDurationMs / 2.55));
+    const delays = [
+      Math.max(100, Math.round(soundDurationMs * .03)),
+      Math.round(soundDurationMs * .32),
+      Math.round(soundDurationMs * .61)
+    ];
+    delays.forEach(delay => {
+      const echo = document.createElement('span');
+      echo.className = 'blip-echo';
+      echo.style.setProperty('--echo-duration', `${waveDuration}ms`);
+      echo.style.setProperty('--echo-delay', `${delay}ms`);
+      blipEl.appendChild(echo);
+    });
+    setTimeout(() => clearVictoryEchoes(blipEl), soundDurationMs + 250);
+  }
+
   /* Attente qui ne s'ecoule QUE pendant que le bloc est sous les yeux.
      Un simple setTimeout continuerait de tourner si le joueur regarde
      ailleurs : la carte apparaitrait hors de sa vue. */
@@ -1323,21 +1357,19 @@
       await waitForSweepOver(blipAngle(blipIdx), sweepTimeout);
       isFirstReveal = false;
 
-      /* b) Le point blanc et ses trois ondes démarrent avec Victoire.mp3.
-         La durée CSS reprend celle du signal afin que l'écho ne s'éteigne
-         pas avant la fin de l'annonce sonore. */
+      /* b) Victoire.mp3 et les trois ondes démarrent dans la même séquence.
+         Les anneaux reprennent la durée connue du signal : leur dernier
+         écho s'éteint juste avec l'annonce sonore. */
+      const victoryDuration = victorySoundDurationMs();
+      const alarmDone = playAlarmOnce();
       if(blipEl){
-        blipEl.style.setProperty('--victory-echo-duration', `${REVEAL_SOUND_FALLBACK_MS}ms`);
         blipEl.classList.add('revealed', 'blip-pop');
+        startVictoryEchoes(blipEl, victoryDuration);
       }
 
-      /* c) La carte suit le point de tres pres : 0,33 s plus tard.
-         Avant, on attendait la FIN de l'alarme (~2,1 s) : le lien entre le
-         point qui vient d'apparaitre et la carte etait perdu. On lance donc
-         le son sans l'attendre, et on enchaine apres un court delai.
-         Le delai est mis en pause si le joueur quitte le bloc du regard,
-         pour que la carte n'apparaisse jamais hors de sa vue. */
-      const alarmDone = playAlarmOnce();
+      /* c) La carte suit le point de très près : 0,33 s plus tard. Le délai
+         est mis en pause si le joueur quitte le bloc du regard, pour que la
+         carte n'apparaisse jamais hors de sa vue. */
       await waitVisible(CARD_AFTER_BLIP_MS);
 
       const temp = document.createElement('div');
@@ -1353,7 +1385,10 @@
       /* On laisse le son finir avant d'annoncer l'equipage suivant : le
          rythme sonore de la sequence reste inchange. */
       await alarmDone;
-      if(blipEl) blipEl.classList.remove('blip-pop');
+      if(blipEl){
+        blipEl.classList.remove('blip-pop');
+        clearVictoryEchoes(blipEl);
+      }
 
       // d) Petite respiration avant l'equipe suivante
       if(_revealQueue.length) await new Promise(r => setTimeout(r, 420));
