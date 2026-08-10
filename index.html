@@ -1105,11 +1105,19 @@
       .forEach(el => el.classList.remove('blip-active', 'blip-flash'));
   }
 
-  /* Meme mise en evidence, declenchee depuis la CARTE cette fois.
-     Le point correspondant se met a clignoter sur le sonar : c'est le seul
-     moyen de le retrouver parmi les autres, surtout quand deux equipages
-     sont proches. */
-  const highlightFromCard = setBlipHighlight;
+  /* Depuis une carte, seul le point correspondant clignote sur le sonar.
+     La carte garde son halo CSS :hover natif, qui disparaît strictement dès
+     la sortie de souris. Ne pas lui appliquer .team-spotlight ici, sinon ce
+     halo JavaScript peut survivre à un re-rendu de la liste. */
+  function highlightBlipFromCard(teamCode, on){
+    const idx = _blipByTeam[teamCode];
+    const blip = idx && document.getElementById('radarBlip' + idx);
+    if(blip){
+      blip.classList.toggle('blip-active', on);
+      blip.classList.toggle('blip-flash', on);
+    }
+  }
+  const highlightFromCard = highlightBlipFromCard;
   let _spotlightTimer = null;   // minuteur unique de la mise en evidence
 
   (function wireCardToBlip(){
