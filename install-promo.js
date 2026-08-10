@@ -36,7 +36,10 @@
 
   var CLE_SNOOZE = 'nautilusInstallPromoSnooze';
   var SNOOZE_MS = 3 * 24 * 3600 * 1000;   // 3 jours de répit après un report
-  var DELAI_AFFICHAGE_MS = 3500;          // la page respire d'abord
+  var DELAI_AFFICHAGE_MS = 3500;          // pages sans machine à écrire
+  var GARDEFOU_TYPEWRITER_MS = 15000;     // si le signal n'arrive jamais
+  var DUREE_CALME_MS = 3000;              /* « EAUX SEREINES » : 3 secondes
+     EN TOUT avant d'envoyer le reste (instructions ou fermeture). */
 
   /* ---------- conditions d'affichage ---------- */
   function estInstallee() {
@@ -244,6 +247,17 @@
     setTimeout(function () { if (cible && cible.remove) cible.remove(); }, 500);
   }
 
+  /* ---------- déclenchement, calé sur la fin de la machine à écrire --- */
+  var declenche = false;
+  function signalerFinTypewriter() {
+    /* Appelé par la page (événement 'nautilus:fin-typewriter') ou par la
+       ceinture de sécurité : la promo ne surgit qu'UNE fois, exactement
+       à la fin de l'ordre de mission. */
+    if (declenche) return;
+    declenche = true;
+    if (!estInstallee()) ouvrir();
+  }
+
   /* Passage à la mer calme + suite selon la plateforme */
   function passerAuCalme(titre, sousTitre, autoFermerMs) {
     if (!overlay) return;
@@ -262,20 +276,22 @@
     /* 1) Prompt natif disponible (Android, Chrome/Edge PC & Mac) */
     var p = consommerPrompt();
     if (p && typeof p.prompt === 'function') {
-      passerAuCalme('🌞 Eaux sereines en vue…', 'Confirme l’installation dans la boîte du navigateur.');
+      passerAuCalme('🌞 Eaux sereines en vue…', 'Confirme dans la boîte du navigateur.');
       try {
         p.prompt();
         var choix = await p.userChoice;
         if (choix && choix.outcome === 'accepted') {
-          passerAuCalme('⚓ Application installée !', 'Retrouve le Nautilus sur ton écran d’accueil, prêt pour la plongée.', 2600);
+          passerAuCalme('⚓ Application installée !', 'Le Nautilus t’attend sur ton écran d’accueil.', DUREE_CALME_MS);
           ecrireSnooze();
           return;
         }
       } catch (e) { /* le navigateur a refusé : on retombe sur les instructions */ }
     }
     /* 2) Instructions manuelles (iOS, macOS Safari, autres) : on reutilise
-          la modale detaillee de la page d'accueil — jamais de copie. */
-    passerAuCalme('🌞 Cap mis sur les eaux sereines !', 'La suite s’affiche juste après.', 1400);
+          la modale detaillee de la page d'accueil — jamais de copie.
+          La mer calme reste 3 secondes EN TOUT (DUREE_CALME_MS) avant
+          d'envoyer le reste. */
+    passerAuCalme('🌞 Cap mis sur les eaux sereines !', 'La suite s’affiche juste après.');
     ecrireSnooze();
     setTimeout(function () {
       fermer();
@@ -284,7 +300,7 @@
       } else if (window.PWAInstall && typeof window.PWAInstall.openInstallModal === 'function') {
         window.PWAInstall.openInstallModal();
       }
-    }, 1450);
+    }, DUREE_CALME_MS);
   }
 
   /* ---------- déclenchement ---------- */
@@ -300,7 +316,16 @@
       maintenant: Date.now(),
       instructionsEnCours: paramsEnCours
     })) return;
-    setTimeout(function () { if (!estInstallee()) ouvrir(); }, DELAI_AFFICHAGE_MS);
+    if (window.nautilusAttendreTypewriter) {
+      /* La page d'accueil le demande : la promo surgit JUSTE a la fin de
+         la machine a ecrire (evenement 'nautilus:fin-typewriter'), pas
+         selon un minuteur aveugle. Ceinture de securite : si l'ordre est
+         annule (ou le signal perdu), affichage de repli a 15 s. */
+      window.addEventListener('nautilus:fin-typewriter', signalerFinTypewriter);
+      setTimeout(signalerFinTypewriter, GARDEFOU_TYPEWRITER_MS);
+    } else {
+      setTimeout(signalerFinTypewriter, DELAI_AFFICHAGE_MS);
+    }
   }
 
   if (document.readyState === 'loading') {
@@ -313,6 +338,9 @@
   window.NautilusInstallPromo = {
     ouvrir: ouvrir, fermer: fermer, doitAfficher: doitAfficher,
     estInstallee: estInstallee, promptDisponible: promptDisponible,
-    SNOOZE_MS: SNOOZE_MS, DELAI_AFFICHAGE_MS: DELAI_AFFICHAGE_MS, CLE_SNOOZE: CLE_SNOOZE
+    signalerFinTypewriter: signalerFinTypewriter,
+    SNOOZE_MS: SNOOZE_MS, DELAI_AFFICHAGE_MS: DELAI_AFFICHAGE_MS,
+    DUREE_CALME_MS: DUREE_CALME_MS, GARDEFOU_TYPEWRITER_MS: GARDEFOU_TYPEWRITER_MS,
+    CLE_SNOOZE: CLE_SNOOZE
   };
 })();
