@@ -27,6 +27,9 @@
        principal : les scripts différés s'exécutent dans l'ordre du
        document, et le module l'utilise dès son démarrage. -->
   <script src="palier-annonces.js?v=1" defer></script>
+  <!-- Animation d'incitation à installer l'app : tempête → eaux sereines.
+       S'ouvre 3,5 s après l'arrivée (jamais en mode appli, report 3 j). -->
+  <script src="install-promo.js?v=1" defer></script>
 
 </head>
 <body>
@@ -6966,8 +6969,15 @@ if(new URLSearchParams(location.search).get('pwa') === 'install'){
   setTimeout(showInstallInstructions, 800);
 }
 
-// Export pour debug
-window.PWAInstall = { openInstallModal, PWA_PLATFORM };
+// Export pour debug + le module d'animation d'installation
+// (install-promo.js) : il reutilise CES instructions par plateforme,
+// jamais de copie. prendrePrompt() consomme le prompt natif capture.
+window.PWAInstall = {
+  openInstallModal, showInstallInstructions, PWA_CONTENT, PWA_PLATFORM, PWA_SUBMARINE_HTML,
+  estInstallee: () => pwaInstalled,
+  prendrePrompt: () => { const p = pwaDeferredPrompt; pwaDeferredPrompt = null; return p; },
+  aUnPrompt: () => Boolean(pwaDeferredPrompt)
+};
 </script>
 <script src="admin-button.js?v=6" type="module"></script>
 </body>
