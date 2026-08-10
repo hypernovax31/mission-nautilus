@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=10">
+  <link rel="stylesheet" href="css/palier1.css?v=11">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
@@ -2608,7 +2608,11 @@ window.Nautilus = {
     }
   }
 
-  /* === ÉCRAN : retour en surface après une tentative === */
+  /* === ÉCRAN : retour en surface après une tentative ===
+     REFONTE « page d'erreurs » : TOUTE la largeur du bloc, trois lignes
+     pleines et courtes à la place des longs paragraphes et des deux
+     cartes côte à côte (illisibles sur téléphone). À l'essentiel :
+     pourquoi / combien de temps / qui reprend. */
   function renderLostScreen(s, t) {
     const monLock = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
     const reason = s.endReason || 'lost';
@@ -2617,6 +2621,29 @@ window.Nautilus = {
       : reason === 'too_many_errors'
         ? '3 erreurs sur cette tentative'
         : 'Tentative interrompue';
+    let lignes;
+    if (monLock?.lockedUntil) {
+      const hours = Number(monLock.lastLockHours || 1);
+      const { suivante, relais, relayHours } = peineEtRelais(t, monLock);
+      const noms = relais.slice(0, 3).map(m => esc(m.nom)).join(', ');
+      lignes = `
+        <div class="lock-ligne lock-ligne--pause">
+          <span class="lock-ligne-ico" aria-hidden="true">⏱</span>
+          <span>Ta pause : <b>${esc(String(hours))} h</b> — reprise <b>${esc(N.formatDate(monLock.lockedUntil))}</b>.</span>
+        </div>
+        <div class="lock-ligne lock-ligne--relais">
+          <span class="lock-ligne-ico" aria-hidden="true">⚓</span>
+          <span>${noms
+            ? `<b>${noms}</b> ${relais.length > 1 ? 'peuvent' : 'peut'} reprendre <b>dès maintenant</b> (risque ${esc(String(relayHours))} h).`
+            : `La barre est libre : <b>un autre matelot</b> peut reprendre <b>dès maintenant</b>.`}</span>
+        </div>
+        <div class="lock-ligne lock-ligne--next">
+          <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
+          <span>Prochain échec : <b>${esc(String(suivante))} h</b> de pause (compteur personnel).</span>
+        </div>`;
+    } else {
+      lignes = `<div class="lock-ligne"><span class="lock-ligne-ico" aria-hidden="true">⏱</span><span>Calcul de ta disponibilité…</span></div>`;
+    }
     return `
       <section class="lock-screen lock-screen--lost" aria-live="polite">
         <div class="lock-heading">
@@ -2627,11 +2654,7 @@ window.Nautilus = {
           </div>
         </div>
         <div class="lock-attempt"><span aria-hidden="true">◌</span>${esc(attemptLabel)}</div>
-        <p class="lock-lead">Cette pause ne concerne que toi. Ton équipage reste en plongée : un autre matelot peut reprendre le palier dès maintenant.</p>
-        ${monLock?.lockedUntil
-          ? `${lockResumeCard(monLock, 'Tu pourras reprendre les commandes')}
-             ${prochainePeineHtml(t, monLock)}`
-          : `<div class="lock-loading">Calcul de ta prochaine disponibilité…</div>`}
+        <div class="lock-lignes">${lignes}</div>
         <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
       </section>
     `;
@@ -2642,7 +2665,10 @@ window.Nautilus = {
      le prochain faux pas : c'est pendant son attente qu'il decidera s'il
      repart lui-meme ou s'il passe la barre a un camarade plus leger.
      Avant, cette information n'apparaissait nulle part : chacun decouvrait
-     sa peine apres coup, en la subissant. */
+     sa peine apres coup, en la subissant.
+
+     Le CALCUL est partage (peineEtRelais) entre la page d'erreurs
+     allegee (trois lignes) et l'ecran de pause personnelle detaille. */
   function lockResumeCard(lock, label){
     const hours = Number(lock?.lastLockHours || 1);
     return `
@@ -2657,7 +2683,7 @@ window.Nautilus = {
     `;
   }
 
-  function prochainePeineHtml(t, l) {
+  function peineEtRelais(t, l) {
     const echecs = Number(l?.failCount || 0);
     /* Un blocage pour indice n'augmente PAS le compteur d'échecs : la
        prochaine peine se calcule donc sur echecs + 1 dans les deux cas. */
@@ -2669,10 +2695,13 @@ window.Nautilus = {
       .map(m => ({ ...m, echecs: Number(locks[m.cle]?.failCount || 0) }))
       .filter(m => N.getLockHours(m.echecs + 1) < suivante)
       .sort((a, b) => a.echecs - b.echecs);
+    return { suivante, relais, relayHours: relais[0] ? N.getLockHours(relais[0].echecs + 1) : null };
+  }
 
+  function prochainePeineHtml(t, l) {
+    const { suivante, relais, relayHours } = peineEtRelais(t, l);
     const firstRelay = relais[0];
     const relayNames = relais.slice(0, 3).map(m => esc(m.nom)).join(', ');
-    const relayHours = firstRelay ? N.getLockHours(firstRelay.echecs + 1) : null;
 
     return `
       <div class="lock-next-grid">

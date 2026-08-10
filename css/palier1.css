@@ -389,13 +389,29 @@
       background:rgba(0,0,0,.18);border:1px dashed rgba(142,231,255,.25);border-radius:8px;
     }
 
-    /* === Retour en surface : une information claire, sans écran punitif === */
+    /* === Retour en surface : une information claire, sans écran punitif ===
+       TOUTE la largeur du bloc (plus de colonne centrale étroite) : la
+       page d'erreur se lit d'un bord à l'autre de la carte. */
     .lock-screen{
-      width:min(100%,780px);margin:0 auto;padding:clamp(20px,4vw,34px);
+      width:100%;margin:0;padding:clamp(20px,4vw,34px);
       color:#eaf8ff;text-align:left;border:1px solid rgba(142,231,255,.26);
       border-radius:22px;background:linear-gradient(145deg,rgba(5,20,36,.96),rgba(8,42,66,.94));
       box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 18px 40px rgba(0,0,0,.25);
+      box-sizing:border-box;
     }
+    /* Page d'erreur allégée : trois lignes PLEINE LARGEUR, une
+       information chacune — fini les deux cartes côte à côte et les
+       longs paragraphes. */
+    .lock-lignes{display:flex;flex-direction:column;gap:8px;width:100%;margin:2px 0 0;}
+    .lock-ligne{display:flex;align-items:flex-start;gap:10px;width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid rgba(142,231,255,.22);background:rgba(0,0,0,.22);color:#dff6ff;font-size:13.5px;font-weight:700;line-height:1.45;}
+    .lock-ligne b{color:#fff;}
+    .lock-ligne-ico{flex:0 0 auto;width:22px;text-align:center;font-size:16px;line-height:1.35;}
+    .lock-ligne--pause{border-color:rgba(255,123,114,.45);background:rgba(185,44,45,.14);color:#ffd0cd;}
+    .lock-ligne--pause b{color:#ffb0aa;}
+    .lock-ligne--relais{border-color:rgba(91,224,155,.4);background:rgba(91,224,155,.09);color:#d9f7e7;}
+    .lock-ligne--relais b{color:#a9f1c8;}
+    .lock-ligne--next{color:#b7d9e8;font-size:12.5px;}
+    .lock-ligne--next b{color:#fff;}
     .lock-screen--lost{border-color:rgba(255,123,114,.46);background:radial-gradient(circle at 100% 0,rgba(185,44,45,.18),transparent 38%),linear-gradient(145deg,rgba(34,10,21,.97),rgba(7,37,58,.96));}
     .lock-heading{display:flex;align-items:center;gap:13px;margin:0 0 14px;}
     .lock-heading-icon{display:grid;place-items:center;flex:0 0 auto;width:48px;height:48px;border-radius:15px;background:rgba(142,231,255,.12);border:1px solid rgba(142,231,255,.3);color:#c8f4ff;font-size:25px;font-weight:1000;}
