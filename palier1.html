@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=15">
+  <link rel="stylesheet" href="css/palier1.css?v=16">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
@@ -1994,8 +1994,15 @@ window.Nautilus = {
 
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
-            <div class="morse-sweep"></div>
+            <!-- Lampe temoin EN PREMIER : le CSS (.on ~ .morse-scope)
+                 fait affoler les ondes pendant la lecture morse. -->
             <div class="morse-signal-light" id="morseVisual"></div>
+            <div class="morse-scope">
+              <div class="morse-scan"></div>
+              <div class="morse-wave w1"></div>
+              <div class="morse-wave w2"></div>
+            </div>
+            <div class="morse-glass"></div>
           </div>
           <div class="morse-controls">
             <button class="morse-listen-btn" id="morseListenBtn" ${listensLeft <= 0 ? 'disabled' : ''}>
@@ -2496,8 +2503,15 @@ window.Nautilus = {
         <p class="morse-brief">Une épreuve est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — s'il échoue, il sera seul repoussé en surface et tu pourras prendre sa place.</p>
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
-            <div class="morse-sweep"></div>
+            <!-- Lampe temoin EN PREMIER : le CSS (.on ~ .morse-scope)
+                 fait affoler les ondes pendant la lecture morse. -->
             <div class="morse-signal-light" id="morseVisual"></div>
+            <div class="morse-scope">
+              <div class="morse-scan"></div>
+              <div class="morse-wave w1"></div>
+              <div class="morse-wave w2"></div>
+            </div>
+            <div class="morse-glass"></div>
           </div>
           <div class="morse-controls">
             <div class="morse-counter">Écoutes restantes : <b>${s.listensLeft ?? 0}</b> / 3</div>

@@ -166,6 +166,9 @@
        reste allumee en rouge, mais cesse de clignoter. */
     @media (prefers-reduced-motion: reduce){
       .dive-lamp.on{animation:none}
+      /* Moniteur Nautilus : ondes, balayage et flash figés (lampe fixe). */
+      .morse-scope,.morse-scan,.morse-wave,.morse-signal-light.on{animation:none}
+      .morse-signal-light.on{opacity:.65}
     }
 
     /* === Équipage === */
@@ -312,22 +315,82 @@
     }
 
     .morse-sonar-panel{
-      display:grid;grid-template-columns:140px 1fr;gap:16px;align-items:center;
+      display:grid;grid-template-columns:156px 1fr;gap:16px;align-items:center;
       padding:16px;background:rgba(0,0,0,.32);
       border:1px solid rgba(142,231,255,.18);border-radius:16px;
     }
     @media(max-width:560px){.morse-sonar-panel{grid-template-columns:1fr;justify-items:center;}}
+    /* MONITEUR ROND « NAUTILUS » — lecteur d'ondes sinusoïdales animé.
+       Hublot laiton à rivets (aucune image : dégradés + SVG data-URI)
+       abritant un oscilloscope à phosphore, façon salle des machines
+       hollywoodienne :
+       - deux sinusoïdes glissent en sens inverse (parallaxe),
+       - un balayage de rafraîchissement CRT traverse le tube,
+       - quand le signal morse joue (#morseVisual passe en .on), le tube
+         flashe et l'onde prend toute son amplitude. */
     .morse-sonar-screen{
-      position:relative;width:130px;height:130px;border-radius:50%;
-      background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.08),rgba(0,0,0,.25) 70%),#02120d;
-      border:3px solid rgba(91,255,156,.7);
-      box-shadow:0 0 18px rgba(91,255,156,.28),inset 0 0 18px rgba(91,255,156,.12);overflow:hidden;
+      position:relative;width:132px;height:132px;border-radius:50%;
+      background:radial-gradient(circle at 50% 38%,rgba(74,255,151,.10),transparent 62%),#020f0a;
+      background-clip:padding-box;border:9px solid transparent;
+      box-shadow:inset 0 0 22px rgba(0,0,0,.8),0 5px 16px rgba(0,0,0,.55),0 0 20px rgba(91,255,156,.14);
     }
-    .morse-sonar-screen:before{content:"";position:absolute;inset:22px;border:1px solid rgba(91,255,156,.22);border-radius:50%;box-shadow:0 0 0 18px rgba(91,255,156,.10),0 0 0 36px rgba(91,255,156,.06);}
-    .morse-sweep{position:absolute;left:50%;top:50%;width:50%;height:2px;background:linear-gradient(90deg,rgba(255,255,255,.95),rgba(91,255,156,.45),transparent);transform-origin:left center;animation:sonarRot 1.8s linear infinite;box-shadow:0 0 10px rgba(255,255,255,.7);}
-    @keyframes sonarRot{to{transform:rotate(360deg);}}
-    .morse-signal-light{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,#fff 0 5px,rgba(91,255,156,.7) 6px,transparent 12px);opacity:0;}
-    .morse-signal-light.on{opacity:1;}
+    /* Ceinture de laiton brossé (derrière la bordure transparente). */
+    .morse-sonar-screen:before{
+      content:"";position:absolute;inset:-9px;border-radius:50%;z-index:-1;
+      background:conic-gradient(from 210deg,#8a6420,#e8c26a 12%,#6b5122 30%,#caa24b 52%,#573f16 70%,#b98f3e 88%,#8a6420);
+      box-shadow:inset 0 2px 4px rgba(255,236,170,.45),inset 0 -3px 6px rgba(0,0,0,.65),0 2px 8px rgba(0,0,0,.5);
+    }
+    /* 8 rivets laiton autour du hublot. */
+    .morse-sonar-screen:after{
+      content:"";position:absolute;inset:-9px;border-radius:50%;z-index:5;pointer-events:none;
+      background:
+        radial-gradient(circle 4px at 50% 2.7%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 83.5% 16.5%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 97.3% 50%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 83.5% 83.5%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 50% 97.3%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 16.5% 83.5%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 2.7% 50%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 16.5% 16.5%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px);
+    }
+    /* Le tube : cercle intérieur, tout y est écrêté (overflow propre). */
+    .morse-scope{position:absolute;inset:0;border-radius:50%;overflow:hidden;z-index:1;
+      animation:scopeFlicker 4.2s steps(80) infinite;}
+    /* Graticule d'oscilloscope + vignettage du verre bombé. */
+    .morse-scope:before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+      background:
+        linear-gradient(rgba(140,255,190,.16),rgba(140,255,190,.16)) 0 50%/100% 1px no-repeat,
+        linear-gradient(90deg,rgba(140,255,190,.16),rgba(140,255,190,.16)) 50% 0/1px 100% no-repeat,
+        radial-gradient(circle,transparent 56%,rgba(0,10,6,.8) 97%);}
+    /* Balayage de rafraîchissement CRT qui traverse le tube. */
+    .morse-scan{position:absolute;top:0;bottom:0;left:0;width:26px;z-index:1;
+      background:linear-gradient(90deg,transparent,rgba(170,255,205,.15),transparent);
+      animation:morseScan 3.1s linear infinite;}
+    @keyframes morseScan{from{transform:translateX(-30px)}to{transform:translateX(140px)}}
+    /* Ondes sinusoïdales : deux traces glissent en sens inverse. */
+    .morse-wave{position:absolute;left:0;right:0;top:50%;height:56px;margin-top:-28px;z-index:1;
+      background-repeat:repeat-x;background-position:0 50%;background-size:120px 56px;}
+    .morse-wave.w1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='56' viewBox='0 0 120 56'%3E%3Cpath d='M0 28 Q15 8 30 28 T60 28 T90 28 T120 28' stroke='%2366ffb0' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+      filter:drop-shadow(0 0 4px rgba(91,255,156,.8));opacity:.9;animation:morseDefile 1.9s linear infinite;}
+    .morse-wave.w2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='56' viewBox='0 0 120 56'%3E%3Cpath d='M0 28 Q15 48 30 28 T60 28 T90 28 T120 28' stroke='%233fd489' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+      opacity:.45;animation:morseDefile 3.4s linear infinite reverse;}
+    @keyframes morseDefile{from{background-position-x:0}to{background-position-x:-120px}}
+    /* Lampe témoin #morseVisual : le JS la passe en .on pendant toute la
+       lecture morse. Plein tube : flash + onde en pleine amplitude. */
+    .morse-signal-light{position:absolute;inset:0;border-radius:50%;z-index:3;pointer-events:none;opacity:0;}
+    .morse-signal-light.on{opacity:1;background:radial-gradient(circle,rgba(196,255,222,.30),transparent 62%);
+      animation:morseFlash .5s ease-in-out infinite;}
+    @keyframes morseFlash{50%{opacity:.35}}
+    .morse-signal-light.on ~ .morse-scope .morse-wave{animation-duration:.45s;opacity:1;}
+    .morse-signal-light.on ~ .morse-scope .morse-wave.w1{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='56' viewBox='0 0 120 56'%3E%3Cpath d='M0 28 Q15 2 30 28 T60 28 T90 28 T120 28' stroke='%23baffdb' stroke-width='2.4' fill='none'/%3E%3C/svg%3E");}
+    .morse-signal-light.on ~ .morse-scope .morse-scan{animation-duration:1s;}
+    /* Reflet du verre du moniteur (au-dessus de tout). */
+    .morse-glass{position:absolute;inset:0;border-radius:50%;z-index:4;pointer-events:none;
+      background:linear-gradient(118deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.05) 14%,transparent 30%),
+                 radial-gradient(circle at 28% 22%,rgba(255,255,255,.10),transparent 40%);
+      box-shadow:inset 0 0 26px rgba(0,0,0,.55);}
+    @keyframes scopeFlicker{0%,89%,100%{opacity:1}90%{opacity:.8}91%{opacity:1}95%{opacity:.88}96%{opacity:1}}
     .morse-controls{display:flex;flex-direction:column;gap:10px;align-items:stretch;}
     .morse-listen-btn{width:100%;margin:0;background:var(--fnac);color:#111;font-weight:1000;border:0;border-radius:12px;padding:12px;font-size:15px;cursor:pointer;}
     .morse-listen-btn:disabled{opacity:.45;cursor:not-allowed;}
