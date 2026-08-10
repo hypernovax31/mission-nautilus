@@ -1076,6 +1076,99 @@ window.Nautilus = {
     bar.classList.toggle('crit', pct <= 20);
   }
 
+  /* ===== APERÇU ADMIN — TEST DES ÉCRANS SANS JOUER =====
+     Ouvert depuis le panneau admin (« Tester toutes les pages ») :
+        palier1.html?apercu=victoire|defaite|blocage|suite&k=<clé>
+     Tout est factice et local : AUCUNE lecture ni écriture de partie,
+     l'écran servi est le même que celui des vrais joueurs.
+     La clé prouve la provenance du panneau admin ; elle dérive du code
+     d'accès. Verrou VOLONTAIREMENT simple (le code vit côté client de
+     toute façon) : elle écarte les joueurs curieux, rien de plus.
+     À GARDER EN PHASE avec apercuAdminCle() de index.html / admin-button.js. */
+  const APERCU_ADMIN_CODE = 'NEMO2026';
+
+  function apercuAdminCleAttendue() {
+    let h = 0;
+    const s = 'apercu-admin:' + APERCU_ADMIN_CODE;
+    for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+    return 'k' + Math.abs(h).toString(36);
+  }
+
+  /* L'URL demande-t-elle un aperçu admin autorisé ? (Vérifié de façon
+     SYNCHRONE au boot, avant l'identification.) */
+  function apercuAdminDemande() {
+    try {
+      const params = new URLSearchParams(location.search);
+      const mode = String(params.get('apercu') || '').toLowerCase();
+      if (!mode) return null;
+      if (String(params.get('k') || '') !== apercuAdminCleAttendue()) return null;
+      return mode;
+    } catch (e) { return null; }
+  }
+
+  /* Dessine l'écran demandé avec des données inventions. Appelé de façon
+     DIFFÉRÉE (après l'évaluation complète du module) : les fonctions de
+     rendu et leurs constantes sont déclarées plus bas. */
+  function initApercuAdmin(mode) {
+    const maintenant = Date.now();
+    const plus1h = new Date(maintenant + 3600e3).toISOString();
+    const team = {
+      teamCode: 'NEMO', teamName: 'Nemo',
+      currentStep: mode === 'suite' ? 'livres' : 'start',
+      completedSteps: mode === 'suite' ? ['start'] : [],
+      status: 'active', failCount: 1,
+      matelotLocks: {
+        DEMO: { name: 'DÉMO', failCount: 1, lastLockHours: 1, lockedUntil: plus1h, reason: 'morse_too_many_errors', blockedAt: new Date(maintenant - 600e3).toISOString() }
+      },
+      members: [
+        { name: 'DÉMO', service: 'PE', memberKey: 'DEMO', registeredAt: new Date(maintenant - 7200e3).toISOString() },
+        { name: 'CAPITAINE', service: 'CODIR', memberKey: 'CAPITAINE', registeredAt: new Date(maintenant - 7300e3).toISOString() }
+      ]
+    };
+    const me = { name: 'DÉMO', service: 'PE', memberKey: 'DEMO', clientId: 'apercu-admin' };
+    const sessionBase = {
+      startedAt: new Date(maintenant - 155e3).toISOString(),
+      endedAt: new Date(maintenant).toISOString(),
+      listensLeft: 1, errors: 3, maxErrors: 3, attempts: 2,
+      startedByName: 'DÉMO', startedByMemberKey: 'DEMO',
+      hintsRevealed: [true, false, false], wordLength: 8, firstLetter: 'B'
+    };
+
+    state.teamCode = team.teamCode;
+    state.team = team;
+    state.me = me;
+
+    $('topTeam').textContent = 'Aperçu admin';
+    $('identityCard').style.display = 'none';
+    $('teamCard').style.display = 'block';
+    $('logCard').style.display = 'block';
+    $('gameCard').style.display = 'block';
+    renderCrew();
+    const body = $('gameBody');
+    const titres = {
+      victoire: 'victoire « Épreuve validée ! »',
+      defaite: 'retour en surface (défaite)',
+      blocage: 'blocage personnel du matelot',
+      suite: 'transition vers le palier suivant'
+    };
+    setStatus(`🧪 APERÇU ADMIN — ${titres[mode] || mode}. Aucune donnée réelle, aucune écriture.`, 'warning');
+
+    if (mode === 'victoire') {
+      const s = { ...sessionBase, state: 'won', endReason: 'solved', errors: 2, revealedWord: 'BALEINES' };
+      body.innerHTML = renderWonScreen(s, team);
+      bindWonScreenEvents();
+      jouerSonVictoire(s);
+    } else if (mode === 'defaite') {
+      body.innerHTML = renderLostScreen({ ...sessionBase, state: 'lost', endReason: 'too_many_errors' }, team);
+    } else if (mode === 'blocage') {
+      body.innerHTML = renderMatelotLockScreen(team, me);
+    } else if (mode === 'suite') {
+      body.innerHTML = renderNextStepPrompt(team);
+    } else {
+      body.innerHTML = `<div class="notice">🧪 Aperçu « ${esc(mode)} » inconnu. Valeurs possibles : victoire, defaite, blocage, suite.</div>`;
+    }
+  }
+
   /* === Boot === */
   (async function init() {
     /* La reserve d'oxygene s'affiche des l'ouverture, puis se rafraichit
@@ -1094,6 +1187,19 @@ window.Nautilus = {
     });
 
     setupDirectResumeForm();
+
+    /* Aperçu admin : on court-circuite TOUT le démarrage normal (équipe,
+       session, identification). L'appel est différé d'un tour de boucle :
+       les fonctions de rendu et leurs constantes sont déclarées plus bas
+       dans le module et ne seraient pas encore prêtes ici. */
+    const modeApercu = apercuAdminDemande();
+    if (modeApercu) {
+      setTimeout(() => {
+        try { initApercuAdmin(modeApercu); }
+        catch (e) { console.error('Aperçu admin:', e); }
+      }, 0);
+      return;
+    }
 
     /* 1) Un lien personnel (?code=…&m=…) reprend automatiquement le
        matelot. Une URL nue ouvre le formulaire de reprise par Code Matelot. */
@@ -2712,6 +2818,6 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=3" defer></script>
-<script src="admin-button.js?v=4" type="module"></script>
+<script src="admin-button.js?v=5" type="module"></script>
 </body>
 </html>

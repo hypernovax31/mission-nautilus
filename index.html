@@ -256,8 +256,8 @@
 
         <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:linear-gradient(135deg,rgba(11,52,78,.08),rgba(245,176,39,.08));">
           <div style="font-weight:900;color:#163f58;margin-bottom:4px">🧪 MODE CONCEPTEUR</div>
-          <div class="small" style="margin-bottom:9px">Prévisualise les paliers sans modifier la progression réelle d’une équipe.</div>
-          <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧭 Afficher l’accès aux paliers</button>
+          <div class="small" style="margin-bottom:9px">Teste toutes les pages du jeu (accueil, paliers, classement…) sans modifier la progression réelle d’une équipe.</div>
+          <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>
           <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>
         </div>
 
@@ -2942,25 +2942,83 @@ function qrDataUri(text, opts){
      et reste invisible pour les vrais équipages. Les paliers non encore
      construits restent visibles mais désactivés, afin que l'organisateur
      dispose déjà de la feuille de route complète. */
+  /* Clé « aperçu » : elle prouve que le lien vient du panneau admin.
+     Dérivée du code d'accès par une formule volontairement simple (le jeu
+     n'a pas d'enjeu de sécurité forte, mais le paramètre ?apercu seul ne
+     doit pas suffire à un joueur curieux).
+     À GARDER EN PHASE avec apercuAdminCleAttendue() de palier1.html. */
+  function apercuAdminCle(){
+    let h = 0;
+    const s = 'apercu-admin:' + ADMIN_CODE;
+    for(let i = 0; i < s.length; i++){ h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+    return 'k' + Math.abs(h).toString(36);
+  }
+
+  /* « TESTER TOUTES LES PAGES » : chaque page du jeu + aperçus d'écrans
+     du Palier 1, ouverts dans un onglet isolé (aucune progression réelle
+     n'est modifiée). Les paliers non construits restent listés « bientôt ». */
   function renderDesignerAccess(){
     if(!isAdminUnlocked()) { alert('Déverrouille d’abord le panneau admin.'); return; }
     const box = $('adminDesignerBox');
     const btn = $('adminDesignerBtn');
     if(!box) return;
-    const stepEntries = Object.entries(STEPS);
-    const cards = stepEntries.map(([id, step], index) => {
-      const available = id === 'start';
-      const href = available
-        ? `palier1.html?code=NEMO&m=ZZZZ-0000`
-        : '#';
-      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:${available ? 'rgba(91,224,155,.12)' : 'rgba(0,0,0,.04)'};border:1px solid ${available ? 'rgba(91,224,155,.45)' : '#dfe8ee'};">
-        <span><b>${index + 1}.</b> ${esc(step.label)} <span class="small">${available ? 'disponible' : 'en construction'}</span></span>
-        ${available ? `<a href="${href}" target="_blank" rel="noopener" style="background:var(--fnac);color:#111;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap">Prévisualiser</a>` : '<span class="small" style="white-space:nowrap">Bientôt</span>'}
+    const lien = (href, label) =>
+      `<a href=\"${href}\" target=\"_blank\" rel=\"noopener\" style=\"background:var(--fnac);color:#111;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap\">${label}</a>`;
+    const ligne = (titre, note, actionHtml, dispo) =>
+      `<div style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:${dispo ? 'rgba(91,224,155,.12)' : 'rgba(0,0,0,.04)'};border:1px solid ${dispo ? 'rgba(91,224,155,.45)' : '#dfe8ee'};\">
+        <span>${titre}${note ? ' <span class=\"small\">' + note + '</span>' : ''}</span>${actionHtml}
       </div>`;
-    }).join('');
-    box.innerHTML = `<div class="small" style="font-weight:900;color:#163f58;margin-bottom:5px">Accès isolé — équipe de test NEMO</div>${cards}`;
+    const sectionHtml = (titre) =>
+      `<div class=\"small\" style=\"font-weight:900;color:#163f58;margin:10px 0 0\">${titre}</div>`;
+    const k = apercuAdminCle();
+    const lignes = [
+      sectionHtml('🧭 TESTER TOUTES LES PAGES'),
+      ligne('🏠 <b>Accueil</b>', 'page de lancement', lien('index.html', 'Ouvrir'), true),
+      ligne('🏁 <b>Classement</b>', 'podium de fin de mission', lien('classement.html', 'Ouvrir'), true),
+      sectionHtml('PALIERS — pages de jeu')
+    ];
+    /* Page connue par palier : start = l'épreuve (compte de test),
+       livres = le portail QR scellé. Le nom de fichier du portail EST le
+       code du palier. */
+    const pageParPalier = { start: 'palier1.html?code=NEMO&m=ZZZZ-0000', livres: '1721310619.html' };
+    Object.entries(STEPS).forEach(([id, step], index) => {
+      const href = pageParPalier[id] || null;
+      const note = id === 'start' ? 'épreuve — compte de test'
+        : id === 'livres' ? 'portail QR scellé'
+        : 'en construction';
+      lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
+        href ? lien(href, 'Prévisualiser') : '<span class=\"small\" style=\"white-space:nowrap\">Bientôt</span>', !!href));
+    });
+    lignes.push(sectionHtml('PALIER 1 — aperçus d’écrans (factice, aucune écriture)'));
+    [
+      ['victoire', '🏆 Épreuve validée (victoire)'],
+      ['defaite', '↟ Retour en surface (défaite)'],
+      ['blocage', '🔒 Blocage personnel d’un matelot'],
+      ['suite', '🧭 Transition vers le palier suivant']
+    ].forEach(([mode, titre]) => {
+      lignes.push(ligne(titre, 'aperçu', lien(`palier1.html?apercu=${mode}&k=${k}`, 'Aperçu'), true));
+    });
+    lignes.push(sectionHtml('EFFETS (sur cette page)'));
+    lignes.push(`<div style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);\">
+      <span>🏆 <b>Annonce verte « palier franchi »</b> <span class=\"small\">message + Victoire.mp3</span></span>
+      <button class=\"secondary\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap\">Tester</button>
+    </div>`);
+    box.innerHTML = lignes.join('');
+    box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', () => {
+      const NA = window.NautilusAnnonces;
+      if(!NA || !NA.showPalierAnnouncement){
+        alert('Module d’annonces absent de cette page (disponible sur l’accueil et les paliers).');
+        return;
+      }
+      NA.showPalierAnnouncement({
+        teamName: 'Équipage démo',
+        palierLabel: 'Palier 1',
+        encouragement: '💪 À vous de jouer : votre équipage franchira le sien !'
+      });
+      if(NA.playVictorySound) NA.playVictorySound();
+    });
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    if(btn) btn.textContent = box.style.display === 'none' ? '🧭 Afficher l’accès aux paliers' : '🔽 Masquer l’accès aux paliers';
+    if(btn) btn.textContent = box.style.display === 'none' ? '🧪 Tester toutes les pages' : '🔽 Masquer les tests de pages';
   }
 
   /* Vérification non destructive du panneau admin.
@@ -6776,7 +6834,7 @@ if(new URLSearchParams(location.search).get('pwa') === 'install'){
 // Export pour debug
 window.PWAInstall = { openInstallModal, PWA_PLATFORM };
 </script>
-<script src="admin-button.js?v=4" type="module"></script>
+<script src="admin-button.js?v=5" type="module"></script>
 </body>
 </html>
 
