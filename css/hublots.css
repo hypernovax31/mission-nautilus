@@ -215,33 +215,13 @@ button.mission-step:not(.active):hover .hublot-glass{
     inset 0 0 22px rgba(3,19,31,.34) !important;
 }
 
-/* Hublot sélectionné : le halo englobe toute la couronne, pas seulement le
-   verre. Le joueur sait immédiatement quel hublot correspond à la consigne
-   ouverte. L'effet reste doux afin de ne pas masquer les autres hublots. */
-@keyframes selectedHublotHalo{
-  0%,100%{
-    box-shadow:
-      0 0 0 3px rgba(245,176,39,.42),
-      0 0 18px 4px rgba(245,176,39,.38),
-      0 10px 22px rgba(0,0,0,.52);
-  }
-  50%{
-    box-shadow:
-      0 0 0 5px rgba(255,226,154,.66),
-      0 0 34px 10px rgba(245,176,39,.62),
-      0 12px 24px rgba(0,0,0,.56);
-  }
-}
+/* Hublot sélectionné : halo fixe autour de toute la couronne. Il indique
+   clairement l'étape active, sans pulsation ni animation parasite. */
 button.mission-step.active{
   z-index:2;
-  animation:selectedHublotHalo 1.7s ease-in-out infinite !important;
-}
-@media(prefers-reduced-motion:reduce){
-  button.mission-step.active{
-    animation:none !important;
-    box-shadow:
-      0 0 0 4px rgba(255,226,154,.58),
-      0 0 26px 7px rgba(245,176,39,.48),
-      0 10px 22px rgba(0,0,0,.52);
-  }
+  animation:none !important;
+  box-shadow:
+    0 0 0 4px rgba(255,226,154,.58),
+    0 0 26px 7px rgba(245,176,39,.48),
+    0 10px 22px rgba(0,0,0,.52);
 }
