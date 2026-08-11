@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=18">
-  <link rel="stylesheet" href="css/palier2.css?v=3">
+  <link rel="stylesheet" href="css/palier2.css?v=4">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -87,11 +87,9 @@
       <div class="status-banner success">
         ✅ <b>Scellé levé !</b> Le QR Code a ouvert le sas du Palier 2 sur cet appareil.
       </div>
-      <p class="gate-lead">
-        ⏳ <b>L'épreuve du Palier 2 arrive.</b> L'organisation la dévoilera ici très prochainement :
-        gardez cette page sous la main.
-      </p>
-      <a class="gate-home" href="index.html">🏠 Retour à l'accueil</a>
+      <div id="mcStatut" class="mc-statut">✍️ Remplis la grille : touche une case ou une définition pour choisir le mot.</div>
+      <div id="mcHost"></div>
+      <a class="gate-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
 </main>
@@ -103,10 +101,153 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=2"></script>
+<script src="palier-sas.js?v=3"></script>
 <script>window.NautilusSas.init(2);</script>
+<!-- Moteur de mots croisés (générique) + données du rayon Livres -->
+<script src="mots-croises.js?v=1"></script>
+<script>
+/* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS DU RAYON » =================
+   Grille moderne au thème FNAC : l'équipage tape les 6 mots du rayon.
+   Règle calquée sur le Palier 1 : 3 mots faux tentés = 1 h de remise
+   en surface (locale à l'appareil). La victoire inscrit « livres » dans
+   completedSteps de l'équipage (mêmes champs que le Palier 1). */
+(function () {
+  'use strict';
+  var CLE_BLOCAGE = 'nautilusEpreuve2BloqueJusqua';
+  var BLOCAGE_MS  = 60 * 60 * 1000;          /* 1 h en surface */
+
+  var MOTS = [
+    { num: 1, dir: 'h', row: 0, col: 0, reponse: 'ALBUM',  definition: "Disque complet d'un artiste — bac vinyle ou CD au rayon Son." },
+    { num: 2, dir: 'h', row: 1, col: 0, reponse: 'BILLET', definition: "Sésame du concert, acheté à la billetterie du magasin." },
+    { num: 3, dir: 'h', row: 2, col: 1, reponse: 'VINYLE', definition: "Le disque noir qui crépite doucement sous la cellule." },
+    { num: 4, dir: 'h', row: 3, col: 1, reponse: 'ROMAN',  definition: "Polar, SF ou aventure : l'histoire en volume du rayon Livres." },
+    { num: 5, dir: 'h', row: 4, col: 0, reponse: 'NEUF',   definition: "Contraire d'occasion — les deux se vendent au magasin." },
+    { num: 6, dir: 'v', row: 0, col: 1, reponse: 'LIVRE',  definition: "Le héros du rayon : poche, grand format ou BD." }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
+  function enModeTest() {
+    try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
+  }
+  function blocageJusqua() {
+    try { return Number(localStorage.getItem(CLE_BLOCAGE) || 0); } catch (e) { return 0; }
+  }
+
+  /* Aperçu organisateur : ?apercu=jeu&k=… — même clé que les aperçus du
+     Palier 1 (djb2 salé, synchrone ; constate en phase avec palier1.html
+     et admin-button.js). */
+  function apercuAdminAutorise() {
+    try {
+      if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
+      var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
+      if (!k) return false;
+      var h = 5381, s = 'apercu-admin:NEMO2026';
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return k === ('k' + Math.abs(h).toString(36));
+    } catch (e) { return false; }
+  }
+
+  function statut(html, kind) {
+    var el = $('mcStatut');
+    if (!el) return;
+    el.innerHTML = html;
+    el.className = 'mc-statut' + (kind ? ' is-' + kind : '');
+  }
+
+  function afficherBlocage(jusqua) {
+    statut("🔒 <b>Trois erreurs : remontée en surface.</b> L'épreuve se déverrouille à <b>"
+      + new Date(jusqua).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      + "</b>. Respire un coup, révise les définitions… et replonge.", 'danger');
+    var host = $('mcHost');
+    if (host) host.innerHTML = '';
+  }
+
+  function onErreur(n, max) {
+    if (n >= max) {
+      var jusqua = Date.now() + BLOCAGE_MS;
+      try { localStorage.setItem(CLE_BLOCAGE, String(jusqua)); } catch (e) {}
+      afficherBlocage(jusqua);
+      journal("🔒 Trois erreurs aux Mots Croisés du Rayon : l'équipage remonte en surface (1 h).", 'danger');
+    } else {
+      statut('⚠️ <b>Mot incorrect (' + n + '/' + max + ').</b> Les lettres fautives clignotent — corrige-les.', 'danger');
+      journal('⚠️ Mot incorrect aux Mots Croisés du Rayon (' + n + '/' + max + ').', 'warning');
+    }
+  }
+
+  /* Inscription Firestore : mêmes champs que le Palier 1 (progression
+     partagée + annonce verte aux autres équipages). Mode test, aperçu
+     admin ou visite sans équipage : AUCUNE écriture. */
+  async function propagerVictoire() {
+    var equipage = null;
+    try { equipage = localStorage.getItem('nautilusCurrentTeam'); } catch (e) {}
+    if (!equipage || equipage === 'NEMO' || enModeTest() || apercuAdminAutorise()) {
+      journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
+      return;
+    }
+    try {
+      var appMod = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
+      var fsMod  = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js');
+      var app = appMod.initializeApp({
+        apiKey:"AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
+        authDomain:"mission-nautilus.firebaseapp.com",
+        projectId:"mission-nautilus",
+        storageBucket:"mission-nautilus.firebasestorage.app",
+        messagingSenderId:"444670686419",
+        appId:"1:444670686419:web:00d186940a2fb8c8c29026"
+      });
+      var db = fsMod.getFirestore(app);
+      await fsMod.updateDoc(fsMod.doc(db, 'teams', equipage), {
+        completedSteps: fsMod.arrayUnion('livres'),
+        currentStep: 'son',
+        lastEvent: 'step_advanced',
+        lastStepCompleted: 'livres',
+        lastStepCompletedAt: new Date().toISOString(),
+        lastStepCompletedLabel: 'Palier 2'
+      });
+      journal('📈 Victoire inscrite au tableau de bord — direction le Palier 3 !', 'success');
+      statut('🏆 <b>Palier 2 franchi !</b> Direction le <b>Palier 3</b> : le QR Code du rayon Son attend ton équipage.', 'success');
+    } catch (e) {
+      journal("⚠️ Victoire non inscrite (connexion ?). Préviens l'organisation.", 'warning');
+    }
+  }
+
+  function onVictoire() {
+    statut('🏆 <b>Palier 2 franchi !</b> La grille du rayon est entièrement résolue.', 'success');
+    journal('🏆 Palier 2 validé : les Mots Croisés du Rayon sont résolus !', 'success');
+    propagerVictoire();
+  }
+
+  var lance = false;
+  function lancer() {
+    if (lance) return;
+    lance = true;
+    var jusqua = blocageJusqua();
+    if (jusqua > Date.now()) { afficherBlocage(jusqua); return; }
+    statut("✍️ Remplis la grille : <b>3 erreurs</b> et l'équipage remonte en surface (1 h).");
+    window.NautilusMotsCroises.init($('mcHost'), {
+      mots: MOTS,
+      maxErreurs: 3,
+      onErreur: onErreur,
+      onMotValide: function (m) { journal('✅ Mot nº' + m.num + ' validé : <b>' + m.solution + '</b>', 'success'); },
+      onVictoire: onVictoire
+    });
+  }
+
+  /* Démarrage : aperçu admin (carte dévoilée sans QR) > sas déjà ouvert
+     > signal du scan en direct. */
+  if (apercuAdminAutorise()) {
+    var carte = $('gateCard'); if (carte) carte.hidden = true;
+    var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
+    lancer();
+  } else if (window.NautilusSas.estDeverrouille(2)) {
+    lancer();
+  }
+  window.addEventListener('nautilus:sas-ouvert', function () { lancer(); });
+})();
+</script>
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
 <script src="sonar-button.js?v=3" defer></script>
-<script src="admin-button.js?v=7" type="module"></script>
+<script src="admin-button.js?v=8" type="module"></script>
 </body>
 </html>

@@ -326,10 +326,10 @@
     Object.entries(STEPS).forEach(([id, step], index) => {
       const href = pageParPalier[id] || null;
       const note = id === 'start' ? 'épreuve — compte de test'
-        : id === 'livres' ? 'portail QR scellé'
+        : id === 'livres' ? 'mots croisés du rayon — portail QR scellé'
         : 'en construction';
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
-        href ? lien(href, 'Prévisualiser') : '<span class=\"small\" style=\"white-space:nowrap\">Bientôt</span>', !!href));
+        href ? (id === 'livres' ? lien(href, 'Portail QR') + ' ' + lien(`1721310619.html?apercu=jeu&k=${k}`, 'Aperçu épreuve') : lien(href, 'Prévisualiser')) : '<span class=\"small\" style=\"white-space:nowrap\">Bientôt</span>', !!href));
     });
     lignes.push(sectionHtml('PALIER 1 — aperçus d’écrans (factice, aucune écriture)'));
     [

@@ -38,7 +38,7 @@
      • chaque événement est consigné dans le JOURNAL DE BORD commun
        (journal-bord.js, « Activité en direct »).
 
-   Utilisation : <script src="palier-sas.js?v=2"></script>
+   Utilisation : <script src="palier-sas.js?v=3"></script>
                  <script>NautilusSas.init(2);</script>   // n = palier
    ============================================================= */
 (function () {
@@ -109,6 +109,9 @@
       var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
       revelerContenuProtege();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      /* Signal unique pour TOUTES les pages de palier : le mini-jeu de la
+         page démarre exactement à ce moment (écoute 'nautilus:sas-ouvert'). */
+      try { window.dispatchEvent(new Event('nautilus:sas-ouvert')); } catch (e) {}
     }
 
     function refuser() {

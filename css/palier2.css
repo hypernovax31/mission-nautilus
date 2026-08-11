@@ -76,3 +76,59 @@
   letter-spacing:.04em; text-transform:uppercase;
 }
 .gate-home:hover{ background:rgba(245,176,39,.85); color:#111; }
+
+/* =============================================================
+   MOTS CROISÉS MODERNES (moteur mots-croises.js)
+   Grille sombre, mot actif surligné or, validation verte,
+   lettres fautives qui clignotent rouge.
+   ============================================================= */
+.mc{ display:grid; grid-template-columns:minmax(0,340px) minmax(0,1fr); gap:18px; align-items:start; }
+@media(max-width:760px){ .mc{ grid-template-columns:1fr; } }
+.mc-grille{ display:grid; gap:4px; width:100%; max-width:340px; margin:0 auto; }
+.mc-vide{ aspect-ratio:1; }
+.mc-case{
+  position:relative; aspect-ratio:1; border-radius:8px;
+  background:rgba(2,12,22,.85); border:1px solid rgba(142,231,255,.30);
+  transition:border-color .15s, box-shadow .15s, background .2s;
+}
+.mc-case:focus-within{ border-color:#8ee7ff; }
+.mc-num{ position:absolute; top:1px; left:4px; font-size:9px; font-weight:900; color:#7fb0c4; pointer-events:none; }
+.mc-input{
+  width:100%; height:100%; border:0; background:transparent; outline:none;
+  text-align:center; color:#fff; font-weight:900; font-size:clamp(15px,2.6vw,21px);
+  caret-color:#f5b027; text-transform:uppercase; padding:0; border-radius:8px;
+}
+.mc-case.mc-actif{ border-color:rgba(245,176,39,.85); box-shadow:0 0 10px rgba(245,176,39,.28); background:rgba(245,176,39,.08); }
+.mc-case.mc-curseur{ border-color:#f5b027; box-shadow:0 0 0 2px rgba(245,176,39,.55), 0 0 16px rgba(245,176,39,.4); }
+.mc-case.mc-juste{ border-color:rgba(91,224,155,.8); background:rgba(91,224,155,.14); }
+.mc-case.mc-juste .mc-input{ color:#baf5d6; }
+.mc-case.mc-faux{ animation:mcShake .5s; border-color:#ff4b3e; background:rgba(255,75,62,.16); }
+@keyframes mcShake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+.mc.mc-termine .mc-grille{ pointer-events:none; }
+
+.mc-defs{ display:flex; flex-direction:column; gap:6px; }
+.mc-defs-titre{ color:#ffd36c; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; margin:6px 0 2px; }
+.mc-def{
+  display:flex; gap:10px; align-items:flex-start; text-align:left; cursor:pointer;
+  background:rgba(2,12,22,.55); border:1px solid rgba(142,231,255,.22); border-radius:10px;
+  color:#dff6ff; font-size:13px; line-height:1.45; padding:8px 10px; font-family:inherit;
+  transition:border-color .15s, background .15s;
+}
+.mc-def:hover{ border-color:rgba(245,176,39,.6); background:rgba(245,176,39,.06); }
+.mc-def.mc-def-active{ border-color:#f5b027; background:rgba(245,176,39,.10); }
+.mc-def.mc-def-ok{ border-color:rgba(91,224,155,.55); color:#9de8c3; text-decoration:line-through; opacity:.75; }
+.mc-def-num{
+  flex:0 0 auto; width:22px; height:22px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(245,176,39,.16); border:1px solid rgba(245,176,39,.55);
+  color:#ffd36c; font-size:11px; font-weight:900;
+}
+
+/* Bandeaux d'état du jeu (compteur d'erreurs, blocage, victoire). */
+.mc-statut{
+  margin-bottom:12px; padding:10px 12px; border-radius:10px;
+  font-size:13px; font-weight:800; line-height:1.5;
+  background:rgba(142,231,255,.08); border:1px solid rgba(142,231,255,.30); color:#dff6ff;
+}
+.mc-statut.is-danger{ background:rgba(255,75,62,.12); border-color:rgba(255,75,62,.5); color:#ffd0cd; }
+.mc-statut.is-success{ background:rgba(91,224,155,.10); border-color:rgba(91,224,155,.5); color:#dfffe8; }
