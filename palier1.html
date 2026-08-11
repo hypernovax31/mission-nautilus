@@ -2645,17 +2645,22 @@ window.Nautilus = {
      validé le Palier 1 obtient d'office une redirection vers son palier
      courant (protection anti-rejeu) : sans cet écran, impossible de
      RELIRE l'indication de direction du QR sans repartir bredouille.
-     Le panneau de direction est le MÊME que celui de l'écran de victoire
-     (directionPanelHtml) : son bouton « ⏭️ » ramène vers le sas. */
+     Mise en page COMPACTE, textes directs à l'essentiel : indication,
+     consigne courte, et le bouton qui ramène au sas. */
   function renderRelectureSasScreen() {
     const nextStep = N.STEPS['start'].next;
+    const nextLabel = N.STEPS[nextStep]?.label || 'palier suivant';
+    const url = nextStepPageUrl(nextStep);
     return `
       <div class="won-screen">
         <div class="won-badge" aria-hidden="true">📍</div>
-        <h2>Zone de recherche du Palier 2</h2>
-        <p class="won-line">Relecture de l'indication communiquée à la victoire du <b>Palier 1</b> : retrouvez la zone, repérez le QR Code, puis revenez au sas.</p>
-        ${directionPanelHtml(nextStep, { id: 'relectureDirectionPanel' })}
-        <a class="gate-home" href="index.html">🏠 Retour à l'accueil</a>
+        <h2>Zone de recherche — ${esc(nextLabel)}</h2>
+        <div class="won-direction">
+          <p class="won-direction-line"><span class="won-direction-label">Indication de direction :</span> ${esc(N.QR_LOCATION_HINT)}</p>
+          <p class="won-direction-line">Sur place, repérez le <b>QR Code</b> : il ouvre le sas.</p>
+        </div>
+        <p><a class="won-next-btn" href="${esc(url)}">⏭️ ALLER AU SAS DU ${esc(nextLabel.toUpperCase())}</a></p>
+        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
       </div>
     `;
   }
