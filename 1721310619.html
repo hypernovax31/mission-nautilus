@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=18">
-  <link rel="stylesheet" href="css/palier2.css?v=5">
+  <link rel="stylesheet" href="css/palier2.css?v=6">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -32,10 +32,12 @@
       <div class="status-banner warning">
         ⛔ Ce palier est verrouillé. <b>Sans le QR Code de la zone de recherche, cette page reste bloquée</b> et personne ne peut progresser vers le palier suivant.
       </div>
-      <p class="gate-lead">
-        Rendez-vous dans la <b>zone de recherche</b> (voir l'écran « Épreuve validée ! » du palier précédent),
-        trouvez le <b>QR Code</b> qui s'y cache, puis présentez-le ici : il est la <b>clé d'entrée</b> du Palier 2.
-      </p>
+      <!-- Au lieu d'une phrase d'explication, un BOUTON renvoie sur la
+           page d'indication de la zone de recherche (écran « direction »
+           du Palier 1). ?relecture=sas : indispensable, car palier1.html
+           RENVOIE d'office vers le palier courant tout équipage ayant
+           validé — sans ce paramètre, ce bouton rebouclerait ici. -->
+      <a class="gate-btn gate-btn--import gate-retour" href="palier1.html?relecture=sas">📍 Voir l'indication de la zone de recherche</a>
     </div>
   </section>
 

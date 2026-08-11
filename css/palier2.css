@@ -77,6 +77,13 @@
 }
 .gate-home:hover{ background:rgba(245,176,39,.85); color:#111; }
 
+/* Bouton « Voir l'indication de la zone de recherche » (zone scellée) :
+   remplace l'ancienne phrase d'explication — renvoie sur palier1.html
+   ?relecture=sas, c'est-à-dire l'écran de relecture de la direction
+   du QR du palier précédent. */
+.gate-retour{ display:inline-block; text-decoration:none; margin:2px 0 6px; }
+.gate-retour:hover{ filter:brightness(1.08); }
+
 /* =============================================================
    MOTS CROISÉS MODERNES (moteur mots-croises.js)
    Grille sombre, mot actif surligné or, validation verte,
