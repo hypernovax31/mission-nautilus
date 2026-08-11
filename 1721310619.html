@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=18">
-  <link rel="stylesheet" href="css/palier2.css?v=6">
+  <link rel="stylesheet" href="css/palier2.css?v=7">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -89,7 +89,7 @@
       <div class="status-banner success">
         ✅ <b>Scellé levé !</b> Le QR Code a ouvert le sas du Palier 2 sur cet appareil.
       </div>
-      <div id="mcStatut" class="mc-statut">✍️ <b>8 pièges — un par rayon.</b> Touche une case ou une définition ; les lettres citées « entre guillemets » reforment la réponse.</div>
+      <div id="mcStatut" class="mc-statut">✍️ <b>8 balises « Escale Labège »</b> — jargon de vendeur et territoire d'ancrage. Touche une case ou une définition ; les lettres citées « entre guillemets » reforment la réponse.</div>
       <div id="mcHost"></div>
       <a class="gate-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
@@ -106,15 +106,17 @@
 <script src="palier-sas.js?v=3"></script>
 <script>window.NautilusSas.init(2);</script>
 <!-- Moteur de mots croisés (générique) + données : 8 mots, un par rayon -->
-<script src="mots-croises.js?v=1"></script>
+<script src="mots-croises.js?v=2"></script>
 <script>
-/* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS DES RAYONS » =================
-   Grille EXPERT : 8 mots, UN PAR RAYON du magasin, chacun caché
-   derrière un jeu de lettres (anagramme ou charade entre « guillemets »)
-   — stratagème anti-triche : les lettres citées reforment exactement la
-   réponse, mais une IA échoue à les recomposer sans tricher lettre à lettre.
-   Grille 13×11, 61 cases, 9 croisements — CHAQUE croisement vérifié
-   lettre par lettre par les tests (voir tests du projet).
+/* ================= ÉPREUVE DU PALIER 2 — « ESCALE LABÈGE » =================
+   Grille EXPERT « tout FNAC Labège » : 8 mots mêlant jargon de vendeur
+   (ADHÉRENT, OCCASION, GONDOLE, VINYLES) et territoire d'ancrage
+   (LABÈGE, INNOPOLE, MONTAUDRAN, PASTEL), chacun caché derrière un jeu
+   de lettres (charade/anagramme « entre guillemets ») — stratagème
+   anti-triche : les lettres citées reforment exactement la réponse,
+   mais une IA échoue à les recomposer sans tricher lettre à lettre.
+   Grille 13×11, 52 cases, 8 croisements — construite et vérifiée lettre
+   par lettre par tools/generer_mots_croises.py (rejouable à l'identique).
    Règle calquée sur le Palier 1 : 3 mots faux tentés = 1 h de remise
    en surface (locale à l'appareil). La victoire inscrit « livres » dans
    completedSteps de l'équipage (mêmes champs que le Palier 1). */
@@ -124,14 +126,14 @@
   var BLOCAGE_MS  = 60 * 60 * 1000;          /* 1 h en surface */
 
   var MOTS = [
-    { num: 1, dir: 'v', row: 0,  col: 0,  reponse: 'SPEEDRUN',   definition: '« DU » et « PENSER » brassés : finir le jeu à fond la caisse (rayon Gaming).' },
-    { num: 2, dir: 'h', row: 0,  col: 4,  reponse: 'CARDIOIDE',  definition: '« IRIDÉ » + « CODA » réunis : la sensibilité du micro, dessinée en cœur (rayon Son).' },
-    { num: 3, dir: 'v', row: 0,  col: 11, reponse: 'DEMARQUE',   definition: 'Une « MARQUE » lancée au « DÉ » : étiquette jaune du rayon Occasion.' },
-    { num: 4, dir: 'v', row: 2,  col: 5,  reponse: 'GYROSCOPE',  definition: '« GYRO » suivi de « SCOPE » : la toupie qui garde ton drone à niveau.' },
-    { num: 5, dir: 'v', row: 2,  col: 8,  reponse: 'LUMINANCE',  definition: '« UN CINÉ » reçoit un « MAL » : la mesure de lumière qui trie les écrans du rayon TV.' },
-    { num: 6, dir: 'h', row: 4,  col: 0,  reponse: 'DIAPHRAGME', definition: '« DRAP », « HI » et « GAME » se referment : iris qui dose la lumière (rayon Photo).' },
-    { num: 7, dir: 'h', row: 7,  col: 3,  reponse: 'INCUNABLE',  definition: '« NICE UN BAL » chamboulé : trésor de la librairie, livre imprimé avant 1501.' },
-    { num: 8, dir: 'h', row: 10, col: 1,  reponse: 'PREVENTE',   definition: 'Un « PRÉ » suivi de « VENTE » : le billet du concert acheté des mois avant (rayon Billetterie).' }
+    { num: 1, dir: 'v', row: 0,  col: 8, reponse: 'LABEGE',     definition: "« BELGE » suivi d'un « A » : la commune qui accueille le magasin, aux portes de Toulouse." },
+    { num: 2, dir: 'h', row: 1,  col: 0, reponse: 'MONTAUDRAN', definition: "« MONTANA » endurci de « DUR » : la piste des géants toute proche, d'où décollaient Mermoz et Saint-Exupéry." },
+    { num: 3, dir: 'v', row: 1,  col: 1, reponse: 'OCCASION',   definition: "« CAS », « COIN » puis « O » : le rayon où chaque article a déjà vécu une première vie." },
+    { num: 4, dir: 'v', row: 1,  col: 4, reponse: 'ADHERENT',   definition: "« ANTHÈRE » coiffée d'un « D » : il renouvelle sa carte chaque année pour cumuler les avantages." },
+    { num: 5, dir: 'h', row: 4,  col: 0, reponse: 'PASTEL',     definition: "« PLATS » allongés d'un « E » : l'or bleu du Lauragais qui fit la richesse de la région." },
+    { num: 6, dir: 'v', row: 6,  col: 6, reponse: 'GONDOLE',    definition: "« LONGÉ » suivi de « DO » : le meuble promo planté en bout d'allée, centre névralgique des opérations." },
+    { num: 7, dir: 'h', row: 7,  col: 3, reponse: 'INNOPOLE',   definition: "« IN » devant « NO » puis « PÔLE » : la technopole de Labège, voisine high-tech du magasin." },
+    { num: 8, dir: 'h', row: 11, col: 2, reponse: 'VINYLES',    definition: "« VIN », « Y » et « LES » réunis : ils tournent encore à 33 tours au rayon Musique." }
   ];
 
   var $ = function (id) { return document.getElementById(id); };
@@ -177,10 +179,10 @@
       var jusqua = Date.now() + BLOCAGE_MS;
       try { localStorage.setItem(CLE_BLOCAGE, String(jusqua)); } catch (e) {}
       afficherBlocage(jusqua);
-      journal("🔒 Trois erreurs aux Mots Croisés des Rayons : l'équipage remonte en surface (1 h).", 'danger');
+      journal("🔒 Trois erreurs aux Mots Croisés « Escale Labège » : l'équipage remonte en surface (1 h).", 'danger');
     } else {
       statut('⚠️ <b>Mot incorrect (' + n + '/' + max + ').</b> Les lettres fautives clignotent — corrige-les.', 'danger');
-      journal('⚠️ Mot incorrect aux Mots Croisés des Rayons (' + n + '/' + max + ').', 'warning');
+      journal('⚠️ Mot incorrect aux Mots Croisés « Escale Labège » (' + n + '/' + max + ').', 'warning');
     }
   }
 
@@ -222,8 +224,8 @@
   }
 
   function onVictoire() {
-    statut('🏆 <b>Palier 2 franchi !</b> La grille des rayons est entièrement résolue.', 'success');
-    journal('🏆 Palier 2 validé : les Mots Croisés des Rayons sont résolus !', 'success');
+    statut('🏆 <b>Palier 2 franchi !</b> La grille « Escale Labège » est entièrement résolue.', 'success');
+    journal('🏆 Palier 2 validé : les Mots Croisés « Escale Labège » sont résolus !', 'success');
     propagerVictoire();
   }
 
@@ -233,7 +235,7 @@
     lance = true;
     var jusqua = blocageJusqua();
     if (jusqua > Date.now()) { afficherBlocage(jusqua); return; }
-    statut("✍️ <b>8 pièges — un par rayon.</b> Remplis la grille : <b>3 erreurs</b> et l'équipage remonte en surface (1 h).");
+    statut("✍️ <b>8 mots « Escale Labège »</b> : remplis la grille — <b>3 erreurs</b> et l'équipage remonte en surface (1 h).");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
       maxErreurs: 3,

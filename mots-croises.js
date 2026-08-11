@@ -247,7 +247,12 @@
         b.className = 'mc-def';
         b.dataset.num = m.num;
         b.dataset.dir = m.dir;
-        b.innerHTML = '<span class="mc-def-num">' + m.num + '</span><span>' + m.definition + '</span>';
+        /* Badge « nombre de lettres » (mc-def-len) : repère standard des
+           mots croisés modernes, aide à valider une piste avant de poser. */
+        b.innerHTML = '<span class="mc-def-num">' + m.num + '</span>'
+          + '<span class="mc-def-txt">' + m.definition + '</span>'
+          + '<span class="mc-def-len" title="' + m.solution.length + ' lettres" aria-label="'
+          + m.solution.length + ' lettres">' + m.solution.length + '</span>';
         b.addEventListener('click', function () { if (!fini) selectionner(m); });
         defs.appendChild(b);
       });
