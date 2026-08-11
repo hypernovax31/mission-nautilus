@@ -82,9 +82,9 @@
    Grille sombre, mot actif surligné or, validation verte,
    lettres fautives qui clignotent rouge.
    ============================================================= */
-.mc{ display:grid; grid-template-columns:minmax(0,340px) minmax(0,1fr); gap:18px; align-items:start; }
+.mc{ display:grid; grid-template-columns:minmax(0,470px) minmax(0,1fr); gap:18px; align-items:start; }
 @media(max-width:760px){ .mc{ grid-template-columns:1fr; } }
-.mc-grille{ display:grid; gap:4px; width:100%; max-width:340px; margin:0 auto; }
+.mc-grille{ display:grid; gap:4px; width:100%; max-width:470px; margin:0 auto; }
 .mc-vide{ aspect-ratio:1; }
 .mc-case{
   position:relative; aspect-ratio:1; border-radius:8px;
