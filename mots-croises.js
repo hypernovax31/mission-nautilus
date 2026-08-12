@@ -252,7 +252,18 @@
            été retirés, choix visuel du Palier 2 « Code Magasin »). */
         b.innerHTML = '<span class="mc-def-numtxt">' + m.num + '.</span>'
           + '<span class="mc-def-txt">' + m.definition + '</span>';
-        b.addEventListener('click', function () { if (!fini) selectionner(m); });
+        b.addEventListener('click', function () {
+          if (fini) return;
+          selectionner(m);
+          /* Clic sur une définition → la page GLISSE jusqu'au haut de la
+             grille : sur petit écran les définitions sont SOUS la grille,
+             le mot choisi serait surligné hors champ. Le scroll-margin-top
+             du CSS évite la topbar sticky. Inerte si la grille est déjà
+             entièrement visible (grand écran, grille à droite). */
+          if (typeof grille.scrollIntoView === 'function') {
+            grille.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
         defs.appendChild(b);
       });
     });
