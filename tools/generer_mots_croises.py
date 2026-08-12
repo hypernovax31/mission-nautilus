@@ -5,7 +5,7 @@ GÉNÉRATEUR DE LA GRILLE DE MOTS CROISÉS — Palier 2 « Code Magasin ».
 
 Entrée  : MOTS_CANDIDATS ci-dessous — 10 mots du JARGON VENDEUR couvrant
           TOUS les secteurs : rayon, stock, SAV, bureau, caisse,
-          billetterie, occasion et direction (niveau expert par secteur).
+          sécurité, occasion et direction (niveau expert par secteur).
 Sortie  : le tableau JS `var MOTS = [...]` prêt à coller dans 1721310619.html,
           avec (num, dir, row, col) calculés et la grille rendue en ASCII.
 
@@ -52,8 +52,8 @@ MOTS_CANDIDATS = [
          indice="au comptoir on joue d'abord au médecin : symptômes, tests, verdict — avant toute réparation"),
     dict(reponse='PICKING',    secteur='stock',       mode='reculons',
          indice="la cueillette silencieuse des commandes du site, scanner au poing, entre deux clients"),
-    dict(reponse='NOMINATIF',  secteur='billetterie', mode='miroir',
-         indice="ton nom imprimé sur le billet du concert — impossible à revendre au triple à l'entrée"),
+    dict(reponse='ANTIVOL',    secteur='securite',    mode='reculons',
+         indice="il hurle au portique quand un article n'a pas vu la caisse"),
     dict(reponse='ECOTAXE',    secteur='caisse',      mode='reculons',
          indice="payée discrètement sur chaque appareil neuf, elle finance la seconde vie des anciens"),
     dict(reponse='REPRISE',    secteur='occasion',    mode='miroir',
@@ -102,7 +102,7 @@ def verifier_candidat(c):
     if sol in prose:
         return False, 'solution en clair dans l\'indice'
     if c['secteur'] not in ('rayon', 'stock', 'sav', 'bureau', 'caisse',
-                            'billetterie', 'occasion', 'direction'):
+                            'occasion', 'direction', 'securite'):
         return False, 'secteur inconnu'
     return True, ''
 
