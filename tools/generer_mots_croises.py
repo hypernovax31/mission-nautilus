@@ -29,6 +29,7 @@ Règles de construction (mots croisés classiques) :
 
 Usage : PYTHONUTF8=1 python3 tools/generer_mots_croises.py
 """
+import time
 import unicodedata
 from collections import Counter
 
@@ -49,10 +50,10 @@ MOTS_CANDIDATS = [
          indice="le chiffre rouge du grand comptage, celui qui annule la prime si personne ne sait l'expliquer"),
     dict(reponse='DIAGNOSTIC', secteur='sav',         mode='miroir',
          indice="au comptoir on joue d'abord au médecin : symptômes, tests, verdict — avant toute réparation"),
-    dict(reponse='GERBAGE',    secteur='stock',       mode='reculons',
-         indice="l'architecture verticale de la réserve : empiler au cordeau, sans que rien ne bouge"),
-    dict(reponse='PLACEMENT',  secteur='billetterie', mode='miroir',
-         indice="rang C, siège 14 : la géométrie exacte de la soirée, décidée à l'euro près à la vente"),
+    dict(reponse='PICKING',    secteur='stock',       mode='reculons',
+         indice="la cueillette silencieuse des commandes du site, scanner au poing, entre deux clients"),
+    dict(reponse='NOMINATIF',  secteur='billetterie', mode='miroir',
+         indice="ton nom imprimé sur le billet du concert — impossible à revendre au triple à l'entrée"),
     dict(reponse='ECOTAXE',    secteur='caisse',      mode='reculons',
          indice="payée discrètement sur chaque appareil neuf, elle finance la seconde vie des anciens"),
     dict(reponse='REPRISE',    secteur='occasion',    mode='miroir',
@@ -113,7 +114,8 @@ class Solveur:
         self.mots = sorted([normaliser(m) for m in mots], key=len, reverse=True)
         self.meilleur = None          # (score, placements, cellules)
         self.noeuds = 0
-        self.MAX_NOEUDS = 2_000_000
+        self.MAX_NOEUDS = 5_000_000
+        self.t0 = None
 
     def score(self, placements, cellules, croisements):
         rs = [r for (r, c) in cellules]; cs = [c for (r, c) in cellules]
@@ -137,7 +139,7 @@ class Solveur:
                     if cellules[(r, c)] != lettre:
                         continue
                     # la case cible doit appartenir à un mot PERPENDICULAIRE
-                    if not any(p[2] != sens and couvre(p, r, c) for p in placements):
+                    if not any(p[1] != sens and couvre(p, r, c) for p in placements):
                         continue
                     r0, c0 = (r, c - i) if sens == 'h' else (r - i, c)
                     cand = (mot, sens, r0, c0)
@@ -170,26 +172,38 @@ class Solveur:
                     return 0, False
         return nb_crois, True
 
-    def resoudre(self, idx, placements, cellules, proprietaires, croisements):
+    def resoudre(self, restants, placements, cellules, proprietaires, croisements):
         self.noeuds += 1
         if self.noeuds > self.MAX_NOEUDS:
             return
-        if idx == len(self.mots):
-            rs = [r for (r, c) in cellules]; cs = [c for (r, c) in cellules]
-            if max(rs) - min(rs) + 1 > 13 or max(cs) - min(cs) + 1 > 13:
-                return   # cadre dur : la grille doit tenir dans 13×13 (mobile)
+        if self.t0 and time.time() - self.t0 > 150:
+            return
+        if not restants:
             sc = self.score(placements, cellules, croisements)
             if self.meilleur is None or sc > self.meilleur[0]:
                 self.meilleur = (sc, list(placements), dict(cellules), croisements)
             return
-        # élagage : même avec un croisement par mot restant, peut-on battre ?
+        # élagage : même avec des croisements généreux, peut-on battre ?
         if self.meilleur:
             borne = self.score(placements, cellules,
-                               croisements + 3 * (len(self.mots) - idx))
+                               croisements + 3 * len(restants))
             if borne < self.meilleur[0]:
                 return
-        mot = self.mots[idx]
-        for nb_crois, cand in self.placements_possibles(mot, placements, cellules, proprietaires)[:20]:
+        # CHOIX DYNAMIQUE : on pose d'abord le mot le plus contraint PARMI
+        # CEUX QUI PEUVENT CROISER maintenant. Un mot sans candidat n'est
+        # PAS une impasse (il croisera un mot posé plus tard) — l'impasse,
+        # c'est quand PLUS AUCUN mot restant ne peut se poser.
+        viable = []
+        for i, mot in enumerate(restants):
+            cands = self.placements_possibles(mot, placements, cellules, proprietaires)
+            if cands:
+                viable.append((len(cands), i, mot, cands))
+        if not viable:
+            return
+        viable.sort(key=lambda v: v[0])
+        _, best_i, mot, best_list = viable[0]
+        restants.pop(best_i)
+        for nb_crois, cand in best_list[:40]:
             mot2, sens, r0, c0 = cand
             dr, dc = (0, 1) if sens == 'h' else (1, 0)
             ajouts = []
@@ -205,18 +219,72 @@ class Solveur:
             # s'il dépasse déjà 13×13, toute la branche est stérile.
             rs = [r for (r, c) in cellules]; cs = [c for (r, c) in cellules]
             if max(rs) - min(rs) + 1 <= 13 and max(cs) - min(cs) + 1 <= 13:
-                self.resoudre(idx + 1, placements, cellules, proprietaires,
+                self.resoudre(restants, placements, cellules, proprietaires,
                               croisements + nb_crois)
             placements.pop()
             for (r, c) in ajouts:
                 del cellules[(r, c)]
                 del proprietaires[(r, c)]
+        restants.insert(best_i, mot)
 
 def couvre(p, r, c):
     mot, sens, r0, c0 = p
     if sens == 'h':
         return r == r0 and c0 <= c < c0 + len(mot)
     return c == c0 and r0 <= r < r0 + len(mot)
+
+# ---------------------------------------------------------------
+# Recherche PRINCIPALE : gloutonne aléatoire à graine fixe.
+# Le backtracking exhaustif échoue sur certains lexiques (couloirs
+# stériles) alors que des solutions existent : le glouton aléatoire
+# en trouve ~0,8 % du temps. On enchaîne les essais pondérés (les
+# placements à plusieurs croisements sont favorisés) pendant un
+# budget temps, et on garde la MEILLEURE grille. Graine fixe →
+# résultat REPRODUCTIBLE à l'identique (contrat avec les tests).
+# ---------------------------------------------------------------
+def recherche_stochastique(solveur, graine=20260812, budget_s=45):
+    import random
+    rng = random.Random(graine)
+    essais, trouvees = 0, 0
+    t0 = time.time()
+    while time.time() - t0 < budget_s:
+        essais += 1
+        mots = list(solveur.mots)
+        rng.shuffle(mots)
+        placements, cellules, proprietaires = [], {}, {}
+        for w in mots:
+            cands = solveur.placements_possibles(w, placements, cellules, proprietaires)
+            valables = []
+            for nb, cand in cands:
+                m2, sens, r0, c0 = cand
+                dr, dc = (0, 1) if sens == 'h' else (1, 0)
+                tout = list(cellules)
+                for i in range(len(m2)):
+                    pt = (r0 + dr * i, c0 + dc * i)
+                    if pt not in cellules:
+                        tout.append(pt)
+                rs = [r for r, _ in tout]; cs = [cc for _, cc in tout]
+                if max(rs) - min(rs) + 1 <= 13 and max(cs) - min(cs) + 1 <= 13:
+                    valables.append((nb, cand))
+            if not valables:
+                break
+            poids = [(nb + 1) ** 2 for nb, _ in valables]
+            nb, cand = rng.choices(valables, weights=poids, k=1)[0]
+            m2, sens, r0, c0 = cand
+            dr, dc = (0, 1) if sens == 'h' else (1, 0)
+            crois = 0
+            for i, l in enumerate(m2):
+                pt = (r0 + dr * i, c0 + dc * i)
+                cellules[pt] = l
+                proprietaires.setdefault(pt, []).append(sens)
+            placements.append(cand)
+        if len(placements) == len(mots):
+            trouvees += 1
+            croisements = sum(len(set(proprietaires[p])) > 1 for p in proprietaires)
+            sc = solveur.score(placements, cellules, croisements)
+            if solveur.meilleur is None or sc > solveur.meilleur[0]:
+                solveur.meilleur = (sc, list(placements), dict(cellules), croisements)
+    return essais, trouvees
 
 # ---------------------------------------------------------------
 # Numérotation classique : balayage ligne puis colonne, un numéro
@@ -269,21 +337,21 @@ def main():
             raise SystemExit(f"CRYPTOGRAMME FAUX pour {c['reponse']} : {detail}")
     couverture = sorted({c['secteur'] for c in MOTS_CANDIDATS})
     print(f'  ✓ couverture secteurs ({len(couverture)}): ' + ', '.join(couverture))
-    # 2) solveur : toutes les réponses, cadre ≤ 13×13, max de croisements
+    # 2) solveur stochastique (graine fixe) : cadre ≤ 13×13, max croisements
     selection = [c['reponse'] for c in MOTS_CANDIDATS]
     solveur = Solveur(selection)
-    solveur.resoudre(0, [], {}, {}, 0)
+    essais, trouvees = recherche_stochastique(solveur)
     if not solveur.meilleur:
         raise SystemExit('Aucune grille trouvée dans le cadre 13×13.')
     score, placements, cellules, croisements = solveur.meilleur
-    print(f'  solveur : {croisements} croisements, {solveur.noeuds} nœuds')
+    print(f'  solveur : {croisements} croisements ({trouvees} grilles sur {essais} essais)')
     par_reponse = {normaliser(c['reponse']): c for c in MOTS_CANDIDATS}
     mot_infos, dec = numeroter(placements)
     print()
     print(f'=== Grille retenue : {selection} ===')
     print(f'croisements={croisements}  cases={len(cellules)}  '
           f'cadre={max(r for r, c in cellules) - dec[0] + 1}×'
-          f'{max(c for r, c in cellules) - dec[1] + 1}  nœuds={solveur.noeuds}')
+          f'{max(c for r, c in cellules) - dec[1] + 1}')
     lignes = rendre_ascii(cellules, dec)
     for lg in lignes:
         print('  ' + lg)
