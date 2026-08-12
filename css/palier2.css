@@ -134,30 +134,14 @@
 .mc-def:hover{ border-color:rgba(245,176,39,.75); background:rgba(245,176,39,.08); }
 .mc-def.mc-def-active{ border-color:#f5b027; background:rgba(245,176,39,.12); box-shadow:0 0 0 1px rgba(245,176,39,.40), 0 0 14px rgba(245,176,39,.18); }
 .mc-def.mc-def-ok{ border-color:rgba(91,224,155,.6); color:#9de8c3; text-decoration:line-through; opacity:.8; }
-.mc-def-num{
-  flex:0 0 auto; width:24px; height:24px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  background:rgba(245,176,39,.22); border:1px solid rgba(245,176,39,.65);
-  color:#ffd36c; font-size:11px; font-weight:900;
+/* Définitions NUES (Palier 2 « Code Magasin ») : ni pastille numérotée,
+   ni badge « nombre de lettres », ni cryptogramme — juste le numéro en
+   texte or suivi de l'indice oblique. */
+.mc-def-numtxt{
+  flex:0 0 auto; min-width:26px; text-align:right;
+  color:#ffd36c; font-size:13.5px; font-weight:900; line-height:1.45;
 }
 .mc-def-txt{ flex:1 1 auto; min-width:0; }
-.mc-def-len{
-  flex:0 0 auto; min-width:24px; height:24px; padding:0 7px; border-radius:8px;
-  display:flex; align-items:center; justify-content:center;
-  background:rgba(142,231,255,.14); border:1px solid rgba(142,231,255,.45);
-  color:#8ee7ff; font-size:11px; font-weight:900; line-height:1;
-}
-.mc-def.mc-def-ok .mc-def-len{ background:rgba(91,224,155,.12); border-color:rgba(91,224,155,.45); color:#7fe0b0; }
-
-/* Pastille CRYPTOGRAMME des définitions « Code Magasin » : le mot
-   chiffré (à reculons / alphabet miroir) affiché en chasse fixe or,
-   façon étiquette de code — bien distincte de l'indice métier. */
-.mc-code{
-  font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-weight:900; font-size:12.5px; letter-spacing:.14em; white-space:nowrap;
-  color:#ffd36c; background:rgba(245,176,39,.13);
-  border:1px solid rgba(245,176,39,.5); border-radius:6px; padding:1px 7px;
-}
 
 /* Bandeaux d'état du jeu (compteur d'erreurs, blocage, victoire). */
 .mc-statut{

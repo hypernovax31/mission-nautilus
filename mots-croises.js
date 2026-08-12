@@ -247,12 +247,11 @@
         b.className = 'mc-def';
         b.dataset.num = m.num;
         b.dataset.dir = m.dir;
-        /* Badge « nombre de lettres » (mc-def-len) : repère standard des
-           mots croisés modernes, aide à valider une piste avant de poser. */
-        b.innerHTML = '<span class="mc-def-num">' + m.num + '</span>'
-          + '<span class="mc-def-txt">' + m.definition + '</span>'
-          + '<span class="mc-def-len" title="' + m.solution.length + ' lettres" aria-label="'
-          + m.solution.length + ' lettres">' + m.solution.length + '</span>';
+        /* Définition NUE : numéro en texte simple + indice (les pastilles
+           numérotées, badges « nombre de lettres » et cryptogrammes ont
+           été retirés, choix visuel du Palier 2 « Code Magasin »). */
+        b.innerHTML = '<span class="mc-def-numtxt">' + m.num + '.</span>'
+          + '<span class="mc-def-txt">' + m.definition + '</span>';
         b.addEventListener('click', function () { if (!fini) selectionner(m); });
         defs.appendChild(b);
       });

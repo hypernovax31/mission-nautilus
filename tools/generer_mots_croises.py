@@ -9,16 +9,10 @@ Entrée  : MOTS_CANDIDATS ci-dessous — 10 mots du JARGON VENDEUR couvrant
 Sortie  : le tableau JS `var MOTS = [...]` prêt à coller dans 1721310619.html,
           avec (num, dir, row, col) calculés et la grille rendue en ASCII.
 
-ANTI-IA — deux chiffrements alternés, siglés dans la pastille :
-  - « ·reculons » : la solution épelée de DROITE À GAUCHE (GNICAF) ;
-  - « ·A↔Z »      : ALPHABET INVERSÉ, A↔Z … M↔N (UZXRMT).
-  Un humain décode à vue ; un LLM se trompe dans les transformations
-  caractère par caractère dès 6-7 lettres (faiblesse connue), et la
-  grille rejette toute lettre fautive. L'indice métier est OBLIQUE
-  (scène vécue, jamais la définition directe) : il confirme, il
-  n'annonce pas. Le script VÉRIFIE que chaque cryptogramme décode
-  EXACTEMENT la solution et que la solution n'apparaît NULLE PART
-  dans l'indice.
+DIFFICULTÉ « EXPERT » — fini les chiffrements : chaque indice est une
+  SCÈNE VÉCUE du métier (oblique, jamais la définition scolaire), et le
+  mot lui-même est un jargon propre au secteur. La solution n'apparaît
+  JAMAIS dans l'indice (le script le vérifie) : il faut parler boutique.
 
 Règles de construction (mots croisés classiques) :
   - chaque mot croise AU MOINS un autre mot (grille entièrement connexe) ;
@@ -40,25 +34,25 @@ from collections import Counter
 #             occasion / direction       indice : confirmation métier
 # ---------------------------------------------------------------
 MOTS_CANDIDATS = [
-    dict(reponse='INVENTAIRE', secteur='bureau',      mode='miroir',
+    dict(reponse='INVENTAIRE', secteur='bureau',      mode=None,
          indice="le bureau ferme, les scanners s'allument, la nuit commence — chaque référence y passe, sans exception"),
-    dict(reponse='LINEAIRE',   secteur='rayon',       mode='miroir',
+    dict(reponse='LINEAIRE',   secteur='rayon',       mode=None,
          indice="ses centimètres se négocient plus âprement qu'une place de parking un samedi de décembre"),
-    dict(reponse='REASSORT',   secteur='stock',       mode='miroir',
+    dict(reponse='REASSORT',   secteur='stock',       mode=None,
          indice="samedi 14 h, la réserve et le rayon jouent à la navette — et tu es la navette"),
-    dict(reponse='DEMARQUE',   secteur='direction',   mode='miroir',
+    dict(reponse='DEMARQUE',   secteur='direction',   mode=None,
          indice="le chiffre rouge du grand comptage, celui qui annule la prime si personne ne sait l'expliquer"),
-    dict(reponse='DIAGNOSTIC', secteur='sav',         mode='miroir',
+    dict(reponse='DIAGNOSTIC', secteur='sav',         mode=None,
          indice="au comptoir on joue d'abord au médecin : symptômes, tests, verdict — avant toute réparation"),
-    dict(reponse='PICKING',    secteur='stock',       mode='reculons',
+    dict(reponse='PICKING',    secteur='stock',       mode=None,
          indice="la cueillette silencieuse des commandes du site, scanner au poing, entre deux clients"),
-    dict(reponse='ANTIVOL',    secteur='securite',    mode='reculons',
-         indice="il hurle au portique quand un article n'a pas vu la caisse"),
-    dict(reponse='ECOTAXE',    secteur='caisse',      mode='reculons',
+    dict(reponse='PORTIQUE',   secteur='securite',    mode=None,
+         indice="les deux piliers à l'entrée qui jugent silencieusement chaque passage"),
+    dict(reponse='ECOTAXE',    secteur='caisse',      mode=None,
          indice="payée discrètement sur chaque appareil neuf, elle finance la seconde vie des anciens"),
-    dict(reponse='REPRISE',    secteur='occasion',    mode='miroir',
+    dict(reponse='REPRISE',    secteur='occasion',    mode=None,
          indice="le comptoir Occasion pèse ton ancien mobile et te le transforme en bon d'achat"),
-    dict(reponse='FACING',     secteur='rayon',       mode='reculons',
+    dict(reponse='FACING',     secteur='rayon',       mode=None,
          indice="le garde-à-vous du rayon, refait dix fois par jour : rien ne dépasse du bord"),
 ]
 NB_MOTS = len(MOTS_CANDIDATS)
@@ -68,37 +62,17 @@ def normaliser(s):
     return ''.join(c for c in unicodedata.normalize('NFD', s)
                    if unicodedata.category(c) != 'Mn').upper()
 
-def miroir(mot):
-    """Alphabet inversé : A↔Z, B↔Y … (Atbash latin)."""
-    return ''.join(chr(ord('A') + 25 - (ord(c) - ord('A'))) for c in mot)
-
-def crypter(mot, mode):
-    mot = normaliser(mot)
-    return mot[::-1] if mode == 'reculons' else miroir(mot)
-
-def decrypter(crypto, mode):
-    return crypto[::-1] if mode == 'reculons' else miroir(crypto)
-
-SIGILES = {'reculons': '·reculons',   # mot épelé de droite à gauche
-           'miroir': '·A↔Z'}          # alphabet inversé
-
 def fabriquer_definition(c):
-    """Définition joueur, UNE ligne : pastille cryptogramme siglée +
-    indice métier oblique (anti-IA : jamais la définition directe,
-    aucune étiquette de secteur dans le texte visible)."""
-    crypto = crypter(c['reponse'], c['mode'])
-    return ('<code class="mc-code">%s %s</code> %s.'
-            % (crypto, SIGILES[c['mode']], c['indice']))
+    """Définition joueur, UNE ligne nue : l'indice métier oblique,
+    sans pastille, sans cryptogramme, sans étiquette de secteur."""
+    return '%s.' % c['indice']
 
 def verifier_candidat(c):
-    """Garde-fous : décodage exact + aucune fuite de la solution en clair."""
+    """Garde-fous : aucune fuite de la solution dans l'indice."""
     import re
     sol = normaliser(c['reponse'])
     defin = fabriquer_definition(c)
-    if decrypter(crypter(sol, c['mode']), c['mode']) != sol:
-        return False, 'cryptogramme non réversible'
-    prose = re.sub(r'<[^>]+>', ' ', defin)          # hors pastille HTML
-    prose = normaliser(prose).replace(normaliser(crypter(sol, c['mode'])), '')
+    prose = normaliser(re.sub(r'<[^>]+>', ' ', defin))
     if sol in prose:
         return False, 'solution en clair dans l\'indice'
     if c['secteur'] not in ('rayon', 'stock', 'sav', 'bureau', 'caisse',
@@ -327,14 +301,13 @@ def rendre_ascii(cellules, dec):
     return lignes
 
 def main():
-    # 1) verrous anti-IA : décodage exact + aucune fuite en clair
-    print('=== Vérification des cryptogrammes (anti-IA) ===')
+    # 1) garde-fous : aucune solution ne fuit dans son indice
+    print('=== Vérification des indices (aucune fuite en clair) ===')
     for c in MOTS_CANDIDATS:
         ok, detail = verifier_candidat(c)
-        print(f"  {'✓' if ok else '✗'} {normaliser(c['reponse']):<11} "
-              f"{c['mode']:<9} → {crypter(c['reponse'], c['mode'])}")
+        print(f"  {'✓' if ok else '✗'} {normaliser(c['reponse']):<11}")
         if not ok:
-            raise SystemExit(f"CRYPTOGRAMME FAUX pour {c['reponse']} : {detail}")
+            raise SystemExit(f"INDICE BOITEUX pour {c['reponse']} : {detail}")
     couverture = sorted({c['secteur'] for c in MOTS_CANDIDATS})
     print(f'  ✓ couverture secteurs ({len(couverture)}): ' + ', '.join(couverture))
     # 2) solveur stochastique (graine fixe) : cadre ≤ 13×13, max croisements
