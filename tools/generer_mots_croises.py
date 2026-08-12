@@ -9,15 +9,16 @@ Entrée  : MOTS_CANDIDATS ci-dessous — 10 mots du JARGON VENDEUR couvrant
 Sortie  : le tableau JS `var MOTS = [...]` prêt à coller dans 1721310619.html,
           avec (num, dir, row, col) calculés et la grille rendue en ASCII.
 
-ANTI-IA — deux chiffrements alternés (plus de recombinaison de lettres) :
-  - « à reculons »  : la solution épelée de DROITE À GAUCHE (GNICAF) ;
-  - « miroir »      : ALPHABET INVERSÉ, A↔Z … M↔N (UZXRMT).
+ANTI-IA — deux chiffrements alternés, siglés dans la pastille :
+  - « ·reculons » : la solution épelée de DROITE À GAUCHE (GNICAF) ;
+  - « ·A↔Z »      : ALPHABET INVERSÉ, A↔Z … M↔N (UZXRMT).
   Un humain décode à vue ; un LLM se trompe dans les transformations
   caractère par caractère dès 6-7 lettres (faiblesse connue), et la
-  grille rejette toute lettre fautive. Chaque indice métier sert de
-  CONFIRMATION au joueur, jamais de réponse directe.
-  Le script VÉRIFIE que chaque cryptogramme décode EXACTEMENT la solution
-  et que la solution n'apparaît NULLE PART en clair dans la définition.
+  grille rejette toute lettre fautive. L'indice métier est OBLIQUE
+  (scène vécue, jamais la définition directe) : il confirme, il
+  n'annonce pas. Le script VÉRIFIE que chaque cryptogramme décode
+  EXACTEMENT la solution et que la solution n'apparaît NULLE PART
+  dans l'indice.
 
 Règles de construction (mots croisés classiques) :
   - chaque mot croise AU MOINS un autre mot (grille entièrement connexe) ;
@@ -39,25 +40,25 @@ from collections import Counter
 # ---------------------------------------------------------------
 MOTS_CANDIDATS = [
     dict(reponse='INVENTAIRE', secteur='bureau',      mode='miroir',
-         indice="une fois l'an, tout le magasin compté pièce par pièce, scanner en main"),
+         indice="le bureau ferme, les scanners s'allument, la nuit commence — chaque référence y passe, sans exception"),
     dict(reponse='LINEAIRE',   secteur='rayon',       mode='miroir',
-         indice="ses précieux centimètres se marchandent entre rayons rivaux"),
+         indice="ses centimètres se négocient plus âprement qu'une place de parking un samedi de décembre"),
     dict(reponse='REASSORT',   secteur='stock',       mode='miroir',
-         indice="le va-et-vient de la réserve vers le rayon avant le rush du samedi"),
+         indice="samedi 14 h, la réserve et le rayon jouent à la navette — et tu es la navette"),
     dict(reponse='DEMARQUE',   secteur='direction',   mode='miroir',
-         indice="additionnée à l'inconnue, elle donne des sueurs froides au chef de rayon le jour du comptage"),
-    dict(reponse='GARANTIE',   secteur='sav',         mode='reculons',
-         indice="deux ans minimum : la promesse du comptoir qui désamorce les colères"),
-    dict(reponse='ARRIVAGE',   secteur='stock',       mode='miroir',
-         indice="le camion du matin que le quai attend pour nourrir les rayons"),
-    dict(reponse='PREVENTE',   secteur='billetterie', mode='reculons',
-         indice="les billets vendus avant même l'affiche du concert"),
+         indice="le chiffre rouge du grand comptage, celui qui annule la prime si personne ne sait l'expliquer"),
+    dict(reponse='DIAGNOSTIC', secteur='sav',         mode='miroir',
+         indice="au comptoir on joue d'abord au médecin : symptômes, tests, verdict — avant toute réparation"),
+    dict(reponse='GERBAGE',    secteur='stock',       mode='reculons',
+         indice="l'architecture verticale de la réserve : empiler au cordeau, sans que rien ne bouge"),
+    dict(reponse='PLACEMENT',  secteur='billetterie', mode='miroir',
+         indice="rang C, siège 14 : la géométrie exacte de la soirée, décidée à l'euro près à la vente"),
     dict(reponse='ECOTAXE',    secteur='caisse',      mode='reculons',
-         indice="la petite ligne verte déjà réglée sur le ticket de caisse"),
+         indice="payée discrètement sur chaque appareil neuf, elle finance la seconde vie des anciens"),
     dict(reponse='REPRISE',    secteur='occasion',    mode='miroir',
-         indice="ton ancien mobile quitte ta poche contre un bon d'achat"),
+         indice="le comptoir Occasion pèse ton ancien mobile et te le transforme en bon d'achat"),
     dict(reponse='FACING',     secteur='rayon',       mode='reculons',
-         indice="le rituel de l'ouverture : chaque article face au client, étiquette tirée au bord"),
+         indice="le garde-à-vous du rayon, refait dix fois par jour : rien ne dépasse du bord"),
 ]
 NB_MOTS = len(MOTS_CANDIDATS)
 CIBLE_CROISEMENTS = 9
@@ -77,23 +78,27 @@ def crypter(mot, mode):
 def decrypter(crypto, mode):
     return crypto[::-1] if mode == 'reculons' else miroir(crypto)
 
-MODE_TXT = {'reculons': 'relu à reculons',
-            'miroir':   'lu en alphabet miroir (A↔Z)'}
+SIGILES = {'reculons': '·reculons',   # mot épelé de droite à gauche
+           'miroir': '·A↔Z'}          # alphabet inversé
 
 def fabriquer_definition(c):
-    """Définition joueur : cryptogramme + mode + indice métier + secteur."""
+    """Définition joueur, UNE ligne : pastille cryptogramme siglée +
+    indice métier oblique (anti-IA : jamais la définition directe,
+    aucune étiquette de secteur dans le texte visible)."""
     crypto = crypter(c['reponse'], c['mode'])
-    return ('« <code class="mc-code">%s</code>, %s » : %s. (%s)'
-            % (crypto, MODE_TXT[c['mode']], c['indice'], c['secteur']))
+    return ('<code class="mc-code">%s %s</code> %s.'
+            % (crypto, SIGILES[c['mode']], c['indice']))
 
 def verifier_candidat(c):
     """Garde-fous : décodage exact + aucune fuite de la solution en clair."""
+    import re
     sol = normaliser(c['reponse'])
     defin = fabriquer_definition(c)
     if decrypter(crypter(sol, c['mode']), c['mode']) != sol:
         return False, 'cryptogramme non réversible'
-    propre = normaliser(defin.split('»')[1])   # texte hors citation
-    if sol in propre:
+    prose = re.sub(r'<[^>]+>', ' ', defin)          # hors pastille HTML
+    prose = normaliser(prose).replace(normaliser(crypter(sol, c['mode'])), '')
+    if sol in prose:
         return False, 'solution en clair dans l\'indice'
     if c['secteur'] not in ('rayon', 'stock', 'sav', 'bureau', 'caisse',
                             'billetterie', 'occasion', 'direction'):
