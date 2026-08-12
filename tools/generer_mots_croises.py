@@ -1,68 +1,104 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-GÉNÉRATEUR DE LA GRILLE DE MOTS CROISÉS — Palier 2 « Escale Labège ».
+GÉNÉRATEUR DE LA GRILLE DE MOTS CROISÉS — Palier 2 « Code Magasin ».
 
-Entrée  : CANDIDATS ci-dessous (réponses + définitions à jeux de lettres).
+Entrée  : MOTS_CANDIDATS ci-dessous — 10 mots du JARGON VENDEUR couvrant
+          TOUS les secteurs : rayon, stock, SAV, bureau, caisse,
+          billetterie, occasion et direction (niveau expert par secteur).
 Sortie  : le tableau JS `var MOTS = [...]` prêt à coller dans 1721310619.html,
           avec (num, dir, row, col) calculés et la grille rendue en ASCII.
 
+ANTI-IA — deux chiffrements alternés (plus de recombinaison de lettres) :
+  - « à reculons »  : la solution épelée de DROITE À GAUCHE (GNICAF) ;
+  - « miroir »      : ALPHABET INVERSÉ, A↔Z … M↔N (UZXRMT).
+  Un humain décode à vue ; un LLM se trompe dans les transformations
+  caractère par caractère dès 6-7 lettres (faiblesse connue), et la
+  grille rejette toute lettre fautive. Chaque indice métier sert de
+  CONFIRMATION au joueur, jamais de réponse directe.
+  Le script VÉRIFIE que chaque cryptogramme décode EXACTEMENT la solution
+  et que la solution n'apparaît NULLE PART en clair dans la définition.
+
 Règles de construction (mots croisés classiques) :
   - chaque mot croise AU MOINS un autre mot (grille entièrement connexe) ;
-  - tout croisement est vérifié LETTRE PAR LETTRE (la case partagée porte la
-    même lettre pour les deux mots) ;
+  - tout croisement est vérifié LETTRE PAR LETTRE ;
   - aucune touche illégale : hors croisement, deux cases de mots différents
-    ne sont jamais voisines orthogonales ; un blanc encadre chaque extrémité.
-  - objectif de recherche : maximiser les croisements, minimiser le cadre.
-
-Chaque définition cite ses lettres « entre guillemets » : le script VÉRIFIE
-(multiset de lettres) que les fragments cités reforment exactement la
-réponse — c'est le verrou anti-IA (les LLM comptent mal les lettres).
+    ne sont jamais voisines orthogonales ; un blanc encadre chaque extrémité ;
+  - cadre dur ≤ 13×13 (lisible sur mobile) ; objectif : max de croisements.
 
 Usage : PYTHONUTF8=1 python3 tools/generer_mots_croises.py
 """
 import unicodedata
-from itertools import combinations
+from collections import Counter
 
 # ---------------------------------------------------------------
-# Réponses candidates « Fnac Labège » — jargon vendeur + territoire.
-# Chaque définition est une charade/anagramme entre « guillemets »
-# (lettres exactes reconstituant la réponse) + une accroche locale.
+# Les 10 mots « jargon maison » — un niveau EXPERT par secteur.
+#   reponse : solution (sans accents)   mode : 'reculons' | 'miroir'
+#   secteur : rayon / stock / sav / bureau / caisse / billetterie /
+#             occasion / direction       indice : confirmation métier
 # ---------------------------------------------------------------
-CANDIDATS = {
-    'MONTAUDRAN': "« MONTANA » endurci de « DUR » : la piste des géants toute proche, d'où décollaient Mermoz et Saint-Exupéry.",
-    'ADHERENT':   "« ANTHÈRE » coiffée d'un « D » : il renouvelle sa carte chaque année pour cumuler les avantages.",
-    'OCCASION':   "« CAS », « COIN » puis « O » : le rayon où chaque article a déjà vécu une première vie.",
-    'INNOPOLE':   "« IN » devant « NO » puis « PÔLE » : la technopole de Labège, voisine high-tech du magasin.",
-    'GONDOLE':    "« LONGÉ » suivi de « DO » : le meuble promo planté en bout d'allée, centre névralgique des opérations.",
-    'VINYLES':    "« VIN », « Y » et « LES » réunis : ils tournent encore à 33 tours au rayon Musique.",
-    'LABEGE':     "« BELGE » suivi d'un « A » : la commune qui accueille le magasin, aux portes de Toulouse.",
-    'FACING':     "« FAC » suivie d'« ING » : le rituel de l'ouverture, aligner chaque produit face au client.",
-    'PASTEL':     "« PLATS » allongés d'un « E » : l'or bleu du Lauragais qui fit la richesse de la région.",
-}
-# Les 3 ancres « Labège » imposées dans toute grille retenue :
-ANCRES = {'MONTAUDRAN', 'LABEGE', 'INNOPOLE'}
-NB_MOTS = 8
+MOTS_CANDIDATS = [
+    dict(reponse='INVENTAIRE', secteur='bureau',      mode='miroir',
+         indice="une fois l'an, tout le magasin compté pièce par pièce, scanner en main"),
+    dict(reponse='LINEAIRE',   secteur='rayon',       mode='miroir',
+         indice="ses précieux centimètres se marchandent entre rayons rivaux"),
+    dict(reponse='REASSORT',   secteur='stock',       mode='miroir',
+         indice="le va-et-vient de la réserve vers le rayon avant le rush du samedi"),
+    dict(reponse='DEMARQUE',   secteur='direction',   mode='miroir',
+         indice="additionnée à l'inconnue, elle donne des sueurs froides au chef de rayon le jour du comptage"),
+    dict(reponse='GARANTIE',   secteur='sav',         mode='reculons',
+         indice="deux ans minimum : la promesse du comptoir qui désamorce les colères"),
+    dict(reponse='ARRIVAGE',   secteur='stock',       mode='miroir',
+         indice="le camion du matin que le quai attend pour nourrir les rayons"),
+    dict(reponse='PREVENTE',   secteur='billetterie', mode='reculons',
+         indice="les billets vendus avant même l'affiche du concert"),
+    dict(reponse='ECOTAXE',    secteur='caisse',      mode='reculons',
+         indice="la petite ligne verte déjà réglée sur le ticket de caisse"),
+    dict(reponse='REPRISE',    secteur='occasion',    mode='miroir',
+         indice="ton ancien mobile quitte ta poche contre un bon d'achat"),
+    dict(reponse='FACING',     secteur='rayon',       mode='reculons',
+         indice="le rituel de l'ouverture : chaque article face au client, étiquette tirée au bord"),
+]
+NB_MOTS = len(MOTS_CANDIDATS)
 CIBLE_CROISEMENTS = 9
 
 def normaliser(s):
     return ''.join(c for c in unicodedata.normalize('NFD', s)
                    if unicodedata.category(c) != 'Mn').upper()
 
-def extraire_fragments(definition):
-    """Fragments « entre guillemets » de la définition, normalisés."""
-    import re
-    return [normaliser(m) for m in re.findall("«\\s*([^»]+?)\\s*»", definition)]
+def miroir(mot):
+    """Alphabet inversé : A↔Z, B↔Y … (Atbash latin)."""
+    return ''.join(chr(ord('A') + 25 - (ord(c) - ord('A'))) for c in mot)
 
-def verifier_jeu_de_lettres(mot, definition):
-    from collections import Counter
-    sol = normaliser(mot)
-    frags = extraire_fragments(definition)
-    if not frags:
-        return False, 'aucun fragment « cité »'
-    fusion = ''.join(frags).replace(' ', '')
-    ok = Counter(fusion) == Counter(sol)
-    return ok, (fusion if not ok else '')
+def crypter(mot, mode):
+    mot = normaliser(mot)
+    return mot[::-1] if mode == 'reculons' else miroir(mot)
+
+def decrypter(crypto, mode):
+    return crypto[::-1] if mode == 'reculons' else miroir(crypto)
+
+MODE_TXT = {'reculons': 'relu à reculons',
+            'miroir':   'lu en alphabet miroir (A↔Z)'}
+
+def fabriquer_definition(c):
+    """Définition joueur : cryptogramme + mode + indice métier + secteur."""
+    crypto = crypter(c['reponse'], c['mode'])
+    return ('« <code class="mc-code">%s</code>, %s » : %s. (%s)'
+            % (crypto, MODE_TXT[c['mode']], c['indice'], c['secteur']))
+
+def verifier_candidat(c):
+    """Garde-fous : décodage exact + aucune fuite de la solution en clair."""
+    sol = normaliser(c['reponse'])
+    defin = fabriquer_definition(c)
+    if decrypter(crypter(sol, c['mode']), c['mode']) != sol:
+        return False, 'cryptogramme non réversible'
+    propre = normaliser(defin.split('»')[1])   # texte hors citation
+    if sol in propre:
+        return False, 'solution en clair dans l\'indice'
+    if c['secteur'] not in ('rayon', 'stock', 'sav', 'bureau', 'caisse',
+                            'billetterie', 'occasion', 'direction'):
+        return False, 'secteur inconnu'
+    return True, ''
 
 # ---------------------------------------------------------------
 # Solveur : placement par retour sur trace, règles strictes.
@@ -86,7 +122,10 @@ class Solveur:
         out = []
         premier = not placements
         if premier:
-            return [(0, (mot, 'h', 0, 0)), (0, (mot, 'v', 0, 0))]
+            # le 1er mot est toujours posé horizontal à l'origine : toute
+            # grille avec 1er mot vertical se transpose (cadre symétrique
+            # ≤13×13) — ça divise l'espace de recherche par deux.
+            return [(0, (mot, 'h', 0, 0))]
         for sens in ('h', 'v'):
             for i, lettre in enumerate(mot):
                 for (r, c) in sorted(cellules):
@@ -157,7 +196,12 @@ class Solveur:
                     ajouts.append((r, c))
                 proprietaires[(r, c)].append(sens)
             placements.append(cand)
-            self.resoudre(idx + 1, placements, cellules, proprietaires, croisements + nb_crois)
+            # élague tôt : le cadre courant ne fait que GRANDIR —
+            # s'il dépasse déjà 13×13, toute la branche est stérile.
+            rs = [r for (r, c) in cellules]; cs = [c for (r, c) in cellules]
+            if max(rs) - min(rs) + 1 <= 13 and max(cs) - min(cs) + 1 <= 13:
+                self.resoudre(idx + 1, placements, cellules, proprietaires,
+                              croisements + nb_crois)
             placements.pop()
             for (r, c) in ajouts:
                 del cellules[(r, c)]
@@ -210,35 +254,31 @@ def rendre_ascii(cellules, dec):
     return lignes
 
 def main():
-    # 1) verrous anti-IA : les fragments cités reforment la réponse
-    print('=== Vérification des jeux de lettres (« citations ») ===')
-    for mot, defin in CANDIDATS.items():
-        ok, detail = verifier_jeu_de_lettres(mot, defin)
-        print(f"  {'✓' if ok else '✗'} {mot:<11} fragments={extraire_fragments(defin)}")
+    # 1) verrous anti-IA : décodage exact + aucune fuite en clair
+    print('=== Vérification des cryptogrammes (anti-IA) ===')
+    for c in MOTS_CANDIDATS:
+        ok, detail = verifier_candidat(c)
+        print(f"  {'✓' if ok else '✗'} {normaliser(c['reponse']):<11} "
+              f"{c['mode']:<9} → {crypter(c['reponse'], c['mode'])}")
         if not ok:
-            raise SystemExit(f'JEU DE LETTRES FAUX pour {mot}: {detail}')
-    # 2) essai de chaque sous-ensemble à NB_MOTS contenant les ancres
-    autres = [m for m in CANDIDATS if m not in ANCRES]
-    meilleur_global = None
-    for sous in combinations(autres, NB_MOTS - len(ANCRES)):
-        selection = sorted(ANCRES | set(sous))
-        solveur = Solveur(selection)
-        solveur.resoudre(0, [], {}, {}, 0)
-        if solveur.meilleur:
-            sc, pl, _, cr = solveur.meilleur
-            print(f'  sous-ensemble {sorted(set(selection) - ANCRES)} : {cr} croisements, score {sc}, {solveur.noeuds} nœuds')
-        if solveur.meilleur and (meilleur_global is None
-                                 or solveur.meilleur[0] > meilleur_global[0][0]):
-            meilleur_global = (solveur.meilleur, selection, solveur.noeuds)
-    if not meilleur_global:
-        raise SystemExit('Aucune grille trouvée.')
-    (score, placements, cellules, croisements), selection, noeuds = meilleur_global
+            raise SystemExit(f"CRYPTOGRAMME FAUX pour {c['reponse']} : {detail}")
+    couverture = sorted({c['secteur'] for c in MOTS_CANDIDATS})
+    print(f'  ✓ couverture secteurs ({len(couverture)}): ' + ', '.join(couverture))
+    # 2) solveur : toutes les réponses, cadre ≤ 13×13, max de croisements
+    selection = [c['reponse'] for c in MOTS_CANDIDATS]
+    solveur = Solveur(selection)
+    solveur.resoudre(0, [], {}, {}, 0)
+    if not solveur.meilleur:
+        raise SystemExit('Aucune grille trouvée dans le cadre 13×13.')
+    score, placements, cellules, croisements = solveur.meilleur
+    print(f'  solveur : {croisements} croisements, {solveur.noeuds} nœuds')
+    par_reponse = {normaliser(c['reponse']): c for c in MOTS_CANDIDATS}
     mot_infos, dec = numeroter(placements)
     print()
     print(f'=== Grille retenue : {selection} ===')
     print(f'croisements={croisements}  cases={len(cellules)}  '
           f'cadre={max(r for r, c in cellules) - dec[0] + 1}×'
-          f'{max(c for r, c in cellules) - dec[1] + 1}  nœuds={noeuds}')
+          f'{max(c for r, c in cellules) - dec[1] + 1}  nœuds={solveur.noeuds}')
     lignes = rendre_ascii(cellules, dec)
     for lg in lignes:
         print('  ' + lg)
@@ -265,10 +305,12 @@ def main():
     print('  var MOTS = [')
     lignes_js = []
     for m in mot_infos:
-        defin = CANDIDATS[m['reponse']]
+        c = par_reponse[normaliser(m['reponse'])]
+        defin = fabriquer_definition(c)
         lignes_js.append(
-            "    { num: %d, dir: '%s', row: %d, col: %d, reponse: '%s', definition: \"%s\" }"
-            % (m['num'], m['dir'], m['row'], m['col'], m['reponse'], defin.replace('"', '\\"')))
+            '    { num: %d, dir: \'%s\', row: %d, col: %d, reponse: \'%s\', secteur: \'%s\', definition: "%s" }'
+            % (m['num'], m['dir'], m['row'], m['col'], normaliser(m['reponse']),
+               c['secteur'], defin.replace(chr(34), chr(92) + chr(34))))
     print(',\n'.join(lignes_js))
     print('  ];')
 

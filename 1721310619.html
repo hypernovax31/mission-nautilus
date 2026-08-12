@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=18">
-  <link rel="stylesheet" href="css/palier2.css?v=7">
+  <link rel="stylesheet" href="css/palier2.css?v=8">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -89,7 +89,7 @@
       <div class="status-banner success">
         ✅ <b>Scellé levé !</b> Le QR Code a ouvert le sas du Palier 2 sur cet appareil.
       </div>
-      <div id="mcStatut" class="mc-statut">✍️ <b>8 balises « Escale Labège »</b> — jargon de vendeur et territoire d'ancrage. Touche une case ou une définition ; les lettres citées « entre guillemets » reforment la réponse.</div>
+      <div id="mcStatut" class="mc-statut">✍️ <b>10 balises « Code Magasin »</b> — le jargon expert de chaque secteur. Décrypte la citation : <b>à reculons</b> = mot épelé de droite à gauche, <b>miroir</b> = alphabet inversé (A↔Z, B↔Y…).</div>
       <div id="mcHost"></div>
       <a class="gate-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
@@ -108,14 +108,16 @@
 <!-- Moteur de mots croisés (générique) + données : 8 mots, un par rayon -->
 <script src="mots-croises.js?v=2"></script>
 <script>
-/* ================= ÉPREUVE DU PALIER 2 — « ESCALE LABÈGE » =================
-   Grille EXPERT « tout FNAC Labège » : 8 mots mêlant jargon de vendeur
-   (ADHÉRENT, OCCASION, GONDOLE, VINYLES) et territoire d'ancrage
-   (LABÈGE, INNOPOLE, MONTAUDRAN, PASTEL), chacun caché derrière un jeu
-   de lettres (charade/anagramme « entre guillemets ») — stratagème
-   anti-triche : les lettres citées reforment exactement la réponse,
-   mais une IA échoue à les recomposer sans tricher lettre à lettre.
-   Grille 13×11, 52 cases, 8 croisements — construite et vérifiée lettre
+/* ================= ÉPREUVE DU PALIER 2 — « CODE MAGASIN » =================
+   Grille EXPERT « jargon vendeur » : 10 mots couvrant TOUS les secteurs du
+   magasin — rayon (FACING, LINÉAIRE), stock (RÉASSORT, ARRIVAGE), SAV
+   (GARANTIE), bureau (INVENTAIRE), caisse (ÉCOTAXE), billetterie (PRÉVENTE),
+   occasion (REPRISE) et direction (DÉMARQUE inconnue!).
+   ANTI-IA : chaque définition cite la réponse CHIFFRÉE, en « à reculons »
+   (mot épelé de droite à gauche) ou en « alphabet miroir » (A↔Z) — un
+   humain décode à vue, un LLM déraille dans la conversion lettre à lettre ;
+   l'indice métier ne sert qu'à confirmer (la solution n'y apparaît jamais).
+   Grille 13×13, 68 cases, 10 croisements — construite et vérifiée lettre
    par lettre par tools/generer_mots_croises.py (rejouable à l'identique).
    Règle calquée sur le Palier 1 : 3 mots faux tentés = 1 h de remise
    en surface (locale à l'appareil). La victoire inscrit « livres » dans
@@ -126,14 +128,16 @@
   var BLOCAGE_MS  = 60 * 60 * 1000;          /* 1 h en surface */
 
   var MOTS = [
-    { num: 1, dir: 'v', row: 0,  col: 8, reponse: 'LABEGE',     definition: "« BELGE » suivi d'un « A » : la commune qui accueille le magasin, aux portes de Toulouse." },
-    { num: 2, dir: 'h', row: 1,  col: 0, reponse: 'MONTAUDRAN', definition: "« MONTANA » endurci de « DUR » : la piste des géants toute proche, d'où décollaient Mermoz et Saint-Exupéry." },
-    { num: 3, dir: 'v', row: 1,  col: 1, reponse: 'OCCASION',   definition: "« CAS », « COIN » puis « O » : le rayon où chaque article a déjà vécu une première vie." },
-    { num: 4, dir: 'v', row: 1,  col: 4, reponse: 'ADHERENT',   definition: "« ANTHÈRE » coiffée d'un « D » : il renouvelle sa carte chaque année pour cumuler les avantages." },
-    { num: 5, dir: 'h', row: 4,  col: 0, reponse: 'PASTEL',     definition: "« PLATS » allongés d'un « E » : l'or bleu du Lauragais qui fit la richesse de la région." },
-    { num: 6, dir: 'v', row: 6,  col: 6, reponse: 'GONDOLE',    definition: "« LONGÉ » suivi de « DO » : le meuble promo planté en bout d'allée, centre névralgique des opérations." },
-    { num: 7, dir: 'h', row: 7,  col: 3, reponse: 'INNOPOLE',   definition: "« IN » devant « NO » puis « PÔLE » : la technopole de Labège, voisine high-tech du magasin." },
-    { num: 8, dir: 'h', row: 11, col: 2, reponse: 'VINYLES',    definition: "« VIN », « Y » et « LES » réunis : ils tournent encore à 33 tours au rayon Musique." }
+    { num: 1,  dir: 'h', row: 0,  col: 2,  reponse: 'FACING',     secteur: 'rayon',       definition: "« <code class=\"mc-code\">GNICAF</code>, relu à reculons » : le rituel de l'ouverture : chaque article face au client, étiquette tirée au bord. (rayon)" },
+    { num: 2,  dir: 'v', row: 0,  col: 7,  reponse: 'GARANTIE',   secteur: 'sav',         definition: "« <code class=\"mc-code\">EITNARAG</code>, relu à reculons » : deux ans minimum : la promesse du comptoir qui désamorce les colères. (sav)" },
+    { num: 3,  dir: 'h', row: 2,  col: 5,  reponse: 'ARRIVAGE',   secteur: 'stock',       definition: "« <code class=\"mc-code\">ZIIREZTV</code>, lu en alphabet miroir (A↔Z) » : le camion du matin que le quai attend pour nourrir les rayons. (stock)" },
+    { num: 4,  dir: 'v', row: 3,  col: 3,  reponse: 'LINEAIRE',   secteur: 'rayon',       definition: "« <code class=\"mc-code\">ORMVZRIV</code>, lu en alphabet miroir (A↔Z) » : ses précieux centimètres se marchandent entre rayons rivaux. (rayon)" },
+    { num: 5,  dir: 'h', row: 4,  col: 3,  reponse: 'INVENTAIRE', secteur: 'bureau',      definition: "« <code class=\"mc-code\">RMEVMGZRIV</code>, lu en alphabet miroir (A↔Z) » : une fois l'an, tout le magasin compté pièce par pièce, scanner en main. (bureau)" },
+    { num: 6,  dir: 'v', row: 5,  col: 1,  reponse: 'PREVENTE',   secteur: 'billetterie', definition: "« <code class=\"mc-code\">ETNEVERP</code>, relu à reculons » : les billets vendus avant même l'affiche du concert. (billetterie)" },
+    { num: 7,  dir: 'v', row: 6,  col: 10, reponse: 'ECOTAXE',    secteur: 'caisse',      definition: "« <code class=\"mc-code\">EXATOCE</code>, relu à reculons » : la petite ligne verte déjà réglée sur le ticket de caisse. (caisse)" },
+    { num: 8,  dir: 'h', row: 7,  col: 0,  reponse: 'DEMARQUE',   secteur: 'direction',   definition: "« <code class=\"mc-code\">WVNZIJFV</code>, lu en alphabet miroir (A↔Z) » : additionnée à l'inconnue, elle donne des sueurs froides au chef de rayon le jour du comptage. (direction)" },
+    { num: 9,  dir: 'h', row: 9,  col: 3,  reponse: 'REASSORT',   secteur: 'stock',       definition: "« <code class=\"mc-code\">IVZHHLIG</code>, lu en alphabet miroir (A↔Z) » : le va-et-vient de la réserve vers le rayon avant le rush du samedi. (stock)" },
+    { num: 10, dir: 'h', row: 12, col: 4,  reponse: 'REPRISE',    secteur: 'occasion',    definition: "« <code class=\"mc-code\">IVKIRHV</code>, lu en alphabet miroir (A↔Z) » : ton ancien mobile quitte ta poche contre un bon d'achat. (occasion)" }
   ];
 
   var $ = function (id) { return document.getElementById(id); };
@@ -179,10 +183,10 @@
       var jusqua = Date.now() + BLOCAGE_MS;
       try { localStorage.setItem(CLE_BLOCAGE, String(jusqua)); } catch (e) {}
       afficherBlocage(jusqua);
-      journal("🔒 Trois erreurs aux Mots Croisés « Escale Labège » : l'équipage remonte en surface (1 h).", 'danger');
+      journal("🔒 Trois erreurs aux Mots Croisés « Code Magasin » : l'équipage remonte en surface (1 h).", 'danger');
     } else {
       statut('⚠️ <b>Mot incorrect (' + n + '/' + max + ').</b> Les lettres fautives clignotent — corrige-les.', 'danger');
-      journal('⚠️ Mot incorrect aux Mots Croisés « Escale Labège » (' + n + '/' + max + ').', 'warning');
+      journal('⚠️ Mot incorrect aux Mots Croisés « Code Magasin » (' + n + '/' + max + ').', 'warning');
     }
   }
 
@@ -224,8 +228,8 @@
   }
 
   function onVictoire() {
-    statut('🏆 <b>Palier 2 franchi !</b> La grille « Escale Labège » est entièrement résolue.', 'success');
-    journal('🏆 Palier 2 validé : les Mots Croisés « Escale Labège » sont résolus !', 'success');
+    statut('🏆 <b>Palier 2 franchi !</b> La grille « Code Magasin » est entièrement résolue.', 'success');
+    journal('🏆 Palier 2 validé : les Mots Croisés « Code Magasin » sont résolus !', 'success');
     propagerVictoire();
   }
 
@@ -235,7 +239,7 @@
     lance = true;
     var jusqua = blocageJusqua();
     if (jusqua > Date.now()) { afficherBlocage(jusqua); return; }
-    statut("✍️ <b>8 mots « Escale Labège »</b> : remplis la grille — <b>3 erreurs</b> et l'équipage remonte en surface (1 h).");
+    statut("✍️ <b>10 mots du jargon maison</b> : décrypte-les (<b>à reculons</b> / <b>alphabet miroir</b>) puis remplis la grille — <b>3 erreurs</b> et l'équipage remonte en surface (1 h).");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
       maxErreurs: 3,
