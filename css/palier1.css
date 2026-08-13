@@ -62,6 +62,20 @@
        fenêtre). Cette marge de défilement dégage la barre du haut
        (sticky, ~62 px) pour que le titre ne passe jamais dessous. */
     #gameCard{scroll-margin-top:74px;}
+    /* MISE EN PAGE « AU MOMENT DE JOUER » : pendant la partie, la page
+       ne laisse QUE cette carte (l'équipage actif et le journal de bord
+       sont rangés sur la vue briefing). Elle devient la scène unique :
+       liseré d'or renforcé, halo doux, fond un cran plus profond —
+       transition courte pour que le basculement briefing ↔ épreuve se
+       lise sans à-coup. */
+    #gameCard{
+      transition:border-color .3s ease, box-shadow .3s ease, background .3s ease;
+    }
+    #gameCard.epreuve-focus{
+      border-color:rgba(245,176,39,.6);
+      background:rgba(5,19,33,.95);
+      box-shadow:0 0 0 3px rgba(245,176,39,.14), 0 22px 48px rgba(0,0,0,.55);
+    }
     .card h2{
       margin:0;padding:16px 20px;
       background:linear-gradient(90deg,#101820,#253545);

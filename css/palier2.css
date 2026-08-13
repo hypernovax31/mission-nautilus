@@ -68,6 +68,18 @@
 
 .gate-unlocked{ border-color:rgba(91,255,156,.5); }
 .gate-unlocked h2{ color:#5be09b; }
+
+/* MISE EN PAGE « AU MOMENT DE JOUER » : pendant les mots croisés, la
+   page ne laisse QUE la carte de l'épreuve (le journal de bord s'est
+   rangé : il vit sur la vue du portail scellé, le « briefing » du
+   palier). Même scène unique qu'au Palier 1 : liseré d'or renforcé et
+   halo doux, avec transition courte pour un basculement sans à-coup. */
+.gate-unlocked{ transition:border-color .3s ease, box-shadow .3s ease, background .3s ease; }
+.gate-unlocked.epreuve-focus{
+  border-color:rgba(245,176,39,.6);
+  background:rgba(5,19,33,.95);
+  box-shadow:0 0 0 3px rgba(245,176,39,.14), 0 22px 48px rgba(0,0,0,.55);
+}
 .gate-home{
   display:inline-block; margin-top:8px;
   background:rgba(255,255,255,.08); color:#fff;

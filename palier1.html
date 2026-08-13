@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=18">
+  <link rel="stylesheet" href="css/palier1.css?v=19">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=1" defer></script>
@@ -1618,6 +1618,21 @@ window.Nautilus = {
     const t = state.team;
     const s = state.session;
     const me = state.me;
+
+    /* MISE EN PAGE « AU MOMENT DE JOUER » : pendant que l'épreuve se
+       joue (état playing — joueur aux commandes ou spectateur en live),
+       la page ne laisse QUE l'encart « 🧪 ÉPREUVE DU PALIER », repensé
+       en scène unique (classe epreuve-focus) : l'« ⚓ ÉQUIPAGE ACTIF EN
+       PLONGÉE » et le « 📜 JOURNAL DE BORD (Activité en direct) » se
+       rangent. Ils vivent sur la vue PRÉCÉDENTE — le briefing — et
+       réapparaissent dès qu'on n'est plus dans le mini-jeu (attente,
+       victoire, défaite, blocage, relecture). */
+    if (t) {
+      const enJeu = !!(s && s.state === 'playing');
+      if ($('teamCard')) $('teamCard').style.display = enJeu ? 'none' : 'block';
+      if ($('logCard')) $('logCard').style.display = enJeu ? 'none' : 'block';
+      $('gameCard').classList.toggle('epreuve-focus', enJeu);
+    }
 
     /* Le voyant suit CHAQUE redessin : c'est le point de passage commun a
        tous les changements d'etat (debut de partie, victoire, defaite,

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
-  <link rel="stylesheet" href="css/palier1.css?v=18">
-  <link rel="stylesheet" href="css/palier2.css?v=10">
+  <link rel="stylesheet" href="css/palier1.css?v=19">
+  <link rel="stylesheet" href="css/palier2.css?v=11">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -210,7 +210,20 @@
     el.className = 'mc-statut' + (kind ? ' is-' + kind : '');
   }
 
+  /* « AU MOMENT DE JOUER, IL NE RESTE QUE L'ÉPREUVE » : le 📜 JOURNAL
+     DE BORD se retire dès que les mots croisés démarrent, et revient
+     dès que le jeu s'arrête (blocage, victoire). Le portail scellé (QR
+     à viser) est la vue « briefing » du palier : le journal y reste
+     affiché, comme demandé (avec l'équipage actif côté Palier 1). */
+  function afficherJournalDeBord(visible) {
+    var el = $('logCard');
+    if (el) el.style.display = visible ? '' : 'none';
+    var carte = $('gateUnlocked');
+    if (carte) carte.classList.toggle('epreuve-focus', !visible);
+  }
+
   function afficherBlocage(jusqua, nom) {
+    afficherJournalDeBord(true);   /* plus personne ne joue : le journal revient */
     statut(nom
       ? "🔒 <b>" + esc(nom) + ", 3 erreurs : tu remontes en surface.</b> Reprise possible à <b>"
         + heureLisible(jusqua) + "</b>. Un coéquipier peut prendre le relais "
@@ -310,6 +323,7 @@
   }
 
   function onVictoire() {
+    afficherJournalDeBord(true);   /* épreuve terminée : le journal revient */
     statut('🏆 <b>Palier 2 franchi !</b> La grille « Code Magasin » est entièrement résolue.', 'success');
     journal('🏆 Palier 2 validé : les Mots Croisés « Code Magasin » sont résolus !', 'success');
     propagerVictoire();
@@ -344,6 +358,7 @@
         if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
       }
     }
+    afficherJournalDeBord(false);  /* la partie démarre : il ne reste que l'épreuve */
     statut("✍️ <b>10 mots du jargon maison</b> — lis la scène, trouve le mot du métier : <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
