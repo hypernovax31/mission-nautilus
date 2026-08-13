@@ -137,6 +137,11 @@
           verrouille[k] = true;
           var el = hote.querySelector('[data-k="' + k + '"]');
           if (el) {
+            /* LE ROUGE REDEVIENT VERT : la marque d'erreur part AVEC la
+               validation (oubli historique : .mc-faux restait posée et,
+               déclarée APRÈS .mc-juste dans le CSS, gagnait la cascade —
+               la case restait rouge malgré la bonne réponse). */
+            el.classList.remove('mc-faux');
             el.classList.add('mc-juste');
             var input = el.querySelector('.mc-input');
             if (input) input.readOnly = true;
@@ -157,17 +162,39 @@
         if (suivant) selectionner(suivant);
       } else {
         erreurs++;
-        cases.forEach(function (k, i) {
-          if (saisie[k] !== mot.solution[i]) {
-            var el = hote.querySelector('[data-k="' + k + '"]');
-            if (el) {
-              el.classList.remove('mc-faux');
-              void el.offsetWidth;              /* relance l'animation */
-              el.classList.add('mc-faux');
-            }
+        /* RÈGLE « CODE MAGASIN » (demande explicite) : un mot COMPLET
+           mais FAUX = TOUTES ses cases passent au rouge — pas seulement
+           les lettres fautives (les cases verrouillées par un croisement
+           déjà validé, elles, restent vertes). */
+        cases.forEach(function (k) {
+          if (verrouille[k]) return;
+          var el = hote.querySelector('[data-k="' + k + '"]');
+          if (el) {
+            el.classList.remove('mc-faux');
+            void el.offsetWidth;              /* relance l'animation */
+            el.classList.add('mc-faux');
           }
         });
         if (typeof opts.onErreur === 'function') opts.onErreur(erreurs, maxErreurs);
+        /* …puis « LE MOT SAUTE POUR RECOMMENCER » : après un court délai
+           (le temps de VOIR le rouge, 0,9 s), les cases non verrouillées
+           se VIDENT et le mot est resélectionné à sa première case vide —
+           on retape le mot entier. */
+        var motARelancer = mot;
+        setTimeout(function () {
+          if (fini) return;
+          cases.forEach(function (k) {
+            if (verrouille[k]) return;                /* croisement validé : il reste */
+            saisie[k] = '';
+            var el = hote.querySelector('[data-k="' + k + '"]');
+            if (el) {
+              el.classList.remove('mc-faux');
+              var input = el.querySelector('.mc-input');
+              if (input) input.value = '';
+            }
+          });
+          selectionner(motARelancer);
+        }, 900);
       }
     }
 
