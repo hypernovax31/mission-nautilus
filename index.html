@@ -5484,7 +5484,12 @@ function qrDataUri(text, opts){
     seenAlarmAt = 'launch-' + Date.now();
     await alarmesLancementComplets(ALARMES_LANCEMENT, true);
     if(pagePalier){
-      location.href = pagePalier;
+      /* Le Code Matelot suit la navigation (?m=) : le palier sait alors
+         QUI joue et applique la règle des blocages PERSONNELS
+         (matelot-blocages.js). L'identité n'étant gardée qu'en mémoire
+         vive sur l'accueil, le paramètre est le seul vecteur fiable. */
+      const mc = currentMatelot?.codeMatelot || '';
+      location.href = pagePalier + (mc ? `?m=${encodeURIComponent(mc)}` : '');
       return;
     }
     /* Étape inconnue (filet de sécurité) : retour au cockpit. */

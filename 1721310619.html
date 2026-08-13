@@ -105,7 +105,11 @@
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
 <script src="palier-sas.js?v=3"></script>
 <script>window.NautilusSas.init(2);</script>
-<!-- Moteur de mots croisés (générique) + données : 8 mots, un par rayon -->
+<!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers :
+     3 erreurs = remise en surface de CE matelot, consignée dans le
+     document Firestore de son équipage, JAMAIS dans le seul appareil. -->
+<script src="matelot-blocages.js?v=1"></script>
+<!-- Moteur de mots croisés (générique) + données : 10 mots, un par secteur -->
 <script src="mots-croises.js?v=4"></script>
 <script>
 /* ================= ÉPREUVE DU PALIER 2 — « CODE MAGASIN » =================
@@ -119,13 +123,23 @@
    un décodage. Grille 13×13, 66 cases, 13 croisements — construite et
    vérifiée lettre par lettre par tools/generer_mots_croises.py
    (rejouable à l'identique).
-   Règle calquée sur le Palier 1 : 3 mots faux tentés = 1 h de remise
-   en surface (locale à l'appareil). La victoire inscrit « livres » dans
-   completedSteps de l'équipage (mêmes champs que le Palier 1). */
+   Règle calquée sur le Palier 1 : 3 mots faux tentés = remise en
+   surface PERSONNELLE du matelot fautif (matelot-blocages.js — compteur
+   d'échecs et barème 1 h/2 h/4 h/8 h/12 h communs à TOUS les paliers).
+   Joueur SANS Code Matelot : repli historique local à l'appareil (1 h),
+   lu pour lui SEUL — un matelot identifié ne lit jamais ce repli :
+   les erreurs d'un collègue anonyme ne peuvent plus bloquer un matelot
+   qui reprend SA partie sur le même appareil. La victoire inscrit
+   « livres » dans completedSteps de l'équipage (mêmes champs que le
+   Palier 1) et lève les blocages personnels encore actifs de
+   l'équipage, comme advanceTeam() du Palier 1. */
 (function () {
   'use strict';
-  var CLE_BLOCAGE = 'nautilusEpreuve2BloqueJusqua';
-  var BLOCAGE_MS  = 60 * 60 * 1000;          /* 1 h en surface */
+  /* Repli ANONYME uniquement (joueur sans Code Matelot) — le canal
+     personnel vit dans matelot-blocages.js (règle globale du jeu). */
+  var CLE_BLOCAGE_ANONYME = 'nautilusEpreuve2BloqueJusqua';
+  var BLOCAGE_MS  = 60 * 60 * 1000;          /* repli anonyme : 1 h */
+  var _blocageSession = 0;                   /* mode test : volatil */
 
   var MOTS = [
     { num: 1, dir: 'v', row: 0,  col: 4,  reponse: 'FACING',     secteur: 'rayon',     definition: "le garde-à-vous du rayon, refait dix fois par jour : rien ne dépasse du bord." },
@@ -145,8 +159,30 @@
   function enModeTest() {
     try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
   }
-  function blocageJusqua() {
-    try { return Number(localStorage.getItem(CLE_BLOCAGE) || 0); } catch (e) { return 0; }
+  function blocageAnonymeJusqua() {
+    try { return Number(localStorage.getItem(CLE_BLOCAGE_ANONYME) || 0); } catch (e) { return 0; }
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function heureLisible(v) {
+    var d = new Date(typeof v === 'number' ? v : String(v));
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* QUI joue sur cet appareil ? Résolution mémoïsée (param ?m=, à
+     défaut localStorage nautilusMatelotCode). null = joueur anonyme
+     → repli LOCAL, jamais lu par un matelot identifié. */
+  var _ident = null, _identLue = false;
+  function monIdentite() {
+    if (_identLue) return Promise.resolve(_ident);
+    _identLue = true;
+    return window.NautilusBlocages.identiteCourante()
+      .then(function (i) { _ident = i; return _ident; })
+      .catch(function () { _ident = null; return null; });
   }
 
   /* Aperçu organisateur : ?apercu=jeu&k=… — même clé que les aperçus du
@@ -170,57 +206,97 @@
     el.className = 'mc-statut' + (kind ? ' is-' + kind : '');
   }
 
-  function afficherBlocage(jusqua) {
-    statut("🔒 <b>Trois erreurs : remontée en surface.</b> L'épreuve se déverrouille à <b>"
-      + new Date(jusqua).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-      + "</b>. Respire un coup, révise les définitions… et replonge.", 'danger');
+  function afficherBlocage(jusqua, nom) {
+    statut(nom
+      ? "🔒 <b>" + esc(nom) + ", 3 erreurs : tu remontes en surface.</b> Reprise possible à <b>"
+        + heureLisible(jusqua) + "</b>. Un coéquipier peut prendre le relais "
+        + "avec son Code Matelot — <b>chacun ses erreurs</b>."
+      : "🔒 <b>Trois erreurs : remontée en surface.</b> L'épreuve se déverrouille à <b>"
+        + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
+        + "pour que tes erreurs restent les tiennes.", 'danger');
     var host = $('mcHost');
     if (host) host.innerHTML = '';
   }
 
   function onErreur(n, max) {
     if (n >= max) {
-      var jusqua = Date.now() + BLOCAGE_MS;
-      try { localStorage.setItem(CLE_BLOCAGE, String(jusqua)); } catch (e) {}
-      afficherBlocage(jusqua);
-      journal("🔒 Trois erreurs aux Mots Croisés « Code Magasin » : l'équipage remonte en surface (1 h).", 'danger');
+      declencherBlocage();
     } else {
       statut('⚠️ <b>Mot incorrect (' + n + '/' + max + ').</b> Les lettres fautives clignotent — corrige-les.', 'danger');
       journal('⚠️ Mot incorrect aux Mots Croisés « Code Magasin » (' + n + '/' + max + ').', 'warning');
     }
   }
 
+  /* 3 erreurs atteintes : le blocage est PERSONNEL quand le matelot est
+     identifié (Code Matelot) — sinon repli historique LOCAL à
+     l'appareil, réservé aux joueurs anonymes. */
+  function declencherBlocage() {
+    if (apercuAdminAutorise()) {
+      journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
+      return;
+    }
+    monIdentite().then(function (ident) {
+      if (ident && ident.isTest) {
+        _blocageSession = Date.now() + BLOCAGE_MS;
+        afficherBlocage(_blocageSession, 'TEST');
+        journal('🔒 Trois erreurs aux Mots Croisés « Code Magasin » (partie d’essai : blocage volatil, rien n’est enregistré).', 'danger');
+        return;
+      }
+      if (ident) {
+        window.NautilusBlocages.poserBlocage(ident, 'mots_croises_too_many_errors')
+          .then(function (r) {
+            afficherBlocage(r.lockedUntil, ident.name);
+            journal('🔒 Trois erreurs aux Mots Croisés « Code Magasin » : <b>' + esc(ident.name)
+              + '</b> remonte en surface jusqu’à ' + heureLisible(r.lockedUntil)
+              + ' (' + r.hours + ' h) — blocage personnel, l’équipage continue.', 'danger');
+          })
+          .catch(function () {
+            /* Réseau en rade : le blocage vaut pour CETTE session et rien
+               n’est posé sur l’appareil — un collègue identifié reste libre. */
+            _blocageSession = Date.now() + BLOCAGE_MS;
+            afficherBlocage(_blocageSession, ident.name);
+            journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
+          });
+        return;
+      }
+      /* Joueur anonyme : repli historique, local à cet appareil. */
+      var jusqua = Date.now() + BLOCAGE_MS;
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
+      afficherBlocage(jusqua, null);
+      journal('🔒 Trois erreurs aux Mots Croisés « Code Magasin » : remontée en surface (1 h) — joueur non identifié, blocage local à cet appareil.', 'danger');
+    });
+  }
+
   /* Inscription Firestore : mêmes champs que le Palier 1 (progression
-     partagée + annonce verte aux autres équipages). Mode test, aperçu
-     admin ou visite sans équipage : AUCUNE écriture. */
+     partagée + annonce verte aux autres équipages). L'équipage est celui
+     du matelot identifié quand il existe (sa fiche fait foi). Firebase
+     passe par matelot-blocages.js (app mutualisée, jamais deux init).
+     Mode test, aperçu admin ou visite sans équipage : AUCUNE écriture. */
   async function propagerVictoire() {
-    var equipage = null;
-    try { equipage = localStorage.getItem('nautilusCurrentTeam'); } catch (e) {}
+    var ident = await monIdentite();
+    var equipage = (ident && !ident.isTest) ? ident.teamCode : null;
+    if (!equipage) { try { equipage = localStorage.getItem('nautilusCurrentTeam'); } catch (e) {} }
     if (!equipage || equipage === 'NEMO' || enModeTest() || apercuAdminAutorise()) {
       journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
       return;
     }
     try {
-      var appMod = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
-      var fsMod  = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js');
-      var app = appMod.initializeApp({
-        apiKey:"AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
-        authDomain:"mission-nautilus.firebaseapp.com",
-        projectId:"mission-nautilus",
-        storageBucket:"mission-nautilus.firebasestorage.app",
-        messagingSenderId:"444670686419",
-        appId:"1:444670686419:web:00d186940a2fb8c8c29026"
-      });
-      var db = fsMod.getFirestore(app);
-      await fsMod.updateDoc(fsMod.doc(db, 'teams', equipage), {
-        completedSteps: fsMod.arrayUnion('livres'),
+      var x = await window.NautilusBlocages.db();
+      await x.fs.updateDoc(x.fs.doc(x.db, 'teams', equipage), {
+        completedSteps: x.fs.arrayUnion('livres'),
         currentStep: 'son',
         lastEvent: 'step_advanced',
         lastStepCompleted: 'livres',
         lastStepCompletedAt: new Date().toISOString(),
-        lastStepCompletedLabel: 'Palier 2'
+        lastStepCompletedLabel: 'Palier 2',
+        lastStepCompletedBy: (ident && !ident.isTest) ? ident.name : 'Un matelot'
       });
-      journal('📈 Victoire inscrite au tableau de bord — direction le Palier 3 !', 'success');
+      /* Même règle qu'advanceTeam() du Palier 1 : un palier franchi
+         lève les blocages PERSONNELS encore actifs de l'équipage.
+         Les compteurs d'échecs, eux, sont conservés. */
+      var leves = await window.NautilusBlocages.leverBlocages(equipage, 'livres');
+      journal('📈 Victoire inscrite au tableau de bord — direction le Palier 3 !'
+        + (leves > 0 ? ' ' + leves + ' matelot' + (leves > 1 ? 's' : '') + ' débloqué' + (leves > 1 ? 's' : '') + '.' : ''), 'success');
       statut('🏆 <b>Palier 2 franchi !</b> Direction le <b>Palier 3</b> : le QR Code du rayon Son attend ton équipage.', 'success');
     } catch (e) {
       journal("⚠️ Victoire non inscrite (connexion ?). Préviens l'organisation.", 'warning');
@@ -237,9 +313,32 @@
   function lancer() {
     if (lance) return;
     lance = true;
-    var jusqua = blocageJusqua();
-    if (jusqua > Date.now()) { afficherBlocage(jusqua); return; }
-    statut("✍️ <b>10 mots du jargon maison</b> — lis la scène, trouve le mot du métier : <b>3 erreurs</b> et l'équipage remonte en surface (1 h).");
+    demarrer();
+  }
+
+  /* Démarrage protégé : on vérifie d'abord le blocage PERSONNEL du
+     matelot identifié ; à défaut d'identité, le repli local historique
+     (réservé aux anonymes). Le moindre doute réseau laisse JOUER :
+     jamais de verrouillage sur une simple panne de connexion. */
+  async function demarrer() {
+    if (!apercuAdminAutorise()) {
+      var ident = await monIdentite();
+      if (ident && ident.isTest) {
+        if (_blocageSession > Date.now()) { afficherBlocage(_blocageSession, 'TEST'); return; }
+      } else if (ident) {
+        var bloc = await window.NautilusBlocages.blocageActif(ident);
+        if (bloc) {
+          afficherBlocage(bloc.lockedUntil, ident.name);
+          journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
+            + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
+          return;
+        }
+      } else {
+        var jusqua = blocageAnonymeJusqua();
+        if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
+      }
+    }
+    statut("✍️ <b>10 mots du jargon maison</b> — lis la scène, trouve le mot du métier : <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
       maxErreurs: 3,
