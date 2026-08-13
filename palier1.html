@@ -326,7 +326,16 @@ function getCurrentTeamCode() {
   const fromUrl = params.get('code');
   if (fromUrl) {
     const clean = teamCodeFromInput(fromUrl);
-    localStorage.setItem('nautilusCurrentTeam', clean);
+    /* MODE CONCEPTEUR : l'équipage du lien de test (?code=NEMO&m=ZZZZ-0000)
+       n'est qu'une coquille technique — le compte fantôme ne fait JAMAIS
+       partie d'un équipage. On le garde en mémoire mais on ne le MÉMORISE
+       pas sur l'appareil : sinon les autres pages (sas des paliers,
+       identités) afficheraient le testeur « connecté dans l'équipage
+       NEMO », ce qui a trompé le concepteur. */
+    const mUrl = (params.get('m') || params.get('matelot') || '').trim().toUpperCase();
+    if (mUrl !== TEST_MATELOT_CODE && !isTestMode()) {
+      localStorage.setItem('nautilusCurrentTeam', clean);
+    }
     return clean;
   }
   return localStorage.getItem('nautilusCurrentTeam');
@@ -1272,7 +1281,9 @@ window.Nautilus = {
       state.teamCode = team.teamCode;
       state.team = team;
       state.isTest = code === 'ZZZZ-0000';
-      N.setCurrentTeamCode(team.teamCode);
+      /* Mode concepteur : l'équipage coquille (NEMO) n'est pas mémorisé —
+         le compte fantôme ne fait partie d'aucun équipage. */
+      if (!state.isTest) N.setCurrentTeamCode(team.teamCode);
       localStorage.setItem('nautilusMatelotCode', code);
       await attachTeamListener();
 
@@ -2923,6 +2934,6 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=3" defer></script>
-<script src="admin-button.js?v=10" type="module"></script>
+<script src="admin-button.js?v=11" type="module"></script>
 </body>
 </html>

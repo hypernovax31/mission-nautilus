@@ -281,17 +281,26 @@
     document.addEventListener('visibilitychange', function () { if (document.hidden) stopCamera(); });
     window.addEventListener('beforeunload', stopCamera);
 
-    /* Équipage affiché en barre du haut (simple mémoire de la navigation). */
+    /* Équipage affiché en barre du haut (simple mémoire de la navigation).
+       MODE CONCEPTEUR : le compte de test n'appartient à AUCUN équipage —
+       l'équipage réel éventuellement mémorisé sur l'appareil est ignoré
+       (il sera retrouvé intact dès la sortie du mode test). */
     var equipage = null;
+    var modeTest = false;
+    try { modeTest = (localStorage.getItem('nautilusMatelotCode') || '').trim().toUpperCase() === 'ZZZZ-0000'; } catch (e) {}
     try {
-      var code = localStorage.getItem('nautilusCurrentTeam');
-      if (code) equipage = NOMS_EQUIPAGES[code] || code;
-      if (equipage && $('topTeam')) $('topTeam').textContent = equipage;
+      if (!modeTest) {
+        var code = localStorage.getItem('nautilusCurrentTeam');
+        if (code) equipage = NOMS_EQUIPAGES[code] || code;
+        if (equipage && $('topTeam')) $('topTeam').textContent = equipage;
+      } else if ($('topTeam')) {
+        $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+      }
     } catch (e) {}
     /* Journal de bord : première ligne du suivi en direct — l'équipage
        vient de franchir la porte de la ZONE SCELLÉE. */
     journal('🛡️ Portail du <b>' + LABEL + '</b> atteint'
-      + (equipage ? ' par l’équipage <b>' + equipage + '</b>' : '')
+      + (modeTest ? ' en <b>mode test</b> (hors équipage)' : (equipage ? ' par l’équipage <b>' + equipage + '</b>' : ''))
       + ' : en attente du QR Code de la zone de recherche.', 'info');
 
     /* Retour sur la page avec le sas déjà ouvert : le contenu protégé

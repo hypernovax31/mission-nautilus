@@ -377,7 +377,7 @@
      « Réinitialiser les paliers en mode test » referme tous les sas. */
   function deverrouillerSasModeTest(){
     if(!isAdminUnlocked()) return;
-    const ok = confirm("Déverrouiller TOUS les sas en mode test sur cet appareil ?\n\n✔ Les portails QR des paliers 2 à 7 s'ouvriront sans aucun scan\n\n✔ Ton Code Matelot passe en mode test (ZZZZ-0000) : aucune victoire de test n'est inscrite\n\n✔ « Réinitialiser les paliers » referme tous les sas");
+    const ok = confirm("Déverrouiller TOUS les sas en mode test sur cet appareil ?\n\n✔ Les portails QR des paliers 2 à 7 s'ouvriront sans aucun scan\n\n✔ Ton Code Matelot passe en mode test (ZZZZ-0000) : aucune victoire de test n'est inscrite\n\n✔ Tu n'es rattaché à AUCUN équipage réel (le compte de test n'en fait jamais partie)\n\n✔ « Réinitialiser les paliers » referme tous les sas");
     if(!ok) return;
     const BASE = [16, 1, 12, 9, 5, 18];   // P A L I E R — en phase avec palier-sas.js
     let ecrits = 0;
@@ -443,7 +443,7 @@
       }
     } catch(e){}
     el.innerHTML = actif
-      ? '🧪 <b>Concepteur ACTIF sur cet appareil</b> — ' + sasOuverts + '/6 sas ouverts · erreurs et indices sans blocage · aucune partie de test enregistrée.'
+      ? '🧪 <b>Concepteur ACTIF sur cet appareil</b> — ' + sasOuverts + '/6 sas ouverts · erreurs et indices sans blocage · hors tout équipage · aucune partie de test enregistrée.'
       : '⭕ Mode concepteur inactif sur cet appareil. « 🔓 Déverrouiller tous les sas » l’active.';
     el.style.color = actif ? '#075c39' : '#9b1111';
   }

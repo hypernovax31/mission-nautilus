@@ -127,8 +127,12 @@
     var code = codeMatelotCourant();
     if (!code) return null;
     if (code === CODE_TEST) {
+      /* RÈGLE : le compte fantôme TEST ne fait JAMAIS partie d'un
+         équipage — teamCode null. L'éventuel équipage réel mémorisé sur
+         l'appareil n'est pas lu non plus : il serait sinon affiché comme
+         « l'équipage du testeur », ce qui a trompé le concepteur. */
       return { code: code, name: 'TEST', memberKey: 'TEST', isTest: true,
-               teamCode: equipeCourante() || 'NEMO' };
+               teamCode: null };
     }
     var teamCode = equipeCourante();
     var x;
