@@ -17,28 +17,35 @@
    BLOC HTML ATTENDU (identique sur chaque page de palier ≥ 2) :
 
      <div class="topbar-title" id="topPalierTitle">Palier n</div>
-     <section class="card gate-hero">
+     <section class="card gate-hero" id="gateHero">
        <h2 id="sasHeroTitle">🔒 PALIER n — ZONE SCELLÉE</h2> …
      </section>
+     <section class="card" id="logCard">… journal de bord …</section>
      <section class="card" id="gateCard">… QR / photo …</section>
      <section class="card gate-unlocked" id="gateUnlocked" hidden>
        <h2 id="sasUnlockedTitle">✅ PALIER n DÉVERROUILLÉ</h2> …
      </section>
      … tout le contenu du mini-jeu porte class="sas-protege" …
 
-   Garanties apportées par ce module :
-     • « 🔒 PALIER n — ZONE SCELLÉE » apparaît TOUJOURS sur la page
-       (le héros n'est jamais masqué, scellé ou pas) ;
+   Garanties apportées par ce module (et le script de la page) :
+     • tant que la zone est réellement scellée (en attente du QR
+       Code), « 🔒 PALIER n — ZONE SCELLÉE », le journal de bord et le
+       sas QR sont à l'écran — le mini-jeu reste VERROUILLÉ ;
+     • dès que le sas est ouvert (scan réussi, sas déjà mémorisé,
+       aperçu admin), la page bascule sur la VUE ÉPREUVE : SEUL
+       l'encart du mini-jeu reste — le héros « ZONE SCELLÉE », le
+       journal et le sas se retirent (la zone ne l'est plus) ;
      • tant que le sas est fermé, tout élément .sas-protege reste
        caché : IMPOSSIBLE de toucher au mini-jeu ;
      • déblocage = QR caméra, ou PHOTO du QR importée ;
      • une fois ouvert, on le mémorise sur l'appareil
        (localStorage), l'équipage n'a pas à refaire le scan à chaque
-       visite — le héros « ZONE SCELLÉE » reste visible en rappel ;
+       visite — la page rejoint alors DIRECTEMENT le mini-jeu ;
      • chaque événement est consigné dans le JOURNAL DE BORD commun
-       (journal-bord.js, « Activité en direct »).
+       (journal-bord.js, « Activité en direct »), consultable sur la
+       vue scellée (avant-partie) et dès que l'épreuve s'arrête.
 
-   Utilisation : <script src="palier-sas.js?v=4"></script>
+   Utilisation : <script src="palier-sas.js?v=6"></script>
                  <script>NautilusSas.init(2);</script>   // n = palier
    ============================================================= */
 (function () {
@@ -60,7 +67,11 @@
       if (window.JournalDeBord) window.JournalDeBord.addLogEntry(texte, kind || 'info');
     }
 
-    /* ---------- Le héros « 🔒 ZONE SCELLÉE » est TOUJOURS à l'écran ---------- */
+    /* ---------- Titres du héros « ZONE SCELLÉE » et du portail ----------
+       Le héros (et le sas) ne restent À L'ÉCRAN que tant que la zone
+       est réellement scellée : c'est le script de la page qui les
+       range dès que la vue « épreuve » prend le relais (scan réussi,
+       sas mémorisé, aperçu admin). */
     document.title = 'Mission Nautilus — ' + LABEL;
     if ($('topPalierTitle')) $('topPalierTitle').textContent = LABEL;
     if ($('sasHeroTitle')) $('sasHeroTitle').textContent = '🔒 ' + LABEL.toUpperCase() + ' — ZONE SCELLÉE';
@@ -304,7 +315,8 @@
       + ' : en attente du QR Code de la zone de recherche.', 'info');
 
     /* Retour sur la page avec le sas déjà ouvert : le contenu protégé
-       est montré, mais le héros « ZONE SCELLÉE » reste affiché. */
+       est montré aussitôt — le script de la page range alors héros,
+       journal et sas pour ne laisser QUE l'encart du mini-jeu. */
     if (sasForceFerme()) {
       /* Concepteur : le portail se montre SCELLÉ même si le sas est déjà
          ouvert sur cet appareil — tout est en place pour viser le vrai

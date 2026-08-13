@@ -26,7 +26,11 @@
 </div>
 
 <main>
-  <section class="card gate-hero">
+  <!-- Héros « ZONE SCELLÉE » : visible SEULEMENT quand la zone est
+       réellement scellée (en attente du QR Code). Dès que le sas est
+       ouvert — scan réussi, sas déjà mémorisé ou aperçu admin — il se
+       retire avec le reste de la vue « briefing ». -->
+  <section class="card gate-hero" id="gateHero">
     <h2 id="sasHeroTitle">🔒 PALIER 2 — ZONE SCELLÉE</h2>
     <div class="body">
       <div class="status-banner warning">
@@ -41,9 +45,12 @@
     </div>
   </section>
 
-  <!-- Journal de bord (live) : EN HAUT DE PAGE, juste sous le héros
-       « ZONE SCELLÉE » et au-dessus du sas — la même place que sur le
-       Palier 1, où le journal précède la carte de l'épreuve -->
+  <!-- Journal de bord (live) : placé EN HAUT de la VUE SCELLÉE, entre
+       le héros et le sas — la vue « briefing » d'avant-partie (comme
+       sur le Palier 1, où le journal précède la carte de l'épreuve).
+       Il n'apparaît QUE là : dès que le mini-jeu démarre, il se retire
+       pour ne laisser QUE l'encart du mini-jeu (il ne revient que
+       quand l'épreuve s'arrête : blocage, victoire). -->
   <section class="card" id="logCard">
     <h2>📜 JOURNAL DE BORD</h2>
     <div class="body">
@@ -103,7 +110,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=5"></script>
+<script src="palier-sas.js?v=6"></script>
 <script>window.NautilusSas.init(2);</script>
 <!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers :
      3 erreurs = remise en surface de CE matelot, consignée dans le
@@ -210,14 +217,41 @@
     el.className = 'mc-statut' + (kind ? ' is-' + kind : '');
   }
 
-  /* « AU MOMENT DE JOUER, IL NE RESTE QUE L'ÉPREUVE » : le 📜 JOURNAL
-     DE BORD se retire dès que les mots croisés démarrent, et revient
-     dès que le jeu s'arrête (blocage, victoire). Le portail scellé (QR
-     à viser) est la vue « briefing » du palier : le journal y reste
-     affiché, comme demandé (avec l'équipage actif côté Palier 1). */
+  /* ================= DEUX VUES SEULEMENT =================
+     1) VUE SCELLÉE — la vue « briefing », montrée SEULEMENT quand la
+        zone est réellement scellée (en attente du QR Code) : héros
+        🔒 ZONE SCELLÉE + 📜 JOURNAL DE BORD + 📷 sas QR.
+     2) VUE ÉPREUVE — dès que le sas est ouvert (scan réussi, sas déjà
+        mémorisé sur l'appareil ou aperçu admin) : SEUL l'encart du
+        mini-jeu reste à l'écran — ni héros « ZONE SCELLÉE », ni
+        journal, ni sas. Le journal de bord ne réapparaît que quand
+        l'épreuve s'arrête (blocage, victoire) : c'est le seul moment
+        « hors mini-jeu » où on le consulte. */
+  function montrerCarte(id, visible) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? '' : 'none';
+  }
+  function afficherVueScellee() {
+    montrerCarte('gateHero', true);
+    montrerCarte('logCard', true);
+    montrerCarte('gateCard', true);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueEpreuve() {
+    montrerCarte('gateHero', false);
+    montrerCarte('logCard', false);
+    montrerCarte('gateCard', false);
+    montrerCarte('gateUnlocked', true);
+    var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
+  }
+  /* Fin d'épreuve (blocage, victoire) : le journal revient SOUS la
+     carte du mini-jeu — le héros « ZONE SCELLÉE » et le sas, eux,
+     restent rangés : la zone n'est plus scellée. */
   function afficherJournalDeBord(visible) {
-    var el = $('logCard');
-    if (el) el.style.display = visible ? '' : 'none';
+    montrerCarte('logCard', visible);
     var carte = $('gateUnlocked');
     if (carte) carte.classList.toggle('epreuve-focus', !visible);
   }
@@ -358,7 +392,7 @@
         if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
       }
     }
-    afficherJournalDeBord(false);  /* la partie démarre : il ne reste que l'épreuve */
+    afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas) */
     statut("✍️ <b>10 mots du jargon maison</b> — lis la scène, trouve le mot du métier : <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
@@ -369,19 +403,27 @@
     });
   }
 
-  /* Démarrage : aperçu admin (carte dévoilée sans QR) > page scellée
-     forcée (test du QR Code, concepteur) > sas déjà ouvert > signal du
-     scan en direct. */
+  /* Démarrage : on choisit la VUE avant de lancer l'épreuve.
+     — aperçu admin ou sas déjà ouvert ici → VUE ÉPREUVE directe : la
+       zone n'est PAS scellée, « ZONE SCELLÉE » n'a pas à apparaître,
+       on commence par l'encart du mini-jeu ;
+     — page scellée forcée (?sas=ferme, test du QR concepteur) ou sas
+       fermé → VUE SCELLÉE : briefing + journal + sas QR ;
+     — le scan réussi ('nautilus:sas-ouvert') bascule de l'une à
+       l'autre en direct. */
   if (apercuAdminAutorise()) {
-    var carte = $('gateCard'); if (carte) carte.hidden = true;
-    var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
+    afficherVueEpreuve();
     lancer();
   } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
     /* Concepteur : la page reste scellée, on attend le vrai scan du QR. */
+    afficherVueScellee();
   } else if (window.NautilusSas.estDeverrouille(2)) {
+    afficherVueEpreuve();
     lancer();
+  } else {
+    afficherVueScellee();
   }
-  window.addEventListener('nautilus:sas-ouvert', function () { lancer(); });
+  window.addEventListener('nautilus:sas-ouvert', function () { afficherVueEpreuve(); lancer(); });
 })();
 </script>
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
