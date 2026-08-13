@@ -103,7 +103,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=3"></script>
+<script src="palier-sas.js?v=4"></script>
 <script>window.NautilusSas.init(2);</script>
 <!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers :
      3 erreurs = remise en surface de CE matelot, consignée dans le
@@ -193,7 +193,11 @@
       if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
       var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
       if (!k) return false;
-      var h = 5381, s = 'apercu-admin:NEMO2026';
+      /* EN PHASE avec palier1.html / index.html / admin-button.js : djb2
+         salé initialisé à 0 (et NON 5381 — sinon la clé k=… générée par le
+         panneau admin était refusée ici et l'aperçu « Jouer l'épreuve »
+         retombait sur le portail scellé). */
+      var h = 0, s = 'apercu-admin:NEMO2026';
       for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
       return k === ('k' + Math.abs(h).toString(36));
     } catch (e) { return false; }
@@ -237,9 +241,11 @@
     }
     monIdentite().then(function (ident) {
       if (ident && ident.isTest) {
-        _blocageSession = Date.now() + BLOCAGE_MS;
-        afficherBlocage(_blocageSession, 'TEST');
-        journal('🔒 Trois erreurs aux Mots Croisés « Code Magasin » (partie d’essai : blocage volatil, rien n’est enregistré).', 'danger');
+        /* MODE CONCEPTEUR : jamais de blocage — le testeur vérifie
+           chaque palier sans bride (erreurs, demandes d'indice…) et
+           rien n'est enregistré. La grille reste jouable. */
+        statut('🧪 <b>Mode concepteur : 3 erreurs atteintes.</b> Aucun blocage en test — la grille reste jouable, rien n’est enregistré.', 'warning');
+        journal('🧪 Mode concepteur : 3 erreurs aux Mots Croisés « Code Magasin » — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
         return;
       }
       if (ident) {
@@ -323,9 +329,9 @@
   async function demarrer() {
     if (!apercuAdminAutorise()) {
       var ident = await monIdentite();
-      if (ident && ident.isTest) {
-        if (_blocageSession > Date.now()) { afficherBlocage(_blocageSession, 'TEST'); return; }
-      } else if (ident) {
+      /* Concepteur (ident.isTest) : AUCUN blocage n'est jamais posé ni
+         lu — le testeur joue chaque palier sans bride. */
+      if (ident && !ident.isTest) {
         var bloc = await window.NautilusBlocages.blocageActif(ident);
         if (bloc) {
           afficherBlocage(bloc.lockedUntil, ident.name);
@@ -333,7 +339,7 @@
             + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
           return;
         }
-      } else {
+      } else if (!ident) {
         var jusqua = blocageAnonymeJusqua();
         if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
       }
@@ -348,12 +354,15 @@
     });
   }
 
-  /* Démarrage : aperçu admin (carte dévoilée sans QR) > sas déjà ouvert
-     > signal du scan en direct. */
+  /* Démarrage : aperçu admin (carte dévoilée sans QR) > page scellée
+     forcée (test du QR Code, concepteur) > sas déjà ouvert > signal du
+     scan en direct. */
   if (apercuAdminAutorise()) {
     var carte = $('gateCard'); if (carte) carte.hidden = true;
     var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
     lancer();
+  } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
+    /* Concepteur : la page reste scellée, on attend le vrai scan du QR. */
   } else if (window.NautilusSas.estDeverrouille(2)) {
     lancer();
   }
@@ -362,6 +371,6 @@
 </script>
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
 <script src="sonar-button.js?v=3" defer></script>
-<script src="admin-button.js?v=9" type="module"></script>
+<script src="admin-button.js?v=10" type="module"></script>
 </body>
 </html>

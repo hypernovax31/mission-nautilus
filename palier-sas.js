@@ -38,7 +38,7 @@
      • chaque événement est consigné dans le JOURNAL DE BORD commun
        (journal-bord.js, « Activité en direct »).
 
-   Utilisation : <script src="palier-sas.js?v=3"></script>
+   Utilisation : <script src="palier-sas.js?v=4"></script>
                  <script>NautilusSas.init(2);</script>   // n = palier
    ============================================================= */
 (function () {
@@ -296,7 +296,15 @@
 
     /* Retour sur la page avec le sas déjà ouvert : le contenu protégé
        est montré, mais le héros « ZONE SCELLÉE » reste affiché. */
-    if (isUnlocked()) {
+    if (sasForceFerme()) {
+      /* Concepteur : le portail se montre SCELLÉ même si le sas est déjà
+         ouvert sur cet appareil — tout est en place pour viser le vrai
+         QR Code (le scan lève alors le scellé normalement). */
+      var carteF = $('gateCard'); if (carteF) carteF.hidden = false;
+      var ouvertF = $('gateUnlocked'); if (ouvertF) ouvertF.hidden = true;
+      cacherContenuProtege();
+      journal('🧪 Mode concepteur : page scellée affichée pour tester le QR Code (le déverrouillage mémorisé est ignoré sur cette vue).', 'info');
+    } else if (isUnlocked()) {
       var carte = $('gateCard'); if (carte) carte.hidden = true;
       var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
       revelerContenuProtege();
@@ -306,6 +314,14 @@
     }
   }
 
+  /* ---------- « PAGE SCELLÉE » POUR TESTER LES QR CODES (concepteur) ------
+     ?sas=ferme force l'affichage du portail scellé même si ce sas est
+     déjà ouvert sur cet appareil : le concepteur vise un VRAI QR
+     imprimé et vérifie que le scan fonctionne, comme chez un joueur. */
+  function sasForceFerme() {
+    try { return /[?&]sas=ferme(?:&|$)/.test(location.search); } catch (e) { return false; }
+  }
+
   /* Consultation externe : le sas de ce palier est-il déjà ouvert ici ? */
   function estDeverrouille(palier) {
     var n = Math.max(2, palier | 0);
@@ -313,5 +329,5 @@
     try { return localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok'; } catch (e) { return false; }
   }
 
-  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille };
+  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme };
 })();

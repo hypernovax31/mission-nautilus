@@ -2302,7 +2302,10 @@ window.Nautilus = {
     const ancien = N.getMatelotLock(state.team, key);
     const nextFail = Number(ancien?.failCount || 0) + 1;
     const hours = N.getLockHours(nextFail);
-    const until = N.getLockedUntilISO(nextFail);
+    /* MODE CONCEPTEUR (partie d'essai) : jamais bridé par les erreurs —
+       le blocage est immédiatement expiré : l'écran de défaite et le
+       compteur s'affichent, mais le testeur rejoue sans attendre. */
+    const until = state.isTest ? new Date().toISOString() : N.getLockedUntilISO(nextFail);
 
     /* BUG CORRIGE : le resultat de saveTeam() etait jete.
        L'ecran de defaite affiche "Reprise possible le <lockedUntil>" en
@@ -2451,7 +2454,10 @@ window.Nautilus = {
   async function blockMatelotForHint() {
     if (!state.team || !state.me) return;
     const key = state.me.memberKey;
-    const until = new Date(Date.now() + HINT_LOCK_HOURS * 3600 * 1000).toISOString();
+    /* MODE CONCEPTEUR (partie d'essai) : l'indice ne bride pas non plus
+       — blocage immédiatement expiré, le testeur continue sa tournée. */
+    const until = state.isTest ? new Date().toISOString()
+                               : new Date(Date.now() + HINT_LOCK_HOURS * 3600 * 1000).toISOString();
     const locks = { ...(state.team.matelotLocks || {}) };
     const ancien = locks[key] || {};
     locks[key] = {
@@ -2917,6 +2923,6 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=3" defer></script>
-<script src="admin-button.js?v=9" type="module"></script>
+<script src="admin-button.js?v=10" type="module"></script>
 </body>
 </html>
