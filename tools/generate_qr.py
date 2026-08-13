@@ -12,10 +12,13 @@ Formes ARRONDIES : modules de données en carrés arrondis soudés entre eux,
 repères de position en anneaux aux coins arrondis. Logo de l'app au centre
 (correction d'erreur H = 30 %). Grande résolution ≈ 2000 × 2000 px.
 
-Chaque QR encode l'URL de la page du palier (https://…/<code>.html) : digits
-seuls = la série attendue par palier-sas.js (payloadUnlocks).
-Chaque image produite est DÉCODÉE par OpenCV en sortie de chaîne
-(preuve de scannabilité).
+Chaque QR encode LE NOM DE LA PAGE du palier, c.-à-d. le code pur
+(palier 2 → « 1721310619 », palier 3 → « 1831411720 »…) — PAS d'URL :
+un téléphone qui scanne le code hors de l'app ne voit qu'un numéro,
+jamais l'adresse du jeu. Chiffres seuls = la série attendue par
+palier-sas.js (payloadUnlocks).
+Chaque image produite est DÉCODÉE par jsQR (le scanner de l'app) en
+sortie de chaîne (preuve de scannabilité) ; OpenCV en indicatif.
 
 Usage : python3 tools/generate_qr.py
 Sorties : assets/qr/QR-palier-<n>_noir-sur-blanc.png
@@ -28,12 +31,19 @@ import qrcode
 from qrcode.constants import ERROR_CORRECT_H
 from PIL import Image, ImageDraw
 
-DOMAINE = 'https://mission-nautilus.firebaseapp.com'
 JAUNE_FNAC = (245, 176, 39)          # var(--fnac)
 NOIR = (8, 8, 8)
 BLANC = (255, 255, 255)
 GRIS_LISERE = (214, 218, 222)
 BASE = [16, 1, 12, 9, 5, 18]         # P A L I E R — en phase avec palier-sas.js
+VERSION_MIN = 4                      # matrice QR minimale (33×33). Verrou issue
+                                     # du badge logo : en v1 (payload « code pur »,
+                                     # 21×21), jsQR échoue à relire la variante
+                                     # INVERSÉE (jaune/noir) dès que le badge
+                                     # central est posé — bissection 4 cas :
+                                     # arrondi sans badge OK, carré + badge KO,
+                                     # v1 sans badge OK, v4 + badge OK. Le badge
+                                     # doit donc vivre sur une matrice ≥ v4.
 CIBLE_PX = 2048                      # résolution finale
 SS = 2                                # suréchantillonnage (lissé LANCZOS)                      # grande résolution
 QUIET = 4                            # zone de silence (modules)
@@ -84,6 +94,11 @@ def rendre(payload, logo, *, couleur_modules, couleur_fond, fichier):
     qr = qrcode.QRCode(error_correction=ERROR_CORRECT_H, box_size=1, border=0)
     qr.add_data(payload)
     qr.make(fit=True)
+    if qr.version < VERSION_MIN:      # le badge logo impose une matrice ≥ v4
+        qr = qrcode.QRCode(version=VERSION_MIN, error_correction=ERROR_CORRECT_H,
+                           box_size=1, border=0)
+        qr.add_data(payload)
+        qr.make(fit=False)
     m = qr.get_matrix()
     n = len(m)
     version = qr.version
@@ -201,7 +216,7 @@ def main():
     produits = []
     for n in range(2, 8):
         code = code_palier(n)
-        payload = f'{DOMAINE}/{code}.html'
+        payload = code   # nom de la page du palier (sans « .html ») — pas d'URL
         for style, mods, fond, suffixe, inverse in (
                 ('noir sur blanc', NOIR, BLANC, 'noir-sur-blanc', False),
                 ('jaune Fnac sur noir', JAUNE_FNAC, NOIR, 'jaune-sur-noir', True)):

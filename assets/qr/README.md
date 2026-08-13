@@ -1,7 +1,11 @@
 # QR Codes des sas — paliers 2 à 7
 
-Chaque QR encode l'URL de la page du palier (`https://mission-nautilus.firebaseapp.com/<code>.html`).
-Scanné dans l'app (écran « Zone scellée »), il déverrouille le sas du palier correspondant.
+Chaque QR encode **le nom de la page du palier**, c.-à-d. son code pur
+(`1721310619`, `1831411720`…) — **pas d'URL** : scanné avec un appareil photo
+ordinaire (hors app), le code n'affiche qu'un numéro et ne révèle jamais
+l'adresse du jeu. Scanné dans l'app (écran « Zone scellée »), il déverrouille
+le sas du palier correspondant (`palier-sas.js` n'en retient que les chiffres :
+le code pur est reconnu à l'identique).
 
 ## Fichiers
 
