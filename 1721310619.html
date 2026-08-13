@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=19">
-  <link rel="stylesheet" href="css/palier2.css?v=11">
+  <link rel="stylesheet" href="css/palier2.css?v=12">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -93,15 +93,24 @@
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
     <h2 id="sasUnlockedTitle">✅ PALIER 2 DÉVERROUILLÉ</h2>
     <div class="body">
-      <div class="status-banner success">
-        ✅ <b>Scellé levé !</b> Le QR Code a ouvert le sas du Palier 2 sur cet appareil.
-      </div>
+      <!-- La phrase « ✅ Scellé levé ! … » n'est PLUS une bannière fixe
+           ici : c'est une MODAL qui pop puis disparaît (voir
+           #modalSasOuvert en fin de page + popModalScelleLeve()). -->
       <div id="mcStatut" class="mc-statut">✍️ <b>10 balises « Code Magasin »</b> — le jargon expert de chaque secteur. L'indice raconte la scène, jamais le mot : à toi de traduire.</div>
       <div id="mcHost"></div>
       <a class="gate-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
 </main>
+
+<!-- MODAL ÉPHÉMÈRE « ✅ Scellé levé ! » : elle POP au premier plan
+     quand le sas s'ouvre (scan réussi ou sas déjà mémorisé), puis
+     DISPARAÎT d'elle-même en fondu — il ne reste alors QUE l'encart
+     de l'épreuve du palier. Pilotée par popModalScelleLeve() dans le
+     script du jeu ; styles .modal-sas dans css/palier2.css. -->
+<div class="modal-sas" id="modalSasOuvert" hidden role="status" aria-live="polite">
+  <div class="modal-sas-bulle">✅ <b>Scellé levé&nbsp;!</b> Le QR Code a ouvert le sas du Palier 2 sur cet appareil.</div>
+</div>
 
 <!-- Journal de bord « Activité en direct », code COMMUN à tous les
      paliers. Script classique SANS defer : l'ordre avec le sas est
@@ -246,6 +255,27 @@
     montrerCarte('gateCard', false);
     montrerCarte('gateUnlocked', true);
     var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
+  }
+  /* ---------- MODAL ÉPHÉMÈRE « ✅ Scellé levé ! » ----------
+     Elle remplace l'ancienne bannière FIXE de la carte déverrouillée :
+     elle POP au premier plan quand la partie démarre, reste ~2,6 s,
+     puis DISPARAÎT d'elle-même en fondu — il ne reste alors QUE
+     l'encart de l'épreuve du palier. */
+  var _modalSasT = [];
+  function popModalScelleLeve() {
+    var m = $('modalSasOuvert');
+    if (!m) return;
+    while (_modalSasT.length) clearTimeout(_modalSasT.pop());
+    m.hidden = false;
+    m.classList.remove('is-sortie');
+    m.classList.add('is-ouvert');
+    _modalSasT.push(setTimeout(function () { m.classList.add('is-sortie'); }, 2600));
+    _modalSasT.push(setTimeout(function () {
+      m.hidden = true;
+      m.classList.remove('is-ouvert');
+      m.classList.remove('is-sortie');
+      _modalSasT = [];
+    }, 2950));
   }
   /* Fin d'épreuve (blocage, victoire) : le journal revient SOUS la
      carte du mini-jeu — le héros « ZONE SCELLÉE » et le sas, eux,
@@ -393,6 +423,7 @@
       }
     }
     afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas) */
+    popModalScelleLeve();  /* « ✅ Scellé levé ! » en modal : elle POP puis disparaît d'elle-même */
     statut("✍️ <b>10 mots du jargon maison</b> — lis la scène, trouve le mot du métier : <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
