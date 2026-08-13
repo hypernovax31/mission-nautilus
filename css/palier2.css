@@ -138,27 +138,33 @@
    Le badge de droite = NOMBRE DE LETTRES du mot.
    ============================================================= */
 .mc{ display:grid; grid-template-columns:minmax(0,720px) minmax(0,1fr); gap:24px; align-items:start; }
+@media(max-width:1120px){ .mc{ gap:16px; } }
 @media(max-width:980px){ .mc{ grid-template-columns:1fr; } }
 .mc-grille{
-  display:grid; gap:6px; width:100%; max-width:720px; margin:0 auto;
-  background:rgba(2,12,22,.55); border:1px solid rgba(245,176,39,.30);
+  display:grid; gap:6px; width:100%; max-width:720px; min-width:0; margin:0 auto;
+  /* FOND RETRAVAILLÉ : cadre abyssal en dégradé, filet d'or plus
+     présent — les cases « papier » restent DANS l'encadrement à
+     toutes les largeurs (min-width:0 + input size=1, voir
+     mots-croises.js) : plus aucun débordement. */
+  background:linear-gradient(180deg, rgba(8,26,41,.92), rgba(3,13,23,.94));
+  border:1px solid rgba(245,176,39,.45);
   border-radius:18px; padding:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.35) inset;
+  box-shadow:inset 0 2px 16px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.35);
   /* un clic sur une définition glisse la page jusqu'au HAUT de la
      grille : marge de scroll pour ne pas passer sous la topbar
      sticky (~62 px, même convention que #gameCard de palier1.css) */
   scroll-margin-top:74px;
 }
-.mc-vide{ aspect-ratio:1; }
+.mc-vide{ aspect-ratio:1; min-width:0; }
 .mc-case{
-  position:relative; aspect-ratio:1; border-radius:9px;
+  position:relative; aspect-ratio:1; min-width:0; border-radius:9px;
   background:#f1f6fc; border:1px solid #12365a;
   transition:border-color .15s, box-shadow .15s, background .2s;
 }
 .mc-case:focus-within{ border-color:#8ee7ff; box-shadow:0 0 0 2px rgba(142,231,255,.55); }
 .mc-num{ position:absolute; top:1px; left:4px; font-size:9px; font-weight:900; color:#4d6c86; pointer-events:none; }
 .mc-input{
-  width:100%; height:100%; border:0; background:transparent; outline:none;
+  width:100%; height:100%; min-width:0; border:0; background:transparent; outline:none;
   text-align:center; color:#0b2740; font-weight:900; font-size:clamp(11px,3.4vw,22px);
   caret-color:#c47f0e; text-transform:uppercase; padding:0; border-radius:9px;
 }
@@ -170,10 +176,20 @@
   .mc-input{ border-radius:5px; }
   .mc-num{ font-size:7.5px; top:0; left:3px; }
 }
+/* Très petit écran : encore un cran plus compact, définitions assouplies. */
+@media(max-width:430px){
+  .mc-grille{ gap:2px; padding:5px; }
+  .mc-num{ font-size:7px; left:2px; }
+  .mc-def{ padding:10px 12px; gap:9px; font-size:13px; }
+  .mc-def-check{ width:22px; height:22px; font-size:12px; }
+}
 .mc-case.mc-actif{ background:#ffe6ad; border-color:#b97e0c; box-shadow:0 0 8px rgba(245,176,39,.35); }
 .mc-case.mc-curseur{ background:#ffd877; border-color:#f5b027; box-shadow:0 0 0 2px #f5b027, 0 0 14px rgba(245,176,39,.5); }
-.mc-case.mc-juste{ background:#d3f3df; border-color:#1f9d5c; box-shadow:none; }
-.mc-case.mc-juste .mc-input{ color:#14683c; }
+/* MOT VALIDÉ = VERT FRANC, bien lisible (demande explicite) : la case
+   passe au vert dès que le mot est complet et juste — y compris
+   complété « par-dessus » un croisement (correctif mots-croises.js). */
+.mc-case.mc-juste{ background:#b9eccd; border-color:#1f9d5c; box-shadow:inset 0 0 0 1px rgba(31,157,92,.4); }
+.mc-case.mc-juste .mc-input{ color:#0f6a3d; }
 .mc-case.mc-faux{ animation:mcShake .5s; background:#ffd9d4; border-color:#d02c1c; }
 .mc-case.mc-faux .mc-input{ color:#a11e12; }
 @keyframes mcShake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
@@ -189,7 +205,31 @@
 }
 .mc-def:hover{ border-color:rgba(245,176,39,.75); background:rgba(245,176,39,.08); }
 .mc-def.mc-def-active{ border-color:#f5b027; background:rgba(245,176,39,.12); box-shadow:0 0 0 1px rgba(245,176,39,.40), 0 0 14px rgba(245,176,39,.18); }
-.mc-def.mc-def-ok{ border-color:rgba(91,224,155,.6); color:#9de8c3; text-decoration:line-through; opacity:.8; }
+/* BADGE ✔ DE VALIDATION : caché par défaut, il POP (échelle) quand le
+   mot est trouvé — posé à droite de la définition, impossible à rater. */
+.mc-def-check{
+  flex:0 0 auto; align-self:center;
+  width:26px; height:26px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:1000; color:#06170f;
+  background:#3ddc84; box-shadow:0 0 10px rgba(61,220,132,.55);
+  opacity:0; transform:scale(.5);
+  transition:opacity .25s ease, transform .25s cubic-bezier(.2,1.4,.4,1);
+}
+/* MOT VALIDÉ = IMPOSSIBLE À RATER : badge ✔ vert plein + fond doucement
+   teinté + filet vert + indice raturé — bien plus clair que l'ancien
+   simple barré translucide. */
+.mc-def.mc-def-ok{
+  border-color:rgba(61,220,132,.65);
+  background:linear-gradient(135deg, rgba(61,220,132,.17), rgba(61,220,132,.05));
+  box-shadow:0 0 0 1px rgba(61,220,132,.28);
+}
+.mc-def.mc-def-ok .mc-def-check{ opacity:1; transform:scale(1); }
+.mc-def.mc-def-ok .mc-def-numtxt{ color:#7ce6ad; }
+.mc-def.mc-def-ok .mc-def-txt{
+  color:#b9ecd2;
+  text-decoration:line-through; text-decoration-color:rgba(61,220,132,.6);
+}
 /* Définitions NUES (Palier 2 « Code Magasin ») : ni pastille numérotée,
    ni badge « nombre de lettres », ni cryptogramme — juste le numéro en
    texte or suivi de l'indice oblique. */

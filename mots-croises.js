@@ -16,9 +16,13 @@
 
    ERGONOMIE « moderne » : clic sur une case OU une définition pour
    choisir le mot, surlignage or du mot actif, saisie qui avance
-   toute seule, retour arrière qui recule, validation automatique
-   dès que la dernière lettre est posée. Mauvaise pioche = lettres
-   fautives qui clignotent rouge et restent éditables.
+   toute seule EN SAUTANT les lettres déjà posées (croisements,
+   cases verrouillées), retour arrière qui recule, validation
+   automatique dès que le mot est COMPLET — même complété
+   « par-dessus » un mot voisin : les cases passent alors TOUTES au
+   vert. Mauvaise pioche = lettres fautives qui clignotent rouge et
+   restent éditables (Enter ou la dernière case relancent la
+   validation après correction). Définition validée = badge ✔ vert.
    AUCUNE image, AUCUNE dépendance.
    ============================================================= */
 (function () {
@@ -190,6 +194,13 @@
         var input = document.createElement('input');
         input.className = 'mc-input';
         input.maxLength = 1;
+        /* DÉBORDEMENT CORRIGÉ : sans size=1, l'<input> garde sa taille
+           intrinsèque (~20 caractères) et impose ce min-content aux
+           pistes de la grille (min-width:auto) — les 13 colonnes ne
+           pouvaient plus rétrécir et les cases DÉBORDAIENT du cadre
+           doré sur petit écran. (Double sécurité : min-width:0 en CSS
+           sur .mc-case ET .mc-input.) */
+        input.size = 1;
         input.autocomplete = 'off';
         input.autocapitalize = 'characters';
         input.spellcheck = false;
@@ -199,16 +210,49 @@
            écouteurs liraient la valeur du DERNIER input créé (bug réel,
            attrapé par le test sandbox). */
         (function (kk, dd, inp) {
+          inp.addEventListener('focus', function () {
+            /* RETAPER PAR-DESSUS une lettre déjà posée : le contenu de la
+               case est présélectionné au focus — la frappe REMPLACE
+               directement (autrement maxLength=1 bloquait purement toute
+               saisie dans une case déjà remplie : la correction était
+               impossible sans Backspace). Différé d'un cran pour survivre
+               au « tap » tactile qui vide la sélection native. */
+            setTimeout(function () { try { inp.select(); } catch (e) {} }, 0);
+          });
           inp.addEventListener('input', function () {
             var v = normaliser(inp.value);
             var dernier = v.slice(-1);
             if (!LETTRE.test(dernier)) { inp.value = ''; return; }
-            saisie[kk] = dernier;
-            inp.value = dernier;
+            if (!actif) { inp.value = ''; return; }
             var cases = caseDuMot(actif);
             var idx = cases.indexOf(kk);
-            if (idx === cases.length - 1) validerMot(actif);
-            else aller(1);
+            /* Le mot était-il déjà COMPLET avant cette frappe ? Retaper
+               une lettre dans un mot complet (correction après erreur)
+               ne relance PAS la validation à chaque frappe : Enter ou la
+               dernière case restent le déclencheur, comme avant. */
+            var completAvant = cases.every(function (k) { return !!saisie[k]; });
+            saisie[kk] = dernier;
+            inp.value = dernier;
+            /* VALIDATION « PAR-DESSUS » : on valide dès que le mot est
+               COMPLET, quelle que soit la case frappée. Avant, seule la
+               DERNIÈRE case déclenchait — or avec les croisements elle
+               pouvait être déjà remplie ET verrouillée par un mot voisin,
+               le mot complet n'était alors JAMAIS validé (cases jamais
+               vertes). */
+            var complet = cases.every(function (k) { return !!saisie[k]; });
+            if (complet && (idx === cases.length - 1 || !completAvant)) { validerMot(actif); return; }
+            /* Avancer à la prochaine case VIDE : les lettres déjà posées
+               (croisements, cases verrouillées en lecture seule) sont
+               sautées — la frappe ne tombe plus jamais sur une case
+               figée où elle se perdait. */
+            var cible = null;
+            for (var j = idx + 1; j < cases.length && !cible; j++) if (!saisie[cases[j]]) cible = cases[j];
+            if (!cible) for (var j2 = 0; j2 < cases.length && !cible; j2++) if (!saisie[cases[j2]]) cible = cases[j2];
+            if (!cible) return;   /* mot complet sans validation (correction) : le curseur reste */
+            curseur = cible;
+            peindre();
+            var suivante = hote.querySelector('[data-k="' + cible + '"] .mc-input');
+            if (suivante) suivante.focus({ preventScroll: true });
           });
           inp.addEventListener('keydown', function (e) {
             if (e.key === 'Backspace') {
@@ -247,11 +291,15 @@
         b.className = 'mc-def';
         b.dataset.num = m.num;
         b.dataset.dir = m.dir;
-        /* Définition NUE : numéro en texte simple + indice (les pastilles
-           numérotées, badges « nombre de lettres » et cryptogrammes ont
-           été retirés, choix visuel du Palier 2 « Code Magasin »). */
+        /* Définition NUE + BADGE DE VALIDATION : numéro en texte or,
+           indice, et pastille ✔ verte qui apparaît (pop) quand le mot
+           est trouvé — on voit D'UN COUP ce qui est validé. (Les
+           pastilles numérotées, badges « nombre de lettres » et
+           cryptogrammes restent retirés, choix visuel du Palier 2
+           « Code Magasin ».) */
         b.innerHTML = '<span class="mc-def-numtxt">' + m.num + '.</span>'
-          + '<span class="mc-def-txt">' + m.definition + '</span>';
+          + '<span class="mc-def-txt">' + m.definition + '</span>'
+          + '<span class="mc-def-check" aria-hidden="true">✔</span>';
         b.addEventListener('click', function () {
           if (fini) return;
           selectionner(m);
