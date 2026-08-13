@@ -47,8 +47,15 @@
       const n = progressOf(team);
       return n >= STEPS.length ? 'Mission terminée' : `${n} palier${n > 1 ? 's' : ''} franchi${n > 1 ? 's' : ''}`;
     }
+    /* Le compte test interne (ZZZZ-0000 / TEST) ne fait JAMAIS partie
+       d'un équipage : filtré à la lecture, même si une vieille fiche
+       l'avait laissé dans members[]. */
+    function isTestMember(m){
+      return !!m && (m.codeMatelot === 'ZZZZ-0000' || m.memberKey === 'TEST'
+        || String(m.name || '').trim().toUpperCase() === 'TEST');
+    }
     function crewLabel(team){
-      const names = (team.members || []).map(m => m.name).filter(Boolean);
+      const names = (team.members || []).filter(m => !isTestMember(m)).map(m => m.name).filter(Boolean);
       return names.length ? names.join(' · ') : 'Équipage non renseigné';
     }
     /* Les identifiants techniques restent en majuscules dans Firestore. Le

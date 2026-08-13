@@ -345,8 +345,10 @@
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>
             <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>
+            <button class="secondary" id="cleanupTestSessionsBtn" type="button" style="margin:0">🧪 Purger les traces du compte test</button>
+            <button class="secondary" id="cleanupFieldsBtn" type="button" style="margin:0">🧹 Nettoyer les champs obsolètes</button>
           </div>
-          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>Le nettoyage retire « migratedFrom », un reste de l'ancienne migration des identifiants d'équipe : sans effet sur le jeu.</p>
+          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>La purge retire toute trace du compte de test ZZZZ-0000 (parties fantômes, membre, blocage ou présence TEST) : le compte de test ne fait jamais partie d'un équipage.<br>Le nettoyage retire « migratedFrom », un reste de l'ancienne migration des identifiants d'équipe : sans effet sur le jeu.</p>
         </div>
       </div>
     </div>
@@ -440,6 +442,16 @@
   const normalize=s=>String(s||'').trim().toUpperCase();
   const memberKey=name=>normalize(String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]/gi,''));
   const simple=s=>normalize(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+  /* Compte fantôme interne (ZZZZ-0000 / TEST) : il ne fait JAMAIS
+     partie d'un équipage. Filtré à la LECTURE partout où une liste de
+     matelots est affichée ou exploitée (compteurs, équilibrage,
+     collisions de noms) : une vieille fiche polluée — écrite avant les
+     verrous d'écriture — ne doit plus jamais faire apparaître le compte
+     de test dans un équipage. */
+  function isTestMatelotMember(m){
+    return !!m && (m.codeMatelot === TEST_MATELOT_CODE || m.memberKey === 'TEST'
+      || normalize(m.name || '') === 'TEST');
+  }
   /* Identifiant d'equipe a partir d'un nom ou d'un identifiant.
      Le nom EST l'identifiant (a la casse et aux accents pres). */
   function teamCodeFromInput(value){
@@ -923,7 +935,7 @@
     // Equipages effectivement reveles, et leurs matelots.
     const shown = (_lastTeams || []).filter(t => _revealedCodes.has(t.teamCode));
     const nbTeams = shown.length;
-    const nbCrew  = shown.reduce((n, t) => n + ((t.members || []).length), 0);
+    const nbCrew  = shown.reduce((n, t) => n + ((t.members || []).filter(m => !isTestMatelotMember(m)).length), 0);
 
     const prev = Number(elT.dataset.n || '0');
     elT.textContent = nbTeams;
@@ -1530,7 +1542,7 @@
 
   function pickBalancedTeam(teams, service){
     const scored=teams.map(team=>{
-      const members=team.members||[];
+      const members=(team.members||[]).filter(m=>!isTestMatelotMember(m));
       const total=members.length;
       const sameService=members.filter(m=>m.service===service).length;
       return {team,score:sameService*100+total*10+Math.random()};
@@ -2499,7 +2511,7 @@ function qrDataUri(text, opts){
       const usedCodes = new Set();
       const usedNames = new Map(); // cle normalisee -> nom + equipe, pour le message
       allTeams.forEach(data => {
-        const ms = data.members || [];
+        const ms = (data.members || []).filter(m => !isTestMatelotMember(m));
         ms.forEach(m => {
           if(m.codeMatelot) usedCodes.add(m.codeMatelot);
           const k = m.memberKey || memberKey(m.name || '');
@@ -3083,7 +3095,12 @@ function qrDataUri(text, opts){
 
      Le mini-jeu ignore desormais ces sessions a la lecture : plus aucun
      joueur ne peut etre bloque, meme sans ce nettoyage. Ce bouton sert a
-     effacer pour de bon les traces deja presentes. */
+     effacer pour de bon les traces deja presentes.
+
+     REGLE DU JEU (rappel) : le compte test ZZZZ-0000 ne fait JAMAIS
+     partie d'un equipage. La purge couvre donc AUSSI les fiches
+     d'equipage polluées : membre TEST dans members[], blocage TEST
+     dans matelotLocks, presence TEST dans onlineMatelots. */
   async function cleanupTestSessions(){
     if(!isAdminUnlocked()) return;
     try{
@@ -3101,23 +3118,60 @@ function qrDataUri(text, opts){
         const estTest = d.startedByMatelot === TEST_MATELOT_CODE
                      || d.isTest === true
                      || d.startedByName === 'TEST';
-        if(estTest) trouvees.push({ code: t.code, nom: t.name, ref, etat: d.state || '?' });
+        if(estTest) trouvees.push({ kind:'session', code: t.code, nom: t.name, ref, etat: d.state || '?' });
+      }
+
+      /* Traces du compte fantome DANS la fiche de l'equipage :
+         membre, blocage personnel, presence « en ligne ». La purge
+         reconstruit chaque collection sans la clé TEST. */
+      for(const t of effectiveTeams){
+        const tref = doc(db,'teams',t.code);
+        const tsnap = await getDoc(tref);
+        if(!tsnap.exists()) continue;
+        const d = tsnap.data() || {};
+        const patch = {};
+        const details = [];
+        const membres = d.members || [];
+        const membresRestants = membres.filter(m => !isTestMatelotMember(m));
+        if(membresRestants.length !== membres.length){
+          patch.members = membresRestants;
+          details.push(`${membres.length - membresRestants.length} membre(s) TEST`);
+        }
+        if(d.matelotLocks && Object.prototype.hasOwnProperty.call(d.matelotLocks,'TEST')){
+          const l2 = { ...d.matelotLocks };
+          delete l2.TEST;
+          patch.matelotLocks = l2;
+          details.push('1 blocage TEST');
+        }
+        if(d.onlineMatelots && Object.prototype.hasOwnProperty.call(d.onlineMatelots,'TEST')){
+          const o2 = { ...d.onlineMatelots };
+          delete o2.TEST;
+          patch.onlineMatelots = o2;
+          details.push('1 présence TEST');
+        }
+        if(details.length) trouvees.push({ kind:'fiche', code: t.code, nom: t.name, ref: tref, patch, detail: details.join(' + ') });
       }
 
       if(!trouvees.length){
-        alert('✅ Aucune partie de test en base. Rien à purger.');
+        alert('✅ Aucune trace du compte de test en base (parties, membres, blocages). Rien à purger.');
         return;
       }
 
-      const liste = trouvees.map(x => `• ${x.nom} (${x.etat})`).join('\n');
-      if(!confirm(`${trouvees.length} partie(s) de test trouvée(s) :\n\n${liste}\n\n`
-        + `Les supprimer ? Les équipages concernés pourront de nouveau jouer.`)) return;
+      const liste = trouvees.map(x => x.kind === 'session'
+        ? `• ${x.nom} : partie de test (${x.etat})`
+        : `• ${x.nom} : ${x.detail}`).join('\n');
+      if(!confirm(`${trouvees.length} trace(s) du compte de test (ZZZZ-0000) trouvée(s) :\n\n${liste}\n\n`
+        + `Les supprimer ? Le compte de test ne doit jamais faire partie d'un équipage.`)) return;
 
       for(const x of trouvees){
-        await setDoc(x.ref, { state:'idle', clearedAt:new Date().toISOString() });
+        if(x.kind === 'session'){
+          await setDoc(x.ref, { state:'idle', clearedAt:new Date().toISOString() });
+        }else{
+          await updateDoc(x.ref, { ...x.patch, updatedAt:new Date().toISOString() });
+        }
       }
       await loadTeams();
-      endAdminSession(`✅ ${trouvees.length} partie(s) de test purgée(s) · session fermée`);
+      endAdminSession(`✅ ${trouvees.length} trace(s) du compte de test purgée(s) · session fermée`);
     }catch(err){
       console.error('cleanupTestSessions:', err);
       alert(`❌ Échec de la purge : ${err.message || err}`);
@@ -3261,7 +3315,7 @@ function qrDataUri(text, opts){
       events.push({ t: new Date(team.createdAt).getTime(), icon: '⚓',
         text: 'Équipage <b>' + esc(team.teamName) + '</b> créé.' });
     }
-    (team.members || []).forEach(m => {
+    (team.members || []).filter(m => !isTestMatelotMember(m)).forEach(m => {
       if(m.registeredAt){
         events.push({ t: new Date(m.registeredAt).getTime(), icon: '👤',
           text: '<b>' + esc(m.name) + '</b> embarqué' + (m.service ? ' (' + esc(m.service) + ')' : '') + '.' });
@@ -5613,6 +5667,8 @@ function qrDataUri(text, opts){
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
   $('adminDesignerBtn')?.addEventListener('click', renderDesignerAccess);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
+  $('cleanupTestSessionsBtn')?.addEventListener('click', cleanupTestSessions);
+  $('cleanupFieldsBtn')?.addEventListener('click', cleanupObsoleteFields);
 
   /* =====================================================================
      PANNEAU ADMIN — bouton engrenage en bas-gauche
@@ -6362,7 +6418,7 @@ function qrDataUri(text, opts){
       const usedNames = new Map();
       allSnap.forEach(d => {
         const data = d.data();
-        (data.members || []).forEach(m => {
+        (data.members || []).filter(m => !isTestMatelotMember(m)).forEach(m => {
           if(m.codeMatelot) usedCodes.add(m.codeMatelot);
           const k = m.memberKey || memberKey(m.name || '');
           if(k) usedNames.set(k, { name: m.name || '', team: data.teamName || d.id });

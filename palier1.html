@@ -411,6 +411,18 @@ function isTestSession(session) {
       || session.startedByName === 'TEST';
 }
 
+/* REGLE DU JEU : le compte fantôme ne fait JAMAIS partie d'un équipage.
+   Ce prédicat le filtre à la LECTURE partout où une liste de matelots
+   est affichée ou exploitée (équipage connecté, relais possibles) :
+   une vieille fiche polluée — écrite avant les verrous d'écriture —
+   ne doit plus jamais faire apparaître TEST dans un équipage. */
+function isTestMember(m) {
+  if (!m) return false;
+  return m.codeMatelot === TEST_MATELOT_CODE
+      || m.memberKey === 'TEST'
+      || normalize(m.name || '') === 'TEST';
+}
+
 /* Cette session est-elle PERIMEE ?
 
    INCIDENT REEL : apres une remise a zero des progressions depuis le
@@ -737,7 +749,7 @@ window.Nautilus = {
   sessionRef, getSession, getSessionBrute, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, getMatelotLock, isMatelotLocked, formatDate,
   getMissionConfig,
-  isTestMode,
+  isTestMode, isTestMember,
   isSoundEnabled, getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
   showToast, addLogEntry, clearLog, heartbeat
@@ -1479,7 +1491,9 @@ window.Nautilus = {
   function renderCrew() {
     const list = $('crewList');
     if (!list || !state.team) return;
-    const members = state.team.members || [];
+    /* Le compte test ne fait jamais partie d'un équipage : filtré à la
+       lecture (sauf en mode test, où l'équipage fictif n'a que lui). */
+    const members = (state.team.members || []).filter(m => state.isTest || !isTestMember(m));
     const vus = state.team.onlineMatelots || {};
     const maintenant = Date.now();
     const connectes = members.filter(m => {
@@ -2796,6 +2810,7 @@ window.Nautilus = {
     const suivante = N.getLockHours(echecs + 1);
     const locks = (t && t.matelotLocks) || {};
     const relais = ((t && t.members) || [])
+      .filter(m => !isTestMember(m))   // le compte test n'est jamais d'un équipage
       .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
       .filter(m => m.cle && m.cle !== (state.me && state.me.memberKey) && !N.isMatelotLocked(t, m.cle))
       .map(m => ({ ...m, echecs: Number(locks[m.cle]?.failCount || 0) }))
