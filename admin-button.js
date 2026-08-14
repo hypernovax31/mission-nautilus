@@ -73,7 +73,7 @@
     document.head.appendChild(style);
   }
 
-  const ADMIN_PANEL_HTML = '<section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">\n    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">\n      <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>\n      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">\n        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>\n      </button>\n    </h2>\n    <div class="body">\n      <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l\'équipe d\'organisation. Accès par code uniquement.</p>\n      <div class="hr"></div>\n      <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">\n        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d\'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d\'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>\n        <span id="adminUnlockMsg" class="small" style="width:100%"></span>\n      </div>\n      <div id="adminWorkspace" style="display:none">\n        <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">\n          <span class="small" style="color:#075c39;font-weight:900">✅ Session admin active</span>\n        </div>\n\n        <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:linear-gradient(135deg,rgba(11,52,78,.08),rgba(245,176,39,.08));">\n          <div style="font-weight:900;color:#163f58;margin-bottom:4px">🧪 MODE CONCEPTEUR</div>\n          <div id=\"adminConceptStatut\" class=\"small\" style=\"margin-bottom:6px;font-weight:900\">…</div>\n          <div class="small" style="margin-bottom:9px">Teste chaque palier sans bride : sas ouverts sans scan, erreurs et demandes d’indice sans blocage, et <b>aucune partie de test n’est enregistrée</b> (compte invisible ZZZZ-0000). Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>\n          <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>\n          <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>\n          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">\n            <button class="secondary" id="adminSasUnlockBtn" type="button" style="margin:0;background:linear-gradient(135deg,#f5b027,#ffd36c);color:#111;border:1px solid #b57c1a">🔓 Déverrouiller tous les sas (mode test)</button>\n            <button class="secondary" id="adminTestResetBtn" type="button" style="margin:0">♻️ Réinitialiser les paliers en mode test</button>\n            <button class=\"secondary\" id=\"adminConceptQuitBtn\" type=\"button\" style=\"margin:0\">🚪 Quitter le mode concepteur</button>\n            <span class="small" id="adminTestResetMsg" style="font-weight:900;color:#075c39"></span>\n          </div>\n        </div>\n\n        <div class="admin-tabs" role="tablist">\n          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Membres</span><span class="lbl-mobile" aria-label="Membres">👥</span></button>\n          <button class="admin-tab" data-tab="teams" type="button" role="tab"><span class="lbl-desktop">🚢 Équipes</span><span class="lbl-mobile" aria-label="Équipes">🚢</span></button>\n          <button class="admin-tab" data-tab="locks" type="button" role="tab"><span class="lbl-desktop">🔒 Blocages</span><span class="lbl-mobile" aria-label="Blocages">🔒</span></button>\n          <button class="admin-tab" data-tab="oxygen" type="button" role="tab"><span class="lbl-desktop">⏱️ O₂</span><span class="lbl-mobile" aria-label="O₂">⏱️</span></button>\n          <button class="admin-tab" data-tab="danger" type="button" role="tab"><span class="lbl-desktop">⚠️ Danger</span><span class="lbl-mobile" aria-label="Danger">⚠️</span></button>\n        </div>\n\n        <!-- TAB: MEMBRES -->\n        <div class="admin-pane" data-pane="members">\n          <div class="row" style="margin-bottom:10px;align-items:center">\n            <span class="small" style="flex:1">Modifie le nom, le service ou l\'équipage d\'un matelot, ou supprime-le.</span>\n            <button class="secondary" id="adminReloadBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">↻ Recharger</button>\n          </div>\n          <div class="admin-add-member">\n            <div class="admin-add-title">➕ Ajouter un matelot</div>\n            <div class="admin-form-grid">\n              <label for="adminNewMemberName">Nom</label>\n              <input id="adminNewMemberName" type="text" maxlength="32" placeholder="Ex. JULES VERNE" autocomplete="off">\n              <label for="adminNewMemberSvc">Service</label>\n              <select id="adminNewMemberSvc"><option value="" selected disabled>Ex. PE</option></select>\n              <label for="adminNewMemberTeam">Équipage</label>\n              <select id="adminNewMemberTeam"><option value="" selected disabled>Choisir…</option></select>\n            </div>\n            <div class="admin-actions-row">\n              <button class="primary" id="adminAddMemberBtn" type="button">➕ Ajouter le matelot</button>\n            </div>\n            <div id="adminAddMemberMsg"></div>\n          </div>\n          <div id="adminMembersBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: BLOCAGES -->\n        <div class="admin-pane" data-pane="locks" style="display:none">\n          <p class="small" style="margin-bottom:10px">Pour chaque équipe : activer/désactiver le blocage, ou modifier la date/heure de reprise autorisée.</p>\n          <div id="adminLocksBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: O2 -->\n        <div class="admin-pane" data-pane="oxygen" style="display:none">\n          <p class="small" style="margin-bottom:10px">Le compte à rebours de la réserve O₂ (durée de la mission) peut être réinitialisé, ou décalé en modifiant la date/heure de départ.</p>\n          <div class="admin-o2-status">\n            <div class="admin-o2-row"><span>État actuel</span><strong id="adminO2Now">—</strong></div>\n            <div class="admin-o2-row"><span>Statut</span><span class="admin-o2-badge" id="adminO2State">—</span></div>\n            <div class="admin-o2-row"><span>Temps restant</span><strong id="adminO2Countdown">—</strong></div>\n          </div>\n          <div class="admin-form-grid admin-o2-form">\n            <label for="adminO2Date">Date de départ</label>\n            <input id="adminO2Date" type="datetime-local">\n            <label for="adminO2Days">Durée (jours)</label>\n            <input id="adminO2Days" type="number" min="0" step="1" value="7">\n            <label for="adminO2Hours">Durée (heures)</label>\n            <input id="adminO2Hours" type="number" min="0" max="23" step="1" value="0">\n          </div>\n          <div class="admin-actions-row">\n            <button class="primary" id="adminO2Apply" type="button">💾 Appliquer la modification</button>\n            <button class="secondary" id="adminO2Reset" type="button">♻️ Reset à maintenant (durée initiale)</button>\n            <button class="danger" id="adminO2Clear" type="button">🛑 Arrêter la mission</button>\n          </div>\n        </div>\n\n        <!-- TAB: EQUIPES -->\n        <div class="admin-pane" data-pane="teams" style="display:none">\n          <p class="small" style="margin-bottom:10px">Ajoute, renomme ou supprime une équipe. La suppression purge le doc Firestore correspondant et l\'ajoute à la liste des codes obsolètes (nettoyés à chaque init).</p>\n          <div id="adminTeamsBox" class="teamlist"></div>\n          <div class="hr"></div>\n          <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">\n            <div style="flex:1;min-width:220px"><label for="adminNewTeamName">Nom de la nouvelle équipe</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" maxlength="24" autocomplete="off"></div>\n            <button class="primary" id="adminAddTeamBtn" type="button" style="margin:0">➕ Ajouter</button>\n          </div>\n        </div>\n\n        <!-- TAB: DANGER -->\n        <div class="admin-pane" data-pane="danger" style="display:none">\n          <p style="margin:0 0 12px;font-weight:900;color:#9b1111">⚠️ Zone sensible — actions irréversibles</p>\n          <div style="display:flex;gap:10px;flex-wrap:wrap">\n            <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>\n            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>\n          </div>\n          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>Le nettoyage retire « migratedFrom », un reste de l\'ancienne migration des identifiants d\'équipe : sans effet sur le jeu.</p>\n        </div>\n      </div>\n    </div>\n  </section>';
+  const ADMIN_PANEL_HTML = '<section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">\n    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">\n      <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>\n      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">\n        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>\n      </button>\n    </h2>\n    <div class="body">\n      <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l\'équipe d\'organisation. Accès par code uniquement.</p>\n      <div class="hr"></div>\n      <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">\n        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d\'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d\'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>\n        <span id="adminUnlockMsg" class="small" style="width:100%"></span>\n      </div>\n      <div id="adminWorkspace" style="display:none">\n        <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">\n          <span class="small" style="color:#075c39;font-weight:900">✅ Session admin active</span>\n        </div>\n\n        <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:linear-gradient(135deg,rgba(11,52,78,.08),rgba(245,176,39,.08));">\n          <div style="font-weight:900;color:#163f58;margin-bottom:4px">🧪 ACCÈS CONCEPTEUR</div>\n          <div class="small" style="margin-bottom:9px">Ouvre chaque page du jeu dans un onglet isolé : l’aperçu organisateur n’écrit <b>aucun blocage ni aucune progression réelle</b>. Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>\n          <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>\n          <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>\n          \n        </div>\n\n        <div class="admin-tabs" role="tablist">\n          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Membres</span><span class="lbl-mobile" aria-label="Membres">👥</span></button>\n          <button class="admin-tab" data-tab="teams" type="button" role="tab"><span class="lbl-desktop">🚢 Équipes</span><span class="lbl-mobile" aria-label="Équipes">🚢</span></button>\n          <button class="admin-tab" data-tab="locks" type="button" role="tab"><span class="lbl-desktop">🔒 Blocages</span><span class="lbl-mobile" aria-label="Blocages">🔒</span></button>\n          <button class="admin-tab" data-tab="oxygen" type="button" role="tab"><span class="lbl-desktop">⏱️ O₂</span><span class="lbl-mobile" aria-label="O₂">⏱️</span></button>\n          <button class="admin-tab" data-tab="danger" type="button" role="tab"><span class="lbl-desktop">⚠️ Danger</span><span class="lbl-mobile" aria-label="Danger">⚠️</span></button>\n        </div>\n\n        <!-- TAB: MEMBRES -->\n        <div class="admin-pane" data-pane="members">\n          <div class="row" style="margin-bottom:10px;align-items:center">\n            <span class="small" style="flex:1">Modifie le nom, le service ou l\'équipage d\'un matelot, ou supprime-le.</span>\n            <button class="secondary" id="adminReloadBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">↻ Recharger</button>\n          </div>\n          <div class="admin-add-member">\n            <div class="admin-add-title">➕ Ajouter un matelot</div>\n            <div class="admin-form-grid">\n              <label for="adminNewMemberName">Nom</label>\n              <input id="adminNewMemberName" type="text" maxlength="32" placeholder="Ex. JULES VERNE" autocomplete="off">\n              <label for="adminNewMemberSvc">Service</label>\n              <select id="adminNewMemberSvc"><option value="" selected disabled>Ex. PE</option></select>\n              <label for="adminNewMemberTeam">Équipage</label>\n              <select id="adminNewMemberTeam"><option value="" selected disabled>Choisir…</option></select>\n            </div>\n            <div class="admin-actions-row">\n              <button class="primary" id="adminAddMemberBtn" type="button">➕ Ajouter le matelot</button>\n            </div>\n            <div id="adminAddMemberMsg"></div>\n          </div>\n          <div id="adminMembersBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: BLOCAGES -->\n        <div class="admin-pane" data-pane="locks" style="display:none">\n          <p class="small" style="margin-bottom:10px">Pour chaque équipe : activer/désactiver le blocage, ou modifier la date/heure de reprise autorisée.</p>\n          <div id="adminLocksBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: O2 -->\n        <div class="admin-pane" data-pane="oxygen" style="display:none">\n          <p class="small" style="margin-bottom:10px">Le compte à rebours de la réserve O₂ (durée de la mission) peut être réinitialisé, ou décalé en modifiant la date/heure de départ.</p>\n          <div class="admin-o2-status">\n            <div class="admin-o2-row"><span>État actuel</span><strong id="adminO2Now">—</strong></div>\n            <div class="admin-o2-row"><span>Statut</span><span class="admin-o2-badge" id="adminO2State">—</span></div>\n            <div class="admin-o2-row"><span>Temps restant</span><strong id="adminO2Countdown">—</strong></div>\n          </div>\n          <div class="admin-form-grid admin-o2-form">\n            <label for="adminO2Date">Date de départ</label>\n            <input id="adminO2Date" type="datetime-local">\n            <label for="adminO2Days">Durée (jours)</label>\n            <input id="adminO2Days" type="number" min="0" step="1" value="7">\n            <label for="adminO2Hours">Durée (heures)</label>\n            <input id="adminO2Hours" type="number" min="0" max="23" step="1" value="0">\n          </div>\n          <div class="admin-actions-row">\n            <button class="primary" id="adminO2Apply" type="button">💾 Appliquer la modification</button>\n            <button class="secondary" id="adminO2Reset" type="button">♻️ Reset à maintenant (durée initiale)</button>\n            <button class="danger" id="adminO2Clear" type="button">🛑 Arrêter la mission</button>\n          </div>\n        </div>\n\n        <!-- TAB: EQUIPES -->\n        <div class="admin-pane" data-pane="teams" style="display:none">\n          <p class="small" style="margin-bottom:10px">Ajoute, renomme ou supprime une équipe. La suppression purge le doc Firestore correspondant et l\'ajoute à la liste des codes obsolètes (nettoyés à chaque init).</p>\n          <div id="adminTeamsBox" class="teamlist"></div>\n          <div class="hr"></div>\n          <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">\n            <div style="flex:1;min-width:220px"><label for="adminNewTeamName">Nom de la nouvelle équipe</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" maxlength="24" autocomplete="off"></div>\n            <button class="primary" id="adminAddTeamBtn" type="button" style="margin:0">➕ Ajouter</button>\n          </div>\n        </div>\n\n        <!-- TAB: DANGER -->\n        <div class="admin-pane" data-pane="danger" style="display:none">\n          <p style="margin:0 0 12px;font-weight:900;color:#9b1111">⚠️ Zone sensible — actions irréversibles</p>\n          <div style="display:flex;gap:10px;flex-wrap:wrap">\n            <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>\n            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>\n          </div>\n          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>Le nettoyage retire « migratedFrom », un reste de l\'ancienne migration des identifiants d\'équipe : sans effet sur le jeu.</p>\n        </div>\n      </div>\n    </div>\n  </section>';
   function injectAdminPanel(){
     if(document.getElementById('adminPanel')) return;
     ensureAdminModalFallbackStyles();
@@ -368,106 +368,6 @@
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
     if(btn) btn.textContent = box.style.display === 'none' ? '🧪 Tester toutes les pages' : '🔽 Masquer les tests de pages';
   }
-  /* « DÉVERROUILLER TOUS LES SAS (MODE TEST) » : écrit sur CET appareil
-     la clé d'ouverture du sas de chaque palier (formule « PALIER+n-1 »,
-     EN PHASE avec palier-sas.js) — les portails QR s'affichent alors
-     directement déverrouillés, SANS avoir à scanner de QR physique.
-     Garde-fou : le Code Matelot passe en mode test (ZZZZ-0000) pour
-     qu'aucune victoire de test ne soit inscrite au tableau de bord.
-     « Réinitialiser les paliers en mode test » referme tous les sas. */
-  function deverrouillerSasModeTest(){
-    if(!isAdminUnlocked()) return;
-    const ok = confirm("Déverrouiller TOUS les sas en mode test sur cet appareil ?\n\n✔ Les portails QR des paliers 2 à 7 s'ouvriront sans aucun scan\n\n✔ Ton Code Matelot passe en mode test (ZZZZ-0000) : aucune victoire de test n'est inscrite\n\n✔ Tu n'es rattaché à AUCUN équipage réel (le compte de test n'en fait jamais partie)\n\n✔ « Réinitialiser les paliers » referme tous les sas");
-    if(!ok) return;
-    const BASE = [16, 1, 12, 9, 5, 18];   // P A L I E R — en phase avec palier-sas.js
-    let ecrits = 0;
-    try {
-      for(let n = 2; n <= 7; n++){
-        const code = BASE.map(function(x){ return String(x + (n - 1)); }).join('');
-        localStorage.setItem('nautilusUnlock:palier:' + code, 'ok');
-        ecrits++;
-      }
-      /* Mode test forcé : les paliers n'écrivent au tableau de bord QUE
-         si le code matelot n'est PAS le code de test. */
-      localStorage.setItem('nautilusMatelotCode', 'ZZZZ-0000');
-    } catch(e){ /* mode privé : rien à écrire */ }
-    const msg = $("adminTestResetMsg");
-    if(msg) msg.textContent = '🔓 ' + ecrits + ' sas ouverts (paliers 2 → 7) — mode test actif. « Réinitialiser » les referme.';
- 
-    majStatutConcepteur();
-  }
-
-  /* « RÉINITIALISER LES PALIERS EN MODE TEST » : efface UNIQUEMENT la
-     mémoire locale des paliers de CET appareil :
-     - nautilusUnlock:palier:*  -> sas re-verrouillés (scan QR à refaire),
-     - nautilusBlocageLeveVu:*  -> accusés « blocage levé » oubliés.
-     AUCUNE donnée réelle n'est touchée : Firestore, identités
-     (clientId, équipage, Code Matelot ZZZZ-0000 = le mode test
-     lui-même), réglage son, configuration O₂ et snooze de la promo
-     d'installation sont tous préservés. C'est le brouillon du
-     concepteur, pas la partie des équipages. */
-  function resetTestPaliers(){
-    if(!isAdminUnlocked()) return;
-    const ok = confirm("Réinitialiser les paliers en mode test sur cet appareil ?\n\n✔ Sas des paliers re-verrouillés (scan QR à refaire)\n✔ Messages « blocage levé » réinitialisés\n✔ Aucune donnée réelle ni identité touchée");
-    if(!ok) return;
-    const prefixes = ["nautilusUnlock:palier:", "nautilusBlocageLeveVu:"];
-    const cles = [];
-    try {
-      for(let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
-        if(k && prefixes.some(p => k.indexOf(p) === 0)) cles.push(k);
-      }
-      cles.forEach(k => localStorage.removeItem(k));
-    } catch(e) { /* mode privé : rien à effacer */ }
-    const msg = $("adminTestResetMsg");
-    if(msg) msg.textContent = cles.length
-      ? "✅ " + cles.length + " souvenir(s) de palier effacé(s) — sas re-verrouillés."
-      : "✔ Rien à effacer : aucun palier mémorisé sur cet appareil.";
- 
-    majStatutConcepteur();
-  }
-  /* Ligne de statut du MODE CONCEPTEUR, relue a chaque ouverture du
-     panneau et apres chaque action : actif = Code Matelot de test pose
-     par « Déverrouiller tous les sas » ; on compte aussi les sas
-     ouverts sur cet appareil. */
-  function majStatutConcepteur(){
-    const el = $('adminConceptStatut');
-    if(!el) return;
-    let actif = false, sasOuverts = 0;
-    try {
-      actif = (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000';
-      const BASE = [16, 1, 12, 9, 5, 18];
-      for(let n = 2; n <= 7; n++){
-        const code = BASE.map(x => String(x + (n - 1))).join('');
-        if(localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok') sasOuverts++;
-      }
-    } catch(e){}
-    el.innerHTML = actif
-      ? '🧪 <b>Concepteur ACTIF sur cet appareil</b> — ' + sasOuverts + '/6 sas ouverts · erreurs et indices sans blocage · hors tout équipage · aucune partie de test enregistrée.'
-      : '⭕ Mode concepteur inactif sur cet appareil. « 🔓 Déverrouiller tous les sas » l’active.';
-    el.style.color = actif ? '#075c39' : '#9b1111';
-  }
-
-  /* « QUITTER LE MODE CONCEPTEUR » : efface le Code Matelot de test et
-     referme les sas de cet appareil. Aucune donnée réelle n'est
-     touchée (le mode test n'a de toute façon JAMAIS rien écrit). */
-  function quitterModeConcepteur(){
-    if(!isAdminUnlocked()) return;
-    const ok = confirm("Quitter le mode concepteur sur cet appareil ?\n\n✔ Code Matelot de test (ZZZZ-0000) effacé\n✔ Sas re-verrouillés — scan QR à refaire\n✔ Aucune donnée réelle touchée");
-    if(!ok) return;
-    try { localStorage.removeItem('nautilusMatelotCode'); } catch(e){}
-    try {
-      const cles = [];
-      for(let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
-        if(k && k.indexOf('nautilusUnlock:palier:') === 0) cles.push(k);
-      }
-      cles.forEach(k => localStorage.removeItem(k));
-    } catch(e){}
-    const msg = $('adminTestResetMsg');
-    if(msg) msg.textContent = '🚪 Mode concepteur quitté : code de test effacé et sas refermés.';
-    majStatutConcepteur();
-  }
 
 
   /* =====================================================================
@@ -515,8 +415,6 @@
     wipeAdminCode();
     const msg = $('adminUnlockMsg');
     if(msg){ msg.textContent = ''; msg.style.color = ''; }
-    majStatutConcepteur();
-  
     setTimeout(() => $('adminCodeInput')?.focus(), 80);
   }
   function closeAdminPanel(){
@@ -1447,9 +1345,6 @@
   // principal de la page ; ici on les câble pour les pages injectées).
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
   $('adminDesignerBtn')?.addEventListener('click', renderDesignerAccess);
-  $('adminSasUnlockBtn')?.addEventListener('click', deverrouillerSasModeTest);
-  $('adminTestResetBtn')?.addEventListener('click', resetTestPaliers);
-  $('adminConceptQuitBtn')?.addEventListener('click', quitterModeConcepteur);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
 
   return { open: openAdminPanel, close: closeAdminPanel };

@@ -261,17 +261,11 @@
         </div>
 
         <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:linear-gradient(135deg,rgba(11,52,78,.08),rgba(245,176,39,.08));">
-          <div style="font-weight:900;color:#163f58;margin-bottom:4px">🧪 MODE CONCEPTEUR</div>
-          <div id="adminConceptStatut" class="small" style="margin-bottom:6px;font-weight:900">…</div>
-          <div class="small" style="margin-bottom:9px">Teste chaque palier sans bride : sas ouverts sans scan, erreurs et demandes d'indice sans blocage, et <b>aucune partie de test n'est enregistrée</b> (compte invisible ZZZZ-0000). Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>
+          <div style="font-weight:900;color:#163f58;margin-bottom:4px">🧪 ACCÈS CONCEPTEUR</div>
+          <div class="small" style="margin-bottom:9px">Ouvre chaque page du jeu dans un onglet isolé : l’aperçu organisateur n’écrit <b>aucun blocage ni aucune progression réelle</b>. Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>
           <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>
           <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
-            <button class="secondary" id="adminSasUnlockBtn" type="button" style="margin:0;background:linear-gradient(135deg,#f5b027,#ffd36c);color:#111;border:1px solid #b57c1a">🔓 Déverrouiller tous les sas (mode test)</button>
-            <button class="secondary" id="adminTestResetBtn" type="button" style="margin:0">♻️ Réinitialiser les paliers en mode test</button>
-            <button class="secondary" id="adminConceptQuitBtn" type="button" style="margin:0">🚪 Quitter le mode concepteur</button>
-            <span class="small" id="adminTestResetMsg" style="font-weight:900;color:#075c39"></span>
-          </div>
+
         </div>
 
         <div class="admin-tabs" role="tablist">
@@ -2976,11 +2970,10 @@ function qrDataUri(text, opts){
    * enregistrees dans la base : il faut le faire explicitement.
    * Sans risque : ce champ n'est lu nulle part dans l'application.
    */
-  /* Accès concepteur isolé : aucune progression Firestore n'est modifiée.
-     Le compte ZZZZ-0000 est reconnu par le Palier 1 comme session de test
-     et reste invisible pour les vrais équipages. Les paliers non encore
-     construits restent visibles mais désactivés, afin que l'organisateur
-     dispose déjà de la feuille de route complète. */
+  /* Accès concepteur isolé : aucune progression Firestore n'est modifiée —
+     les liens d'aperçu ouvrent le jeu SANS écrire blocage ni victoire.
+     Les paliers non encore construits restent visibles mais désactivés,
+     afin que l'organisateur dispose déjà de la feuille de route complète. */
   /* Clé « aperçu » : elle prouve que le lien vient du panneau admin.
      Dérivée du code d'accès par une formule volontairement simple (le jeu
      n'a pas d'enjeu de sécurité forte, mais le paramètre ?apercu seul ne
@@ -3065,100 +3058,6 @@ function qrDataUri(text, opts){
     });
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
     if(btn) btn.textContent = box.style.display === 'none' ? '🧪 Tester toutes les pages' : '🔽 Masquer les tests de pages';
-  }
-
-  /* Ligne de statut du MODE CONCEPTEUR, relue a chaque ouverture du
-     panneau et apres chaque action : actif = Code Matelot de test pose
-     par « Déverrouiller tous les sas » ; on compte aussi les sas
-     ouverts sur cet appareil. */
-  function majStatutConcepteur(){
-    const el = $('adminConceptStatut');
-    if(!el) return;
-    let actif = false, sasOuverts = 0;
-    try {
-      actif = (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000';
-      const BASE = [16, 1, 12, 9, 5, 18];
-      for(let n = 2; n <= 7; n++){
-        const code = BASE.map(x => String(x + (n - 1))).join('');
-        if(localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok') sasOuverts++;
-      }
-    } catch(e){}
-    el.innerHTML = actif
-      ? '🧪 <b>Concepteur ACTIF sur cet appareil</b> — ' + sasOuverts + '/6 sas ouverts · erreurs et indices sans blocage · hors tout équipage · aucune partie de test enregistrée.'
-      : '⭕ Mode concepteur inactif sur cet appareil. « 🔓 Déverrouiller tous les sas » l’active.';
-    el.style.color = actif ? '#075c39' : '#9b1111';
-  }
-
-  /* « QUITTER LE MODE CONCEPTEUR » : efface le Code Matelot de test et
-     referme les sas de cet appareil. Aucune donnée réelle n'est
-     touchée (le mode test n'a de toute façon JAMAIS rien écrit). */
-  function quitterModeConcepteur(){
-    if(!isAdminUnlocked()) return;
-    const ok = confirm("Quitter le mode concepteur sur cet appareil ?\n\n✔ Code Matelot de test (ZZZZ-0000) effacé\n✔ Sas re-verrouillés — scan QR à refaire\n✔ Aucune donnée réelle touchée");
-    if(!ok) return;
-    try { localStorage.removeItem('nautilusMatelotCode'); } catch(e){}
-    try {
-      const cles = [];
-      for(let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
-        if(k && k.indexOf('nautilusUnlock:palier:') === 0) cles.push(k);
-      }
-      cles.forEach(k => localStorage.removeItem(k));
-    } catch(e){}
-    const msg = $('adminTestResetMsg');
-    if(msg) msg.textContent = '🚪 Mode concepteur quitté : code de test effacé et sas refermés.';
-    majStatutConcepteur();
-  }
-
-  /* « DÉVERROUILLER TOUS LES SAS (MODE TEST) » : écrit sur CET appareil
-     la clé d'ouverture du sas de chaque palier (formule « PALIER+n-1 »,
-     EN PHASE avec palier-sas.js) — les portails QR s'affichent alors
-     directement déverrouillés, SANS avoir à scanner de QR physique.
-     Garde-fou : le Code Matelot passe en mode test (ZZZZ-0000) : erreurs
-     et demandes d'indice sans blocage, aucune victoire de test inscrite.
-     « Réinitialiser les paliers » referme tous les sas. */
-  function deverrouillerSasModeTest(){
-    if(!isAdminUnlocked()) return;
-    const ok = confirm("Déverrouiller TOUS les sas en mode test sur cet appareil ?\n\n✔ Les portails QR des paliers 2 à 7 s'ouvriront sans aucun scan\n\n✔ Ton Code Matelot passe en mode test (ZZZZ-0000) : erreurs et indices sans blocage, aucune partie de test enregistrée\n\n✔ Tu n'es rattaché à AUCUN équipage réel (le compte de test n'en fait jamais partie)\n\n✔ « Réinitialiser les paliers » referme tous les sas");
-    if(!ok) return;
-    const BASE = [16, 1, 12, 9, 5, 18];   // P A L I E R — en phase avec palier-sas.js
-    let ecrits = 0;
-    try {
-      for(let n = 2; n <= 7; n++){
-        const code = BASE.map(function(x){ return String(x + (n - 1)); }).join('');
-        localStorage.setItem('nautilusUnlock:palier:' + code, 'ok');
-        ecrits++;
-      }
-      /* Mode test forcé : les paliers n'écrivent au tableau de bord QUE
-         si le code matelot n'est PAS le code de test. */
-      localStorage.setItem('nautilusMatelotCode', 'ZZZZ-0000');
-    } catch(e){ /* mode privé : rien à écrire */ }
-    const msg = $("adminTestResetMsg");
-    if(msg) msg.textContent = '🔓 ' + ecrits + ' sas ouverts (paliers 2 → 7) — mode test actif. « Réinitialiser » les referme.';
-    majStatutConcepteur();
-  }
-
-  /* « RÉINITIALISER LES PALIERS EN MODE TEST » : efface UNIQUEMENT la
-     mémoire locale des paliers de CET appareil (sas + accusés) ; aucune
-     donnée réelle n'est touchée (le mode test n'écrit jamais rien). */
-  function resetTestPaliers(){
-    if(!isAdminUnlocked()) return;
-    const ok = confirm("Réinitialiser les paliers en mode test sur cet appareil ?\n\n✔ Sas des paliers re-verrouillés (scan QR à refaire)\n✔ Messages « blocage levé » réinitialisés\n✔ Aucune donnée réelle ni identité touchée");
-    if(!ok) return;
-    const prefixes = ["nautilusUnlock:palier:", "nautilusBlocageLeveVu:"];
-    const cles = [];
-    try {
-      for(let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
-        if(k && prefixes.some(p => k.indexOf(p) === 0)) cles.push(k);
-      }
-      cles.forEach(k => localStorage.removeItem(k));
-    } catch(e) { /* mode privé : rien à effacer */ }
-    const msg = $("adminTestResetMsg");
-    if(msg) msg.textContent = cles.length
-      ? "✅ " + cles.length + " souvenir(s) de palier effacé(s) — sas re-verrouillés."
-      : "✔ Rien à effacer : aucun palier mémorisé sur cet appareil.";
-    majStatutConcepteur();
   }
 
   /* Vérification non destructive du panneau admin.
@@ -5781,9 +5680,6 @@ function qrDataUri(text, opts){
   });
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
   $('adminDesignerBtn')?.addEventListener('click', renderDesignerAccess);
-  $('adminSasUnlockBtn')?.addEventListener('click', deverrouillerSasModeTest);
-  $('adminTestResetBtn')?.addEventListener('click', resetTestPaliers);
-  $('adminConceptQuitBtn')?.addEventListener('click', quitterModeConcepteur);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
   $('cleanupTestSessionsBtn')?.addEventListener('click', cleanupTestSessions);
   $('cleanupFieldsBtn')?.addEventListener('click', cleanupObsoleteFields);
@@ -5833,7 +5729,6 @@ function qrDataUri(text, opts){
     wipeAdminCode();
     const msg = $('adminUnlockMsg');
     if(msg){ msg.textContent = ''; msg.style.color = ''; }
-    majStatutConcepteur();
     setTimeout(() => $('adminCodeInput')?.focus(), 80);
   }
   function closeAdminPanel(){
@@ -7166,7 +7061,7 @@ window.PWAInstall = {
   aUnPrompt: () => Boolean(pwaDeferredPrompt)
 };
 </script>
-<script src="admin-button.js?v=11" type="module"></script>
+<script src="admin-button.js?v=12" type="module"></script>
 </body>
 </html>
 
