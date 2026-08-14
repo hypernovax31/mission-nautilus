@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=19">
+  <link rel="stylesheet" href="css/palier1.css?v=20">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=2" defer></script>
@@ -1129,7 +1129,6 @@ window.Nautilus = {
     if (mode === 'victoire') {
       const s = { ...sessionBase, state: 'won', endReason: 'solved', errors: 2, revealedWord: 'BALEINES' };
       body.innerHTML = renderWonScreen(s, team);
-      bindWonScreenEvents();
       jouerSonVictoire(s);
     } else if (mode === 'defaite') {
       body.innerHTML = renderLostScreen({ ...sessionBase, state: 'lost', endReason: 'too_many_errors' }, team);
@@ -1717,7 +1716,6 @@ window.Nautilus = {
     /* Session en cours */
     if (s.state === 'won') {
       body.innerHTML = renderWonScreen(s, t);
-      bindWonScreenEvents();
       jouerSonVictoire(s);
       return;
     }
@@ -2629,33 +2627,37 @@ window.Nautilus = {
     return code ? code.replace(/-/g, '') + '.html' : 'index.html';
   }
 
-  /* Panneau « DIRECTION VERS LA ZONE DE RECHERCHE », partagé par l'écran
-     de victoire (repliable) et l'écran de reprise de la mission. */
+  /* Bloc « PROCHAINE IMMERSION » de l'écran de victoire — refonte v3
+     (demande capitaine : plus spectaculaire et immersif, dès la note
+     « 🔓 … »). L'ancien panneau PLIABLE « DIRECTION VERS LA ZONE DE
+     RECHERCHE » (longs paragraphes + bouton « CONTINUER » qui pliait/
+     dépliait — doublon du vrai CTA) laisse place à un bloc TOUJOURS
+     VISIBLE : radar sonar animé, cap sur le palier suivant, indication,
+     3 étapes-chips COURTES, gros bouton ⏭️ pulsant, 1 ligne d'astuce.
+     Mêmes classes/markup que directionHtml() de victoire-palier.js —
+     À GARDER EN PHASE. */
   function directionPanelHtml(nextStep, opts = {}) {
     const nextLabel = N.STEPS[nextStep]?.label || 'palier suivant';
     const action = nextStepActionLabel(nextStep);
     const url = nextStepPageUrl(nextStep);
     const id = opts.id || 'wonDirectionPanel';
     return `
-      <div class="won-direction" id="${esc(id)}"${opts.collapsed ? ' hidden' : ''}>
-        <h3 class="won-direction-title">📍 DIRECTION VERS LA ZONE DE RECHERCHE</h3>
-        <p class="won-direction-line"><span class="won-direction-label">Indication de direction :</span> ${esc(N.QR_LOCATION_HINT)}</p>
-        <div class="won-direction-steps">
-          <p class="won-direction-sub">Sur place :</p>
-          <ol>
-            <li>Repérez le <b>QR Code</b> de la zone.</li>
-            <li>Cliquez sur le bouton <b>« ${esc(action)} »</b> pour passer au prochain palier.</li>
-            <li><b>Scannez le QR Code</b> dans l’encart prévu à cet effet (ou importez-en la photo).</li>
-          </ol>
+      <div class="won-nextzone" id="${esc(id)}">
+        <div class="won-radar" aria-hidden="true">
+          <span class="won-radar-ring"></span>
+          <span class="won-radar-ring won-radar-ring--2"></span>
+          <span class="won-radar-core">🧭</span>
         </div>
-        <div class="won-direction-remind">
-          📷 <b>L’équipage souhaite poursuivre maintenant ?</b> Une fois le QR Code trouvé,
-          ouvrez la page du prochain palier et scannez-le.<br>
-          <b>Vous reprendrez plus tard ?</b> Prenez le QR Code en photo et gardez-le
-          précieusement : c’est la <b>clé d’entrée du ${esc(nextLabel)}</b> — sans lui,
-          la page restera verrouillée et personne ne pourra progresser.
+        <h3 class="won-nextzone-title">Cap sur le ${esc(nextLabel)}</h3>
+        <p class="won-nextzone-indication">📍 « ${esc(N.QR_LOCATION_HINT)} »</p>
+        <div class="won-nextzone-steps">
+          <span class="won-step-chip"><b>1</b> Rallier la zone</span>
+          <span class="won-step-chip"><b>2</b> Ouvrir la page du palier</span>
+          <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
         </div>
         <a class="won-next-btn" href="${esc(url)}">⏭️ ${esc(action)}</a>
+        <p class="won-nextzone-hint">📷 Pause ? Photographiez le QR de la zone :
+          c’est la clé d’entrée du ${esc(nextLabel)}.</p>
       </div>
     `;
   }
@@ -2686,11 +2688,8 @@ window.Nautilus = {
           <div class="won-stat"><strong>${listens}/3</strong><span>Écoutes utilisées</span></div>
           <div class="won-stat"><strong>${errors}</strong><span>Erreur${errors > 1 ? 's' : ''}</span></div>
         </div>
-        <div class="won-unlock-note">🔓 <b>Tout l’équipage reprend la quête.</b> Si un matelot
-          était bloqué en surface après un échec, son blocage est levé : il peut rejouer sans attendre.</div>
-        <div class="won-actions">
-          <button type="button" class="won-continue-btn" id="wonContinueBtn" aria-expanded="true" aria-controls="wonDirectionPanel">🧭 CONTINUER VERS LE PALIER SUIVANT</button>
-        </div>
+        <div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —
+          tout l’équipage replonge !</div>
         ${directionPanelHtml(nextStep, { id: 'wonDirectionPanel' })}
       </div>
     `;
@@ -2722,21 +2721,9 @@ window.Nautilus = {
     `;
   }
 
-  /* Bouton « CONTINUER VERS LE PALIER SUIVANT » de l'écran de victoire :
-     plie/déplie le panneau de direction, pour REVOIR à tout moment les
-     informations nécessaires pour localiser le QR Code — y compris quand
-     l'équipage a choisi de ne pas poursuivre tout de suite. */
-  function bindWonScreenEvents() {
-    const btn = document.getElementById('wonContinueBtn');
-    const panel = document.getElementById('wonDirectionPanel');
-    if (!btn || !panel) return;
-    btn.addEventListener('click', () => {
-      const ouvert = !panel.hidden;
-      panel.hidden = ouvert;
-      btn.setAttribute('aria-expanded', String(!ouvert));
-      if (!ouvert) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-  }
+  /* (Refonte victoire v3) plus AUCUN bouton « CONTINUER » plier/déplier
+     sur l'écran de victoire : le bloc « PROCHAINE IMMERSION » reste
+     TOUJOURS visible, le seul CTA est le bouton ⏭️ du palier suivant. */
 
   /* Son de victoire, UNE FOIS par épreuve gagnée et par appareil
      (même gabarit de règles que partout : geste + fenêtre visible +

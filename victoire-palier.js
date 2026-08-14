@@ -4,11 +4,20 @@
 
    LA MÊME PAGE DE VICTOIRE QUE LE PALIER 1, PARTOUT : badge 🏆,
    « Épreuve validée ! », ligne d'équipage, bravo au matelot, 3 stats
-   (temps, mots, erreurs), note de déblocage, bouton 🧭 CONTINUER et
-   panneau PLIABLE « DIRECTION VERS LA ZONE DE RECHERCHE » qui mène au
-   sas du palier suivant. Structure et classes (.won-* — styles dans
-   css/palier1.css, chargée par TOUTES les pages de palier) calquées
-   sur renderWonScreen() / directionPanelHtml() de palier1.html.
+   (temps, mots, erreurs) — PUIS, refonte v3 (demande capitaine : plus
+   SPECTACULAIRE et IMMERSIF, textes COURTS, aucun bouton superflu) :
+
+     dès la note « 🔓 … », l'ancien panneau PLIABLE « DIRECTION VERS LA
+     ZONE DE RECHERCHE » (longs paragraphes + bouton 🧭 CONTINUER qui
+     ne faisait que plier/déplier — doublon du vrai CTA) est remplacé
+     par un bloc « PROCHAINE IMMERSION » toujours visible : radar sonar
+     animé 🧭, cap sur le palier suivant, indication de la zone, trois
+     étapes-chips (rallier / ouvrir / scanner), gros bouton ⏭️ PULSANT
+     et une unique ligne d'astuce 📷 (photo du QR = clé d'entrée).
+
+   Structure et classes (.won-* — styles dans css/palier1.css, chargée
+   par TOUTES les pages de palier) calquées sur renderWonScreen() /
+   directionPanelHtml() de palier1.html — À GARDER EN PHASE avec eux.
 
    Chaque page de palier appelle, au moment de sa victoire :
 
@@ -38,35 +47,36 @@
     });
   }
 
-  /* Panneau « DIRECTION VERS LA ZONE DE RECHERCHE » — mêmes classes et
-     même contenu type que palier1.html#directionPanelHtml. */
+  /* Bloc « PROCHAINE IMMERSION » — remplace l'ancien panneau pliable :
+     radar sonar, cap, indication, 3 étapes-chips, CTA pulsant, astuce.
+     Contenu VOLONTAIREMENT court (chips de 3-4 mots, 1 ligne d'astuce).
+     Mêmes classes/markup que directionPanelHtml() de palier1.html. */
   function directionHtml(o) {
     return ''
-      + '<div class="won-direction" id="wonDirectionPanel">'
-      +   '<h3 class="won-direction-title">📍 DIRECTION VERS LA ZONE DE RECHERCHE</h3>'
-      +   '<p class="won-direction-line"><span class="won-direction-label">Indication de direction :</span> ' + esc(o.indication) + '</p>'
-      +   '<div class="won-direction-steps">'
-      +     '<p class="won-direction-sub">Sur place :</p>'
-      +     '<ol>'
-      +       '<li>Repérez le <b>QR Code</b> de la zone.</li>'
-      +       '<li>Cliquez sur le bouton <b>« ' + esc(o.actionSuivante) + ' »</b> pour passer au prochain palier.</li>'
-      +       '<li><b>Scannez le QR Code</b> dans l’encart prévu à cet effet (ou importez-en la photo).</li>'
-      +     '</ol>'
+      + '<div class="won-nextzone" id="wonDirectionPanel">'
+      +   '<div class="won-radar" aria-hidden="true">'
+      +     '<span class="won-radar-ring"></span>'
+      +     '<span class="won-radar-ring won-radar-ring--2"></span>'
+      +     '<span class="won-radar-core">🧭</span>'
       +   '</div>'
-      +   '<div class="won-direction-remind">'
-      +     '📷 <b>L’équipage souhaite poursuivre maintenant ?</b> Une fois le QR Code trouvé,'
-      +     ' ouvrez la page du prochain palier et scannez-le.<br>'
-      +     '<b>Vous reprendrez plus tard ?</b> Prenez le QR Code en photo et gardez-le'
-      +     ' précieusement : c’est la <b>clé d’entrée du ' + esc(o.labelSuivant) + '</b> — sans lui,'
-      +     ' la page restera verrouillée et personne ne pourra progresser.'
+      +   '<h3 class="won-nextzone-title">Cap sur le ' + esc(o.labelSuivant) + '</h3>'
+      +   '<p class="won-nextzone-indication">📍 « ' + esc(o.indication) + ' »</p>'
+      +   '<div class="won-nextzone-steps">'
+      +     '<span class="won-step-chip"><b>1</b> Rallier la zone</span>'
+      +     '<span class="won-step-chip"><b>2</b> Ouvrir la page du palier</span>'
+      +     '<span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>'
       +   '</div>'
       +   '<a class="won-next-btn" href="' + esc(o.urlSuivante) + '">⏭️ ' + esc(o.actionSuivante) + '</a>'
+      +   '<p class="won-nextzone-hint">📷 Pause ? Photographiez le QR de la zone :'
+      +   ' c’est la clé d’entrée du ' + esc(o.labelSuivant) + '.</p>'
       + '</div>';
   }
 
   /* Écran « Épreuve validée ! » — miroir de renderWonScreen() du
      Palier 1 (phrase d'accueil FIGÉE, comme là-bas : pas de re-pop à
-     chaque rafraîchissement). */
+     chaque rafraîchissement). Note de déblocage réduite à UNE ligne ;
+     plus AUCUN bouton plier/déplier (superflu) : le bloc de direction
+     est affiché en permanence. */
   function afficher(hote, opts) {
     if (!hote) return;
     var o = opts || {};
@@ -88,27 +98,10 @@
       +   '<p class="won-line">' + ligneEquipage + '</p>'
       +   '<p class="won-line won-line--bravo">Bravo à <b>' + esc(bravo) + '</b> pour « ' + esc(o.mission) + ' ».</p>'
       +   '<div class="won-stats" aria-label="Bilan de l’épreuve">' + statsHtml + '</div>'
-      +   '<div class="won-unlock-note">🔓 <b>Tout l’équipage reprend la quête.</b> Si un matelot'
-      +   ' était bloqué en surface après un échec, son blocage est levé : il peut rejouer sans attendre.</div>'
-      +   '<div class="won-actions">'
-      +     '<button type="button" class="won-continue-btn" id="wonContinueBtn" aria-expanded="true" aria-controls="wonDirectionPanel">🧭 CONTINUER VERS LE PALIER SUIVANT</button>'
-      +   '</div>'
+      +   '<div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —'
+      +   ' tout l’équipage replonge !</div>'
       +   directionHtml(o)
       + '</div>';
-    /* Bouton 🧭 : plie/déplie le panneau de direction (pour REVOIR la
-       marche à suivre à tout moment) — mêmes règles que palier1.html. */
-    var btn = hote.querySelector('#wonContinueBtn');
-    var panel = hote.querySelector('#wonDirectionPanel');
-    if (btn && panel) {
-      btn.addEventListener('click', function () {
-        var ouvert = !panel.hidden;
-        panel.hidden = ouvert;
-        btn.setAttribute('aria-expanded', String(!ouvert));
-        if (!ouvert && typeof panel.scrollIntoView === 'function') {
-          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      });
-    }
   }
 
   window.NautilusVictoire = { afficher: afficher };
