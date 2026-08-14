@@ -4616,8 +4616,11 @@ function qrDataUri(text, opts){
 
   /* Joue l'alarme en boucle pendant `dureeMs` via Web Audio. Renvoie false
      si le buffer n'est pas pret : l'appelant bascule alors sur le lecteur
-     <audio> classique (ordinateur, ou decode indisponible). */
+     <audio> classique (ordinateur, ou decode indisponible).
+     SONAR COUPÉ = SILENCE ABSOLU : on renvoie false SANS jouer, exactement
+     comme si le buffer manquait — l'alerte reste purement visuelle. */
   function jouerAlarmeFinWebAudio(dureeMs){
+    if(!isSoundEnabled()) return false;
     if(!_alarmeFinBuffer) return false;
     const ctx = sfxContext();
     if(!ctx) return false;
@@ -4661,9 +4664,11 @@ function qrDataUri(text, opts){
        ensemble au même instant. Priorité au chemin Web Audio (décodé en
        silence au premier geste) : il ne réveille jamais le lecteur
        <audio> — non amorcé sur mobile, il y serait refusé ou parasite.
-       Repli <audio> pour les ordinateurs si le buffer n'est pas prêt. */
+       Repli <audio> pour les ordinateurs si le buffer n'est pas prêt.
+       Si le joueur a coupé le sonar, AUCUN des deux chemins ne joue :
+       l'écran rouge et son decompte restent, en silence. */
     if(!jouerAlarmeFinWebAudio(5000)){
-      playSubmarineAlarm(5000, true);
+      playSubmarineAlarm(5000);
     }
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
@@ -4905,23 +4910,26 @@ function qrDataUri(text, opts){
     }
   }
 
-  function showNautilusAlarm(startedAt, durationMs, forceSound=false){
+  function showNautilusAlarm(startedAt, durationMs){
     seenAlarmAt = startedAt;
     const alarm = $('nautilusAlarm');
     if(!alarm) return;
     alarm.classList.add('show');
-    /* Le lancement d'un palier est un geste volontaire : l'alarme doit donc
-       accompagner l'animation, même si le sonar d'ambiance a été coupé.
-       Les alertes reçues passivement depuis Firestore restent, elles,
-       soumises au choix sonore du joueur. */
-    playSubmarineAlarm(durationMs, forceSound);
+    /* L'écran rouge ALERTE NAUTILUS s'affiche TOUJOURS (l'information
+       reste visible) — mais le son, lui, ne part JAMAIS quand le joueur
+       a coupé le sonar : playSubmarineAlarm() applique la règle absolue,
+       sans exception pour le lancement d'un palier ou la fin d'O₂. */
+    playSubmarineAlarm(durationMs);
     setTimeout(() => alarm.classList.remove('show'), durationMs || 9500);
   }
 
-  function playSubmarineAlarm(durationMs, force=false){
-    // L'alarme de fin peut être forcée : elle doit annoncer la remontée
-    // générale même si le sonar d'ambiance a été coupé auparavant.
-    if(!force && !isSoundEnabled()) return;
+  function playSubmarineAlarm(durationMs){
+    /* RÈGLE ABSOLUE (demande explicite du capitaine) : si le joueur a
+       coupé le sonar, AUCUNE alarme ne doit sonner — ni alerte reçue
+       passivement, ni lancement volontaire, ni fin d'O₂. L'animation
+       rouge vit seule. Plus aucun paramètre « force » n'existe : la
+       porte dérobée a été supprimée, pas seulement fermée. */
+    if(!isSoundEnabled()) return;
     const alarmAudio = document.getElementById('alarmAudio');
     if(!alarmAudio) return;
 
@@ -4971,13 +4979,14 @@ function qrDataUri(text, opts){
 
      La promesse se résout :
        • normalement, à la fin du dernier passage (événement "ended") ;
-       • sans son (toggle coupé et non forcé) : après la durée estimée
-         des passages, pour laisser vivre l'animation rouge ;
+       • sans son (sonar coupé par le joueur — la règle est absolue,
+         aucun contournement « force » n'existe plus) : après la durée
+         estimée des passages, pour laisser vivre l'animation rouge ;
        • en dernier recours, via un garde-fou : si le mp3 ne termine
          jamais sur l'appareil, le lancement n'est JAMAIS piégé. */
   const ALARMES_LANCEMENT = 2;         // 2 alarmes complètes (≈ 4,1 s)
 
-  function alarmesLancementComplets(nbFois = ALARMES_LANCEMENT, force = false){
+  function alarmesLancementComplets(nbFois = ALARMES_LANCEMENT){
     return new Promise(resolve => {
       const alarm = $('nautilusAlarm');
       if(alarm) alarm.classList.add('show');
@@ -4999,9 +5008,10 @@ function qrDataUri(text, opts){
         resolve();
       };
 
-      if(!alarmAudio || (!force && !isSoundEnabled())){
-        /* Son impossible ou coupé : l'écran rouge vit quand même le
-           temps de deux alarmes (≈ 2,1 s chacune) avant de naviguer. */
+      if(!alarmAudio || !isSoundEnabled()){
+        /* Son impossible ou coupé par le joueur : l'écran rouge vit
+           quand même le temps de deux alarmes (≈ 2,1 s chacune) avant
+           de naviguer — en silence, sans AUCUNE exception. */
         gardeFou = setTimeout(fin, passages * 2100);
         return;
       }
@@ -5625,7 +5635,7 @@ function qrDataUri(text, opts){
       const url = `palier1.html?code=${encodeURIComponent(currentTeam.teamCode)}`
                 + (mc ? `&m=${encodeURIComponent(mc)}` : '');
       seenAlarmAt = 'launch-' + Date.now();
-      await alarmesLancementComplets(ALARMES_LANCEMENT, false);
+      await alarmesLancementComplets(ALARMES_LANCEMENT);
       location.href = url;
       return;
     }
@@ -5641,7 +5651,7 @@ function qrDataUri(text, opts){
        palier 2 affichait l'alarme et ne lançait aucune page. */
     const pagePalier = palierPageUrl(effectiveCurrentStep(currentTeam));
     seenAlarmAt = 'launch-' + Date.now();
-    await alarmesLancementComplets(ALARMES_LANCEMENT, true);
+    await alarmesLancementComplets(ALARMES_LANCEMENT);
     if(pagePalier){
       /* Le Code Matelot suit la navigation (?m=) : le palier sait alors
          QUI joue et applique la règle des blocages PERSONNELS

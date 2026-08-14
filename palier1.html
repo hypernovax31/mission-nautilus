@@ -877,9 +877,13 @@ window.Nautilus = {
     /* Lecture prioritaire en Web Audio (buffer decode en silence au
        premier geste) : zero parasite a l'amorcage ET lecture autorisee
        depuis le minuteur. Repli : le lecteur <audio> classique, pour les
-       ordinateurs ou si le decode n'a pas abouti. */
+       ordinateurs ou si le decode n'a pas abouti.
+       RÈGLE ABSOLUE (demande explicite) : sonar coupé = SILENCE TOTAL,
+       même pour l'alarme de fin d'O₂ — l'écran rouge et le compte à
+       rebours restent affichés, mais AUCUN son ne part, par AUCUN des
+       deux chemins. */
     let finJouee = false;
-    const finCtx = _finAlarmAudioCtx();
+    const finCtx = isSoundEnabled() ? _finAlarmAudioCtx() : null;
     if(finCtx && _finAlarmBuf){
       try{
         const src = finCtx.createBufferSource();
@@ -894,7 +898,7 @@ window.Nautilus = {
         finJouee = true;
       }catch(e){ finJouee = false; }
     }
-    if(!finJouee){
+    if(!finJouee && isSoundEnabled()){
       _finAlarmFallbackAudio = new Audio('assets/Submarine_alarm.mp3');
       _finAlarmFallbackAudio.loop = true;
       _finAlarmFallbackAudio.preload = 'auto';
