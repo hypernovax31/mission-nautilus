@@ -36,8 +36,8 @@ from collections import Counter
 MOTS_CANDIDATS = [
     dict(reponse='INVENTAIRE', secteur='bureau',      mode=None,
          indice="le bureau ferme, les scanners s'allument, la nuit commence — chaque référence y passe, sans exception"),
-    dict(reponse='ATTACH',     secteur='rayon',       mode=None,
-         indice="le petit score qui grimpe quand la sacoche, le câble et la garantie partent en caisse avec le PC"),
+    dict(reponse='VINYLE',     secteur='rayon',       mode=None,
+         indice="il a survécu à la cassette et au CD : dans les bacs du rayon musique, le 33 tours reprend chaque année du terrain"),
     dict(reponse='REASSORT',   secteur='stock',       mode=None,
          indice="samedi 14 h, la réserve et le rayon jouent à la navette — et tu es la navette"),
     dict(reponse='DEMARQUE',   secteur='direction',   mode=None,
