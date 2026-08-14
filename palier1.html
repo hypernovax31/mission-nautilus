@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="css/palier1.css?v=19">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
-  <script src="palier-annonces.js?v=1" defer></script>
+  <script src="palier-annonces.js?v=2" defer></script>
   <!-- Journal de bord « Activité en direct », code COMMUN à tous les
        paliers (extrait mot pour mot de cette page). Chargé avant le
        module ci-dessous : window.JournalDeBord est prêt à temps. -->
@@ -2323,6 +2323,10 @@ window.Nautilus = {
 
   async function blockMatelot(reason) {
     if (!state.team || !state.me) return;
+    /* SON DE DÉFAITE à l'éjection du mini-jeu (demande explicite) :
+       assets/Perdu.mp3 retentit — JAMAIS si le site est en sourdine
+       (palier-annonces.js applique la règle absolue du sonar). */
+    try { window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound && window.NautilusAnnonces.playDefeatSound(); } catch (e) {}
     /* NOUVELLE REGLE DU JEU : on ne bloque plus l'equipage entier, mais
        UNIQUEMENT le matelot qui vient d'echouer. Son compteur d'echecs lui
        est propre : son 1er echec coute 1 h, meme si ses camarades en ont
@@ -2483,6 +2487,9 @@ window.Nautilus = {
      blockMatelot() : pas d'incrementation du compteur d'echecs, duree fixe. */
   async function blockMatelotForHint() {
     if (!state.team || !state.me) return;
+    /* Éjection pour indice : même règle — Perdu.mp3 sauf si le site est
+       en sourdine. */
+    try { window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound && window.NautilusAnnonces.playDefeatSound(); } catch (e) {}
     const key = state.me.memberKey;
     /* MODE CONCEPTEUR (partie d'essai) : l'indice ne bride pas non plus
        — blocage immédiatement expiré, le testeur continue sa tournée. */

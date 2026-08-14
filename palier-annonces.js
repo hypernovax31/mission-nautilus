@@ -12,8 +12,10 @@
       Un court message d'encouragement est ajouté pour les
       équipages qui n'ont pas encore franchi ce palier.
 
-   2. SON DE VICTOIRE (assets/Victoire.mp3)
-      Joué avec l'annonce, et sur l'écran « Épreuve validée ! ».
+   2. SONS DE PALIER (assets/Victoire.mp3, assets/Perdu.mp3)
+      Victoire : avec l'annonce, et sur l'écran « Épreuve validée ! ».
+      Perdu : à l'éjection d'un mini-jeu (3 erreurs, indice bloquant…)
+      — sauf si le site est en sourdine, règle absolue partagée.
 
    RÈGLES AUDIO (les mêmes que partout dans le jeu) :
      - interrupteur général « sonar » respecté (nautilusSoundOn) ;
@@ -86,39 +88,84 @@
   const _GESTES = ['pointerdown', 'touchstart', 'mousedown', 'keydown', 'click'];
   function _onFirstGesture() {
     _gestureOk = true;
-    _primeVictorySound();
+    _pisteVictoire.prime();
+    _pisteDefaite.prime();
     _GESTES.forEach((t) => document.removeEventListener(t, _onFirstGesture, true));
   }
   _GESTES.forEach((t) => {
     document.addEventListener(t, _onFirstGesture, { capture: true, passive: true });
   });
 
-  /* ---------- Victoire.mp3 : préparation SILENCIEUSE + lecture ---------- */
-  let _vicCtx = null;     // contexte créé/recréé DANS le premier geste
-  let _vicBuf = null;     // son décodé, prêt à jouer
-  let _vicLoading = null; // décodage en cours (anti-doublon)
-  let _vicFallback = null;// lecteur <audio> de repli
-  let _vicPlaying = false;
-
-  function _victoryAudioCtx() {
-    if (_vicCtx && _vicCtx.state !== 'closed') return _vicCtx;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return null;
-    try { _vicCtx = new AC(); } catch (e) { return null; }
-    if (_vicCtx.state === 'suspended') _vicCtx.resume().catch(() => {});
-    return _vicCtx;
+  /* ---------- Pistes MP3 : Victoire.mp3 & Perdu.mp3 -----------------
+     Même recette pour les deux sons : préparation SILENCIEUSE au
+     premier geste (téléchargement + décodage, JAMAIS de play() muet),
+     lecture via Web Audio, repli <audio> sur PC/Mac/Android.
+     Perdu.mp3 : joué à l'ÉJECTION d'un mini-jeu (3 erreurs, indice
+     bloquant…) — demande explicite — sauf si le site est en sourdine
+     (la règle absolue du son, partagée avec toute la page). */
+  function _creerPiste(src, vol) {
+    let ctx = null, buf = null, loading = null, fallback = null, playing = false;
+    function audioCtx() {
+      if (ctx && ctx.state !== 'closed') return ctx;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { ctx = new AC(); } catch (e) { return null; }
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      return ctx;
+    }
+    function prime() {
+      if (buf || loading) return;
+      const c = audioCtx();
+      if (!c) return; // Web Audio indisponible : le repli <audio> suffira
+      loading = fetch(src)
+        .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+        .then((b) => c.decodeAudioData(b))
+        .then((d) => { buf = d; })
+        .catch(() => { loading = null; });
+    }
+    function play() {
+      if (!_sonAutorise()) return false;
+      if (playing) return false;
+      playing = true;
+      const fin = () => { playing = false; };
+      /* Web Audio d'abord : le contexte a été débloqué DANS le premier
+         geste — une lecture déclenchée ensuite par un événement réseau
+         ou de jeu reste autorisée, y compris sur iPhone. */
+      const c = audioCtx();
+      if (c && buf) {
+        try {
+          if (c.state === 'suspended') c.resume().catch(() => {});
+          const s = c.createBufferSource();
+          s.buffer = buf;
+          const g = c.createGain();
+          g.gain.value = vol;
+          s.connect(g);
+          g.connect(c.destination);
+          s.onended = fin;
+          s.start();
+          return true;
+        } catch (e) { /* on tente le repli ci-dessous */ }
+      }
+      /* Repli <audio> : sur PC/Mac et Android, une lecture démarrée hors
+         geste passe après un premier contact avec la page. */
+      try {
+        const a = fallback || new Audio(src);
+        fallback = a;
+        a.preload = 'auto';
+        a.volume = vol;
+        try { a.currentTime = 0; } catch (e) {}
+        a.onended = fin;
+        a.onerror = fin;
+        const p = a.play();
+        if (p && p.catch) p.catch(() => fin());
+        return true;
+      } catch (e) { fin(); return false; }
+    }
+    return { prime: prime, play: play };
   }
 
-  function _primeVictorySound() {
-    if (_vicBuf || _vicLoading) return;
-    const ctx = _victoryAudioCtx();
-    if (!ctx) return; // Web Audio indisponible : le repli <audio> suffira
-    _vicLoading = fetch('assets/Victoire.mp3')
-      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
-      .then((b) => ctx.decodeAudioData(b))
-      .then((d) => { _vicBuf = d; })
-      .catch(() => { _vicLoading = null; });
-  }
+  const _pisteVictoire = _creerPiste('assets/Victoire.mp3', 0.85);
+  const _pisteDefaite = _creerPiste('assets/Perdu.mp3', 0.85);
 
   function _sonAutorise() {
     try { if (localStorage.getItem('nautilusSoundOn') === '0') return false; } catch (e) {}
@@ -129,44 +176,12 @@
 
   /* Joue Victoire.mp3 si (et seulement si) les règles le permettent.
      Renvoie true si une lecture a été demandée. */
-  function playVictorySound() {
-    if (!_sonAutorise()) return false;
-    if (_vicPlaying) return false;
-    _vicPlaying = true;
-    const fin = () => { _vicPlaying = false; };
-    /* Web Audio d'abord : le contexte a été débloqué DANS le premier
-       geste — la lecture déclenchée ensuite par un événement réseau
-       reste autorisée, y compris sur iPhone. */
-    const ctx = _victoryAudioCtx();
-    if (ctx && _vicBuf) {
-      try {
-        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-        const src = ctx.createBufferSource();
-        src.buffer = _vicBuf;
-        const g = ctx.createGain();
-        g.gain.value = 0.85;
-        src.connect(g);
-        g.connect(ctx.destination);
-        src.onended = fin;
-        src.start();
-        return true;
-      } catch (e) { /* on tente le repli ci-dessous */ }
-    }
-    /* Repli <audio> : sur PC/Mac et Android, une lecture démarrée hors
-       geste passe après un premier contact avec la page. */
-    try {
-      const a = _vicFallback || new Audio('assets/Victoire.mp3');
-      _vicFallback = a;
-      a.preload = 'auto';
-      a.volume = 0.9;
-      try { a.currentTime = 0; } catch (e) {}
-      a.onended = fin;
-      a.onerror = fin;
-      const p = a.play();
-      if (p && p.catch) p.catch(() => fin());
-      return true;
-    } catch (e) { fin(); return false; }
-  }
+  function playVictorySound() { return _pisteVictoire.play(); }
+
+  /* Joue Perdu.mp3 à l'éjection d'un mini-jeu — mêmes règles que le
+     son de victoire : JAMAIS si le site est en sourdine (sonar éteint),
+     jamais sans geste, jamais fenêtre masquée. */
+  function playDefeatSound() { return _pisteDefaite.play(); }
 
   /* ---------- Habillage (injecté une fois) ---------- */
   function _injectStyles() {
@@ -326,6 +341,7 @@
     handleTeamsSnapshot,
     showPalierAnnouncement,
     playVictorySound,
+    playDefeatSound,          // Perdu.mp3 à l'éjection d'un mini-jeu
     encouragementPour
   };
 })();

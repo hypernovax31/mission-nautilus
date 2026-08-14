@@ -329,6 +329,16 @@
     }
   }
 
+  /* Son de défaite (module partagé palier-annonces.js) : joué à
+     l'éjection du mini-jeu, JAMAIS si le sonar est éteint. */
+  function jouerSonDefaite() {
+    try {
+      if (window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound) {
+        window.NautilusAnnonces.playDefeatSound();
+      }
+    } catch (e) {}
+  }
+
   /* 3 erreurs atteintes : le blocage est PERSONNEL quand le matelot est
      identifié (Code Matelot) — sinon repli historique LOCAL à
      l'appareil, réservé aux joueurs anonymes. */
@@ -346,6 +356,10 @@
         journal('🧪 Mode concepteur : 3 erreurs aux Mots Croisés « Code Magasin » — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
         return;
       }
+      /* ÉJECTION RÉELLE (anonyme ou matelot identifié) : Perdu.mp3
+         retentit — demande explicite — sauf si le site est en
+         sourdine (règle absolue, appliquée par palier-annonces.js). */
+      jouerSonDefaite();
       if (ident) {
         window.NautilusBlocages.poserBlocage(ident, 'mots_croises_too_many_errors')
           .then(function (r) {
@@ -511,6 +525,7 @@
 </script>
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
 <script src="sonar-button.js?v=3" defer></script>
+<script src="palier-annonces.js?v=2" defer></script>
 <script src="admin-button.js?v=12" type="module"></script>
 </body>
 </html>
