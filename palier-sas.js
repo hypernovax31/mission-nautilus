@@ -54,7 +54,7 @@
        vues d'avant-partie (scellée, briefing) et dès que l'épreuve
        s'arrête.
 
-   Utilisation : <script src="palier-sas.js?v=8"></script>
+   Utilisation : <script src="palier-sas.js?v=9"></script>
                  <script>NautilusSas.init(2);</script>   // n = palier
    ============================================================= */
 (function () {
@@ -306,13 +306,36 @@
     document.addEventListener('visibilitychange', function () { if (document.hidden) stopCamera(); });
     window.addEventListener('beforeunload', stopCamera);
 
-    /* Équipage affiché en barre du haut (simple mémoire de la navigation).
-       MODE CONCEPTEUR : le compte de test n'appartient à AUCUN équipage —
-       l'équipage réel éventuellement mémorisé sur l'appareil est ignoré
-       (il sera retrouvé intact dès la sortie du mode test). */
+    /* Équipage affiché en barre du haut — celui DU MATELOT CONNECTÉ,
+       jamais une simple mémoire d'appareil.
+
+       BUG CORRIGÉ (signalé sur le briefing du capitaine) : un matelot
+       connecté avec SON code voyait « 🧪 Mode test — aucun équipage ».
+       Cause : depuis l'accueil, la session est VOLONTAIREMENT volatile
+       et le Code Matelot voyage dans l'URL (?m=ABCD-1234) — « le seul
+       vecteur fiable » (commentaire du cockpit). Ce module, lui, ne
+       lisait QUE localStorage : un appareil où traînait encore le code
+       de test ZZZZ-0000 (laissé par un ancien lien concepteur
+       palier1.html?code=NEMO&m=ZZZZ-0000, que rien n'effaçait plus
+       depuis la suppression du bouton « quitter le mode test ») plaquait
+       « Mode test » sur un vrai matelot. Lecture réalignée sur TOUT le
+       site (matelot-blocages.js, palier1.html) : ?m= d'abord — et on le
+       mémorise —, localStorage ensuite. Règle : « Mode test » n'existe
+       QUE pour le code ZZZZ-0000 ; sinon, l'équipage est celui du
+       matelot connecté. */
+    var codeMatelot = '';
+    try {
+      var pm = location.search.match(/[?&]m=([^&]+)/);
+      if (pm && pm[1]) {
+        codeMatelot = decodeURIComponent(pm[1].replace(/\+/g, ' ')).trim().toUpperCase();
+        if (codeMatelot) { try { localStorage.setItem('nautilusMatelotCode', codeMatelot); } catch (e) {} }
+      }
+    } catch (e) {}
+    if (!codeMatelot) {
+      try { codeMatelot = (localStorage.getItem('nautilusMatelotCode') || '').trim().toUpperCase(); } catch (e) {}
+    }
     var equipage = null;
-    var modeTest = false;
-    try { modeTest = (localStorage.getItem('nautilusMatelotCode') || '').trim().toUpperCase() === 'ZZZZ-0000'; } catch (e) {}
+    var modeTest = (codeMatelot === 'ZZZZ-0000');
     try {
       if (!modeTest) {
         var code = localStorage.getItem('nautilusCurrentTeam');
@@ -322,6 +345,25 @@
         $('topTeam').textContent = '🧪 Mode test — aucun équipage';
       }
     } catch (e) {}
+    /* Affinage réseau : la FICHE du matelot fait foi pour l'équipage
+       (identiteCourante corrige d'ailleurs nautilusCurrentTeam au
+       passage si l'appareil traînait un autre équipage). Différé d'un
+       tour d'événements : matelot-blocages.js est alors chargé quel que
+       soit l'ordre des scripts de la page. Hors connexion, la lecture
+       échoue doucement et la mémoire ci-dessus reste affichée —
+       fail-open : on n'efface JAMAIS l'équipage sur un doute réseau. */
+    if (!modeTest) {
+      setTimeout(function () {
+        try {
+          var B = window.NautilusBlocages;
+          if (!B || !B.identiteCourante || !$('topTeam')) return;
+          B.identiteCourante().then(function (ident) {
+            if (!ident || ident.isTest || !ident.teamCode || !$('topTeam')) return;
+            $('topTeam').textContent = NOMS_EQUIPAGES[ident.teamCode] || ident.teamCode;
+          }).catch(function () {});
+        } catch (e) {}
+      }, 0);
+    }
     /* Journal de bord : première ligne du suivi en direct — l'équipage
        vient de franchir la porte de la ZONE SCELLÉE. */
     journal('🛡️ Portail du <b>' + LABEL + '</b> atteint'
