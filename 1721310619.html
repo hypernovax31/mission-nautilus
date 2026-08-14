@@ -126,7 +126,7 @@
      document Firestore de son équipage, JAMAIS dans le seul appareil. -->
 <script src="matelot-blocages.js?v=2"></script>
 <!-- Moteur de mots croisés (générique) + données : 10 mots, un par secteur -->
-<script src="mots-croises.js?v=6"></script>
+<script src="mots-croises.js?v=7"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers (même page de victoire
      que le Palier 1) : badge, stats, panneau pliable « DIRECTION VERS
      LA ZONE DE RECHERCHE ». -->
@@ -319,7 +319,7 @@
     if (n >= max) {
       declencherBlocage();
     } else {
-      statut('⚠️ <b>Mot incorrect (' + n + '/' + max + ').</b> Les lettres fautives clignotent — corrige-les.', 'danger');
+      statut('⚠️ <b>Mot incorrect (' + n + '/' + max + ').</b> Toutes les cases passent au rouge puis le mot se vide tout seul — retape-le en entier.', 'danger');
       journal('⚠️ Mot incorrect aux Mots Croisés « Code Magasin » (' + n + '/' + max + ').', 'warning');
     }
   }

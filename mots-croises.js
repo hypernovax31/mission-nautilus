@@ -20,9 +20,11 @@
    cases verrouillées), retour arrière qui recule, validation
    automatique dès que le mot est COMPLET — même complété
    « par-dessus » un mot voisin : les cases passent alors TOUTES au
-   vert. Mauvaise pioche = lettres fautives qui clignotent rouge et
-   restent éditables (Enter ou la dernière case relancent la
-   validation après correction). Définition validée = badge ✔ vert.
+   vert. Mauvaise pioche = TOUTES les cases non verrouillées passent
+   au rouge (secousse 0,5 s), puis 0,9 s après le mot se VIDE tout
+   seul et se resélectionne : on le retape en entier (les lettres
+   verrouillées par un croisement déjà validé, elles, restent en
+   place et au vert). Définition validée = badge ✔ vert.
    AUCUNE image, AUCUNE dépendance.
    ============================================================= */
 (function () {
