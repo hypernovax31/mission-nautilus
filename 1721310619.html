@@ -91,7 +91,7 @@
   </section>
 
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">✅ PALIER 2 DÉVERROUILLÉ</h2>
+    <h2 id="sasUnlockedTitle">✅ PALIER 2</h2>
     <div class="body">
       <!-- La phrase « ✅ Scellé levé ! … » n'est PLUS une bannière fixe
            ici : c'est une MODAL qui pop puis disparaît (voir
@@ -119,7 +119,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=6"></script>
+<script src="palier-sas.js?v=7"></script>
 <script>window.NautilusSas.init(2);</script>
 <!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers :
      3 erreurs = remise en surface de CE matelot, consignée dans le
@@ -303,11 +303,13 @@
 
   function afficherBlocage(jusqua, nom) {
     afficherJournalDeBord(true);   /* plus personne ne joue : le journal revient */
+    /* Formules reprises du PALIER 1 (renderLostScreen) : « 3 erreurs
+       sur cette tentative », « retour en surface », « passe la barre ». */
     statut(nom
-      ? "🔒 <b>" + esc(nom) + ", 3 erreurs : tu remontes en surface.</b> Reprise possible à <b>"
-        + heureLisible(jusqua) + "</b>. Un coéquipier peut prendre le relais "
+      ? "🔒 <b>3 erreurs sur cette tentative — retour en surface : " + esc(nom) + " passe la barre.</b> Retour possible à <b>"
+        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
         + "avec son Code Matelot — <b>chacun ses erreurs</b>."
-      : "🔒 <b>Trois erreurs : remontée en surface.</b> L'épreuve se déverrouille à <b>"
+      : "🔒 <b>3 erreurs sur cette tentative — retour en surface, tu passes la barre.</b> Reprise possible à <b>"
         + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
         + "pour que tes erreurs restent les tiennes.", 'danger');
     var host = $('mcHost');
@@ -319,8 +321,11 @@
     if (n >= max) {
       declencherBlocage();
     } else {
-      statut('⚠️ <b>Mot incorrect (' + n + '/' + max + ').</b> Toutes les cases passent au rouge puis le mot se vide tout seul — retape-le en entier.', 'danger');
-      journal('⚠️ Mot incorrect aux Mots Croisés « Code Magasin » (' + n + '/' + max + ').', 'warning');
+    /* Code d'erreur repris du PALIER 1 (« ❌ Mauvaise réponse.
+       X chance(s) restante(s). ») : même formule courte, sans jamais
+       révéler quelles lettres sont fausses. */
+    statut('❌ <b>Mauvaise réponse. ' + (max - n) + ' chance(s) restante(s).</b> Toutes les cases passent au rouge puis le mot se vide tout seul — retape-le en entier.', 'danger');
+    journal('❌ Mauvaise réponse aux Mots Croisés « Code Magasin » (' + n + '/' + max + ') — ' + (max - n) + ' chance(s) restante(s).', 'warning');
     }
   }
 
@@ -337,7 +342,7 @@
         /* MODE CONCEPTEUR : jamais de blocage — le testeur vérifie
            chaque palier sans bride (erreurs, demandes d'indice…) et
            rien n'est enregistré. La grille reste jouable. */
-        statut('🧪 <b>Mode concepteur : 3 erreurs atteintes.</b> Aucun blocage en test — la grille reste jouable, rien n’est enregistré.', 'warning');
+        statut('🧪 <b>Mode concepteur : 3 erreurs sur cette tentative.</b> Aucun blocage en test — la grille reste jouable, rien n’est enregistré.', 'warning');
         journal('🧪 Mode concepteur : 3 erreurs aux Mots Croisés « Code Magasin » — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
         return;
       }

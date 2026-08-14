@@ -23,7 +23,7 @@
      <section class="card" id="logCard">… journal de bord …</section>
      <section class="card" id="gateCard">… QR / photo …</section>
      <section class="card gate-unlocked" id="gateUnlocked" hidden>
-       <h2 id="sasUnlockedTitle">✅ PALIER n DÉVERROUILLÉ</h2> …
+       <h2 id="sasUnlockedTitle">✅ PALIER n</h2> …
      </section>
      … tout le contenu du mini-jeu porte class="sas-protege" …
 
@@ -45,7 +45,7 @@
        (journal-bord.js, « Activité en direct »), consultable sur la
        vue scellée (avant-partie) et dès que l'épreuve s'arrête.
 
-   Utilisation : <script src="palier-sas.js?v=6"></script>
+   Utilisation : <script src="palier-sas.js?v=7"></script>
                  <script>NautilusSas.init(2);</script>   // n = palier
    ============================================================= */
 (function () {
@@ -75,7 +75,10 @@
     document.title = 'Mission Nautilus — ' + LABEL;
     if ($('topPalierTitle')) $('topPalierTitle').textContent = LABEL;
     if ($('sasHeroTitle')) $('sasHeroTitle').textContent = '🔒 ' + LABEL.toUpperCase() + ' — ZONE SCELLÉE';
-    if ($('sasUnlockedTitle')) $('sasUnlockedTitle').textContent = '✅ ' + LABEL.toUpperCase() + ' DÉVERROUILLÉ';
+    /* Titre de l'épreuve EN MODE JEU : « ✅ PALIER n » tout court — le
+       mot « DÉVERROUILLÉ » a été supprimé (demande explicite : une fois
+       qu'on joue, plus rien à déverrouiller à l'écran). */
+    if ($('sasUnlockedTitle')) $('sasUnlockedTitle').textContent = '✅ ' + LABEL.toUpperCase();
 
     /* ---------- Verrouillage du contenu protégé ----------
        Tant que le sas est fermé, tout élément .sas-protege (le futur
