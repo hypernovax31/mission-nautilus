@@ -66,11 +66,11 @@
 /* =============================================================
    MODAL ÉPHÉMÈRE « ✅ SCELLÉ LEVÉ ! »
    Elle POP au premier plan quand le sas s'ouvre (scan réussi ou sas
-   déjà mémorisé), puis DISPARAÎT d'elle-même en fondu : il ne reste
-   alors QUE l'encart de l'épreuve du palier. Séquence pilotée par
-   popModalScelleLeve() dans 1721310619.html (~2,6 s + fondu .35 s),
-   aucune interaction requise. Remplace l'ancienne bannière fixe de
-   la carte déverrouillée.
+   déjà mémorisé), par-dessus le BRIEFING DU CAPITAINE qui prend alors
+   l'écran, puis DISPARAÎT d'elle-même en fondu : il ne reste alors
+   QUE le briefing. Séquence pilotée par popModalScelleLeve() dans
+   1721310619.html (~2,6 s + fondu .35 s), aucune interaction requise.
+   Remplace l'ancienne bannière fixe de la carte déverrouillée.
    ============================================================= */
 .modal-sas{
   position:fixed; inset:0; z-index:90; margin:0;
@@ -101,11 +101,19 @@
 .gate-unlocked{ border-color:rgba(91,255,156,.5); }
 .gate-unlocked h2{ color:#5be09b; }
 
+/* BRIEFING DU CAPITAINE (#briefCard) : vue obligatoire entre la ZONE
+   SCELLÉE (sas QR) et l'épreuve, sur TOUS les paliers de la mission
+   (Palier 2 → final). AUCUN style dédié ici : la carte réutilise
+   .card / .body de palier1.css et le bloc rendu par palier-briefing.js
+   réutilise EXACTEMENT les classes .brief du briefing du Palier 1
+   (.brief-signature, .brief-intro, .brief-list, .brief-cta). */
+
 /* MISE EN PAGE « AU MOMENT DE JOUER » : pendant les mots croisés, la
    page ne laisse QUE la carte de l'épreuve (le journal de bord s'est
-   rangé : il vit sur la vue du portail scellé, le « briefing » du
-   palier). Même scène unique qu'au Palier 1 : liseré d'or renforcé et
-   halo doux, avec transition courte pour un basculement sans à-coup. */
+   rangé : il vit sur les vues d'avant-partie — portail scellé et
+   briefing du capitaine). Même scène unique qu'au Palier 1 : liseré
+   d'or renforcé et halo doux, avec transition courte pour un
+   basculement sans à-coup. */
 .gate-unlocked{ transition:border-color .3s ease, box-shadow .3s ease, background .3s ease; }
 .gate-unlocked.epreuve-focus{
   border-color:rgba(245,176,39,.6);

@@ -22,6 +22,9 @@
      </section>
      <section class="card" id="logCard">… journal de bord …</section>
      <section class="card" id="gateCard">… QR / photo …</section>
+     <section class="card" id="briefCard" hidden>
+       <div class="body"><div id="briefHost"></div></div>
+     </section>
      <section class="card gate-unlocked" id="gateUnlocked" hidden>
        <h2 id="sasUnlockedTitle">✅ PALIER n</h2> …
      </section>
@@ -32,20 +35,26 @@
        Code), « 🔒 PALIER n — ZONE SCELLÉE », le journal de bord et le
        sas QR sont à l'écran — le mini-jeu reste VERROUILLÉ ;
      • dès que le sas est ouvert (scan réussi, sas déjà mémorisé,
-       aperçu admin), la page bascule sur la VUE ÉPREUVE : SEUL
-       l'encart du mini-jeu reste — le héros « ZONE SCELLÉE », le
-       journal et le sas se retirent (la zone ne l'est plus) ;
+       aperçu admin), la page bascule sur la VUE BRIEFING DU CAPITAINE
+       (palier-briefing.js — explication immersive du thème, SANS
+       dévoiler le contenu, mise en page du Palier 1) : vue
+       OBLIGATOIRE entre la ZONE SCELLÉE et le mini-jeu sur TOUS les
+       paliers de la mission (Palier 2 → final) — son bouton
+       « ⚓ PRENDRE LES COMMANDES » mène à la VUE ÉPREUVE, où SEUL
+       l'encart du mini-jeu reste ;
      • tant que le sas est fermé, tout élément .sas-protege reste
        caché : IMPOSSIBLE de toucher au mini-jeu ;
      • déblocage = QR caméra, ou PHOTO du QR importée ;
      • une fois ouvert, on le mémorise sur l'appareil
        (localStorage), l'équipage n'a pas à refaire le scan à chaque
-       visite — la page rejoint alors DIRECTEMENT le mini-jeu ;
+       visite — la page rejoint alors DIRECTEMENT le briefing du
+       capitaine, sans repasser par le sas ;
      • chaque événement est consigné dans le JOURNAL DE BORD commun
-       (journal-bord.js, « Activité en direct »), consultable sur la
-       vue scellée (avant-partie) et dès que l'épreuve s'arrête.
+       (journal-bord.js, « Activité en direct »), consultable sur les
+       vues d'avant-partie (scellée, briefing) et dès que l'épreuve
+       s'arrête.
 
-   Utilisation : <script src="palier-sas.js?v=7"></script>
+   Utilisation : <script src="palier-sas.js?v=8"></script>
                  <script>NautilusSas.init(2);</script>   // n = palier
    ============================================================= */
 (function () {
@@ -123,8 +132,10 @@
       var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
       revelerContenuProtege();
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      /* Signal unique pour TOUTES les pages de palier : le mini-jeu de la
-         page démarre exactement à ce moment (écoute 'nautilus:sas-ouvert'). */
+      /* Signal unique pour TOUTES les pages de palier : la page fait
+         alors entrer dans le BRIEFING DU CAPITAINE (écoute
+         'nautilus:sas-ouvert') — l'épreuve ne s'arme qu'après le
+         « ⚓ PRENDRE LES COMMANDES » du briefing, sur toute la mission. */
       try { window.dispatchEvent(new Event('nautilus:sas-ouvert')); } catch (e) {}
     }
 
@@ -318,8 +329,9 @@
       + ' : en attente du QR Code de la zone de recherche.', 'info');
 
     /* Retour sur la page avec le sas déjà ouvert : le contenu protégé
-       est montré aussitôt — le script de la page range alors héros,
-       journal et sas pour ne laisser QUE l'encart du mini-jeu. */
+       est montré aussitôt — le script de la page fait alors entrer
+       dans le BRIEFING DU CAPITAINE (héros et sas rangés), et le
+       mini-jeu n'apparaît qu'après « ⚓ PRENDRE LES COMMANDES ». */
     if (sasForceFerme()) {
       /* Concepteur : le portail se montre SCELLÉ même si le sas est déjà
          ouvert sur cet appareil — tout est en place pour viser le vrai
@@ -332,7 +344,7 @@
       var carte = $('gateCard'); if (carte) carte.hidden = true;
       var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
       revelerContenuProtege();
-      journal('🔓 Sas déjà ouvert sur cet appareil : le portail déverrouillé s’affiche directement.', 'success');
+      journal('🔓 Sas déjà ouvert sur cet appareil : le briefing du capitaine s’affiche directement.', 'success');
     } else {
       cacherContenuProtege();
     }

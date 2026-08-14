@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=19">
-  <link rel="stylesheet" href="css/palier2.css?v=13">
+  <link rel="stylesheet" href="css/palier2.css?v=14">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -29,7 +29,8 @@
   <!-- Héros « ZONE SCELLÉE » : visible SEULEMENT quand la zone est
        réellement scellée (en attente du QR Code). Dès que le sas est
        ouvert — scan réussi, sas déjà mémorisé ou aperçu admin — il se
-       retire avec le reste de la vue « briefing ». -->
+       retire avec le reste de la vue scellée, au profit du BRIEFING
+       DU CAPITAINE (#briefCard, juste après le sas). -->
   <section class="card gate-hero" id="gateHero">
     <h2 id="sasHeroTitle">🔒 PALIER 2 — ZONE SCELLÉE</h2>
     <div class="body">
@@ -45,12 +46,13 @@
     </div>
   </section>
 
-  <!-- Journal de bord (live) : placé EN HAUT de la VUE SCELLÉE, entre
-       le héros et le sas — la vue « briefing » d'avant-partie (comme
-       sur le Palier 1, où le journal précède la carte de l'épreuve).
-       Il n'apparaît QUE là : dès que le mini-jeu démarre, il se retire
-       pour ne laisser QUE l'encart du mini-jeu (il ne revient que
-       quand l'épreuve s'arrête : blocage, victoire). -->
+  <!-- Journal de bord (live) : consultable sur les DEUX vues
+       d'avant-partie — la VUE SCELLÉE (en haut, entre le héros et le
+       sas) et le BRIEFING DU CAPITAINE — comme sur le Palier 1, où le
+       journal précède la carte de l'épreuve. Dès que le mini-jeu
+       démarre, il se retire pour ne laisser QUE l'encart du mini-jeu
+       (il ne revient que quand l'épreuve s'arrête : blocage,
+       victoire). -->
   <section class="card" id="logCard">
     <h2>📜 JOURNAL DE BORD</h2>
     <div class="body">
@@ -90,13 +92,26 @@
     </div>
   </section>
 
+  <!-- BRIEFING DU CAPITAINE — vue OBLIGATOIRE entre la ZONE SCELLÉE et
+       l'épreuve, sur TOUS les paliers de la mission (Palier 2 →
+       final) : explication immersive du thème du mini-jeu, SANS
+       dévoiler le contenu, avec la mise en page du Palier 1 (classes
+       .brief de css/palier1.css). Le bloc est rendu par le module
+       COMMUN palier-briefing.js ; la vue est montrée par
+       afficherVueBriefing() dès que le sas est ouvert. -->
+  <section class="card" id="briefCard" hidden>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
     <h2 id="sasUnlockedTitle">✅ PALIER 2</h2>
     <div class="body">
       <!-- La phrase « ✅ Scellé levé ! … » n'est PLUS une bannière fixe
            ici : c'est une MODAL qui pop puis disparaît (voir
            #modalSasOuvert en fin de page + popModalScelleLeve()). -->
-      <div id="mcStatut" class="mc-statut">✍️ <b>10 balises « Code Magasin »</b> — le jargon expert de chaque secteur. L'indice raconte la scène, jamais le mot : à toi de traduire.</div>
+      <div id="mcStatut" class="mc-statut">⏳ <b>Préparation de la grille…</b></div>
       <div id="mcHost"></div>
       <a class="gate-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
@@ -105,8 +120,8 @@
 
 <!-- MODAL ÉPHÉMÈRE « ✅ Scellé levé ! » : elle POP au premier plan
      quand le sas s'ouvre (scan réussi ou sas déjà mémorisé), puis
-     DISPARAÎT d'elle-même en fondu — il ne reste alors QUE l'encart
-     de l'épreuve du palier. Pilotée par popModalScelleLeve() dans le
+     DISPARAÎT d'elle-même en fondu — il ne reste alors QUE le
+     briefing du capitaine. Pilotée par popModalScelleLeve() dans le
      script du jeu ; styles .modal-sas dans css/palier2.css. -->
 <div class="modal-sas" id="modalSasOuvert" hidden role="status" aria-live="polite">
   <div class="modal-sas-bulle">✅ <b>Scellé levé&nbsp;!</b> Le QR Code a ouvert le sas du Palier 2 sur cet appareil.</div>
@@ -119,7 +134,12 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=7"></script>
+<script src="palier-sas.js?v=8"></script>
+<!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2 :
+     la vue d'explication immersive du thème (SANS dévoiler le
+     contenu) entre la ZONE SCELLÉE et le mini-jeu — mise en page du
+     Palier 1. Toute la logique vit dans palier-briefing.js. -->
+<script src="palier-briefing.js?v=1"></script>
 <script>window.NautilusSas.init(2);</script>
 <!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers :
      3 erreurs = remise en surface de CE matelot, consignée dans le
@@ -241,16 +261,26 @@
     el.className = 'mc-statut' + (kind ? ' is-' + kind : '');
   }
 
-  /* ================= DEUX VUES SEULEMENT =================
-     1) VUE SCELLÉE — la vue « briefing », montrée SEULEMENT quand la
-        zone est réellement scellée (en attente du QR Code) : héros
-        🔒 ZONE SCELLÉE + 📜 JOURNAL DE BORD + 📷 sas QR.
-     2) VUE ÉPREUVE — dès que le sas est ouvert (scan réussi, sas déjà
-        mémorisé sur l'appareil ou aperçu admin) : SEUL l'encart du
-        mini-jeu reste à l'écran — ni héros « ZONE SCELLÉE », ni
-        journal, ni sas. Le journal de bord ne réapparaît que quand
-        l'épreuve s'arrête (blocage, victoire) : c'est le seul moment
-        « hors mini-jeu » où on le consulte. */
+  /* ================= TROIS VUES EN SÉQUENCE =================
+     Enchaînement imposé sur TOUTE la mission (Palier 2 → final) :
+     ZONE SCELLÉE → BRIEFING DU CAPITAINE → ÉPREUVE.
+
+     1) VUE SCELLÉE — montrée SEULEMENT quand la zone est réellement
+        scellée (en attente du QR Code) : héros 🔒 ZONE SCELLÉE +
+        📜 JOURNAL DE BORD + 📷 sas QR.
+     2) VUE BRIEFING DU CAPITAINE — montrée dès que le sas est ouvert
+        (scan réussi, sas déjà mémorisé sur l'appareil ou aperçu
+        admin) et AVANT le mini-jeu : explication immersive du thème
+        SANS dévoiler le contenu (mise en page du Palier 1, module
+        commun palier-briefing.js). Le journal de bord reste
+        consultable là, exactement comme sur la vue d'avant-partie
+        du Palier 1 — héros « ZONE SCELLÉE » et sas, eux, se rangent
+        (la zone n'est plus scellée). Le « ⚓ PRENDRE LES COMMANDES »
+        du briefing arme la partie (lancer()).
+     3) VUE ÉPREUVE — SEUL l'encart du mini-jeu reste à l'écran — ni
+        héros, ni journal, ni sas, ni briefing. Le journal de bord ne
+        réapparaît que quand l'épreuve s'arrête (blocage, victoire) :
+        c'est le seul moment « hors mini-jeu » où on le consulte. */
   function montrerCarte(id, visible) {
     var el = $(id);
     if (!el) return;
@@ -261,21 +291,34 @@
     montrerCarte('gateHero', true);
     montrerCarte('logCard', true);
     montrerCarte('gateCard', true);
+    montrerCarte('briefCard', false);
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueBriefing() {
+    montrerCarte('gateHero', false);
+    montrerCarte('logCard', true);
+    montrerCarte('gateCard', false);
+    montrerCarte('briefCard', true);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+    /* La modal « ✅ Scellé levé ! » POP à l'entrée de cette vue :
+       là où elle surgissait déjà — juste après l'ouverture du sas. */
+    popModalScelleLeve();
   }
   function afficherVueEpreuve() {
     montrerCarte('gateHero', false);
     montrerCarte('logCard', false);
     montrerCarte('gateCard', false);
+    montrerCarte('briefCard', false);
     montrerCarte('gateUnlocked', true);
     var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
   }
   /* ---------- MODAL ÉPHÉMÈRE « ✅ Scellé levé ! » ----------
      Elle remplace l'ancienne bannière FIXE de la carte déverrouillée :
-     elle POP au premier plan quand la partie démarre, reste ~2,6 s,
-     puis DISPARAÎT d'elle-même en fondu — il ne reste alors QUE
-     l'encart de l'épreuve du palier. */
+     elle POP au premier plan quand le sas vient de s'ouvrir (entrée
+     dans la vue briefing du capitaine), reste ~2,6 s, puis DISPARAÎT
+     d'elle-même en fondu — il ne reste alors QUE le briefing. */
   var _modalSasT = [];
   function popModalScelleLeve() {
     var m = $('modalSasOuvert');
@@ -293,8 +336,8 @@
     }, 2950));
   }
   /* Fin d'épreuve (blocage, victoire) : le journal revient SOUS la
-     carte du mini-jeu — le héros « ZONE SCELLÉE » et le sas, eux,
-     restent rangés : la zone n'est plus scellée. */
+     carte du mini-jeu — le héros « ZONE SCELLÉE », le sas et le
+     briefing restent rangés : la zone n'est plus scellée. */
   function afficherJournalDeBord(visible) {
     montrerCarte('logCard', visible);
     var carte = $('gateUnlocked');
@@ -302,6 +345,11 @@
   }
 
   function afficherBlocage(jusqua, nom) {
+    /* Verdict lu DEPUIS le briefing (clic « PRENDRE LES COMMANDES »
+       d'un matelot encore en surface) : on entre d'abord dans la vue
+       épreuve, qui porte ce message — appel sans effet quand on y est
+       déjà (éjection en pleine partie). */
+    afficherVueEpreuve();
     afficherJournalDeBord(true);   /* plus personne ne joue : le journal revient */
     /* Formules reprises du PALIER 1 (renderLostScreen) : « 3 erreurs
        sur cette tentative », « retour en surface », « passe la barre ». */
@@ -487,8 +535,7 @@
         if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
       }
     }
-    afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas) */
-    popModalScelleLeve();  /* « ✅ Scellé levé ! » en modal : elle POP puis disparaît d'elle-même */
+    afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas, ni briefing) */
     t0Partie = Date.now(); /* chrono du bilan de l'écran de victoire */
     statut("✍️ <b>10 mots du jargon maison</b> — lis la scène, trouve le mot du métier : <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
     window.NautilusMotsCroises.init($('mcHost'), {
@@ -500,27 +547,65 @@
     });
   }
 
-  /* Démarrage : on choisit la VUE avant de lancer l'épreuve.
-     — aperçu admin ou sas déjà ouvert ici → VUE ÉPREUVE directe : la
-       zone n'est PAS scellée, « ZONE SCELLÉE » n'a pas à apparaître,
-       on commence par l'encart du mini-jeu ;
+  /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
+     Règle de TOUTE la mission (Palier 2 → final) : APRÈS la ZONE
+     SCELLÉE (déverrouillage par QR Code) et AVANT la page qui joue au
+     mini-jeu, le briefing explique le thème de l'épreuve de façon
+     immersive et IMPLICITE — jamais le contenu (ni mot, ni réponse,
+     ni grille) — avec la mise en page du Palier 1, rendue par le
+     module commun palier-briefing.js. « ⚓ PRENDRE LES COMMANDES »
+     arme réellement la partie (lancer() : blocage vérifié en réseau,
+     vue épreuve, grille). */
+  window.NautilusBriefing.afficher($('briefHost'), {
+    /* Thème du « Code Magasin », raconté sans le livrer : les mots
+       exacts, les secteurs du jargon, la grille — rien ne fuite. */
+    intro: "Chaque bulle remontée de ce secteur raconte une <b>scène du métier</b>, jamais le mot : à toi de le traduire sur la grille.",
+    consignes: [
+      { ico: '✍️', html: "<b>10 mots croisés</b> — le jargon expert de chaque secteur du magasin." },
+      { ico: '⏱️', html: "<b>Aucun chronomètre</b> : la plongée se fait au calme." },
+      { ico: '❌', warn: true, html: "<b>3 erreurs</b> : le matelot remonte en surface." },
+      { ico: '🤝', html: "Un autre matelot reprend la barre avec son Code Matelot — <b>chacun ses erreurs</b>." }
+    ],
+    cta: '⚓ PRENDRE LES COMMANDES',
+    onDepart: function () {
+      glisserEnHaut();
+      lancer();
+      setTimeout(glisserEnHaut, 350);
+      setTimeout(glisserEnHaut, 900);
+    }
+  });
+
+  /* SCROLL au départ de l'épreuve — reprise du geste du Palier 1
+     (« PRENDRE LES COMMANDES » glisse vers l'encart du mini-jeu) :
+     la vue épreuve est la scène unique, on plaque son haut sous la
+     barre. Sur grand écran où tout tient déjà, rien ne bouge —
+     c'est normal ; sur téléphone, la grille arrive sous les yeux. */
+  function glisserEnHaut() {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    catch (e) { try { window.scrollTo(0, 0); } catch (_) {} }
+  }
+
+  /* Démarrage : on choisit la VUE — l'épreuve, elle, ne s'arme QUE
+     depuis le « ⚓ PRENDRE LES COMMANDES » du briefing.
+     — aperçu admin ou sas déjà ouvert ici → VUE BRIEFING : la zone
+       n'est PAS scellée (« ZONE SCELLÉE » n'a pas à apparaître), mais
+       le mini-jeu n'apparaît qu'après le briefing du capitaine —
+       enchaînement valable sur toute la mission ;
      — page scellée forcée (?sas=ferme, test du QR concepteur) ou sas
-       fermé → VUE SCELLÉE : briefing + journal + sas QR ;
-     — le scan réussi ('nautilus:sas-ouvert') bascule de l'une à
-       l'autre en direct. */
+       fermé → VUE SCELLÉE : héros + journal + sas QR ;
+     — le scan réussi ('nautilus:sas-ouvert') fait entrer dans la
+       VUE BRIEFING en direct. */
   if (apercuAdminAutorise()) {
-    afficherVueEpreuve();
-    lancer();
+    afficherVueBriefing();
   } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
     /* Concepteur : la page reste scellée, on attend le vrai scan du QR. */
     afficherVueScellee();
   } else if (window.NautilusSas.estDeverrouille(2)) {
-    afficherVueEpreuve();
-    lancer();
+    afficherVueBriefing();
   } else {
     afficherVueScellee();
   }
-  window.addEventListener('nautilus:sas-ouvert', function () { afficherVueEpreuve(); lancer(); });
+  window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
 })();
 </script>
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
