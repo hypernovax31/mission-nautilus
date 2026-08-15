@@ -204,13 +204,13 @@
       margin:0 !important
     }
     /* Boutons compacts (save/delete/unlock) — ne PAS hériter du button global 48px */
-    .me-save,.me-del,.lk-save,.lk-unlock,.tt-save,.tt-del{
+    .me-save,.me-del,.tt-save,.tt-del{
       width:auto !important;min-width:32px !important;height:30px !important;
       min-height:30px !important;padding:0 10px !important;margin:0 !important;
       font-size:14px !important;line-height:1;border-radius:6px;
       display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto
     }
-    .me-save:hover,.me-del:hover,.lk-save:hover,.lk-unlock:hover,.tt-save:hover,.tt-del:hover{
+    .me-save:hover,.me-del:hover,.tt-save:hover,.tt-del:hover{
       transform:none !important
     }
     /* Stack horizontal pour les boutons */
@@ -237,11 +237,11 @@
        datetime-local sous leur largeur utile (~190px) : on bascule en
        2 colonnes plus tot. */
     @media(max-width:860px){
-      .admin-form-grid,.admin-form-grid-6{grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:8px 12px}
-      .admin-form-grid>label,.admin-form-grid-6>label{text-align:left;padding-right:0;white-space:normal}
+      .admin-form-grid{grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:8px 12px}
+      .admin-form-grid>label{text-align:left;padding-right:0;white-space:normal}
     }
     @media(max-width:560px){
-      .admin-form-grid,.admin-form-grid-6{grid-template-columns:1fr;gap:8px}
+      .admin-form-grid{grid-template-columns:1fr;gap:8px}
     }
     .admin-actions-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
     .admin-actions-row>button{flex:1 1 180px;min-width:0;margin:0 !important;padding:8px 12px !important;font-size:12px !important;min-height:36px !important;border-radius:8px;width:auto}

@@ -4,8 +4,6 @@
    ============================================================= */
 
 .gate-hero .body{ display:block; }
-.gate-lead{ color:#dff6ff; font-size:14px; line-height:1.55; margin:0 0 4px; }
-.gate-scan-lead{ color:#dff6ff; font-size:14px; line-height:1.5; margin:0 0 10px; }
 
 /* Encart de scan : cadre pointillé or, façon « zone d'amarrage ». */
 .gate-scanbox{
@@ -133,9 +131,6 @@
    remplace l'ancienne phrase d'explication — renvoie sur palier1.html
    ?relecture=sas, c'est-à-dire l'écran de relecture de la direction
    du QR du palier précédent. */
-.gate-retour{ display:inline-block; text-decoration:none; margin:2px 0 6px; }
-.gate-retour:hover{ filter:brightness(1.08); }
-
 /* =============================================================
    MOTS CROISÉS « ESCALE LABÈGE » (moteur mots-croises.js)
    REFAITE CONTRASTES : cases « papier » claires sur fond abyssal

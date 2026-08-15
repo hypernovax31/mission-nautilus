@@ -12,7 +12,7 @@
 
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
@@ -83,7 +83,7 @@
       link.rel = 'stylesheet';
       // Versionné pour ne jamais réutiliser l'ancienne feuille corrompue du
       // cache PWA sur les pages palier et classement.
-      link.href = 'css/admin.css?v=3';
+      link.href = 'css/admin.css?v=4';
       document.head.appendChild(link);
     }
     const wrap = document.createElement('div');
