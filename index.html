@@ -437,8 +437,28 @@
   let palierLaunchNotice=false;
   let missionConfig=null;
   let heartbeatTimer=null;
-  // ID de session 100% volatil (regenere a chaque load). JAMAIS persiste.
-  const SESSION_ID = 'P-' + Math.random().toString(36).slice(2,10).toUpperCase() + Date.now().toString(36).toUpperCase();
+  /* Identifiant d'appareil PERSISTANT (localStorage, même clé que
+     palier1.html). Le même appareil garde donc la même clé d'un
+     chargement à l'autre.
+
+     BUG CORRIGÉ : l'ancien identifiant était 100 % volatil (régénéré à
+     CHAQUE chargement). Chaque rechargement ajoutait alors une entrée
+     fraîche dans onlinePlayers, et le compteur « En ligne » montait de
+     1 à chaque fois (1 connecté, puis 2, 3…) alors que c'était toujours
+     le même matelot. Avec une clé persistante, le battement de cœur
+     écrase sa propre entrée au lieu d'en ajouter une nouvelle. */
+  function getClientId(){
+    try{
+      let id = localStorage.getItem('nautilusClientId');
+      if(!id){
+        id = 'P-' + Math.random().toString(36).slice(2,10).toUpperCase();
+        localStorage.setItem('nautilusClientId', id);
+      }
+      return id;
+    }catch(e){ /* mémoire indisponible : identifiant volatil de secours */ }
+    return 'P-' + Math.random().toString(36).slice(2,10).toUpperCase();
+  }
+  const SESSION_ID = getClientId();
   const $=id=>document.getElementById(id);
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const normalize=s=>String(s||'').trim().toUpperCase();
