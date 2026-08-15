@@ -564,13 +564,17 @@
      vue épreuve, grille). */
   window.NautilusBriefing.afficher($('briefHost'), {
     /* Thème du « Code Magasin », raconté sans le livrer : les mots
-       exacts, les secteurs du jargon, la grille — rien ne fuite. */
-    intro: "Chaque bulle remontée de ce secteur raconte une <b>scène du métier</b>, jamais le mot : à toi de le traduire sur la grille.",
+       exacts, les secteurs du jargon, la grille — rien ne fuite.
+       Formulation arrêtée par l'organisation : « illustre », « sans
+       jamais utiliser le mot », déchiffrage collectif (« À vous »). */
+    intro: "Chaque bulle remontée de ce secteur illustre une <b>scène du métier</b>, sans jamais utiliser le mot. À vous de la déchiffrer sur la grille.",
     consignes: [
       { ico: '✍️', html: "<b>10 mots croisés</b> — le jargon expert de chaque secteur du magasin." },
       { ico: '⏱️', html: "<b>Aucun chronomètre</b> : la plongée se fait au calme." },
-      { ico: '❌', warn: true, html: "<b>3 erreurs</b> : le matelot remonte en surface." },
-      { ico: '🤝', html: "Un autre matelot reprend la barre avec son Code Matelot — <b>chacun ses erreurs</b>." }
+      { ico: '❌', warn: true, html: "<b>3 erreurs</b> : le matelot remonte en surface." }
+      /* La 4e consigne (releve par Code Matelot) a ete RETIREE sur
+         demande de l'organisation : trois lignes suffisent, la releve
+         se decouvre en jouant. */
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
