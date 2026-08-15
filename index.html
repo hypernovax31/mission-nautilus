@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=19">
+  <link rel="stylesheet" href="css/index.css?v=20">
   <link rel="stylesheet" href="css/hublots.css?v=13">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
@@ -2616,30 +2616,38 @@ function qrDataUri(text, opts){
       const qrUrl = matelotQrUri(matelotCode, chosen.teamCode);
       $('registerMsg').innerHTML =
         '<div class="notice success matelot-card">' +
-          '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
-          /* ENCART ROUGE : la regle du Code Matelot, en clair.
-             L'ancien texte tenait sur une ligne et disait surtout ce qu'il
-             NE FALLAIT PAS oublier ("usage unique", "plus jamais
-             affiche"), sans jamais expliquer A QUOI SERT ce code ni QUAND
-             on en a besoin. Le matelot le notait donc sans savoir
-             pourquoi — et beaucoup ne le notaient pas du tout.
-             Trois lignes desormais, dans l'ordre des questions qu'on se
-             pose : c'est quoi, qu'est-ce que j'en fais, pourquoi. */
+          /* BANDEAU D'ACCUEIL : le message le plus important de la carte
+             ("qui je suis, avec quel equipage je pars"). Presente comme un
+             panneau de cockpit, pas comme un paragraphe : c'est la seule
+             information d'identite de l'ecran, le matelot doit la voir en
+             premier. Avant : un simple <p> de 15 px, noye entre l'encart
+             rouge et le code, et meme masque par la barre flottante sur
+             un petit telephone. */
+          '<div class="matelot-welcome">' +
+            '<span class="matelot-welcome-ico" aria-hidden="true">&#x2693;</span>' +
+            '<p class="matelot-welcome-txt"><b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
+          '</div>' +
+          /* ENCART ROUGE : la regle du Code Matelot, reduite a
+             L'ESSENTIEL. Trois lignes, une seule idee par ligne :
+             1. quoi faire tout de suite (le noter, car affichage unique),
+             2. la regle d'equipage (jamais partage),
+             3. a quoi il sert (revenir en jeu, quel que soit l'appareil).
+             Retires : "chaque matelot a le sien" (evident apres
+             "personnel"), "a tout moment" (redondant avec "revenir"),
+             "Sans lui, tu perds ta progression" (deja dit par
+             "une seule fois" et "revenir dans la partie"). */
           '<div class="matelot-alert" role="alert">' +
             '<span class="matelot-alert-ico" aria-hidden="true">&#x26A0;</span>' +
             '<div class="matelot-alert-txt">' +
               '<b class="matelot-alert-titre">Ce code, c\'est ta place à bord.</b>' +
               '<span class="matelot-alert-l">' +
-                '<b>1.</b> Il s\'affiche <b>une seule fois</b>, maintenant. ' +
-                'Note-le, ou enregistre le QR Code.' +
+                '<b>1.</b> Il s\'affiche <b>une seule fois</b> : note-le <b>maintenant</b>, ou garde le QR.' +
               '</span>' +
               '<span class="matelot-alert-l">' +
-                '<b>2.</b> Il est <b>personnel</b> : ne le donne à personne, ' +
-                'chaque matelot a le sien.' +
+                '<b>2.</b> Il est <b>personnel</b> : ne le donne à personne.' +
               '</span>' +
               '<span class="matelot-alert-l">' +
-                '<b>3.</b> Il te fait <b>revenir dans la partie</b> à tout moment, ' +
-                'depuis n\'importe quel téléphone. Sans lui, tu perds ta progression.' +
+                '<b>3.</b> Il te fait <b>revenir dans la partie</b>, sur n\'importe quel téléphone.' +
               '</span>' +
             '</div>' +
           '</div>' +

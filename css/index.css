@@ -362,7 +362,26 @@
     }
     /* --- Encart d'embarquement : code matelot + QR alignes --- */
     .matelot-card{padding:clamp(16px,3.5vw,22px)}
-    .matelot-welcome{margin:0 0 8px;font-size:clamp(15px,2.4vw,17px);line-height:1.45}
+    /* BANDEAU D'ACCUEIL : traite comme un panneau de cockpit (fond
+       abysse, lisere cyan, noms en or) car c'est le message le plus
+       important de la carte : il dit au matelot QUI il est et AVEC QUI
+       il joue. Avant, un simple paragraphe de 15 px passait entre
+       l'encart rouge et le code sans etre vu. */
+    .matelot-welcome{display:flex;align-items:center;justify-content:center;gap:12px;
+      margin:0 0 16px;padding:13px 18px;border-radius:14px;
+      background:linear-gradient(135deg,#071a2b,#0b2d44);
+      border:1px solid rgba(142,231,255,.4);
+      box-shadow:0 10px 24px rgba(4,18,30,.30), inset 0 1px 0 rgba(255,255,255,.10);
+      animation:matelotWelcomeIn .55s ease-out both}
+    .matelot-welcome-ico{flex:0 0 auto;font-size:1.5em;line-height:1;color:var(--fnac);
+      filter:drop-shadow(0 2px 5px rgba(0,0,0,.45))}
+    .matelot-welcome-txt{margin:0;color:#eaf7ff;font-weight:800;line-height:1.4;
+      font-size:clamp(16px,2.9vw,20px);text-align:center}
+    .matelot-welcome-txt b{color:var(--fnac);font-weight:1000;
+      text-shadow:0 0 14px rgba(245,176,39,.35)}
+    /* Entree en scene UNIQUE (la carte est injectee une seule fois par
+       inscription) : le leger mouvement attire l'oeil sur le bandeau. */
+    @keyframes matelotWelcomeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
     /* Invitation a aller voir son equipage sur le sonar. Volontairement
        plus discrete que le message de bienvenue : c'est une suggestion,
        pas une consigne. */
@@ -387,7 +406,11 @@
        melangeaient et le matelot n'en retenait aucune. */
     .matelot-alert-txt{display:flex;flex-direction:column;gap:5px;min-width:0}
     .matelot-alert-titre{font-size:calc(var(--fs-small) + 1px);letter-spacing:.01em}
-    .matelot-alert-l{font-weight:700;line-height:1.45}
+    /* Retrait suspendu : quand une regle tient sur deux lignes (petit
+       telephone), la seconde revient sous le TEXTE, pas sous le numero :
+       la liste reste lisible comme une vraie liste. */
+    .matelot-alert-l{font-weight:700;line-height:1.45;
+      padding-left:1.5em;text-indent:-1.5em}
     .matelot-alert-l b{font-weight:900}
     /* L'icone se cale en haut : sur trois lignes, la centrer verticalement
        la detacherait du titre auquel elle se rapporte. */
