@@ -482,6 +482,9 @@
     .lock-screen--lost .lock-heading-icon{background:rgba(255,75,62,.13);border-color:rgba(255,123,114,.4);color:#ffb0aa;}
     .lock-kicker,.lock-card-label{margin:0;color:#8ee7ff;font-size:10px;font-weight:1000;letter-spacing:.12em;line-height:1.2;text-transform:uppercase;}
     .lock-screen--lost .lock-kicker{color:#ffb0aa;}
+    /* Ligne d'ambiance de la « Remontée forcée ! » : une phrase, en
+       italique — l'immersion sans pavé de texte. */
+    .lock-flavor{margin:-4px 0 13px;color:#ffb0aa;font-size:13px;line-height:1.5;font-style:italic;opacity:.92}
     .lock-screen h2{margin:3px 0 0;padding:0;border:0;background:none;color:#fff;font-size:clamp(22px,4vw,32px);line-height:1.08;}
     .lock-attempt{display:inline-flex;align-items:center;gap:7px;margin:0 0 14px;padding:7px 10px;border:1px solid rgba(255,185,177,.28);border-radius:999px;color:#ffd0cd;background:rgba(255,75,62,.08);font-size:12px;font-weight:900;}
     .lock-attempt span{color:#ff7b72;font-size:17px;line-height:0;}

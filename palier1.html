@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=20">
+  <link rel="stylesheet" href="css/palier1.css?v=21">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="palier-annonces.js?v=2" defer></script>
@@ -1536,7 +1536,7 @@ window.Nautilus = {
      l'appareil), pas le matelot. Quand plusieurs matelots se succèdent
      sur le même appareil — test admin avec « l'équipe Nautilus »,
      dépannage d'un camarade… — chacun était reconnu comme l'auteur de
-     la partie perdue (« Tu passes la barre » sans moyen de rejouer) :
+     la partie perdue (« Remontée forcée » sans moyen de rejouer) :
      tout l'équipage avait l'air bloqué, alors que la règle ne bloque
      QUE le fautif. Sur une partie en cours, c'était pire : le second
      matelot apparaissait AUX COMMANDES. La clé matelot est la seule
@@ -1606,7 +1606,7 @@ window.Nautilus = {
      l'appareil), pas le matelot. Quand plusieurs matelots se succèdent
      sur le même appareil — test admin avec « l'équipe Nautilus »,
      dépannage d'un camarade… — chacun était reconnu comme l'auteur de
-     la partie perdue (« Tu passes la barre » sans moyen de rejouer) :
+     la partie perdue (« Remontée forcée » sans moyen de rejouer) :
      tout l'équipage avait l'air bloqué, alors que la règle ne bloque
      QUE le fautif. Sur une partie en cours, c'était pire : le second
      matelot apparaissait AUX COMMANDES. La clé matelot est la seule
@@ -2769,9 +2769,10 @@ window.Nautilus = {
           <span class="lock-heading-icon" aria-hidden="true">↟</span>
           <div>
             <p class="lock-kicker">RETOUR EN SURFACE</p>
-            <h2>Tu passes la barre</h2>
+            <h2>Remontée forcée !</h2>
           </div>
         </div>
+        <p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : le Nautilus te dépose à la surface pendant que ton équipage poursuit la plongée.</p>
         <div class="lock-attempt"><span aria-hidden="true">◌</span>${esc(attemptLabel)}</div>
         <div class="lock-lignes">${lignes}</div>
         <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>

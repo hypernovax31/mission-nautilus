@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
-  <link rel="stylesheet" href="css/palier1.css?v=20">
+  <link rel="stylesheet" href="css/palier1.css?v=21">
   <link rel="stylesheet" href="css/palier2.css?v=14">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
@@ -352,12 +352,13 @@
     afficherVueEpreuve();
     afficherJournalDeBord(true);   /* plus personne ne joue : le journal revient */
     /* Formules reprises du PALIER 1 (renderLostScreen) : « 3 erreurs
-       sur cette tentative », « retour en surface », « passe la barre ». */
+       sur cette tentative », « Remontée forcée ! » — message immersif
+       demandé par l'organisation (remplace « tu passes la barre »). */
     statut(nom
-      ? "🔒 <b>3 erreurs sur cette tentative — retour en surface : " + esc(nom) + " passe la barre.</b> Retour possible à <b>"
+      ? "🔒 <b>3 erreurs sur cette tentative — remontée forcée !</b> " + esc(nom) + " regagne la surface ; reprise possible à <b>"
         + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
         + "avec son Code Matelot — <b>chacun ses erreurs</b>."
-      : "🔒 <b>3 erreurs sur cette tentative — retour en surface, tu passes la barre.</b> Reprise possible à <b>"
+      : "🔒 <b>3 erreurs sur cette tentative — remontée forcée !</b> Tu regagnes la surface ; reprise possible à <b>"
         + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
         + "pour que tes erreurs restent les tiennes.", 'danger');
     var host = $('mcHost');
