@@ -1450,6 +1450,47 @@
     /* Acces a la fiche du matelot, sous le bouton de mission. */
     .ck-launch .hero-cta{min-width:min(100%,380px)}
 
+    /* ===== CHAMBRE DE PILOTAGE : même décor sombre que l'ORDRE DE MISSION =====
+       Le bloc #gameCard était une .card BLANCHE : le pupitre sombre
+       (.cockpit) flottait sur un fond clair qui tranchait avec l'ambiance
+       du sous-marin. On reprend ici le style du bloc « Ordre de mission »
+       (dégradé abyssal + quadrillage en filigrane), pour que le cockpit se
+       fonde dans le décor. */
+    #gameCard{
+      position:relative;
+      background:linear-gradient(135deg,rgba(5,16,28,.92),rgba(12,53,77,.92));
+      color:#eaf8ff;
+    }
+    #gameCard:before{
+      content:"";position:absolute;inset:0;pointer-events:none;opacity:.85;
+      background:
+        radial-gradient(circle at 18% 20%,rgba(142,231,255,.18),transparent 26%),
+        radial-gradient(circle at 82% 70%,rgba(245,176,39,.14),transparent 22%),
+        linear-gradient(90deg,rgba(142,231,255,.05) 1px,transparent 1px),
+        linear-gradient(rgba(142,231,255,.045) 1px,transparent 1px);
+      background-size:auto,auto,38px 38px,38px 38px;
+    }
+    #gameCard>h2,
+    #gameCard .body{position:relative;z-index:1}
+    /* Les encarts du cockpit (état vide, « transmission réactivée »,
+       « palier chargé ») deviennent des bandeaux sombres translucides,
+       lisibles sur le fond abyssal — comme le reste du pupitre. */
+    #gameCard .notice{
+      background:rgba(0,0,0,.28);
+      border:1px solid rgba(142,231,255,.3);
+      color:#dff6ff;
+    }
+    #gameCard .notice.success{
+      background:rgba(91,255,156,.10);
+      border-color:rgba(91,255,156,.5);
+      color:#dfffe8;
+    }
+    #gameCard .notice.warning{
+      background:rgba(255,75,62,.12);
+      border-color:rgba(255,75,62,.5);
+      color:#ffd0cd;
+    }
+
     /* Etats particuliers : bloque / termine */
     .cockpit.is-locked{border-color:rgba(255,75,62,.5)}
     .cockpit.is-locked .ck-screen{

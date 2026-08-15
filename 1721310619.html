@@ -46,6 +46,19 @@
     </div>
   </section>
 
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE : même bloc que le Palier 1 — les
+       matelots de l'équipage connectés en direct (en train de jouer ou
+       en spectateur). Placé AVANT le journal de bord, sur les vues
+       d'avant-partie (zone scellée + briefing). Rendu par le module
+       commun equipage-actif.js ; il se retire avec le journal dès que
+       le mini-jeu démarre. -->
+  <section class="card" id="teamCard">
+    <h2>⚓ ÉQUIPAGE ACTIF EN PLONGÉE</h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
   <!-- Journal de bord (live) : consultable sur les DEUX vues
        d'avant-partie — la VUE SCELLÉE (en haut, entre le héros et le
        sas) et le BRIEFING DU CAPITAINE — comme sur le Palier 1, où le
@@ -150,6 +163,10 @@
      s'injecte toute seule en tête de <main> (mêmes styles que le
      Palier 1, css/palier1.css). -->
 <script src="reserve-o2.js?v=1"></script>
+<!-- Équipage actif en plongée : liste des matelots connectés en direct,
+     commune à tous les paliers (mêmes styles que le Palier 1). -->
+<script src="equipage-actif.js?v=1"></script>
+<script>window.EquipageActif.init();</script>
 <!-- Moteur de mots croisés (générique) + données : 10 mots, un par secteur -->
 <script src="mots-croises.js?v=7"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers (même page de victoire
@@ -294,6 +311,7 @@
   }
   function afficherVueScellee() {
     montrerCarte('gateHero', true);
+    montrerCarte('teamCard', true);
     montrerCarte('logCard', true);
     montrerCarte('gateCard', true);
     montrerCarte('briefCard', false);
@@ -302,6 +320,7 @@
   }
   function afficherVueBriefing() {
     montrerCarte('gateHero', false);
+    montrerCarte('teamCard', true);
     montrerCarte('logCard', true);
     montrerCarte('gateCard', false);
     montrerCarte('briefCard', true);
@@ -313,6 +332,7 @@
   }
   function afficherVueEpreuve() {
     montrerCarte('gateHero', false);
+    montrerCarte('teamCard', false);
     montrerCarte('logCard', false);
     montrerCarte('gateCard', false);
     montrerCarte('briefCard', false);
@@ -344,6 +364,7 @@
      carte du mini-jeu — le héros « ZONE SCELLÉE », le sas et le
      briefing restent rangés : la zone n'est plus scellée. */
   function afficherJournalDeBord(visible) {
+    montrerCarte('teamCard', visible);
     montrerCarte('logCard', visible);
     var carte = $('gateUnlocked');
     if (carte) carte.classList.toggle('epreuve-focus', !visible);
