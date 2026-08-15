@@ -525,6 +525,11 @@
       padding:9px 12px;border-radius:12px;
       background:linear-gradient(135deg,rgba(5,16,28,.9),rgba(8,48,72,.9));
       border:1px solid rgba(142,231,255,.22)}
+    /* La jauge doit rester MASQUÉE tant que la mission n'a pas de date de
+       départ (attribut hidden posé par le JS) : le display:flex ci-dessus
+       écraserait sinon l'attribut hidden et la jauge vide resterait
+       affichée (« Réserve O₂ — — ») au lieu de se retirer. */
+    .o2-bar[hidden]{display:none}
     .o2-label{flex:0 0 auto;font-size:10px;font-weight:900;letter-spacing:.09em;
       text-transform:uppercase;color:#8ee7ff}
     .o2-tube{position:relative;flex:1 1 auto;height:22px;border-radius:999px;
