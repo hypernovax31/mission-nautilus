@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=17">
+  <link rel="stylesheet" href="css/index.css?v=18">
   <link rel="stylesheet" href="css/hublots.css?v=13">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
@@ -3475,17 +3475,14 @@ function qrDataUri(text, opts){
         /* Indispensable ici : c'est le matelot bloque qui a le plus besoin
            de suivre la progression de son equipage pendant son attente. */
         + cockpitHistoryHtml(currentTeam)
-        /* Le bareme complet, avec la ligne du PROCHAIN echec en
-           surbrillance : pendant l'attente, le matelot voit exactement ou
-           il en est sur l'echelle et ce qui l'attend s'il insiste. */
-        + '<div class="ck-risque rouge">'
-        +   '<div class="ck-risque-titre">⏳ L’échelle des blocages</div>'
-        +   baremeBlocageHtml(Math.min(Number(monLock.failCount || 0) + 1, 6))
-        +   '<p class="ck-risque-l aide">🤝 <b>Ne repars pas seul par fierté.</b> '
-        +     'À ta remontée, regarde qui a le compteur le plus léger : c’est à lui '
-        +     'de prendre la barre. Et si personne ne veut risquer gros, un matelot peut '
-        +     '<b>se sacrifier</b> et encaisser les blocages pour protéger les autres.</p>'
-        + '</div>'
+        /* BLOC SUPPRIMÉ (demande organisation) : « ⏳ L'échelle des
+           blocages » — le barème avec la ligne du prochain échec en
+           surbrillance. Juste sous le JOURNAL DE BORD DE L'ÉQUIPAGE, il
+           se lisait comme une donnée D'ÉQUIPAGE alors qu'il extrapole un
+           compteur strictement personnel : mauvaise donnée au mauvais
+           endroit. Le statut personnel ci-dessus garde les deux données
+           utiles et justes : la date de reprise et la peine au prochain
+           échec. */
         + '</div>';
       return;
     }
@@ -3593,34 +3590,9 @@ function qrDataUri(text, opts){
     }
   };
 
-  /* ===== TABLEAU DU BAREME DE BLOCAGE =====
-     Une ligne par echec, la duree correspondante a droite. Les dernieres
-     lignes passent en rouge : le joueur doit VOIR que ca devient lourd
-     avant d'y arriver, pas le decouvrir apres. */
-  function baremeBlocageHtml(surbrillance){
-    const lignes = [1,2,3,4,5,6].map(n => {
-      const h    = getLockHours(n);
-      const cls  = h >= 12 ? ' rouge' : (h >= 4 ? ' ambre' : '');
-      const actif = (surbrillance && Number(surbrillance) === n) ? ' actif' : '';
-      const label = n === 6 ? '6ᵉ échec et suivants' : (n === 1 ? '1ᵉʳ échec' : n + 'ᵉ échec');
-      return '<div class="bareme-l' + cls + actif + '">'
-           +   '<span class="bareme-n">' + label + '</span>'
-           +   '<span class="bareme-h">' + h + ' h en surface</span>'
-           + '</div>';
-    }).join('');
-    return '<div class="bareme">'
-      +   '<div class="bareme-titre">⏳ Le temps de blocage double à chaque échec</div>'
-      +   '<div class="bareme-liste">' + lignes + '</div>'
-      +   '<p class="bareme-note">Ce compteur est <b>personnel</b> et ne se remet jamais à zéro '
-      +     'de toute la mission. Un matelot qui a déjà échoué 4 fois risque <b>8 h</b> au prochain '
-      +     'faux pas, alors qu’un camarade encore intact ne risque que <b>1 h</b>.</p>'
-      +   '<p class="bareme-note entraide">🤝 <b>Laissez-vous arrêter par l’équipage.</b> '
-      +     'Si tu accumules les échecs, passe la barre à quelqu’un dont le compteur est plus bas : '
-      +     'l’équipage perdra beaucoup moins de temps. Et à l’inverse, un matelot peut '
-      +     '<b>se sacrifier</b> et prendre le risque à la place des autres pour garder l’équipage à flot. '
-      +     'Ce n’est pas de la triche : c’est de la stratégie de plongée.</p>'
-      + '</div>';
-  }
+  /* (Le « TABLEAU DU BARÊME DE BLOCAGE » a été supprimé avec l'« échelle
+     des blocages » : barème complet et niveau personnel surligné ne sont
+     plus affichés nulle part — cf. l'écran « REMONTÉE FORCÉE ».) */
 
   function showRule(key, shouldScroll=false){
     const rule = RULES[key] || RULES.embark;

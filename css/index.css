@@ -706,39 +706,6 @@
       box-shadow:0 0 8px rgba(245,176,39,.6);
     }
 
-    /* --- Bareme de blocage : une ligne par echec, duree a droite --- */
-    .bareme{margin:16px 0 0;padding:14px 16px;border-radius:12px;
-      background:rgba(4,16,26,.72);border:1px solid rgba(142,231,255,.18);}
-    .bareme-titre{
-      font-size:clamp(12px,2.4vw,14px);font-weight:900;letter-spacing:.04em;
-      text-transform:uppercase;color:#fff;margin-bottom:10px;
-    }
-    .bareme-liste{display:grid;gap:5px}
-    .bareme-l{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:7px 11px;border-radius:8px;font-size:var(--fs-small);line-height:1.3;
-      background:rgba(142,231,255,.06);border-left:3px solid rgba(142,231,255,.45);
-      color:#cfe6f4;
-    }
-    .bareme-l.ambre{background:rgba(245,176,39,.09);border-left-color:var(--amber);color:#ffe2a0}
-    .bareme-l.rouge{background:rgba(255,75,62,.11);border-left-color:#ff4b3e;color:#ffd0cd}
-    .bareme-l.actif{
-      outline:1px solid rgba(255,255,255,.55);
-      box-shadow:0 0 14px rgba(255,255,255,.18);font-weight:800;
-    }
-    .bareme-n{font-weight:700}
-    .bareme-h{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
-    .bareme-note{
-      margin:11px 0 0!important;font-size:calc(var(--fs-small) - .5px)!important;
-      line-height:1.55!important;color:#a9c6d6!important;
-    }
-    .bareme-note b{color:#fff}
-    .bareme-note.entraide{
-      margin-top:10px!important;padding:10px 12px;border-radius:9px;
-      background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
-      color:#c8ece0!important;
-    }
-    .bareme-note.entraide b{color:#8dffd0}
 
     @media(max-width:620px){
       .mission-steps{grid-template-columns:repeat(2,1fr);gap:14px}
@@ -1413,33 +1380,14 @@
       background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
       font-size:var(--fs-small);line-height:1.5;color:#cfe6ef;
     }
-    /* Avertissement chiffre : ce qu'un nouvel echec couterait a CE matelot */
-    .ck-risque{
-      margin:0 0 14px;padding:13px 15px;border-radius:12px;
-      background:rgba(4,16,26,.7);border:1px solid rgba(142,231,255,.20);
-      border-left:4px solid rgba(142,231,255,.55);
-    }
-    .ck-risque.ambre{border-left-color:var(--amber);background:rgba(245,176,39,.07)}
-    .ck-risque.rouge{border-left-color:#ff4b3e;background:rgba(255,75,62,.08)}
-    .ck-risque-titre{
-      font-size:clamp(12px,2.4vw,14px);font-weight:900;letter-spacing:.04em;
-      text-transform:uppercase;color:#fff;margin-bottom:8px;
-    }
-    .ck-risque-l{margin:0;font-size:var(--fs-small);line-height:1.55;color:#cfe6f4}
-    .ck-risque-l b{color:#fff}
+    /* Avertissement chiffre : ce qu'un nouvel echec couterait a CE matelot.
+       « ⏳ L'échelle des blocages » (bloc risque + tableau bareme)
+       a été SUPPRIMÉE de l'écran de blocage — demande organisation :
+       sous le journal de bord de l'équipage, elle se lisait comme une
+       donnée d'équipage alors qu'elle extrapole un compteur personnel.
+       Seul reste .ck-risque-h, qui met en or la peine du prochain
+       échec dans la phrase du statut personnel. */
     .ck-risque-h{font-size:1.12em;color:#ffd36c!important}
-    .ck-risque.rouge .ck-risque-h{color:#ff8f86!important}
-    .ck-risque-l.aide{
-      margin-top:10px;padding:10px 12px;border-radius:9px;
-      background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
-      color:#c8ece0;
-    }
-    .ck-risque-l.aide b{color:#8dffd0}
-    .ck-risque .bareme{background:transparent;border-color:rgba(142,231,255,.14);padding:12px 0 0}
-    .ck-risque .bareme .bareme-titre{display:none}
-    /* Les deux notes du bareme repetent ce que le paragraphe du dessus dit
-       deja avec les chiffres du matelot : inutile de les redire ici. */
-    .ck-risque .bareme .bareme-note{display:none}
 
     .ck-launch{display:flex;justify-content:center}
     /* Acces a la fiche du matelot, sous le bouton de mission. */
