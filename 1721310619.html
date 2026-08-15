@@ -154,7 +154,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=9"></script>
+<script src="palier-sas.js?v=10"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2 :
      la vue d'explication immersive du thème (SANS dévoiler le
      contenu) entre la ZONE SCELLÉE et le mini-jeu — mise en page du
@@ -171,7 +171,7 @@
 <script src="reserve-o2.js?v=1"></script>
 <!-- Équipage actif en plongée : liste des matelots connectés en direct,
      commune à tous les paliers (mêmes styles que le Palier 1). -->
-<script src="equipage-actif.js?v=1"></script>
+<script src="equipage-actif.js?v=2"></script>
 <script>window.EquipageActif.init();</script>
 <!-- Moteur de mots croisés (générique) + données : 10 mots, un par secteur -->
 <script src="mots-croises.js?v=7"></script>
@@ -664,6 +664,14 @@
     afficherVueBriefing();
   } else {
     afficherVueScellee();
+    /* DÉVERROUILLAGE D'ÉQUIPE EN DIRECT : tant que la zone est scellée,
+       on écoute le document d'équipage. Dès qu'un coéquipier scanne le
+       QR (sur n'importe quel appareil), le sas s'ouvre ici aussi, à
+       l'instant, sans avoir à rescanner. Couvre aussi le retour d'un
+       matelot dont l'équipage a déjà ouvert le sas entre-temps. */
+    if (window.NautilusSas.observerDeverrouillageEquipe) {
+      window.NautilusSas.observerDeverrouillageEquipe();
+    }
   }
   window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
 })();

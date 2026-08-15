@@ -54,7 +54,7 @@
        vues d'avant-partie (scellée, briefing) et dès que l'épreuve
        s'arrête.
 
-   Utilisation : <script src="palier-sas.js?v=9"></script>
+   Utilisation : <script src="palier-sas.js?v=10"></script>
                  <script>NautilusSas.init(2);</script>   // n = palier
    ============================================================= */
 (function () {
@@ -125,7 +125,7 @@
       el.className = 'gate-msg' + (texte ? ' is-' + (kind || 'info') : '');
     }
 
-    function showUnlocked() {
+    function showUnlocked(propager) {
       persistUnlock();
       stopCamera();
       var carte = $('gateCard'); if (carte) carte.hidden = true;
@@ -137,6 +137,67 @@
          'nautilus:sas-ouvert') — l'épreuve ne s'arme qu'après le
          « ⚓ PRENDRE LES COMMANDES » du briefing, sur toute la mission. */
       try { window.dispatchEvent(new Event('nautilus:sas-ouvert')); } catch (e) {}
+      /* DÉVERROUILLAGE PARTAGÉ AVEC L'ÉQUIPAGE : un seul matelot scanne
+         le QR, tout son équipage voit le sas s'ouvrir en direct (état
+         écrit dans Firestore, teams/{code}.sasUnlocks[n]).
+         `propager === false` est réservé à l'ouverture déclenchée par
+         l'écoute d'équipe elle-même : inutile de réécrire l'état déjà
+         posé par le matelot qui a scanné. */ 
+      if (propager !== false) propagerDeverrouillageEquipe();
+    }
+
+    /* Écrit le déverrouillage dans le document Firestore de l'équipage,
+       pour que les autres matelots (sur leur propre appareil) basculent
+       aussitôt vers le briefing sans avoir à rescanner le QR. Mode test,
+       joueur anonyme ou réseau en rade : l'ouverture reste valable
+       localement, rien n'est propagé. */
+    function propagerDeverrouillageEquipe() {
+      var B = window.NautilusBlocages;
+      if (!B || !B.db || !B.identiteCourante) return;
+      B.identiteCourante().then(function (ident) {
+        if (!ident || ident.isTest || !ident.teamCode) return;
+        B.db().then(function (x) {
+          var patch = {};
+          patch['sasUnlocks.' + n] = {
+            openedAt: new Date().toISOString(),
+            openedBy: ident.name || 'Un matelot'
+          };
+          patch.updatedAt = new Date().toISOString();
+          return x.fs.updateDoc(x.fs.doc(x.db, 'teams', ident.teamCode), patch);
+        }).catch(function () { /* connexion en rade : l'ouverture locale suffit */ });
+      }).catch(function () {});
+    }
+
+    /* Écoute temps réel du document d'équipage : dès qu'un coéquipier
+       ouvre le sas (scan réussi ailleurs), le sas s'ouvre ici aussi,
+       instantanément, sans aucun geste — la page entre dans le briefing
+       du capitaine exactement comme après un scan local. Couvre aussi le
+       cas où l'équipage a déjà ouvert le sas pendant que cet appareil
+       était ailleurs (localStorage encore vide). */
+    function observerDeverrouillageEquipe() {
+      var B = window.NautilusBlocages;
+      if (!B || !B.identiteCourante || !B.db) return;
+      B.identiteCourante().then(function (ident) {
+        if (!ident || ident.isTest || !ident.teamCode) return;
+        B.db().then(function (x) {
+          var termine = false;
+          var unsub = null;
+          unsub = x.fs.onSnapshot(
+            x.fs.doc(x.db, 'teams', ident.teamCode),
+            function (snap) {
+              if (termine || !snap || !snap.exists()) return;
+              var data = snap.data() || {};
+              var ouverts = data.sasUnlocks || {};
+              if (ouverts[n]) {
+                termine = true;
+                try { if (unsub) unsub(); } catch (e) {}
+                showUnlocked(false);
+              }
+            },
+            function () { /* lecture indisponible : la vue scellée reste affichée */ }
+          );
+        }).catch(function () {});
+      }).catch(function () {});
     }
 
     function refuser() {
@@ -390,6 +451,11 @@
     } else {
       cacherContenuProtege();
     }
+
+    /* Expose l'écoute d'équipe : la page l'appelle quand elle affiche la
+       VUE SCELLÉE, pour basculer en direct dès qu'un coéquipier ouvre le
+       sas (déverrouillage partagé, plus seulement local à l'appareil). */
+    window.NautilusSas.observerDeverrouillageEquipe = observerDeverrouillageEquipe;
   }
 
   /* ---------- « PAGE SCELLÉE » POUR TESTER LES QR CODES (concepteur) ------
