@@ -255,3 +255,57 @@
 }
 .mc-statut.is-danger{ background:rgba(255,75,62,.12); border-color:rgba(255,75,62,.5); color:#ffd0cd; }
 .mc-statut.is-success{ background:rgba(91,224,155,.10); border-color:rgba(91,224,155,.5); color:#dfffe8; }
+
+/* =============================================================
+   SAS SCELLÉ — panneau d'alerte du héros « ZONE SCELLÉE »
+   Le simple bandeau générique laisse place à une vraie « porte de
+   sas verrouillée » : cadenas en médaillon de laiton, titre d'alerte
+   et consigne, le tout dans le même langage visuel que l'encart de
+   scan (filet pointillé ambre « zone d'amarrage »). Le bouton
+   d'indication devient le seul geste à faire.
+   ============================================================= */
+.gate-seal{
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  text-align:center;
+  padding:clamp(22px,5vw,34px) clamp(16px,4vw,26px);
+  border:2px dashed rgba(245,176,39,.55);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 50% 0%,rgba(245,176,39,.12),transparent 58%),
+    linear-gradient(160deg,rgba(9,46,72,.55),rgba(3,17,29,.68));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 18px 40px rgba(0,0,0,.28);
+}
+/* Médaillon du cadenas : un hublot de laiton sombre, cerclé d'ambre. */
+.gate-seal-badge{
+  display:grid;place-items:center;
+  width:74px;height:74px;border-radius:50%;
+  font-size:34px;line-height:1;
+  background:
+    radial-gradient(circle at 38% 30%,rgba(255,255,255,.16),transparent 46%),
+    radial-gradient(circle,rgba(245,176,39,.18),rgba(0,0,0,.6) 74%),#150d04;
+  border:3px solid rgba(245,176,39,.62);
+  box-shadow:
+    0 0 0 5px rgba(245,176,39,.13),
+    0 0 28px rgba(245,176,39,.30),
+    inset 0 0 18px rgba(245,176,39,.16);
+}
+.gate-seal-titre{
+  margin:0;font-family:Consolas,"Courier New",monospace;
+  font-weight:1000;letter-spacing:.06em;text-transform:uppercase;
+  color:#ffd36c;font-size:clamp(15px,2.8vw,19px);
+  text-shadow:0 1px 0 #000,0 0 16px rgba(245,176,39,.45);
+}
+.gate-seal-msg{
+  margin:0;max-width:52ch;color:#dff6ff;line-height:1.55;
+  font-size:clamp(13px,2vw,14.5px);
+}
+.gate-seal-msg b{color:#ffe2a0}
+/* Le bouton devient le geste central : plus grand, plein sur mobile,
+   avec un halo ambré discret pour attirer l'œil sans animer en boucle. */
+.gate-seal-cta{
+  margin:4px 0 0;
+  padding:14px 26px;
+  font-size:14px;
+  box-shadow:0 10px 24px rgba(0,0,0,.35),0 0 0 4px rgba(245,176,39,.10);
+}
+.gate-seal-cta:hover{filter:brightness(1.1);transform:translateY(-1px)}
