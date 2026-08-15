@@ -328,15 +328,25 @@
   font-size:14px;
 }
 /* L'indication de la zone de recherche : fil d'Ariane discret en fin
-   de scène, pour qui a perdu la piste du QR. */
+   de scène, pour qui a perdu la piste du QR. C'est désormais un BOUTON
+   qui déplie l'encart « Cap sur le Palier » SUR PLACE — plus de renvoi
+   vers palier1.html?relecture=sas, qui tombait sur l'écran
+   d'identification faute d'identité dans l'URL. */
 .sas-indication{
   margin-top:2px;
   color:#9bc4d4;font-size:12.5px;font-weight:800;
   text-decoration:none;letter-spacing:.02em;
-  border-bottom:1px dashed rgba(142,231,255,.35);
-  padding-bottom:2px;
+  background:none;border:0;border-bottom:1px dashed rgba(142,231,255,.35);
+  padding:2px 0;cursor:pointer;font-family:inherit;
 }
 .sas-indication:hover{ color:#dff6ff;border-color:rgba(142,231,255,.7); }
+
+/* Encart « Cap sur le Palier » dépliable depuis la zone scellée : il
+   réutilise le bloc « PROCHAINE IMMERSION » (.won-nextzone) de l'écran
+   de victoire — radar, indication, étapes — sans quitter la scène. */
+.sas-indication-panel{ width:100%; }
+.sas-indication-panel[hidden]{ display:none; }
+.sas-indication-panel .won-nextzone{ margin:16px auto 0; }
 
 /* Réduction de mouvement : cadenas et rayon restent fixes. */
 @media (prefers-reduced-motion: reduce){

@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=22">
-  <link rel="stylesheet" href="css/palier2.css?v=16">
+  <link rel="stylesheet" href="css/palier2.css?v=17">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -72,11 +72,29 @@
         <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
 
         <!-- L'indication de la zone de recherche, en toute fin de scène :
-             un simple fil d'Ariane, discret, pour ceux qui ont perdu la
-             piste du QR. ?relecture=sas : indispensable, car palier1.html
-             RENVOIE d'office vers le palier courant tout équipage ayant
-             validé — sans ce paramètre, ce lien rebouclerait ici. -->
-        <a class="sas-indication" href="palier1.html?relecture=sas">📍 Voir l'indication de la zone de recherche</a>
+             un fil d'Ariane discret pour ceux qui ont perdu la piste du
+             QR. Elle se DÉPLIE sur place (encart « Cap sur le Palier 2 »),
+             sans quitter la scène scellée. L'ancien renvoi vers
+             palier1.html?relecture=sas menait à l'écran d'identification
+             faute d'identité portée par l'URL. -->
+        <button type="button" class="sas-indication" id="sasIndicationBtn" aria-expanded="false">📍 Voir l'indication de la zone de recherche</button>
+        <div class="sas-indication-panel" id="sasIndicationPanel" hidden>
+          <div class="won-nextzone">
+            <div class="won-radar" aria-hidden="true">
+              <span class="won-radar-ring"></span>
+              <span class="won-radar-ring won-radar-ring--2"></span>
+              <span class="won-radar-core">🧭</span>
+            </div>
+            <h3 class="won-nextzone-title">Cap sur le Palier 2</h3>
+            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">……</span> »</p>
+            <div class="won-nextzone-steps">
+              <span class="won-step-chip"><b>1</b> Rallier la zone</span>
+              <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
+              <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
+            </div>
+            <p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone : c’est la clé d’entrée du Palier 2.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -214,6 +232,13 @@
      chaîne que QR_LOCATION_HINT de palier1.html : quand l'admin fixe
      le lieu, on aligne les DEUX fichiers (paliers suivants idem). */
   var QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
+
+  /* Indication de la zone de recherche du PALIER 2 — l'endroit du magasin
+     où se trouve le QR qui ouvre ce sas. Affichée dans l'encart
+     « Cap sur le Palier 2 » déplié depuis la zone scellée. Même valeur
+     que QR_LOCATION_HINT de palier1.html : quand l'admin fixe le lieu,
+     on aligne les DEUX fichiers. */
+  var ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
   /* Bilan de l'épreuve, affiché sur l'écran de victoire (façon
      Palier 1) : chrono qui démarre avec la grille, compteur d'erreurs. */
@@ -674,6 +699,26 @@
     }
   }
   window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
+
+  /* --- Indication de la zone de recherche : dépliable SUR PLACE ---
+     Le bouton « 📍 Voir l'indication… » déplie/replie l'encart
+     « Cap sur le Palier 2 » DANS la scène scellée — plus aucun renvoi
+     vers palier1.html?relecture=sas, qui tombait sur l'écran
+     d'identification faute d'identité dans l'URL. */
+  var _btnIndication = $('sasIndicationBtn');
+  var _panelIndication = $('sasIndicationPanel');
+  if (_btnIndication && _panelIndication) {
+    var _txtIndication = $('sasIndicationTexte');
+    if (_txtIndication) _txtIndication.textContent = ZONE_RECHERCHE_HINT;
+    _btnIndication.addEventListener('click', function () {
+      var estOuvert = !_panelIndication.hidden;
+      _panelIndication.hidden = estOuvert;
+      _btnIndication.textContent = estOuvert
+        ? '📍 Voir l’indication de la zone de recherche'
+        : '📍 Masquer l’indication';
+      _btnIndication.setAttribute('aria-expanded', estOuvert ? 'false' : 'true');
+    });
+  }
 })();
 </script>
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
