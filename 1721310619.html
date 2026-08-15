@@ -566,7 +566,11 @@
   }
 
   function onVictoire() {
-    afficherJournalDeBord(true);   /* épreuve terminée : le journal revient */
+    /* PAGE VICTOIRE : les blocs « ⚓ ÉQUIPAGE ACTIF EN PLONGÉE » et
+       « 📜 JOURNAL DE BORD » sont RETIRÉS (demande capitaine) — seule
+       la carte de l'épreuve reste, en scène unique (epreuve-focus),
+       exactement comme pendant la partie. */
+    afficherJournalDeBord(false);
     statut('🏆 <b>Palier 2 franchi !</b> La grille « Code Magasin » est entièrement résolue.', 'success');
     journal('🏆 Palier 2 validé : les Mots Croisés « Code Magasin » sont résolus !', 'success');
     propagerVictoire();

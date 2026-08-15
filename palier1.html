@@ -1651,19 +1651,21 @@ window.Nautilus = {
     const s = state.session;
     const me = state.me;
 
-    /* MISE EN PAGE « AU MOMENT DE JOUER » : pendant que l'épreuve se
-       joue (état playing — joueur aux commandes ou spectateur en live),
-       la page ne laisse QUE l'encart « 🧪 ÉPREUVE DU PALIER », repensé
-       en scène unique (classe epreuve-focus) : l'« ⚓ ÉQUIPAGE ACTIF EN
-       PLONGÉE » et le « 📜 JOURNAL DE BORD (Activité en direct) » se
-       rangent. Ils vivent sur la vue PRÉCÉDENTE — le briefing — et
-       réapparaissent dès qu'on n'est plus dans le mini-jeu (attente,
-       victoire, défaite, blocage, relecture). */
+    /* MISE EN PAGE « AU MOMENT DE JOUER » ET « PAGE VICTOIRE » : pendant
+       l'épreuve (état playing) ET sur l'écran de victoire (état won),
+       la page ne laisse QUE l'encart « 🧪 ÉPREUVE DU PALIER », en scène
+       unique (classe epreuve-focus) : l'« ⚓ ÉQUIPAGE ACTIF EN PLONGÉE »
+       et le « 📜 JOURNAL DE BORD (Activité en direct) » se rangent
+       (demande capitaine : retirés aussi de la page victoire). Ils
+       vivent sur la vue PRÉCÉDENTE — le briefing — et réapparaissent
+       sur les autres états hors mini-jeu (attente, défaite, blocage,
+       relecture). */
     if (t) {
       const enJeu = !!(s && s.state === 'playing');
-      if ($('teamCard')) $('teamCard').style.display = enJeu ? 'none' : 'block';
-      if ($('logCard')) $('logCard').style.display = enJeu ? 'none' : 'block';
-      $('gameCard').classList.toggle('epreuve-focus', enJeu);
+      const surVictoire = !!(s && s.state === 'won');
+      if ($('teamCard')) $('teamCard').style.display = (enJeu || surVictoire) ? 'none' : 'block';
+      if ($('logCard')) $('logCard').style.display = (enJeu || surVictoire) ? 'none' : 'block';
+      $('gameCard').classList.toggle('epreuve-focus', enJeu || surVictoire);
     }
 
     /* Le voyant suit CHAQUE redessin : c'est le point de passage commun a
