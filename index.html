@@ -229,7 +229,7 @@
   </section>
 
   <section class="card" id="gameCard">
-    <h2>⚙️ CHAMBRE DE PILOTAGE</h2>
+    <h2>⚙️ CHAMBRE DE PILOTAGE <span id="gameCardTeam" class="gamecard-team"></span></h2>
     <div class="body" id="gameBox"><div class="notice">Les données de ton équipage apparaîtront ici.</div></div>
   </section>
   <section class="final-cta card" id="bottomAlertMessage">
@@ -423,7 +423,7 @@
 
   const STEPS = {
     start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le Nautilus est prêt à plonger. Votre équipage attend le signal de départ pour naviguer vers le Palier 1."},
-    livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Une trace d’encre, un auteur visionnaire, et peut-être le premier secret du capitaine Nemo."},
+    livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
     son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Un signal brouillé remonte des profondeurs. Il faudra l’écouter autrement."},
     zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
@@ -2616,30 +2616,26 @@ function qrDataUri(text, opts){
       const qrUrl = matelotQrUri(matelotCode, chosen.teamCode);
       $('registerMsg').innerHTML =
         '<div class="notice success matelot-card">' +
-          '<p class="matelot-welcome">&#x2693; <b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</p>' +
-          /* ENCART ROUGE : la regle du Code Matelot, en clair.
-             L'ancien texte tenait sur une ligne et disait surtout ce qu'il
-             NE FALLAIT PAS oublier ("usage unique", "plus jamais
-             affiche"), sans jamais expliquer A QUOI SERT ce code ni QUAND
-             on en a besoin. Le matelot le notait donc sans savoir
-             pourquoi — et beaucoup ne le notaient pas du tout.
-             Trois lignes desormais, dans l'ordre des questions qu'on se
-             pose : c'est quoi, qu'est-ce que j'en fais, pourquoi. */
+          '<div class="matelot-welcome">' +
+            '<span class="matelot-welcome-ico" aria-hidden="true">&#x2693;</span>' +
+            '<span class="matelot-welcome-txt"><b>' + esc(name) + '</b>, tu embarques avec l\'équipage <b>' + esc(chosen.teamName) + '</b>.</span>' +
+          '</div>' +
+          /* ENCART ROUGE : la regle du Code Matelot, en clair et CONCISE.
+             Trois lignes courtes seulement, dans l'ordre de ce que le
+             matelot doit retenir : le noter tout de suite, le garder pour
+             lui, et savoir qu'il sert a revenir en jeu. */
           '<div class="matelot-alert" role="alert">' +
             '<span class="matelot-alert-ico" aria-hidden="true">&#x26A0;</span>' +
             '<div class="matelot-alert-txt">' +
               '<b class="matelot-alert-titre">Ce code, c\'est ta place à bord.</b>' +
               '<span class="matelot-alert-l">' +
-                '<b>1.</b> Il s\'affiche <b>une seule fois</b>, maintenant. ' +
-                'Note-le, ou enregistre le QR Code.' +
+                '<b>1.</b> Il ne s\'affiche qu\'<b>une fois</b> : note-le ou enregistre le QR.' +
               '</span>' +
               '<span class="matelot-alert-l">' +
-                '<b>2.</b> Il est <b>personnel</b> : ne le donne à personne, ' +
-                'chaque matelot a le sien.' +
+                '<b>2.</b> <b>Personnel</b> : ne le partage pas.' +
               '</span>' +
               '<span class="matelot-alert-l">' +
-                '<b>3.</b> Il te fait <b>revenir dans la partie</b> à tout moment, ' +
-                'depuis n\'importe quel téléphone. Sans lui, tu perds ta progression.' +
+                '<b>3.</b> C\'est lui qui te <b>ramène en jeu</b>, à partir de n\'importe quel appareil connecté.' +
               '</span>' +
             '</div>' +
           '</div>' +
@@ -2820,6 +2816,29 @@ function qrDataUri(text, opts){
     }
   }
 
+    /* ===== POP-UP DE REPRISE =====
+     À la reconnexion d'un matelot (encart « Reprendre la mission »), une
+     case surgit en haut de l'écran et disparaît toute seule après quelques
+     secondes : « ✅ NOM, matelot de l'équipage TEAM, reprends la plongée. »
+     Aucun clic nécessaire, la page reste entièrement utilisable. */
+  function showResumePopup(name, teamName){
+    const ancien = document.getElementById('resumePopup');
+    if(ancien) ancien.remove();
+    const toast = document.createElement('div');
+    toast.id = 'resumePopup';
+    toast.className = 'resume-popup';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.innerHTML =
+      '&#x2705; <b>' + esc(name) + '</b>, matelot de l\'équipage <b>' + esc(teamName) + '</b>, reprends la plongée.';
+    document.body.appendChild(toast);
+    /* Disparition automatique : un simple délai, la case s'efface seule. */
+    setTimeout(() => {
+      toast.classList.add('resume-popup-out');
+      setTimeout(() => toast.remove(), 350);
+    }, 4000);
+  }
+
   async function joinTeam(skipScroll){
     const codeRaw = ($('matelotCodeInput').value || '').trim().toUpperCase();
     $('joinMsg').innerHTML = '';
@@ -2855,21 +2874,10 @@ function qrDataUri(text, opts){
     const welcome = m.isTest
       ? '&#x2705; <b>Mode test</b> — tu explores le jeu librement. Rien n\'est enregistré.'
       : '&#x2705; <b>' + esc(m.name) + '</b>, matelot de l\'équipage <b>' + esc(t.teamName) + '</b>, reprends la plongée.';
-    /* REPRISE LÀ OÙ L'ÉQUIPAGE S'EST ARRÊTÉ, EN UN CLIC.
-       L'équipage a déjà franchi au moins un palier : le message de
-       bienvenue propose AUSSI le lien direct vers la page du palier en
-       cours (ex. : Nemo au Palier 2 → portail « QR Code demandé »). Sans
-       ce raccourci, le matelot devait deviner qu'il fallait ensuite
-       cliquer le bouton rouge du poste de pilotage. */
-    const etapeReelle = effectiveCurrentStep(t);
-    const pageReprise = etapeReelle !== 'start' ? palierPageUrl(etapeReelle) : null;
-    const lienReprise = pageReprise
-      ? '<div style="margin-top:12px;text-align:center">'
-        + '<a href="' + pageReprise + '" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:12px 22px;font-weight:900;text-decoration:none;font-size:14px;letter-spacing:.03em;text-transform:uppercase">⏭️ Reprendre au « ' + esc(STEPS[etapeReelle]?.label || 'palier en cours') + ' »</a>'
-        + '<div class="small" style="margin-top:6px">La page du palier demandera le <b>QR Code</b> — prépare ta photo.</div>'
-        + '</div>'
-      : '';
-    $('joinMsg').innerHTML = '<div class="notice success">' + welcome + unlockMsg + lienReprise + '</div>';
+    $('joinMsg').innerHTML = '<div class="notice success">' + welcome + unlockMsg + '</div>';
+    /* Pop-up à l'écran : annonce visible de la reprise. Le compte de test
+       n'appartient à aucun équipage : pas de pop-up pour lui. */
+    if(!m.isTest) showResumePopup(m.name, t.teamName);
     renderGame(res.justUnlocked);
     renderEmbarkMissionButton();
 
@@ -3304,8 +3312,13 @@ function qrDataUri(text, opts){
 
   /* Plaque gravee du nom d'equipage, en tete du pupitre. */
   function cockpitPlateHtml(team, subtitle){
+    const st = teamStyle(team && team.teamCode);
+    const initial = (team.teamName || '?').charAt(0).toUpperCase();
     return '<div class="ck-plate">'
-         +   '<span class="ck-plate-name">' + esc(team.teamName || '—') + '</span>'
+         +   '<div class="ck-plate-id">'
+         +     '<span class="ck-plate-badge" style="--team-tint:' + st.tint + '">' + esc(initial) + '</span>'
+         +     '<span class="ck-plate-name">' + esc(team.teamName || '—') + '</span>'
+         +   '</div>'
          +   '<span class="ck-plate-sub">' + esc(subtitle) + '</span>'
          + '</div>';
   }
@@ -3326,9 +3339,10 @@ function qrDataUri(text, opts){
           text: '<b>' + esc(m.name) + '</b> embarqué' + (m.service ? ' (' + esc(m.service) + ')' : '') + '.' });
       }
     });
-    /* PAS de ligne "Palier N valide" : le cadran "Sas franchis" en donne
-       le nombre, et le bandeau de diodes montre EXACTEMENT lesquels sont
-       franchis. Trois fois la meme information sur le meme ecran. */
+    /* PAS de ligne "Palier N valide" : le cadran "Position" (palier courant)
+       et le bandeau de diodes montrent DEJA l'avancement exact de
+       l'equipage. Repeter le total des paliers valides ici ferait trois
+       fois la meme information sur le meme ecran. */
     const locks = team.matelotLocks || {};
     Object.entries(locks).forEach(([key, l]) => {
       if(!l || !l.lockedUntil) return;
@@ -3350,6 +3364,9 @@ function qrDataUri(text, opts){
        toutes lettres deux centimetres plus bas n'apportait rien. */
     if(events.length === 0) return '';
     events.sort((a, b) => a.t - b.t);
+    /* LIMITE À 10 LIGNES : on ne garde que les 10 événements les plus
+       récents, les plus anciens (toujours en tête après le tri croissant)
+       sortent du journal. */
 
     /* JOUR ET HEURE de chaque evenement, a droite de la ligne.
        Format court "06/08 00:09" : la date complete prendrait trop de
@@ -3367,7 +3384,7 @@ function qrDataUri(text, opts){
     /* Le style vit dans la feuille CSS (.ck-journal-*), pas en attributs
        ecrits a la main sur chaque element : une seule source, et une
        interface qui reste coherente si on ajuste la police. */
-    const items = events.map(e => {
+    const items = events.slice(-10).map(e => {
       const h = quand(e.t);
       return '<li class="ck-journal-ligne">'
       + '<span class="ck-journal-ico">' + e.icon + '</span>'
@@ -3397,6 +3414,22 @@ function qrDataUri(text, opts){
 
   function renderGame(justUnlocked=false){
     const box=$('gameBox');
+    /* Nom d'equipage dans le titre de la chambre de pilotage : la plaque
+       du cockpit le repete plus bas, mais ce bandeau d'en-tete est ce que
+       le matelot voit en premier en arrivant. Il faut donc l'y afficher
+       aussi, aux couleurs de l'equipage. */
+    const titreEquipe = $('gameCardTeam');
+    if(titreEquipe){
+      if(!currentTeam){
+        titreEquipe.textContent = '';
+        titreEquipe.classList.remove('has-team');
+      }else{
+        const st = teamStyle(currentTeam.teamCode);
+        titreEquipe.textContent = '— ' + (currentTeam.teamName || '—');
+        titreEquipe.style.setProperty('--team-tint', st.tint);
+        titreEquipe.classList.add('has-team');
+      }
+    }
     if(!currentTeam){
       updateFinalMissionButton();
       box.innerHTML=`<div class="notice">Le carnet de bord du Nautilus affichera les données de ton équipe au cours de l’aventure.</div>`;
@@ -3407,7 +3440,7 @@ function qrDataUri(text, opts){
 
     /* Chiffres du pupitre, calcules une fois pour tous les etats. */
     const ids       = Object.keys(STEPS);
-    const doneCount = (currentTeam.completedSteps || []).length;
+    const enLigne   = onlineCount(currentTeam);
     const stepNo    = Math.min(ids.indexOf(currentTeam.currentStep) + 1 || 1, ids.length);
     const fails     = Number(currentTeam.failCount || 0);
 
@@ -3520,9 +3553,9 @@ function qrDataUri(text, opts){
       +       '<div class="ck-gauge-label">Position</div>'
       +     '</div>'
       +     '<div class="ck-gauge">'
-      +       '<div class="ck-dial"><span class="ck-dial-value">' + doneCount + '</span>'
-      +         '<span class="ck-dial-unit">validés</span></div>'
-      +       '<div class="ck-gauge-label">Sas franchis</div>'
+      +       '<div class="ck-dial"><span class="ck-dial-value">' + enLigne + '</span>'
+      +         '<span class="ck-dial-unit">' + (enLigne > 1 ? 'connectés' : 'connecté') + '</span></div>'
+      +       '<div class="ck-gauge-label">En ligne</div>'
       +     '</div>'
 
       /* 4e cadran : les erreurs commises par l'equipage.

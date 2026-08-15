@@ -106,7 +106,7 @@
   const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
   const STEPS = {
     start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le Nautilus est prêt à plonger. Votre équipage attend le signal de départ pour naviguer vers le Palier 1."},
-    livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Une trace d’encre, un auteur visionnaire, et peut-être le premier secret du capitaine Nemo."},
+    livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
     son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Un signal brouillé remonte des profondeurs. Il faudra l’écouter autrement."},
     zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},

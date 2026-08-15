@@ -93,8 +93,8 @@
     if (place) list.insertBefore(li, place);
     else list.appendChild(li);
 
-    /* Limite à 20 entrées : on retire les plus ANCIENNES (en bas). */
-    while (list.children.length > 20) list.removeChild(list.lastChild);
+    /* Limite à 10 entrées : on retire les plus ANCIENNES (en bas). */
+    while (list.children.length > 10) list.removeChild(list.lastChild);
   }
 
   function clearLog() {
