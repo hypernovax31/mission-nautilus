@@ -1766,6 +1766,21 @@
   font-size:clamp(12px,1.7vw,15px);
   line-height:1.35;
 }
+/* Phrase « La mission est lancée… » : l'annonce reste discrète, la
+   question passe dessous, plus claire, avec le nom du Nautilus en jaune
+   d'accent pour l'oeil. */
+.oxygen-status-question{
+  display:block;
+  margin-top:4px;
+  color:#eaf6ff;
+  font-weight:900;
+  line-height:1.4;
+}
+.oxygen-status-question i{
+  color:var(--fnac);
+  font-style:italic;
+  font-weight:900;
+}
 .oxygen-tube{height:46px}
 .oxygen-bottom{
   display:grid;
