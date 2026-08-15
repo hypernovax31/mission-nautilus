@@ -607,7 +607,7 @@
    AMBIANT uniquement (radar/balayage/pulse en boucles lentes) : AUCUNE
    animation d'entrée one-shot — l'écran est régénéré à chaque sync
    d'état et une anim one-shot se « rejouerait » en boucle (bug h2). */
-.won-nextzone{position:relative;overflow:hidden;margin:20px auto 0;max-width:560px;padding:20px 16px 16px;border:2px solid rgba(245,176,39,.65);border-radius:20px;background:linear-gradient(160deg,rgba(9,46,72,.94),rgba(3,17,29,.97));box-shadow:0 0 38px rgba(245,176,39,.14),inset 0 0 52px rgba(0,10,20,.6);text-align:center}
+.won-nextzone{position:relative;overflow:hidden;margin:22px auto 0;width:100%;max-width:none;padding:clamp(24px,5vw,46px) clamp(16px,4vw,40px);border:2px solid rgba(245,176,39,.65);border-radius:22px;background:linear-gradient(160deg,rgba(9,46,72,.94),rgba(3,17,29,.97));box-shadow:0 0 38px rgba(245,176,39,.14),inset 0 0 52px rgba(0,10,20,.6);text-align:center}
 .won-nextzone::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(115deg,transparent 0 30px,rgba(142,231,255,.055) 31px 33px);animation:celebrationSweep 9s linear infinite}
 .won-nextzone>*{position:relative;z-index:1}
 .won-radar{position:relative;width:76px;height:76px;margin:0 auto 10px}
@@ -615,13 +615,15 @@
 .won-radar-ring--2{animation-delay:1.3s}
 .won-radar-core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;border-radius:50%;background:radial-gradient(circle at 50% 35%,rgba(91,224,155,.30),rgba(3,17,29,.92) 72%);box-shadow:0 0 24px rgba(91,224,155,.40)}
 @keyframes radarPing{0%{transform:scale(.45);opacity:.9}70%{opacity:0}100%{transform:scale(1.55);opacity:0}}
-.won-nextzone-title{margin:0 0 8px;color:#ffd36c;font-size:15px;letter-spacing:.12em;text-transform:uppercase;font-weight:900;text-shadow:0 0 18px rgba(245,176,39,.5)}
-.won-nextzone-indication{margin:0 auto 13px;max-width:480px;color:#fff;font-size:15px;font-weight:700;line-height:1.5}
-.won-nextzone-steps{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin:0 0 15px}
-.won-step-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 6px;border:1px solid rgba(142,231,255,.32);border-radius:999px;background:rgba(0,0,0,.32);color:#dff6ff;font-size:12.5px;font-weight:700}
-.won-step-chip b{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:var(--fnac);color:#111;font-size:11px;font-weight:1000;flex:0 0 auto}
-.won-next-btn{display:inline-block;background:var(--fnac);color:#111;border-radius:14px;padding:13px 26px;font-weight:900;text-decoration:none;font-size:16px;letter-spacing:.03em;text-transform:uppercase;animation:nextBtnPulse 2.2s ease-in-out infinite}
+.won-nextzone-title{margin:0 0 16px;color:#ffd36c;font-size:clamp(24px,4vw,38px);letter-spacing:.06em;text-transform:uppercase;font-weight:1000;line-height:1.12;text-shadow:0 2px 0 #000,0 0 24px rgba(245,176,39,.55)}
+.won-nextzone-indication{margin:-6px auto 18px;max-width:640px;color:#fff;font-size:clamp(15px,2.4vw,18px);font-weight:700;line-height:1.5}
+.won-nextzone-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 auto 24px;width:100%;max-width:860px}
+@media(max-width:640px){.won-nextzone-steps{grid-template-columns:1fr;gap:10px}}
+.won-step-chip{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 14px;border:1px solid rgba(142,231,255,.32);border-radius:14px;background:rgba(0,0,0,.32);color:#dff6ff;font-size:13.5px;font-weight:700;text-align:center}
+.won-step-chip b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--fnac);color:#111;font-size:12px;font-weight:1000;flex:0 0 auto}
+.won-next-btn{display:inline-block;background:var(--fnac);color:#111;border-radius:16px;padding:16px 42px;font-weight:1000;text-decoration:none;font-size:clamp(15px,2.4vw,19px);letter-spacing:.03em;text-transform:uppercase;animation:nextBtnPulse 2.2s ease-in-out infinite}
 .won-next-btn:hover{filter:brightness(1.08)}
+@media(max-width:520px){.won-next-btn{display:block;width:100%;max-width:440px;margin:0 auto;box-sizing:border-box}}
 @keyframes nextBtnPulse{50%{box-shadow:0 0 0 6px rgba(245,176,39,.16),0 0 30px rgba(245,176,39,.60)}}
 .won-nextzone-hint{margin:13px auto 0;max-width:480px;color:#9bc4d4;font-size:12px;line-height:1.45}
 /* Panneau « DIRECTION » sobre, conservé pour l'écran de RELECTURE de

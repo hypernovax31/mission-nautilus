@@ -53,6 +53,9 @@
      Contenu VOLONTAIREMENT court (chips de 3-4 mots, 1 ligne d'astuce).
      Mêmes classes/markup que directionPanelHtml() de palier1.html. */
   function directionHtml(o) {
+    var boutonTexte = (o.labelSuivant === 'Palier final')
+      ? 'PASSER AU PALIER FINAL'
+      : 'PASSER AU PALIER ' + (Number(o.palier) + 1);
     return ''
       + '<div class="won-nextzone" id="wonDirectionPanel">'
       +   '<div class="won-radar" aria-hidden="true">'
@@ -60,15 +63,13 @@
       +     '<span class="won-radar-ring won-radar-ring--2"></span>'
       +     '<span class="won-radar-core">🧭</span>'
       +   '</div>'
-      +   '<h3 class="won-nextzone-title">CAP SUR LE QR CODE : <span style="text-transform:none;letter-spacing:.02em">« ' + esc(o.indication) + ' »</span></h3>'
+      +   '<h2 class="won-nextzone-title">CAP SUR LE QR CODE</h2>'
       +   '<div class="won-nextzone-steps">'
       +     '<span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>'
       +     '<span class="won-step-chip"><b>2</b> Passer au prochain palier</span>'
       +     '<span class="won-step-chip"><b>3</b> Scanner le QR Code trouvé</span>'
       +   '</div>'
-      +   '<a class="won-next-btn" href="' + esc(o.urlSuivante) + '">⏭️ PASSER AU PROCHAIN PALIER</a>'
-      +   '<p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone :'
-      +   ' c’est la clé d’entrée du ' + esc(o.labelSuivant) + '.</p>'
+      +   '<a class="won-next-btn" href="' + esc(o.urlSuivante) + '">⏭️ ' + esc(boutonTexte) + '</a>'
       + '</div>';
   }
 
