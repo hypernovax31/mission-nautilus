@@ -442,7 +442,13 @@
     var ident = await monIdentite();
     var equipage = (ident && !ident.isTest) ? ident.teamCode : null;
     if (!equipage) { try { equipage = localStorage.getItem('nautilusCurrentTeam'); } catch (e) {} }
-    if (!equipage || equipage === 'NEMO' || enModeTest() || apercuAdminAutorise()) {
+    /* PLUS de passe-droit « NEMO = coquille de test » : c'était un reste
+       de l'ère où le mode concepteur se déguisait en équipage NEMO — un
+       VRAI équipage Nemo ne voyait JAMAIS sa victoire du Palier 2
+       inscrite. Règle d'uniformité : le test est détecté UNIQUEMENT par
+       le code ZZZZ-0000 (ident.isTest / enModeTest) ou l'aperçu admin ;
+       Nemo est un équipage comme les autres. */
+    if (!equipage || enModeTest() || apercuAdminAutorise()) {
       journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
       return;
     }
@@ -596,6 +602,17 @@
      — le scan réussi ('nautilus:sas-ouvert') fait entrer dans la
        VUE BRIEFING en direct. */
   if (apercuAdminAutorise()) {
+    /* MODE CONCEPTEUR = MODE TEST (règle d'uniformité) : la barre du
+       haut porte la même bannière que le compte ZZZZ-0000 — le
+       concepteur n'appartient à AUCUN équipage et rien n'est enregistré
+       (blocage et victoire déjà neutralisés plus haut). Ré-affirmée un
+       instant après : palier-sas.js peut plaquer sur topTeam un
+       équipage mémorisé sur l'appareil de l'organisateur. */
+    var banniereModeTest = function () {
+      if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+    };
+    banniereModeTest();
+    setTimeout(banniereModeTest, 150);
     afficherVueBriefing();
   } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
     /* Concepteur : la page reste scellée, on attend le vrai scan du QR. */

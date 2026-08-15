@@ -4794,7 +4794,15 @@ function qrDataUri(text, opts){
       return;
     }
     await loadMissionConfig();
-    if(!missionConfig?.missionStartedAt){
+    /* Compte de test / mode concepteur (ZZZZ-0000) : le départ officiel
+       du compte à rebours O₂ est une donnée PARTAGÉE par tous les
+       équipages — une partie d'essai ne doit JAMAIS l'armer, ni s'y
+       attribuer (sinon « Équipage de test » atterrissait dans
+       game/config). Règle d'uniformité : mode concepteur = mode test =
+       aucun équipage, AUCUNE donnée enregistrée. Le chrono démarrera
+       au lancement du premier VRAI matelot. */
+    const estPartieEssai = !!(currentTeam?.isTest || currentMatelot?.isTest);
+    if(!missionConfig?.missionStartedAt && !estPartieEssai){
       const startedAt = new Date().toISOString();
       await setDoc(doc(db,'game','config'), {
         missionStartedAt: startedAt,

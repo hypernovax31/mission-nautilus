@@ -1348,7 +1348,10 @@ window.Nautilus = {
         }]
       };
       state.session = null;   // aucune epreuve en cours au depart
-      $('topTeam').textContent = 'Équipage de test';
+      /* Barre du haut : la MÊME bannière que sur les paliers ≥ 2
+         (palier-sas.js). Règle d'uniformité : mode concepteur = mode
+         test (ZZZZ-0000) — le testeur n'appartient à AUCUN équipage. */
+      $('topTeam').textContent = '🧪 Mode test — aucun équipage';
       N.showToast('Mode test : partie d\'essai, rien n\'est enregistré.', 'info');
       renderCrew();
       $('identityCard').style.display = 'none';
