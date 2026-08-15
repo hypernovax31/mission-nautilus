@@ -20,13 +20,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=18">
+  <link rel="stylesheet" href="css/index.css?v=19">
   <link rel="stylesheet" href="css/hublots.css?v=13">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
        principal : les scripts différés s'exécutent dans l'ordre du
        document, et le module l'utilise dès son démarrage. -->
-  <script src="palier-annonces.js?v=2" defer></script>
+  <script src="son-partage.js?v=1" defer></script>
+  <script src="palier-annonces.js?v=3" defer></script>
   <!-- La promo d'installation attend la FIN de la machine à écrire :
        ce drapeau est posé avant son chargement (deferred), et l'ordre
        de mission émet 'nautilus:fin-typewriter' à sa dernière lettre. -->
@@ -3734,6 +3735,10 @@ function qrDataUri(text, opts){
     if(!AC) return null;
     if(!_sfxCtx){
       try{ _sfxCtx = new AC(); }catch(e){ return null; }
+      /* Catalogue dans le registre partage : l'extinction generale (bouton
+         sonar) suspend ce contexte — meme l'alarme O2 Web Audio deja en
+         cours se tait net. au rallumage, relancerContextes() le reveille. */
+      if(window.NautilusSon) window.NautilusSon.registerContexte(_sfxCtx);
     }
     /* Safari suspend le contexte des que l'onglet passe en arriere-plan :
        on le relance a chaque fois, sinon plus aucun son ne sort au retour. */
@@ -3995,6 +4000,9 @@ function qrDataUri(text, opts){
     if(!AC) return null;
     try{
       _typeCtx = new AC();
+      /* Registre partage (NautilusSon) : couper le sonar suspend aussi les
+         bips de frappe deja programmes. */
+      if(window.NautilusSon) window.NautilusSon.registerContexte(_typeCtx);
       _typeBus = _typeCtx.createGain();
       /* Volume de frappe reduit : discret sous l'ambiance sonar, sans
          disparaitre completement (0,45 -> 0,15, environ moitie moins fort
@@ -5067,7 +5075,10 @@ function qrDataUri(text, opts){
   }
 
   /* Coupe net toutes les sources sonores de la page : les trois lecteurs
-     <audio> (ambiance, alarme de mission, annonce d'equipage). */
+     <audio> (ambiance, alarme de mission, annonce d'equipage) ET les
+     contextes Web Audio (hublots, frappe clavier, alarme O2 decodee) —
+     suspendus via le registre partage : meme un son DEJA en cours
+     s'arrete dans la seconde, rien ne finit dans le dos du joueur. */
   function silenceEverything(){
     clearTimeout(_autoplayRecoveryTimer);
     _autoplayRecoveryTimer = null;
@@ -5078,6 +5089,7 @@ function qrDataUri(text, opts){
         a.currentTime = 0;
       }catch(e){ /* element non pret */ }
     });
+    if(window.NautilusSon) window.NautilusSon.suspendreContextes();
   }
 
   /* Autorise a nouveau les lecteurs a produire du son. */
@@ -5086,6 +5098,10 @@ function qrDataUri(text, opts){
       const el = document.getElementById(id);
       if(el) el.muted = false;
     });
+    /* Reveille les contextes Web Audio endormis par l'extinction generale.
+       Sans effet si le sonar reste coupe (relancerContextes verifie la
+       regle d'or lui-meme). */
+    if(window.NautilusSon) window.NautilusSon.relancerContextes();
   }
 
   function _ambiance(){ return document.getElementById('ambianceAudio'); }
@@ -6633,21 +6649,48 @@ function qrDataUri(text, opts){
 
   // (recap.html supprime)
 
-  /* Enregistrement du service worker (PWA) + MISE A JOUR AUTOMATIQUE.
+  /* Bandeau « mise a jour prete », pose en bas de l'ecran. NON bloquant :
+     la partie continue dessous, le joueur choisit son moment. « Actualiser »
+     recharge la page ; « ✕ » fait patienter la mise a jour jusqu'a la
+     prochaine navigation (qui chargera de toute facon les fichiers frais
+     servis par le nouveau service worker). */
+  function afficherBanniereMiseAJour(){
+    if(document.getElementById('majDispoToast')) return;
+    const toast = document.createElement('div');
+    toast.id = 'majDispoToast';
+    toast.className = 'maj-toast';
+    toast.setAttribute('role', 'status');
+    toast.innerHTML =
+      '<span class="maj-toast-dot" aria-hidden="true"></span>' +
+      '<span class="maj-toast-txt"><strong>Nouvelle version du Nautilus</strong> prête à embarquer.</span>' +
+      '<button type="button" class="maj-toast-btn">Actualiser</button>' +
+      '<button type="button" class="maj-toast-close" aria-label="Ignorer pour l’instant" title="Ignorer pour l’instant">✕</button>';
+    toast.querySelector('.maj-toast-btn').addEventListener('click', () => { window.location.reload(); });
+    toast.querySelector('.maj-toast-close').addEventListener('click', () => { toast.remove(); });
+    document.body.appendChild(toast);
+  }
 
-     PROBLEME CORRIGE : l'ancienne version se contentait d'enregistrer le
-     service worker. Quand une nouvelle version du jeu etait publiee, le
-     nouveau service worker s'installait bien en arriere-plan, mais la
-     page affichee, elle, continuait de montrer l'ANCIEN contenu jusqu'a
-     ce que le joueur ferme completement l'onglet (ou l'application
-     installee). Sur telephone, une application PWA n'est presque jamais
-     fermee : des corrections de texte pouvaient donc rester invisibles
-     pendant des jours, en donnant l'impression qu'elles n'avaient pas
-     ete faites.
+  /* Enregistrement du service worker (PWA) + MISE A JOUR SANS FAUX DEPART.
 
-     Desormais : des qu'une nouvelle version a fini de s'installer, la
-     page se recharge UNE SEULE FOIS, toute seule. On verifie aussi
-     l'existence d'une mise a jour au retour sur l'application. */
+     HISTORIQUE DU PROBLEME (analyse cause racine) :
+     1. A l'origine, on se contentait d'enregistrer le service worker :
+        une nouvelle version publiee restait invisible jusqu'a fermeture
+        complete de l'app — presque jamais sur une PWA de telephone.
+     2. Premiere correction : rechargement automatique de la page des que
+        le nouveau service worker prenait la main ('controllerchange').
+        EFFET DE BORD constate en magasin : le FAUX DEPART. Le joueur
+        ouvre l'app, la page charge, il commence a taper son code
+        equipage... et quelques secondes plus tard la page REPART DE
+        ZERO toute seule : le nouveau service worker venait de finir son
+        installation et imposait son rechargement, formulaire efface.
+     3. Desormais : PLUS JAMAIS de rechargement automatique. Le nouveau
+        service worker sert deja les fichiers frais a la prochaine
+        navigation vers un palier ; pour la page deja affichee, un
+        bandeau discret « Nouvelle version prete — Actualiser » laisse
+        le joueur recharger QUAND IL VEUT (ou ignorer : rien ne casse).
+
+     On verifie aussi l'existence d'une mise a jour au retour sur
+     l'application (visibilitychange). */
   if('serviceWorker' in navigator){
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then((reg) => {
@@ -6678,15 +6721,23 @@ function qrDataUri(text, opts){
         console.warn('[PWA] Echec enregistrement service worker :', err);
       });
 
-      /* Le nouveau service worker a pris la main : on recharge pour
-         afficher la nouvelle version. Le verrou evite toute boucle de
-         rechargement, cas classique de cette technique. */
-      let _rechargeFaite = false;
+      /* Le nouveau service worker a pris la main : on propose « Actualiser »
+         au lieu de recharger de force (voir le bloc d'explication au-dessus
+         du register : le rechargement automatique causait le faux depart
+         qui effaçait la saisie du joueur).
+         GARDE « PREMIERE VISITE » : controllerchange se declenche AUSSI a
+         la toute premiere installation (clients.claim()). Or a la premiere
+         visite la page affichee EST deja la version fraiche : aucun
+         bandeau ne doit apparaitre. On retient donc, au chargement, si un
+         controleur existait deja. Le verrou _majAnnoncee evite enfin les
+         bandeaux en double quand plusieurs mises a jour s'enchainent. */
+      let _majAnnoncee = false;
+      const _avaitControleur = !!navigator.serviceWorker.controller;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if(_rechargeFaite) return;
-        _rechargeFaite = true;
-        console.log('[PWA] Nouvelle version active : rechargement.');
-        window.location.reload();
+        if(_majAnnoncee || !_avaitControleur) return;
+        _majAnnoncee = true;
+        console.log('[PWA] Nouvelle version active.');
+        afficherBanniereMiseAJour();
       });
     });
   }

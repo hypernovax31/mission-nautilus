@@ -1,21 +1,22 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v252';
+const CACHE_NAME = 'nautilus-v253';
 const PRECACHE = [
   './',
   './index.html',
   './palier1.html',
   './1721310619.html',
   './classement.html',
-  './css/index.css?v=18',
+  './css/index.css?v=19',
   './css/classement.css?v=3',
   './css/hublots.css?v=13',
   './css/palier1.css?v=21',
   './css/palier2.css?v=14',
   './css/admin.css?v=3',
-  './sonar-button.js?v=3',
+  './son-partage.js?v=1',
+  './sonar-button.js?v=4',
   './admin-button.js?v=12',
-  './palier-annonces.js?v=2',
+  './palier-annonces.js?v=3',
   './journal-bord.js?v=1',
   './palier-sas.js?v=9',
   './palier-briefing.js?v=1',
@@ -39,8 +40,11 @@ self.addEventListener('install', (event) => {
   );
   /* skipWaiting : la nouvelle version prend la main tout de suite, sans
      attendre la fermeture de tous les onglets. Combine a l'ecoute de
-     'controllerchange' dans index.html, la page se recharge alors d'elle
-     meme et le joueur voit immediatement la derniere version. */
+     'controllerchange' dans index.html, qui affiche alors un bandeau
+     « Nouvelle version prete — Actualiser » : PLUS JAMAIS de rechargement
+     automatique (il causait le faux depart qui effacait la saisie du
+     joueur). Les fichiers frais arrivent d'eux-memes a la prochaine
+     navigation, servis par ce nouveau service worker. */
   self.skipWaiting();
 });
 

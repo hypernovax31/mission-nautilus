@@ -36,7 +36,10 @@
 
    REGLE DU SON, identique partout :
      - allume : ambiance + bruitages audibles
-     - eteint : silence total sur toute la page
+     - eteint : silence total sur toute la page — Y COMPRIS les sons Web
+       Audio deja en cours, suspendus via le registre NautilusSon
+       (son-partage.js). Seule exception : le signal morse du palier 1,
+       necessaire a l'epreuve, joue a la demande meme sonar coupe.
    Le choix est memorise dans localStorage sous 'nautilusSoundOn' et suit le
    joueur d'une page a l'autre.
 ============================================================================= */
@@ -229,11 +232,14 @@
   }
 
   function silence() {
-    // Coupe TOUS les sons de la page, pas seulement l'ambiance.
+    // Coupe TOUS les sons de la page, pas seulement l'ambiance : d'abord
+    // les <audio>, ensuite les contextes Web Audio (jingle, alarme ou
+    // ecoute morse deja en cours : suspendus nets, sans attente).
     var list = document.querySelectorAll('audio');
     for (var i = 0; i < list.length; i++) {
       try { list[i].pause(); list[i].muted = true; } catch (e) { /* pas pret */ }
     }
+    if (window.NautilusSon) window.NautilusSon.suspendreContextes();
     clearTimeout(autoWakeTimer); autoWakeTimer = null;
     primed = false;
     paint(false);
@@ -245,6 +251,7 @@
       silence();
     } else {
       remember(true);
+      if (window.NautilusSon) window.NautilusSon.relancerContextes();
       var list = document.querySelectorAll('audio');
       for (var i = 0; i < list.length; i++) list[i].muted = false;
       start();

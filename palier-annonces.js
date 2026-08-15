@@ -18,7 +18,9 @@
       — sauf si le site est en sourdine, règle absolue partagée.
 
    RÈGLES AUDIO (les mêmes que partout dans le jeu) :
-     - interrupteur général « sonar » respecté (nautilusSoundOn) ;
+     - interrupteur général « sonar » respecté (nautilusSoundOn) — silence
+       total quand il est coupé, jusqu'au jingle en cours de lecture
+       (contextes suspendus via le registre NautilusSon de son-partage.js) ;
      - aucun son ne part si AUCUN geste n'a eu lieu sur la page
        (impossible sur iPhone, inutile d'insister) ;
      - aucun son si la fenêtre n'est pas visible ;
@@ -110,6 +112,10 @@
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
       try { ctx = new AC(); } catch (e) { return null; }
+      /* Catalogue dans le registre partage : si le joueur coupe le sonar
+         PENDANT le jingle, l'extinction generale (NautilusSon) suspend ce
+         contexte — le son s'arrete au lieu de finir dans le dos. */
+      if (window.NautilusSon) window.NautilusSon.registerContexte(ctx);
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
       return ctx;
     }

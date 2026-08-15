@@ -8,7 +8,8 @@
   <link rel="stylesheet" href="css/palier1.css?v=21">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
-  <script src="palier-annonces.js?v=2" defer></script>
+  <script src="son-partage.js?v=1" defer></script>
+  <script src="palier-annonces.js?v=3" defer></script>
   <!-- Journal de bord « Activité en direct », code COMMUN à tous les
        paliers (extrait mot pour mot de cette page). Chargé avant le
        module ci-dessous : window.JournalDeBord est prêt à temps. -->
@@ -594,7 +595,15 @@ function formatDate(iso) { return iso ? new Date(iso).toLocaleString('fr-FR') : 
 /* ---------- AUDIO WEB API ---------- */
 /* Le bouton "sonar" de la page d'accueil est l'interrupteur general du son
    du jeu. Son etat est partage entre les pages via localStorage : si le
-   joueur a coupe le son, AUCUN bip du mini-jeu ne doit sortir ici non plus. */
+   joueur a coupe le son, AUCUN bip du mini-jeu ne doit sortir ici non plus.
+
+   SEULE EXCEPTION (demande explicite) : le SIGNAL MORSE. Il n'est pas un
+   bruitage — il EST l'epreuve : sans lui, le mot est indéchiffrable et le
+   palier impossible. Il passe donc par un contexte dedie, getMorseCtx(),
+   qui ignore l'interrupteur ; il reste joue a la demande (bouton
+   « Ecouter le signal », 3 ecoutes max), jamais en fond sonore.
+   Si le joueur coupe le sonar PENDANT une ecoute, l'extinction generale
+   (registre NautilusSon) suspend le contexte : le signal se tait net. */
 function isSoundEnabled() {
   try { return localStorage.getItem('nautilusSoundOn') !== '0'; }
   catch (e) { return true; }
@@ -607,8 +616,23 @@ function getAudioCtx() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     _audioCtx = new AC();
+    window.NautilusSon?.registerContexte?.(_audioCtx);
   }
   return _audioCtx;
+}
+
+/* Contexte DEDIE au signal morse : le seul son autorise meme sonar coupe
+   (voir l'explication au-dessus de isSoundEnabled). Catalogue quand meme
+   dans le registre partage pour l'extinction instantanee a la demande. */
+let _morseCtx = null;
+function getMorseCtx() {
+  if (!_morseCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { _morseCtx = new AC(); } catch (e) { return null; }
+    window.NautilusSon?.registerContexte?.(_morseCtx);
+  }
+  return _morseCtx;
 }
 
 /* Tonalite du signal (point ou trait) sur le contexte courant */
@@ -759,7 +783,7 @@ window.Nautilus = {
   getLockHours, getLockedUntilISO, getMatelotLock, isMatelotLocked, formatDate,
   getMissionConfig,
   isTestMode, isTestMember,
-  isSoundEnabled, getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
+  isSoundEnabled, getAudioCtx, getMorseCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
   showToast, addLogEntry, clearLog, heartbeat
 };
@@ -840,6 +864,8 @@ window.Nautilus = {
     const AC = window.AudioContext || window.webkitAudioContext;
     if(!AC) return null;
     try{ _finAlarmCtx = new AC(); }catch(e){ return null; }
+    /* Catalogue : couper le sonar pendant l'alarme la suspend a l'instant. */
+    window.NautilusSon?.registerContexte?.(_finAlarmCtx);
     if(_finAlarmCtx.state === 'suspended') _finAlarmCtx.resume().catch(()=>{});
     return _finAlarmCtx;
   }
@@ -2145,14 +2171,13 @@ window.Nautilus = {
       return;
     }
     _isPlaying = true;
-    const ctx = N.getAudioCtx();
+    /* Le signal morse est la SEULE exception a la regle du silence : il
+       joue meme sonar coupe, car sans lui l'epreuve est insoluble (voir
+       getMorseCtx). Il ne part qu'ici, a la demande, sur cette ecoute. */
+    const ctx = N.getMorseCtx();
     if (!ctx) {
-      // Sonar eteint : on ne joue rien ET on ne consomme pas d'ecoute.
-      // On explique pourquoi, sinon le bouton semble casse.
       _isPlaying = false;
-      if (!N.isSoundEnabled()) {
-        N.showToast('Le sonar est coupé : réactive-le en haut de la page pour entendre le signal.', 'danger');
-      }
+      N.showToast('Signal indisponible : cet appareil a bloqué tout l’audio. Recharge la page.', 'danger');
       return;
     }
     if (ctx.state === 'suspended') await ctx.resume();
@@ -2950,7 +2975,7 @@ window.Nautilus = {
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu.
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
-<script src="sonar-button.js?v=3" defer></script>
+<script src="sonar-button.js?v=4" defer></script>
 <script src="admin-button.js?v=12" type="module"></script>
 </body>
 </html>
