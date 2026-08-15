@@ -2262,17 +2262,28 @@ window.Nautilus = {
       return;
     }
     if (guess === target.toUpperCase()) {
-      await N.updateSession(state.teamCode, {
+      const finWin = {
         state: 'won',
         endReason: 'solved',
         lastEvent: 'solved',
         endedAt: new Date().toISOString(),   /* repere pour savoir quand cet ecran a fait son temps */
         revealedWord: target  /* stocké en clair sur la session pour l'écran de victoire uniquement */
-      });
+      };
+      await N.updateSession(state.teamCode, finWin);
       N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe ! L'épreuve du sonar est validée.`, 'success');
       N.showToast('Mot de passe déchiffré !', 'success');
       /* Avance le palier côté équipe */
       await advanceTeam();
+      /* Même raison que pour la défaite / le temps écoulé : en partie
+         d'essai (compte ZZZZ-0000), updateSession() n'écrit rien et aucune
+         écoute temps réel ne se déclenche — l'écran de victoire ne
+         s'affichait donc JAMAIS, seul le toast vert « Mot de passe
+         déchiffré ! » apparaissait. On applique la victoire EN MÉMOIRE et
+         on redessine, pour que l'écran « Épreuve validée ! » s'affiche
+         aussi en mode test (et, en partie réelle, sans attendre
+         l'aller-retour réseau). */
+      state.session = { ...(state.session || {}), ...finWin };
+      renderGameArea();
     } else {
       const newErrors = (state.session.errors || 0) + 1;
       const max = state.session.maxErrors || 3;
