@@ -73,7 +73,7 @@
 
         <!-- L'indication de la zone de recherche, en toute fin de scène :
              un fil d'Ariane discret pour ceux qui ont perdu la piste du
-             QR. Elle se DÉPLIE sur place (encart « Cap sur le Palier 2 »),
+             QR. Elle se DÉPLIE sur place (encart « CAP SUR LE QR CODE »),
              sans quitter la scène scellée. L'ancien renvoi vers
              palier1.html?relecture=sas menait à l'écran d'identification
              faute d'identité portée par l'URL. -->
@@ -85,10 +85,9 @@
               <span class="won-radar-ring won-radar-ring--2"></span>
               <span class="won-radar-core">🧭</span>
             </div>
-            <h3 class="won-nextzone-title">Cap sur le Palier 2</h3>
-            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">……</span> »</p>
+            <h3 class="won-nextzone-title">CAP SUR LE QR CODE : <span style="text-transform:none;letter-spacing:.02em">« <span id="sasIndicationTexte">……</span> »</span></h3>
             <div class="won-nextzone-steps">
-              <span class="won-step-chip"><b>1</b> Rallier la zone</span>
+              <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
               <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
               <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
             </div>
@@ -196,7 +195,7 @@
 <!-- Écran de VICTOIRE commun à TOUS les paliers (même page de victoire
      que le Palier 1) : badge, stats, panneau pliable « DIRECTION VERS
      LA ZONE DE RECHERCHE ». -->
-<script src="victoire-palier.js?v=4"></script>
+<script src="victoire-palier.js?v=5"></script>
 <script>
 /* ================= ÉPREUVE DU PALIER 2 — « CODE MAGASIN » =================
    Grille EXPERT « jargon vendeur » : 10 mots couvrant TOUS les secteurs du
@@ -235,7 +234,7 @@
 
   /* Indication de la zone de recherche du PALIER 2 — l'endroit du magasin
      où se trouve le QR qui ouvre ce sas. Affichée dans l'encart
-     « Cap sur le Palier 2 » déplié depuis la zone scellée. Même valeur
+     « CAP SUR LE QR CODE » déplié depuis la zone scellée. Même valeur
      que QR_LOCATION_HINT de palier1.html : quand l'admin fixe le lieu,
      on aligne les DEUX fichiers. */
   var ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
@@ -562,7 +561,6 @@
       ],
       indication: QR_LOCATION_HINT,
       labelSuivant: 'Palier 3',
-      actionSuivante: 'PASSER AU 3EME PALIER',
       urlSuivante: '1831411720.html'
     });
   }
@@ -702,7 +700,7 @@
 
   /* --- Indication de la zone de recherche : dépliable SUR PLACE ---
      Le bouton « 📍 Voir l'indication… » déplie/replie l'encart
-     « Cap sur le Palier 2 » DANS la scène scellée — plus aucun renvoi
+     « CAP SUR LE QR CODE » DANS la scène scellée — plus aucun renvoi
      vers palier1.html?relecture=sas, qui tombait sur l'écran
      d'identification faute d'identité dans l'URL. */
   var _btnIndication = $('sasIndicationBtn');

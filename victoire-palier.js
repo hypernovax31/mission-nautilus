@@ -11,9 +11,11 @@
      ZONE DE RECHERCHE » (longs paragraphes + bouton 🧭 CONTINUER qui
      ne faisait que plier/déplier — doublon du vrai CTA) est remplacé
      par un bloc « PROCHAINE IMMERSION » toujours visible : radar sonar
-     animé 🧭, cap sur le palier suivant, indication de la zone, trois
-     étapes-chips (rallier / ouvrir / scanner), gros bouton ⏭️ PULSANT
-     et une unique ligne d'astuce 📷 (photo du QR = clé d'entrée).
+     animé 🧭, titre « CAP SUR LE QR CODE : « … » » (qui NOTIFIE la
+     zone de recherche du QR), trois étapes-chips (rallier la zone /
+     passer au prochain palier / scanner le QR trouvé), gros bouton
+     ⏭️ « PASSER AU PROCHAIN PALIER » PULSANT et une unique ligne
+     d'astuce 📷 (photo du QR = clé d'entrée).
 
    Structure et classes (.won-* — styles dans css/palier1.css, chargée
    par TOUTES les pages de palier) calquées sur renderWonScreen() /
@@ -31,7 +33,6 @@
                 { valeur: '2',     label: 'Erreurs' } ],
        indication: '…',              // indication de direction du QR
        labelSuivant: 'Palier 3',
-       actionSuivante: 'PASSER AU 3EME PALIER',
        urlSuivante: '1831411720.html'
      });
 
@@ -59,14 +60,13 @@
       +     '<span class="won-radar-ring won-radar-ring--2"></span>'
       +     '<span class="won-radar-core">🧭</span>'
       +   '</div>'
-      +   '<h3 class="won-nextzone-title">Cap sur le ' + esc(o.labelSuivant) + '</h3>'
-      +   '<p class="won-nextzone-indication">📍 « ' + esc(o.indication) + ' »</p>'
+      +   '<h3 class="won-nextzone-title">CAP SUR LE QR CODE : <span style="text-transform:none;letter-spacing:.02em">« ' + esc(o.indication) + ' »</span></h3>'
       +   '<div class="won-nextzone-steps">'
-      +     '<span class="won-step-chip"><b>1</b> Rallier la zone</span>'
-      +     '<span class="won-step-chip"><b>2</b> Ouvrir la page du palier</span>'
-      +     '<span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>'
+      +     '<span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>'
+      +     '<span class="won-step-chip"><b>2</b> Passer au prochain palier</span>'
+      +     '<span class="won-step-chip"><b>3</b> Scanner le QR Code trouvé</span>'
       +   '</div>'
-      +   '<a class="won-next-btn" href="' + esc(o.urlSuivante) + '">⏭️ ' + esc(o.actionSuivante) + '</a>'
+      +   '<a class="won-next-btn" href="' + esc(o.urlSuivante) + '">⏭️ PASSER AU PROCHAIN PALIER</a>'
       +   '<p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone :'
       +   ' c’est la clé d’entrée du ' + esc(o.labelSuivant) + '.</p>'
       + '</div>';
