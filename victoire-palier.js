@@ -67,7 +67,7 @@
       +     '<span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>'
       +   '</div>'
       +   '<a class="won-next-btn" href="' + esc(o.urlSuivante) + '">⏭️ ' + esc(o.actionSuivante) + '</a>'
-      +   '<p class="won-nextzone-hint">📷 Pause ? Photographiez le QR de la zone :'
+      +   '<p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone :'
       +   ' c’est la clé d’entrée du ' + esc(o.labelSuivant) + '.</p>'
       + '</div>';
   }

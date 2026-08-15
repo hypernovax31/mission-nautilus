@@ -6928,8 +6928,11 @@ const PWA_CONTENT = {
       { text: '<b>Safari</b> : menu <b>Fichier → Ajouter au Dock…</b>', hint: 'En haut de l’écran' },
       { text: '<b>Chrome</b> : icône <b>⊕ Installer</b> à droite de la barre d’adresse' },
       { text: 'Confirme en cliquant sur <b>Ajouter</b> ou <b>Installer</b>' }
-    ],
-    tip: 'L’app s’ouvrira dans sa propre fenêtre, sans la barre d’adresse.'
+    ]
+    /* Phrase de conclusion SUPPRIMÉE (demande organisation) : l'ancien
+       tip macOS sur la « fenêtre dédiée hors navigateur » n'apparaît
+       plus — les 3 gestes suffisent. Le rendu tolère désormais un tip
+       absent (rien n'est affiché). */
   },
   windows: {
     title: 'Installe Mission Nautilus sur ton PC',
@@ -7007,7 +7010,7 @@ function showInstallInstructions(){
       '<h2 class="pwa-modal-title">' + c.title + '</h2>' +
       '<p class="pwa-modal-subtitle">' + c.subtitle + '</p>' +
       '<ol class="pwa-modal-steps">' + stepsHtml + '</ol>' +
-      '<div class="pwa-modal-tip">' + c.tip + '</div>' +
+      (c.tip ? '<div class="pwa-modal-tip">' + c.tip + '</div>' : '') +
       '<button type="button" class="pwa-modal-cta" data-close>Compris</button>' +
     '</div>';
 
