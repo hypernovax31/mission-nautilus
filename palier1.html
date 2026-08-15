@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=23">
+  <link rel="stylesheet" href="css/palier1.css?v=24">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -14,6 +14,9 @@
        paliers (extrait mot pour mot de cette page). Chargé avant le
        module ci-dessous : window.JournalDeBord est prêt à temps. -->
   <script src="journal-bord.js?v=2" defer></script>
+  <!-- Records de résolution des paliers (écran de victoire) : écriture
+       et lecture Firestore communes à tous les paliers. -->
+  <script src="records-palier.js?v=1" defer></script>
 
 </head>
 <body>
@@ -1156,6 +1159,7 @@ window.Nautilus = {
       const s = { ...sessionBase, state: 'won', endReason: 'solved', errors: 2, revealedWord: 'BALEINES' };
       body.innerHTML = renderWonScreen(s, team);
       jouerSonVictoire(s);
+      chargerRecordsVictoire();
     } else if (mode === 'defaite') {
       body.innerHTML = renderLostScreen({ ...sessionBase, state: 'lost', endReason: 'too_many_errors' }, team);
     } else if (mode === 'blocage') {
@@ -1748,6 +1752,7 @@ window.Nautilus = {
     if (s.state === 'won') {
       body.innerHTML = renderWonScreen(s, t);
       jouerSonVictoire(s);
+      chargerRecordsVictoire();
       return;
     }
 
@@ -2274,8 +2279,12 @@ window.Nautilus = {
       await N.updateSession(state.teamCode, finWin);
       N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe ! L'épreuve du sonar est validée.`, 'success');
       N.showToast('Mot de passe déchiffré !', 'success');
+      /* Durée de résolution (secondes) pour le record de temps. */
+      const dureeSec = (state.session && state.session.startedAt)
+        ? Math.max(0, Math.round((new Date(finWin.endedAt).getTime() - new Date(state.session.startedAt).getTime()) / 1000))
+        : 0;
       /* Avance le palier côté équipe */
-      await advanceTeam();
+      await advanceTeam(dureeSec);
       /* Même raison que pour la défaite / le temps écoulé : en partie
          d'essai (compte ZZZZ-0000), updateSession() n'écrit rien et aucune
          écoute temps réel ne se déclenche — l'écran de victoire ne
@@ -2409,7 +2418,7 @@ window.Nautilus = {
     N.addLogEntry(`🔒 ${state.me.name} est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h).`, 'danger', instant);
   }
 
-  async function advanceTeam() {
+  async function advanceTeam(dureeSec) {
     if (!state.team) return;
     const completed = Array.from(new Set([...(state.team.completedSteps || []), 'start']));
     const next = N.STEPS['start'].next;
@@ -2447,6 +2456,16 @@ window.Nautilus = {
     if (leves > 0) { update.matelotLocks = locks; }
     state.team = await N.saveTeam(state.team, update);
     N.markHintsExhausted(state.word);
+    /* Record de temps de résolution — hors mode test / aperçu (aucune
+       écriture réelle dans ces modes), silencieux en cas de panne réseau. */
+    if (!N.isTestMode() && typeof window.NautilusRecords !== 'undefined') {
+      window.NautilusRecords.enregistrer({
+        stepId: 'start',
+        seconds: dureeSec || 0,
+        matelot: state.me ? state.me.name : 'Un matelot',
+        equipage: displayTeamName(state.team)
+      });
+    }
     if (leves > 0) {
       N.addLogEntry(`🔓 Palier franchi : ${leves} matelot(s) bloqué(s) en surface reprennent la quête.`, 'success');
     }
@@ -2689,13 +2708,14 @@ window.Nautilus = {
           <span class="won-radar-ring won-radar-ring--2"></span>
           <span class="won-radar-core">🧭</span>
         </div>
-        <h2 class="won-nextzone-title">CAP SUR LE QR CODE</h2>
+        <h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>
         <div class="won-nextzone-steps">
           <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
           <span class="won-step-chip"><b>2</b> Passer au prochain palier</span>
           <span class="won-step-chip"><b>3</b> Scanner le QR Code trouvé</span>
         </div>
         <a class="won-next-btn" href="${esc(url)}">⏭️ ${esc(boutonTexte)}</a>
+        <p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone : c’est la clé d’entrée du Palier ${nextNum}.</p>
       </div>
     `;
   }
@@ -2726,11 +2746,26 @@ window.Nautilus = {
           <div class="won-stat"><strong>${listens}/3</strong><span>Écoutes utilisées</span></div>
           <div class="won-stat"><strong>${errors}</strong><span>Erreur${errors > 1 ? 's' : ''}</span></div>
         </div>
+        <div class="won-records" id="wonRecordsHost" aria-live="polite"></div>
         <div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —
           tout l’équipage replonge !</div>
         ${directionPanelHtml(nextStep, { id: 'wonDirectionPanel' })}
       </div>
     `;
+  }
+
+  /* === RECORDS DE RÉSOLUTION (Palier 1) ===
+     Peuple le menu déroulant discret sous les résultats du matelot :
+     les temps des AUTRES matelots / équipages, du plus rapide au plus
+     lent (lecture Firestore via records-palier.js, asynchrone — on rend
+     d'abord l'écran, puis on injecte les records). */
+  function chargerRecordsVictoire() {
+    const host = $('wonRecordsHost');
+    if (!host || typeof window.NautilusRecords === 'undefined') return;
+    window.NautilusRecords.chargerEtRendre(host, {
+      stepId: 'start',
+      moi: state.me ? state.me.name : ''
+    });
   }
 
   /* === ÉCRAN : relecture de la zone de recherche (palier1.html?relecture=sas) ===

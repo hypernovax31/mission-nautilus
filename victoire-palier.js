@@ -56,6 +56,7 @@
     var boutonTexte = (o.labelSuivant === 'Palier final')
       ? 'PASSER AU PALIER FINAL'
       : 'PASSER AU PALIER ' + (Number(o.palier) + 1);
+    var prochain = o.labelSuivant || ('Palier ' + (Number(o.palier) + 1));
     return ''
       + '<div class="won-nextzone" id="wonDirectionPanel">'
       +   '<div class="won-radar" aria-hidden="true">'
@@ -63,13 +64,14 @@
       +     '<span class="won-radar-ring won-radar-ring--2"></span>'
       +     '<span class="won-radar-core">🧭</span>'
       +   '</div>'
-      +   '<h2 class="won-nextzone-title">CAP SUR LE QR CODE</h2>'
+      +   '<h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>'
       +   '<div class="won-nextzone-steps">'
       +     '<span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>'
       +     '<span class="won-step-chip"><b>2</b> Passer au prochain palier</span>'
       +     '<span class="won-step-chip"><b>3</b> Scanner le QR Code trouvé</span>'
       +   '</div>'
       +   '<a class="won-next-btn" href="' + esc(o.urlSuivante) + '">⏭️ ' + esc(boutonTexte) + '</a>'
+      +   '<p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone : c’est la clé d’entrée du ' + esc(prochain) + '.</p>'
       + '</div>';
   }
 
@@ -99,6 +101,7 @@
       +   '<p class="won-line">' + ligneEquipage + '</p>'
       +   '<p class="won-line won-line--bravo">Bravo à <b>' + esc(bravo) + '</b> pour « ' + esc(o.mission) + ' ».</p>'
       +   '<div class="won-stats" aria-label="Bilan de l’épreuve">' + statsHtml + '</div>'
+      +   '<div class="won-records" id="wonRecordsHost" aria-live="polite"></div>'
       +   '<div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —'
       +   ' tout l’équipage replonge !</div>'
       +   directionHtml(o)
