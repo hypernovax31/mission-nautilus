@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=22">
-  <link rel="stylesheet" href="css/palier2.css?v=15">
+  <link rel="stylesheet" href="css/palier2.css?v=16">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -26,28 +26,57 @@
 </div>
 
 <main>
-  <!-- Héros « ZONE SCELLÉE » : visible SEULEMENT quand la zone est
-       réellement scellée (en attente du QR Code). Dès que le sas est
-       ouvert — scan réussi, sas déjà mémorisé ou aperçu admin — il se
-       retire avec le reste de la vue scellée, au profit du BRIEFING
-       DU CAPITAINE (#briefCard, juste après le sas). -->
+  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER. Vue unique et immersive —
+       le message de verrouillage, le lecteur QR et l'indication de la
+       zone de recherche ne forment PLUS QU'UN SEUL BLOC. Tant que le sas
+       est fermé, RIEN d'autre n'est à l'écran (ni équipage, ni journal) :
+       toute l'attention se porte sur le QR Code à scanner ou à importer.
+       Dès que le sas s'ouvre (scan réussi, sas mémorisé, aperçu admin),
+       cette scène se retire au profit du BRIEFING DU CAPITAINE
+       (#briefCard) — et l'équipage actif + le journal reviennent. -->
   <section class="card gate-hero" id="gateHero">
     <h2 id="sasHeroTitle">🔒 PALIER 2 — ZONE SCELLÉE</h2>
     <div class="body">
-      <!-- « SAS SCELLÉ » : panneau d'alerte à part entière, façon porte de
-           sas verrouillée. Le cadenas et la consigne ne sont plus une
-           bannière générique, mais une scène : on comprend d'un coup d'œil
-           que la zone est fermée et qu'il faut d'abord le QR Code. -->
-      <div class="gate-seal">
-        <div class="gate-seal-badge" aria-hidden="true">🔒</div>
-        <p class="gate-seal-titre">⛔ Ce palier est verrouillé.</p>
-        <p class="gate-seal-msg">Sans le <b>QR Code de la zone de recherche</b>, cette page reste bloquée et personne ne peut progresser vers le palier suivant.</p>
-        <!-- Au lieu d'une phrase d'explication, un BOUTON renvoie sur la
-             page d'indication de la zone de recherche (écran « direction »
-             du Palier 1). ?relecture=sas : indispensable, car palier1.html
+      <div class="sas-scene">
+        <!-- En-tête de suspense : le sas est clos, il attend sa clé. -->
+        <div class="sas-head">
+          <div class="sas-lock" aria-hidden="true">
+            <span class="sas-lock-ico">🔒</span>
+          </div>
+          <p class="sas-kicker">Profondeur — porte scellée</p>
+          <p class="sas-titre">⛔ Ce palier est verrouillé.</p>
+          <p class="sas-msg">Sans le <b>QR Code de la zone de recherche</b>, cette page reste bloquée et personne ne peut progresser vers le palier suivant.</p>
+        </div>
+
+        <!-- Le lecteur : la serrure à ouvrir. Il occupe le centre de la
+             scène — c'est LE geste à faire, ni plus ni moins. -->
+        <div class="gate-scanbox sas-scanbox" id="gateScanbox">
+          <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
+          <canvas id="gateCanvas" hidden></canvas>
+          <div class="gate-cam-placeholder" id="gateCamPlaceholder" aria-hidden="true">
+            <span class="gate-cam-icon">📷</span>
+            <span>Caméra en veille — vise le QR Code pour ouvrir le sas.</span>
+          </div>
+          <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
+        </div>
+
+        <div class="gate-actions">
+          <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
+          <!-- Import du QR Code photographié : placé sous l'encart de scan.
+               Sert quand l'équipage a photographié le QR pour continuer
+               plus tard. -->
+          <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
+          <input type="file" id="gateFile" accept="image/*" hidden>
+        </div>
+
+        <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
+
+        <!-- L'indication de la zone de recherche, en toute fin de scène :
+             un simple fil d'Ariane, discret, pour ceux qui ont perdu la
+             piste du QR. ?relecture=sas : indispensable, car palier1.html
              RENVOIE d'office vers le palier courant tout équipage ayant
-             validé — sans ce paramètre, ce bouton rebouclerait ici. -->
-        <a class="gate-btn gate-btn--import gate-retour gate-seal-cta" href="palier1.html?relecture=sas">📍 Voir l'indication de la zone de recherche</a>
+             validé — sans ce paramètre, ce lien rebouclerait ici. -->
+        <a class="sas-indication" href="palier1.html?relecture=sas">📍 Voir l'indication de la zone de recherche</a>
       </div>
     </div>
   </section>
@@ -79,35 +108,6 @@
         <h3>Activité en direct</h3>
         <ul id="morse-log-list"></ul>
       </div>
-    </div>
-  </section>
-
-  <section class="card" id="gateCard">
-    <h2>📷 QR CODE D'ACCÈS</h2>
-    <div class="body">
-
-      <p class="gate-scan-lead"><b>Scannez le QR Code</b> dans l'encart ci-dessous, ou importez-en la photo.</p>
-      <div class="gate-scanbox" id="gateScanbox">
-        <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
-        <canvas id="gateCanvas" hidden></canvas>
-        <div class="gate-cam-placeholder" id="gateCamPlaceholder" aria-hidden="true">
-          <span class="gate-cam-icon">📷</span>
-          <span>Caméra en veille — vise le QR Code pour ouvrir le sas.</span>
-        </div>
-        <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
-      </div>
-
-      <div class="gate-actions">
-        <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
-        <!-- Import du QR Code photographié : placé sous l'encart de scan.
-             Sert quand l'équipage a photographié le QR pour continuer
-             plus tard. -->
-        <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
-        <input type="file" id="gateFile" accept="image/*" hidden>
-      </div>
-
-      <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
-
     </div>
   </section>
 
@@ -294,8 +294,10 @@
      ZONE SCELLÉE → BRIEFING DU CAPITAINE → ÉPREUVE.
 
      1) VUE SCELLÉE — montrée SEULEMENT quand la zone est réellement
-        scellée (en attente du QR Code) : héros 🔒 ZONE SCELLÉE +
-        📜 JOURNAL DE BORD + 📷 sas QR.
+        scellée (en attente du QR Code) : UN SEUL BLOC immersif — le
+        message de verrouillage, le lecteur QR et l'indication de la
+        zone. Ni équipage, ni journal : tout l'écran se concentre sur
+        le geste d'ouverture.
      2) VUE BRIEFING DU CAPITAINE — montrée dès que le sas est ouvert
         (scan réussi, sas déjà mémorisé sur l'appareil ou aperçu
         admin) et AVANT le mini-jeu : explication immersive du thème
@@ -316,19 +318,23 @@
     el.style.display = visible ? '' : 'none';
   }
   function afficherVueScellee() {
+    /* LA PORTE SCELLÉE, et RIEN d'autre : tant que le sas est fermé,
+       ni l'équipage actif ni le journal ne viennent disperser
+       l'attention — toute la scène se concentre sur le QR Code à
+       scanner ou à importer (le tout vit dans un seul bloc #gateHero). */
     montrerCarte('gateHero', true);
-    montrerCarte('teamCard', true);
-    montrerCarte('logCard', true);
-    montrerCarte('gateCard', true);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
     montrerCarte('briefCard', false);
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
   }
   function afficherVueBriefing() {
+    /* Sas ouvert : la scène scellée se retire, et l'équipage actif +
+       le journal de bord reviennent avec le briefing du capitaine. */
     montrerCarte('gateHero', false);
     montrerCarte('teamCard', true);
     montrerCarte('logCard', true);
-    montrerCarte('gateCard', false);
     montrerCarte('briefCard', true);
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
@@ -340,7 +346,6 @@
     montrerCarte('gateHero', false);
     montrerCarte('teamCard', false);
     montrerCarte('logCard', false);
-    montrerCarte('gateCard', false);
     montrerCarte('briefCard', false);
     montrerCarte('gateUnlocked', true);
     var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
@@ -635,7 +640,8 @@
        le mini-jeu n'apparaît qu'après le briefing du capitaine —
        enchaînement valable sur toute la mission ;
      — page scellée forcée (?sas=ferme, test du QR concepteur) ou sas
-       fermé → VUE SCELLÉE : héros + journal + sas QR ;
+       fermé → VUE SCELLÉE : le seul bloc « porte scellée » (message +
+       lecteur QR + indication) ;
      — le scan réussi ('nautilus:sas-ouvert') fait entrer dans la
        VUE BRIEFING en direct. */
   if (apercuAdminAutorise()) {
