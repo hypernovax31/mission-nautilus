@@ -363,14 +363,19 @@
     /* --- Encart d'embarquement : code matelot + QR alignes --- */
     .matelot-card{padding:clamp(16px,3.5vw,22px)}
     /* Message de bienvenue : la nouvelle la plus importante de la carte,
-       mise en avant par un bandeau vert plein qui tranche sur le fond clair
-       de l'encart. Le nom du matelot et son équipage ressortent en doré. */
+       mise en avant par un bandeau PLEIN qui tranche sur le fond clair de
+       l'encart. Sa couleur est celle de l'équipage (teinte posée par le JS
+       via --team-tint / --team-glow, mêmes valeurs que les cartes d'équipe) :
+       le matelot reconnaît son bord d'un coup d'œil. Repli vert historique
+       si aucune teinte n'est posée. Le nom et l'équipage ressortent en doré. */
     .matelot-welcome{
       display:flex;align-items:center;gap:12px;
       margin:0 0 14px;padding:14px 16px;border-radius:12px;
-      background:linear-gradient(135deg,#075c39,#0a8a5a);
+      background:
+        linear-gradient(135deg, rgba(var(--team-glow,7,92,57),.22), transparent 55%),
+        var(--team-tint,#075c39);
       color:#fff;font-size:clamp(17px,2.6vw,20px);font-weight:900;line-height:1.3;
-      box-shadow:0 8px 18px rgba(7,92,57,.28);
+      box-shadow:0 8px 18px rgba(var(--team-glow,7,92,57),.30);
     }
     .matelot-welcome b{color:#ffe2a0}
     .matelot-welcome-ico{flex:0 0 auto;font-size:28px;line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.3)}
