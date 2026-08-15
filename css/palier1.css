@@ -539,6 +539,11 @@
     /* Alerte et niveau critique : memes degrades que sur l'accueil. */
     .o2-bar.warn .o2-fill{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}
     .o2-bar.crit .o2-fill{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c)}
+    /* Alerte critique : on ne fait plus clignoter le FLUIDE mais le CONTOUR
+       de la jauge — blanc léger qui alterne avec le rouge d'alerte O₂
+       (même principe que la jauge d'accueil). */
+    .o2-bar.crit .o2-tube{animation:o2ContourAlert 1.1s ease-in-out infinite}
+    @keyframes o2ContourAlert{0%,100%{border-color:rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(255,255,255,.18)}50%{border-color:#ff4b3e;box-shadow:0 0 0 2px rgba(255,75,62,.4)}}
     @media(max-width:430px){
       .o2-label{display:none}
       .o2-time{font-size:10px}
