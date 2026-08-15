@@ -201,7 +201,7 @@
     }
 
     function refuser() {
-      message('❌ Ce code n’ouvre pas le sas du ' + LABEL + '. Vise le QR Code de la zone de recherche (ou sa photo), ou vérifie le numéro.', 'danger');
+      message('❌ Ce QR Code n’ouvre pas le sas du ' + LABEL + '. Recherche le bon !', 'danger');
     }
 
     function verifier(payload, source) {

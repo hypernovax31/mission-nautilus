@@ -1006,7 +1006,7 @@
      des liseres sur blanc >= 4,5:1, teintes distinctes aussi en vision
      daltonienne. DEFAULT est un gris neutre volontaire. */
   const TEAM_STYLES = {
-    NEMO:     { glow: '132,157,250', tint: '#1857b8', emblem: 'M100 30a16 16 0 1 1 0 32 16 16 0 0 1 0-32Zm0 40v104M64 88h72M100 174c-30 0-46-20-48-44l14 6-6-18 22 8c-6 18 4 32 18 34Zm0 0c30 0 46-20 48-44l-14 6 6-18-22 8c6 18-4 32-18 34Z' },
+    NEMO:     { glow: '0,105,255', tint: '#0a4fd8', emblem: 'M100 30a16 16 0 1 1 0 32 16 16 0 0 1 0-32Zm0 40v104M64 88h72M100 174c-30 0-46-20-48-44l14 6-6-18 22 8c-6 18 4 32 18 34Zm0 0c30 0 46-20 48-44l-14 6 6-18-22 8c6 18-4 32-18 34Z' },
     NAUTILUS: { glow: '49,251,142', tint: '#138046', emblem: 'M100 78c40 0 72 14 72 30s-32 30-72 30-72-14-72-30 32-30 72-30Zm-14-24h28v22H86Zm86 22 22-12v40l-22-12M28 158q22-10 44 0t44 0 44 0' },
     ARONNAX:  { glow: '252,146,51', tint: '#924d06', emblem: 'M86 44a44 44 0 1 1 0 88 44 44 0 0 1 0-88Zm0 14a30 30 0 1 0 0 60 30 30 0 0 0 0-60Zm32 76 46 46' },
     NEDLAND:  { glow: '250,42,103', tint: '#9f0e3d', emblem: 'M100 178V54m0-38 22 38h-44Zm0 60 26 20m-26-20-26 20m26 22 20 16m-20-16-20 16' },
@@ -2864,8 +2864,16 @@ function qrDataUri(text, opts){
     }, 4000);
   }
 
+  let _joinInProgress = false;
   async function joinTeam(skipScroll){
-    const codeRaw = ($('matelotCodeInput').value || '').trim().toUpperCase();
+    /* Verrou anti-double-tap : un clic (ou Entrée) pendant la reprise ne
+       relance pas une seconde recherche. */
+    if(_joinInProgress) return;
+    /* Formatage TOLÉRANT : le code est remis en forme (majuscules + tiret
+       automatique) AVANT validation. Même si la saisie n'a pas encore été
+       reformatée par l'événement « input », la reprise fonctionne du
+       premier coup (ex. « abcd1234 » → « ABCD-1234 »). */
+    const codeRaw = formatMatelotCodeInput(($('matelotCodeInput').value || '').trim());
     $('joinMsg').innerHTML = '';
     // Champ vide ou format incorrect : alerte popup, comme a l'embarquement.
     if(!codeRaw){
@@ -2877,7 +2885,19 @@ function qrDataUri(text, opts){
         + "d'un tiret, puis de 4 chiffres.\n\nExemple : ABCD-1234");
       return;
     }
-    const res = await resumeWithMatelotCode(codeRaw);
+    /* Retour visuel immédiat pendant la recherche réseau : le bouton se
+       verrouille et affiche « Reprise… » le temps de l'appel Firestore. */
+    const btn = $('joinBtn');
+    const btnLabel = btn ? btn.textContent : '';
+    if(btn){ btn.disabled = true; btn.textContent = '⏳ Reprise…'; }
+    _joinInProgress = true;
+    let res;
+    try {
+      res = await resumeWithMatelotCode(codeRaw);
+    } finally {
+      _joinInProgress = false;
+      if(btn){ btn.disabled = false; btn.textContent = btnLabel; }
+    }
     if(!res.ok){
       if(res.reason === 'not_found'){
         alert('Halte-là Matelot ! Vérifie ta saisie.\n\n'
