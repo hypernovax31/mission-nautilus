@@ -229,7 +229,7 @@
   </section>
 
   <section class="card" id="gameCard">
-    <h2>⚙️ CHAMBRE DE PILOTAGE <span id="gameCardTeam" class="gamecard-team"></span></h2>
+    <h2>⚙️ CHAMBRE DE PILOTAGE</h2>
     <div class="body" id="gameBox"><div class="notice">Les données de ton équipage apparaîtront ici.</div></div>
   </section>
   <section class="final-cta card" id="bottomAlertMessage">
@@ -3315,11 +3315,11 @@ function qrDataUri(text, opts){
     const st = teamStyle(team && team.teamCode);
     const initial = (team.teamName || '?').charAt(0).toUpperCase();
     return '<div class="ck-plate">'
-         +   '<div class="ck-plate-id">'
-         +     '<span class="ck-plate-badge" style="--team-tint:' + st.tint + '">' + esc(initial) + '</span>'
+         +   '<span class="ck-plate-badge" style="--team-tint:' + st.tint + '">' + esc(initial) + '</span>'
+         +   '<div class="ck-plate-txt">'
          +     '<span class="ck-plate-name">' + esc(team.teamName || '—') + '</span>'
+         +     '<span class="ck-plate-sub">' + esc(subtitle) + '</span>'
          +   '</div>'
-         +   '<span class="ck-plate-sub">' + esc(subtitle) + '</span>'
          + '</div>';
   }
 
@@ -3414,22 +3414,6 @@ function qrDataUri(text, opts){
 
   function renderGame(justUnlocked=false){
     const box=$('gameBox');
-    /* Nom d'equipage dans le titre de la chambre de pilotage : la plaque
-       du cockpit le repete plus bas, mais ce bandeau d'en-tete est ce que
-       le matelot voit en premier en arrivant. Il faut donc l'y afficher
-       aussi, aux couleurs de l'equipage. */
-    const titreEquipe = $('gameCardTeam');
-    if(titreEquipe){
-      if(!currentTeam){
-        titreEquipe.textContent = '';
-        titreEquipe.classList.remove('has-team');
-      }else{
-        const st = teamStyle(currentTeam.teamCode);
-        titreEquipe.textContent = '— ' + (currentTeam.teamName || '—');
-        titreEquipe.style.setProperty('--team-tint', st.tint);
-        titreEquipe.classList.add('has-team');
-      }
-    }
     if(!currentTeam){
       updateFinalMissionButton();
       box.innerHTML=`<div class="notice">Le carnet de bord du Nautilus affichera les données de ton équipe au cours de l’aventure.</div>`;
