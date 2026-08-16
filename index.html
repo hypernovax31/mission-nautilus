@@ -3408,10 +3408,9 @@ function qrDataUri(text, opts){
        pilotage, juste au-dessus, affiche deja ce chiffre. Le repeter en
        toutes lettres deux centimetres plus bas n'apportait rien. */
     if(events.length === 0) return '';
+    /* TRI PAR DATE (croissant) : le plus ancien d'abord, le plus récent en
+       dernier — on garde ensuite les 6 plus récents ci-dessous. */
     events.sort((a, b) => a.t - b.t);
-    /* LIMITE À 10 LIGNES : on ne garde que les 10 événements les plus
-       récents, les plus anciens (toujours en tête après le tri croissant)
-       sortent du journal. */
 
     /* JOUR ET HEURE de chaque evenement, a droite de la ligne.
        Format court "06/08 00:09" : la date complete prendrait trop de
@@ -3439,17 +3438,11 @@ function qrDataUri(text, opts){
       + '</li>';
     };
 
-    /* 10 DERNIERES LIGNES visibles, le reste replie dans un menu :
-       l'historique complet reste consultable sans envahir le pupitre. */
-    const visibles = events.slice(-10);
-    const cachees  = events.slice(0, -10);
-    const items = visibles.map(ligne).join('');
-    const suite = cachees.length
-      ? '<details class="ck-journal-suite">'
-        + '<summary>⏬ Voir les ' + cachees.length + ' événements précédents</summary>'
-        + '<ul class="ck-journal-liste">' + cachees.map(ligne).join('') + '</ul>'
-        + '</details>'
-      : '';
+    /* 6 DERNIÈRES LIGNES seulement : on ne garde que les 6 événements les
+       plus récents (triés par date croissante ci-dessus), les plus
+       anciens sortent du journal — l'essentiel reste lisible sans
+       envahir le pupitre. */
+    const items = events.slice(-6).map(ligne).join('');
     /* Le titre nomme l'EQUIPAGE concerne : sur un ecran ou l'on parle
        deja de position, de sas et de dommages, "Journal de bord" tout
        court ne disait pas de qui il s'agissait. C'est un vrai titre de
@@ -3467,7 +3460,6 @@ function qrDataUri(text, opts){
       +   '📜 Journal de bord de l’équipage ' + esc(team.teamName || '—')
       + '</h3>'
       + '<ul class="ck-journal-liste">' + items + '</ul>'
-      + suite
       + '</div>';
   }
 
