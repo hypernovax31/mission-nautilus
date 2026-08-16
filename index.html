@@ -4697,7 +4697,7 @@ function qrDataUri(text, opts){
     const reserveEpuisee = Date.now() >= end;
     status.innerHTML = reserveEpuisee
       ? 'Réserves épuisées… Tous les équipages remontent à la surface.'
-      : '<h4 class="oxygen-status-title">La mission est lancée…</h4><span class="oxygen-status-question">Quel équipage trouvera le <i>Nautilus</i> avant l’épuisement des réserves d’air&nbsp;?</span>';
+      : '<h4 class="oxygen-status-title">La mission est en cours…</h4><span class="oxygen-status-question">Quel équipage trouvera le <i>Nautilus</i> avant l’épuisement des réserves d’air&nbsp;?</span>';
     if(reserveEpuisee) showOxygenEndAlarm(end);
     bar.style.width = percentPrecis.toFixed(3) + '%';
     /* La largeur révèle les 50 niveaux de l'échelle, du rouge foncé côté
