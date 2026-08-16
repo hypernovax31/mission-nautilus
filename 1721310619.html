@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
-  <link rel="stylesheet" href="css/palier1.css?v=32">
+  <link rel="stylesheet" href="css/palier1.css?v=33">
   <link rel="stylesheet" href="css/palier2.css?v=18">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
@@ -122,7 +122,10 @@
     <h2>📜 JOURNAL DE BORD</h2>
     <div class="body">
       <div class="morse-log">
-        <h3>Activités de l’équipage</h3>
+        <div class="journal-live">
+          <span class="journal-live-dot" aria-hidden="true"></span>
+          <span class="journal-live-txt">Actes de l’équipage — en direct</span>
+        </div>
         <ul id="morse-log-list"></ul>
       </div>
     </div>
@@ -167,7 +170,7 @@
      paliers. Script classique SANS defer : l'ordre avec le sas est
      garanti (journal-bord.js → palier-sas.js → init). -->
 <script src="son-partage.js?v=1"></script>
-<script src="journal-bord.js?v=4"></script>
+<script src="journal-bord.js?v=5"></script>
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
@@ -260,6 +263,9 @@
 
   var $ = function (id) { return document.getElementById(id); };
   function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
+  /* ACTE de l'épreuve (affiché dans le flux « en direct ») : phrase
+     courte et nue, le prénom est ajouté à l'affichage. */
+  function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
   function enModeTest() {
     try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
   }
@@ -436,7 +442,7 @@
        X chance(s) restante(s). ») : même formule courte, sans jamais
        révéler quelles lettres sont fausses. */
     statut('❌ <b>Mauvaise réponse. ' + (max - n) + ' chance(s) restante(s).</b> Toutes les cases passent au rouge puis le mot se vide tout seul — retape-le en entier.', 'danger');
-    journal('❌ Mauvaise réponse aux Mots Croisés « Code Magasin » (' + n + '/' + max + ') — ' + (max - n) + ' chance(s) restante(s).', 'warning');
+    acte('mauvaise réponse (' + n + '/' + max + ')', 'warning');
     }
   }
 
@@ -475,9 +481,7 @@
         window.NautilusBlocages.poserBlocage(ident, 'mots_croises_too_many_errors')
           .then(function (r) {
             afficherBlocage(r.lockedUntil, ident.name);
-            journal('🔒 Trois erreurs aux Mots Croisés « Code Magasin » : <b>' + esc(ident.name)
-              + '</b> remonte en surface jusqu’à ' + heureLisible(r.lockedUntil)
-              + ' (' + r.hours + ' h) — blocage personnel, l’équipage continue.', 'danger');
+            acte('3 erreurs — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
           })
           .catch(function () {
             /* Réseau en rade : le blocage vaut pour CETTE session et rien
@@ -492,7 +496,7 @@
       var jusqua = Date.now() + BLOCAGE_MS;
       try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
       afficherBlocage(jusqua, null);
-      journal('🔒 Trois erreurs aux Mots Croisés « Code Magasin » : remontée en surface (1 h) — joueur non identifié, blocage local à cet appareil.', 'danger');
+      acte('3 erreurs — remonte en surface (1 h)', 'danger');
     });
   }
 
@@ -592,7 +596,7 @@
        exactement comme pendant la partie. */
     afficherJournalDeBord(false);
     statut('🏆 <b>Palier 2 franchi !</b> La grille « Code Magasin » est entièrement résolue.', 'success');
-    journal('🏆 Palier 2 validé : les Mots Croisés « Code Magasin » sont résolus !', 'success');
+    acte('résout la grille « Code Magasin »', 'success');
     propagerVictoire();
     afficherEcranVictoire();
   }
@@ -633,7 +637,7 @@
       mots: MOTS,
       maxErreurs: 3,
       onErreur: onErreur,
-      onMotValide: function (m) { journal('✅ Mot nº' + m.num + ' validé : <b>' + m.solution + '</b>', 'success'); },
+      onMotValide: function (m) { acte('valide le mot nº' + m.num, 'success'); },
       onVictoire: onVictoire
     });
   }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=32">
+  <link rel="stylesheet" href="css/palier1.css?v=33">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -13,7 +13,7 @@
   <!-- Journal de bord « Activité en direct », code COMMUN à tous les
        paliers (extrait mot pour mot de cette page). Chargé avant le
        module ci-dessous : window.JournalDeBord est prêt à temps. -->
-  <script src="journal-bord.js?v=4" defer></script>
+  <script src="journal-bord.js?v=5" defer></script>
   <!-- Records de résolution des paliers (écran de victoire) : écriture
        et lecture Firestore communes à tous les paliers. -->
   <script src="records-palier.js?v=1" defer></script>
@@ -92,7 +92,10 @@
     <h2>📜 JOURNAL DE BORD</h2>
     <div class="body">
       <div class="morse-log">
-        <h3>Activités de l’équipage</h3>
+        <div class="journal-live">
+          <span class="journal-live-dot" aria-hidden="true"></span>
+          <span class="journal-live-txt">Actes de l’équipage — en direct</span>
+        </div>
         <ul id="morse-log-list"></ul>
       </div>
     </div>
@@ -749,6 +752,7 @@ function showToast(message, type = 'info', duration = 4000) {
    paliers...). On garde ici les memes noms de fonctions : toute la
    page, y compris window.Nautilus, fonctionne a l'identique. */
 const addLogEntry = window.JournalDeBord.addLogEntry;
+const addActe     = window.JournalDeBord.addActe;
 const clearLog    = window.JournalDeBord.clearLog;
 
 /* ---------- HEARTBEAT (mise à jour lastSeen du membre) ---------- */
@@ -788,7 +792,7 @@ window.Nautilus = {
   isTestMode, isTestMember,
   isSoundEnabled, getAudioCtx, getMorseCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
-  showToast, addLogEntry, clearLog, heartbeat
+  showToast, addLogEntry, addActe, clearLog, heartbeat
 };
 
 
@@ -1973,7 +1977,7 @@ window.Nautilus = {
         startedWordHint: entry.h,
         lastEvent: 'session_started'
       };
-      N.addLogEntry(`⚓ <b>${state.me.name}</b> a pris les commandes. Épreuve en cours — personne d'autre ne peut jouer.`, 'warning');
+      N.addActe('prend les commandes', 'info', state.me.name);
       /* renderGameArea() et non onSessionUpdate() : cette derniere REMPLACE
          state.session par son argument, ce qui effacerait la session qu'on
          vient de fabriquer. */
@@ -2000,7 +2004,7 @@ window.Nautilus = {
       startedWordHint: entry.h,
       lastEvent: 'session_started'
     });
-    N.addLogEntry(`⚓ <b>${state.me.name}</b> a pris les commandes. Épreuve en cours — personne d'autre ne peut jouer.`, 'warning');
+    N.addActe('prend les commandes', 'info', state.me.name);
   }
 
   /* === ÉCRAN : joueur actif === */
@@ -2213,7 +2217,7 @@ window.Nautilus = {
     } else {
       await N.updateSession(state.teamCode, { listensLeft: left, lastEvent: 'listen' });
     }
-    N.addLogEntry(`🔊 ${state.me.name} reçoit le signal (${left}/3 restantes).`, 'info');
+    N.addActe(`reçoit le signal (${left}/3)`, 'info', state.me.name);
     const visual = $('morseVisual');
     const ecran = visual && visual.closest ? visual.closest('.morse-sonar-screen') : null;
     const setVisual = (on) => {
@@ -2285,7 +2289,7 @@ window.Nautilus = {
         revealedWord: target  /* stocké en clair sur la session pour l'écran de victoire uniquement */
       };
       await N.updateSession(state.teamCode, finWin);
-      N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe ! L'épreuve du sonar est validée.`, 'success');
+      N.addActe('déchiffre le mot de passe', 'success', state.me.name);
       N.showToast('Mot de passe déchiffré !', 'success');
       /* Durée de résolution (secondes) pour le record de temps. */
       const dureeSec = (state.session && state.session.startedAt)
@@ -2370,7 +2374,7 @@ window.Nautilus = {
     const finTemps = { state: 'lost', endReason: 'timeout', lastEvent: 'timeout',
                        endedAt: new Date().toISOString() };
     await N.updateSession(state.teamCode, finTemps);
-    N.addLogEntry(`⏳ Le temps est écoulé. L'épreuve a échoué.`, 'danger');
+    N.addActe('temps écoulé', 'danger');
     /* Meme raison que pour les 3 erreurs : sans cela, la partie d'essai
        reste affichee comme "en cours" une fois le temps ecoule. */
     state.session = { ...(state.session || {}), ...finTemps };
@@ -2423,7 +2427,7 @@ window.Nautilus = {
       failCount: Number(state.team.failCount || 0) + 1,
       lastEvent: 'matelot_blocked'
     });
-    N.addLogEntry(`🔒 ${state.me.name} est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h).`, 'danger', instant);
+    N.addActe(`remonte en surface (${hours} h)`, 'danger', state.me.name);
   }
 
   async function advanceTeam(dureeSec) {
@@ -2529,7 +2533,7 @@ window.Nautilus = {
        partie reelle cela evite d'attendre l'aller-retour reseau. */
     state.session = { ...(state.session || {}), ...patch };
 
-    N.addLogEntry(`🆘 ${state.me.name} a demandé un indice. Il remonte en surface pour ${HINT_LOCK_HOURS} h.`, 'warning');
+    N.addActe('demande un indice', 'warning', state.me.name);
     showFloatingHint('🆘 Indice débloqué : ' + buildHintContent(idx), 10000);
 
     /* Blocage personnel, exactement le meme mecanisme que pour un echec :
