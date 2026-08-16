@@ -34,7 +34,10 @@
 
 set -uo pipefail
 
-BRANCH="arena/019fa0d2-mission-nautilus"
+# La branche de travail change a chaque session (arena/<nouveau-id>-mission-nautilus).
+# On la lit donc depuis la branche courante au lieu de la figer en dur :
+# une valeur figee devenait fausse des la session suivante.
+BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'arena/inconnue')"
 SAFE=".nautilus-safe"
 KEEP=8                      # nombre de copies de secours conservees
 
