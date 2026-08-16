@@ -609,7 +609,7 @@
 @keyframes nextBtnPulse{50%{box-shadow:0 0 0 6px rgba(245,176,39,.16),0 0 30px rgba(245,176,39,.60)}}
 .won-nextzone-hint{margin:13px auto 0;max-width:520px;color:#9bc4d4;font-size:12.5px;line-height:1.5}
 /* Records de résolution — menu déroulant discret sous les résultats */
-.won-records{margin:18px auto 0;max-width:560px;text-align:left}
+.won-records{margin:18px auto 0;width:100%;max-width:none;text-align:left}
 .won-records summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border:1px solid rgba(142,231,255,.22);border-radius:999px;color:#9bc4d4;font-weight:800;font-size:12.5px;letter-spacing:.02em;background:rgba(0,0,0,.16)}
 .won-records summary::-webkit-details-marker{display:none}
 .won-records summary::before{content:"▸";font-size:11px;transition:transform .18s ease}

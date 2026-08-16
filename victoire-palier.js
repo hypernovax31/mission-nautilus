@@ -55,8 +55,10 @@
   function directionHtml(o) {
     var boutonTexte = (o.labelSuivant === 'Palier final')
       ? 'PASSER AU PALIER FINAL'
-      : 'PASSER AU PALIER ' + (Number(o.palier) + 1);
-    var prochain = o.labelSuivant || ('Palier ' + (Number(o.palier) + 1));
+      : 'PASSER AU PALIER « ' + (Number(o.palier) + 1) + ' »';
+    var prochain = (o.labelSuivant === 'Palier final')
+      ? 'Palier final'
+      : 'Palier « ' + (Number(o.palier) + 1) + ' »';
     return ''
       + '<div class="won-nextzone" id="wonDirectionPanel">'
       +   '<div class="won-radar" aria-hidden="true">'
@@ -83,12 +85,12 @@
   function afficher(hote, opts) {
     if (!hote) return;
     var o = opts || {};
-    /* Équipage nommé → « Tout l'équipage « Nautilus » franchit… » ;
-       anonyme/test → « L'équipage franchit… » (pas de « l'équipage »
-       entre guillemets, pléonasme). */
+    /* Équipage nommé → « Tout l'équipage <em>Nautilus</em> franchit… » ;
+       anonyme/test → « L'équipage franchit… » (pas de nom d'équipage,
+       pléonasme). */
     var ligneEquipage = o.equipe
-      ? 'Tout l’équipage « ' + esc(o.equipe) + ' » franchit le sas du <b>« Palier ' + esc(o.palier) + ' »</b>.'
-      : 'L’équipage franchit le sas du <b>« Palier ' + esc(o.palier) + ' »</b>.';
+      ? 'Tout l’équipage <em>' + esc(o.equipe) + '</em> franchit le sas du <b><em>Palier ' + esc(o.palier) + '</em></b>.'
+      : 'L’équipage franchit le sas du <b><em>Palier ' + esc(o.palier) + '</em></b>.';
     var bravo = o.bravo || 'l’équipage';
     var stats = (o.stats || []).slice(0, 4);
     var statsHtml = stats.map(function (s) {
@@ -99,7 +101,7 @@
       +   '<div class="won-badge" aria-hidden="true">🏆</div>'
       +   '<h2>Épreuve validée !</h2>'
       +   '<p class="won-line">' + ligneEquipage + '</p>'
-      +   '<p class="won-line won-line--bravo">Bravo à <b>«</b> ' + esc(bravo) + ' <b>»</b> pour « ' + esc(o.mission) + ' ».</p>'
+      +   '<p class="won-line won-line--bravo">Bravo à <b><em>' + esc(bravo) + '</em></b> pour « ' + esc(o.mission) + ' ».</p>'
       +   '<div class="won-stats" aria-label="Bilan de l’épreuve">' + statsHtml + '</div>'
       +   '<div class="won-records" id="wonRecordsHost" aria-live="polite"></div>'
       +   '<div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —'

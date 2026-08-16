@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=28">
+  <link rel="stylesheet" href="css/palier1.css?v=29">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -2708,7 +2708,7 @@ window.Nautilus = {
     const nextNum = Object.keys(N.STEPS).indexOf(nextStep) + 1;
     const url = nextStepPageUrl(nextStep);
     const id = opts.id || 'wonDirectionPanel';
-    const boutonTexte = (nextStep === 'final') ? 'PASSER AU PALIER FINAL' : 'PASSER AU PALIER ' + nextNum;
+    const boutonTexte = (nextStep === 'final') ? 'PASSER AU PALIER FINAL' : 'PASSER AU PALIER « ' + nextNum + ' »';
     return `
       <div class="won-nextzone" id="${esc(id)}">
         <div class="won-radar" aria-hidden="true">
@@ -2723,7 +2723,7 @@ window.Nautilus = {
           <span class="won-step-chip"><b>3</b> Scanner le QR Code trouvé</span>
         </div>
         <a class="won-next-btn" href="${esc(url)}">⏭️ ${esc(boutonTexte)}</a>
-        <p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone : c’est la clé d’entrée du Palier ${nextNum}.</p>
+        <p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone : c’est la clé d’entrée du Palier « ${nextNum} ».</p>
       </div>
     `;
   }
@@ -2747,8 +2747,8 @@ window.Nautilus = {
       <div class="won-screen celebration">
         <div class="won-badge" aria-hidden="true">🏆</div>
         <h2>Épreuve validée !</h2>
-        <p class="won-line">Tout l’équipage « ${esc(equipe)} » franchit le sas du <b>« Palier 1 »</b>.</p>
-        <p class="won-line won-line--bravo">Bravo à <b>«</b> ${esc(s.startedByName || 'l’équipage')} <b>»</b> pour « ${esc(mission)} ».</p>
+        <p class="won-line">Tout l’équipage <em>${esc(equipe)}</em> franchit le sas du <b><em>Palier 1</em></b>.</p>
+        <p class="won-line won-line--bravo">Bravo à <b><em>${esc(s.startedByName || 'l’équipage')}</em></b> pour « ${esc(mission)} ».</p>
         <div class="won-stats" aria-label="Bilan de l’épreuve">
           <div class="won-stat"><strong>${mins}:${secs}</strong><span>Temps utilisé</span></div>
           <div class="won-stat"><strong>${listens}/3</strong><span>Écoutes utilisées</span></div>
