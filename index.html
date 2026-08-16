@@ -537,6 +537,22 @@
     document.documentElement.style.scrollBehavior = '';
   }
 
+  /* Défilement en douceur jusqu'à la plaque métal « LES ABYSSES NE
+     PARDONNENT PAS », en pied de page, avec un rattrapage au chargement
+     complet : les cartes d'équipage se remplissent de façon asynchrone et
+     font grandir la page après le premier défilement. */
+  function glisserAuPiedDePage(){
+    const abysses = document.getElementById('bottomAlertMessage');
+    if(!abysses) return;
+    const versBas = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+    versBas();
+    if(document.readyState === 'complete'){
+      setTimeout(versBas, 250);   // rattrapage après la peinture des cartes
+    }else{
+      window.addEventListener('load', versBas, { once:true });
+    }
+  }
+
   function onlineCount(team){
     const now = Date.now();
     const online = team.onlinePlayers || {};
@@ -2951,7 +2967,7 @@ function qrDataUri(text, opts){
        fin de l'alarme ; en declencher un ici partirait trop tot. */
     if(!skipScroll){
       loadTeams().then(() => {
-        setTimeout(() => smartScroll(document.getElementById('gameCard')), 120);
+        setTimeout(glisserAuPiedDePage, 120);
       });
     }else{
       loadTeams();
@@ -5542,9 +5558,9 @@ function qrDataUri(text, opts){
     box.innerHTML = '<button class="hero-cta red cockpit-launch" type="button" id="embarkMissionBtn">'
       + 'REJOINDRE LE COCKPIT</button>';
     $('embarkMissionBtn')?.addEventListener('click', () => {
-      /* Cible gameCard (le DEBUT du bloc cockpit). */
-      const cible = document.getElementById('gameCard');
-      smartScroll(cible);
+      /* On déroule la page jusqu'à la plaque « LES ABYSSES NE PARDONNENT
+         PAS » en pied de page (au lieu du début du cockpit). */
+      glisserAuPiedDePage();
     });
   }
 
@@ -6981,20 +6997,9 @@ function qrDataUri(text, opts){
            faite en arrière-plan : le matelot est identifié, et il découvre
            la page d'accueil jusqu'au panneau de bas de page. */
         const settle = 60;
-        const glisserAuPiedDePage = () => {
-          const abysses = document.getElementById('bottomAlertMessage');
-          if(abysses){
-            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-          }
-        };
         setTimeout(() => {
           if(currentTeam){
             glisserAuPiedDePage();
-            /* Rattrapage : les cartes d'équipage et la chambre de pilotage
-               se remplissent de façon asynchrone (loadTeams) et font
-               grandir la page après ce premier défilement. On recale une
-               fois la page chargée pour atteindre vraiment le bas. */
-            window.addEventListener('load', glisserAuPiedDePage, { once:true });
           }else{
             // Code refuse : on montre la zone de reprise pour corriger.
             smartScroll(document.getElementById('retrouverEquipage'));
