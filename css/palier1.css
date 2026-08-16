@@ -445,6 +445,14 @@
       display:flex;flex-direction:column;
       font-family:Consolas,"Courier New",monospace;
     }
+    /* JOURNAL VIDE : on le DIT simplement. 100 % CSS via :empty — la
+       phrase apparaît quand aucun acte n'est encore enregistré, et
+       s'efface toute seule dès le premier. */
+    .morse-log ul:empty::after{
+      content:'Personne n’est aux commandes en ce moment.';
+      display:block;padding:10px 12px;
+      color:rgba(142,231,255,.55);font-style:italic;font-size:13px;line-height:1.5;
+    }
     .journal-acte{
       display:flex;align-items:baseline;gap:9px;
       padding:5px 0;
