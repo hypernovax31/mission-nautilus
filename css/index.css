@@ -1826,7 +1826,11 @@
 .oxygen-tube{height:46px}
 .oxygen-bottom{
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  /* Colonne de gauche = le badge d'état (court), colonne de droite = le
+     compte à rebours qui prend tout l'espace restant : la phrase
+     « COMPTE À REBOURS — Durée initiale : … » tient ainsi sur moins de
+     lignes, sans chevaucher le badge. */
+  grid-template-columns:auto minmax(0,1fr);
   align-items:center;
   gap:clamp(14px,3vw,28px);
   margin-top:18px;
@@ -1853,7 +1857,8 @@
   align-items:flex-end;
   justify-content:center;
   gap:5px;
-  margin-left:auto;
+  justify-self:stretch;
+  width:100%;
   min-width:0;
   max-width:100%;
   text-align:right;
@@ -1880,7 +1885,7 @@
 }
 @media(max-width:600px){
   .oxygen-bottom{
-    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    grid-template-columns:auto minmax(0,1fr);
     align-items:center;
     gap:10px;
     justify-items:stretch;
