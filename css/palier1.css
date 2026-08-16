@@ -78,9 +78,14 @@
     }
     .card h2{
       margin:0;padding:16px 20px;
-      background:linear-gradient(90deg,#101820,#253545);
-      color:#fff;font-size:18px;
-      border-bottom:1px solid rgba(142,231,255,.18);
+      /* Plaque de laiton brossé : dégradé métal doré + fines stries, effet relief */
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.02) 1px 3px),
+        linear-gradient(180deg, #f6df9b 0%, #ecc25f 20%, #d8a03a 48%, #bd7d16 72%, #d9ab47 88%, #eccf86 100%);
+      color:#2b1802;font-size:18px;
+      font-weight:700;letter-spacing:.05em;
+      text-shadow:0 1px 0 rgba(255,250,225,.6),0 -1px 1px rgba(90,55,8,.5);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -2px 0 rgba(96,60,8,.5),0 2px 4px rgba(0,0,0,.25);
     }
     /* Titre de carte en DEUX parties : l'intitule a gauche, le chrono a
        droite. Le temps etait auparavant repete dans un second encart, a
@@ -91,17 +96,17 @@
     .card-h2-split{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
     .card-h2-timer{display:flex;align-items:baseline;gap:8px;}
     .card-h2-timer .lbl{
-      font-size:12px;color:#9bc4d4;letter-spacing:.09em;
+      font-size:12px;color:#6a4a12;letter-spacing:.09em;
       text-transform:uppercase;font-weight:800;
     }
     .card-h2-timer .val{
       font-family:Consolas,"Courier New",monospace;
-      font-size:clamp(18px,2.6vw,24px);font-weight:1000;color:#8ee7ff;
-      text-shadow:0 0 12px rgba(142,231,255,.5);line-height:1;
+      font-size:clamp(18px,2.6vw,24px);font-weight:1000;color:#3b2505;
+      text-shadow:0 1px 0 rgba(255,250,225,.55);line-height:1;
     }
     /* Chrono qui tourne : il vire a l'ambre sous 60 s, au rouge sous 20 s. */
-    .card-h2-timer.warn .val{color:#ffd36c;text-shadow:0 0 12px rgba(245,176,39,.55);}
-    .card-h2-timer.crit .val{color:#ff7b72;text-shadow:0 0 12px rgba(255,75,62,.6);}
+    .card-h2-timer.warn .val{color:#8a3a06;text-shadow:0 1px 0 rgba(255,250,225,.5);}
+    .card-h2-timer.crit .val{color:#8a1208;text-shadow:0 1px 0 rgba(255,250,225,.5);}
     @media(max-width:430px){
       .card-h2-timer .lbl{display:none}
     }

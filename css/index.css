@@ -572,11 +572,25 @@
     }
     .card h2{
       margin:0;
-      background:linear-gradient(90deg,#101820,#253545);
-      color:#fff;
+      /* Plaque de laiton brossé : dégradé métal doré + fines stries, effet relief */
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.02) 1px 3px),
+        linear-gradient(180deg, #f6df9b 0%, #ecc25f 20%, #d8a03a 48%, #bd7d16 72%, #d9ab47 88%, #eccf86 100%);
+      color:#2b1802;
       padding:18px clamp(18px,3vw,26px);
       font-size:clamp(20px,2.6vw,24px);
+      font-weight:700;
+      letter-spacing:.05em;
       line-height:1.18;
+      /* Relief frappé : lettres gravées dans le métal (lumière en bas, ombre en haut) */
+      text-shadow:
+        0 1px 0 rgba(255,250,225,.6),
+        0 -1px 1px rgba(90,55,8,.5);
+      /* Arête claire en haut, tranche sombre en bas : la plaque se détache de la carte */
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.6),
+        inset 0 -2px 0 rgba(96,60,8,.5),
+        0 2px 4px rgba(0,0,0,.25);
     }
     .body{padding:clamp(18px,3vw,28px)}
 
