@@ -61,12 +61,11 @@
       padding:2px 9px;text-align:right;
     }
 
-    /* Onglet O2 : la date a besoin de place, elle prend une ligne entiere. */
+    /* Onglet O2 : deux champs (jours + heures), sur une grille à deux
+       paires libellé / saisie. */
     .admin-o2-form{grid-template-columns:minmax(0,auto) minmax(0,1fr)}
-    .admin-o2-form>input[type="datetime-local"]{min-width:0}
     @media(min-width:761px){
-      .admin-o2-form{grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,auto) minmax(0,110px) minmax(0,auto) minmax(0,110px)}
-      .admin-o2-form>input[type="datetime-local"]{grid-column:2 / -1}
+      .admin-o2-form{grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,auto) minmax(0,1fr)}
     }
     /* Filet de securite : rien ne deborde du panneau admin. */
     #adminPanel input,#adminPanel select,#adminPanel textarea{max-width:100%;box-sizing:border-box}
@@ -1022,11 +1021,11 @@
     .admin-form-grid>input[type="datetime-local"],.admin-form-grid>input[type="number"]{min-width:0;font-variant-numeric:tabular-nums}
     .admin-form-grid>.full{grid-column:1 / -1}
     /* Variante 6 colonnes pour O2 (3 paires label/input sur 1 ligne) */
-    /* En dessous de 860px la grille 4 colonnes comprimait les champs
-       datetime-local sous leur largeur utile (~190px) : on bascule en
-       2 colonnes plus tot. */
+    /* En dessous de 860px (ou zoom important) : chaque champ passe SOUS
+       son libellé (une colonne) au lieu de rester côte à côte — plus de
+       chevauchement ni de compression des saisies. */
     @media(max-width:860px){
-      .admin-form-grid,.admin-form-grid-6{grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:8px 12px}
+      .admin-form-grid,.admin-form-grid-6{grid-template-columns:1fr;gap:8px 12px}
       .admin-form-grid>label,.admin-form-grid-6>label{text-align:left;padding-right:0;white-space:normal}
     }
     @media(max-width:560px){
@@ -1142,8 +1141,8 @@
 
     .radar-big{padding:0;background:transparent;border:0;box-shadow:none;width:100%}
     .radar-screen-big{
-      position:relative;width:min(62vw,250px);height:min(62vw,250px);min-width:170px;flex:0 0 auto;
-      aspect-ratio:1/1;border-radius:50%;
+      position:relative;width:min(62vw,250px);aspect-ratio:1/1;height:auto;flex:0 0 auto;
+      border-radius:50%;
       background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.10),rgba(0,0,0,.35) 75%),#02120d;
       border:3px solid rgba(91,255,156,.85);
       box-shadow:0 0 35px rgba(91,255,156,.32),inset 0 0 28px rgba(91,255,156,.16);

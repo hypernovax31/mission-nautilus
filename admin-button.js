@@ -83,7 +83,7 @@
       link.rel = 'stylesheet';
       // Versionné pour ne jamais réutiliser l'ancienne feuille corrompue du
       // cache PWA sur les pages palier et classement.
-      link.href = 'css/admin.css?v=7';
+      link.href = 'css/admin.css?v=8';
       document.head.appendChild(link);
     }
     const wrap = document.createElement('div');

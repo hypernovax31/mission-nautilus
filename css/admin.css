@@ -236,7 +236,7 @@
        datetime-local sous leur largeur utile (~190px) : on bascule en
        2 colonnes plus tot. */
     @media(max-width:860px){
-      .admin-form-grid{grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:8px 12px}
+      .admin-form-grid{grid-template-columns:1fr;gap:8px 12px}
       .admin-form-grid>label{text-align:left;padding-right:0;white-space:normal}
     }
     @media(max-width:560px){
