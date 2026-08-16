@@ -301,6 +301,14 @@
        et au rouge à 20 %. */
     bar.classList.toggle('warn', pct <= 50 && pct > 20);
     bar.classList.toggle('crit', pct <= 20);
+    /* Contour d'alerte : clignote en 5 s ; sous 5 %, chaque % restant
+       accélère le clignotement (1 % = 1 s, plancher 1 s). */
+    var tube = bar.querySelector('.o2-tube');
+    if (tube) {
+      tube.style.animationDuration = pct <= 20
+        ? (pct < 5 ? Math.max(1, pct) : 5) + 's'
+        : '';
+    }
   }
 
   /* ===== INJECTION DU HTML ===== */

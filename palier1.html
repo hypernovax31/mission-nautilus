@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=27">
+  <link rel="stylesheet" href="css/palier1.css?v=28">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -1077,6 +1077,14 @@ window.Nautilus = {
        l'autre, au meme instant. */
     bar.classList.toggle('warn', pct <= 50 && pct > 20);
     bar.classList.toggle('crit', pct <= 20);
+    /* Contour d'alerte : clignote en 5 s ; sous 5 %, chaque % restant
+       accélère le clignotement (1 % = 1 s, plancher 1 s). */
+    const tube = bar.querySelector('.o2-tube');
+    if (tube) {
+      tube.style.animationDuration = pct <= 20
+        ? (pct < 5 ? Math.max(1, pct) : 5) + 's'
+        : '';
+    }
   }
 
   /* ===== APERÇU ADMIN — TEST DES ÉCRANS SANS JOUER =====

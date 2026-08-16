@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=25">
+  <link rel="stylesheet" href="css/index.css?v=26">
   <link rel="stylesheet" href="css/hublots.css?v=13">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
@@ -4705,6 +4705,14 @@ function qrDataUri(text, opts){
     applyOxygenGradient(bar, percentPrecis);
     bar.classList.toggle('warning-level', percent <= 50 && percent > 20);
     bar.classList.toggle('critical', percent <= 20);
+    /* Contour d'alerte : clignote en 5 s ; sous 5 %, chaque % restant
+       accélère le clignotement (1 % = 1 s, plancher 1 s). */
+    const tube = bar.parentElement;
+    if (tube) {
+      tube.style.animationDuration = percent <= 20
+        ? (percent < 5 ? Math.max(1, percent) : 5) + 's'
+        : '';
+    }
     if(pctEl) pctEl.textContent = percent + '%';
     if(state){
       if(percent <= 20){state.textContent='OXYGÈNE CRITIQUE';state.className='oxygen-state critical';}
