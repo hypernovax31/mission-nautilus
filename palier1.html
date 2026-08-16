@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=33">
+  <link rel="stylesheet" href="css/palier1.css?v=34">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -13,7 +13,7 @@
   <!-- Journal de bord « Activité en direct », code COMMUN à tous les
        paliers (extrait mot pour mot de cette page). Chargé avant le
        module ci-dessous : window.JournalDeBord est prêt à temps. -->
-  <script src="journal-bord.js?v=5" defer></script>
+  <script src="journal-bord.js?v=6" defer></script>
   <!-- Records de résolution des paliers (écran de victoire) : écriture
        et lecture Firestore communes à tous les paliers. -->
   <script src="records-palier.js?v=1" defer></script>
@@ -92,10 +92,7 @@
     <h2>📜 JOURNAL DE BORD</h2>
     <div class="body">
       <div class="morse-log">
-        <div class="journal-live">
-          <span class="journal-live-dot" aria-hidden="true"></span>
-          <span class="journal-live-txt">Actes de l’équipage — en direct</span>
-        </div>
+        <h3 class="journal-titre">ACTES DE L’ÉQUIPAGE — EN DIRECT</h3>
         <ul id="morse-log-list"></ul>
       </div>
     </div>
@@ -2289,7 +2286,7 @@ window.Nautilus = {
         revealedWord: target  /* stocké en clair sur la session pour l'écran de victoire uniquement */
       };
       await N.updateSession(state.teamCode, finWin);
-      N.addActe('déchiffre le mot de passe', 'success', state.me.name);
+      N.addActe('réussit l’épreuve', 'success', state.me.name);
       N.showToast('Mot de passe déchiffré !', 'success');
       /* Durée de résolution (secondes) pour le record de temps. */
       const dureeSec = (state.session && state.session.startedAt)

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
-  <link rel="stylesheet" href="css/palier1.css?v=33">
+  <link rel="stylesheet" href="css/palier1.css?v=34">
   <link rel="stylesheet" href="css/palier2.css?v=18">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
@@ -122,10 +122,7 @@
     <h2>📜 JOURNAL DE BORD</h2>
     <div class="body">
       <div class="morse-log">
-        <div class="journal-live">
-          <span class="journal-live-dot" aria-hidden="true"></span>
-          <span class="journal-live-txt">Actes de l’équipage — en direct</span>
-        </div>
+        <h3 class="journal-titre">ACTES DE L’ÉQUIPAGE — EN DIRECT</h3>
         <ul id="morse-log-list"></ul>
       </div>
     </div>
@@ -170,7 +167,7 @@
      paliers. Script classique SANS defer : l'ordre avec le sas est
      garanti (journal-bord.js → palier-sas.js → init). -->
 <script src="son-partage.js?v=1"></script>
-<script src="journal-bord.js?v=5"></script>
+<script src="journal-bord.js?v=6"></script>
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
@@ -596,7 +593,7 @@
        exactement comme pendant la partie. */
     afficherJournalDeBord(false);
     statut('🏆 <b>Palier 2 franchi !</b> La grille « Code Magasin » est entièrement résolue.', 'success');
-    acte('résout la grille « Code Magasin »', 'success');
+    acte('réussit l’épreuve', 'success');
     propagerVictoire();
     afficherEcranVictoire();
   }
@@ -637,7 +634,7 @@
       mots: MOTS,
       maxErreurs: 3,
       onErreur: onErreur,
-      onMotValide: function (m) { acte('valide le mot nº' + m.num, 'success'); },
+      onMotValide: function (m) { acte('valide une réponse', 'success'); },
       onVictoire: onVictoire
     });
   }

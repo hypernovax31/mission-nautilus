@@ -53,7 +53,7 @@
   'use strict';
 
   var CODE_TEST = 'ZZZZ-0000';
-  var N_VISIBLE = 8;         // actes visibles (les plus récents)
+  var N_VISIBLE = 6;         // actes visibles (les plus récents)
   var MAX_LOCAL = 200;       // garde-fou du repli local (mémoire)
 
   var FIREBASE_CONFIG = {
@@ -76,11 +76,14 @@
     });
   }
 
+  /* Teinte du texte de l'acte selon sa nature (pas de liseré, pas de
+     pastille : seule la couleur du verbe distingue succès / échec /
+     avertissement / info). */
   var COLORS = {
-    info:    { border: 'rgba(142,231,255,.45)' },
-    success: { border: 'rgba(91,255,156,.55)' },
-    warning: { border: 'rgba(245,176,39,.55)' },
-    danger:  { border: 'rgba(255,75,62,.6)' }
+    info:    { text: '#dff6ff' },
+    success: { text: '#aef2cd' },
+    warning: { text: '#ffe2a0' },
+    danger:  { text: '#ffb4ad' }
   };
 
   /* Prénom d'un matelot : le premier mot du nom enregistré, mis en forme
@@ -221,15 +224,15 @@
   }
 
   /* Une ligne d'ACTE : heure · prénom · action, sur un ruban monospace.
-     La couleur du liseré gauche (--accent) reflète la nature de l'acte
-     (succès, échec, avertissement, info). */
+     La teinte du texte (--accent) reflète la nature de l'acte, sans
+     liseré ni pastille. */
   function acteHtml(e) {
     var c = COLORS[e.kind] || COLORS.info;
     var auteur = e.auteur ? journalEsc(prenomMatelot(e.auteur)) : '';
     var action = journalEsc(e.text)
       .replace(/&lt;b&gt;/g, '<b>')
       .replace(/&lt;\/b&gt;/g, '</b>');
-    return '<li class="journal-acte" style="--accent:' + c.border + ';">'
+    return '<li class="journal-acte" style="--accent:' + c.text + ';">'
       + '<span class="journal-acte-heure">' + heureLisible(e.ts) + '</span>'
       + (auteur ? '<span class="journal-acte-auteur">' + auteur + '</span>' : '')
       + '<span class="journal-acte-action">' + action + '</span>'
