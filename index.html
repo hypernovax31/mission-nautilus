@@ -316,8 +316,6 @@
             <div class="admin-o2-row"><span>Temps restant</span><strong id="adminO2Countdown">—</strong></div>
           </div>
           <div class="admin-form-grid admin-o2-form">
-            <label for="adminO2Date">Date de départ</label>
-            <input id="adminO2Date" type="datetime-local">
             <label for="adminO2Days">Durée (jours)</label>
             <input id="adminO2Days" type="number" min="0" step="1" value="7">
             <label for="adminO2Hours">Durée (heures)</label>
@@ -4458,6 +4456,18 @@ function qrDataUri(text, opts){
     el.textContent = 'COMPTE À REBOURS — Durée initiale : ' + formatInitialDuration(getMissionDurationMs());
   }
 
+  /* Format « XJ XXhXXmXXs » d'une durée (état « en attente du top départ »,
+     quand la mission n'a pas encore démarré). Affiche la durée CONFIGURÉE,
+     pas un « 7J 00h00m00s » figé en dur. */
+  function formatCountdown(ms){
+    let t = Math.max(0, Math.round(Number(ms || MISSION_DURATION_MS_DEFAULT)));
+    const d = Math.floor(t / 86400000); t -= d * 86400000;
+    const h = Math.floor(t / 3600000);  t -= h * 3600000;
+    const m = Math.floor(t / 60000);    t -= m * 60000;
+    const s = Math.floor(t / 1000);
+    return `${d}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(s).padStart(2,'0')}s`;
+  }
+
   function getMissionDurationMs(){
     const v = missionConfig?.missionDurationMs;
     return (typeof v === 'number' && v > 0) ? v : MISSION_DURATION_MS_DEFAULT;
@@ -4673,7 +4683,9 @@ function qrDataUri(text, opts){
       : `${totalHours}H`;
     if(scope) scope.textContent = `DURÉE INITIALE · ${durationText}`;
     if(!startedAt){
-      el.textContent = '7J 00h00m00s';
+      /* Mission NON démarrée : le compteur reste FIXE sur la durée
+         configurée, en attendant le top départ du Palier 1. */
+      el.textContent = formatCountdown(getMissionDurationMs());
       status.textContent = 'En attente du premier signal…';
       bar.style.width = '100%';
       applyOxygenGradient(bar, 100);
@@ -6387,10 +6399,10 @@ function qrDataUri(text, opts){
       $('adminO2Now').textContent = 'Non démarrée';
       $('adminO2State').textContent = 'EN ATTENTE';
       $('adminO2State').className = 'admin-o2-badge';
-      $('adminO2Countdown').textContent = '7J 00h00m00s';
-      $('adminO2Date').value = '';
-      $('adminO2Days').value = 7;
-      $('adminO2Hours').value = 0;
+      $('adminO2Countdown').textContent = formatCountdown(getMissionDurationMs());
+      const durMs = getMissionDurationMs();
+      $('adminO2Days').value = Math.floor(durMs / 86400000);
+      $('adminO2Hours').value = Math.floor((durMs % 86400000) / 3600000);
       return;
     }
     const start = new Date(startedAt);
@@ -6406,8 +6418,6 @@ function qrDataUri(text, opts){
     $('adminO2Countdown').textContent = `${d}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(sec).padStart(2,'0')}s`;
     $('adminO2State').textContent = percent <= 20 ? 'CRITIQUE' : (percent <= 50 ? 'EN BAISSE' : 'STABLE');
     $('adminO2State').className = 'admin-o2-badge' + (percent <= 20 ? ' critical' : (percent <= 50 ? ' warning' : ''));
-    const pad = n => String(n).padStart(2,'0');
-    $('adminO2Date').value = `${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}T${pad(start.getHours())}:${pad(start.getMinutes())}`;
     // Durée restante déduite
     const totalRemainingDays = (end - now) / 86400000;
     $('adminO2Days').value = Math.max(0, Math.floor(totalRemainingDays));
@@ -6416,31 +6426,24 @@ function qrDataUri(text, opts){
   async function adminApplyOxygen(){
     if(!isAdminUnlocked()) return;
     try{
-      const dateVal = $('adminO2Date').value;
       const days = Math.max(0, Number($('adminO2Days').value || 0));
       const hours = Math.max(0, Math.min(23, Number($('adminO2Hours').value || 0)));
-      let startedAt;
-      if(dateVal){
-        const d = new Date(dateVal);
-        if(isNaN(d.getTime())){ alert('Date invalide.'); return; }
-        startedAt = d.toISOString();
-      }else{
-        startedAt = new Date().toISOString();
-      }
-      // MISSION_DURATION_MS est `const` — on ne peut pas la modifier globalement sans recompiler.
-      // On stocke donc une override `missionDurationMs` dans game/config.
+      // MISSION_DURATION_MS est `const` — on stocke une override
+      // `missionDurationMs` dans game/config.
       const durationMs = ((days * 24) + hours) * 60 * 60 * 1000;
+      /* Appliquer une durée NE DÉMARRE PAS le compte à rebours : on
+         configure la durée et on laisse missionStartedAt à null. Le
+         « top départ » viendra du lancement du mini-jeu du Palier 1
+         (startMissionOfficial), pas du panneau admin. */
       await setDoc(doc(db,'game','config'), {
-        missionStartedAt: startedAt,
+        missionStartedAt: null,
         missionDurationMs: durationMs,
-        missionStartedByTeam: currentTeam?.teamCode || missionConfig?.missionStartedByTeam || null,
-        missionStartedByTeamName: currentTeam?.teamName || missionConfig?.missionStartedByTeamName || null,
         updatedAt: new Date().toISOString()
       }, {merge:true});
-      missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: durationMs };
+      missionConfig = { ...(missionConfig||{}), missionStartedAt: null, missionDurationMs: durationMs };
       updateCountdown();
       renderAdminOxygen();
-      endAdminSession('✅ Réserve O₂ mise à jour · session fermée');
+      endAdminSession(`✅ Réserve O₂ armée à ${formatInitialDuration(durationMs)} — en attente du top départ · session fermée`);
     }catch(err){
       console.error('adminApplyOxygen:', err);
       alert(`❌ Échec : ${err.message || err}`);
@@ -7206,7 +7209,7 @@ window.PWAInstall = {
   aUnPrompt: () => Boolean(pwaDeferredPrompt)
 };
 </script>
-<script src="admin-button.js?v=18" type="module"></script>
+<script src="admin-button.js?v=19" type="module"></script>
 </body>
 </html>
 

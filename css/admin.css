@@ -56,12 +56,11 @@
       padding:2px 9px;text-align:right;
     }
 
-    /* Onglet O2 : la date a besoin de place, elle prend une ligne entiere. */
+    /* Onglet O2 : deux champs (jours + heures), sur une grille à deux
+       paires libellé / saisie. */
     .admin-o2-form{grid-template-columns:minmax(0,auto) minmax(0,1fr)}
-    .admin-o2-form>input[type="datetime-local"]{min-width:0}
     @media(min-width:761px){
-      .admin-o2-form{grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,auto) minmax(0,110px) minmax(0,auto) minmax(0,110px)}
-      .admin-o2-form>input[type="datetime-local"]{grid-column:2 / -1}
+      .admin-o2-form{grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,auto) minmax(0,1fr)}
     }
     /* Filet de securite : rien ne deborde du panneau admin. */
     #adminPanel input,#adminPanel select,#adminPanel textarea{max-width:100%;box-sizing:border-box}
@@ -221,7 +220,7 @@
     .admin-pane .team h3 .small{font-size:var(--fs-tiny);font-weight:600}
 
     /* Tab O2 : champs alignés compact */
-    #adminO2Date,#adminO2Days,#adminO2Hours{height:34px !important;min-height:34px;padding:6px 8px !important;font-size:12px !important}
+    #adminO2Days,#adminO2Hours{height:34px !important;min-height:34px;padding:6px 8px !important;font-size:12px !important}
     /* Grille 4 colonnes (Statut | Reprise | Échecs | Vide) sur Blocages,
        s'adapte à la largeur du panneau */
     .admin-form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.4fr);gap:8px 14px;align-items:center}
