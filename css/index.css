@@ -2051,9 +2051,40 @@ body, body *{
   background:linear-gradient(135deg,rgba(5,16,28,.95),rgba(12,53,77,.95));
 }
 .countdown-card,
-#equipagesEnMer,
-.final-cta{
+#equipagesEnMer{
   background:linear-gradient(135deg,rgba(5,16,28,.95),rgba(8,48,72,.95));
+}
+.final-cta{
+  background:
+    linear-gradient(180deg, rgba(2,9,15,.62), rgba(2,9,15,.30) 45%, rgba(2,9,15,.68)),
+    url('../assets/abysses-metal.jpg') center / cover no-repeat;
+  background-color:#04101c;
+}
+/* Reflet métallique brillant : bande de lumière qui balaie le panneau
+   « LES ABYSSES NE PARDONNENT PAS » au mouvement du scroll. La position
+   est pilotée par la variable --sheen-x (JS) ; le reflet n'apparaît que
+   pendant le défilement puis s'estompe au repos. */
+.final-cta::after{
+  content:"";
+  position:absolute;
+  top:-25%;
+  bottom:-25%;
+  left:0;
+  width:38%;
+  background:linear-gradient(100deg, transparent 0%, rgba(190,225,255,.10) 40%, rgba(255,255,255,.30) 50%, rgba(190,225,255,.10) 60%, transparent 100%);
+  transform:translateX(var(--sheen-x, -130%));
+  pointer-events:none;
+  filter:blur(3px);
+  opacity:0;
+  transition:opacity .5s ease;
+  z-index:1;
+}
+.final-cta.sheen-active::after{
+  opacity:1;
+}
+.final-cta .body{
+  position:relative;
+  z-index:2;
 }
 .team,
 .admin-pane{

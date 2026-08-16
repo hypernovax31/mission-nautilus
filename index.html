@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=29">
+  <link rel="stylesheet" href="css/index.css?v=30">
   <link rel="stylesheet" href="css/hublots.css?v=13">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
@@ -7197,5 +7197,36 @@ window.PWAInstall = {
   document.addEventListener('click', () => setTimeout(requestSync, 0), true);
   window.addEventListener('load', requestSync, {once:true});
   requestSync();
+})();
+</script>
+
+<script>
+/* Reflet métallique du bloc « LES ABYSSES NE PARDONNENT PAS » : une bande
+   de lumière balaie le panneau pendant le scroll (position --sheen-x), puis
+   s'estompe au repos (~260 ms sans mouvement). */
+(function syncAbyssesSheen(){
+  const bloc = document.getElementById('bottomAlertMessage');
+  if(!bloc) return;
+  let frame = null;
+  let idleTimer = null;
+  function sync(){
+    frame = null;
+    const r = bloc.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    /* Progression du bloc dans la fenêtre : 0 (entre en bas) → 1 (sort en haut). */
+    const p = (vh - r.top) / (vh + r.height);
+    const c = Math.max(0, Math.min(1, p));
+    /* La bande balaie de gauche à droite : -110 % → +280 % (largeur relative). */
+    bloc.style.setProperty('--sheen-x', (c * 390 - 110) + '%');
+  }
+  function onScroll(){
+    bloc.classList.add('sheen-active');
+    if(frame === null) frame = requestAnimationFrame(sync);
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => bloc.classList.remove('sheen-active'), 260);
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll, {passive:true});
+  onScroll();
 })();
 </script>
