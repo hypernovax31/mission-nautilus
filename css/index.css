@@ -1244,7 +1244,21 @@
        ce qui rend le calcul des rayons exact. */
     .radar-rings{
       position:absolute;inset:0;border-radius:50%;pointer-events:none;
-      background:radial-gradient(circle closest-side,transparent 0,transparent 21.69%,rgba(91,255,156,.34) 21.69%,rgba(91,255,156,.34) 22.31%,transparent 22.31%,transparent 30.83%,rgba(91,255,156,.15) 30.83%,rgba(91,255,156,.15) 31.45%,transparent 31.45%,transparent 39.98%,rgba(91,255,156,.15) 39.98%,rgba(91,255,156,.15) 40.60%,transparent 40.60%,transparent 49.12%,rgba(91,255,156,.15) 49.12%,rgba(91,255,156,.15) 49.74%,transparent 49.74%,transparent 58.26%,rgba(91,255,156,.15) 58.26%,rgba(91,255,156,.15) 58.88%,transparent 58.88%,transparent 67.40%,rgba(91,255,156,.15) 67.40%,rgba(91,255,156,.15) 68.02%,transparent 68.02%,transparent 76.55%,rgba(91,255,156,.15) 76.55%,rgba(91,255,156,.15) 77.17%,transparent 77.17%,transparent 85.69%,rgba(91,255,156,.15) 85.69%,rgba(91,255,156,.15) 86.31%,transparent 86.31%);
+      background:
+        /* halo discret autour du palier final (le cercle le plus proche du centre) */
+        radial-gradient(circle closest-side,transparent 0,transparent 17.5%,rgba(91,255,156,.10) 21.69%,transparent 26%),
+        /* lignes circulaires nettes : un cercle fin et régulier par palier,
+           le palier final étant volontairement plus épais et plus lumineux */
+        radial-gradient(circle closest-side,
+          transparent 0,
+          transparent 20.99%,rgba(91,255,156,.72) 20.99%,rgba(91,255,156,.72) 22.39%,transparent 22.39%,
+          transparent 30.38%,rgba(91,255,156,.38) 30.38%,rgba(91,255,156,.38) 31.28%,transparent 31.28%,
+          transparent 39.53%,rgba(91,255,156,.38) 39.53%,rgba(91,255,156,.38) 40.43%,transparent 40.43%,
+          transparent 48.67%,rgba(91,255,156,.38) 48.67%,rgba(91,255,156,.38) 49.57%,transparent 49.57%,
+          transparent 57.81%,rgba(91,255,156,.38) 57.81%,rgba(91,255,156,.38) 58.71%,transparent 58.71%,
+          transparent 66.95%,rgba(91,255,156,.38) 66.95%,rgba(91,255,156,.38) 67.85%,transparent 67.85%,
+          transparent 76.10%,rgba(91,255,156,.38) 76.10%,rgba(91,255,156,.38) 77.00%,transparent 77.00%,
+          transparent 85.24%,rgba(91,255,156,.38) 85.24%,rgba(91,255,156,.38) 86.14%,transparent 86.14%);
     }
     .radar-center{
       position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;
