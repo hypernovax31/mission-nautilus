@@ -1096,14 +1096,17 @@ window.Nautilus = {
 
     const j = Math.floor(reste / 86400000); reste -= j * 86400000;
     const h = Math.floor(reste / 3600000);  reste -= h * 3600000;
-    const m = Math.floor(reste / 60000);
+    const m = Math.floor(reste / 60000);    reste -= m * 60000;
+    const s = Math.floor(reste / 1000);
 
     bar.hidden = false;
     const fill = $('o2Fill');
     fill.style.width = pctPrecis.toFixed(3) + '%';
     applyOxygenGradient(fill, pctPrecis);
     $('o2Pct').textContent = pct + '%';
-    $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m`;
+    /* MÊME FORMAT QUE L'ACCUEIL : secondes comprises, pour un temps
+       strictement identique sur la jauge du palier et celle de l'accueil. */
+    $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(s).padStart(2,'0')}s`;
     /* MEMES SEUILS QUE L'ACCUEIL : la jauge passait ici a l'orange a 40 %
        et au rouge a 15 %, contre 50 % et 20 % sur la page d'accueil. Un
        equipage a 45 % voyait donc du bleu sur un ecran et de l'orange sur
@@ -1221,7 +1224,9 @@ window.Nautilus = {
 
     chargerConfigO2().then(() => {
       majReserveO2();
-      setInterval(majReserveO2, 30000);
+      /* MÊME CADENCE QUE L'ACCUEIL : chaque seconde, pour que les secondes
+         défilent à l'identique et que la jauge reste synchronisée. */
+      setInterval(majReserveO2, 1000);
       /* La date de depart peut etre posee pendant la partie (un autre
          equipage lance la mission) : on la reverifie de temps en temps. */
       setInterval(() => chargerConfigO2().then(majReserveO2), 120000);

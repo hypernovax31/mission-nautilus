@@ -289,14 +289,17 @@
 
     var j = Math.floor(reste / 86400000); reste -= j * 86400000;
     var h = Math.floor(reste / 3600000);  reste -= h * 3600000;
-    var m = Math.floor(reste / 60000);
+    var m = Math.floor(reste / 60000);    reste -= m * 60000;
+    var s = Math.floor(reste / 1000);
 
     bar.hidden = false;
     var fill = document.getElementById('o2Fill');
     fill.style.width = pctPrecis.toFixed(3) + '%';
     applyOxygenGradient(fill, pctPrecis);
     document.getElementById('o2Pct').textContent = pct + '%';
-    document.getElementById('o2Time').textContent = j + 'J ' + ('0' + h).slice(-2) + 'h' + ('0' + m).slice(-2) + 'm';
+    /* MÊME FORMAT QUE L'ACCUEIL : « 7J 00h00m00s », secondes comprises —
+       la jauge des paliers affiche exactement le même temps que l'accueil. */
+    document.getElementById('o2Time').textContent = j + 'J ' + ('0' + h).slice(-2) + 'h' + ('0' + m).slice(-2) + 'm' + ('0' + s).slice(-2) + 's';
     /* MÊMES SEUILS QUE L'ACCUEIL : la jauge passe à l'orange à 50 %
        et au rouge à 20 %. */
     bar.classList.toggle('warn', pct <= 50 && pct > 20);
@@ -354,7 +357,10 @@
 
     chargerConfigO2().then(function () {
       majReserveO2();
-      setInterval(majReserveO2, 30000);
+      /* MÊME CADENCE QUE L'ACCUEIL : rafraîchissement chaque seconde, pour
+         que les secondes défilent à l'identique et que la jauge reste
+         exactement synchronisée avec celle de l'accueil. */
+      setInterval(majReserveO2, 1000);
       /* La date de départ peut être posée pendant la partie (un autre
          équipage lance la mission) : on la reverifie de temps en temps. */
       setInterval(function () { chargerConfigO2().then(majReserveO2); }, 120000);
