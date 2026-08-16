@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
-  <link rel="stylesheet" href="css/palier1.css?v=30">
+  <link rel="stylesheet" href="css/palier1.css?v=31">
   <link rel="stylesheet" href="css/palier2.css?v=18">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
@@ -123,7 +123,7 @@
     <h2>📜 JOURNAL DE BORD</h2>
     <div class="body">
       <div class="morse-log">
-        <h3>Activité en direct</h3>
+        <h3>Activités de l’équipage</h3>
         <ul id="morse-log-list"></ul>
       </div>
     </div>
@@ -168,7 +168,7 @@
      paliers. Script classique SANS defer : l'ordre avec le sas est
      garanti (journal-bord.js → palier-sas.js → init). -->
 <script src="son-partage.js?v=1"></script>
-<script src="journal-bord.js?v=2"></script>
+<script src="journal-bord.js?v=3"></script>
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->

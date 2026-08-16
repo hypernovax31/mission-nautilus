@@ -1,5 +1,5 @@
 /* =============================================================
-   JOURNAL DE BORD — « Activité en direct » — CODE COMMUN À TOUS
+   JOURNAL DE BORD — « Activités de l'équipage » — CODE COMMUN À TOUS
    LES PALIERS, ACTIVITÉ PARTAGÉE DE L'ÉQUIPAGE.
 
    Ce module remplace l'ancien journal LOCAL (chaque appareil ne voyait
@@ -14,8 +14,11 @@
      • au-delà, un bouton « ⏬ Voir toute l'activité de l'équipage (N) »
        déplie la suite cachée en dessous — le matelot relit alors toute
        l'activité de son équipage depuis le début de la mission ;
-     • le tri est du plus récent (en haut) au plus ancien, exactement
-       comme l'ancien journal.
+     • le tri est du plus récent (en haut) au plus ancien ;
+     • les activités sont GROUPÉES PAR MATELOT : chaque matelot a son
+       bloc, ouvert par une pastille ronde à son initiale (couleur
+       stable par nom) suivie de son nom — ses activités se lisent
+       indépendamment de celles des autres.
 
    REPLI LOCAL : joueur anonyme, compte de test (ZZZZ-0000) ou appareil
    hors ligne → aucune lecture/écriture Firestore ; le journal retombe
@@ -29,25 +32,27 @@
        <h2>📜 JOURNAL DE BORD</h2>
        <div class="body">
          <div class="morse-log">
-           <h3>Activité en direct</h3>
+           <h3>Activités de l'équipage</h3>
            <ul id="morse-log-list"></ul>
          </div>
        </div>
      </section>
 
-   … et la feuille css/palier1.css (styles .morse-log). Le bouton « voir
-   la suite » et la liste dépliée sont injectés par ce script, sans
-   toucher au HTML de chaque page. L'API reste identique :
+   … et la feuille css/palier1.css (styles .morse-log, .ml-groupe). Le
+   bouton « voir la suite » et la liste dépliée sont injectés par ce
+   script, sans toucher au HTML de chaque page. L'API reste identique :
 
-     JournalDeBord.addLogEntry(texte, kind, quand)
+     JournalDeBord.addLogEntry(texte, kind, quand, auteur?)
        kind : 'info' | 'success' | 'warning' | 'danger'
        quand : Date optionnelle (sinon : maintenant)
+       auteur : nom du matelot (optionnel — sinon le nom du matelot
+       connecté sur l'appareil est résolu automatiquement)
        Seules les balises <b></b> sont autorisées dans le texte.
      JournalDeBord.clearLog()
      JournalDeBord.afficher(id?)  — montre la carte (défaut #logCard)
      JournalDeBord.masquer(id?)   — masque la carte
 
-   Utilisation : <script src="journal-bord.js?v=2"></script>
+   Utilisation : <script src="journal-bord.js?v=3"></script>
    ============================================================= */
 (function () {
   'use strict';
@@ -82,6 +87,22 @@
     warning: { dot: '#ffd36c', border: 'rgba(245,176,39,.5)' },
     danger:  { dot: '#ff7b72', border: 'rgba(255,75,62,.55)' }
   };
+
+  /* Palette de couleurs STABLE par matelot : chaque nom tombe toujours
+     sur la même teinte (hachage djb2), pour qu'un matelot soit repéré
+     d'un coup d'œil d'une session à l'autre. Teintes vives, lisibles sur
+     le fond sombre, distinctes les unes des autres. */
+  var MATELOT_COLORS = [
+    '#ff8a80', '#8ee7ff', '#5be09b', '#ffd36c', '#ff9ff3',
+    '#c39bff', '#ffb26b', '#7be7c2', '#9fb8ff', '#f8e78a'
+  ];
+  function couleurMatelot(nom) {
+    var s = String(nom || '').trim().toUpperCase();
+    if (!s) return '#8ee7ff';
+    var h = 0;
+    for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+    return MATELOT_COLORS[Math.abs(h) % MATELOT_COLORS.length];
+  }
 
   function lireParam(nom) {
     try {
@@ -132,8 +153,12 @@
   /* Équipage du matelot connecté — la FICHE fait foi (index global
      matelots/{code}, même règle que matelot-blocages.js). Résolution
      autonome : ce module ne dépend d'aucun autre script de la page.
-     Mode test / anonyme → null → repli local. */
+     Mode test / anonyme → null → repli local.
+     Au passage, on retient aussi le NOM du matelot (_monNom) : c'est lui
+     qui servira d'auteur aux activités qu'il écrit, pour le groupement
+     par matelot. */
   var _teamPromise = null;
+  var _monNom = null;
   function resoudreEquipe() {
     if (_teamPromise) return _teamPromise;
     _teamPromise = new Promise(function (resolve) {
@@ -146,6 +171,7 @@
         if (snap && snap.exists() && snap.data().teamCode) {
           var equipe = String(snap.data().teamCode).trim().toUpperCase();
           try { localStorage.setItem('nautilusCurrentTeam', equipe); } catch (e) {}
+          if (snap.data().name) _monNom = String(snap.data().name).toUpperCase();
           resolve(equipe);
         } else {
           resolve(equipeDepuisMemoire());
@@ -209,15 +235,45 @@
       + '</li>';
   }
 
+  /* Regroupe une liste d'entrées (déjà triées du plus récent au plus
+     ancien) PAR MATELOT, en conservant l'ordre de première apparition.
+     Chaque groupe est un <li> ouvert par une pastille à l'initiale
+     (couleur stable par nom) + le nom du matelot, puis ses activités.
+     Les entrées sans auteur vont sous « Équipage ». */
+  function groupeHtml(entries) {
+    var groupes = [], map = {};
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      var cle = String(e.auteur || '').toUpperCase();
+      if (!map[cle]) {
+        map[cle] = { auteur: e.auteur || null, entrees: [] };
+        groupes.push(map[cle]);
+      }
+      map[cle].entrees.push(e);
+    }
+    return groupes.map(function (g) {
+      var nom = g.auteur || 'Équipage';
+      var couleur = couleurMatelot(nom);
+      var initiale = nom.charAt(0).toUpperCase();
+      return '<li class="ml-groupe">'
+        + '<div class="ml-groupe-tete">'
+        +   '<span class="ml-groupe-avatar" style="background:' + couleur + '">' + journalEsc(initiale) + '</span>'
+        +   '<span class="ml-groupe-nom">' + journalEsc(nom) + '</span>'
+        + '</div>'
+        + '<ul class="ml-groupe-liste">' + g.entrees.map(entryHtml).join('') + '</ul>'
+        + '</li>';
+    }).join('');
+  }
+
   function render() {
     ensureDom();
     if (!_listEl) return;
     if (_mode === 'live') {
       var visibles = _entries.slice(0, N_VISIBLE);
       var suite = _entries.slice(N_VISIBLE);
-      _listEl.innerHTML = visibles.map(entryHtml).join('');
+      _listEl.innerHTML = groupeHtml(visibles);
       if (_suiteEl) {
-        _suiteEl.innerHTML = suite.map(entryHtml).join('');
+        _suiteEl.innerHTML = groupeHtml(suite);
         _suiteEl.hidden = !(_suiteOuverte && suite.length > 0);
       }
       if (_btn) {
@@ -231,7 +287,7 @@
         }
       }
     } else {
-      _listEl.innerHTML = _localEntries.slice(0, N_VISIBLE).map(entryHtml).join('');
+      _listEl.innerHTML = groupeHtml(_localEntries.slice(0, N_VISIBLE));
       if (_suiteEl) { _suiteEl.innerHTML = ''; _suiteEl.hidden = true; }
       if (_btn) _btn.hidden = true;
     }
@@ -241,11 +297,15 @@
   function ecrireEntree(e) {
     resoudreEquipe().then(function (teamCode) {
       if (!teamCode) return;
+      /* Auteur : explicite (paramètre) sinon le nom du matelot connecté
+         sur cet appareil (résolu au passage par resoudreEquipe). */
+      var auteur = e.auteur || _monNom || null;
       db().then(function (x) {
         return x.fs.addDoc(x.fs.collection(x.db, 'teams', teamCode, 'journal'), {
           ts: e.ts,
           kind: e.kind,
-          text: e.text
+          text: e.text,
+          auteur: auteur
         });
       }).catch(function () { /* hors ligne ou règles non déployées : repli local */ });
     }).catch(function () {});
@@ -267,7 +327,7 @@
           var liste = [];
           snap.forEach(function (d) {
             var data = d.data() || {};
-            liste.push({ ts: data.ts, kind: data.kind || 'info', text: data.text || '' });
+            liste.push({ ts: data.ts, kind: data.kind || 'info', text: data.text || '', auteur: data.auteur || null });
           });
           _entries = liste;
           render();
@@ -277,10 +337,10 @@
   }
 
   /* ---------- API publique ---------- */
-  function addLogEntry(text, kind, quand) {
+  function addLogEntry(text, kind, quand, auteur) {
     kind = kind || 'info';
     var t = (quand instanceof Date) ? quand : new Date();
-    var e = { ts: t.toISOString(), kind: kind, text: String(text == null ? '' : text) };
+    var e = { ts: t.toISOString(), kind: kind, text: String(text == null ? '' : text), auteur: auteur || null };
 
     /* Repli local : insertion TRIÉE (du plus récent au plus ancien),
        chronologie garantie même quand `quand` est antérieur à maintenant

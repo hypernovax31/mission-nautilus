@@ -420,17 +420,16 @@
     }
     .morse-log h3{margin:0 0 10px;color:var(--fnac);font-size:14px;letter-spacing:.06em;text-transform:uppercase;}
     .morse-log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;}
-    /* JOURNAL VIDE : on le DIT, au lieu de laisser un trou muet sous le
-       titre « Activité en direct ». 100 % CSS via :empty — quel que soit
-       le chemin qui vide la liste (arrivée sur la page, clearLog, purge),
-       la mention apparaît ; dès la première entrée, elle s'efface toute
-       seule. Aucun JS à entretenir. */
-    .morse-log ul:empty::after{
-      content:'Aucune activité pour le moment — les événements de la mission s’afficheront ici en direct.';
-      display:block;padding:10px 12px;
-      color:rgba(142,231,255,.55);font-style:italic;font-size:13px;line-height:1.5;
-      background:rgba(0,0,0,.18);border:1px dashed rgba(142,231,255,.25);border-radius:8px;
-    }
+    /* Activités GROUPÉES PAR MATELOT : chaque matelot a son propre bloc,
+       ouvert par une pastille ronde à son initiale (couleur stable par
+       nom) suivie de son nom. Les activités de chacun se lisent ainsi
+       indépendamment de celles des autres. */
+    .ml-groupe{list-style:none;margin:0;padding:0}
+    .ml-groupe-tete{display:flex;align-items:center;gap:8px;margin:10px 0 6px}
+    .ml-groupe:first-child .ml-groupe-tete{margin-top:0}
+    .ml-groupe-avatar{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:900;color:#0b1a2a;flex:0 0 auto}
+    .ml-groupe-nom{font-weight:900;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:#eaf8ff}
+    .morse-log ul.ml-groupe-liste{max-height:none;overflow:visible}
 
     /* === Retour en surface : une information claire, sans écran punitif ===
        TOUTE la largeur du bloc (plus de colonne centrale étroite) : la
