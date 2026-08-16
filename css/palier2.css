@@ -61,37 +61,6 @@
 .gate-msg.is-danger{ color:#ffd0cd; background:rgba(255,75,62,.14); border:1px solid rgba(255,75,62,.5); padding:10px 12px; }
 .gate-msg.is-success{ color:#dfffe8; background:rgba(91,255,156,.10); border:1px solid rgba(91,255,156,.5); padding:10px 12px; }
 
-/* =============================================================
-   MODAL ÉPHÉMÈRE « ✅ SCELLÉ LEVÉ ! »
-   Elle POP au premier plan quand le sas s'ouvre (scan réussi ou sas
-   déjà mémorisé), par-dessus le BRIEFING DU CAPITAINE qui prend alors
-   l'écran, puis DISPARAÎT d'elle-même en fondu : il ne reste alors
-   QUE le briefing. Séquence pilotée par popModalScelleLeve() dans
-   1721310619.html (~2,6 s + fondu .35 s), aucune interaction requise.
-   Remplace l'ancienne bannière fixe de la carte déverrouillée.
-   ============================================================= */
-.modal-sas{
-  position:fixed; inset:0; z-index:90; margin:0;
-  display:flex; align-items:center; justify-content:center;
-  padding:20px; background:rgba(2,10,18,.72);
-}
-.modal-sas[hidden]{ display:none; }
-.modal-sas-bulle{
-  max-width:min(430px,92vw); text-align:center;
-  background:linear-gradient(180deg, rgba(6,26,42,.97), rgba(3,15,26,.97));
-  border:1px solid rgba(91,255,156,.55); border-radius:16px;
-  box-shadow:0 0 0 3px rgba(91,255,156,.12), 0 24px 60px rgba(0,0,0,.6);
-  color:#dfffe8; font-size:15px; font-weight:800; line-height:1.6;
-  padding:22px 24px;
-}
-.modal-sas-bulle b{ color:#5be09b; }
-/* Entrée « pop » (léger dépassement façon ressort), sortie en fondu. */
-.modal-sas.is-ouvert .modal-sas-bulle{ animation:modalSasPop .28s cubic-bezier(.2,1.4,.4,1); }
-.modal-sas.is-sortie{ opacity:0; transition:opacity .3s ease; }
-@keyframes modalSasPop{
-  from{ transform:scale(.82) translateY(10px); opacity:0; }
-  to{ transform:scale(1) translateY(0); opacity:1; }
-}
 
 /* L'encart de saisie manuscrite du numéro secret (.gate-manual) a été
    SUPPRIMÉ : caméra ou photo du QR Code uniquement. Styles retirés. */
