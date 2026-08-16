@@ -137,7 +137,7 @@
 .mc-num{ position:absolute; top:1px; left:4px; font-size:9px; font-weight:900; color:#4d6c86; pointer-events:none; }
 .mc-input{
   width:100%; height:100%; min-width:0; border:0; background:transparent; outline:none;
-  text-align:center; color:#0b2740; font-weight:900; font-size:clamp(11px,3.4vw,22px);
+  text-align:center; color:#0b2740; font-weight:900; font-size:clamp(12px,3.4vw,22px);
   caret-color:#c47f0e; text-transform:uppercase; padding:0; border-radius:9px;
 }
 /* Petit écran : grille resserrée pour des cases aussi grosses que
@@ -253,7 +253,7 @@
   50%{ box-shadow:0 0 0 10px rgba(245,176,39,.04),0 0 40px rgba(245,176,39,.42),inset 0 0 26px rgba(245,176,39,.24); }
 }
 .sas-kicker{
-  margin:0;font-size:11px;font-weight:900;letter-spacing:.16em;
+  margin:0;font-size:12px;font-weight:900;letter-spacing:.16em;
   text-transform:uppercase;color:rgba(142,231,255,.7);
 }
 .sas-titre{

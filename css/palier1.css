@@ -91,7 +91,7 @@
     .card-h2-split{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
     .card-h2-timer{display:flex;align-items:baseline;gap:8px;}
     .card-h2-timer .lbl{
-      font-size:10px;color:#9bc4d4;letter-spacing:.09em;
+      font-size:12px;color:#9bc4d4;letter-spacing:.09em;
       text-transform:uppercase;font-weight:800;
     }
     .card-h2-timer .val{
@@ -112,11 +112,11 @@
     .direct-resume-panel{max-width:700px;margin:0 auto;padding:clamp(16px,3vw,24px);border:1px solid rgba(142,231,255,.28);border-radius:18px;background:linear-gradient(145deg,rgba(4,23,39,.86),rgba(8,54,78,.78));box-shadow:inset 0 1px 0 rgba(255,255,255,.06);}
     .direct-resume-heading{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
     .direct-resume-icon{display:grid;place-items:center;flex:0 0 auto;width:46px;height:46px;border-radius:14px;background:rgba(142,231,255,.13);border:1px solid rgba(142,231,255,.32);font-size:23px;}
-    .direct-resume-heading p{margin:0;color:#8ee7ff;font-size:10px;font-weight:1000;letter-spacing:.11em;line-height:1.2;text-transform:uppercase;}
+    .direct-resume-heading p{margin:0;color:#8ee7ff;font-size:12px;font-weight:1000;letter-spacing:.11em;line-height:1.2;text-transform:uppercase;}
     .direct-resume-heading h3{margin:3px 0 0;color:#fff;font-size:clamp(19px,3vw,25px);line-height:1.1;}
     .direct-resume-lead{max-width:610px;margin:0 0 16px;color:#c3e0ec;font-size:14px;font-weight:700;line-height:1.5;}
     .direct-resume-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;}
-    .direct-resume-form label{display:block;margin-bottom:6px;color:#9bc4d4;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}
+    .direct-resume-form label{display:block;margin-bottom:6px;color:#9bc4d4;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}
     .direct-resume-form input{width:100%;height:48px;padding:10px 12px;border:1px solid rgba(142,231,255,.35);border-radius:12px;background:rgba(0,0,0,.3);color:#fff;font:800 16px Consolas,"Courier New",monospace;letter-spacing:.08em;text-transform:uppercase;}
     .direct-resume-form input:focus{outline:none;border-color:var(--fnac);box-shadow:0 0 0 3px rgba(245,176,39,.2);}
     .direct-resume-form button{height:48px;margin:0;padding:0 17px;border:0;border-radius:12px;background:var(--fnac);color:#111;font-weight:1000;cursor:pointer;white-space:normal;line-height:1.2;}
@@ -192,7 +192,7 @@
       font-weight:900;color:#fff;font-size:13px;
       letter-spacing:.07em;text-transform:uppercase;
     }
-    .crew-group-count{margin-left:auto;font-size:11px;color:#9bc4d4;white-space:normal;overflow-wrap:anywhere;text-align:right;}
+    .crew-group-count{margin-left:auto;font-size:12px;color:#9bc4d4;white-space:normal;overflow-wrap:anywhere;text-align:right;}
     .crew-group-members{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
     .crew-member{
       padding:10px 12px;background:rgba(0,0,0,.32);
@@ -202,7 +202,7 @@
     .crew-member.self{border:2px solid var(--fnac);background:rgba(245,176,39,.12);box-shadow:0 0 14px rgba(245,176,39,.22);}
     .crew-member.self .crew-name{color:var(--fnac);text-shadow:0 0 10px rgba(245,176,39,.4);}
     .crew-member .crew-name{font-weight:900;color:#fff;}
-    .crew-member .crew-meta{font-size:11px;color:#9bc4d4;}
+    .crew-member .crew-meta{font-size:12px;color:#9bc4d4;}
     .crew-empty{color:#9bc4d4;font-size:13px;font-style:italic;padding:6px 2px;}
 
     /* === Bloc de l epreuve === */
@@ -369,7 +369,7 @@
     .morse-counter b{color:var(--fnac);font-size:15px;}
 
     .morse-answer-zone{background:rgba(0,0,0,.28);border:1px solid rgba(142,231,255,.18);border-radius:16px;padding:16px;}
-    .morse-answer-label{display:block;font-size:11px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:8px;}
+    .morse-answer-label{display:block;font-size:12px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:8px;}
     /* Zone de reponse : un seul bandeau qui s'allonge au fil de la frappe.
        Les anciennes cases pre-dessinees (une par lettre) revelaient la
        longueur du mot avant meme la premiere ecoute. */
@@ -430,7 +430,7 @@
       font-size:12px;line-height:1.45;color:#9bc4d4;
       min-height:64px;
     }
-    .morse-hint-card .morse-hint-card-label{color:#fff;font-weight:900;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+    .morse-hint-card .morse-hint-card-label{color:#fff;font-weight:900;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
     .morse-hint-card.morse-hint-revealed{
       background:rgba(91,255,156,.10);border-color:rgba(91,255,156,.5);color:#dfffe8;
     }
@@ -474,7 +474,7 @@
       padding:3px 10px;border-radius:999px;
       border:1px solid rgba(245,176,39,.45);
       background:rgba(245,176,39,.08);
-      color:#ffd36c;font-weight:900;font-size:10.5px;
+      color:#ffd36c;font-weight:900;font-size:12px;
       letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;
     }
     .journal-live-dot{
@@ -505,7 +505,7 @@
       line-height:1.5;
     }
     .journal-acte:last-child{border-bottom:0}
-    .journal-acte-heure{flex:0 0 auto;color:rgba(142,231,255,.45);font-size:11px}
+    .journal-acte-heure{flex:0 0 auto;color:rgba(142,231,255,.45);font-size:12px}
     .journal-acte-auteur{flex:0 0 auto;color:#8ee7ff;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
     .journal-acte-action{flex:1;min-width:0;color:var(--accent,#dff6ff);font-size:13px}
     .journal-acte-action b{color:#eaf8ff}
@@ -543,7 +543,7 @@
     .lock-heading{display:flex;align-items:center;gap:13px;margin:0 0 14px;}
     .lock-heading-icon{display:grid;place-items:center;flex:0 0 auto;width:48px;height:48px;border-radius:15px;background:rgba(142,231,255,.12);border:1px solid rgba(142,231,255,.3);color:#c8f4ff;font-size:25px;font-weight:1000;}
     .lock-screen--lost .lock-heading-icon{background:rgba(255,75,62,.13);border-color:rgba(255,123,114,.4);color:#ffb0aa;}
-    .lock-kicker,.lock-card-label{margin:0;color:#8ee7ff;font-size:10px;font-weight:1000;letter-spacing:.12em;line-height:1.2;text-transform:uppercase;}
+    .lock-kicker,.lock-card-label{margin:0;color:#8ee7ff;font-size:12px;font-weight:1000;letter-spacing:.12em;line-height:1.2;text-transform:uppercase;}
     .lock-screen--lost .lock-kicker{color:#ffb0aa;}
     /* Ligne d'ambiance de la « Remontée forcée ! » : une phrase, en
        italique — l'immersion sans pavé de texte. */
@@ -593,7 +593,7 @@
        écraserait sinon l'attribut hidden et la jauge vide resterait
        affichée (« Réserve O₂ — — ») au lieu de se retirer. */
     .o2-bar[hidden]{display:none}
-    .o2-label{flex:0 0 auto;font-size:10px;font-weight:900;letter-spacing:.09em;
+    .o2-label{flex:0 0 auto;font-size:12px;font-weight:900;letter-spacing:.09em;
       text-transform:uppercase;color:#8ee7ff}
     .o2-tube{position:relative;flex:1 1 auto;height:22px;border-radius:999px;
       overflow:hidden;background:rgba(0,0,0,.45);
@@ -616,10 +616,10 @@
     /* Le pourcentage est ECRIT DANS la jauge, centre, avec un lisere noir
        pour rester lisible aussi bien sur le vert que sur le fond sombre. */
     .o2-pct{position:absolute;inset:0;display:flex;align-items:center;
-      justify-content:center;font-size:11px;font-weight:1000;color:#fff;
+      justify-content:center;font-size:12px;font-weight:1000;color:#fff;
       letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.85)}
     .o2-time{flex:0 0 auto;font-family:Consolas,"Courier New",monospace;
-      font-size:11px;font-weight:900;color:#cfe6ef;white-space:nowrap}
+      font-size:12px;font-weight:900;color:#cfe6ef;white-space:nowrap}
     /* Alerte et niveau critique : memes degrades que sur l'accueil. */
     .o2-bar.warn .o2-fill{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}
     .o2-bar.crit .o2-fill{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c)}
@@ -630,7 +630,7 @@
     @keyframes o2ContourAlert{0%,100%{border-color:rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(255,255,255,.18)}50%{border-color:#ff4b3e;box-shadow:0 0 0 2px rgba(255,75,62,.4)}}
     @media(max-width:430px){
       .o2-label{display:none}
-      .o2-time{font-size:10px}
+      .o2-time{font-size:12px}
     }
 
     /* === Animations === */
@@ -659,7 +659,7 @@
 .won-badge{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;margin:0 auto 10px;border-radius:50%;font-size:44px;background:linear-gradient(145deg,#ffd36c,#f5b027);box-shadow:0 0 0 6px rgba(245,176,39,.16),0 0 34px rgba(245,176,39,.55);animation:badgePulse 1.8s ease-in-out infinite}
 .won-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:520px;margin:18px auto;text-align:center}
 .won-stat{padding:11px 8px;border:1px solid rgba(142,231,255,.25);border-radius:12px;background:rgba(0,0,0,.24)}
-.won-stat strong{display:block;color:#fff;font:1000 21px Consolas,"Courier New",monospace}.won-stat span{display:block;margin-top:4px;color:#9bc4d4;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.won-stat strong{display:block;color:#fff;font:1000 21px Consolas,"Courier New",monospace}.won-stat span{display:block;margin-top:4px;color:#9bc4d4;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
 @keyframes badgePulse{50%{transform:scale(1.08);box-shadow:0 0 0 10px rgba(245,176,39,.10),0 0 46px rgba(245,176,39,.75)}}@keyframes celebrationSweep{to{background-position:180px 0}}
 
 /* ===== Écran « Épreuve validée ! » : nouveaux blocs ===== */
@@ -700,7 +700,7 @@
 .won-records{margin:18px auto 0;width:100%;max-width:none;text-align:center}
 .won-records summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border:1px solid rgba(142,231,255,.22);border-radius:999px;color:#9bc4d4;font-weight:800;font-size:12.5px;letter-spacing:.02em;background:rgba(0,0,0,.16)}
 .won-records summary::-webkit-details-marker{display:none}
-.won-records summary::before{content:"▸";font-size:11px;transition:transform .18s ease}
+.won-records summary::before{content:"▸";font-size:12px;transition:transform .18s ease}
 .won-records[open] summary::before{transform:rotate(90deg)}
 .won-records summary:hover{color:#dff6ff;border-color:rgba(142,231,255,.55)}
 .won-records[open] summary{margin-bottom:10px}

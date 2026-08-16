@@ -5,7 +5,7 @@
 .mission-steps{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:clamp(10px,2.2vw,22px);
+  gap:clamp(12px,2.2vw,22px);
   margin:22px 0 0;
   justify-items:center;
   align-items:start;
@@ -131,8 +131,8 @@ button.mission-step.active .hublot-lock{
 button.mission-step.active .hublot-lock::before,
 button.mission-step.active .hublot-lock::after{background:#dff6ff}
 
-.mission-step .num{font:900 clamp(11px,2.2vw,14px)/1 Consolas,"Courier New",monospace;letter-spacing:.2em;color:rgba(245,176,39,.9)}
-.mission-step b{font-size:clamp(11px,2.4vw,16px);font-weight:1000;line-height:1.1;letter-spacing:.03em;text-transform:uppercase;color:#eaf8ff;padding:0 8%;text-shadow:0 2px 10px rgba(0,0,0,.8)}
+.mission-step .num{font:900 clamp(12px,2.2vw,14px)/1 Consolas,"Courier New",monospace;letter-spacing:.2em;color:rgba(245,176,39,.9)}
+.mission-step b{font-size:clamp(12px,2.4vw,16px);font-weight:1000;line-height:1.1;letter-spacing:.03em;text-transform:uppercase;color:#eaf8ff;padding:0 8%;text-shadow:0 2px 10px rgba(0,0,0,.8)}
 button.mission-step:focus-visible{outline:3px solid #8ee7ff;outline-offset:5px}
 
 @media(max-width:620px){
