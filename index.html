@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=37">
+  <link rel="stylesheet" href="css/index.css?v=38">
   <link rel="stylesheet" href="css/hublots.css?v=13">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
@@ -3408,9 +3408,10 @@ function qrDataUri(text, opts){
        pilotage, juste au-dessus, affiche deja ce chiffre. Le repeter en
        toutes lettres deux centimetres plus bas n'apportait rien. */
     if(events.length === 0) return '';
-    /* TRI PAR DATE (croissant) : le plus ancien d'abord, le plus récent en
-       dernier — on garde ensuite les 6 plus récents ci-dessous. */
-    events.sort((a, b) => a.t - b.t);
+    /* TRI PAR DATE (DÉCROISSANT) : le plus récent d'abord, le plus ancien
+       en dernier. Les 6 premiers (les plus récents) restent visibles, le
+       reste se replie dans un menu discret ci-dessous. */
+    events.sort((a, b) => b.t - a.t);
 
     /* JOUR ET HEURE de chaque evenement, a droite de la ligne.
        Format court "06/08 00:09" : la date complete prendrait trop de
@@ -3438,11 +3439,18 @@ function qrDataUri(text, opts){
       + '</li>';
     };
 
-    /* 6 DERNIÈRES LIGNES seulement : on ne garde que les 6 événements les
-       plus récents (triés par date croissante ci-dessus), les plus
-       anciens sortent du journal — l'essentiel reste lisible sans
-       envahir le pupitre. */
-    const items = events.slice(-6).map(ligne).join('');
+    /* 6 LIGNES visibles (les plus récentes), le reste replié dans un menu
+       discret « ⏬ Voir les N événements précédents » : l'historique
+       complet reste consultable sans envahir le pupitre. */
+    const visibles = events.slice(0, 6);
+    const cachees  = events.slice(6);
+    const items = visibles.map(ligne).join('');
+    const suite = cachees.length
+      ? '<details class="ck-journal-suite">'
+        + '<summary>⏬ Voir les ' + cachees.length + ' événements précédents</summary>'
+        + '<ul class="ck-journal-liste">' + cachees.map(ligne).join('') + '</ul>'
+        + '</details>'
+      : '';
     /* Le titre nomme l'EQUIPAGE concerne : sur un ecran ou l'on parle
        deja de position, de sas et de dommages, "Journal de bord" tout
        court ne disait pas de qui il s'agissait. C'est un vrai titre de
@@ -3460,6 +3468,7 @@ function qrDataUri(text, opts){
       +   '📜 Journal de bord de l’équipage ' + esc(team.teamName || '—')
       + '</h3>'
       + '<ul class="ck-journal-liste">' + items + '</ul>'
+      + suite
       + '</div>';
   }
 
