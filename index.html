@@ -6975,30 +6975,26 @@ function qrDataUri(text, opts){
            La fiche reste accessible a l'inscription, par le bouton
            "Agrandir" de la carte d'embarquement. */
 
-        /* On rejoint la chambre de pilotage tout de suite.
-           Ce delai etait de 1,7 s : il servait uniquement a laisser
-           l'ecran rouge se dissiper avant de faire defiler la page. Cet
-           ecran ne s'affiche plus a l'arrivee, l'attente n'a donc plus
-           lieu d'etre. Les 60 ms restantes laissent au cockpit le temps
-           d'etre rempli par renderGame() avant qu'on ne le vise. */
+        /* Arrivée par QR : on déroule la page en douceur jusqu'au panneau
+           métal « LES ABYSSES NE PARDONNENT PAS », en pied de page
+           (au lieu de viser la chambre de pilotage). La reprise reste
+           faite en arrière-plan : le matelot est identifié, et il découvre
+           la page d'accueil jusqu'au panneau de bas de page. */
         const settle = 60;
+        const glisserAuPiedDePage = () => {
+          const abysses = document.getElementById('bottomAlertMessage');
+          if(abysses){
+            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+          }
+        };
         setTimeout(() => {
-          /* BUG CORRIGE : on cherchait `.stepbox` pour savoir si la
-             reprise avait reussi. Cette classe n'existe plus dans la
-             chambre de pilotage, qui produit `.cockpit` — la condition
-             etait donc TOUJOURS fausse, et le matelot arrivant par son
-             lien perso etait envoye sur le bloc "Reprends la mission"
-             au lieu de sa chambre de pilotage, alors meme que sa partie
-             etait chargee.
-             On se fie desormais a `currentTeam`, qui dit sans ambiguite
-             si la reprise a abouti. */
           if(currentTeam){
-            /* Meme destination que la saisie manuelle du code : le
-               TITRE de la chambre de pilotage. Cette reprise visait
-               auparavant l'encart "Position actuelle", situe au bas de la
-               carte : le matelot arrivant par QR et celui saisissant son
-               code ne tombaient donc pas au meme endroit. */
-            smartScroll(document.getElementById('gameCard'));
+            glisserAuPiedDePage();
+            /* Rattrapage : les cartes d'équipage et la chambre de pilotage
+               se remplissent de façon asynchrone (loadTeams) et font
+               grandir la page après ce premier défilement. On recale une
+               fois la page chargée pour atteindre vraiment le bas. */
+            window.addEventListener('load', glisserAuPiedDePage, { once:true });
           }else{
             // Code refuse : on montre la zone de reprise pour corriger.
             smartScroll(document.getElementById('retrouverEquipage'));
