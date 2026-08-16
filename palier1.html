@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=36">
+  <link rel="stylesheet" href="css/palier1.css?v=37">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -171,6 +171,20 @@ const TEAM_DEFS = [
   { code: "NEDLAND",  name: "Ned Land" },
   { code: "CALAMAR",  name: "Calamar" }
 ];
+
+/* Couleurs des équipages (mêmes teintes que index.html) : liseré + voyant
+   lumineux de chaque panneau d'équipage dans le bloc « Équipage actif ». */
+const TEAM_STYLES = {
+  NEMO:     { tint: '#0a4fd8', glow: '0,105,255' },
+  NAUTILUS: { tint: '#138046', glow: '49,251,142' },
+  ARONNAX:  { tint: '#924d06', glow: '252,146,51' },
+  NEDLAND:  { tint: '#9f0e3d', glow: '250,42,103' },
+  CALAMAR:  { tint: '#910e85', glow: '232,31,213' },
+  BALEINE:  { tint: '#0f6a6b', glow: '37,191,193' },
+  TRITON:   { tint: '#71770b', glow: '225,236,36' },
+  DEFAULT:  { tint: '#6a6a6a', glow: '176,176,176' }
+};
+function teamStyle(code) { return TEAM_STYLES[code] || TEAM_STYLES.DEFAULT; }
 
 /* Définition officielle UIT-R M.1677-1 (caractères accentués inclus) */
 const MORSE_TABLE = {
@@ -838,6 +852,10 @@ window.Nautilus = {
     unsubTeam: null,
     hintFlashTimeout: null
   };
+  /* Équipages actifs (toutes équipes) : rempli en temps réel par
+     l'écoute de la collection `teams`, pour le bloc « Équipage actif ». */
+  let _allTeams = [];
+  let _unsubAllTeams = null;
 
   /* === Helpers UI === */
 
@@ -1213,6 +1231,17 @@ window.Nautilus = {
 
     setupDirectResumeForm();
 
+    /* ÉQUIPAGE ACTIF EN PLONGÉE (globale) : on écoute la collection
+       `teams` en temps réel pour afficher tous les matelots en plongée,
+       toutes équipes confondues. */
+    try {
+      _unsubAllTeams = onSnapshot(collection(N.db, 'teams'), (snap) => {
+        _allTeams = [];
+        snap.forEach((d) => _allTeams.push({ teamCode: d.id, ...d.data() }));
+        renderCrew();
+      }, () => { /* lecture indisponible : on garde l'état précédent */ });
+    } catch (e) { console.warn('Équipage actif (global) indisponible :', e); }
+
     /* Aperçu admin : on court-circuite TOUT le démarrage normal (équipe,
        session, identification). L'appel est différé d'un tour de boucle :
        les fonctions de rendu et leurs constantes sont déclarées plus bas
@@ -1555,34 +1584,60 @@ window.Nautilus = {
      le matelot deconnecte. */
   const PRESENCE_FRAICHE_MS = 90 * 1000;
 
-  /* === ÉQUIPAGE ACTIF EN PLONGÉE : uniquement les matelots EN LIVE ===
-     On n'affiche plus tout l'equipage : seuls les matelots dont le
-     battement de presence (onlineMatelots[memberKey]) est frais. Moi, je
-     suis connecte par definition — y compris en mode test, ou le
-     battement est volontairement coupe. */
+  /* ÉQUIPAGE ACTIF EN PLONGÉE — plongée GLOBALE : tous les matelots en
+     plongée, toutes équipes confondues, groupés par équipage (liseré +
+     voyant lumineux à la couleur de l'équipage). */
   function renderCrew() {
     const list = $('crewList');
-    if (!list || !state.team) return;
-    /* Le compte test ne fait jamais partie d'un équipage : filtré à la
-       lecture (sauf en mode test, où l'équipage fictif n'a que lui). */
-    const members = (state.team.members || []).filter(m => state.isTest || !isTestMember(m));
-    const vus = state.team.onlineMatelots || {};
+    if (!list) return;
     const maintenant = Date.now();
-    const connectes = members.filter(m => {
-      const cle = m.memberKey || N.memberKey(m.name || '');
-      if (state.me && cle === state.me.memberKey) return true; // moi : connecté
-      const vu = vus[cle] ? new Date(vus[cle]).getTime() : 0;
-      return (maintenant - vu) < PRESENCE_FRAICHE_MS;
-    });
-    list.innerHTML = connectes.map(m => {
-      const isMe = state.me && (m.memberKey === state.me.memberKey);
-      return `
-        <div class="crew-member ${isMe ? 'self' : ''}">
-          <div class="crew-name">${esc(m.name)} ${isMe ? '(toi)' : ''}</div>
+    let html = '';
+
+    /* MODE TEST : l'équipage fictif (un seul matelot) — aucun autre. */
+    if (state.isTest) {
+      const connectes = (state.team?.members || []).filter(m => !isTestMember(m));
+      html = connectes.map(m => `
+        <div class="crew-member self">
+          <div class="crew-name">${esc(m.name)} (toi)</div>
           <div class="crew-meta">${esc(m.service || '—')}</div>
-        </div>
-      `;
-    }).join('') || `<div style="color:#9bc4d4;font-size:13px;grid-column:1/-1;">Aucun matelot connecté pour le moment.</div>`;
+        </div>`).join('');
+      list.innerHTML = html || `<div class="crew-empty">Aucun matelot en plongée pour le moment.</div>`;
+      return;
+    }
+
+    (_allTeams || []).forEach(t => {
+      if (!t) return;
+      const members = (t.members || []).filter(m => !isTestMember(m));
+      const vus = t.onlineMatelots || {};
+      const connectes = members.filter(m => {
+        const cle = m.memberKey || N.memberKey(m.name || '');
+        if (state.me && cle === state.me.memberKey) return true; // moi : connecté
+        const vu = vus[cle] ? new Date(vus[cle]).getTime() : 0;
+        return (maintenant - vu) < PRESENCE_FRAICHE_MS;
+      });
+      if (!connectes.length) return;
+      const st = teamStyle(t.teamCode);
+      const nom = displayTeamName(t);
+      const cartes = connectes.map(m => {
+        const isMe = state.me && ((m.memberKey || N.memberKey(m.name || '')) === state.me.memberKey);
+        return `
+          <div class="crew-member ${isMe ? 'self' : ''}">
+            <div class="crew-name">${esc(m.name)} ${isMe ? '(toi)' : ''}</div>
+            <div class="crew-meta">${esc(m.service || '—')}</div>
+          </div>`;
+      }).join('');
+      html += `
+        <div class="crew-group" style="--team-tint:${st.tint};--team-glow:${st.glow}">
+          <div class="crew-group-head">
+            <span class="crew-group-dot" aria-hidden="true"></span>
+            <span class="crew-group-name">${esc(nom)}</span>
+            <span class="crew-group-count">${connectes.length} ${connectes.length > 1 ? 'matelots en plongée' : 'matelot en plongée'}</span>
+          </div>
+          <div class="crew-group-members">${cartes}</div>
+        </div>`;
+    });
+
+    list.innerHTML = html || `<div class="crew-empty">Aucun matelot en plongée pour le moment.</div>`;
   }
 
   /* === QUI EST L'AUTEUR DE LA SESSION ? — par la CLÉ MATELOT, jamais
@@ -3049,6 +3104,7 @@ window.Nautilus = {
   window.addEventListener('beforeunload', () => {
     if (state.unsubSession) state.unsubSession();
     if (state.unsubTeam) state.unsubTeam();
+    if (_unsubAllTeams) _unsubAllTeams();
     if (state.timerHandle) clearInterval(state.timerHandle);
     if (state._heartbeatInterval) clearInterval(state._heartbeatInterval);
   });

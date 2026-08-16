@@ -170,8 +170,30 @@
       .morse-signal-light.on{opacity:.65}
     }
 
-    /* === Équipage === */
-    .crew{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px;}
+    /* === Équipage (plongée globale : tous les équipages) === */
+    .crew{display:flex;flex-direction:column;gap:14px;margin-top:12px;}
+    /* Panneau d'un équipage actif, souligné d'un liseré à sa couleur. */
+    .crew-group{
+      border:1px solid rgba(142,231,255,.16);
+      border-left:4px solid var(--team-tint,#6a6a6a);
+      border-radius:12px;padding:12px 14px;
+      background:rgba(0,0,0,.24);
+    }
+    .crew-group-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+    /* Voyant lumineux pulsant, à la teinte de l'équipage. */
+    .crew-group-dot{
+      width:9px;height:9px;border-radius:50%;flex:0 0 auto;
+      background:rgb(var(--team-glow,176,176,176));
+      box-shadow:0 0 10px rgba(var(--team-glow,176,176,176),.85);
+      animation:crewDotPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes crewDotPulse{50%{opacity:.3}}
+    .crew-group-name{
+      font-weight:900;color:#fff;font-size:13px;
+      letter-spacing:.07em;text-transform:uppercase;
+    }
+    .crew-group-count{margin-left:auto;font-size:11px;color:#9bc4d4;white-space:nowrap;}
+    .crew-group-members{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
     .crew-member{
       padding:10px 12px;background:rgba(0,0,0,.32);
       border:1px solid rgba(142,231,255,.22);border-radius:12px;
@@ -181,6 +203,7 @@
     .crew-member.self .crew-name{color:var(--fnac);text-shadow:0 0 10px rgba(245,176,39,.4);}
     .crew-member .crew-name{font-weight:900;color:#fff;}
     .crew-member .crew-meta{font-size:11px;color:#9bc4d4;}
+    .crew-empty{color:#9bc4d4;font-size:13px;font-style:italic;padding:6px 2px;}
 
     /* === Bloc de l epreuve === */
     /* CADRE RETIRE : ce bloc enveloppait le panneau sonar, la zone de

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#030811">
   <title>Mission Nautilus — Classement final</title>
-  <link rel="stylesheet" href="css/classement.css?v=3">
+  <link rel="stylesheet" href="css/classement.css?v=4">
 </head>
 <body>
   <div class="result-wallpaper" aria-hidden="true"></div>
@@ -38,10 +38,15 @@
     const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
     function progressOf(team){ return Array.isArray(team.completedSteps) ? team.completedSteps.length : 0; }
+    /* Nombre d'erreurs cumulées de l'équipage (failCount) : sert à départager
+       deux équipages à égalité de paliers franchis. */
+    function errorCount(team){ return Number(team.failCount || 0); }
+    /* Instant où l'équipage a résolu son DERNIER palier : le « temps » de
+       référence pour départager deux équipages à égalité de paliers ET
+       d'erreurs. */
     function progressDate(team){
-      const dates = Object.values(team.progressionAt || {}).filter(Boolean).map(v => new Date(v).getTime()).filter(Number.isFinite);
-      if(dates.length) return Math.max(...dates);
-      return new Date(team.finishedAt || team.updatedAt || team.createdAt || 0).getTime() || Number.MAX_SAFE_INTEGER;
+      const t = new Date(team.lastStepCompletedAt || team.finishedAt || team.updatedAt || team.createdAt || 0).getTime();
+      return t || Number.MAX_SAFE_INTEGER;
     }
     function stepLabel(team){
       const n = progressOf(team);
@@ -64,7 +69,12 @@
       return team?.teamCode === 'ARONNAX' ? 'Aronnax' : (team?.teamName || team?.teamCode || '—');
     }
     function sortTeams(teams){
-      return teams.filter(t => t && (t.teamName || t.teamCode)).sort((a,b) => progressOf(b)-progressOf(a) || progressDate(a)-progressDate(b) || displayTeamName(a).localeCompare(displayTeamName(b),'fr'));
+      return teams.filter(t => t && (t.teamName || t.teamCode)).sort((a,b) =>
+        progressOf(b) - progressOf(a) ||       // 1) le plus de paliers franchis d'abord
+        errorCount(a) - errorCount(b) ||       // 2) à égalité de paliers : le MOINS d'erreurs d'abord (plus d'erreurs = dernier)
+        progressDate(a) - progressDate(b) ||   // 3) à égalité de paliers ET d'erreurs : le premier à avoir résolu le dernier palier d'abord
+        displayTeamName(a).localeCompare(displayTeamName(b),'fr')
+      );
     }
     function podiumCard(team, rank){
       if(!team) return '<div class="podium-empty"></div>';
@@ -74,6 +84,7 @@
         <div class="podium-rank">${rank}<sup>e</sup></div>
         <h2>${esc(displayTeamName(team))}</h2>
         <div class="podium-progress">${esc(stepLabel(team))}</div>
+        <div class="podium-errors">${errorCount(team)} erreur${errorCount(team) > 1 ? 's' : ''}</div>
         <div class="podium-crew">${esc(crewLabel(team))}</div>
         <div class="podium-spark"></div>
       </article>`;
@@ -92,7 +103,7 @@
     <b>${esc(displayTeamName(t))}</b>
     <em>${esc(crewLabel(t))}</em>
   </div>
-  <small>${esc(stepLabel(t))}</small>
+  <small>${esc(stepLabel(t))} · ${errorCount(t)} err.</small>
 </li>`).join('')}</ol>` : '';
     }
     try {
