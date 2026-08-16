@@ -99,7 +99,7 @@
       +   '<div class="won-badge" aria-hidden="true">🏆</div>'
       +   '<h2>Épreuve validée !</h2>'
       +   '<p class="won-line">' + ligneEquipage + '</p>'
-      +   '<p class="won-line won-line--bravo">Bravo à <b>« ' + esc(bravo) + ' »</b> pour « ' + esc(o.mission) + ' ».</p>'
+      +   '<p class="won-line won-line--bravo">Bravo à <b>«</b> ' + esc(bravo) + ' <b>»</b> pour « ' + esc(o.mission) + ' ».</p>'
       +   '<div class="won-stats" aria-label="Bilan de l’épreuve">' + statsHtml + '</div>'
       +   '<div class="won-records" id="wonRecordsHost" aria-live="polite"></div>'
       +   '<div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —'
