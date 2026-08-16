@@ -276,6 +276,7 @@
     var fin = new Date(depart).getTime() + duree;
     if (Date.now() >= fin) showOxygenEndAlarm(fin);
     var reste = Math.max(0, fin - Date.now());
+    var resteTotal = reste;   // conservé pour le choix de cadence / de format
     /* MÊME CALCUL QUE L'ACCUEIL, au chiffre près : arrondi au plus
        proche, mais jamais « 100 % » si du temps a été consommé, ni
        « 0 % » s'il en reste. */
@@ -297,9 +298,15 @@
     fill.style.width = pctPrecis.toFixed(3) + '%';
     applyOxygenGradient(fill, pctPrecis);
     document.getElementById('o2Pct').textContent = pct + '%';
-    /* MÊME FORMAT QUE L'ACCUEIL : « 7J 00h00m00s », secondes comprises —
-       la jauge des paliers affiche exactement le même temps que l'accueil. */
-    document.getElementById('o2Time').textContent = j + 'J ' + ('0' + h).slice(-2) + 'h' + ('0' + m).slice(-2) + 'm' + ('0' + s).slice(-2) + 's';
+    /* FORMAT DU TEMPS : sans secondes au-delà de la dernière minute
+       (« 7J 00h00m »), secondes comprises uniquement quand il reste moins
+       d'une minute (« 0J 00h00m59s ») — la jauge se lit comme l'accueil
+       sans consommer la batterie à chaque seconde pendant des jours. */
+    var sousUneMinute = resteTotal < 60000;
+    document.getElementById('o2Time').textContent = j + 'J '
+      + ('0' + h).slice(-2) + 'h'
+      + ('0' + m).slice(-2) + 'm'
+      + (sousUneMinute ? ('0' + s).slice(-2) + 's' : '');
     /* MÊMES SEUILS QUE L'ACCUEIL : la jauge passe à l'orange à 50 %
        et au rouge à 20 %. */
     bar.classList.toggle('warn', pct <= 50 && pct > 20);
@@ -312,6 +319,20 @@
         ? (pct < 5 ? Math.max(1, pct) : 5) + 's'
         : '';
     }
+
+    /* CADENCE ADAPTATIVE (batterie) : rafraîchissement toutes les minutes
+       tant qu'il reste plus d'une minute ; dans la dernière minute, chaque
+       seconde pour faire défiler les secondes. */
+    planifierTick(resteTotal);
+  }
+
+  /* Programme le prochain rafraîchissement de la jauge selon le temps
+     restant : 60 s par défaut, 1 s dans la dernière minute. */
+  var _tickTimer = null;
+  function planifierTick(resteTotal) {
+    if (_tickTimer) { clearTimeout(_tickTimer); _tickTimer = null; }
+    var delai = (resteTotal > 0 && resteTotal < 60000) ? 1000 : 60000;
+    _tickTimer = setTimeout(majReserveO2, delai);
   }
 
   /* ===== INJECTION DU HTML ===== */
@@ -356,11 +377,7 @@
     if (_o2Config) majReserveO2();
 
     chargerConfigO2().then(function () {
-      majReserveO2();
-      /* MÊME CADENCE QUE L'ACCUEIL : rafraîchissement chaque seconde, pour
-         que les secondes défilent à l'identique et que la jauge reste
-         exactement synchronisée avec celle de l'accueil. */
-      setInterval(majReserveO2, 1000);
+      majReserveO2();   /* s'auto-programme (cadence adaptative) */
       /* La date de départ peut être posée pendant la partie (un autre
          équipage lance la mission) : on la reverifie de temps en temps. */
       setInterval(function () { chargerConfigO2().then(majReserveO2); }, 120000);

@@ -1082,6 +1082,7 @@ window.Nautilus = {
     const fin = new Date(depart).getTime() + duree;
     if(Date.now() >= fin) showOxygenEndAlarm(fin);
     let reste = Math.max(0, fin - Date.now());
+    const resteTotal = reste;   // conservé pour le choix de cadence / de format
     /* MEME CALCUL QUE LA PAGE D'ACCUEIL, au chiffre pres : arrondi au
        plus proche, mais jamais "100 %" si du temps a ete consomme, ni
        "0 %" s'il en reste. */
@@ -1104,9 +1105,12 @@ window.Nautilus = {
     fill.style.width = pctPrecis.toFixed(3) + '%';
     applyOxygenGradient(fill, pctPrecis);
     $('o2Pct').textContent = pct + '%';
-    /* MÊME FORMAT QUE L'ACCUEIL : secondes comprises, pour un temps
-       strictement identique sur la jauge du palier et celle de l'accueil. */
-    $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(s).padStart(2,'0')}s`;
+    /* FORMAT DU TEMPS : sans secondes au-delà de la dernière minute
+       (« 7J 00h00m »), secondes comprises uniquement quand il reste moins
+       d'une minute (« 0J 00h00m59s ») — batterie préservée, lecture
+       identique à l'accueil sur la durée. */
+    const sousUneMinute = resteTotal < 60000;
+    $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${sousUneMinute ? String(s).padStart(2,'0') + 's' : ''}`;
     /* MEMES SEUILS QUE L'ACCUEIL : la jauge passait ici a l'orange a 40 %
        et au rouge a 15 %, contre 50 % et 20 % sur la page d'accueil. Un
        equipage a 45 % voyait donc du bleu sur un ecran et de l'orange sur
@@ -1121,6 +1125,19 @@ window.Nautilus = {
         ? (pct < 5 ? Math.max(1, pct) : 5) + 's'
         : '';
     }
+
+    /* CADENCE ADAPTATIVE (batterie) : 60 s par défaut, 1 s dans la
+       dernière minute pour faire défiler les secondes. */
+    planifierTickO2(resteTotal);
+  }
+
+  /* Programme le prochain rafraîchissement de la jauge selon le temps
+     restant : 60 s par défaut, 1 s dans la dernière minute. */
+  let _tickTimerO2 = null;
+  function planifierTickO2(resteTotal) {
+    if (_tickTimerO2) { clearTimeout(_tickTimerO2); _tickTimerO2 = null; }
+    const delai = (resteTotal > 0 && resteTotal < 60000) ? 1000 : 60000;
+    _tickTimerO2 = setTimeout(majReserveO2, delai);
   }
 
   /* ===== APERÇU ADMIN — TEST DES ÉCRANS SANS JOUER =====
@@ -1223,10 +1240,7 @@ window.Nautilus = {
     if (_o2Config) majReserveO2();
 
     chargerConfigO2().then(() => {
-      majReserveO2();
-      /* MÊME CADENCE QUE L'ACCUEIL : chaque seconde, pour que les secondes
-         défilent à l'identique et que la jauge reste synchronisée. */
-      setInterval(majReserveO2, 1000);
+      majReserveO2();   /* s'auto-programme (cadence adaptative) */
       /* La date de depart peut etre posee pendant la partie (un autre
          equipage lance la mission) : on la reverifie de temps en temps. */
       setInterval(() => chargerConfigO2().then(majReserveO2), 120000);
