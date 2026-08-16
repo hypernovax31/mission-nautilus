@@ -165,7 +165,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=11"></script>
+<script src="palier-sas.js?v=12"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2 :
      la vue d'explication immersive du thème (SANS dévoiler le
      contenu) entre la ZONE SCELLÉE et le mini-jeu — mise en page du
@@ -182,7 +182,7 @@
 <script src="reserve-o2.js?v=2"></script>
 <!-- Équipage actif en plongée : liste des matelots connectés en direct,
      commune à tous les paliers (mêmes styles que le Palier 1). -->
-<script src="equipage-actif.js?v=3"></script>
+<script src="equipage-actif.js?v=4"></script>
 <script>window.EquipageActif.init();</script>
 <!-- Moteur de mots croisés (générique) + données : 10 mots, un par secteur -->
 <script src="mots-croises.js?v=7"></script>
@@ -500,7 +500,7 @@
       /* Record de temps de résolution du Palier 2 (records-palier.js) :
          écrit dans game/records partagé, silencieux en cas de panne. */
       if (typeof window.NautilusRecords !== 'undefined') {
-        var NOMS_EQUIPES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land', CALAMAR: 'Calamar' };
+        var NOMS_EQUIPES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
         var dureeSec = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
         window.NautilusRecords.enregistrer({
           stepId: 'livres',
@@ -529,7 +529,7 @@
     var ident = await monIdentite();
     var duree = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
     var mm = Math.floor(duree / 60), ss = ('0' + (duree % 60)).slice(-2);
-    var NOMS = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land', CALAMAR: 'Calamar' };
+    var NOMS = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
     var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
     host.classList.remove('mc', 'mc-termine');
     window.NautilusVictoire.afficher(host, {
@@ -717,6 +717,6 @@
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
 <script src="sonar-button.js?v=4" defer></script>
 <script src="palier-annonces.js?v=3" defer></script>
-<script src="admin-button.js?v=17" type="module"></script>
+<script src="admin-button.js?v=18" type="module"></script>
 </body>
 </html>

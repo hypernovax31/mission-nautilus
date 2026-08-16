@@ -64,13 +64,12 @@
     NAUTILUS: { tint: '#138046', glow: '49,251,142' },
     ARONNAX:  { tint: '#924d06', glow: '252,146,51' },
     NEDLAND:  { tint: '#9f0e3d', glow: '250,42,103' },
-    CALAMAR:  { tint: '#910e85', glow: '232,31,213' },
     BALEINE:  { tint: '#0f6a6b', glow: '37,191,193' },
     TRITON:   { tint: '#71770b', glow: '225,236,36' },
     DEFAULT:  { tint: '#6a6a6a', glow: '176,176,176' }
   };
   /* Nom propre d'affichage (l'identifiant technique reste en majuscules). */
-  var TEAM_NAMES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land', CALAMAR: 'Calamar' };
+  var TEAM_NAMES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
 
   function normalize(s) { return String(s || '').trim().toUpperCase(); }
   function memberKey(name) {

@@ -61,7 +61,7 @@
   'use strict';
 
   var BASE = [16, 1, 12, 9, 5, 18];      // P A L I E R
-  var NOMS_EQUIPAGES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land', CALAMAR: 'Calamar' };
+  var NOMS_EQUIPAGES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
 
   function init(palier) {
     var n = Math.max(2, palier | 0);              // le sas ne concerne que les paliers ≥ 2

@@ -349,7 +349,6 @@
             <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>
             <button class="secondary" id="cleanupTestSessionsBtn" type="button" style="margin:0">🧪 Purger les traces du compte test</button>
             <button class="secondary" id="cleanupFieldsBtn" type="button" style="margin:0">🧹 Nettoyer les champs obsolètes</button>
-            <button class="secondary" id="regenCodesBtn" type="button" style="margin:0;background:#fff4e6;color:#8c5a1f;border:1px solid #e8c05f">🔄 Régénérer tous les Codes Matelot</button>
           </div>
           <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>La purge retire toute trace du compte de test ZZZZ-0000 (parties fantômes, membre, blocage ou présence TEST) : le compte de test ne fait jamais partie d'un équipage.<br>Le nettoyage retire « migratedFrom », un reste de l'ancienne migration des identifiants d'équipe : sans effet sur le jeu.</p>
         </div>
@@ -1011,7 +1010,6 @@
     NAUTILUS: { glow: '49,251,142', tint: '#138046', emblem: 'M100 78c40 0 72 14 72 30s-32 30-72 30-72-14-72-30 32-30 72-30Zm-14-24h28v22H86Zm86 22 22-12v40l-22-12M28 158q22-10 44 0t44 0 44 0' },
     ARONNAX:  { glow: '252,146,51', tint: '#924d06', emblem: 'M86 44a44 44 0 1 1 0 88 44 44 0 0 1 0-88Zm0 14a30 30 0 1 0 0 60 30 30 0 0 0 0-60Zm32 76 46 46' },
     NEDLAND:  { glow: '250,42,103', tint: '#9f0e3d', emblem: 'M100 178V54m0-38 22 38h-44Zm0 60 26 20m-26-20-26 20m26 22 20 16m-20-16-20 16' },
-    CALAMAR:  { glow: '232,31,213', tint: '#910e85', emblem: 'M100 24c20 0 34 18 34 42s-14 38-34 38-34-14-34-38 14-42 34-42Zm-14 34a6 6 0 1 1 0 12 6 6 0 0 1 0-12Zm28 0a6 6 0 1 1 0 12 6 6 0 0 1 0-12ZM74 102q-16 38-40 54m54-48q-10 44-26 62m38-60q0 46 8 64m14-66q10 44 26 60m10-66q16 34 34 46' },
     BALEINE:  { glow: '37,191,193', tint: '#0f6a6b', emblem: 'M34 108q28-34 62-34t56 30q18-4 30-18-4 22-16 32 12 10 16 28-20-10-34-8-22 28-56 28t-58-30Zm100-18a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z' },
     TRITON:   { glow: '225,236,36', tint: '#71770b', emblem: 'M100 176V56m-30-6 30 34 30-34M62 26v34m76-34v34M100 20v40M52 60h96' },
     DEFAULT:  { glow: '176,176,176', tint: '#6a6a6a', emblem: 'M100 26 118 82l56 18-56 18-18 56-18-56-56-18 56-18Z' }
@@ -3023,92 +3021,6 @@ function qrDataUri(text, opts){
     }catch(err){
       console.error('NAUTILUS resetAllMembers error:', err);
       alert(`❌ Échec du reset : ${err.message || err}`);
-    }
-  }
-
-  /**
-   * Régénère le Code Matelot de TOUS les matelots réels (jamais le compte
-   * de test). Chaque matelot reçoit un nouveau code : mot anglais sans O +
-   * 4 chiffres 1-9 (jamais NEMO / 2026). Les anciens codes et QR deviennent
-   * inutilisables — un rapport « ancien → nouveau » est affiché pour refaire
-   * les QR. Double confirmation (action irréversible).
-   */
-  async function regenerateAllCodes(){
-    const ok1 = confirm("⚠️ Régénérer le Code Matelot de TOUS les matelots ?\n\nChaque matelot reçoit un nouveau code (mot anglais sans O + 4 chiffres de 1 à 9). Les anciens codes et QR deviennent inutilisables.\n\nÀ la fin, un rapport « ancien → nouveau » s'affichera pour refaire les QR.");
-    if(!ok1) return;
-    const ok2 = confirm("Confirme une seconde fois : régénérer les codes de tous les matelots ?");
-    if(!ok2) return;
-    try{
-      await refreshAdminTeams();
-      /* 1) Collecter les codes déjà utilisés (anti-collision) + les matelots
-            réels (source : la sous-collection teams/{code}/matelots, où le
-            code EST l'identifiant du document). */
-      const used = new Set();
-      const matelots = [];
-      for(const t of effectiveTeams){
-        const fiches = await getDocs(collection(db,'teams',t.code,'matelots'));
-        for(const d of fiches.docs){
-          const f = d.data() || {};
-          const oldCode = f.codeMatelot || d.id;
-          /* Le compte de test ne fait jamais partie d'un équipage. */
-          if(oldCode === TEST_MATELOT_CODE || normalize(f.name||'') === 'TEST') continue;
-          used.add(oldCode);
-          matelots.push({
-            teamCode: t.code,
-            teamName: f.teamName || t.name,
-            name: f.name, service: f.service,
-            memberKey: f.memberKey || memberKey(f.name || ''),
-            oldCode, registeredAt: f.registeredAt
-          });
-        }
-      }
-      if(!matelots.length){ alert("Aucun matelot à traiter."); return; }
-      /* 2) Générer les nouveaux codes, tous uniques. */
-      const mapping = [];
-      for(const m of matelots){
-        let nc;
-        do { nc = generateMatelotCode(); } while(used.has(nc));
-        used.add(nc);
-        mapping.push({ ...m, newCode: nc });
-      }
-      /* 3) Appliquer par équipe : members[] + fiche + index global. */
-      const byTeam = {};
-      for(const m of mapping){ (byTeam[m.teamCode] = byTeam[m.teamCode] || []).push(m); }
-      let done = 0;
-      for(const teamCode of Object.keys(byTeam)){
-        const teamRef = doc(db,'teams',teamCode);
-        const snap = await getDoc(teamRef);
-        if(!snap.exists()) continue;
-        const members = (snap.data().members || []).slice();
-        for(const m of byTeam[teamCode]){
-          if(m.oldCode && m.oldCode !== m.newCode){
-            await deleteDoc(doc(db,'teams',teamCode,'matelots',m.oldCode)).catch(()=>{});
-            await deleteDoc(doc(db,'matelots',m.oldCode)).catch(()=>{});
-          }
-          await setDoc(doc(db,'teams',teamCode,'matelots',m.newCode), {
-            name: m.name, service: m.service, memberKey: m.memberKey,
-            codeMatelot: m.newCode, teamCode: teamCode, teamName: m.teamName,
-            registeredAt: m.registeredAt || new Date().toISOString()
-          }).catch(()=>{});
-          await setDoc(doc(db,'matelots',m.newCode), {
-            codeMatelot: m.newCode, name: m.name, service: m.service,
-            teamCode: teamCode, teamName: m.teamName,
-            updatedAt: new Date().toISOString()
-          }).catch(()=>{});
-          /* members[] : mettre à jour le codeMatelot de ce membre. */
-          const idx = members.findIndex(x => (x.codeMatelot && x.codeMatelot === m.oldCode) || (x.memberKey && x.memberKey === m.memberKey));
-          if(idx >= 0) members[idx] = { ...members[idx], codeMatelot: m.newCode };
-          done++;
-        }
-        await updateDoc(teamRef, { members, updatedAt: new Date().toISOString() }).catch(()=>{});
-      }
-      const rapport = mapping.map(m => (m.name||'—') + ' (' + m.teamName + ') : ' + (m.oldCode||'—') + ' → ' + m.newCode).join('\n');
-      endAdminSession(`✅ ${done} Code(s) Matelot régénéré(s) · session fermée`);
-      await loadTeams();
-      alert('Codes Matelot régénérés (' + done + ') :\n\n' + rapport);
-    }catch(err){
-      console.error('NAUTILUS regenerateAllCodes error:', err);
-      alert(`❌ Échec de la régénération : ${err.message || err}`);
     }
   }
 
@@ -5864,7 +5776,6 @@ function qrDataUri(text, opts){
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
   $('cleanupTestSessionsBtn')?.addEventListener('click', cleanupTestSessions);
   $('cleanupFieldsBtn')?.addEventListener('click', cleanupObsoleteFields);
-  $('regenCodesBtn')?.addEventListener('click', regenerateAllCodes);
 
   /* =====================================================================
      PANNEAU ADMIN — bouton engrenage en bas-gauche
@@ -7295,7 +7206,7 @@ window.PWAInstall = {
   aUnPrompt: () => Boolean(pwaDeferredPrompt)
 };
 </script>
-<script src="admin-button.js?v=17" type="module"></script>
+<script src="admin-button.js?v=18" type="module"></script>
 </body>
 </html>
 
