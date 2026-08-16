@@ -631,6 +631,23 @@
       font-family:Consolas,"Courier New",monospace;line-height:1.65;
       white-space:nowrap;
     }
+    /* Menu replie de l'historique : les evenements anterieurs aux 10
+       dernieres lignes. <details> natif : aucun script necessaire pour
+       deplier/replier, et accessible au clavier (meme esprit que le menu
+       des records de resolution des paliers). */
+    .ck-journal-suite{margin-top:10px}
+    .ck-journal-suite summary{
+      cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border:1px solid rgba(142,231,255,.22);border-radius:999px;
+      color:#9bc4d4;font-weight:800;font-size:12.5px;letter-spacing:.02em;
+      background:rgba(0,0,0,.16);transition:.18s color,.18s border-color;
+    }
+    .ck-journal-suite summary::-webkit-details-marker{display:none}
+    .ck-journal-suite summary::before{content:"▸";font-size:11px;transition:transform .18s ease}
+    .ck-journal-suite[open] summary::before{transform:rotate(90deg)}
+    .ck-journal-suite summary:hover{color:#dff6ff;border-color:rgba(142,231,255,.55)}
+    .ck-journal-suite[open] summary{margin-bottom:10px}
+    .ck-journal-suite .ck-journal-liste{margin-top:0}
     @media(max-width:430px){
       .ck-journal{padding:12px 13px}
       .ck-journal-texte{font-size:13px}

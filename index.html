@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=36">
+  <link rel="stylesheet" href="css/index.css?v=37">
   <link rel="stylesheet" href="css/hublots.css?v=13">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
@@ -3429,14 +3429,27 @@ function qrDataUri(text, opts){
     /* Le style vit dans la feuille CSS (.ck-journal-*), pas en attributs
        ecrits a la main sur chaque element : une seule source, et une
        interface qui reste coherente si on ajuste la police. */
-    const items = events.slice(-10).map(e => {
+    /* Ligne d'evenement, partagee par la liste visible et la suite repliee. */
+    const ligne = (e) => {
       const h = quand(e.t);
       return '<li class="ck-journal-ligne">'
       + '<span class="ck-journal-ico">' + e.icon + '</span>'
       + '<span class="ck-journal-texte">' + e.text + '</span>'
       + (h ? '<span class="ck-journal-date">' + h + '</span>' : '')
       + '</li>';
-    }).join('');
+    };
+
+    /* 10 DERNIERES LIGNES visibles, le reste replie dans un menu :
+       l'historique complet reste consultable sans envahir le pupitre. */
+    const visibles = events.slice(-10);
+    const cachees  = events.slice(0, -10);
+    const items = visibles.map(ligne).join('');
+    const suite = cachees.length
+      ? '<details class="ck-journal-suite">'
+        + '<summary>⏬ Voir les ' + cachees.length + ' événements précédents</summary>'
+        + '<ul class="ck-journal-liste">' + cachees.map(ligne).join('') + '</ul>'
+        + '</details>'
+      : '';
     /* Le titre nomme l'EQUIPAGE concerne : sur un ecran ou l'on parle
        deja de position, de sas et de dommages, "Journal de bord" tout
        court ne disait pas de qui il s'agissait. C'est un vrai titre de
@@ -3454,6 +3467,7 @@ function qrDataUri(text, opts){
       +   '📜 Journal de bord de l’équipage ' + esc(team.teamName || '—')
       + '</h3>'
       + '<ul class="ck-journal-liste">' + items + '</ul>'
+      + suite
       + '</div>';
   }
 
