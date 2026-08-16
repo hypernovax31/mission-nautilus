@@ -8,8 +8,8 @@
 
 /* Classement centré sur tous les écrans. */
 .results-hero h1{text-align:center;margin-left:auto;margin-right:auto}
-.podium-row{justify-items:center}
-.podium-card{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.podium-row{justify-items:stretch}
+.podium-card{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%}
 .fleet-results{text-align:center}
 .fleet-results ol{width:min(680px,100%);margin:0 auto}
 .fleet-results li{text-align:center}
@@ -86,3 +86,26 @@ html,body{width:100%;min-width:100%;min-height:100%;margin:0}
 }
 .results-hero h1{width:100%;max-width:none}
 .podium-row{width:100%;max-width:none}
+
+/* ===== PODIUM EN GRADINS — règle finale, source de vérité =====
+   Trois colonnes jointives, alignées par le bas : la hauteur de chaque
+   carte forme une marche (1er le plus haut, 3e le plus bas). Les cartes
+   REMPLISSENT leur colonne (aucun trou), les marches se lisent d'un
+   coup d'œil. */
+.podium-row{
+  display:grid;
+  grid-template-columns:1fr 1.15fr 1fr;
+  gap:10px;
+  align-items:end;
+  justify-items:stretch;
+}
+.podium-card{width:100%;margin:0}
+.podium-card.rank-3{min-height:250px}
+.podium-card.rank-2{min-height:310px}
+.podium-card.rank-1{min-height:370px}
+@media(max-width:640px){
+  .podium-row{gap:6px}
+  .podium-card.rank-3{min-height:180px}
+  .podium-card.rank-2{min-height:225px}
+  .podium-card.rank-1{min-height:270px}
+}
