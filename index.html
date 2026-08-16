@@ -2414,12 +2414,20 @@ function qrDataUri(text, opts){
         '<div style="margin-top:18px;font-size:12px;opacity:.7">Tape en dehors pour fermer</div>' +
       '</div>';
 
-    // Ferme si on tape sur le fond (pas sur les boutons)
+    /* Fermeture : clic sur le fond OU touche ÉCHAP (aucune validation
+       obligatoire ici). L'écouteur ÉCHAP est retiré dès la fermeture. */
+    const retirer = () => {
+      document.removeEventListener('keydown', onEchap);
+      if (overlay.parentNode) overlay.remove();
+    };
+    const onEchap = (e) => { if (e.key === 'Escape') retirer(); };
+
     overlay.addEventListener('click', (e) => {
-      if(e.target === overlay) document.body.removeChild(overlay);
+      if(e.target === overlay) retirer();
     });
 
     document.body.appendChild(overlay);
+    document.addEventListener('keydown', onEchap);
 
     // Bouton Partager : tente d'envoyer l'image via Web Share API
     document.getElementById('qrModalShare').addEventListener('click', async () => {
@@ -6827,8 +6835,16 @@ function qrDataUri(text, opts){
     });
   }
 
-  /* Raccourci secret : Ctrl+Alt+M pour ouvrir/fermer */
+  /* Raccourcis clavier :
+     - Ctrl+Alt+M : ouvrir/fermer le panneau admin (accès restreint) ;
+     - ÉCHAP : fermer le panneau admin s'il est ouvert (même comportement
+       que le bouton ✕ / le clic sur le fond — aucune validation
+       obligatoire). */
   document.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){
+      if($('adminPanel')?.classList.contains('open')) closeAdminPanel();
+      return;
+    }
     if(e.ctrlKey && e.altKey && (e.key === 'M' || e.key === 'm')){
       e.preventDefault();
       if($('adminPanel')?.classList.contains('open')) closeAdminPanel();
@@ -7151,12 +7167,18 @@ function showInstallInstructions(){
     '</div>';
 
   document.body.appendChild(overlay);
+  /* Fermeture unique : clic sur le fond / bouton « Compris » / ÉCHAP.
+     L'écouteur ÉCHAP est retiré dès la fermeture (aucune accumulation). */
+  const fermer = () => {
+    document.removeEventListener('keydown', onEchap);
+    overlay.classList.add('pwa-modal-out');
+    setTimeout(() => overlay.remove(), 250);
+  };
+  const onEchap = (e) => { if (e.key === 'Escape') fermer(); };
   overlay.addEventListener('click', (e) => {
-    if(e.target === overlay || e.target.hasAttribute('data-close')){
-      overlay.classList.add('pwa-modal-out');
-      setTimeout(() => overlay.remove(), 250);
-    }
+    if(e.target === overlay || e.target.hasAttribute('data-close')) fermer();
   });
+  document.addEventListener('keydown', onEchap);
 }
 
 // Bind
