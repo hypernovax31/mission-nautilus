@@ -1,2 +1,5 @@
 .nautilus-safe/
 apercu-*.wav
+
+__pycache__/
+*.pyc

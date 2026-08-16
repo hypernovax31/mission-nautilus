@@ -87,8 +87,8 @@
        anonyme/test → « L'équipage franchit… » (pas de « l'équipage »
        entre guillemets, pléonasme). */
     var ligneEquipage = o.equipe
-      ? 'Tout l’équipage « ' + esc(o.equipe) + ' » franchit le sas du <b>Palier ' + esc(o.palier) + '</b>.'
-      : 'L’équipage franchit le sas du <b>Palier ' + esc(o.palier) + '</b>.';
+      ? 'Tout l’équipage « ' + esc(o.equipe) + ' » franchit le sas du <b>« Palier ' + esc(o.palier) + ' »</b>.'
+      : 'L’équipage franchit le sas du <b>« Palier ' + esc(o.palier) + ' »</b>.';
     var bravo = o.bravo || 'l’équipage';
     var stats = (o.stats || []).slice(0, 4);
     var statsHtml = stats.map(function (s) {
@@ -99,7 +99,7 @@
       +   '<div class="won-badge" aria-hidden="true">🏆</div>'
       +   '<h2>Épreuve validée !</h2>'
       +   '<p class="won-line">' + ligneEquipage + '</p>'
-      +   '<p class="won-line won-line--bravo">Bravo à <b>' + esc(bravo) + '</b> pour « ' + esc(o.mission) + ' ».</p>'
+      +   '<p class="won-line won-line--bravo">Bravo à <b>« ' + esc(bravo) + ' »</b> pour « ' + esc(o.mission) + ' ».</p>'
       +   '<div class="won-stats" aria-label="Bilan de l’épreuve">' + statsHtml + '</div>'
       +   '<div class="won-records" id="wonRecordsHost" aria-live="polite"></div>'
       +   '<div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —'
