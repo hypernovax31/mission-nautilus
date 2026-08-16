@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=27">
+  <link rel="stylesheet" href="css/index.css?v=28">
   <link rel="stylesheet" href="css/hublots.css?v=13">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
@@ -4697,7 +4697,7 @@ function qrDataUri(text, opts){
     const reserveEpuisee = Date.now() >= end;
     status.innerHTML = reserveEpuisee
       ? 'Réserves épuisées… Tous les équipages remontent à la surface.'
-      : 'La mission est lancée…<br><span class="oxygen-status-question">Quel équipage trouvera le <i>Nautilus</i> avant l’épuisement des réserves d’air&nbsp;?</span>';
+      : '<h4 class="oxygen-status-title">La mission est lancée…</h4><span class="oxygen-status-question">Quel équipage trouvera le <i>Nautilus</i> avant l’épuisement des réserves d’air&nbsp;?</span>';
     if(reserveEpuisee) showOxygenEndAlarm(end);
     bar.style.width = percentPrecis.toFixed(3) + '%';
     /* La largeur révèle les 50 niveaux de l'échelle, du rouge foncé côté

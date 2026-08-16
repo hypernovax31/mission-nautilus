@@ -1766,9 +1766,18 @@
   font-size:clamp(12px,1.7vw,15px);
   line-height:1.35;
 }
-/* Phrase « La mission est lancée… » : l'annonce reste discrète, la
-   question passe dessous, plus claire, avec le nom du Nautilus en jaune
-   d'accent pour l'oeil. */
+/* Phrase « La mission est lancée… » : le titre est mis en avant en
+   rouge (H4), la question passe dessous, plus claire, avec le nom du
+   Nautilus en jaune d'accent pour l'oeil. */
+.oxygen-status-title{
+  margin:0 0 6px;
+  font-size:clamp(16px,2.4vw,21px);
+  font-weight:1000;
+  color:#ff4b3e;
+  letter-spacing:.03em;
+  line-height:1.2;
+  text-shadow:0 0 14px rgba(255,75,62,.4);
+}
 .oxygen-status-question{
   display:block;
   margin-top:4px;
