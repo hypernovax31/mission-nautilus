@@ -15,12 +15,13 @@
    paliers de la mission globale, du Palier 2 au palier final.
 
    La mise en page est CELLE DU PALIER 1 : mêmes classes
-   .brief / .brief-signature / .brief-list / .brief-intro /
-   .brief-cta (styles dans css/palier1.css, chargée par TOUTES les
-   pages de palier), mêmes formules « ⚓ BRIEFING DU CAPITAINE » et
-   « ⚓ PRENDRE LES COMMANDES » — bloc repris de renderIdleScreen()
-   de palier1.html. Ce module ne fait que rendre ce bloc à partir
-   des textes fournis par la page : AUCUNE dépendance, AUCUN réseau.
+   .brief / .brief-list / .brief-intro / .brief-cta (styles dans
+   css/palier1.css, chargée par TOUTES les pages de palier). Le titre
+   « ⚓ BRIEFING DU CAPITAINE » est porté par la carte (titre <h2>),
+   et le bouton « ⚓ PRENDRE LES COMMANDES » reste le CTA du bloc —
+   bloc repris de renderIdleScreen() de palier1.html. Ce module ne
+   fait que rendre ce bloc à partir des textes fournis par la page :
+   AUCUNE dépendance, AUCUN réseau.
 
    BLOC HTML ATTENDU sur chaque page de palier ≥ 2, entre le sas QR
    (#gateCard) et l'épreuve (#gateUnlocked) :
@@ -56,9 +57,10 @@
 (function () {
   'use strict';
 
-  /* Formules EXACTES du Palier 1 — reprise à l'identique pour que le
-     briefing se lise pareil sur tous les paliers. */
-  var SIGNATURE = '⚓ BRIEFING DU CAPITAINE';
+  /* Le titre « ⚓ BRIEFING DU CAPITAINE » est désormais porté par la
+     carte elle-même (titre <h2> du bloc), et NON plus répété à
+     l'intérieur : ce module ne rend que l'intro, les consignes et le
+     bouton, sans signature redondante. */
   var CTA_DEFAUT = '⚓ PRENDRE LES COMMANDES';
 
   function afficher(hote, cfg) {
@@ -76,7 +78,6 @@
     var ctaId = cfg.ctaId || 'briefCtaBtn';
     hote.innerHTML = ''
       + '<div class="brief">'
-      +   '<div class="brief-signature">' + SIGNATURE + '</div>'
       +   '<p class="brief-intro">' + (cfg.intro || '') + '</p>'
       +   '<ul class="brief-list">' + lis + '</ul>'
       +   '<button class="brief-cta" id="' + ctaId + '" type="button">'
