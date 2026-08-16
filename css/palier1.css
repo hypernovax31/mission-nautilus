@@ -425,11 +425,17 @@
        nom) suivie de son nom. Les activités de chacun se lisent ainsi
        indépendamment de celles des autres. */
     .ml-groupe{list-style:none;margin:0;padding:0}
-    .ml-groupe-tete{display:flex;align-items:center;gap:8px;margin:10px 0 6px}
+    .ml-groupe-tete{display:flex;align-items:center;margin:12px 0 6px}
     .ml-groupe:first-child .ml-groupe-tete{margin-top:0}
-    .ml-groupe-avatar{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:900;color:#0b1a2a;flex:0 0 auto}
-    .ml-groupe-nom{font-weight:900;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:#eaf8ff}
+    /* Prénom seul : un simple libellé, sans pastille ni code couleur. */
+    .ml-groupe-nom{font-weight:800;font-size:13.5px;color:#eaf8ff}
     .morse-log ul.ml-groupe-liste{max-height:none;overflow:visible}
+    /* JOURNAL DE BORD repliable : le titre fait office de bouton. Le
+       chevron à droite montre l'état ; carte repliée = contenu masqué. */
+    #logCard h2{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    #logCard h2 .log-chevron{flex:0 0 auto;color:#8ee7ff;font-size:16px;line-height:1;transition:transform .18s ease}
+    #logCard.log-replie .body{display:none}
+    #logCard.log-replie h2{border-bottom:0}
 
     /* === Retour en surface : une information claire, sans écran punitif ===
        TOUTE la largeur du bloc (plus de colonne centrale étroite) : la

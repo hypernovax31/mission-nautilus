@@ -88,20 +88,15 @@
     danger:  { dot: '#ff7b72', border: 'rgba(255,75,62,.55)' }
   };
 
-  /* Palette de couleurs STABLE par matelot : chaque nom tombe toujours
-     sur la même teinte (hachage djb2), pour qu'un matelot soit repéré
-     d'un coup d'œil d'une session à l'autre. Teintes vives, lisibles sur
-     le fond sombre, distinctes les unes des autres. */
-  var MATELOT_COLORS = [
-    '#ff8a80', '#8ee7ff', '#5be09b', '#ffd36c', '#ff9ff3',
-    '#c39bff', '#ffb26b', '#7be7c2', '#9fb8ff', '#f8e78a'
-  ];
-  function couleurMatelot(nom) {
-    var s = String(nom || '').trim().toUpperCase();
-    if (!s) return '#8ee7ff';
-    var h = 0;
-    for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
-    return MATELOT_COLORS[Math.abs(h) % MATELOT_COLORS.length];
+  /* Prénom d'un matelot : le premier mot du nom enregistré, mis en forme
+     « Prénom » (majuscule initiale, reste en minuscules). Le nom complet
+     en MAJUSCULES (« JULES VERNE ») donne ainsi « Jules », plus léger à
+     lire que le nom entier. Sans auteur → « Équipage ». */
+  function prenomMatelot(nom) {
+    var s = String(nom || '').trim();
+    if (!s) return 'Équipage';
+    var premier = s.split(/\s+/)[0];
+    return premier.charAt(0).toUpperCase() + premier.slice(1).toLowerCase();
   }
 
   function lireParam(nom) {
@@ -206,6 +201,39 @@
     _btn.addEventListener('click', function () { _suiteOuverte = !_suiteOuverte; render(); });
     parent.insertBefore(_suiteEl, _listEl.nextSibling);
     parent.insertBefore(_btn, _suiteEl.nextSibling);
+
+    /* REPLI / DÉPLI DE LA CARTE : le titre « 📜 JOURNAL DE BORD » devient
+       un bouton. Un chevron à droite indique l'état (▾ ouvert / ▸ fermé),
+       et le clic (ou Entrée / Espace au clavier) plie/déplie le contenu.
+       L'état replié est indépendant de l'affichage de la carte (le jeu
+       continue de la montrer/masquer selon la vue). */
+    var carte = _listEl.closest ? _listEl.closest('.card') : null;
+    if (carte) {
+      var tete = carte.querySelector('h2');
+      var corps = carte.querySelector('.body');
+      if (tete && corps) {
+        tete.style.cursor = 'pointer';
+        tete.setAttribute('role', 'button');
+        tete.setAttribute('tabindex', '0');
+        tete.setAttribute('aria-expanded', 'true');
+        tete.title = 'Ouvrir ou fermer le journal de bord';
+        var chevron = document.createElement('span');
+        chevron.className = 'log-chevron';
+        chevron.setAttribute('aria-hidden', 'true');
+        chevron.textContent = '▾';
+        tete.appendChild(chevron);
+        var bascule = function () {
+          var replie = carte.classList.toggle('log-replie');
+          chevron.textContent = replie ? '▸' : '▾';
+          tete.setAttribute('aria-expanded', replie ? 'false' : 'true');
+        };
+        tete.addEventListener('click', bascule);
+        tete.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); bascule(); }
+        });
+      }
+    }
+
     return true;
   }
 
@@ -237,8 +265,8 @@
 
   /* Regroupe une liste d'entrées (déjà triées du plus récent au plus
      ancien) PAR MATELOT, en conservant l'ordre de première apparition.
-     Chaque groupe est un <li> ouvert par une pastille à l'initiale
-     (couleur stable par nom) + le nom du matelot, puis ses activités.
+     Chaque groupe est un <li> ouvert par le SEUL PRÉNOM du matelot (pas
+     de pastille ni de code couleur), puis ses activités.
      Les entrées sans auteur vont sous « Équipage ». */
   function groupeHtml(entries) {
     var groupes = [], map = {};
@@ -252,14 +280,8 @@
       map[cle].entrees.push(e);
     }
     return groupes.map(function (g) {
-      var nom = g.auteur || 'Équipage';
-      var couleur = couleurMatelot(nom);
-      var initiale = nom.charAt(0).toUpperCase();
       return '<li class="ml-groupe">'
-        + '<div class="ml-groupe-tete">'
-        +   '<span class="ml-groupe-avatar" style="background:' + couleur + '">' + journalEsc(initiale) + '</span>'
-        +   '<span class="ml-groupe-nom">' + journalEsc(nom) + '</span>'
-        + '</div>'
+        + '<div class="ml-groupe-tete"><span class="ml-groupe-nom">' + journalEsc(prenomMatelot(g.auteur)) + '</span></div>'
         + '<ul class="ml-groupe-liste">' + g.entrees.map(entryHtml).join('') + '</ul>'
         + '</li>';
     }).join('');
