@@ -2057,9 +2057,50 @@ body, body *{
 }
 .final-cta{
   background:
-    linear-gradient(180deg, rgba(2,9,15,.62), rgba(2,9,15,.30) 45%, rgba(2,9,15,.68)),
-    url('../assets/abysses-metal.jpg') center / cover no-repeat;
-  background-color:#04101c;
+    /* rouille et patine marine, discrètes */
+    radial-gradient(130% 90% at 8% 14%, rgba(126,74,40,.20), transparent 46%),
+    radial-gradient(120% 85% at 92% 86%, rgba(56,84,68,.20), transparent 48%),
+    radial-gradient(90% 70% at 88% 10%, rgba(88,68,46,.13), transparent 55%),
+    /* métal brossé sombre */
+    repeating-linear-gradient(90deg, rgba(255,255,255,.016) 0 1px, rgba(0,0,0,.014) 1px 3px),
+    linear-gradient(165deg, #1c2731 0%, #0d141c 55%, #161f28 100%);
+  background-color:#0a1119;
+  border:2px solid #3a4854;
+  border-radius:14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 -2px 0 rgba(0,0,0,.55),
+    inset 0 0 90px rgba(0,0,0,.45),
+    0 28px 70px rgba(0,0,0,.40);
+}
+/* Rivets de sous-marin rivetés sur le pourtour + voile de lisibilité. */
+.final-cta::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background-image:
+    radial-gradient(circle 6px at 50% 40%, #eef4f7 0 1px, #8fa0ab 1px 3px, #34414c 3px 5px, #0c1319 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #eef4f7 0 1px, #8fa0ab 1px 3px, #34414c 3px 5px, #0c1319 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #eef4f7 0 1px, #8fa0ab 1px 3px, #34414c 3px 5px, #0c1319 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #eef4f7 0 1px, #8fa0ab 1px 3px, #34414c 3px 5px, #0c1319 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #eef4f7 0 1px, #8fa0ab 1px 3px, #34414c 3px 5px, #0c1319 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #eef4f7 0 1px, #8fa0ab 1px 3px, #34414c 3px 5px, #0c1319 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #eef4f7 0 1px, #8fa0ab 1px 3px, #34414c 3px 5px, #0c1319 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #eef4f7 0 1px, #8fa0ab 1px 3px, #34414c 3px 5px, #0c1319 5px 6px, transparent 6px);
+  background-size:12px 12px;
+  background-repeat:no-repeat;
+  background-position:
+    20px 20px,
+    calc(100% - 20px) 20px,
+    20px calc(100% - 20px),
+    calc(100% - 20px) calc(100% - 20px),
+    50% 20px,
+    50% calc(100% - 20px),
+    20px 50%,
+    calc(100% - 20px) 50%;
+  box-shadow: inset 0 0 70px rgba(0,0,0,.50);
 }
 /* Reflet métallique brillant : bande de lumière qui balaie le panneau
    « LES ABYSSES NE PARDONNENT PAS » au mouvement du scroll. La position
