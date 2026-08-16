@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=35">
+  <link rel="stylesheet" href="css/palier1.css?v=36">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -92,7 +92,12 @@
     <h2>📜 JOURNAL DE BORD</h2>
     <div class="body">
       <div class="morse-log">
-        <h3 class="journal-titre">ACTES DE L’ÉQUIPAGE — EN DIRECT</h3>
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Actes de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
         <ul id="morse-log-list"></ul>
       </div>
     </div>
@@ -3055,6 +3060,6 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=4" defer></script>
-<script src="admin-button.js?v=14" type="module"></script>
+<script src="admin-button.js?v=15" type="module"></script>
 </body>
 </html>

@@ -426,18 +426,39 @@
       border-radius:0;
       box-shadow:none;
     }
-    /* Sous-titre : même allure que les titres de bloc (majuscules, blanc,
-       filet fin en dessous). */
+    /* Sous-titre en SEPARATEUR ORNEMENTAL : un libellé centré entre deux
+       filets dégradés, suivi d'un badge « EN DIRECT » à voyant pulsant —
+       comme une console de sonar qui annonce un flux en cours. */
     .journal-titre{
+      display:flex;align-items:center;justify-content:center;
+      flex-wrap:wrap;gap:10px;
       margin:0 0 12px;
-      padding:0 0 9px;
-      color:#fff;
-      font-size:15px;
-      font-weight:900;
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      border-bottom:1px solid rgba(142,231,255,.18);
     }
+    .journal-titre-rule{
+      flex:1 1 32px;min-width:24px;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(142,231,255,.35));
+    }
+    .journal-titre-rule:last-child{
+      background:linear-gradient(90deg,rgba(142,231,255,.35),transparent);
+    }
+    .journal-titre-label{
+      color:#fff;font-weight:900;font-size:13px;
+      letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;
+    }
+    .journal-live-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:3px 10px;border-radius:999px;
+      border:1px solid rgba(245,176,39,.45);
+      background:rgba(245,176,39,.08);
+      color:#ffd36c;font-weight:900;font-size:10.5px;
+      letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;
+    }
+    .journal-live-dot{
+      width:7px;height:7px;border-radius:50%;
+      background:#5be09b;box-shadow:0 0 8px #5be09b;
+      animation:journalLivePulse 1.3s ease-in-out infinite;
+    }
+    @keyframes journalLivePulse{50%{opacity:.3}}
 
     /* Ruban des actes : une ligne par acte */
     .morse-log ul{
