@@ -191,6 +191,12 @@
   /* ---------- construction ---------- */
   var overlay = null;
 
+  /* La touche ÉCHAP fait disparaître la promo (« Évite les tumultes de
+     l'océan »), quel que soit son état (tempête ou eaux sereines). */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay) fermer();
+  });
+
   function injecterStyles() {
     if (document.getElementById('ip-styles')) return;
     var st = document.createElement('style');
