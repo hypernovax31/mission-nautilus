@@ -117,9 +117,9 @@
     .direct-resume-lead{max-width:610px;margin:0 0 16px;color:#c3e0ec;font-size:14px;font-weight:700;line-height:1.5;}
     .direct-resume-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;}
     .direct-resume-form label{display:block;margin-bottom:6px;color:#9bc4d4;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}
-    .direct-resume-form input{width:100%;height:48px;padding:10px 12px;border:1px solid rgba(142,231,255,.35);border-radius:12px;background:rgba(0,0,0,.3);color:#fff;font:800 16px Consolas,"Courier New",monospace;letter-spacing:.08em;text-transform:uppercase;}
+    .direct-resume-form input{width:100%;height:auto;min-height:48px;padding:10px 12px;border:1px solid rgba(142,231,255,.35);border-radius:12px;background:rgba(0,0,0,.3);color:#fff;font:800 16px Consolas,"Courier New",monospace;letter-spacing:.08em;text-transform:uppercase;}
     .direct-resume-form input:focus{outline:none;border-color:var(--fnac);box-shadow:0 0 0 3px rgba(245,176,39,.2);}
-    .direct-resume-form button{height:48px;margin:0;padding:0 17px;border:0;border-radius:12px;background:var(--fnac);color:#111;font-weight:1000;cursor:pointer;white-space:normal;line-height:1.2;}
+    .direct-resume-form button{height:auto;min-height:48px;margin:0;padding:12px 17px;border:0;border-radius:12px;background:var(--fnac);color:#111;font-weight:1000;cursor:pointer;white-space:normal;line-height:1.2;}
     .direct-resume-message:not(:empty){margin-top:12px;padding:10px 12px;border-radius:11px;font-size:13px;font-weight:800;line-height:1.45;}
     .direct-resume-message.error{border:1px solid rgba(255,123,114,.42);color:#ffd0cd;background:rgba(255,75,62,.11);}
     .direct-resume-message.loading{border:1px solid rgba(142,231,255,.3);color:#c3eaf7;background:rgba(142,231,255,.08);}
@@ -740,3 +740,10 @@
 /* Bouton sonar toujours visible au-dessus des animations du mini-jeu. */
 .nx-sonar-bar{z-index:11000 !important}
 .nx-sonar-toggle{position:relative;z-index:11001 !important}
+
+/* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur ===== */
+html{font-size:100%;}
+h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-word;word-break:break-word;}
+img,video,svg,canvas,iframe{max-width:100%;height:auto;}
+button,input,select,textarea{max-width:100%;box-sizing:border-box;}
+body{overflow-wrap:break-word;}

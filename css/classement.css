@@ -109,3 +109,10 @@ html,body{width:100%;min-width:100%;min-height:100%;margin:0}
   .podium-card.rank-2{min-height:225px}
   .podium-card.rank-1{min-height:270px}
 }
+
+/* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur ===== */
+html{font-size:100%;}
+h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-word;word-break:break-word;}
+img,video,svg,canvas,iframe{max-width:100%;height:auto;}
+button,input,select,textarea{max-width:100%;box-sizing:border-box;}
+body{overflow-wrap:break-word;}

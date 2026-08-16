@@ -2,9 +2,9 @@
        ces variables). Ne fait aucun mal quand elles existent deja. */
     :root{
       --fnac:#f5b027;
-      --fs-base:clamp(15px,2.4vw,17px);
-      --fs-small:max(12px, calc(var(--fs-base) * .80));
-      --fs-tiny:max(12px, calc(var(--fs-base) * .70));
+      --fs-base:clamp(0.94rem,2.4vw,1.06rem);
+      --fs-small:max(0.75rem, calc(var(--fs-base) * .80));
+      --fs-tiny:max(0.75rem, calc(var(--fs-base) * .70));
     }
     /* ===== Classes generiques du panneau (absentes des pages hors index) ===== */
     #adminPanel{font-family:Arial,Helvetica,sans-serif;color:#13202b}
@@ -266,3 +266,9 @@
       .member-edit-row .me-team{grid-column:1 / -1}
       .member-edit-row .me-save,.member-edit-row .me-del{justify-self:end}
     }
+/* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur ===== */
+html{font-size:100%;}
+h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-word;word-break:break-word;}
+img,video,svg,canvas,iframe{max-width:100%;height:auto;}
+button,input,select,textarea{max-width:100%;box-sizing:border-box;}
+body{overflow-wrap:break-word;}
