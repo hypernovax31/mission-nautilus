@@ -98,6 +98,17 @@
     </div>
   </section>
 
+  <!-- BRIEFING DU CAPITAINE — vue OBLIGATOIRE entre l'identification et
+       l'épreuve (même architecture que les paliers ≥ 2) : le titre est
+       porté par la carte, le contenu (intro + consignes + CTA) est rendu
+       par renderIdleScreen() dans #briefHost. -->
+  <section class="card" id="briefCard" style="display:none;">
+    <h2>⚓ BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+
   <!-- Zone de jeu -->
   <section class="card" id="gameCard" style="display:none;">
     <h2 class="card-h2-split">
@@ -1657,6 +1668,12 @@ window.Nautilus = {
     return s.startedBy === me.clientId;
   }
 
+  /* Affiche / masque une carte (briefCard, teamCard, logCard, gameCard). */
+  function montrerCarte(id, visible) {
+    const el = $(id);
+    if (el) el.style.display = visible ? 'block' : 'none';
+  }
+
   function renderGameArea() {
     const body = $('gameBody');
     if (!body) return;
@@ -1676,8 +1693,14 @@ window.Nautilus = {
     if (t) {
       const enJeu = !!(s && s.state === 'playing');
       const surVictoire = !!(s && s.state === 'won');
-      if ($('teamCard')) $('teamCard').style.display = (enJeu || surVictoire) ? 'none' : 'block';
-      if ($('logCard')) $('logCard').style.display = (enJeu || surVictoire) ? 'none' : 'block';
+      /* PAR DÉFAUT : la vue épreuve (carte du mini-jeu) est affichée et
+         le briefing est rangé. Les deux branches « briefing » (pas de
+         session, ou échec d'un autre matelot) repassent sur la vue
+         briefing un peu plus bas. */
+      montrerCarte('briefCard', false);
+      montrerCarte('gameCard', true);
+      montrerCarte('teamCard', !(enJeu || surVictoire));
+      montrerCarte('logCard', !(enJeu || surVictoire));
       $('gameCard').classList.toggle('epreuve-focus', enJeu || surVictoire);
     }
 
@@ -1752,7 +1775,9 @@ window.Nautilus = {
         location.replace(nextStepPageUrl(t.currentStep));
         return;
       }
-      body.innerHTML = renderIdleScreen(t, me, null);
+      montrerCarte('briefCard', true);
+      montrerCarte('gameCard', false);
+      $('briefHost').innerHTML = renderIdleScreen(t, me, null);
       bindIdleEvents();
       return;
     }
@@ -1772,7 +1797,9 @@ window.Nautilus = {
          devant : la barre est libre, ils peuvent reprendre le palier. */
       const cestMoi = estAuteurSession(s, me);
       if (cestMoi) { body.innerHTML = renderLostScreen(s, t); return; }
-      body.innerHTML = renderIdleScreen(t, me, s);
+      montrerCarte('briefCard', true);
+      montrerCarte('gameCard', false);
+      $('briefHost').innerHTML = renderIdleScreen(t, me, s);
       bindIdleEvents();
       return;
     }
@@ -1824,8 +1851,6 @@ window.Nautilus = {
     return `
       ${banniere}
       <div class="brief">
-        <div class="brief-signature">⚓ BRIEFING DU CAPITAINE</div>
-
         <p class="brief-intro">
           Un signal s’échappe des profondeurs : le <b>Nautilus</b> se manifeste enfin. Tends l’oreille, matelot : à toi de le comprendre.
         </p>
