@@ -340,7 +340,7 @@
     Object.entries(STEPS).forEach(([id, step], index) => {
       const href = pageParPalier[id] || null;
       const note = id === 'start' ? 'épreuve morse — compte de test'
-        : id === 'livres' ? 'mots croisés « Code Magasin »'
+        : id === 'livres' ? 'mots croisés'
         : 'en construction';
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
         href ? (id === 'livres'

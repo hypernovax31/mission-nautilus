@@ -192,7 +192,7 @@
 <script src="victoire-palier.js?v=10"></script>
 <script src="records-palier.js?v=2"></script>
 <script>
-/* ================= ÉPREUVE DU PALIER 2 — « CODE MAGASIN » =================
+/* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS » =================
    Grille EXPERT « jargon vendeur » : 10 mots couvrant TOUS les secteurs du
    magasin — rayon (FACING, VINYLE), stock (RÉASSORT, PICKING), SAV
    (DIAGNOSTIC), bureau (INVENTAIRE), caisse (ÉCOTAXE), sécurité
@@ -437,7 +437,7 @@
            chaque palier sans bride (erreurs, demandes d'indice…) et
            rien n'est enregistré. La grille reste jouable. */
         statut('🧪 <b>Mode concepteur : 3 erreurs sur cette tentative.</b> Aucun blocage en test — la grille reste jouable, rien n’est enregistré.', 'warning');
-        journal('🧪 Mode concepteur : 3 erreurs aux Mots Croisés « Code Magasin » — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
+        journal('🧪 Mode concepteur : 3 erreurs aux Mots Croisés — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
         return;
       }
       /* ÉJECTION RÉELLE (anonyme ou matelot identifié) : Perdu.mp3
@@ -536,7 +536,7 @@
     host.classList.remove('mc', 'mc-termine');
     window.NautilusVictoire.afficher(host, {
       palier: 2,
-      mission: 'Code Magasin',
+      mission: 'Mots Croisés',
       equipe: equipe,
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [
@@ -573,7 +573,7 @@
        la carte de l'épreuve reste, en scène unique (epreuve-focus),
        exactement comme pendant la partie. */
     afficherJournalDeBord(false);
-    statut('🏆 <b>Palier 2 franchi !</b> La grille « Code Magasin » est entièrement résolue.', 'success');
+    statut('🏆 <b>Palier 2 franchi !</b> La grille « Mots Croisés » est entièrement résolue.', 'success');
     acte('réussit l’épreuve', 'success');
     propagerVictoire();
     afficherEcranVictoire();
@@ -630,15 +630,15 @@
      arme réellement la partie (lancer() : blocage vérifié en réseau,
      vue épreuve, grille). */
   window.NautilusBriefing.afficher($('briefHost'), {
-    /* Thème du « Code Magasin », raconté sans le livrer : les mots
+    /* Thème des « Mots Croisés », raconté sans le livrer : les mots
        exacts, les secteurs du jargon, la grille — rien ne fuite.
        Formulation arrêtée par l'organisation : « illustre », « sans
        jamais utiliser le mot », déchiffrage collectif (« À vous »). */
     intro: "Chaque bulle remontée des profondeurs décrit une <b>scène vécue du métier</b>, sans jamais prononcer le mot qu'elle désigne. À vous de le deviner et de l'écrire sur la grille, lettre par lettre.",
     consignes: [
-      { ico: '✍️', html: "<b>10 mots croisés</b> — le jargon expert de chaque secteur du magasin." },
-      { ico: '⏱️', html: "<b>Aucun chronomètre</b> : la plongée se fait au calme." },
-      { ico: '❌', warn: true, html: "<b>3 erreurs</b> : le matelot remonte en surface." }
+      { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b>" },
+      { ico: '⏱️', html: "<b>Aucun chronomètre</b> : la plongée se fait en mer calme." },
+      { ico: '❌', warn: true, html: "<b>3 erreurs</b> : le matelot remonte en surface — un autre prend le relais immédiatement." }
       /* La 4e consigne (releve par Code Matelot) a ete RETIREE sur
          demande de l'organisation : trois lignes suffisent, la releve
          se decouvre en jouant. */
