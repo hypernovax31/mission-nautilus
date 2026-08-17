@@ -195,12 +195,12 @@
 /* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS » =================
    Grille EXPERT « jargon vendeur » : 10 mots couvrant les secteurs du
    magasin — rayon (DEMATERIALISATION, STEELBOOK, LINEAIRE, FACING),
-   stock (REASSORT, ROTATION), SAV (DIAGNOSTIC), bureau (INVENTAIRE)
+   stock (REASSORT, PICKING), SAV (DIAGNOSTIC), bureau (INVENTAIRE)
    et direction (TRANSFORMATION, PLANOGRAMME).
    Indices OBLIQUES : chaque définition raconte une scène vécue du métier
    sans jamais nommer le mot (la solution n'apparaît jamais dans l'indice,
    le générateur le vérifie) — la difficulté vit dans le jargon, pas dans
-   un décodage. Grille 17×17, 87 cases, 14 croisements — construite et
+   un décodage. Grille 17×16, 87 cases, 13 croisements — construite et
    vérifiée lettre par lettre par tools/generer_mots_croises.py
    (rejouable à l'identique ; cadre porté à 17×17 pour accueillir
    DEMATERIALISATION, 17 lettres).
@@ -240,16 +240,16 @@
   var nbErreurs = 0;
 
   var MOTS = [
-    { num: 1, dir: 'v', row: 0, col: 2, reponse: 'REASSORT', secteur: 'stock', definition: "la mission matinale du gilet noir : le combat contre le vide pour que chaque broche et chaque tablette soient à nouveau pleines avant l'ouverture." },
-    { num: 2, dir: 'v', row: 0, col: 8, reponse: 'DEMATERIALISATION', secteur: 'rayon', definition: "le basculement vers le spectre : cette mutation profonde qui vide les bacs de plastiques circulaires pour remplir des serveurs distants." },
-    { num: 3, dir: 'h', row: 2, col: 0, reponse: 'PLANOGRAMME', secteur: 'direction', definition: "l'évangile d'Ivry : le schéma d'implantation rigide qui définit la topographie du magasin, forçant chaque produit à trouver sa place au millimètre près." },
-    { num: 4, dir: 'v', row: 5, col: 10, reponse: 'FACING', secteur: 'rayon', definition: "le geste esthétique : l'alignement chirurgical des produits sur le bord de l'étagère pour supprimer tout effet de désordre." },
-    { num: 5, dir: 'v', row: 5, col: 14, reponse: 'INVENTAIRE', secteur: 'bureau', definition: "la grande purge nocturne : l'instant de vérité comptable où l'on confronte le virtuel du logiciel à la réalité physique du dépôt." },
-    { num: 6, dir: 'h', row: 6, col: 1, reponse: 'TRANSFORMATION', secteur: 'direction', definition: "le juge de paix du flux : le ratio entre ceux qui franchissent les cellules photoélectriques de l'entrée et ceux qui valident leur panier en sortie." },
-    { num: 7, dir: 'v', row: 6, col: 5, reponse: 'STEELBOOK', secteur: 'rayon', definition: "le Graal du rayonnage Vidéo : l'édition blindée dont le poids en main justifie le prix fort pour les collectionneurs de Labège." },
-    { num: 8, dir: 'v', row: 9, col: 12, reponse: 'ROTATION', secteur: 'stock', definition: "le pouls du stock : cet indicateur financier qui mesure la vitesse à laquelle les produits entrent en réserve et ressortent par la caisse, évitant l'immobilisation du capital." },
-    { num: 9, dir: 'h', row: 10, col: 7, reponse: 'DIAGNOSTIC', secteur: 'sav', definition: "le protocole de vérité : l'examen clinique mené en zone technique pour décider si l'appareil repart en atelier ou s'il a simplement subi une erreur humaine." },
-    { num: 10, dir: 'h', row: 14, col: 7, reponse: 'LINEAIRE', secteur: 'rayon', definition: "la scène d'exposition : l'unité de mesure de la visibilité dont chaque mètre est loué implicitement par la marge dégagée." }
+    { num: 1, dir: 'v', row: 0, col: 9, reponse: 'DEMATERIALISATION', secteur: 'rayon', definition: "le basculement vers le spectre : cette mutation profonde qui vide les bacs de plastiques circulaires pour remplir des serveurs distants." },
+    { num: 2, dir: 'h', row: 2, col: 0, reponse: 'PLANOGRAMME', secteur: 'direction', definition: "l'évangile d'Ivry : le schéma d'implantation rigide qui définit la topographie du magasin, forçant chaque produit à trouver sa place au millimètre près." },
+    { num: 2, dir: 'v', row: 2, col: 0, reponse: 'PICKING', secteur: 'stock', definition: "le ballet du e-réservoir : la tournée, liste en main, qui relie les allées de la réserve pour rassembler une à une les références d'un client qu'on ne verra jamais en caisse." },
+    { num: 3, dir: 'v', row: 2, col: 6, reponse: 'REASSORT', secteur: 'stock', definition: "la mission matinale du gilet noir : le combat contre le vide pour que chaque broche et chaque tablette soient à nouveau pleines avant l'ouverture." },
+    { num: 4, dir: 'v', row: 4, col: 11, reponse: 'DIAGNOSTIC', secteur: 'sav', definition: "le protocole de vérité : l'examen clinique mené en zone technique pour décider si l'appareil repart en atelier ou s'il a simplement subi une erreur humaine." },
+    { num: 5, dir: 'v', row: 5, col: 15, reponse: 'INVENTAIRE', secteur: 'bureau', definition: "la grande purge nocturne : l'instant de vérité comptable où l'on confronte le virtuel du logiciel à la réalité physique du dépôt." },
+    { num: 6, dir: 'h', row: 6, col: 2, reponse: 'TRANSFORMATION', secteur: 'direction', definition: "le juge de paix du flux : le ratio entre ceux qui franchissent les cellules photoélectriques de l'entrée et ceux qui valident leur panier en sortie." },
+    { num: 7, dir: 'h', row: 9, col: 5, reponse: 'STEELBOOK', secteur: 'rayon', definition: "le Graal du rayonnage Vidéo : l'édition blindée dont le poids en main justifie le prix fort pour les collectionneurs de Labège." },
+    { num: 8, dir: 'h', row: 12, col: 8, reponse: 'FACING', secteur: 'rayon', definition: "le geste esthétique : l'alignement chirurgical des produits sur le bord de l'étagère pour supprimer tout effet de désordre." },
+    { num: 9, dir: 'h', row: 16, col: 7, reponse: 'LINEAIRE', secteur: 'rayon', definition: "la scène d'exposition : l'unité de mesure de la visibilité dont chaque mètre est loué implicitement par la marge dégagée." }
   ];
 
   var $ = function (id) { return document.getElementById(id); };
