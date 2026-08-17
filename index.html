@@ -538,19 +538,17 @@
   }
 
   /* Défilement en douceur jusqu'à la plaque métal « LES ABYSSES NE
-     PARDONNENT PAS », en pied de page, avec un rattrapage au chargement
-     complet : les cartes d'équipage se remplissent de façon asynchrone et
-     font grandir la page après le premier défilement. */
+     PARDONNENT PAS », en pied de page.
+
+     CORRECTION « GLISSER EN 2 TEMPS » : l'ancienne version défilait une
+     première fois, puis une seconde 250 ms plus tard pour « rattraper »
+     la hauteur des cartes d'équipage encore en train de se remplir. Sur
+     téléphone, cela se voyait comme un glissement en deux temps (descente,
+     temps d'arrêt, nouvelle descente). Les appelants attendent désormais
+     la fin de loadTeams() AVANT d'appeler : la hauteur de la page est
+     alors définitive, un seul défilement suffit. */
   function glisserAuPiedDePage(){
-    const abysses = document.getElementById('bottomAlertMessage');
-    if(!abysses) return;
-    const versBas = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-    versBas();
-    if(document.readyState === 'complete'){
-      setTimeout(versBas, 250);   // rattrapage après la peinture des cartes
-    }else{
-      window.addEventListener('load', versBas, { once:true });
-    }
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
   }
 
   function onlineCount(team){
@@ -6995,8 +6993,15 @@ function qrDataUri(text, opts){
            métal « LES ABYSSES NE PARDONNENT PAS », en pied de page
            (au lieu de viser la chambre de pilotage). La reprise reste
            faite en arrière-plan : le matelot est identifié, et il découvre
-           la page d'accueil jusqu'au panneau de bas de page. */
-        const settle = 60;
+           la page d'accueil jusqu'au panneau de bas de page.
+
+           CORRECTION « GLISSER EN 2 TEMPS » : on attend la fin de
+           loadTeams() (les cartes d'équipage se remplissent de façon
+           asynchrone et changent la hauteur de la page) PUIS on défile
+           UNE SEULE fois. Auparavant, le défilement partait trop tôt et
+           le « rattrapage » interne produisait un double mouvement. */
+        try{ await loadTeams(); }catch(e){ /* le radar a deja son repli */ }
+        const settle = 120;
         setTimeout(() => {
           if(currentTeam){
             glisserAuPiedDePage();
