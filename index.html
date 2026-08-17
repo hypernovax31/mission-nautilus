@@ -548,7 +548,21 @@
      la fin de loadTeams() AVANT d'appeler : la hauteur de la page est
      alors définitive, un seul défilement suffit. */
   function glisserAuPiedDePage(){
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+    /* Vise la PLAQUE entière (« LES ABYSSES NE PARDONNENT PAS ») au lieu
+       du bas absolu de la page : sur mobile, défiler jusqu'au scrollHeight
+       faisait remonter le haut de la plaque au-dessus de l'écran. On cale
+       donc le haut de la plaque juste sous la barre fixe du haut, pour
+       qu'elle soit visible en entier (elle tient largement dans la hauteur
+       d'un écran de téléphone). */
+    const plaque = document.getElementById('bottomAlertMessage');
+    const topbar = document.querySelector('.top-bar');
+    const gap = topbar ? Math.ceil(topbar.getBoundingClientRect().bottom + 3) : 3;
+    if(!plaque){
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+      return;
+    }
+    const y = window.pageYOffset + plaque.getBoundingClientRect().top - gap;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
   }
 
   function onlineCount(team){
