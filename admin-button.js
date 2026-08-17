@@ -1049,20 +1049,20 @@
   }
   async function adminResetOxygenToNow(){
     if(!isAdminUnlocked()) return;
-    const startedAt = new Date().toISOString();
-    /* Le reset conserve la durée initiale actuellement configurée :
-       modifier la date de départ ne doit jamais remettre la mission à 7 jours
-       par défaut. */
-    const durationMs = getMissionDurationMs();
+    /* Rétablit la durée d'origine (7 jours) ET remet la mission en attente :
+       le compte à rebours ne démarre PAS ici — il partira au « top départ »,
+       quand le premier matelot lancera le mini-jeu du Palier 1
+       (startMissionOfficial). Aucun bouton du panneau ne doit l'armer. */
+    const durationMs = MISSION_DURATION_MS_DEFAULT;
     await setDoc(doc(db,'game','config'), {
-      missionStartedAt: startedAt,
+      missionStartedAt: null,
       missionDurationMs: durationMs,
       updatedAt: new Date().toISOString()
     }, {merge:true});
-    missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: durationMs };
+    missionConfig = { ...(missionConfig||{}), missionStartedAt: null, missionDurationMs: durationMs };
     updateCountdown();
     renderAdminOxygen();
-    endAdminSession(`✅ O₂ reset à maintenant (${formatInitialDuration(durationMs)}) · session fermée`);
+    endAdminSession(`✅ Réserve O₂ réarmée à ${formatInitialDuration(durationMs)} — en attente du top départ · session fermée`);
   }
   async function adminClearOxygen(){
     if(!isAdminUnlocked()) return;
