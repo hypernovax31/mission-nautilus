@@ -9,7 +9,7 @@
 
    Présence : chaque matelot identifié écrit sa clé
    (onlineMatelots[memberKey]) toutes les 15 s. La liste ne montre que
-   les matelots dont le dernier battement date de moins de 45 s (moi y
+   les matelots dont le dernier battement date de moins de 30 s (moi y
    compris — « (toi) »).
 
    AFFICHAGE (groupé par équipage, immersif) :
@@ -42,9 +42,11 @@
   var CODE_TEST = 'ZZZZ-0000';
   /* Fraîcheur acceptée d'un signe de vie. Le battement de cœur part
      toutes les 15 s (et à chaque retour au premier plan) : on tolère
-     deux battements manqués avant de considérer le matelot en surface. */
-  var PRESENCE_FRAICHE_MS = 15 * 1000;
-  var HEARTBEAT_MS = 5000;
+     deux battements manqués avant de considérer le matelot en surface.
+     ÉCONOMIE DE BATTERIE : 15 s (et non 5 s) réduit les écritures
+     Firestore de ~12/min à ~4/min par matelot actif. */
+  var PRESENCE_FRAICHE_MS = 30 * 1000;
+  var HEARTBEAT_MS = 15000;
 
   var FIREBASE_CONFIG = {
     apiKey: "AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
@@ -175,8 +177,13 @@
         + '</div>';
     });
 
-    list.innerHTML = html
+    var rendu = html
       || '<div class="crew-empty">Aucun matelot en plongée pour le moment.</div>';
+    /* ÉCONOMIE DE BATTERIE : on ne touche au DOM QUE si le contenu a
+       réellement changé. Sinon chaque battement de présence reconstruisait
+       la liste, redémarrait l'animation du voyant et forçait un repaint —
+       source de chauffe inutile sur téléphone. */
+    if (list.innerHTML !== rendu) list.innerHTML = rendu;
 
     /* Voyant rouge clignotant du bloc : allumé tant qu'au moins un matelot
        est en plongée (en cours de jeu), éteint dès que la liste se vide. */
@@ -253,9 +260,11 @@
         /* Re-rendu périodique : la fraîcheur (onlineMatelots) devient
            « périmée » sans nouvelle écriture Firestore — un matelot parti
            cesse d'écrire, onSnapshot ne se déclenche donc pas et il
-           resterait affiché. On filtre donc localement à intervalle fixe. */
+           resterait affiché. On filtre donc localement à intervalle fixe.
+           ÉCONOMIE DE BATTERIE : 30 s (et non 10 s) — ce minuteur ne sert
+           qu'à rattraper les départs, il n'a pas besoin d'être fréquent. */
         if (!_refreshTimer) {
-          _refreshTimer = setInterval(function () { renderCrew(_lastTeams); }, 10000);
+          _refreshTimer = setInterval(function () { renderCrew(_lastTeams); }, 30000);
         }
       }).catch(function () {});
     }).catch(function () {

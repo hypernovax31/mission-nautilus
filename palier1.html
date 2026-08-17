@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=45">
+  <link rel="stylesheet" href="css/palier1.css?v=46">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -1267,7 +1267,7 @@ window.Nautilus = {
          nouvelle écriture Firestore (un matelot parti cesse d'écrire, la
          collection `teams` ne change pas, donc onSnapshot reste muet). */
       if (!_crewRefreshTimer) {
-        _crewRefreshTimer = setInterval(() => renderCrew(), 15000);
+        _crewRefreshTimer = setInterval(() => renderCrew(), 30000);
       }
     } catch (e) { console.warn('Équipage actif (global) indisponible :', e); }
 
@@ -1514,7 +1514,7 @@ window.Nautilus = {
        le prochain battement mettra a jour la bonne cle. */
     N.heartbeat(state.teamCode, state.me && state.me.memberKey);
     if (!state._heartbeatInterval) {
-      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 5000);
+      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 15000);
     }
 
     /* MISE EN EVIDENCE DU NOM pour un retour : quand le matelot vient de
@@ -1608,10 +1608,12 @@ window.Nautilus = {
         .catch(() => { /* l'accusé repassera au prochain chargement */ });
     }
   }
-  /* Fraicheur acceptee d'un signe de vie : battement toutes les 30 s,
-     on tolère deux battements manques (3 x 30 s) avant de considerer
-     le matelot deconnecte. */
-  const PRESENCE_FRAICHE_MS = 15 * 1000;
+  /* Fraicheur acceptee d'un signe de vie : battement toutes les 15 s,
+     on tolère deux battements manques (2 x 15 s = 30 s) avant de
+     considerer le matelot deconnecte. 15 s (et non 5 s) réduit les
+     écritures Firestore de ~12/min à ~4/min par matelot actif
+     (économie de batterie / chauffe). */
+  const PRESENCE_FRAICHE_MS = 30 * 1000;
 
   /* ÉQUIPAGE ACTIF EN PLONGÉE — plongée GLOBALE : tous les matelots en
      plongée, toutes équipes confondues, groupés par équipage (liseré +
@@ -1668,7 +1670,12 @@ window.Nautilus = {
         </div>`;
     });
 
-    list.innerHTML = html || `<div class="crew-empty">Aucun matelot en plongée pour le moment.</div>`;
+    const rendu = html || `<div class="crew-empty">Aucun matelot en plongée pour le moment.</div>`;
+    /* ÉCONOMIE DE BATTERIE : on ne touche au DOM QUE si le contenu a
+       réellement changé. Sinon chaque battement de présence reconstruisait
+       la liste, redémarrait l'animation du voyant et forçait un repaint —
+       source de chauffe inutile sur téléphone. */
+    if (list.innerHTML !== rendu) list.innerHTML = rendu;
 
     /* Voyant rouge clignotant du bloc : allumé tant qu'au moins un matelot
        est en plongée (en cours de jeu), éteint dès que la liste se vide. */
@@ -3164,7 +3171,7 @@ window.Nautilus = {
     if (document.visibilityState === 'visible') {
       N.heartbeat(state.teamCode, state.me && state.me.memberKey);
       if (!state._heartbeatInterval) {
-        state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 5000);
+        state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 15000);
       }
     } else {
       if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
-  <link rel="stylesheet" href="css/palier1.css?v=45">
+  <link rel="stylesheet" href="css/palier1.css?v=46">
   <link rel="stylesheet" href="css/palier2.css?v=21">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
@@ -182,7 +182,7 @@
 <script src="reserve-o2.js?v=4"></script>
 <!-- Équipage actif en plongée : liste des matelots connectés en direct,
      commune à tous les paliers (mêmes styles que le Palier 1). -->
-<script src="equipage-actif.js?v=8"></script>
+<script src="equipage-actif.js?v=9"></script>
 <script>window.EquipageActif.init();</script>
 <!-- Moteur de mots croisés (générique) + données : 10 mots, un par secteur -->
 <script src="mots-croises.js?v=7"></script>
@@ -636,7 +636,7 @@
        jamais utiliser le mot », déchiffrage collectif (« À vous »). */
     intro: "Chaque bulle remontée des profondeurs décrit une <b>scène vécue du métier</b>, sans jamais prononcer le mot qu'elle désigne. À vous de le deviner et de l'écrire sur la grille, lettre par lettre.",
     consignes: [
-      { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b>" },
+      { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b> — le jargon expert de chaque secteur du magasin." },
       { ico: '⏱️', html: "<b>Aucun chronomètre</b> : la plongée se fait en mer calme." },
       { ico: '❌', warn: true, html: "<b>3 erreurs</b> : le matelot remonte en surface — un autre prend le relais immédiatement." }
       /* La 4e consigne (releve par Code Matelot) a ete RETIREE sur
