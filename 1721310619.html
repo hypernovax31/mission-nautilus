@@ -240,16 +240,16 @@
   var nbErreurs = 0;
 
   var MOTS = [
-    { num: 1, dir: 'h', row: 0, col: 2, reponse: 'PLEIADE', secteur: 'rayon', definition: "l'aristocratie de l'imprimé : la collection au dos souple, bordé d'un liseré d'or, qu'on ne solde jamais et qu'on glisse dans le papier cadeau des grandes occasions — l'édition que l'on garde une vie entière." },
-    { num: 1, dir: 'v', row: 0, col: 2, reponse: 'PLANOGRAMME', secteur: 'direction', definition: "le cadastre des rayons : la carte immuable descendue du siège, qui fige au millimètre la place de chaque référence et fait loi sur la boutique — un produit hors de sa case est un produit en faute." },
-    { num: 2, dir: 'v', row: 1, col: 13, reponse: 'DIAGNOSTIC', secteur: 'sav', definition: "la consultation du comptoir technique : recueillir les symptômes, palper la machine, interroger ses entrailles, puis rendre l'arrêt — panne réelle ou simple maladresse de l'utilisateur ? Le verdict décide de l'atelier ou du retour au client." },
-    { num: 3, dir: 'h', row: 2, col: 9, reponse: 'PICKING', secteur: 'stock', definition: "la récolte de l'invisible : arpenter les travées du dépôt, liste en main, pour rassembler pièce à pièce la commande d'un inconnu qui paiera sans jamais croiser le chemin de celui qui la compose." },
-    { num: 4, dir: 'v', row: 4, col: 16, reponse: 'INVENTAIRE', secteur: 'bureau', definition: "la nuit où les comptes descendent sur terre : la douchette s'allume, chaque référence défile, et le chiffre affiché à l'écran doit enfin se mesurer à la vérité des rayonnages — le virtuel rend gorge au réel." },
-    { num: 5, dir: 'v', row: 5, col: 10, reponse: 'FACING', secteur: 'rayon', definition: "la ligne de front : ramener chaque article jusqu'au rebord même de l'étagère, sans un vide, sans une bavure, jusqu'à ce que le rayon tout entier présente une façade lisse — la discipline du neuf perpétuel." },
-    { num: 6, dir: 'h', row: 6, col: 1, reponse: 'TRANSFORMATION', secteur: 'direction', definition: "l'aiguille du verdict : parmi ceux qui franchissent la barrière lumineuse du seuil, combien ressortiront réellement les bras chargés ? Cette proportion-là, et nulle autre, dit si la boutique convertit sa foule ou la laisse filer." },
-    { num: 7, dir: 'v', row: 6, col: 5, reponse: 'STEELBOOK', secteur: 'rayon', definition: "la cuirasse de collection : l'écrin de métal, nettement plus pesant qu'une jaquette de plastique, qui enveloppe le film d'une seconde peau et justifie aux yeux du chineur un prix que la seule galette ne porterait jamais." },
-    { num: 8, dir: 'v', row: 6, col: 8, reponse: 'REASSORT', secteur: 'stock', definition: "l'office de l'aurore : la ronde furtive entre l'arrière-salle et le front de vente, pour que chaque trou laissé la veille soit comblé avant que la porte ne s'ouvre — broche après broche, étagère après étagère." },
-    { num: 9, dir: 'h', row: 8, col: 0, reponse: 'DEMATERIALISATION', secteur: 'rayon', definition: "la retraite du support : ce qui tournait encore hier dans un boîtier de plastique s'efface pour ne plus vivre qu'à distance, dans un entrepôt de données — on achète le droit d'accéder, plus jamais l'objet lui-même." }
+    { num: 1, dir: 'h', row: 0, col: 2, reponse: 'PLEIADE', secteur: 'rayon', definition: "la collection au dos souple ourlé d'or." },
+    { num: 1, dir: 'v', row: 0, col: 2, reponse: 'PLANOGRAMME', secteur: 'direction', definition: "le plan d'implantation dicté par le siège." },
+    { num: 2, dir: 'v', row: 1, col: 13, reponse: 'DIAGNOSTIC', secteur: 'sav', definition: "l'examen qui départage panne et fausse manip." },
+    { num: 3, dir: 'h', row: 2, col: 9, reponse: 'PICKING', secteur: 'stock', definition: "la tournée en réserve, liste en main." },
+    { num: 4, dir: 'v', row: 4, col: 16, reponse: 'INVENTAIRE', secteur: 'bureau', definition: "le comptage nocturne, rayon par rayon." },
+    { num: 5, dir: 'v', row: 5, col: 10, reponse: 'FACING', secteur: 'rayon', definition: "tout tirer au bord de l'étagère." },
+    { num: 6, dir: 'h', row: 6, col: 1, reponse: 'TRANSFORMATION', secteur: 'direction', definition: "le ratio entrées / passages en caisse." },
+    { num: 7, dir: 'v', row: 6, col: 5, reponse: 'STEELBOOK', secteur: 'rayon', definition: "l'édition vidéo en boîtier de métal." },
+    { num: 8, dir: 'v', row: 6, col: 8, reponse: 'REASSORT', secteur: 'stock', definition: "remplir les rayons avant l'ouverture." },
+    { num: 9, dir: 'h', row: 8, col: 0, reponse: 'DEMATERIALISATION', secteur: 'rayon', definition: "la disparition du support physique." }
   ];
 
   var $ = function (id) { return document.getElementById(id); };
