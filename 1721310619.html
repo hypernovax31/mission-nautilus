@@ -193,17 +193,17 @@
 <script src="records-palier.js?v=2"></script>
 <script>
 /* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS » =================
-   Grille EXPERT « jargon vendeur » : 10 mots couvrant TOUS les secteurs du
-   magasin — rayon (FACING, VINYLE), stock (RÉASSORT, PICKING), SAV
-   (DIAGNOSTIC), bureau (INVENTAIRE), caisse (ÉCOTAXE), sécurité
-   (PORTIQUE), occasion (REPRISE) et direction (DÉMARQUE inconnue!).
+   Grille EXPERT « jargon vendeur » : 10 mots couvrant les secteurs du
+   magasin — rayon (DEMATERIALISATION, STEELBOOK, LINEAIRE, FACING),
+   stock (REASSORT, ROTATION), SAV (DIAGNOSTIC), bureau (INVENTAIRE)
+   et direction (TRANSFORMATION, PLANOGRAMME).
    Indices OBLIQUES : chaque définition raconte une scène vécue du métier
    sans jamais nommer le mot (la solution n'apparaît jamais dans l'indice,
    le générateur le vérifie) — la difficulté vit dans le jargon, pas dans
-   un décodage. Grille 13×13, 65 cases, 12 croisements — construite et
+   un décodage. Grille 17×17, 87 cases, 14 croisements — construite et
    vérifiée lettre par lettre par tools/generer_mots_croises.py
-   (rejouable à l'identique ; VINYLE — rayon disque CD/DVD — a remplacé
-   ATTACH, lui-même succédé à LINÉAIRE, jugé trop fade).
+   (rejouable à l'identique ; cadre porté à 17×17 pour accueillir
+   DEMATERIALISATION, 17 lettres).
    Règle calquée sur le Palier 1 : 3 mots faux tentés = remise en
    surface PERSONNELLE du matelot fautif (matelot-blocages.js — compteur
    d'échecs et barème 1 h/2 h/4 h/8 h/12 h communs à TOUS les paliers).
@@ -240,16 +240,16 @@
   var nbErreurs = 0;
 
   var MOTS = [
-    { num: 1, dir: 'v', row: 0, col: 4, reponse: 'DIAGNOSTIC', secteur: 'sav', definition: "au comptoir on joue d'abord au médecin : symptômes, tests, verdict — avant toute réparation." },
-    { num: 2, dir: 'v', row: 1, col: 7, reponse: 'INVENTAIRE', secteur: 'bureau', definition: "le bureau ferme, les scanners s'allument, la nuit commence — chaque référence y passe, sans exception." },
-    { num: 3, dir: 'h', row: 2, col: 3, reponse: 'FACING', secteur: 'rayon', definition: "le garde-à-vous du rayon, refait dix fois par jour : rien ne dépasse du bord." },
-    { num: 4, dir: 'v', row: 3, col: 12, reponse: 'PORTIQUE', secteur: 'securite', definition: "les deux piliers à l'entrée qui jugent silencieusement chaque passage." },
-    { num: 5, dir: 'h', row: 4, col: 2, reponse: 'VINYLE', secteur: 'rayon', definition: "il a survécu à la cassette et au CD : dans les bacs du rayon musique, le 33 tours reprend chaque année du terrain." },
-    { num: 6, dir: 'h', row: 6, col: 0, reponse: 'REASSORT', secteur: 'stock', definition: "samedi 14 h, la réserve et le rayon jouent à la navette — et tu es la navette." },
-    { num: 7, dir: 'v', row: 6, col: 1, reponse: 'ECOTAXE', secteur: 'caisse', definition: "payée discrètement sur chaque appareil neuf, elle finance la seconde vie des anciens." },
-    { num: 8, dir: 'h', row: 8, col: 3, reponse: 'PICKING', secteur: 'stock', definition: "la cueillette silencieuse des commandes du site, scanner au poing, entre deux clients." },
-    { num: 9, dir: 'h', row: 10, col: 6, reponse: 'REPRISE', secteur: 'occasion', definition: "le comptoir Occasion pèse ton ancien mobile et te le transforme en bon d'achat." },
-    { num: 10, dir: 'h', row: 12, col: 0, reponse: 'DEMARQUE', secteur: 'direction', definition: "le chiffre rouge du grand comptage, celui qui annule la prime si personne ne sait l'expliquer." }
+    { num: 1, dir: 'v', row: 0, col: 2, reponse: 'REASSORT', secteur: 'stock', definition: "la mission matinale du gilet noir : le combat contre le vide pour que chaque broche et chaque tablette soient à nouveau pleines avant l'ouverture." },
+    { num: 2, dir: 'v', row: 0, col: 8, reponse: 'DEMATERIALISATION', secteur: 'rayon', definition: "le basculement vers le spectre : cette mutation profonde qui vide les bacs de plastiques circulaires pour remplir des serveurs distants." },
+    { num: 3, dir: 'h', row: 2, col: 0, reponse: 'PLANOGRAMME', secteur: 'direction', definition: "l'évangile d'Ivry : le schéma d'implantation rigide qui définit la topographie du magasin, forçant chaque produit à trouver sa place au millimètre près." },
+    { num: 4, dir: 'v', row: 5, col: 10, reponse: 'FACING', secteur: 'rayon', definition: "le geste esthétique : l'alignement chirurgical des produits sur le bord de l'étagère pour supprimer tout effet de désordre." },
+    { num: 5, dir: 'v', row: 5, col: 14, reponse: 'INVENTAIRE', secteur: 'bureau', definition: "la grande purge nocturne : l'instant de vérité comptable où l'on confronte le virtuel du logiciel à la réalité physique du dépôt." },
+    { num: 6, dir: 'h', row: 6, col: 1, reponse: 'TRANSFORMATION', secteur: 'direction', definition: "le juge de paix du flux : le ratio entre ceux qui franchissent les cellules photoélectriques de l'entrée et ceux qui valident leur panier en sortie." },
+    { num: 7, dir: 'v', row: 6, col: 5, reponse: 'STEELBOOK', secteur: 'rayon', definition: "le Graal du rayonnage Vidéo : l'édition blindée dont le poids en main justifie le prix fort pour les collectionneurs de Labège." },
+    { num: 8, dir: 'v', row: 9, col: 12, reponse: 'ROTATION', secteur: 'stock', definition: "le pouls du stock : cet indicateur financier qui mesure la vitesse à laquelle les produits entrent en réserve et ressortent par la caisse, évitant l'immobilisation du capital." },
+    { num: 9, dir: 'h', row: 10, col: 7, reponse: 'DIAGNOSTIC', secteur: 'sav', definition: "le protocole de vérité : l'examen clinique mené en zone technique pour décider si l'appareil repart en atelier ou s'il a simplement subi une erreur humaine." },
+    { num: 10, dir: 'h', row: 14, col: 7, reponse: 'LINEAIRE', secteur: 'rayon', definition: "la scène d'exposition : l'unité de mesure de la visibilité dont chaque mètre est loué implicitement par la marge dégagée." }
   ];
 
   var $ = function (id) { return document.getElementById(id); };

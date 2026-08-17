@@ -19,7 +19,7 @@ Règles de construction (mots croisés classiques) :
   - tout croisement est vérifié LETTRE PAR LETTRE ;
   - aucune touche illégale : hors croisement, deux cases de mots différents
     ne sont jamais voisines orthogonales ; un blanc encadre chaque extrémité ;
-  - cadre dur ≤ 13×13 (lisible sur mobile) ; objectif : max de croisements.
+  - cadre dur ≤ 17×17 (lisible sur mobile) ; objectif : max de croisements.
 
 Usage : PYTHONUTF8=1 python3 tools/generer_mots_croises.py
 """
@@ -34,26 +34,26 @@ from collections import Counter
 #             occasion / direction       indice : confirmation métier
 # ---------------------------------------------------------------
 MOTS_CANDIDATS = [
-    dict(reponse='INVENTAIRE', secteur='bureau',      mode=None,
-         indice="le bureau ferme, les scanners s'allument, la nuit commence — chaque référence y passe, sans exception"),
-    dict(reponse='VINYLE',     secteur='rayon',       mode=None,
-         indice="il a survécu à la cassette et au CD : dans les bacs du rayon musique, le 33 tours reprend chaque année du terrain"),
-    dict(reponse='REASSORT',   secteur='stock',       mode=None,
-         indice="samedi 14 h, la réserve et le rayon jouent à la navette — et tu es la navette"),
-    dict(reponse='DEMARQUE',   secteur='direction',   mode=None,
-         indice="le chiffre rouge du grand comptage, celui qui annule la prime si personne ne sait l'expliquer"),
-    dict(reponse='DIAGNOSTIC', secteur='sav',         mode=None,
-         indice="au comptoir on joue d'abord au médecin : symptômes, tests, verdict — avant toute réparation"),
-    dict(reponse='PICKING',    secteur='stock',       mode=None,
-         indice="la cueillette silencieuse des commandes du site, scanner au poing, entre deux clients"),
-    dict(reponse='PORTIQUE',   secteur='securite',    mode=None,
-         indice="les deux piliers à l'entrée qui jugent silencieusement chaque passage"),
-    dict(reponse='ECOTAXE',    secteur='caisse',      mode=None,
-         indice="payée discrètement sur chaque appareil neuf, elle finance la seconde vie des anciens"),
-    dict(reponse='REPRISE',    secteur='occasion',    mode=None,
-         indice="le comptoir Occasion pèse ton ancien mobile et te le transforme en bon d'achat"),
-    dict(reponse='FACING',     secteur='rayon',       mode=None,
-         indice="le garde-à-vous du rayon, refait dix fois par jour : rien ne dépasse du bord"),
+    dict(reponse='DEMATERIALISATION', secteur='rayon',     mode=None,
+         indice="le basculement vers le spectre : cette mutation profonde qui vide les bacs de plastiques circulaires pour remplir des serveurs distants"),
+    dict(reponse='TRANSFORMATION',    secteur='direction', mode=None,
+         indice="le juge de paix du flux : le ratio entre ceux qui franchissent les cellules photoélectriques de l'entrée et ceux qui valident leur panier en sortie"),
+    dict(reponse='STEELBOOK',         secteur='rayon',     mode=None,
+         indice="le Graal du rayonnage Vidéo : l'édition blindée dont le poids en main justifie le prix fort pour les collectionneurs de Labège"),
+    dict(reponse='DIAGNOSTIC',        secteur='sav',       mode=None,
+         indice="le protocole de vérité : l'examen clinique mené en zone technique pour décider si l'appareil repart en atelier ou s'il a simplement subi une erreur humaine"),
+    dict(reponse='REASSORT',          secteur='stock',     mode=None,
+         indice="la mission matinale du gilet noir : le combat contre le vide pour que chaque broche et chaque tablette soient à nouveau pleines avant l'ouverture"),
+    dict(reponse='ROTATION',          secteur='stock',     mode=None,
+         indice="le pouls du stock : cet indicateur financier qui mesure la vitesse à laquelle les produits entrent en réserve et ressortent par la caisse, évitant l'immobilisation du capital"),
+    dict(reponse='INVENTAIRE',        secteur='bureau',    mode=None,
+         indice="la grande purge nocturne : l'instant de vérité comptable où l'on confronte le virtuel du logiciel à la réalité physique du dépôt"),
+    dict(reponse='LINEAIRE',          secteur='rayon',     mode=None,
+         indice="la scène d'exposition : l'unité de mesure de la visibilité dont chaque mètre est loué implicitement par la marge dégagée"),
+    dict(reponse='PLANOGRAMME',       secteur='direction', mode=None,
+         indice="l'évangile d'Ivry : le schéma d'implantation rigide qui définit la topographie du magasin, forçant chaque produit à trouver sa place au millimètre près"),
+    dict(reponse='FACING',            secteur='rayon',     mode=None,
+         indice="le geste esthétique : l'alignement chirurgical des produits sur le bord de l'étagère pour supprimer tout effet de désordre"),
 ]
 NB_MOTS = len(MOTS_CANDIDATS)
 CIBLE_CROISEMENTS = 9
@@ -105,7 +105,7 @@ class Solveur:
         if premier:
             # le 1er mot est toujours posé horizontal à l'origine : toute
             # grille avec 1er mot vertical se transpose (cadre symétrique
-            # ≤13×13) — ça divise l'espace de recherche par deux.
+            # ≤17×17) — ça divise l'espace de recherche par deux.
             return [(0, (mot, 'h', 0, 0))]
         for sens in ('h', 'v'):
             for i, lettre in enumerate(mot):
@@ -190,9 +190,9 @@ class Solveur:
                 proprietaires[(r, c)].append(sens)
             placements.append(cand)
             # élague tôt : le cadre courant ne fait que GRANDIR —
-            # s'il dépasse déjà 13×13, toute la branche est stérile.
+            # s'il dépasse déjà 17×17, toute la branche est stérile.
             rs = [r for (r, c) in cellules]; cs = [c for (r, c) in cellules]
-            if max(rs) - min(rs) + 1 <= 13 and max(cs) - min(cs) + 1 <= 13:
+            if max(rs) - min(rs) + 1 <= 17 and max(cs) - min(cs) + 1 <= 17:
                 self.resoudre(restants, placements, cellules, proprietaires,
                               croisements + nb_crois)
             placements.pop()
@@ -238,7 +238,7 @@ def recherche_stochastique(solveur, graine=20260812, budget_s=45):
                     if pt not in cellules:
                         tout.append(pt)
                 rs = [r for r, _ in tout]; cs = [cc for _, cc in tout]
-                if max(rs) - min(rs) + 1 <= 13 and max(cs) - min(cs) + 1 <= 13:
+                if max(rs) - min(rs) + 1 <= 17 and max(cs) - min(cs) + 1 <= 17:
                     valables.append((nb, cand))
             if not valables:
                 break
@@ -310,12 +310,12 @@ def main():
             raise SystemExit(f"INDICE BOITEUX pour {c['reponse']} : {detail}")
     couverture = sorted({c['secteur'] for c in MOTS_CANDIDATS})
     print(f'  ✓ couverture secteurs ({len(couverture)}): ' + ', '.join(couverture))
-    # 2) solveur stochastique (graine fixe) : cadre ≤ 13×13, max croisements
+    # 2) solveur stochastique (graine fixe) : cadre ≤ 17×17, max croisements
     selection = [c['reponse'] for c in MOTS_CANDIDATS]
     solveur = Solveur(selection)
     essais, trouvees = recherche_stochastique(solveur)
     if not solveur.meilleur:
-        raise SystemExit('Aucune grille trouvée dans le cadre 13×13.')
+        raise SystemExit('Aucune grille trouvée dans le cadre 17×17.')
     score, placements, cellules, croisements = solveur.meilleur
     print(f'  solveur : {croisements} croisements ({trouvees} grilles sur {essais} essais)')
     par_reponse = {normaliser(c['reponse']): c for c in MOTS_CANDIDATS}
