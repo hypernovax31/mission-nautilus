@@ -203,13 +203,30 @@
       }
       _meKey = ident.memberKey;
 
-      heartbeat(ident.teamCode);
-      _hb = setInterval(function () { heartbeat(ident.teamCode); }, HEARTBEAT_MS);
+      /* Battement de présence : il ne tourne QUE quand la page est
+         réellement active. Dès que l'écran est verrouillé, que l'app passe
+         en arrière-plan, ou que la page est refermée, on l'arrête : le
+         matelot cesse alors d'apparaître « en plongée » au bout de
+         PRESENCE_FRAICHE_MS. Avant, le minuteur continuait de tourner en
+         arrière-plan et le matelot restait indéfiniment présent alors qu'il
+         avait quitté le mini-jeu. */
+      var demarrerBattement = function () {
+        if (_hb) return;
+        heartbeat(ident.teamCode);
+        _hb = setInterval(function () { heartbeat(ident.teamCode); }, HEARTBEAT_MS);
+      };
+      var arreterBattement = function () {
+        if (_hb) { clearInterval(_hb); _hb = null; }
+      };
+
+      demarrerBattement();
 
       document.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'visible') heartbeat(ident.teamCode);
+        if (document.visibilityState === 'visible') demarrerBattement();
+        else arreterBattement();
       });
-      window.addEventListener('pageshow', function () { heartbeat(ident.teamCode); });
+      window.addEventListener('pageshow', demarrerBattement);
+      window.addEventListener('pagehide', arreterBattement);
 
       /* Écoute TOUTES les équipes en temps réel : chaque matelot en
          plongée, quel que soit son équipage, apparaît / disparaît ici. */

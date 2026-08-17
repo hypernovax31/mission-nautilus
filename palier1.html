@@ -3118,6 +3118,26 @@ window.Nautilus = {
   initAnnoncesPaliers();
 
   /* === Cleanup === */
+  /* PRÉSENCE : le battement de cœur ne tourne que page ACTIVE. Dès que
+     l'écran est verrouillé, que l'app passe en arrière-plan ou que la page
+     se ferme, on arrête d'écrire onlineMatelots : le matelot sort alors du
+     bloc « équipage actif en plongée » au bout de PRESENCE_FRAICHE_MS.
+     Avant, le minuteur continuait de tourner en arrière-plan et le matelot
+     restait indéfiniment « en plongée » après avoir quitté le mini-jeu. */
+  window.addEventListener('visibilitychange', () => {
+    if (!state.teamCode) return;
+    if (document.visibilityState === 'visible') {
+      N.heartbeat(state.teamCode, state.me && state.me.memberKey);
+      if (!state._heartbeatInterval) {
+        state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 30000);
+      }
+    } else {
+      if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }
+  });
   window.addEventListener('beforeunload', () => {
     if (state.unsubSession) state.unsubSession();
     if (state.unsubTeam) state.unsubTeam();

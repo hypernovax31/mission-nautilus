@@ -3027,12 +3027,23 @@ function qrDataUri(text, opts){
         /* onlinePlayers doit etre vide lui aussi : il contient les
            horodatages des appareils connectes, un par session. Sans cela,
            les traces des matelots qu'on vient de supprimer resteraient dans
-           la base apres le reset. Plus de matelots = plus personne en ligne. */
+           la base apres le reset. Plus de matelots = plus personne en ligne.
+           Idem pour onlineMatelots : c'est lui qui pilote le bloc
+           « équipage actif en plongée » des paliers — sans purge, un matelot
+           supprimé y resterait affiché « en plongée ». */
         await updateDoc(teamRef, {
           members: [],
           onlinePlayers: {},
+          onlineMatelots: {},
           updatedAt: new Date().toISOString()
         });
+
+        /* Journal de bord : purger les ACTES (« PIERRE prend les commandes »,
+           « réussit l'épreuve »…). Ils vivent dans la sous-collection
+           teams/{code}/journal et n'étaient PAS effacés ici : après un reset
+           complet, de vieux actes d'hier réapparaissaient dans le journal. */
+        const journalSnap = await getDocs(collection(db,'teams',t.code,'journal'));
+        for(const j of journalSnap.docs){ await deleteDoc(j.ref).catch(() => {}); }
 
         /* La partie en cours du mini-jeu doit tomber elle aussi : elle
            porte le nom du matelot qui l'avait lancee. Sans cela, un
@@ -3360,6 +3371,14 @@ function qrDataUri(text, opts){
         await setDoc(doc(db,'teams',t.code,'morseSession','current'),
           { state:'idle', clearedAt:new Date().toISOString() })
           .catch(e => console.warn('reset session', t.code, e));
+
+        /* Journal de bord : la progression repart de zéro, les actes
+           d'épreuve (« réussit l'épreuve », « prend les commandes »…) ne
+           reflètent plus rien — on les purge pour ne pas laisser un
+           historique périmé affiché dans « Actes de l'équipage ». */
+        const journalSnap = await getDocs(collection(db,'teams',t.code,'journal'));
+        for(const j of journalSnap.docs){ await deleteDoc(j.ref).catch(() => {}); }
+
         done++;
       }
       endAdminSession(`✅ Progression remise à zéro pour ${done} équipe(s) · session fermée`);
