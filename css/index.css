@@ -669,7 +669,7 @@
       .ck-journal-texte{font-size:13px}
     }
 
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.grid>div{display:flex;flex-direction:column;justify-content:flex-end}.boarding-grid{display:grid;grid-template-columns:50fr 15fr 35fr;gap:18px;align-items:end}.boarding-grid>div{min-width:0}.boarding-action button{width:100%;margin:0;height:auto;min-height:52px;padding:13px 18px;line-height:1.2}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.grid>div{display:flex;flex-direction:column;justify-content:flex-end}.boarding-grid{display:grid;grid-template-columns:50fr 15fr 35fr;gap:18px;align-items:end}.boarding-grid>div{min-width:0}.boarding-grid input,.boarding-grid select{height:52px;min-height:52px;box-sizing:border-box}.boarding-action button{width:100%;margin:0;height:52px;min-height:52px;padding:0 18px;line-height:48px;box-sizing:border-box}
 
     /* =====================================================================
        LES 4 HUBLOTS  —  consignes de mission
