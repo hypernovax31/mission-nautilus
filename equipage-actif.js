@@ -177,6 +177,17 @@
 
     list.innerHTML = html
       || '<div class="crew-empty">Aucun matelot en plongée pour le moment.</div>';
+
+    /* Voyant rouge clignotant du bloc : allumé tant qu'au moins un matelot
+       est en plongée (en cours de jeu), éteint dès que la liste se vide. */
+    var lamp = document.getElementById('diveLamp');
+    if (lamp) {
+      var actif = total > 0;
+      lamp.classList.toggle('on', actif);
+      lamp.setAttribute('title', actif
+        ? (total + (total > 1 ? ' matelots en plongée' : ' matelot en plongée'))
+        : 'Aucun matelot en plongée');
+    }
   }
 
   /* Battement de présence : PAR MATELOT (onlineMatelots) + PAR APPAREIL

@@ -81,7 +81,7 @@
        a été supprimé). L'encart n'affiche QUE les matelots connectés en
        live (présence par clé matelot, voir renderCrew). -->
   <section class="card" id="teamCard" style="display:none;">
-    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Un matelot est aux commandes"></span></h2>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
     <div class="body">
       <div class="crew" id="crewList"></div>
     </div>
@@ -1621,6 +1621,7 @@ window.Nautilus = {
     if (!list) return;
     const maintenant = Date.now();
     let html = '';
+    let total = 0;
 
     /* MODE TEST : l'équipage fictif (un seul matelot) — aucun autre. */
     if (state.isTest) {
@@ -1645,6 +1646,7 @@ window.Nautilus = {
         return (maintenant - vu) < PRESENCE_FRAICHE_MS;
       });
       if (!connectes.length) return;
+      total += connectes.length;
       const st = teamStyle(t.teamCode);
       const nom = displayTeamName(t);
       const cartes = connectes.map(m => {
@@ -1667,6 +1669,17 @@ window.Nautilus = {
     });
 
     list.innerHTML = html || `<div class="crew-empty">Aucun matelot en plongée pour le moment.</div>`;
+
+    /* Voyant rouge clignotant du bloc : allumé tant qu'au moins un matelot
+       est en plongée (en cours de jeu), éteint dès que la liste se vide. */
+    const lamp = $('diveLamp');
+    if (lamp) {
+      const actif = total > 0;
+      lamp.classList.toggle('on', actif);
+      lamp.setAttribute('title', actif
+        ? `${total} ${total > 1 ? 'matelots en plongée' : 'matelot en plongée'}`
+        : 'Aucun matelot en plongée');
+    }
   }
 
   /* === QUI EST L'AUTEUR DE LA SESSION ? — par la CLÉ MATELOT, jamais
@@ -1723,20 +1736,9 @@ window.Nautilus = {
     renderGameArea();
   }
 
-  /* Allume ou eteint le voyant rouge de l'encart "Equipage actif en
-     plongee". Il ne s'allume QUE si une epreuve est reellement en cours
-     (state 'playing') : ni une partie gagnee, ni une partie perdue, ni un
-     ecran d'attente ne doivent le faire clignoter. */
-  function majVoyantPlongee() {
-    const lamp = $('diveLamp');
-    if (!lamp) return;
-    const s = state.session;
-    const enCours = !!(s && s.state === 'playing');
-    lamp.classList.toggle('on', enCours);
-    lamp.setAttribute('title', enCours
-      ? `${s.startedByName || 'Un matelot'} est aux commandes`
-      : 'Aucun matelot aux commandes');
-  }
+  /* Le voyant rouge du bloc « Équipage actif en plongée » est désormais
+     piloté par renderCrew() : il clignote tant qu'au moins un matelot est
+     en plongée (en cours de jeu), et s'éteint quand la liste se vide. */
 
   /* === Rendu de la zone de jeu === */
   /* === QUI EST L'AUTEUR DE LA SESSION ? — par la CLÉ MATELOT, jamais
@@ -1793,11 +1795,8 @@ window.Nautilus = {
       $('gameCard').classList.toggle('epreuve-focus', enJeu || surVictoire);
     }
 
-    /* Le voyant suit CHAQUE redessin : c'est le point de passage commun a
-       tous les changements d'etat (debut de partie, victoire, defaite,
-       indice demande, reprise par un autre matelot). Le placer ici evite
-       d'avoir a y penser dans chacun de ces cas. */
-    majVoyantPlongee();
+    /* Le voyant rouge est mis à jour par renderCrew() à chaque
+       rafraîchissement de la présence (et via le minuteur local). */
 
     /* Chrono de la barre de titre. Hors partie, il RETOMBE sur le temps
        imparti (03:30) : sans cette remise a zero, il restait fige sur le
