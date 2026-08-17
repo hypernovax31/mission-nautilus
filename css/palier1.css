@@ -249,7 +249,7 @@
 
     .brief-intro{
       margin:0 0 16px;color:#dff6ff;line-height:1.55;
-      font-size:clamp(13px,1.8vw,15px);
+      font-size:clamp(14px,2vw,16px);
     }
     .brief-intro b{color:var(--cyan)}
 
@@ -462,7 +462,7 @@
        comme une console de sonar qui annonce un flux en cours. */
     .journal-titre{
       display:flex;align-items:center;justify-content:center;
-      flex-wrap:wrap;gap:10px;
+      flex-wrap:nowrap;gap:10px;
       margin:0 0 12px;
     }
     .journal-titre-rule{
@@ -475,7 +475,7 @@
     .journal-titre-label{
       color:#fff;font-weight:900;font-size:13px;
       letter-spacing:.09em;text-transform:uppercase;
-      overflow-wrap:anywhere;line-height:1.3;text-align:center;
+      white-space:nowrap;line-height:1.3;text-align:center;
     }
     .journal-live-badge{
       display:inline-flex;align-items:center;gap:6px;
@@ -491,6 +491,15 @@
       animation:journalLivePulse 1.3s ease-in-out infinite;
     }
     @keyframes journalLivePulse{50%{opacity:.3}}
+    /* Responsive : titre + badge centrés, toujours sur une seule ligne.
+       Sur écran étroit on retire les filets décoratifs et on resserre pour
+       que « Mouvements de l'équipage · En direct » tienne sans se couper. */
+    @media(max-width:560px){
+      .journal-titre-rule{display:none}
+      .journal-titre{gap:7px}
+      .journal-titre-label{font-size:12px;letter-spacing:.03em}
+      .journal-live-badge{font-size:12px;letter-spacing:.05em;padding:2px 8px}
+    }
 
     /* Ruban des actes : une ligne par acte */
     .morse-log ul{

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=43">
+  <link rel="stylesheet" href="css/palier1.css?v=44">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -854,6 +854,12 @@ window.Nautilus = {
      l'écoute de la collection `teams`, pour le bloc « Équipage actif ». */
   let _allTeams = [];
   let _unsubAllTeams = null;
+  /* Rafraîchissement LOCAL de la présence : la fraîcheur se lit sur un
+     horodatage (onlineMatelots) qui devient « périmé » SANS qu'aucune
+     écriture Firestore ne se produise (le matelot parti n'écrit plus).
+     Sans ce minuteur, onSnapshot ne se déclencherait pas et le matelot
+     parti resterait affiché indéfiniment dans « Équipage actif ». */
+  let _crewRefreshTimer = null;
 
   /* === Helpers UI === */
 
@@ -1257,6 +1263,12 @@ window.Nautilus = {
         snap.forEach((d) => _allTeams.push({ teamCode: d.id, ...d.data() }));
         renderCrew();
       }, () => { /* lecture indisponible : on garde l'état précédent */ });
+      /* Re-rendu périodique : filtre les horodatages périmés même sans
+         nouvelle écriture Firestore (un matelot parti cesse d'écrire, la
+         collection `teams` ne change pas, donc onSnapshot reste muet). */
+      if (!_crewRefreshTimer) {
+        _crewRefreshTimer = setInterval(() => renderCrew(), 15000);
+      }
     } catch (e) { console.warn('Équipage actif (global) indisponible :', e); }
 
     /* Aperçu admin : on court-circuite TOUT le démarrage normal (équipe,
@@ -3142,6 +3154,7 @@ window.Nautilus = {
     if (state.unsubSession) state.unsubSession();
     if (state.unsubTeam) state.unsubTeam();
     if (_unsubAllTeams) _unsubAllTeams();
+    if (_crewRefreshTimer) { clearInterval(_crewRefreshTimer); _crewRefreshTimer = null; }
     if (state.timerHandle) clearInterval(state.timerHandle);
     if (state._heartbeatInterval) clearInterval(state._heartbeatInterval);
   });

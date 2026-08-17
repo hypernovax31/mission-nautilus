@@ -110,6 +110,8 @@
   var _meKey = null;
   var _unsub = null;
   var _hb = null;
+  var _lastTeams = [];        // dernier état connu de la collection `teams`
+  var _refreshTimer = null;   // re-rendu local de la présence
 
   /* Identifiant d'appareil PERSISTANT (même clé que index.html) : sert à
      tenir onlinePlayers à jour sur les pages de palier. */
@@ -234,8 +236,16 @@
         _unsub = x.fs.onSnapshot(x.fs.collection(x.db, 'teams'), function (snap) {
           var teams = [];
           snap.forEach(function (d) { teams.push({ teamCode: d.id, teamName: d.data().teamName, members: d.data().members, onlineMatelots: d.data().onlineMatelots }); });
+          _lastTeams = teams;
           renderCrew(teams);
         }, function () { /* lecture indisponible : on garde l'état précédent */ });
+        /* Re-rendu périodique : la fraîcheur (onlineMatelots) devient
+           « périmée » sans nouvelle écriture Firestore — un matelot parti
+           cesse d'écrire, onSnapshot ne se déclenche donc pas et il
+           resterait affiché. On filtre donc localement à intervalle fixe. */
+        if (!_refreshTimer) {
+          _refreshTimer = setInterval(function () { renderCrew(_lastTeams); }, 10000);
+        }
       }).catch(function () {});
     }).catch(function () {
       renderCrew([]);
