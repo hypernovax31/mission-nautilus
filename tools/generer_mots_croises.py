@@ -54,6 +54,10 @@ MOTS_CANDIDATS = [
          indice="la clarté renvoyée par l'écran, jaugée au mètre carré"),
     dict(reponse='RAYTRACING',       secteur='rayon',     mode=None,
          indice="le calcul qui suit chaque trait de lumière à rebours, pour que les reflets disent vrai"),
+    dict(reponse='PICKING',          secteur='stock',     mode=None,
+         indice="l'assemblage pièce à pièce d'une commande destinée à quelqu'un qu'on ne verra jamais"),
+    dict(reponse='ECOTAXE',          secteur='caisse',    mode=None,
+         indice="la dîme verte qu'on ajoute au prix de l'appareil neuf pour offrir une seconde vie à l'ancien"),
 ]
 NB_MOTS = len(MOTS_CANDIDATS)
 CIBLE_CROISEMENTS = 9

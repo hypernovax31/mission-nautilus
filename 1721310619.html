@@ -193,14 +193,14 @@
 <script src="records-palier.js?v=2"></script>
 <script>
 /* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS » =================
-   Grille « produits & techniques maison » : 10 mots couvrant les rayons
+   Grille « produits & techniques maison » : 12 mots couvrant les rayons
    de la Fnac — édition (PLEIADE), vidéo collection (STEELBOOK), occasion
-   (REPRISE), logistique (REASSORT), multimédia (NEURONAL), photo
-   (DIAPHRAGME), son (ANTISKATING), blanc (DEFROISSEUR), vidéoprojection
-   (LUMINANCE) et gaming (RAYTRACING).
+   (REPRISE), logistique (REASSORT, PICKING), caisse (ECOTAXE), multimédia
+   (NEURONAL), photo (DIAPHRAGME), son (ANTISKATING), blanc (DEFROISSEUR),
+   vidéoprojection (LUMINANCE) et gaming (RAYTRACING).
    Indices en POUPÉES RUSSES : chaque définition enrobe la vraie définition
    de 2-3 couches d'indirection, sans jamais nommer le mot ni sa racine
-   (le générateur le vérifie). Grille 13×16, 77 cases, 13 croisements —
+   (le générateur le vérifie). Grille 17×17, 88 cases, 16 croisements —
    construite et vérifiée lettre par lettre par tools/generer_mots_croises.py
    (rejouable à l'identique).
    Règle calquée sur le Palier 1 : 3 mots faux tentés = remise en
@@ -239,16 +239,18 @@
   var nbErreurs = 0;
 
   var MOTS = [
-    { num: 1, dir: 'v', row: 0, col: 5, reponse: 'ANTISKATING', secteur: 'rayon', definition: "le contrepoids qui retient le bras de s'égarer vers le cœur du sillon." },
-    { num: 2, dir: 'v', row: 0, col: 8, reponse: 'STEELBOOK', secteur: 'rayon', definition: "l'armure blindée que l'on réserve aux films que l'on veut posséder." },
-    { num: 3, dir: 'v', row: 2, col: 1, reponse: 'NEURONAL', secteur: 'rayon', definition: "le tissu de la machine qui singe le cerveau pour flairer et décider." },
-    { num: 4, dir: 'h', row: 3, col: 0, reponse: 'DEFROISSEUR', secteur: 'rayon', definition: "le souffle vertical qui redresse l'étoffe sans jamais la toucher." },
-    { num: 5, dir: 'v', row: 3, col: 3, reponse: 'REPRISE', secteur: 'sav', definition: "la seconde existence qu'on accorde à l'objet usé, contre un bon d'achat." },
-    { num: 6, dir: 'v', row: 3, col: 10, reponse: 'RAYTRACING', secteur: 'rayon', definition: "le calcul qui suit chaque trait de lumière à rebours, pour que les reflets disent vrai." },
-    { num: 7, dir: 'h', row: 6, col: 3, reponse: 'REASSORT', secteur: 'stock', definition: "le geste qui offre un lendemain au rayon qu'on avait laissé vide hier." },
-    { num: 8, dir: 'v', row: 6, col: 12, reponse: 'PLEIADE', secteur: 'rayon', definition: "les sept étoiles d'un même ciel, reliées de cuir sur une étagère." },
-    { num: 9, dir: 'h', row: 10, col: 7, reponse: 'LUMINANCE', secteur: 'rayon', definition: "la clarté renvoyée par l'écran, jaugée au mètre carré." },
-    { num: 10, dir: 'h', row: 12, col: 3, reponse: 'DIAPHRAGME', secteur: 'rayon', definition: "l'iris de l'objectif qui dose la lumière pour sculpter le flou et la netteté." }
+    { num: 1, dir: 'v', row: 0, col: 8, reponse: 'LUMINANCE', secteur: 'rayon', definition: "la clarté renvoyée par l'écran, jaugée au mètre carré." },
+    { num: 2, dir: 'v', row: 2, col: 16, reponse: 'DEFROISSEUR', secteur: 'rayon', definition: "le souffle vertical qui redresse l'étoffe sans jamais la toucher." },
+    { num: 3, dir: 'h', row: 3, col: 7, reponse: 'DIAPHRAGME', secteur: 'rayon', definition: "l'iris de l'objectif qui dose la lumière pour sculpter le flou et la netteté." },
+    { num: 4, dir: 'v', row: 3, col: 13, reponse: 'ANTISKATING', secteur: 'rayon', definition: "le contrepoids qui retient le bras de s'égarer vers le cœur du sillon." },
+    { num: 5, dir: 'v', row: 5, col: 0, reponse: 'PICKING', secteur: 'stock', definition: "l'assemblage pièce à pièce d'une commande destinée à quelqu'un qu'on ne verra jamais." },
+    { num: 6, dir: 'h', row: 5, col: 6, reponse: 'REASSORT', secteur: 'stock', definition: "le geste qui offre un lendemain au rayon qu'on avait laissé vide hier." },
+    { num: 6, dir: 'v', row: 5, col: 6, reponse: 'RAYTRACING', secteur: 'rayon', definition: "le calcul qui suit chaque trait de lumière à rebours, pour que les reflets disent vrai." },
+    { num: 7, dir: 'h', row: 8, col: 5, reponse: 'STEELBOOK', secteur: 'rayon', definition: "l'armure blindée que l'on réserve aux films que l'on veut posséder." },
+    { num: 8, dir: 'h', row: 10, col: 0, reponse: 'NEURONAL', secteur: 'rayon', definition: "le tissu de la machine qui singe le cerveau pour flairer et décider." },
+    { num: 9, dir: 'v', row: 10, col: 3, reponse: 'REPRISE', secteur: 'sav', definition: "la seconde existence qu'on accorde à l'objet usé, contre un bon d'achat." },
+    { num: 10, dir: 'h', row: 10, col: 10, reponse: 'ECOTAXE', secteur: 'caisse', definition: "la dîme verte qu'on ajoute au prix de l'appareil neuf pour offrir une seconde vie à l'ancien." },
+    { num: 11, dir: 'h', row: 12, col: 3, reponse: 'PLEIADE', secteur: 'rayon', definition: "les sept étoiles d'un même ciel, reliées de cuir sur une étagère." }
   ];
 
   var $ = function (id) { return document.getElementById(id); };
