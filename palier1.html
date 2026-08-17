@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=44">
+  <link rel="stylesheet" href="css/palier1.css?v=45">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=1" defer></script>
@@ -16,7 +16,7 @@
   <script src="journal-bord.js?v=6" defer></script>
   <!-- Records de résolution des paliers (écran de victoire) : écriture
        et lecture Firestore communes à tous les paliers. -->
-  <script src="records-palier.js?v=1" defer></script>
+  <script src="records-palier.js?v=2" defer></script>
 
 </head>
 <body>
@@ -2605,7 +2605,12 @@ window.Nautilus = {
         seconds: dureeSec || 0,
         matelot: state.me ? state.me.name : 'Un matelot',
         equipage: displayTeamName(state.team)
-      });
+      }).then(() => chargerRecordsVictoire());
+      /* Relecture après écriture : l'écran de victoire lit les records
+         DÈS son rendu (chargerRecordsVictoire), donc AVANT que le record
+         ci-dessus soit consigné. On relit une fois l'écriture terminée
+         pour que le vainqueur voie son propre temps apparaître aussitôt,
+         sans recharger la page. */
     }
     if (leves > 0) {
       N.addLogEntry(`🔓 Palier franchi : ${leves} matelot(s) bloqué(s) en surface reprennent la quête.`, 'success');

@@ -3,8 +3,8 @@
    (records-palier.js)
 
    Sur l'écran de victoire, un menu déroulant DISCRET affiche les
-   records de temps des AUTRES matelots / équipages, classés du plus
-   rapide au plus lent.
+   records de temps de TOUS les matelots / équipages (y compris le
+   vôtre, marqué « (toi) »), classés du plus rapide au plus lent.
 
    OÙ VIVENT LES RECORDS :
      Firestore, document unique game/records (couvert par les règles
@@ -26,8 +26,9 @@
      ignorée : un record ne doit jamais faire échouer la victoire).
 
    LECTURE : window.NautilusRecords.chargerEtRendre(hote, { stepId,
-     moi }) — lit, trie (plus rapide d'abord), exclut le matelot
-     courant (« moi »), et rend le <details> dans l'élément hôte.
+     moi }) — lit, trie (plus rapide d'abord), marque le matelot
+     courant (« moi ») d'un « (toi) », et rend le <details> dans
+     l'élément hôte. Chacun voit donc AUSSI son propre record.
    ============================================================= */
 (function () {
   'use strict';
@@ -103,7 +104,13 @@
       if (snap.exists()) liste = (snap.data() || {})[opts.stepId] || [];
     } catch (e) { /* hors ligne : on affiche l'état vide, sans erreur */ }
     liste = liste
-      .filter(function (r) { return r && !(moi && norme(r.m) === moi); })
+      .filter(function (r) { return !!r; })
+      .map(function (r) {
+        return {
+          s: r.s, m: r.m, e: r.e, at: r.at,
+          aMoi: !!(moi && norme(r.m) === moi)
+        };
+      })
       .sort(function (a, b) { return (Number(a.s) || 0) - (Number(b.s) || 0); })
       .slice(0, MAX_AFFICHES);
     rendre(hote, liste);
@@ -112,20 +119,21 @@
   function rendre(hote, liste) {
     var corps;
     if (!liste.length) {
-      corps = '<li class="won-records-empty">Aucun autre record pour l’instant.</li>';
+      corps = '<li class="won-records-empty">Aucun record pour l’instant.</li>';
     } else {
       corps = liste.map(function (r, i) {
         var equipe = r.e ? ' <em>· ' + esc(r.e) + '</em>' : '';
-        return '<li class="won-records-item">'
+        var toi = r.aMoi ? ' <span class="won-records-self">(toi)</span>' : '';
+        return '<li class="won-records-item' + (r.aMoi ? ' won-records-item--self' : '') + '">'
           + '<span class="won-records-rank">' + (i + 1) + '</span>'
-          + '<span class="won-records-who">' + esc(r.m) + equipe + '</span>'
+          + '<span class="won-records-who">' + esc(r.m) + equipe + toi + '</span>'
           + '<span class="won-records-time">' + formatTemps(r.s) + '</span>'
           + '</li>';
       }).join('');
     }
     hote.innerHTML = ''
       + '<details class="won-records">'
-      +   '<summary>⏱️ Records de résolution — autres matelots</summary>'
+      +   '<summary>⏱️ Records de résolution</summary>'
       +   '<ol class="won-records-list">' + corps + '</ol>'
       + '</details>';
   }
