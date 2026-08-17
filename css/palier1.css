@@ -78,17 +78,17 @@
     }
     .card h2{
       margin:0;padding:16px 20px;
-      /* Laiton ambré oxydé : patine sale + métal brossé + reflet haut */
+      /* Bronze ambré poli : reflet diagonal + patine + métal brossé, texte argent */
       background:
-        radial-gradient(130% 90% at 10% 12%, rgba(74,36,4,.42), transparent 48%),
-        radial-gradient(120% 90% at 92% 88%, rgba(48,22,0,.45), transparent 52%),
-        radial-gradient(70% 60% at 50% -10%, rgba(255,240,190,.35), transparent 60%),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, rgba(0,0,0,.06) 1px 3px),
-        linear-gradient(180deg, #eab54f 0%, #d28c22 28%, #a9630e 55%, #7f4408 80%, #c07d1e 100%);
-      color:#241203;font-size:18px;
-      font-weight:700;letter-spacing:.05em;
-      text-shadow:0 1px 0 rgba(255,244,214,.55),0 -1px 1px rgba(80,40,4,.6);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -3px 0 rgba(80,40,4,.6),inset 0 0 16px rgba(0,0,0,.16),0 2px 4px rgba(0,0,0,.3);
+        linear-gradient(115deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,0) 32%, rgba(255,255,255,.06) 72%),
+        radial-gradient(130% 90% at 8% 12%, rgba(48,22,2,.52), transparent 48%),
+        radial-gradient(120% 90% at 94% 88%, rgba(28,12,0,.52), transparent 52%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, rgba(0,0,0,.09) 1px 3px),
+        linear-gradient(180deg, #b57318 0%, #8f4f0a 30%, #663606 58%, #452404 82%, #7c4808 100%);
+      color:#f2f6f9;font-size:18px;
+      font-weight:700;letter-spacing:.06em;
+      text-shadow:0 1px 2px rgba(0,0,0,.65),0 -1px 0 rgba(255,255,255,.22);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(30,14,0,.65),inset 0 0 18px rgba(0,0,0,.2),0 2px 5px rgba(0,0,0,.35);
     }
     /* Titre de carte en DEUX parties : l'intitule a gauche, le chrono a
        droite. Le temps etait auparavant repete dans un second encart, a
@@ -99,17 +99,17 @@
     .card-h2-split{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
     .card-h2-timer{display:flex;align-items:baseline;gap:8px;}
     .card-h2-timer .lbl{
-      font-size:12px;color:#6a4a12;letter-spacing:.09em;
+      font-size:12px;color:#c9d4dd;letter-spacing:.09em;
       text-transform:uppercase;font-weight:800;
     }
     .card-h2-timer .val{
       font-family:Consolas,"Courier New",monospace;
-      font-size:clamp(18px,2.6vw,24px);font-weight:1000;color:#3b2505;
-      text-shadow:0 1px 0 rgba(255,250,225,.55);line-height:1;
+      font-size:clamp(18px,2.6vw,24px);font-weight:1000;color:#f2f6f9;
+      text-shadow:0 1px 2px rgba(0,0,0,.55);line-height:1;
     }
     /* Chrono qui tourne : il vire a l'ambre sous 60 s, au rouge sous 20 s. */
-    .card-h2-timer.warn .val{color:#8a3a06;text-shadow:0 1px 0 rgba(255,250,225,.5);}
-    .card-h2-timer.crit .val{color:#8a1208;text-shadow:0 1px 0 rgba(255,250,225,.5);}
+    .card-h2-timer.warn .val{color:#ffc95e;text-shadow:0 1px 2px rgba(0,0,0,.55);}
+    .card-h2-timer.crit .val{color:#ff5a4e;text-shadow:0 1px 2px rgba(0,0,0,.55);}
     @media(max-width:430px){
       .card-h2-timer .lbl{display:none}
     }
