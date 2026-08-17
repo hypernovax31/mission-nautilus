@@ -11,11 +11,10 @@
      ZONE DE RECHERCHE » (longs paragraphes + bouton 🧭 CONTINUER qui
      ne faisait que plier/déplier — doublon du vrai CTA) est remplacé
      par un bloc « PROCHAINE IMMERSION » toujours visible : radar sonar
-     animé 🧭, titre « CAP SUR LE QR CODE : « … » » (qui NOTIFIE la
-     zone de recherche du QR), trois étapes-chips (rallier la zone /
-     passer au prochain palier / scanner le QR trouvé), gros bouton
-     ⏭️ « PASSER AU PROCHAIN PALIER » PULSANT et une unique ligne
-     d'astuce 📷 (photo du QR = clé d'entrée).
+     animé 🧭, titre « CAP SUR LE QR CODE » — DEUX encarts : « Rallier
+     la Zone de recherche » + le descriptif de la zone, puis « Passer
+     au prochain palier » + bouton « 📷 Scanner le QR Code trouvé » —
+     et une unique ligne d'astuce 📷 (photo du QR = clé d'entrée).
 
    Structure et classes (.won-* — styles dans css/palier1.css, chargée
    par TOUTES les pages de palier) calquées sur renderWonScreen() /
@@ -49,16 +48,15 @@
   }
 
   /* Bloc « PROCHAINE IMMERSION » — remplace l'ancien panneau pliable :
-     radar sonar, cap, indication, 3 étapes-chips, CTA pulsant, astuce.
-     Contenu VOLONTAIREMENT court (chips de 3-4 mots, 1 ligne d'astuce).
+     radar sonar, cap, indication, DEUX encarts (Rallier la zone +
+     descriptif / Passer au palier + bouton « Scanner le QR Code trouvé »),
+     CTA pulsant, astuce. Contenu VOLONTAIREMENT court.
      Mêmes classes/markup que directionPanelHtml() de palier1.html. */
   function directionHtml(o) {
-    var boutonTexte = (o.labelSuivant === 'Palier final')
-      ? 'PASSER AU PALIER FINAL'
-      : 'PASSER AU PALIER « ' + (Number(o.palier) + 1) + ' »';
     var prochain = (o.labelSuivant === 'Palier final')
       ? 'Palier final'
       : 'Palier « ' + (Number(o.palier) + 1) + ' »';
+    var indication = o.indication || '…… (en attente d’indication par l’admin)';
     return ''
       + '<div class="won-nextzone" id="wonDirectionPanel">'
       +   '<div class="won-radar" aria-hidden="true">'
@@ -67,12 +65,16 @@
       +     '<span class="won-radar-core">🧭</span>'
       +   '</div>'
       +   '<h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>'
-      +   '<div class="won-nextzone-steps">'
-      +     '<span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>'
-      +     '<span class="won-step-chip"><b>2</b> Passer au prochain palier</span>'
-      +     '<span class="won-step-chip"><b>3</b> Scanner le QR Code trouvé</span>'
+      +   '<div class="won-zone-steps">'
+      +     '<div class="won-zone-panel">'
+      +       '<div class="won-zone-head"><span class="won-zone-num">1</span><span class="won-zone-title">Rallier la Zone de recherche</span></div>'
+      +       '<p class="won-zone-desc">📍 « ' + esc(indication) + ' »</p>'
+      +     '</div>'
+      +     '<div class="won-zone-panel">'
+      +       '<div class="won-zone-head"><span class="won-zone-num">2</span><span class="won-zone-title">Passer au prochain palier</span></div>'
+      +       '<a class="won-next-btn won-zone-btn" href="' + esc(o.urlSuivante) + '">📷 Scanner le QR Code trouvé</a>'
+      +     '</div>'
       +   '</div>'
-      +   '<a class="won-next-btn" href="' + esc(o.urlSuivante) + '">⏭️ ' + esc(boutonTexte) + '</a>'
       +   '<p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone : c’est la clé d’entrée du ' + esc(prochain) + '.</p>'
       + '</div>';
   }
