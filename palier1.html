@@ -1514,7 +1514,7 @@ window.Nautilus = {
        le prochain battement mettra a jour la bonne cle. */
     N.heartbeat(state.teamCode, state.me && state.me.memberKey);
     if (!state._heartbeatInterval) {
-      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 30000);
+      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 5000);
     }
 
     /* MISE EN EVIDENCE DU NOM pour un retour : quand le matelot vient de
@@ -1611,7 +1611,7 @@ window.Nautilus = {
   /* Fraicheur acceptee d'un signe de vie : battement toutes les 30 s,
      on tolère deux battements manques (3 x 30 s) avant de considerer
      le matelot deconnecte. */
-  const PRESENCE_FRAICHE_MS = 90 * 1000;
+  const PRESENCE_FRAICHE_MS = 15 * 1000;
 
   /* ÉQUIPAGE ACTIF EN PLONGÉE — plongée GLOBALE : tous les matelots en
      plongée, toutes équipes confondues, groupés par équipage (liseré +
@@ -1719,6 +1719,10 @@ window.Nautilus = {
 
   function onSessionUpdate(session) {
     state.session = session;
+    /* Dès qu'on sort de l'état « won » (nouvelle partie, reset…), on
+       réarme le rendu de victoire pour que la prochaine victoire
+       s'affiche bien. */
+    if (!session || session.state !== 'won') state._wonRendu = null;
     /* RESTAURATION DU MOT apres un retour sur le jeu.
        Le mot ne vivait qu'en memoire vive : au moindre rechargement de la
        page, ou en revenant depuis l'accueil, il etait perdu. L'indice
@@ -1791,7 +1795,13 @@ window.Nautilus = {
       montrerCarte('briefCard', false);
       montrerCarte('gameCard', true);
       montrerCarte('teamCard', !(enJeu || surVictoire));
-      montrerCarte('logCard', !(enJeu || surVictoire));
+      /* Journal de bord : visible en haut du mini-jeu UNIQUEMENT pour les
+         matelots qui regardent l'épreuve de LEUR équipage (les spectateurs).
+         Le matelot aux commandes, lui, reste concentré sur son jeu. Sur les
+         autres états (attente, briefing, défaite d'un autre, blocage), le
+         journal reste affiché comme avant. La page de victoire le range. */
+      const estSpectateur = !!(enJeu && me && !estAuteurSession(s, me));
+      montrerCarte('logCard', estSpectateur || !(enJeu || surVictoire));
       $('gameCard').classList.toggle('epreuve-focus', enJeu || surVictoire);
     }
 
@@ -1872,6 +1882,15 @@ window.Nautilus = {
 
     /* Session en cours */
     if (s.state === 'won') {
+      /* GARDE-FOU « REBOOT » : la victoire était re-rendue plusieurs fois
+         de suite (arrivée de la session, mise à jour de l'équipe par
+         advanceTeam, puis appel direct) — chaque rendu effaçait et
+         recréait l'écran (radar, records), ce qui ressemblait à un
+         rechargement de page. On ne rend qu'UNE fois par victoire, tant
+         que la session de victoire n'a pas changé. */
+      const cle = s.endedAt || s.startedAt || 'won';
+      if (state._wonRendu === cle) return;
+      state._wonRendu = cle;
       body.innerHTML = renderWonScreen(s, t);
       jouerSonVictoire(s);
       chargerRecordsVictoire();
@@ -3140,7 +3159,7 @@ window.Nautilus = {
     if (document.visibilityState === 'visible') {
       N.heartbeat(state.teamCode, state.me && state.me.memberKey);
       if (!state._heartbeatInterval) {
-        state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 30000);
+        state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 5000);
       }
     } else {
       if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }

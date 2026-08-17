@@ -43,8 +43,8 @@
   /* Fraîcheur acceptée d'un signe de vie. Le battement de cœur part
      toutes les 15 s (et à chaque retour au premier plan) : on tolère
      deux battements manqués avant de considérer le matelot en surface. */
-  var PRESENCE_FRAICHE_MS = 45 * 1000;
-  var HEARTBEAT_MS = 15000;
+  var PRESENCE_FRAICHE_MS = 15 * 1000;
+  var HEARTBEAT_MS = 5000;
 
   var FIREBASE_CONFIG = {
     apiKey: "AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
