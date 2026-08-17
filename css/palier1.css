@@ -78,14 +78,17 @@
     }
     .card h2{
       margin:0;padding:16px 20px;
-      /* Plaque de laiton brossé : dégradé métal doré + fines stries, effet relief */
+      /* Laiton ambré oxydé : patine sale + métal brossé + reflet haut */
       background:
-        repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.02) 1px 3px),
-        linear-gradient(180deg, #f6df9b 0%, #ecc25f 20%, #d8a03a 48%, #bd7d16 72%, #d9ab47 88%, #eccf86 100%);
-      color:#2b1802;font-size:18px;
+        radial-gradient(130% 90% at 10% 12%, rgba(74,36,4,.42), transparent 48%),
+        radial-gradient(120% 90% at 92% 88%, rgba(48,22,0,.45), transparent 52%),
+        radial-gradient(70% 60% at 50% -10%, rgba(255,240,190,.35), transparent 60%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, rgba(0,0,0,.06) 1px 3px),
+        linear-gradient(180deg, #eab54f 0%, #d28c22 28%, #a9630e 55%, #7f4408 80%, #c07d1e 100%);
+      color:#241203;font-size:18px;
       font-weight:700;letter-spacing:.05em;
-      text-shadow:0 1px 0 rgba(255,250,225,.6),0 -1px 1px rgba(90,55,8,.5);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -2px 0 rgba(96,60,8,.5),0 2px 4px rgba(0,0,0,.25);
+      text-shadow:0 1px 0 rgba(255,244,214,.55),0 -1px 1px rgba(80,40,4,.6);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -3px 0 rgba(80,40,4,.6),inset 0 0 16px rgba(0,0,0,.16),0 2px 4px rgba(0,0,0,.3);
     }
     /* Titre de carte en DEUX parties : l'intitule a gauche, le chrono a
        droite. Le temps etait auparavant repete dans un second encart, a
