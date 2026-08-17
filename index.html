@@ -2915,7 +2915,7 @@ function qrDataUri(text, opts){
     $('joinMsg').innerHTML = '';
     // Champ vide ou format incorrect : alerte popup, comme a l'embarquement.
     if(!codeRaw){
-      alert('Halte-là Matelot ! Entre ton Code Matelot personnel pour rallumer le sonar.');
+      alert('Le sonar est muet. Ton Code Matelot, matelot.');
       return;
     }
     if(!MATELOT_CODE_RE.test(codeRaw)){
