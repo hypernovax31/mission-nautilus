@@ -443,6 +443,15 @@
       var ouvertF = $('gateUnlocked'); if (ouvertF) ouvertF.hidden = true;
       cacherContenuProtege();
       journal('🧪 Mode concepteur : page scellée affichée pour tester le QR Code (le déverrouillage mémorisé est ignoré sur cette vue).', 'info');
+    } else if (scanDemande()) {
+      /* Matelot qui vient scanner le QR du palier suivant : le portail
+         se montre SCELLÉ même si le sas est déjà ouvert sur cet appareil
+         (cas du concepteur, ou d'un retour après coup) — le scan reste le
+         geste attendu. */
+      var carteS = $('gateCard'); if (carteS) carteS.hidden = false;
+      var ouvertS = $('gateUnlocked'); if (ouvertS) ouvertS.hidden = true;
+      cacherContenuProtege();
+      journal('📷 ' + LABEL + ' : sas prêt à scanner le QR Code.', 'info');
     } else if (isUnlocked()) {
       var carte = $('gateCard'); if (carte) carte.hidden = true;
       var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
@@ -466,6 +475,16 @@
     try { return /[?&]sas=ferme(?:&|$)/.test(location.search); } catch (e) { return false; }
   }
 
+  /* ---------- INTENTION « SCANNER LE QR » (bouton de l'écran de victoire) --
+     ?scan=1 force AUSSI l'affichage du portail scellé (scanner), même si
+     le sas est déjà ouvert sur cet appareil. Contrairement à ?sas=ferme
+     (réservé au concepteur, journal « Mode concepteur »), c'est le geste
+     normal du matelot : après une victoire, il rallie la zone et vient
+     viser le QR Code du palier suivant. */
+  function scanDemande() {
+    try { return /[?&]scan=1(?:&|$)/.test(location.search); } catch (e) { return false; }
+  }
+
   /* Consultation externe : le sas de ce palier est-il déjà ouvert ici ? */
   function estDeverrouille(palier) {
     var n = Math.max(2, palier | 0);
@@ -473,5 +492,5 @@
     try { return localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok'; } catch (e) { return false; }
   }
 
-  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme };
+  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme, scanDemande: scanDemande };
 })();

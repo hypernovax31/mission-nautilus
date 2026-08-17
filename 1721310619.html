@@ -165,7 +165,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=12"></script>
+<script src="palier-sas.js?v=13"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2 :
      la vue d'explication immersive du thème (SANS dévoiler le
      contenu) entre la ZONE SCELLÉE et le mini-jeu — mise en page du
@@ -189,7 +189,7 @@
 <!-- Écran de VICTOIRE commun à TOUS les paliers (même page de victoire
      que le Palier 1) : badge, stats, panneau pliable « DIRECTION VERS
      LA ZONE DE RECHERCHE ». -->
-<script src="victoire-palier.js?v=11"></script>
+<script src="victoire-palier.js?v=12"></script>
 <script src="records-palier.js?v=2"></script>
 <script>
 /* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS » =================
@@ -688,6 +688,10 @@
     afficherVueBriefing();
   } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
     /* Concepteur : la page reste scellée, on attend le vrai scan du QR. */
+    afficherVueScellee();
+  } else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) {
+    /* Matelot venu scanner le QR (bouton « Scanner le QR Code trouvé » de
+       l'écran de victoire) : on présente le sas, même déjà ouvert ici. */
     afficherVueScellee();
   } else if (window.NautilusSas.estDeverrouille(2)) {
     afficherVueBriefing();

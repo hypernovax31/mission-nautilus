@@ -72,7 +72,7 @@
       +     '</div>'
       +     '<div class="won-zone-panel">'
       +       '<div class="won-zone-head"><span class="won-zone-num">2</span><span class="won-zone-title">Passer au prochain palier</span></div>'
-      +       '<a class="won-next-btn won-zone-btn" href="' + esc(o.urlSuivante) + '">📷 Scanner le QR Code trouvé</a>'
+      +       '<a class="won-next-btn won-zone-btn" href="' + esc(o.urlSuivante) + '?scan=1">📷 Scanner le QR Code trouvé</a>'
       +     '</div>'
       +   '</div>'
       +   '<p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone : c’est la clé d’entrée du ' + esc(prochain) + '.</p>'
