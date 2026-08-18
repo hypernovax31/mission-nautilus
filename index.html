@@ -2440,10 +2440,10 @@ function qrDataUri(text, opts){
     overlay.className = 'qr-modal';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:10002;background:radial-gradient(circle at 50% 30%,rgba(5,30,48,.96),rgba(0,0,0,.98));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
     overlay.innerHTML =
-      '<div style="text-align:center;color:#fff;max-width:min(92vw,500px);width:100%">' +
+      '<div style="text-align:center;color:#fff;max-width:min(96vw,640px);width:100%">' +
         '<div style="font-weight:1000;letter-spacing:.04em;font-size:13px;margin-bottom:10px;color:#ffe2a0;line-height:1.4">Scanne ce QR avec un téléphone<br>pour y reprendre ta partie</div>' +
-        '<div style="background:#fff;padding:18px;border-radius:18px;display:inline-block;box-shadow:0 0 60px rgba(245,176,39,.4)">' +
-          '<img id="qrModalImg" src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:min(70vw,380px);height:min(70vw,380px);display:block;image-rendering:pixelated">' +
+        '<div style="background:#fff;padding:16px;border-radius:18px;display:inline-block;box-shadow:0 0 60px rgba(245,176,39,.4)">' +
+          '<img id="qrModalImg" src="' + esc(qrUrl) + '" alt="QR Code Matelot" style="width:min(88vw,82vh,600px);height:min(88vw,82vh,600px);display:block;image-rendering:pixelated">' +
         '</div>' +
         '<div style="font-family:Consolas,monospace;font-size:22px;font-weight:1000;letter-spacing:.08em;margin-top:14px;color:#fff;background:rgba(0,0,0,.55);padding:10px 18px;border-radius:10px;border:2px solid rgba(245,176,39,.55);display:inline-block">' + esc(code) + '</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px">' +
