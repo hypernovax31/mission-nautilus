@@ -2365,21 +2365,32 @@ function qrDataUri(text, opts){
       const img = new Image();
       img.onload = () => {
         try{
+          const cv = document.createElement('canvas');
+          const ctx = cv.getContext('2d');
+
+          /* LIEN EN PLEINE LARGEUR : on mesure sa largeur à 100 px, puis on
+             calcule la taille de police qui occupe exactement toute la
+             largeur disponible du PNG (une seule ligne, le plus lisible
+             possible). */
+          const lienText = 'Lien : ' + buildResumeUrl(code);
+          const availW = W - 2 * PAD;
+          ctx.font = '600 100px Arial, Helvetica, sans-serif';
+          const refW = ctx.measureText(lienText).width || 1;
+          const lienPx = Math.max(16, Math.floor(100 * availW / refW));
+
           const lines = [
-            { t: 'MISSION NAUTILUS', size: 44, weight: '900', color: '#f5b027', gap: 14 },
-            { t: '=================', size: 30, weight: '700', color: '#5d7286', gap: 34 },
-            { t: 'Lien : ' + buildResumeUrl(code), size: 18, weight: '600', color: '#cfe3f0', gap: 26 },
-            { t: 'Matelot : ' + (name || '—'), size: 28, weight: '800', color: '#ffffff', gap: 26 },
-            { t: 'Equipage : ' + (teamName || '—'), size: 28, weight: '800', color: '#ffffff', gap: 26 },
-            { t: 'Code Matelot : ' + code,     size: 34, weight: '900', color: '#f5b027', gap: 34 }
+            { t: 'MISSION NAUTILUS', size: 44 * S, weight: '900', color: '#f5b027', gap: 14 * S },
+            { t: '=================', size: 30 * S, weight: '700', color: '#5d7286', gap: 34 * S },
+            { t: lienText, size: lienPx, weight: '600', color: '#cfe3f0', gap: 26 * S },
+            { t: 'Matelot : ' + (name || '—'), size: 28 * S, weight: '800', color: '#ffffff', gap: 26 * S },
+            { t: 'Equipage : ' + (teamName || '—'), size: 28 * S, weight: '800', color: '#ffffff', gap: 26 * S },
+            { t: 'Code Matelot : ' + code,     size: 34 * S, weight: '900', color: '#f5b027', gap: 34 * S }
           ];
-          const textH = lines.reduce((a, l) => a + (l.size + l.gap) * S, 0);
+          const textH = lines.reduce((a, l) => a + l.size + l.gap, 0);
           const noteH = (30 + 26) * S;
           const H = PAD + textH + QR + 34 * S + noteH + PAD;
 
-          const cv = document.createElement('canvas');
           cv.width = W; cv.height = H;
-          const ctx = cv.getContext('2d');
 
           // Fond dans les couleurs du jeu
           const g = ctx.createLinearGradient(0, 0, W, H);
@@ -2395,10 +2406,10 @@ function qrDataUri(text, opts){
           let y = PAD;
           ctx.textBaseline = 'top';
           for(const l of lines){
-            ctx.font = l.weight + ' ' + (l.size * S) + 'px Arial, Helvetica, sans-serif';
+            ctx.font = l.weight + ' ' + l.size + 'px Arial, Helvetica, sans-serif';
             ctx.fillStyle = l.color;
             ctx.fillText(l.t, PAD, y);
-            y += (l.size + l.gap) * S;
+            y += l.size + l.gap;
           }
 
           // QR centre, sur fond blanc (indispensable pour qu'il reste lisible)
@@ -2491,8 +2502,7 @@ function qrDataUri(text, opts){
         if(estOrdinateur()){
           const r = await enregistrerFichePourOrdinateur(
             currentMatelot?.name, code, currentMatelot?.teamName);
-          showToast(r.ok ? '💾 Image + note enregistrées — envoie l\'image sur ton téléphone'
-                         : '❌ Enregistrement impossible',
+          showToast(r.ok ? 'Enregistré' : '❌ Enregistrement impossible',
             r.ok ? 'linear-gradient(135deg,#075c39,#0a8a5a)' : 'linear-gradient(135deg,#9b1111,#b8322b)');
           return;
         }
@@ -5769,13 +5779,7 @@ function qrDataUri(text, opts){
       const res = await openMatelotInNotes(name, code, team, link);
       if(res.ok){
         if(res.method === 'desktop-files'){
-          /* Ordinateur : on annonce ce qui vient d'arriver dans le dossier
-             Telechargements, et ce qu'il reste a faire (envoyer l'image
-             sur le telephone). */
-          const quoi = (res.image && res.note) ? 'Image + note enregistrées'
-                     : res.image ? 'Image enregistrée' : 'Note enregistrée';
-          showToast('💾 ' + quoi + ' — envoie l\'image sur ton téléphone',
-            'linear-gradient(135deg,#075c39,#0a8a5a)');
+          showToast('Enregistré', 'linear-gradient(135deg,#075c39,#0a8a5a)');
         }else if(res.method === 'clipboard'){
           showToast('📋 Fiche copiée — colle-la dans tes Notes', 'linear-gradient(135deg,#075c39,#0a8a5a)');
         }else if(res.method === 'download'){
