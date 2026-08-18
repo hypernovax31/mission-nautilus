@@ -2351,7 +2351,7 @@ function qrDataUri(text, opts){
           const lines = [
             { t: 'MISSION NAUTILUS', size: 44, weight: '900', color: '#f5b027', gap: 14 },
             { t: '=================', size: 30, weight: '700', color: '#5d7286', gap: 34 },
-            { t: 'Lien : ' + siteUrl(),        size: 24, weight: '600', color: '#cfe3f0', gap: 26 },
+            { t: 'Lien : ' + buildResumeUrl(code), size: 18, weight: '600', color: '#cfe3f0', gap: 26 },
             { t: 'Matelot : ' + (name || '—'), size: 28, weight: '800', color: '#ffffff', gap: 26 },
             { t: 'Equipage : ' + (teamName || '—'), size: 28, weight: '800', color: '#ffffff', gap: 26 },
             { t: 'Code Matelot : ' + code,     size: 34, weight: '900', color: '#f5b027', gap: 34 }
