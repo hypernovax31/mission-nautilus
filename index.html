@@ -2280,11 +2280,11 @@ function qrDataUri(text, opts){
     try{
       if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
         const qrUri = matelotQrUri(code, teamCodeFromName(teamName));
-        const pngBlob = await qrToPngBlob(qrUri, 420);
+        const pngBlob = await qrToPngBlob(qrUri, 1024);
         const dataUrl = await blobToDataUrl(pngBlob);
         const html = '<div style="font-family:Arial,sans-serif">'
           + text.split('\n').map(l => esc(l)).join('<br>')
-          + '<br><br><img src="' + dataUrl + '" alt="QR Code Matelot" width="220" height="220">'
+          + '<br><br><img src="' + dataUrl + '" alt="QR Code Matelot" width="320" height="320">'
           + '</div>';
         await navigator.clipboard.write([new ClipboardItem({
           'text/plain': new Blob([text], { type: 'text/plain' }),
@@ -2319,13 +2319,16 @@ function qrDataUri(text, opts){
   /**
    * Convertit un QR (data: URI SVG) en Blob PNG, pour le partage de fichier.
    * Passe par un canvas : aucun appel reseau.
+   * Résolution haute par défaut (1024 px) : le QR reste net à l'impression
+   * et scannable même par les appareils photo bas de gamme, qui ont besoin
+   * de modules bien séparés et d'une marge blanche franche.
    */
   function qrToPngBlob(dataUri, size){
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
         const cv = document.createElement('canvas');
-        cv.width = cv.height = size || 600;
+        cv.width = cv.height = size || 1024;
         const ctx = cv.getContext('2d');
         ctx.imageSmoothingEnabled = false;
         ctx.fillStyle = '#fff';
@@ -2344,7 +2347,13 @@ function qrDataUri(text, opts){
      d'un texte que certaines applications ignorent. */
   function buildMatelotCardPng(name, code, teamName){
     return new Promise((resolve, reject) => {
-      const W = 900, PAD = 56, QR = 380;
+      /* RESOLUTION DOUBLÉE : la fiche passe de 900 à 1800 px de large et le
+         QR de 380 à 760 px. À l'impression (ou une fois enregistrée dans la
+         galerie puis agrandie), chaque module du QR reste net et bien séparé :
+         c'est ce qui permet aux appareils photo bas de gamme de le lire
+         sans flou ni confusion entre modules voisins. */
+      const S = 2;
+      const W = 900 * S, PAD = 56 * S, QR = 380 * S;
       const img = new Image();
       img.onload = () => {
         try{
@@ -2356,9 +2365,9 @@ function qrDataUri(text, opts){
             { t: 'Equipage : ' + (teamName || '—'), size: 28, weight: '800', color: '#ffffff', gap: 26 },
             { t: 'Code Matelot : ' + code,     size: 34, weight: '900', color: '#f5b027', gap: 34 }
           ];
-          const textH = lines.reduce((a, l) => a + l.size + l.gap, 0);
-          const noteH = 30 + 26;
-          const H = PAD + textH + QR + 34 + noteH + PAD;
+          const textH = lines.reduce((a, l) => a + (l.size + l.gap) * S, 0);
+          const noteH = (30 + 26) * S;
+          const H = PAD + textH + QR + 34 * S + noteH + PAD;
 
           const cv = document.createElement('canvas');
           cv.width = W; cv.height = H;
@@ -2371,28 +2380,28 @@ function qrDataUri(text, opts){
           ctx.fillStyle = g;
           ctx.fillRect(0, 0, W, H);
           ctx.strokeStyle = 'rgba(245,176,39,.45)';
-          ctx.lineWidth = 4;
-          ctx.strokeRect(2, 2, W - 4, H - 4);
+          ctx.lineWidth = 4 * S;
+          ctx.strokeRect(2 * S, 2 * S, W - 4 * S, H - 4 * S);
 
           // Texte
           let y = PAD;
           ctx.textBaseline = 'top';
           for(const l of lines){
-            ctx.font = l.weight + ' ' + l.size + 'px Arial, Helvetica, sans-serif';
+            ctx.font = l.weight + ' ' + (l.size * S) + 'px Arial, Helvetica, sans-serif';
             ctx.fillStyle = l.color;
             ctx.fillText(l.t, PAD, y);
-            y += l.size + l.gap;
+            y += (l.size + l.gap) * S;
           }
 
           // QR centre, sur fond blanc (indispensable pour qu'il reste lisible)
           const qx = (W - QR) / 2;
           ctx.fillStyle = '#fff';
-          ctx.fillRect(qx - 14, y - 14, QR + 28, QR + 28);
+          ctx.fillRect(qx - 14 * S, y - 14 * S, QR + 28 * S, QR + 28 * S);
           ctx.imageSmoothingEnabled = false;
           ctx.drawImage(img, qx, y, QR, QR);
-          y += QR + 34;
+          y += QR + 34 * S;
 
-          ctx.font = '700 22px Arial, Helvetica, sans-serif';
+          ctx.font = '700 ' + (22 * S) + 'px Arial, Helvetica, sans-serif';
           ctx.fillStyle = '#ff9b8f';
           ctx.fillText('IMPORTANT : Le code est personnel et à usage unique.', PAD, y);
 
