@@ -3,17 +3,17 @@
 """
 GÉNÉRATEUR DE LA GRILLE DE MOTS CROISÉS — Palier 2 « Code Magasin ».
 
-Entrée  : MOTS_CANDIDATS ci-dessous — 11 « objets rétro-futuristes » du
-          Nautilus, chacun à retrouver dans un rayon du magasin
-          (rayon, stock, SAV, caisse).
+Entrée  : MOTS_CANDIDATS ci-dessous — 11 mots du quotidien du magasin
+          (produits, gestes, techniques), chacun à retrouver dans un
+          rayon (rayon, stock, SAV, caisse).
 Sortie  : le tableau JS `var MOTS = [...]` prêt à coller dans 1721310619.html,
           avec (num, dir, row, col) calculés et la grille rendue en ASCII.
 
-THÈME « RÉTRO-FUTURISTE » — chaque définition décrit un objet du
-  quotidien présent dans le Nautilus en termes pseudo-scientifiques ;
-  le joueur doit deviner son équivalent dans sa propre dimension (les
-  rayons du magasin). La solution n'apparaît JAMAIS dans l'indice
-  (le script le vérifie), ni sa racine (vérifié manuellement).
+THÈME « RÉTRO-FUTURISTE » — chaque définition décrit un mot du
+  quotidien du magasin dans la langue d'outre-temps du Nautilus ; le
+  joueur doit reconnaître son équivalent dans sa propre dimension
+  (les rayons). La solution n'apparaît JAMAIS dans l'indice (le
+  script le vérifie), ni sa racine (vérifié manuellement).
 
 Règles de construction (mots croisés classiques) :
   - chaque mot croise AU MOINS un autre mot (grille entièrement connexe) ;
@@ -29,8 +29,9 @@ import unicodedata
 from collections import Counter
 
 # ---------------------------------------------------------------
-# Les 11 mots « objets rétro-futuristes » — un équivalent par objet
-# du quotidien présent dans le Nautilus, à retrouver dans les rayons.
+# Les 11 mots du quotidien du magasin (produits, gestes, techniques),
+# décrits dans la langue d'outre-temps du Nautilus — le joueur
+# reconnaît l'équivalent de chaque description dans les rayons.
 #   reponse : solution (sans accents)   secteur : rayon / stock /
 #   sav / caisse        indice : définition « rétro-futuriste »
 #   (le mot exact ne doit JAMAIS y apparaître, ni sa racine)
@@ -55,7 +56,7 @@ MOTS_CANDIDATS = [
     dict(reponse='REPRISE',          secteur='sav',       mode=None,
          indice="Clause de filiation inversée consentie à tout bien vieillissant : l'opérateur d'origine l'absorbe à nouveau, en négocie la déchéance selon un barème d'érosion, puis lui désigne un successeur qui ignorera tout de l'aîné"),
     dict(reponse='ECOTAXE',          secteur='caisse',    mode=None,
-         indice="Obole de compensation opéré à l'instant de l'acquisition, destiné à provisionner la cérémonie ultérieure de démantèlement et la restauration des équilibres que l'objet aura fatigués par sa seule circulation"),
+         indice="Obole de compensation opérée à l'instant de l'acquisition, destinée à provisionner la cérémonie ultérieure de démantèlement et la restauration des équilibres que l'objet aura fatigués par sa seule circulation"),
     dict(reponse='PLEIADE',          secteur='rayon',     mode=None,
          indice="Fratrie lumineuse issue d'un unique embrasement, dont le nombre consacré dépasse d'une unité le témoignage du regard — matrice de toutes les confréries d'éclat, jusqu'à cette bibliothèque de peau fine où l'on inhume les œuvres qu'on estime achevées"),
 ]

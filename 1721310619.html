@@ -193,9 +193,9 @@
 <script src="records-palier.js?v=2"></script>
 <script>
 /* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS » =================
-   Thème RÉTRO-FUTURISTE : 11 objets du quotidien présents dans le Nautilus,
-   décrits en termes pseudo-scientifiques — le joueur retrouve leur
-   équivalent dans les rayons du magasin (défroisseur, diaphragme,
+   Thème RÉTRO-FUTURISTE : 11 mots du quotidien du magasin (produits,
+   gestes, techniques), décrits dans la langue d'outre-temps du Nautilus
+   — le joueur reconnaît leur équivalent en rayon (défroisseur, diaphragme,
    anti-skating, picking, réassort, ray tracing, steelbook, neuronal,
    reprise, écotaxe, Pléiade).
    Définitions « rétro-futuristes » : jamais le mot ni sa racine (le
@@ -240,7 +240,7 @@
 
   var MOTS = [
     { num: 1, dir: 'h', row: 0, col: 2, reponse: 'STEELBOOK', secteur: 'rayon', definition: "Coffret plat à deux volets, trempé contre l'oubli, dont la surface polie renvoie au possesseur son propre visage avant de lui concéder l'accès à la fiction qu'il abrite." },
-    { num: 2, dir: 'v', row: 0, col: 5, reponse: 'ECOTAXE', secteur: 'caisse', definition: "Obole de compensation opéré à l'instant de l'acquisition, destiné à provisionner la cérémonie ultérieure de démantèlement et la restauration des équilibres que l'objet aura fatigués par sa seule circulation." },
+    { num: 2, dir: 'v', row: 0, col: 5, reponse: 'ECOTAXE', secteur: 'caisse', definition: "Obole de compensation opérée à l'instant de l'acquisition, destinée à provisionner la cérémonie ultérieure de démantèlement et la restauration des équilibres que l'objet aura fatigués par sa seule circulation." },
     { num: 3, dir: 'v', row: 3, col: 13, reponse: 'PICKING', secteur: 'stock', definition: "Protocole chrono-opérationnel de matérialisation sélective, piloté par une matrice d'allocation omnicanale, qui convertit une intention transactionnelle en micro-séquences de navigation tactile au sein d'un environnement indexé, jusqu'à stabilisation de l'unité désignée dans son vecteur de circulation." },
     { num: 4, dir: 'h', row: 4, col: 5, reponse: 'ANTISKATING', secteur: 'rayon', definition: "Procédé métaphysique chargé de stabiliser la dérive latérale d'un vecteur acoustico-mental en injectant, dans la trajectoire d'un sillon cognitif, une contre-résonance spectrale destinée à empêcher la pensée non formulée de glisser vers son propre centre." },
     { num: 5, dir: 'v', row: 7, col: 3, reponse: 'NEURONAL', secteur: 'rayon', definition: "Accélérateur matériel pour opérations de réduction dimensionnelle sur espaces vectoriels de grande dimension, avec pipeline dédié aux produits scalaires massivement parallèles." },
@@ -610,7 +610,7 @@
     }
     afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas, ni briefing) */
     t0Partie = Date.now(); /* chrono du bilan de l'écran de victoire */
-    statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — chaque définition décrit un objet du Nautilus : devine son équivalent en rayon. <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
+    statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — chaque définition décrit un produit de vos rayons, transfiguré par le Nautilus. <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
       maxErreurs: 3,
@@ -633,10 +633,11 @@
     /* Thème des « Mots Croisés », raconté sans le livrer : les mots
        exacts, la grille, les réponses — rien ne fuite. Le briefing
        pose le cadre « rétro-futuriste » demandé par l'organisation :
-       des objets du quotidien du Nautilus, à retrouver en rayon. */
-    intro: "Bienvenue dans un monde <b>rétro-futuriste</b> : des objets du quotidien se trouvaient à bord du <b>Nautilus</b>. Saurez-vous identifier leur <b>équivalent dans votre dimension</b> ? <b>P.S.</b> Ils sont dans <b>vos rayons</b>.",
+       le Nautilus décrit le quotidien du magasin (objets, gestes,
+       techniques) dans une langue d'outre-temps, à retrouver en rayon. */
+    intro: "Bienvenue dans un monde <b>rétro-futuriste</b>. Ici, le <b>Nautilus</b> décrit votre quotidien dans une langue d'outre-temps : objets, gestes et techniques y sont transfigurés. Saurez-vous reconnaître, derrière chaque description, son <b>équivalent dans votre dimension</b> ? <b>P.S.</b> Ils sont dans <b>vos rayons</b>.",
     consignes: [
-      { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b> — chaque objet décrit cache un produit de vos rayons." },
+      { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b> — chaque définition cache un produit de vos rayons." },
       { ico: '⏱️', html: "<b>Aucun chronomètre</b> : la plongée se fait en mer calme." },
       { ico: '❌', warn: true, html: "<b>3 erreurs</b> : le matelot remonte en surface — un équipier prend le relais immédiatement." }
       /* La 4e consigne (releve par Code Matelot) a ete RETIREE sur
