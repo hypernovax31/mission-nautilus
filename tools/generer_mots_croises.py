@@ -3,16 +3,17 @@
 """
 GÉNÉRATEUR DE LA GRILLE DE MOTS CROISÉS — Palier 2 « Code Magasin ».
 
-Entrée  : MOTS_CANDIDATS ci-dessous — 10 mots du JARGON VENDEUR couvrant
-          TOUS les secteurs : rayon, stock, SAV, bureau, caisse,
-          sécurité, occasion et direction (niveau expert par secteur).
+Entrée  : MOTS_CANDIDATS ci-dessous — 11 « objets rétro-futuristes » du
+          Nautilus, chacun à retrouver dans un rayon du magasin
+          (rayon, stock, SAV, caisse).
 Sortie  : le tableau JS `var MOTS = [...]` prêt à coller dans 1721310619.html,
           avec (num, dir, row, col) calculés et la grille rendue en ASCII.
 
-DIFFICULTÉ « EXPERT » — fini les chiffrements : chaque indice est une
-  SCÈNE VÉCUE du métier (oblique, jamais la définition scolaire), et le
-  mot lui-même est un jargon propre au secteur. La solution n'apparaît
-  JAMAIS dans l'indice (le script le vérifie) : il faut parler boutique.
+THÈME « RÉTRO-FUTURISTE » — chaque définition décrit un objet du
+  quotidien présent dans le Nautilus en termes pseudo-scientifiques ;
+  le joueur doit deviner son équivalent dans sa propre dimension (les
+  rayons du magasin). La solution n'apparaît JAMAIS dans l'indice
+  (le script le vérifie), ni sa racine (vérifié manuellement).
 
 Règles de construction (mots croisés classiques) :
   - chaque mot croise AU MOINS un autre mot (grille entièrement connexe) ;
@@ -28,36 +29,35 @@ import unicodedata
 from collections import Counter
 
 # ---------------------------------------------------------------
-# Les 10 mots « jargon maison » — un niveau EXPERT par secteur.
-#   reponse : solution (sans accents)   mode : 'reculons' | 'miroir'
-#   secteur : rayon / stock / sav / bureau / caisse / billetterie /
-#             occasion / direction       indice : confirmation métier
+# Les 11 mots « objets rétro-futuristes » — un équivalent par objet
+# du quotidien présent dans le Nautilus, à retrouver dans les rayons.
+#   reponse : solution (sans accents)   secteur : rayon / stock /
+#   sav / caisse        indice : définition « rétro-futuriste »
+#   (le mot exact ne doit JAMAIS y apparaître, ni sa racine)
 # ---------------------------------------------------------------
 MOTS_CANDIDATS = [
-    dict(reponse='PLEIADE',          secteur='rayon',     mode=None,
-         indice="les sept sœurs de la nuit, cousues d'or et rangées parmi les classiques"),
-    dict(reponse='STEELBOOK',        secteur='rayon',     mode=None,
-         indice="la cuirasse que le film endosse pour devenir coffret de collection"),
-    dict(reponse='REPRISE',          secteur='sav',       mode=None,
-         indice="le rachat de l'objet usé, qui lui offre un second maître"),
-    dict(reponse='REASSORT',         secteur='stock',     mode=None,
-         indice="la marée du matin qui regonfle les étagères avant l'arrivée des curieux"),
-    dict(reponse='NEURONAL',         secteur='rayon',     mode=None,
-         indice="le cerveau de la puce, qui devine sans qu'on lui ait tout expliqué"),
-    dict(reponse='DIAPHRAGME',       secteur='rayon',     mode=None,
-         indice="la pupille réglable de l'appareil, qui s'ouvre et se ferme comme celle du chat"),
-    dict(reponse='ANTISKATING',      secteur='rayon',     mode=None,
-         indice="la petite bride qui retient le bras de déraper vers le cœur du disque qui tourne"),
     dict(reponse='DEFROISSEUR',      secteur='rayon',     mode=None,
-         indice="la colonne qui souffle de la vapeur pour lisser l'étoffe, sans jamais la repasser"),
-    dict(reponse='LUMINANCE',        secteur='rayon',     mode=None,
-         indice="ce que l'écran rend à l'œil, compté en carrés de clarté"),
-    dict(reponse='RAYTRACING',       secteur='rayon',     mode=None,
-         indice="le miroir des pixels, qui calcule chaque reflet à rebours pour rendre la scène crédible"),
+         indice="Dispositif moderne qui ajuste les fréquences internes d'une matière pour apaiser les tensions invisibles entre ses états, sans jamais intervenir physiquement"),
+    dict(reponse='DIAPHRAGME',       secteur='rayon',     mode=None,
+         indice="Module orbiculaire à rétraction polyphasique, saturé d'un bruit électro-spectral, qui contracte un interstice d'éclat pour dériver la densité du visible comme un mécanisme optico-analogique en dérive temporelle"),
+    dict(reponse='ANTISKATING',      secteur='rayon',     mode=None,
+         indice="Procédé métaphysique chargé de stabiliser la dérive latérale d'un vecteur acoustico-mental en injectant, dans la trajectoire d'un sillon cognitif, une contre-résonance spectrale destinée à empêcher la pensée non formulée de glisser vers son propre centre"),
     dict(reponse='PICKING',          secteur='stock',     mode=None,
-         indice="la cueillette du magasinier sans verger, où chaque référence rejoint un panier qui partira sans lui"),
+         indice="Protocole chrono-opérationnel de matérialisation sélective, piloté par une matrice d'allocation omnicanale, qui convertit une intention transactionnelle en micro-séquences de navigation tactile au sein d'un environnement indexé, jusqu'à stabilisation de l'unité désignée dans son vecteur de circulation"),
+    dict(reponse='REASSORT',         secteur='stock',     mode=None,
+         indice="Cycle régénératif à cadence différée qui restaure l'équilibre densitaire d'un ensemble ordonné, en réinjectant depuis une réserve latente les unités manquantes d'une trame consommée, jusqu'à rétablissement de la continuité perceptive de l'alignement"),
+    dict(reponse='RAYTRACING',       secteur='rayon',     mode=None,
+         indice="Opération de cartographie négative où l'on ne décrit pas ce qui est, mais ce qu'un parcours hypothétique aurait dû rencontrer pour que l'apparence finale puisse justifier sa propre présence"),
+    dict(reponse='STEELBOOK',        secteur='rayon',     mode=None,
+         indice="Coffret plat à deux volets, trempé contre l'oubli, dont la surface polie renvoie au possesseur son propre visage avant de lui concéder l'accès à la fiction qu'il abrite"),
+    dict(reponse='NEURONAL',         secteur='rayon',     mode=None,
+         indice="Accélérateur matériel pour opérations de réduction dimensionnelle sur espaces vectoriels de grande dimension, avec pipeline dédié aux produits scalaires massivement parallèles"),
+    dict(reponse='REPRISE',          secteur='sav',       mode=None,
+         indice="Clause de filiation inversée consentie à tout bien vieillissant : l'opérateur d'origine l'absorbe à nouveau, en négocie la déchéance selon un barème d'érosion, puis lui désigne un successeur qui ignorera tout de l'aîné"),
     dict(reponse='ECOTAXE',          secteur='caisse',    mode=None,
-         indice="la pièce qu'on paie en plus, pour qu'un jour l'appareil mort renaisse ailleurs"),
+         indice="Obole de compensation opéré à l'instant de l'acquisition, destiné à provisionner la cérémonie ultérieure de démantèlement et la restauration des équilibres que l'objet aura fatigués par sa seule circulation"),
+    dict(reponse='PLEIADE',          secteur='rayon',     mode=None,
+         indice="Fratrie lumineuse issue d'un unique embrasement, dont le nombre consacré dépasse d'une unité le témoignage du regard — matrice de toutes les confréries d'éclat, jusqu'à cette bibliothèque de peau fine où l'on inhume les œuvres qu'on estime achevées"),
 ]
 NB_MOTS = len(MOTS_CANDIDATS)
 CIBLE_CROISEMENTS = 9

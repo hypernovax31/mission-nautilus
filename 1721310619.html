@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=47">
-  <link rel="stylesheet" href="css/palier2.css?v=21">
+  <link rel="stylesheet" href="css/palier2.css?v=22">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -35,7 +35,7 @@
        cette scène se retire au profit du BRIEFING DU CAPITAINE
        (#briefCard) — et l'équipage actif + le journal reviennent. -->
   <section class="card gate-hero" id="gateHero">
-    <h2 id="sasHeroTitle">🔒 PALIER 2 — ZONE SCELLÉE</h2>
+    <h2 id="sasHeroTitle">PALIER 2 — ZONE SCELLÉE</h2>
     <div class="body">
       <div class="sas-scene">
         <!-- En-tête de suspense : le sas est clos, il attend sa clé. -->
@@ -119,7 +119,7 @@
        (il ne revient que quand l'épreuve s'arrête : blocage,
        victoire). -->
   <section class="card" id="logCard" hidden>
-    <h2>📜 JOURNAL DE BORD</h2>
+    <h2>JOURNAL DE BORD</h2>
     <div class="body">
       <div class="morse-log">
         <h3 class="journal-titre">
@@ -141,14 +141,14 @@
        COMMUN palier-briefing.js ; la vue est montrée par
        afficherVueBriefing() dès que le sas est ouvert. -->
   <section class="card" id="briefCard" hidden>
-    <h2>⚓ BRIEFING DU CAPITAINE</h2>
+    <h2>BRIEFING DU CAPITAINE</h2>
     <div class="body">
       <div id="briefHost"></div>
     </div>
   </section>
 
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">✅ PALIER 2</h2>
+    <h2 id="sasUnlockedTitle">PALIER 2</h2>
     <div class="body">
       <div id="mcStatut" class="mc-statut">⏳ <b>Préparation de la grille…</b></div>
       <div id="mcHost"></div>
@@ -184,7 +184,7 @@
      commune à tous les paliers (mêmes styles que le Palier 1). -->
 <script src="equipage-actif.js?v=9"></script>
 <script>window.EquipageActif.init();</script>
-<!-- Moteur de mots croisés (générique) + données : 10 mots, un par secteur -->
+<!-- Moteur de mots croisés (générique) + données : 11 mots « rétro-futuristes » -->
 <script src="mots-croises.js?v=7"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers (même page de victoire
      que le Palier 1) : badge, stats, panneau pliable « DIRECTION VERS
@@ -193,16 +193,16 @@
 <script src="records-palier.js?v=2"></script>
 <script>
 /* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS » =================
-   Grille « produits & techniques maison » : 12 mots couvrant les rayons
-   de la Fnac — édition (PLEIADE), vidéo collection (STEELBOOK), occasion
-   (REPRISE), logistique (REASSORT, PICKING), caisse (ECOTAXE), multimédia
-   (NEURONAL), photo (DIAPHRAGME), son (ANTISKATING), blanc (DEFROISSEUR),
-   vidéoprojection (LUMINANCE) et gaming (RAYTRACING).
-   Indices en POUPÉES RUSSES : chaque définition enrobe la vraie définition
-   de 2-3 couches d'indirection, sans jamais nommer le mot ni sa racine
-   (le générateur le vérifie). Grille 17×17, 88 cases, 16 croisements —
-   construite et vérifiée lettre par lettre par tools/generer_mots_croises.py
-   (rejouable à l'identique).
+   Thème RÉTRO-FUTURISTE : 11 objets du quotidien présents dans le Nautilus,
+   décrits en termes pseudo-scientifiques — le joueur retrouve leur
+   équivalent dans les rayons du magasin (défroisseur, diaphragme,
+   anti-skating, picking, réassort, ray tracing, steelbook, neuronal,
+   reprise, écotaxe, Pléiade).
+   Définitions « rétro-futuristes » : jamais le mot ni sa racine (le
+   générateur vérifie l'absence du mot en clair, la racine est relue à la
+   main). Grille 15×16, 81 cases, 14 croisements — construite et vérifiée
+   lettre par lettre par tools/generer_mots_croises.py (rejouable à
+   l'identique).
    Règle calquée sur le Palier 1 : 3 mots faux tentés = remise en
    surface PERSONNELLE du matelot fautif (matelot-blocages.js — compteur
    d'échecs et barème 1 h/2 h/4 h/8 h/12 h communs à TOUS les paliers).
@@ -239,18 +239,17 @@
   var nbErreurs = 0;
 
   var MOTS = [
-    { num: 1, dir: 'v', row: 0, col: 8, reponse: 'LUMINANCE', secteur: 'rayon', definition: "ce que l'écran rend à l'œil, compté en carrés de clarté." },
-    { num: 2, dir: 'v', row: 2, col: 16, reponse: 'DEFROISSEUR', secteur: 'rayon', definition: "la colonne qui souffle de la vapeur pour lisser l'étoffe, sans jamais la repasser." },
-    { num: 3, dir: 'h', row: 3, col: 7, reponse: 'DIAPHRAGME', secteur: 'rayon', definition: "la pupille réglable de l'appareil, qui s'ouvre et se ferme comme celle du chat." },
-    { num: 4, dir: 'v', row: 3, col: 13, reponse: 'ANTISKATING', secteur: 'rayon', definition: "la petite bride qui retient le bras de déraper vers le cœur du disque qui tourne." },
-    { num: 5, dir: 'v', row: 5, col: 0, reponse: 'PICKING', secteur: 'stock', definition: "la cueillette du magasinier sans verger, où chaque référence rejoint un panier qui partira sans lui." },
-    { num: 6, dir: 'h', row: 5, col: 6, reponse: 'REASSORT', secteur: 'stock', definition: "la marée du matin qui regonfle les étagères avant l'arrivée des curieux." },
-    { num: 6, dir: 'v', row: 5, col: 6, reponse: 'RAYTRACING', secteur: 'rayon', definition: "le miroir des pixels, qui calcule chaque reflet à rebours pour rendre la scène crédible." },
-    { num: 7, dir: 'h', row: 8, col: 5, reponse: 'STEELBOOK', secteur: 'rayon', definition: "la cuirasse que le film endosse pour devenir coffret de collection." },
-    { num: 8, dir: 'h', row: 10, col: 0, reponse: 'NEURONAL', secteur: 'rayon', definition: "le cerveau de la puce, qui devine sans qu'on lui ait tout expliqué." },
-    { num: 9, dir: 'v', row: 10, col: 3, reponse: 'REPRISE', secteur: 'sav', definition: "le rachat de l'objet usé, qui lui offre un second maître." },
-    { num: 10, dir: 'h', row: 10, col: 10, reponse: 'ECOTAXE', secteur: 'caisse', definition: "la pièce qu'on paie en plus, pour qu'un jour l'appareil mort renaisse ailleurs." },
-    { num: 11, dir: 'h', row: 12, col: 3, reponse: 'PLEIADE', secteur: 'rayon', definition: "les sept sœurs de la nuit, cousues d'or et rangées parmi les classiques." }
+    { num: 1, dir: 'h', row: 0, col: 2, reponse: 'STEELBOOK', secteur: 'rayon', definition: "Coffret plat à deux volets, trempé contre l'oubli, dont la surface polie renvoie au possesseur son propre visage avant de lui concéder l'accès à la fiction qu'il abrite." },
+    { num: 2, dir: 'v', row: 0, col: 5, reponse: 'ECOTAXE', secteur: 'caisse', definition: "Obole de compensation opéré à l'instant de l'acquisition, destiné à provisionner la cérémonie ultérieure de démantèlement et la restauration des équilibres que l'objet aura fatigués par sa seule circulation." },
+    { num: 3, dir: 'v', row: 3, col: 13, reponse: 'PICKING', secteur: 'stock', definition: "Protocole chrono-opérationnel de matérialisation sélective, piloté par une matrice d'allocation omnicanale, qui convertit une intention transactionnelle en micro-séquences de navigation tactile au sein d'un environnement indexé, jusqu'à stabilisation de l'unité désignée dans son vecteur de circulation." },
+    { num: 4, dir: 'h', row: 4, col: 5, reponse: 'ANTISKATING', secteur: 'rayon', definition: "Procédé métaphysique chargé de stabiliser la dérive latérale d'un vecteur acoustico-mental en injectant, dans la trajectoire d'un sillon cognitif, une contre-résonance spectrale destinée à empêcher la pensée non formulée de glisser vers son propre centre." },
+    { num: 5, dir: 'v', row: 7, col: 3, reponse: 'NEURONAL', secteur: 'rayon', definition: "Accélérateur matériel pour opérations de réduction dimensionnelle sur espaces vectoriels de grande dimension, avec pipeline dédié aux produits scalaires massivement parallèles." },
+    { num: 6, dir: 'h', row: 7, col: 6, reponse: 'RAYTRACING', secteur: 'rayon', definition: "Opération de cartographie négative où l'on ne décrit pas ce qui est, mais ce qu'un parcours hypothétique aurait dû rencontrer pour que l'apparence finale puisse justifier sa propre présence." },
+    { num: 6, dir: 'v', row: 7, col: 6, reponse: 'REASSORT', secteur: 'stock', definition: "Cycle régénératif à cadence différée qui restaure l'équilibre densitaire d'un ensemble ordonné, en réinjectant depuis une réserve latente les unités manquantes d'une trame consommée, jusqu'à rétablissement de la continuité perceptive de l'alignement." },
+    { num: 7, dir: 'v', row: 7, col: 10, reponse: 'REPRISE', secteur: 'sav', definition: "Clause de filiation inversée consentie à tout bien vieillissant : l'opérateur d'origine l'absorbe à nouveau, en négocie la déchéance selon un barème d'érosion, puis lui désigne un successeur qui ignorera tout de l'aîné." },
+    { num: 8, dir: 'v', row: 8, col: 1, reponse: 'PLEIADE', secteur: 'rayon', definition: "Fratrie lumineuse issue d'un unique embrasement, dont le nombre consacré dépasse d'une unité le témoignage du regard — matrice de toutes les confréries d'éclat, jusqu'à cette bibliothèque de peau fine où l'on inhume les œuvres qu'on estime achevées." },
+    { num: 9, dir: 'h', row: 10, col: 0, reponse: 'DEFROISSEUR', secteur: 'rayon', definition: "Dispositif moderne qui ajuste les fréquences internes d'une matière pour apaiser les tensions invisibles entre ses états, sans jamais intervenir physiquement." },
+    { num: 10, dir: 'h', row: 13, col: 1, reponse: 'DIAPHRAGME', secteur: 'rayon', definition: "Module orbiculaire à rétraction polyphasique, saturé d'un bruit électro-spectral, qui contracte un interstice d'éclat pour dériver la densité du visible comme un mécanisme optico-analogique en dérive temporelle." }
   ];
 
   var $ = function (id) { return document.getElementById(id); };
@@ -611,7 +610,7 @@
     }
     afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas, ni briefing) */
     t0Partie = Date.now(); /* chrono du bilan de l'écran de victoire */
-    statut("✍️ <b>10 mots du jargon maison</b> — lis la scène, trouve le mot du métier : <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
+    statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — chaque définition décrit un objet du Nautilus : devine son équivalent en rayon. <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
       maxErreurs: 3,
@@ -632,12 +631,12 @@
      vue épreuve, grille). */
   window.NautilusBriefing.afficher($('briefHost'), {
     /* Thème des « Mots Croisés », raconté sans le livrer : les mots
-       exacts, les secteurs du jargon, la grille — rien ne fuite.
-       Formulation arrêtée par l'organisation : « illustre », « sans
-       jamais utiliser le mot », déchiffrage collectif (« À vous »). */
-    intro: "Chaque bulle remontée des profondeurs décrit une <b>scène vécue du métier</b>, sans jamais prononcer le mot qu'elle désigne. À vous de le deviner et de l'écrire sur la grille, lettre par lettre.",
+       exacts, la grille, les réponses — rien ne fuite. Le briefing
+       pose le cadre « rétro-futuriste » demandé par l'organisation :
+       des objets du quotidien du Nautilus, à retrouver en rayon. */
+    intro: "Bienvenue dans un monde <b>rétro-futuriste</b> : des objets du quotidien se trouvaient à bord du <b>Nautilus</b>. Saurez-vous identifier leur <b>équivalent dans votre dimension</b> ? <b>P.S.</b> Ils sont dans <b>vos rayons</b>.",
     consignes: [
-      { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b> — le jargon expert de chaque secteur du magasin." },
+      { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b> — chaque objet décrit cache un produit de vos rayons." },
       { ico: '⏱️', html: "<b>Aucun chronomètre</b> : la plongée se fait en mer calme." },
       { ico: '❌', warn: true, html: "<b>3 erreurs</b> : le matelot remonte en surface — un équipier prend le relais immédiatement." }
       /* La 4e consigne (releve par Code Matelot) a ete RETIREE sur
