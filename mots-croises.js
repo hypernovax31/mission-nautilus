@@ -315,7 +315,7 @@
          la grille (deux colonnes côte à côte sur écran moyen, une seule
          sur mobile) au lieu d'une liste unique. */
       var groupe = document.createElement('div');
-      groupe.className = 'mc-defs-group';
+      groupe.className = 'mc-defs-group mc-defs-group--' + g[0];
       var titre = document.createElement('div');
       titre.className = 'mc-defs-titre';
       titre.textContent = g[1];

@@ -3,6 +3,11 @@
    S'ajoute à palier1.css : même liseré d'or, même ambiance.
    ============================================================= */
 
+/* Page pleine largeur : le Palier 2 s'étend au-delà du cadre standard
+   (1180 px) pour laisser la grille et ses descriptions se déployer de
+   part et d'autre sur grand écran. */
+main{ max-width:1720px; }
+
 .gate-hero .body{ display:block; }
 
 /* Encart de scan : cadre pointillé or, façon « zone d'amarrage ». */
@@ -74,6 +79,9 @@
    .card / .body de palier1.css et le bloc rendu par palier-briefing.js
    réutilise EXACTEMENT les classes .brief du briefing du Palier 1
    (.brief-signature, .brief-intro, .brief-list, .brief-cta). */
+/* Page pleine largeur : le texte du briefing reste centré à une largeur
+   de lecture confortable au lieu de s'étirer sur toute la carte. */
+.brief{ max-width:760px; margin:0 auto; }
 
 /* MISE EN PAGE « AU MOMENT DE JOUER » : pendant les mots croisés, la
    page ne laisse QUE la carte de l'épreuve (le journal de bord s'est
@@ -109,19 +117,31 @@
    marine foncée sur case claire dans TOUS les états.
    Le badge de droite = NOMBRE DE LETTRES du mot.
    ============================================================= */
-.mc{ display:grid; grid-template-columns:minmax(0,680px) minmax(0,1fr); gap:28px; align-items:start; }
+/* GRAND ÉCRAN : la grille au centre, les descriptions l'ENTOURENT —
+   « Horizontalement » à gauche, « Verticalement » à droite (3 colonnes,
+   toute la largeur). */
+.mc{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,640px) minmax(0,1fr);
+  grid-template-areas:"across grille down";
+  gap:32px; align-items:start;
+}
+.mc-grille{ grid-area:grille; }
+.mc-defs{ display:contents; }
+.mc-defs-group--h{ grid-area:across; }
+.mc-defs-group--v{ grid-area:down; }
 /* ÉCRAN MOYEN : la grille passe au-dessus, et les descriptions se
-   rangent en DEUX colonnes (Horizontalement | Verticalement) pour
-   occuper toute la largeur disponible au lieu d'une liste unique. */
-@media(max-width:1180px){
-  .mc{ grid-template-columns:1fr; gap:20px; }
-  .mc-grille{ max-width:640px; }
-  .mc-defs{ flex-direction:row; align-items:flex-start; }
+   rangent en DEUX colonnes côte à côte (occupe toute la largeur). */
+@media(max-width:1439px){
+  .mc{ grid-template-columns:1fr; grid-template-areas:none; gap:20px; }
+  .mc-grille{ grid-area:auto; max-width:640px; }
+  .mc-defs{ display:flex; flex-direction:row; align-items:flex-start; gap:16px; }
+  .mc-defs-group--h, .mc-defs-group--v{ grid-area:auto; }
   .mc-defs-group{ flex:1 1 0; }
 }
 /* PETIT TÉLÉPHONE : descriptions de nouveau sur UNE colonne. */
 @media(max-width:640px){
-  .mc-defs{ flex-direction:column; }
+  .mc-defs{ flex-direction:column; gap:14px; }
 }
 /* RESPONSIVE « PLEIN CADRE » : sur petit écran, la page et la carte
    rognent leurs marges pour donner le maximum de largeur à la grille
@@ -190,7 +210,6 @@
 @keyframes mcShake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
 .mc.mc-termine .mc-grille{ pointer-events:none; }
 
-.mc-defs{ display:flex; flex-direction:column; gap:16px; }
 .mc-defs-group{ display:flex; flex-direction:column; gap:9px; min-width:0; }
 .mc-defs-titre{ color:#ffd36c; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; margin:0 0 2px; }
 .mc-def{
