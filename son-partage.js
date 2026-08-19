@@ -13,6 +13,13 @@
       qui EST l'epreuve — sans lui le mot est introuvable. Il joue toujours,
       mais uniquement a la demande (bouton « Ecouter le signal »).
 
+   1 bis. SOURDINE QUAND L'ONGLET QUITTE L'ECRAN (demande explicite)
+      Des que la page n'est plus visible (autre onglet, application en
+      arriere-plan, ecran verrouille), le son se coupe net. Au retour, il
+      reprend — sauf si le joueur avait coupe le sonar. C'est une sourdine
+      TEMPORAIRE, propre a la visibilite de l'onglet : elle ne touche JAMAIS
+      au choix persistant (localStorage).
+
    2. LE REGISTRE DES CONTEXTES WEB AUDIO
       Les elements <audio> savent etre mis en pause ; PAS les contextes Web
       Audio : une fois un jingle ou une alarme demarre dedans, seul un
@@ -64,6 +71,49 @@
     if (!sonActif()) return;
     contextes.forEach(function (c) {
       try { if (c.state === 'suspended') c.resume(); } catch (e) { /* signe */ }
+    });
+  }
+
+  /* ===== SOURDINE QUAND L'ONGLET N'EST PLUS VISIBLE =====
+     Demande explicite : des que la page quitte l'ecran (autre onglet, app
+     en arriere-plan, ecran verrouille), le son se coupe. Au retour, il
+     reprend — sauf si le sonar est coupe (sonActif() = false). Sourdine
+     temporaire : le choix persistant (localStorage) n'est jamais touche.
+     On ne coupe que les <audio> QUI JOUAIENT (muted=false) et on retient
+     lesquels, pour ne demuter qu'eux au retour : on ne reveille jamais un
+     <audio> volontairement muet (amorce, alarme en attente…). */
+  var _ongletMasque = false;
+  var _audiosCoupes = [];   // <audio> dont on a coupe le son en quittant l'ecran
+
+  function _couperOnglet() {
+    _audiosCoupes = [];
+    var list = document.querySelectorAll('audio');
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      if (!a.muted) {
+        try { a.muted = true; _audiosCoupes.push(a); } catch (e) { /* pas pret */ }
+      }
+    }
+    suspendreContextes();   // contextes Web Audio (jingle, morse…) : taises net
+  }
+
+  function _retablirOnglet() {
+    if (!sonActif()) { _audiosCoupes = []; return; }
+    for (var i = 0; i < _audiosCoupes.length; i++) {
+      try { _audiosCoupes[i].muted = false; } catch (e) { /* pas pret */ }
+    }
+    _audiosCoupes = [];
+    relancerContextes();
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        if (_ongletMasque) { _ongletMasque = false; _retablirOnglet(); }
+      } else {
+        _ongletMasque = true;
+        _couperOnglet();
+      }
     });
   }
 
