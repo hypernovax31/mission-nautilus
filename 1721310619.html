@@ -6,7 +6,7 @@
   <title>Mission Nautilus — Palier 2</title>
   <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
   <link rel="stylesheet" href="css/palier1.css?v=47">
-  <link rel="stylesheet" href="css/palier2.css?v=24">
+  <link rel="stylesheet" href="css/palier2.css?v=25">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -634,8 +634,10 @@
        exacts, la grille, les réponses — rien ne fuite. Le briefing
        pose le cadre « rétro-futuriste vernien » demandé par
        l'organisation : le Nautilus consigne le quotidien du magasin
-       (objets, gestes, techniques) dans une langue d'un autre âge. */
-    intro: "Bienvenue à bord, matelot. Les instruments du <b>Nautilus</b> ont consigné les merveilles de votre monde dans une langue d'un autre âge : objets, gestes et techniques y sont décrits comme de prodigieuses <b>machines</b>. Déchiffrez chaque description et restituez-lui le nom qu'elle porte <b>dans votre dimension</b>. <b>P.S.</b> Nul besoin de plonger : chaque réponse sommeille déjà <b>dans vos rayons</b>.",
+       (produits, gestes, techniques) dans une langue d'un autre âge.
+       Responsive : la clause descriptive (.brief-verbose) est masquée
+       sur petit écran — le briefing se lit plus court sur mobile. */
+    intro: "Bienvenue à bord, matelot. Le <b>Nautilus</b> consigne votre quotidien dans une langue d'un autre âge<span class=\"brief-verbose\"> : produits, gestes et techniques y deviennent de prodigieuses <b>machines</b></span>. Déchiffrez chaque description et restituez le nom qu'elle porte <b>dans votre dimension</b>. <b>P.S.</b> Nul besoin de plonger : chaque réponse sommeille déjà <b>dans vos rayons</b>.",
     consignes: [
       { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b> — chaque définition cache un produit de vos rayons." },
       { ico: '⏱️', html: "<b>Aucun chronomètre</b> : la plongée se fait en mer calme." },

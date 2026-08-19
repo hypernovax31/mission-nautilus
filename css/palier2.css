@@ -82,6 +82,13 @@ main{ max-width:1720px; }
 /* Page pleine largeur : le texte du briefing reste centré à une largeur
    de lecture confortable au lieu de s'étirer sur toute la carte. */
 .brief{ max-width:760px; margin:0 auto; }
+/* Responsive : la clause descriptive longue du briefing (.brief-verbose)
+   est masquée sur petit écran — le texte se lit plus court et plus serré,
+   sans mur de texte sur téléphone. */
+@media(max-width:640px){
+  .brief-verbose{ display:none; }
+  .brief-intro{ font-size:14px; line-height:1.6; }
+}
 
 /* MISE EN PAGE « AU MOMENT DE JOUER » : pendant les mots croisés, la
    page ne laisse QUE la carte de l'épreuve (le journal de bord s'est
