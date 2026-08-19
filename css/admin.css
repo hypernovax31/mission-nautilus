@@ -258,14 +258,31 @@
     #adminCloseBtn:hover{background:rgba(255,75,62,.42);color:#fff;transform:rotate(90deg)}
     #adminCloseBtn:focus-visible{outline:2px solid rgba(255,180,173,.7);outline-offset:2px}
 
-    /* Responsive : < 640px → 2 colonnes pour les rows */
+    /* Responsive : < 640px → une seule colonne par ligne de matelot/équipe.
+       (L'ancienne grille 2 colonnes faisait chevaucher le nom, le code et
+       les boutons sur mobile : on aligne tout en colonne, comme la règle
+       « Mobile : tout en 1 colonne » plus haut — les deux breakpoints
+       sont désormais cohérents.) */
     @media(max-width:640px){
       #adminPanel>div.body, #adminPanel .body{padding:10px 12px}
-      .member-edit-row{grid-template-columns:1fr 1fr}
-      .team-edit-row{grid-template-columns:1fr 1fr}
-      .member-edit-row .me-team{grid-column:1 / -1}
-      .member-edit-row .me-save,.member-edit-row .me-del{justify-self:end}
+      .member-edit-row,.team-edit-row{grid-template-columns:1fr;gap:8px}
+      .member-edit-row .me-actions,.team-edit-row .tt-actions{justify-self:stretch;width:100%}
+      .member-edit-row .me-save,.member-edit-row .me-del,
+      .team-edit-row .tt-save,.team-edit-row .tt-del{flex:1}
     }
+    /* ===== MODE CONCEPTEUR — lignes responsives (aucun chevauchement) =====
+       ds-row / ds-row-main / ds-row-actions posées par renderDesignerAccess
+       (index.html). Le titre peut se replier, les actions passent en dessous
+       sur écran étroit au lieu de chevaucher le texte ou de le décaler. */
+    .ds-row{flex-wrap:wrap}
+    .ds-row-main{flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+    .ds-row-actions{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto;max-width:100%}
+    .ds-row-actions a{white-space:nowrap}
+    @media(max-width:480px){
+      .ds-row-actions{flex:1 1 100%}
+      .ds-row-actions a{flex:1 1 auto;text-align:center}
+    }
+
 /* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur ===== */
 html{font-size:100%;}
 h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-word;word-break:break-word;}
