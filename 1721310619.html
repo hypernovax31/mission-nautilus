@@ -610,7 +610,7 @@
     }
     afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas, ni briefing) */
     t0Partie = Date.now(); /* chrono du bilan de l'écran de victoire */
-    statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — chaque définition décrit un produit de vos rayons, transfiguré par le Nautilus. <b>3 erreurs</b> et tu remontes en surface (blocage personnel).");
+    statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — lis une définition, écris la réponse dans la grille. <b>3 erreurs</b> et tu remontes en surface.");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
       maxErreurs: 3,
