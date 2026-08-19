@@ -109,9 +109,20 @@
    marine foncée sur case claire dans TOUS les états.
    Le badge de droite = NOMBRE DE LETTRES du mot.
    ============================================================= */
-.mc{ display:grid; grid-template-columns:minmax(0,720px) minmax(0,1fr); gap:24px; align-items:start; }
-@media(max-width:1120px){ .mc{ gap:16px; } }
-@media(max-width:980px){ .mc{ grid-template-columns:1fr; } }
+.mc{ display:grid; grid-template-columns:minmax(0,680px) minmax(0,1fr); gap:28px; align-items:start; }
+/* ÉCRAN MOYEN : la grille passe au-dessus, et les descriptions se
+   rangent en DEUX colonnes (Horizontalement | Verticalement) pour
+   occuper toute la largeur disponible au lieu d'une liste unique. */
+@media(max-width:1180px){
+  .mc{ grid-template-columns:1fr; gap:20px; }
+  .mc-grille{ max-width:640px; }
+  .mc-defs{ flex-direction:row; align-items:flex-start; }
+  .mc-defs-group{ flex:1 1 0; }
+}
+/* PETIT TÉLÉPHONE : descriptions de nouveau sur UNE colonne. */
+@media(max-width:640px){
+  .mc-defs{ flex-direction:column; }
+}
 /* RESPONSIVE « PLEIN CADRE » : sur petit écran, la page et la carte
    rognent leurs marges pour donner le maximum de largeur à la grille
    (16 colonnes) et aux définitions — on exploite toute la fenêtre
@@ -125,7 +136,7 @@
   .body{ padding:12px 10px; }
 }
 .mc-grille{
-  display:grid; gap:6px; width:100%; max-width:720px; min-width:0; margin:0 auto;
+  display:grid; gap:6px; width:100%; max-width:680px; min-width:0; margin:0 auto;
   /* FOND RETRAVAILLÉ : cadre abyssal en dégradé, filet d'or plus
      présent — les cases « papier » restent DANS l'encadrement à
      toutes les largeurs (min-width:0 + input size=1, voir
@@ -179,8 +190,9 @@
 @keyframes mcShake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
 .mc.mc-termine .mc-grille{ pointer-events:none; }
 
-.mc-defs{ display:flex; flex-direction:column; gap:9px; }
-.mc-defs-titre{ color:#ffd36c; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; margin:8px 0 2px; }
+.mc-defs{ display:flex; flex-direction:column; gap:16px; }
+.mc-defs-group{ display:flex; flex-direction:column; gap:9px; min-width:0; }
+.mc-defs-titre{ color:#ffd36c; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; margin:0 0 2px; }
 .mc-def{
   display:flex; gap:12px; align-items:flex-start; text-align:left; cursor:pointer;
   background:rgba(4,18,30,.72); border:1px solid rgba(142,231,255,.38); border-radius:12px;

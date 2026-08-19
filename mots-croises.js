@@ -310,10 +310,16 @@
     var defs = document.createElement('div');
     defs.className = 'mc-defs';
     [['h', '➡️ Horizontalement'], ['v', '⬇️ Verticalement']].forEach(function (g) {
+      /* Chaque sens forme un GROUPE (Horizontalement / Verticalement) :
+         la mise en page peut alors disposer les descriptions AUTOUR de
+         la grille (deux colonnes côte à côte sur écran moyen, une seule
+         sur mobile) au lieu d'une liste unique. */
+      var groupe = document.createElement('div');
+      groupe.className = 'mc-defs-group';
       var titre = document.createElement('div');
       titre.className = 'mc-defs-titre';
       titre.textContent = g[1];
-      defs.appendChild(titre);
+      groupe.appendChild(titre);
       mots.filter(function (m) { return m.dir === g[0]; }).forEach(function (m) {
         var b = document.createElement('button');
         b.type = 'button';
@@ -341,8 +347,9 @@
             grille.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
         });
-        defs.appendChild(b);
+        groupe.appendChild(b);
       });
+      defs.appendChild(groupe);
     });
 
     hote.appendChild(grille);
