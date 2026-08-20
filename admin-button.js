@@ -83,7 +83,7 @@
       link.rel = 'stylesheet';
       // Versionné pour ne jamais réutiliser l'ancienne feuille corrompue du
       // cache PWA sur les pages palier et classement.
-      link.href = 'css/admin.css?v=9';
+      link.href = 'css/admin.css?v=10';
       document.head.appendChild(link);
     }
     const wrap = document.createElement('div');
@@ -321,8 +321,8 @@
     const lien = (href, label) =>
       `<a href=\"${href}\" target=\"_blank\" rel=\"noopener\" style=\"background:var(--fnac);color:#111;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap\">${label}</a>`;
     const ligne = (titre, note, actionHtml, dispo) =>
-      `<div style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:${dispo ? 'rgba(91,224,155,.12)' : 'rgba(0,0,0,.04)'};border:1px solid ${dispo ? 'rgba(91,224,155,.45)' : '#dfe8ee'};\">
-        <span>${titre}${note ? ' <span class=\"small\">' + note + '</span>' : ''}</span>${actionHtml}
+      `<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:${dispo ? 'rgba(91,224,155,.12)' : 'rgba(0,0,0,.04)'};border:1px solid ${dispo ? 'rgba(91,224,155,.45)' : '#dfe8ee'};\">
+        <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">${titre}${note ? ' <span class=\"small\">' + note + '</span>' : ''}</span><span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\">${actionHtml}</span>
       </div>`;
     const sectionHtml = (titre) =>
       `<div class=\"small\" style=\"font-weight:900;color:#163f58;margin:10px 0 0\">${titre}</div>`;
@@ -361,9 +361,9 @@
       lignes.push(ligne(titre, 'aperçu', lien(`palier1.html?apercu=${mode}&k=${k}`, 'Aperçu'), true));
     });
     lignes.push(sectionHtml('EFFETS (sur cette page)'));
-    lignes.push(`<div style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);\">
-      <span>🏆 <b>Annonce verte « palier franchi »</b> <span class=\"small\">message + Victoire.mp3</span></span>
-      <button class=\"secondary\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap\">Tester</button>
+    lignes.push(`<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);\">
+      <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">🏆 <b>Annonce verte « palier franchi »</b> <span class=\"small\">message + Victoire.mp3</span></span>
+      <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\"><button class=\"secondary\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap\">Tester</button></span>
     </div>`);
     box.innerHTML = lignes.join('');
     box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', () => {

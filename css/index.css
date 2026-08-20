@@ -2384,6 +2384,23 @@ body{background:transparent}
 @keyframes majToastIn{from{opacity:0;transform:translate(-50%,18px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes majDotPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
 
+/* ===== MODE CONCEPTEUR — lignes responsives (aucun chevauchement) =====
+   ds-row / ds-row-main / ds-row-actions posées par renderDesignerAccess
+   (index.html). Le titre peut se replier, les actions passent en dessous
+   sur écran étroit au lieu de chevaucher le texte ou de le décaler. */
+.ds-row{flex-wrap:wrap}
+.ds-row-main{flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+.ds-row-actions{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto;max-width:100%}
+.ds-row-actions a{white-space:nowrap}
+/* Sur téléphone, les actions (liens/boutons) passent sous le titre et
+   s'étirent en pleine largeur : le !important est nécessaire car les
+   lignes portent un flex:0 0 auto EN INLINE (posé par renderDesignerAccess),
+   qui écraserait sinon la règle responsive. */
+@media(max-width:480px){
+  .ds-row-actions{flex:1 1 100% !important}
+  .ds-row-actions a, .ds-row-actions button{flex:1 1 auto;text-align:center}
+}
+
 /* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur =====
    Ces règles neutralisent le débordement / chevauchement quand
    l'utilisateur force une grande police ou zoome fortement :
