@@ -151,7 +151,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection
+  getFirestore, doc, getDoc, setDoc, updateDoc, deleteField, onSnapshot, collection
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ---------- CONFIGURATION ---------- */
@@ -787,16 +787,35 @@ async function heartbeat(teamCode, memberKey = null) {
   const team = await getTeam(teamCode);
   if (!team) return;
   const now = new Date().toISOString();
-  const patch = {
-    onlinePlayers: { ...(team.onlinePlayers || {}), [getClientId()]: now },
-    updatedAt: now
-  };
-  /* Presence PAR MATELOT (et non par appareil) : plusieurs matelots se
+  /* ÉCRITURE PAR CHEMIN (onlinePlayers.CLIENT / onlineMatelots.CLE) : fini
+     la lecture puis réécriture de tout l'objet. Deux matelots qui battent
+     au même instant n'écrasent plus l'entrée de l'autre, et une présence
+     périmée n'est plus recopiée indéfiniment.
+     Presence PAR MATELOT (et non par appareil) : plusieurs matelots se
      succedent sur un meme telephone, clientId ne peut donc pas dire QUI
      est en live. onlineMatelots[memberKey] = date du dernier signe de vie ;
      renderCrew() n'affiche que les cles fraiches. */
-  if (memberKey) patch.onlineMatelots = { ...(team.onlineMatelots || {}), [memberKey]: now };
+  const patch = {
+    ['onlinePlayers.' + getClientId()]: now,
+    updatedAt: now
+  };
+  if (memberKey) patch['onlineMatelots.' + memberKey] = now;
   await updateDoc(doc(db, 'teams', teamCode), patch);
+}
+
+/* ---------- PRÉSENCE : retrait immédiat à la sortie du mini-jeu ----------
+   Écrit le retrait de la clé du matelot (onlineMatelots) au moment où la
+   page passe en arrière-plan ou se ferme. Avant, on se contentait
+   d'arrêter le battement : le matelot restait affiché « en plongée »
+   jusqu'à l'expiration de l'horodatage. Best effort : si l'écriture
+   n'aboutit pas (page déjà fermée), l'expiration prend le relais. */
+async function effacerPresence(teamCode, memberKey) {
+  if (isTestMode() || !memberKey || !teamCode) return;
+  try {
+    await updateDoc(doc(db, 'teams', teamCodeFromInput(teamCode)), {
+      ['onlineMatelots.' + memberKey]: deleteField()
+    });
+  } catch (e) { /* best effort */ }
 }
 
 /* ---------- EXPORT GLOBAL ---------- */
@@ -817,7 +836,7 @@ window.Nautilus = {
   isTestMode, isTestMember,
   isSoundEnabled, getAudioCtx, getMorseCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
-  showToast, addLogEntry, addActe, clearLog, heartbeat
+  showToast, addLogEntry, addActe, clearLog, heartbeat, effacerPresence
 };
 
 
@@ -3178,10 +3197,14 @@ window.Nautilus = {
       }
     } else {
       if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }
+      /* Le matelot n'est plus devant le mini-jeu : on retire sa présence
+         tout de suite au lieu d'attendre l'expiration de l'horodatage. */
+      N.effacerPresence(state.teamCode, state.me && state.me.memberKey);
     }
   });
   window.addEventListener('pagehide', () => {
     if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }
+    N.effacerPresence(state.teamCode, state.me && state.me.memberKey);
   });
   window.addEventListener('beforeunload', () => {
     if (state.unsubSession) state.unsubSession();
@@ -3199,6 +3222,6 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=4" defer></script>
-<script src="admin-button.js?v=22" type="module"></script>
+<script src="admin-button.js?v=23" type="module"></script>
 </body>
 </html>

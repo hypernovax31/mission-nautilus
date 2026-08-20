@@ -238,15 +238,28 @@
       var arreterBattement = function () {
         if (_hb) { clearInterval(_hb); _hb = null; }
       };
+      /* Retire la clé de présence du matelot dès qu'il quitte la page ou
+         passe en arrière-plan : il disparaît aussitôt du bloc « ÉQUIPAGE
+         ACTIF EN PLONGÉE » au lieu d'y rester jusqu'à l'expiration de
+         l'horodatage. Best effort : si l'écriture n'aboutit pas (page
+         déjà fermée), l'expiration prend le relais. */
+      var effacerPresence = function () {
+        if (!_meKey || !ident.teamCode) return;
+        db().then(function (x) {
+          var patch = {};
+          patch['onlineMatelots.' + _meKey] = x.fs.deleteField();
+          return x.fs.updateDoc(x.fs.doc(x.db, 'teams', ident.teamCode), patch);
+        }).catch(function () { /* best effort */ });
+      };
 
       demarrerBattement();
 
       document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible') demarrerBattement();
-        else arreterBattement();
+        else { arreterBattement(); effacerPresence(); }
       });
       window.addEventListener('pageshow', demarrerBattement);
-      window.addEventListener('pagehide', arreterBattement);
+      window.addEventListener('pagehide', function () { arreterBattement(); effacerPresence(); });
 
       /* Écoute TOUTES les équipes en temps réel : chaque matelot en
          plongée, quel que soit son équipage, apparaît / disparaît ici. */

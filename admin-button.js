@@ -12,7 +12,7 @@
 
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
@@ -836,6 +836,67 @@
         await updateDoc(toRef, { members: toMembers, updatedAt: new Date().toISOString() });
       }
 
+      /* ===== PRÉSENCE + BLOCAGE PERSONNEL : ils suivent le matelot =====
+         Ces deux états sont rangés par memberKey — clé dérivée du NOM.
+         Renommer un matelot change donc sa clé. Sans cette migration :
+           • son blocage personnel restait sous l'ancien nom (le matelot
+             paraissait libre, alors que l'ancienne clé traînait « en
+             surface » dans l'onglet Blocages) ;
+           • sa présence « en plongée » restait collée à l'ancien nom
+             dans le bloc ÉQUIPAGE ACTIF, et le matelot, lui, ne pouvait
+             plus être reconnu comme l'auteur de sa propre partie.
+         Déplacer un matelot laissait de même des traces dans l'équipe
+         source. On reporte donc blocage et présence sur la nouvelle clé,
+         et on nettoie l'ancienne — par chemin (jamais d'écrasement de
+         l'état d'un coéquipier écrit au même instant). */
+      const cleChangee = newKey !== oldMemberKey;
+      const deplace = fromTeamCode !== toTeamCode;
+      const lockSource = (fromTeam.matelotLocks || {})[oldMemberKey] || null;
+      const presenceSource = (fromTeam.onlineMatelots || {})[oldMemberKey] || null;
+
+      if (cleChangee || deplace) {
+        const srcNettoyage = {};
+        if (lockSource) srcNettoyage['matelotLocks.' + oldMemberKey] = deleteField();
+        if (presenceSource) srcNettoyage['onlineMatelots.' + oldMemberKey] = deleteField();
+
+        /* Le BLOCAGE suit le matelot (renommer ne doit ni le libérer ni
+           l'oublier sous l'ancien nom). La PRÉSENCE, elle, est seulement
+           retirée : si le matelot joue encore, son prochain battement la
+           recréera sous le bon nom — on n'affiche ainsi jamais un matelot
+           parti comme « encore en plongée » sous son nouveau nom. */
+        const dstReport = {};
+        if (lockSource) dstReport['matelotLocks.' + newKey] = { ...lockSource, name: updatedMember.name };
+
+        const dstRef = doc(db, 'teams', toTeamCode);
+        if (fromTeamCode === toTeamCode) {
+          const patch = { ...srcNettoyage, ...dstReport };
+          if (Object.keys(patch).length) await updateDoc(fromRef, patch);
+        } else {
+          if (Object.keys(srcNettoyage).length) await updateDoc(fromRef, srcNettoyage);
+          if (Object.keys(dstReport).length) await updateDoc(dstRef, dstReport);
+        }
+      }
+
+      /* Session en cours : si c'est CE matelot qui est aux commandes, on
+         reporte son identité sur la nouvelle clé. Sans cela, après un
+         renommage il redeviendrait simple spectateur de sa propre partie
+         (ou se verrait refuser la prise de commandes). */
+      if (fromTeamCode === toTeamCode && cleChangee) {
+        try {
+          const sessRef = doc(db, fromTeamCode, 'morseSession', 'current');
+          const sessSnap = await getDoc(sessRef);
+          if (sessSnap.exists()) {
+            const sess = sessSnap.data();
+            if (sess.startedByMemberKey === oldMemberKey) {
+              await updateDoc(sessRef, {
+                startedByMemberKey: newKey,
+                startedByName: updatedMember.name
+              });
+            }
+          }
+        } catch (e) { /* session absente ou indisponible : sans gravité */ }
+      }
+
       /* ===== SYNCHRONISATION DES 3 EMPLACEMENTS =====
      Un matelot existe a trois endroits, qui doivent TOUJOURS bouger
      ensemble (creation, modification, suppression) :
@@ -888,7 +949,15 @@
       const team = { teamCode, ...snap.data() };
       const victim = (team.members || []).find(m => m.memberKey === targetMemberKey);
       const newMembers = (team.members || []).filter(m => m.memberKey !== targetMemberKey);
-      await updateDoc(ref, { members: newMembers, updatedAt: new Date().toISOString() });
+      const patch = { members: newMembers, updatedAt: new Date().toISOString() };
+      /* PRÉSENCE + BLOCAGE PERSONNEL : un matelot supprimé ne doit plus
+         rester « en plongée » (onlineMatelots) ni « en surface »
+         (matelotLocks) dans le bloc ÉQUIPAGE ACTIF ou l'onglet Blocages. */
+      if (targetMemberKey) {
+        patch['matelotLocks.' + targetMemberKey] = deleteField();
+        patch['onlineMatelots.' + targetMemberKey] = deleteField();
+      }
+      await updateDoc(ref, patch);
 
       /* Purge des deux autres emplacements du matelot. Sans cela son Code
          Matelot restait valide : il pouvait se reconnecter alors qu'il
