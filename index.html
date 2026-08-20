@@ -3154,15 +3154,16 @@ function qrDataUri(text, opts){
        livres = le portail QR. « Page scellée » = portail volontairement
        verrouillé (?sas=ferme) pour TESTER le vrai QR Code imprimé ;
        « Jouer l'épreuve » = l'aperçu qui saute le sas. */
-    const pageParPalier = { start: 'palier1.html?code=NEMO&m=ZZZZ-0000', livres: '1721310619.html' };
+    const pageParPalier = { start: 'palier1.html?code=NEMO&m=ZZZZ-0000', livres: '1721310619.html', son: '1831411720.html' };
     Object.entries(STEPS).forEach(([id, step], index) => {
       const href = pageParPalier[id] || null;
       const note = id === 'start' ? 'épreuve — compte de test'
         : id === 'livres' ? 'mots croisés'
+        : id === 'son' ? 'cluedo des abysses'
         : 'en construction';
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
-        href ? (id === 'livres'
-          ? lien('1721310619.html?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(`1721310619.html?apercu=jeu&k=${k}&m=ZZZZ-0000`, '🕹️ Jouer l’épreuve')
+        href ? ((id === 'livres' || id === 'son')
+          ? lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve')
           : lien(href, '🕹️ Jouer l’épreuve'))
         : '<span class=\"small\" style=\"white-space:nowrap\">Bientôt</span>', !!href));
     });
@@ -7349,7 +7350,7 @@ window.PWAInstall = {
   aUnPrompt: () => Boolean(pwaDeferredPrompt)
 };
 </script>
-<script src="admin-button.js?v=23" type="module"></script>
+<script src="admin-button.js?v=24" type="module"></script>
 </body>
 </html>
 

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Nautilus — Palier 3</title>
+  <meta name="description" content="Accès scellé du Palier 3 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
+  <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil). -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=49">
+  <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
+       communs à tous les paliers ≥ 2. -->
+  <link rel="stylesheet" href="css/palier2.css?v=26">
+  <link rel="stylesheet" href="css/palier3.css?v=1">
+  <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
+       connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
+    <div class="topbar-title" id="topPalierTitle">Palier 3</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER. Vue unique et immersive,
+       commune à tous les paliers ≥ 2 : tant que le QR Code n'est pas
+       scanné, c'est la seule chose à l'écran. -->
+  <section class="card gate-hero" id="gateHero">
+    <h2 id="sasHeroTitle">PALIER 3 — ZONE SCELLÉE</h2>
+    <div class="body">
+      <div class="sas-scene">
+        <div class="sas-head">
+          <div class="sas-lock" aria-hidden="true">
+            <span class="sas-lock-ico">🔒</span>
+          </div>
+          <p class="sas-kicker">Profondeur — sas scellé</p>
+          <p class="sas-titre">⛔ Ce palier est verrouillé.</p>
+          <p class="sas-msg">Déverrouillez le palier suivant grâce au <b>QR Code de la zone de recherche</b>.</p>
+        </div>
+
+        <div class="gate-scanbox sas-scanbox" id="gateScanbox">
+          <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
+          <canvas id="gateCanvas" hidden></canvas>
+          <div class="gate-cam-placeholder" id="gateCamPlaceholder" aria-hidden="true">
+            <span class="gate-cam-icon">📷</span>
+            <span>Caméra en veille — vise le QR Code pour ouvrir le sas.</span>
+          </div>
+          <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
+        </div>
+
+        <div class="gate-actions">
+          <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
+          <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
+          <input type="file" id="gateFile" accept="image/*" hidden>
+        </div>
+
+        <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
+
+        <button type="button" class="sas-indication" id="sasIndicationBtn" aria-expanded="false">📍 Voir l'indication de la zone de recherche</button>
+        <div class="sas-indication-panel" id="sasIndicationPanel" hidden>
+          <div class="won-nextzone">
+            <div class="won-radar" aria-hidden="true">
+              <span class="won-radar-ring"></span>
+              <span class="won-radar-ring won-radar-ring--2"></span>
+              <span class="won-radar-core">🧭</span>
+            </div>
+            <h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>
+            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">……</span> »</p>
+            <div class="won-nextzone-steps">
+              <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
+              <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
+              <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE : même bloc que le Palier 1 / 2. -->
+  <section class="card" id="teamCard" hidden>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- Journal de bord (live). -->
+  <section class="card" id="logCard" hidden>
+    <h2>JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
+        <ul id="morse-log-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING DU CAPITAINE — vue OBLIGATOIRE entre la ZONE SCELLÉE et
+       l'épreuve (même architecture que tous les paliers). -->
+  <section class="card" id="briefCard" hidden>
+    <h2>BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+
+  <!-- ÉPREUVE : CLUEDO DES ABYSSES. -->
+  <section class="card gate-unlocked" id="gateUnlocked" hidden>
+    <h2 id="sasUnlockedTitle">PALIER 3</h2>
+    <div class="body">
+      <div id="cluedoStatut" class="status-banner info">⏳ <b>Préparation du dossier…</b></div>
+      <div id="cluedoHost"></div>
+      <a class="cluedo-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
+    </div>
+  </section>
+</main>
+
+<!-- Journal de bord « Activité en direct », code COMMUN à tous les paliers. -->
+<script src="son-partage.js?v=2"></script>
+<script src="journal-bord.js?v=6"></script>
+<!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
+<script src="palier-sas.js?v=13"></script>
+<!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
+<script src="palier-briefing.js?v=3"></script>
+<script>window.NautilusSas.init(3);</script>
+<!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers. -->
+<script src="matelot-blocages.js?v=2"></script>
+<!-- Réserve d'oxygène (jauge du haut), commune à tous les paliers. -->
+<script src="reserve-o2.js?v=4"></script>
+<!-- Équipage actif en plongée, commun à tous les paliers. -->
+<script src="equipage-actif.js?v=10"></script>
+<script>window.EquipageActif.init();</script>
+<!-- Moteur de l'épreuve CLUEDO DES ABYSSES (Palier 3). -->
+<script src="cluedo-palier3.js?v=1"></script>
+<!-- Écran de VICTOIRE commun à TOUS les paliers. -->
+<script src="victoire-palier.js?v=12"></script>
+<script src="records-palier.js?v=2"></script>
+
+<!-- Configuration GÉNÉRÉE ET VALIDÉE par tools/generer_cluedo.py :
+     6 cartes + 5 témoignages + réserve → UNE SEULE solution. Pour
+     changer la destination du QR du Palier 4, modifiez SECRET dans le
+     générateur, relancez-le, puis collez ici le JSON produit. -->
+<script>
+const CLUEDO = {"categories":{"produit":{"label":"PRODUIT","items":[{"id":"LIVRE","label":"📕 Livre"},{"id":"DVD","label":"💿 DVD"},{"id":"MANETTE","label":"🎮 Manette"},{"id":"VINYLE","label":"🎵 Vinyle"},{"id":"CASQUE","label":"🎧 Casque"},{"id":"SOURIS","label":"🖱 Souris"}]},"rayon":{"label":"RAYON","items":[{"id":"LIVRES","label":"📚 Rayon Livres"},{"id":"INFORMATIQUE","label":"💻 Rayon Informatique"},{"id":"JEUX","label":"🎮 Rayon Jeux"},{"id":"SON","label":"🎧 Rayon Son"},{"id":"CINEMA","label":"🎬 Rayon Cinéma"},{"id":"MUSIQUE","label":"🎵 Rayon Musique"}]},"emplacement":{"label":"EMPLACEMENT","items":[{"id":"TETE","label":"Tête de gondole"},{"id":"BAS","label":"Rayonnage bas"},{"id":"PRESENTOIR","label":"Présentoir"},{"id":"VITRINE","label":"Vitrine"},{"id":"RESERVE","label":"Réserve"},{"id":"CAISSE","label":"Caisse"}]}},"secret":{"produit":"CASQUE","rayon":"SON","emplacement":"TETE"},"cartes":[{"t":"pair_not","x":"SOURIS","r":"JEUX"},{"t":"pair_not","x":"VINYLE","r":"SON"},{"t":"empl_not","x":"RESERVE"},{"t":"rayon_not","x":"MUSIQUE"},{"t":"pair_not","x":"VINYLE","r":"CINEMA"},{"t":"pair_not","x":"VINYLE","r":"INFORMATIQUE"}],"reserve":[{"t":"pair_not","x":"DVD","r":"INFORMATIQUE"},{"t":"rayon_not","x":"LIVRES"},{"t":"pair_not","x":"DVD","r":"LIVRES"},{"t":"pair_not","x":"SOURIS","r":"SON"},{"t":"prod_not","x":"LIVRE"},{"t":"prod_not","x":"SOURIS"},{"t":"rayon_not","x":"JEUX"},{"t":"rayon_not","x":"INFORMATIQUE"},{"t":"pair_not","x":"DVD","r":"JEUX"},{"t":"rayon_not","x":"CINEMA"},{"t":"pair_not","x":"LIVRE","r":"MUSIQUE"},{"t":"pair_not","x":"MANETTE","r":"LIVRES"},{"t":"pair_not","x":"SOURIS","r":"CINEMA"},{"t":"pair_not","x":"MANETTE","r":"CINEMA"},{"t":"pair_not","x":"LIVRE","r":"CINEMA"},{"t":"pair_not","x":"MANETTE","r":"MUSIQUE"},{"t":"pair_is","x":"CASQUE","r":"SON"},{"t":"empl_is","x":"TETE"},{"t":"rayon_is","x":"SON"},{"t":"prod_is","x":"CASQUE"}],"temoignages":[{"k":3,"atoms":[{"t":"prod_not","x":"LIVRE"},{"t":"prod_not","x":"MANETTE"},{"t":"pair_not","x":"DVD","r":"INFORMATIQUE"},{"t":"prod_is","x":"DVD"}]},{"k":2,"atoms":[{"t":"empl_is","x":"VITRINE"},{"t":"rayon_not","x":"LIVRES"},{"t":"prod_not","x":"SOURIS"}]},{"k":0,"atoms":[{"t":"prod_is","x":"SOURIS"},{"t":"rayon_is","x":"INFORMATIQUE"},{"t":"rayon_is","x":"LIVRES"}]},{"k":2,"atoms":[{"t":"empl_not","x":"TETE"},{"t":"rayon_is","x":"SON"},{"t":"prod_is","x":"CASQUE"}]},{"k":2,"atoms":[{"t":"prod_is","x":"MANETTE"},{"t":"empl_not","x":"VITRINE"},{"t":"rayon_is","x":"SON"}]}]};
+</script>
+
+<script>
+/* ================= ÉPREUVE DU PALIER 3 — « CLUEDO DES ABYSSES » =================
+   Épreuve de DÉDUCTION (adaptée du Cluedo), « très complexe » : découvrir
+   où le Nautilus a scellé le QR Code du palier suivant. La réponse est un
+   TRIPLET (PRODUIT repère · RAYON · EMPLACEMENT) parmi 216 combinaisons.
+   La configuration (cartes « hors de cause », témoignages « exactement k
+   affirmations vraies parmi n », réserve) est générée et VALIDÉE par
+   tools/generer_cluedo.py — l'ensemble des indices ne laisse qu'UNE SEULE
+   solution, jamais de contradiction ni d'alternative.
+   Règle calquée sur les Palier 1 & 2 : 3 accusations fausses = remise en
+   surface PERSONNELLE du matelot fautif (matelot-blocages.js — compteur
+   d'échecs et barème communs). Joueur SANS Code Matelot : repli local
+   anonyme. La victoire inscrit « son » dans completedSteps (mêmes champs
+   que les paliers précédents) et lève les blocages personnels actifs. */
+(function () {
+  'use strict';
+
+  var CLE_BLOCAGE_ANONYME = 'nautilusEpreuve3BloqueJusqua';
+  var BLOCAGE_MS  = 60 * 60 * 1000;          /* repli anonyme : 1 h */
+  var _blocageSession = 0;                   /* mode test : volatil */
+
+  /* Indication de la zone de recherche (où trouver le QR du PALIER 3),
+     affichée sur l'écran de victoire et dans l'encart du sas. */
+  var QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
+  var ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
+
+  var t0Partie = null;
+  var nbErreurs = 0;
+
+  var $ = function (id) { return document.getElementById(id); };
+  function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
+  function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
+  function enModeTest() {
+    try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
+  }
+  function blocageAnonymeJusqua() {
+    try { return Number(localStorage.getItem(CLE_BLOCAGE_ANONYME) || 0); } catch (e) { return 0; }
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function heureLisible(v) {
+    var d = new Date(typeof v === 'number' ? v : String(v));
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* QUI joue sur cet appareil ? (mêmes conventions que les autres paliers). */
+  var _ident = null, _identLue = false;
+  function monIdentite() {
+    if (_identLue) return Promise.resolve(_ident);
+    _identLue = true;
+    return window.NautilusBlocages.identiteCourante()
+      .then(function (i) { _ident = i; return _ident; })
+      .catch(function () { _ident = null; return null; });
+  }
+
+  /* Aperçu organisateur : ?apercu=jeu&k=… — même clé que les autres
+     paliers (djb2 salé initialisé à 0). */
+  function apercuAdminAutorise() {
+    try {
+      if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
+      var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
+      if (!k) return false;
+      var h = 0, s = 'apercu-admin:NEMO2026';
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return k === ('k' + Math.abs(h).toString(36));
+    } catch (e) { return false; }
+  }
+
+  function statut(html, kind) {
+    var el = $('cluedoStatut');
+    if (!el) return;
+    el.innerHTML = html;
+    el.className = 'status-banner ' + (kind || 'info');
+  }
+
+  /* Libellé d'un élément de la configuration, par catégorie. */
+  function itemLabel(cat, id) {
+    var items = CLUEDO.categories[cat].items || [];
+    for (var i = 0; i < items.length; i++) if (items[i].id === id) return items[i].label;
+    return id;
+  }
+  /* La destination trouvée, exprimée pour l'écran de victoire. */
+  function destinationLibelle() {
+    var S = CLUEDO.secret;
+    return "Le QR Code est caché au « " + itemLabel('rayon', S.rayon) + " » — "
+         + itemLabel('emplacement', S.emplacement) + " — près du produit « "
+         + itemLabel('produit', S.produit) + " ».";
+  }
+
+  /* ================= TROIS VUES EN SÉQUENCE =================
+     ZONE SCELLÉE → BRIEFING DU CAPITAINE → ÉPREUVE (comme le Palier 2). */
+  function montrerCarte(id, visible) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? '' : 'none';
+  }
+  function afficherVueScellee() {
+    montrerCarte('gateHero', true);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueBriefing() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
+    montrerCarte('briefCard', true);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueEpreuve() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', true);
+    var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
+  }
+  function afficherJournalDeBord(visible) {
+    montrerCarte('teamCard', visible);
+    montrerCarte('logCard', visible);
+    var carte = $('gateUnlocked');
+    if (carte) carte.classList.toggle('epreuve-focus', !visible);
+  }
+
+  function afficherBlocage(jusqua, nom) {
+    afficherVueEpreuve();
+    afficherJournalDeBord(true);
+    statut(nom
+      ? "🔒 <b>3 accusations fausses — remontée forcée !</b> " + esc(nom) + " regagne la surface ; reprise possible à <b>"
+        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
+        + "avec son Code Matelot — <b>chacun ses erreurs</b>."
+      : "🔒 <b>3 accusations fausses — remontée forcée !</b> Tu regagnes la surface ; reprise possible à <b>"
+        + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
+        + "pour que tes erreurs restent les tiennes.", 'danger');
+    var host = $('cluedoHost');
+    if (host) host.innerHTML = '';
+  }
+
+  function onErreur(n, max) {
+    nbErreurs = n;
+    if (n >= max) {
+      declencherBlocage();
+    } else {
+      statut('❌ <b>Accusation rejetée. ' + (max - n) + ' accusation(s) restante(s).</b> Retourne à ta grille : chaque carte et chaque témoignage compte.', 'danger');
+      acte('accusation rejetée (' + n + '/' + max + ')', 'warning');
+    }
+  }
+
+  /* Son de défaite (module partagé), JAMAIS si le sonar est éteint. */
+  function jouerSonDefaite() {
+    try {
+      if (window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound) {
+        window.NautilusAnnonces.playDefeatSound();
+      }
+    } catch (e) {}
+  }
+
+  /* 3 accusations fausses : blocage PERSONNEL (identifié) ou repli local. */
+  function declencherBlocage() {
+    if (apercuAdminAutorise()) {
+      journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
+      return;
+    }
+    monIdentite().then(function (ident) {
+      if (ident && ident.isTest) {
+        statut('🧪 <b>Mode concepteur : 3 accusations fausses.</b> Aucun blocage en test — le dossier reste jouable, rien n’est enregistré.', 'warning');
+        journal('🧪 Mode concepteur : 3 accusations fausses au Cluedo — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
+        return;
+      }
+      jouerSonDefaite();
+      if (ident) {
+        window.NautilusBlocages.poserBlocage(ident, 'cluedo_too_many_errors')
+          .then(function (r) {
+            afficherBlocage(r.lockedUntil, ident.name);
+            acte('3 accusations fausses — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
+          })
+          .catch(function () {
+            _blocageSession = Date.now() + BLOCAGE_MS;
+            afficherBlocage(_blocageSession, ident.name);
+            journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
+          });
+        return;
+      }
+      var jusqua = Date.now() + BLOCAGE_MS;
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
+      afficherBlocage(jusqua, null);
+      acte('3 accusations fausses — remonte en surface (1 h)', 'danger');
+    });
+  }
+
+  /* Inscription Firestore : mêmes champs que les paliers précédents. */
+  async function propagerVictoire() {
+    var ident = await monIdentite();
+    var equipage = (ident && !ident.isTest) ? ident.teamCode : null;
+    if (!equipage) { try { equipage = localStorage.getItem('nautilusCurrentTeam'); } catch (e) {} }
+    if (!equipage || enModeTest() || apercuAdminAutorise()) {
+      journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
+      return;
+    }
+    try {
+      var x = await window.NautilusBlocages.db();
+      await x.fs.updateDoc(x.fs.doc(x.db, 'teams', equipage), {
+        completedSteps: x.fs.arrayUnion('son'),
+        currentStep: 'zone51',
+        lastEvent: 'step_advanced',
+        lastStepCompleted: 'son',
+        lastStepCompletedAt: new Date().toISOString(),
+        lastStepCompletedLabel: 'Palier 3',
+        lastStepCompletedBy: (ident && !ident.isTest) ? ident.name : 'Un matelot'
+      });
+      if (typeof window.NautilusRecords !== 'undefined') {
+        var NOMS_EQUIPES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+        var dureeSec = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
+        window.NautilusRecords.enregistrer({
+          stepId: 'son',
+          seconds: dureeSec,
+          matelot: (ident && !ident.isTest) ? ident.name : 'Un matelot',
+          equipage: NOMS_EQUIPES[ident.teamCode] || ident.teamCode
+        }).then(chargerRecords);
+      }
+      var leves = await window.NautilusBlocages.leverBlocages(equipage, 'son');
+      journal('📈 Victoire inscrite au tableau de bord — direction le Palier 4 !'
+        + (leves > 0 ? ' ' + leves + ' matelot' + (leves > 1 ? 's' : '') + ' débloqué' + (leves > 1 ? 's' : '') + '.' : ''), 'success');
+    } catch (e) {
+      journal("⚠️ Victoire non inscrite (connexion ?). Préviens l'organisation.", 'warning');
+    }
+  }
+
+  /* ÉCRAN DE VICTOIRE FAÇON PALIER 1/2 — commun à tous les paliers. */
+  async function afficherEcranVictoire() {
+    var host = $('cluedoHost');
+    if (!host || !window.NautilusVictoire) return;
+    var ident = await monIdentite();
+    var duree = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
+    var mm = Math.floor(duree / 60), ss = ('0' + (duree % 60)).slice(-2);
+    var NOMS = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+    var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
+    window.NautilusVictoire.afficher(host, {
+      palier: 3,
+      mission: 'Le Dossier du Nautilus',
+      equipe: equipe,
+      bravo: (ident && !ident.isTest) ? ident.name : null,
+      stats: [
+        { valeur: mm + ':' + ss, label: 'Temps utilisé' },
+        { valeur: '1/1', label: 'Destination trouvée' },
+        { valeur: String(nbErreurs), label: nbErreurs > 1 ? 'Accusations fausses' : 'Accusation fausse' }
+      ],
+      indication: destinationLibelle(),
+      labelSuivant: 'Palier 4',
+      urlSuivante: '1941512821.html'
+    });
+    chargerRecords();
+  }
+
+  function chargerRecords() {
+    if (typeof window.NautilusRecords === 'undefined') return;
+    monIdentite().then(function (ident) {
+      window.NautilusRecords.chargerEtRendre($('wonRecordsHost'), {
+        stepId: 'son',
+        moi: (ident && !ident.isTest) ? ident.name : ''
+      });
+    });
+  }
+
+  function onVictoire() {
+    afficherJournalDeBord(false);
+    statut('🏆 <b>Palier 3 franchi !</b> La destination du QR est identifiée.', 'success');
+    acte('réussit l’épreuve', 'success');
+    propagerVictoire();
+    afficherEcranVictoire();
+  }
+
+  var lance = false;
+  function lancer() {
+    if (lance) return;
+    lance = true;
+    demarrer();
+  }
+
+  /* Démarrage protégé : blocage personnel du matelot identifié, sinon
+     repli local anonyme. Le moindre doute réseau laisse JOUER. */
+  async function demarrer() {
+    if (!apercuAdminAutorise()) {
+      var ident = await monIdentite();
+      if (ident && !ident.isTest) {
+        var bloc = await window.NautilusBlocages.blocageActif(ident);
+        if (bloc) {
+          afficherBlocage(bloc.lockedUntil, ident.name);
+          journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
+            + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
+          return;
+        }
+      } else if (!ident) {
+        var jusqua = blocageAnonymeJusqua();
+        if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
+      }
+    }
+    afficherVueEpreuve();
+    t0Partie = Date.now();
+    statut('🕵️ <b>Résous le dossier.</b> Déduis le produit, le rayon et l’emplacement du QR. <b>3 accusations fausses</b> et tu remontes en surface.', 'info');
+    window.NautilusCluedo.init($('cluedoHost'), {
+      config: CLUEDO,
+      maxErreurs: 3,
+      onErreur: onErreur,
+      onVictoire: onVictoire
+    });
+  }
+
+  /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
+     Même enchaînement que le Palier 2 : explication immersive du thème
+     SANS dévoiler la réponse (produit/rayon/emplacement). */
+  window.NautilusBriefing.afficher($('briefHost'), {
+    intro: "Bienvenue à bord, matelot. Le <b>Nautilus</b> a scellé le QR Code du prochain palier quelque part dans le magasin, et l'équipage ne dispose que d'indices épars. Trois choses le désignent : le <b>produit</b> qui sert de repère, le <b>rayon</b> où il est caché, et l'<b>emplacement</b> précis. Recoupe le dossier du capitaine et les témoignages : la vérité est une seule, et rien ne vous sera dit en clair.",
+    consignes: [
+      { ico: '🃏', html: "Chaque <b>carte « hors de cause »</b> élimine un produit, un rayon ou un emplacement. Coche-la dans la grille." },
+      { ico: '📜', html: "Chaque <b>témoignage</b> affirme « exactement k de ces n affirmations sont vraies » : c'est là que se joue toute la déduction." },
+      { ico: '📡', warn: true, html: "Tu peux <b>sonder le sonar 3 fois</b> (verdict par catégorie). <b>3 accusations fausses</b> = remontée en surface." }
+    ],
+    cta: '⚓ PRENDRE LES COMMANDES',
+    onDepart: function () {
+      glisserEnHaut();
+      lancer();
+      setTimeout(glisserEnHaut, 350);
+      setTimeout(glisserEnHaut, 900);
+    }
+  });
+
+  function glisserEnHaut() {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    catch (e) { try { window.scrollTo(0, 0); } catch (_) {} }
+  }
+
+  /* Démarrage : choix de la VUE (identique au Palier 2). */
+  if (apercuAdminAutorise()) {
+    var banniereModeTest = function () {
+      if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+    };
+    banniereModeTest();
+    setTimeout(banniereModeTest, 150);
+    afficherVueBriefing();
+  } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.estDeverrouille(3)) {
+    afficherVueBriefing();
+  } else {
+    afficherVueScellee();
+    if (window.NautilusSas.observerDeverrouillageEquipe) {
+      window.NautilusSas.observerDeverrouillageEquipe();
+    }
+  }
+  window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
+
+  /* --- Indication de la zone de recherche : dépliable SUR PLACE --- */
+  var _btnIndication = $('sasIndicationBtn');
+  var _panelIndication = $('sasIndicationPanel');
+  if (_btnIndication && _panelIndication) {
+    var _txtIndication = $('sasIndicationTexte');
+    if (_txtIndication) _txtIndication.textContent = ZONE_RECHERCHE_HINT;
+    _btnIndication.addEventListener('click', function () {
+      var estOuvert = !_panelIndication.hidden;
+      _panelIndication.hidden = estOuvert;
+      _btnIndication.textContent = estOuvert
+        ? '📍 Voir l’indication de la zone de recherche'
+        : '📍 Masquer l’indication';
+      _btnIndication.setAttribute('aria-expanded', estOuvert ? 'false' : 'true');
+    });
+  }
+})();
+</script>
+<!-- Bouton d'ambiance sonore, commun à toutes les pages du jeu. -->
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=3" defer></script>
+<script src="admin-button.js?v=24" type="module"></script>
+</body>
+</html>

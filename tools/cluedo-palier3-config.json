@@ -1,0 +1,311 @@
+{
+  "categories": {
+    "produit": {
+      "label": "PRODUIT",
+      "items": [
+        {
+          "id": "LIVRE",
+          "label": "📕 Livre"
+        },
+        {
+          "id": "DVD",
+          "label": "💿 DVD"
+        },
+        {
+          "id": "MANETTE",
+          "label": "🎮 Manette"
+        },
+        {
+          "id": "VINYLE",
+          "label": "🎵 Vinyle"
+        },
+        {
+          "id": "CASQUE",
+          "label": "🎧 Casque"
+        },
+        {
+          "id": "SOURIS",
+          "label": "🖱 Souris"
+        }
+      ]
+    },
+    "rayon": {
+      "label": "RAYON",
+      "items": [
+        {
+          "id": "LIVRES",
+          "label": "📚 Rayon Livres"
+        },
+        {
+          "id": "INFORMATIQUE",
+          "label": "💻 Rayon Informatique"
+        },
+        {
+          "id": "JEUX",
+          "label": "🎮 Rayon Jeux"
+        },
+        {
+          "id": "SON",
+          "label": "🎧 Rayon Son"
+        },
+        {
+          "id": "CINEMA",
+          "label": "🎬 Rayon Cinéma"
+        },
+        {
+          "id": "MUSIQUE",
+          "label": "🎵 Rayon Musique"
+        }
+      ]
+    },
+    "emplacement": {
+      "label": "EMPLACEMENT",
+      "items": [
+        {
+          "id": "TETE",
+          "label": "Tête de gondole"
+        },
+        {
+          "id": "BAS",
+          "label": "Rayonnage bas"
+        },
+        {
+          "id": "PRESENTOIR",
+          "label": "Présentoir"
+        },
+        {
+          "id": "VITRINE",
+          "label": "Vitrine"
+        },
+        {
+          "id": "RESERVE",
+          "label": "Réserve"
+        },
+        {
+          "id": "CAISSE",
+          "label": "Caisse"
+        }
+      ]
+    }
+  },
+  "secret": {
+    "produit": "CASQUE",
+    "rayon": "SON",
+    "emplacement": "TETE"
+  },
+  "cartes": [
+    {
+      "t": "pair_not",
+      "x": "SOURIS",
+      "r": "JEUX"
+    },
+    {
+      "t": "pair_not",
+      "x": "VINYLE",
+      "r": "SON"
+    },
+    {
+      "t": "empl_not",
+      "x": "RESERVE"
+    },
+    {
+      "t": "rayon_not",
+      "x": "MUSIQUE"
+    },
+    {
+      "t": "pair_not",
+      "x": "VINYLE",
+      "r": "CINEMA"
+    },
+    {
+      "t": "pair_not",
+      "x": "VINYLE",
+      "r": "INFORMATIQUE"
+    }
+  ],
+  "reserve": [
+    {
+      "t": "pair_not",
+      "x": "DVD",
+      "r": "INFORMATIQUE"
+    },
+    {
+      "t": "rayon_not",
+      "x": "LIVRES"
+    },
+    {
+      "t": "pair_not",
+      "x": "DVD",
+      "r": "LIVRES"
+    },
+    {
+      "t": "pair_not",
+      "x": "SOURIS",
+      "r": "SON"
+    },
+    {
+      "t": "prod_not",
+      "x": "LIVRE"
+    },
+    {
+      "t": "prod_not",
+      "x": "SOURIS"
+    },
+    {
+      "t": "rayon_not",
+      "x": "JEUX"
+    },
+    {
+      "t": "rayon_not",
+      "x": "INFORMATIQUE"
+    },
+    {
+      "t": "pair_not",
+      "x": "DVD",
+      "r": "JEUX"
+    },
+    {
+      "t": "rayon_not",
+      "x": "CINEMA"
+    },
+    {
+      "t": "pair_not",
+      "x": "LIVRE",
+      "r": "MUSIQUE"
+    },
+    {
+      "t": "pair_not",
+      "x": "MANETTE",
+      "r": "LIVRES"
+    },
+    {
+      "t": "pair_not",
+      "x": "SOURIS",
+      "r": "CINEMA"
+    },
+    {
+      "t": "pair_not",
+      "x": "MANETTE",
+      "r": "CINEMA"
+    },
+    {
+      "t": "pair_not",
+      "x": "LIVRE",
+      "r": "CINEMA"
+    },
+    {
+      "t": "pair_not",
+      "x": "MANETTE",
+      "r": "MUSIQUE"
+    },
+    {
+      "t": "pair_is",
+      "x": "CASQUE",
+      "r": "SON"
+    },
+    {
+      "t": "empl_is",
+      "x": "TETE"
+    },
+    {
+      "t": "rayon_is",
+      "x": "SON"
+    },
+    {
+      "t": "prod_is",
+      "x": "CASQUE"
+    }
+  ],
+  "temoignages": [
+    {
+      "k": 3,
+      "atoms": [
+        {
+          "t": "prod_not",
+          "x": "LIVRE"
+        },
+        {
+          "t": "prod_not",
+          "x": "MANETTE"
+        },
+        {
+          "t": "pair_not",
+          "x": "DVD",
+          "r": "INFORMATIQUE"
+        },
+        {
+          "t": "prod_is",
+          "x": "DVD"
+        }
+      ]
+    },
+    {
+      "k": 2,
+      "atoms": [
+        {
+          "t": "empl_is",
+          "x": "VITRINE"
+        },
+        {
+          "t": "rayon_not",
+          "x": "LIVRES"
+        },
+        {
+          "t": "prod_not",
+          "x": "SOURIS"
+        }
+      ]
+    },
+    {
+      "k": 0,
+      "atoms": [
+        {
+          "t": "prod_is",
+          "x": "SOURIS"
+        },
+        {
+          "t": "rayon_is",
+          "x": "INFORMATIQUE"
+        },
+        {
+          "t": "rayon_is",
+          "x": "LIVRES"
+        }
+      ]
+    },
+    {
+      "k": 2,
+      "atoms": [
+        {
+          "t": "empl_not",
+          "x": "TETE"
+        },
+        {
+          "t": "rayon_is",
+          "x": "SON"
+        },
+        {
+          "t": "prod_is",
+          "x": "CASQUE"
+        }
+      ]
+    },
+    {
+      "k": 2,
+      "atoms": [
+        {
+          "t": "prod_is",
+          "x": "MANETTE"
+        },
+        {
+          "t": "empl_not",
+          "x": "VITRINE"
+        },
+        {
+          "t": "rayon_is",
+          "x": "SON"
+        }
+      ]
+    }
+  ]
+}
