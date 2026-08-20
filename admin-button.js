@@ -344,7 +344,7 @@
         : 'en construction';
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
         href ? (id === 'livres'
-          ? lien('1721310619.html?sas=ferme', '🔒 Page scellée (tester le QR)') + ' ' + lien(`1721310619.html?apercu=jeu&k=${k}`, '🕹️ Jouer l’épreuve')
+          ? lien('1721310619.html?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(`1721310619.html?apercu=jeu&k=${k}&m=ZZZZ-0000`, '🕹️ Jouer l’épreuve')
           : lien(href, '🕹️ Jouer l’épreuve'))
         : '<span class=\"small\" style=\"white-space:nowrap\">Bientôt</span>', !!href));
     });
