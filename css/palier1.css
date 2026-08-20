@@ -553,42 +553,47 @@
     /* === Retour en surface : une information claire, sans écran punitif ===
        TOUTE la largeur du bloc (plus de colonne centrale étroite) : la
        page d'erreur se lit d'un bord à l'autre de la carte. */
+    /* PLUS DE CADRE DANS LE CADRE : la carte « ÉPREUVE DU PALIER » est le
+       seul cadre de la page. Le contenu (blocage, remontée) se pose
+       directement dedans, sans seconde boîte à fond/bordure. */
     .lock-screen{
-      width:100%;margin:0;padding:clamp(20px,4vw,34px);
-      color:#eaf8ff;text-align:left;border:1px solid rgba(142,231,255,.26);
-      border-radius:22px;background:linear-gradient(145deg,rgba(5,20,36,.96),rgba(8,42,66,.94));
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 18px 40px rgba(0,0,0,.25);
+      width:100%;margin:0;padding:0;
+      color:#eaf8ff;text-align:left;
       box-sizing:border-box;
     }
     /* Page d'erreur allégée : trois lignes PLEINE LARGEUR, une
        information chacune — fini les deux cartes côte à côte et les
        longs paragraphes. */
-    .lock-lignes{display:flex;flex-direction:column;gap:8px;width:100%;margin:2px 0 0;}
-    .lock-ligne{display:flex;align-items:flex-start;gap:10px;width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid rgba(142,231,255,.22);background:rgba(0,0,0,.22);color:#dff6ff;font-size:13.5px;font-weight:700;line-height:1.45;}
+    /* Lignes PLEINE LARGEUR mais SANS boîte : trois informations, chacune
+       sur une ligne, la hiérarchie se lit à la couleur et à la graisse,
+       plus à des encadrements empilés. */
+    .lock-lignes{display:flex;flex-direction:column;gap:10px;width:100%;margin:2px 0 0;}
+    .lock-ligne{display:flex;align-items:flex-start;gap:10px;width:100%;box-sizing:border-box;color:#dff6ff;font-size:14px;font-weight:700;line-height:1.55;}
     .lock-ligne b{color:#fff;}
-    .lock-ligne-ico{flex:0 0 auto;width:22px;text-align:center;font-size:16px;line-height:1.35;}
-    .lock-ligne--pause{border-color:rgba(255,123,114,.45);background:rgba(185,44,45,.14);color:#ffd0cd;}
+    .lock-ligne-ico{flex:0 0 auto;width:22px;text-align:center;font-size:16px;line-height:1.45;}
+    .lock-ligne--pause{color:#ffd0cd;}
     .lock-ligne--pause b{color:#ffb0aa;}
-    .lock-ligne--relais{border-color:rgba(91,224,155,.4);background:rgba(91,224,155,.09);color:#d9f7e7;}
+    .lock-ligne--relais{color:#d9f7e7;}
     .lock-ligne--relais b{color:#a9f1c8;}
-    .lock-ligne--next{color:#b7d9e8;font-size:12.5px;}
+    .lock-ligne--next{color:#b7d9e8;font-size:13px;}
     .lock-ligne--next b{color:#fff;}
-    .lock-screen--lost{border-color:rgba(255,123,114,.46);background:radial-gradient(circle at 100% 0,rgba(185,44,45,.18),transparent 38%),linear-gradient(145deg,rgba(34,10,21,.97),rgba(7,37,58,.96));}
-    .lock-heading{display:flex;align-items:center;gap:13px;margin:0 0 14px;}
-    .lock-heading-icon{display:grid;place-items:center;flex:0 0 auto;width:48px;height:48px;border-radius:15px;background:rgba(142,231,255,.12);border:1px solid rgba(142,231,255,.3);color:#c8f4ff;font-size:25px;font-weight:1000;}
-    .lock-screen--lost .lock-heading-icon{background:rgba(255,75,62,.13);border-color:rgba(255,123,114,.4);color:#ffb0aa;}
+    .lock-heading{display:flex;align-items:center;gap:12px;margin:0 0 14px;}
+    /* Icône nue (plus de pastille encadrée) : le symbole parle tout seul. */
+    .lock-heading-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:36px;line-height:1;}
+    .lock-screen--lost .lock-heading-icon{color:#ffb0aa;}
     .lock-kicker,.lock-card-label{margin:0;color:#8ee7ff;font-size:12px;font-weight:1000;letter-spacing:.12em;line-height:1.2;text-transform:uppercase;}
     .lock-screen--lost .lock-kicker{color:#ffb0aa;}
     /* Ligne d'ambiance de la « Remontée forcée ! » : une phrase, en
        italique — l'immersion sans pavé de texte. */
     .lock-flavor{margin:-4px 0 13px;color:#ffb0aa;font-size:13px;line-height:1.5;font-style:italic;opacity:.92}
     .lock-screen h2{margin:3px 0 0;padding:0;border:0;background:none;color:#fff;font-size:clamp(22px,4vw,32px);line-height:1.08;}
-    .lock-attempt{display:inline-flex;align-items:center;gap:7px;margin:0 0 14px;padding:7px 10px;border:1px solid rgba(255,185,177,.28);border-radius:999px;color:#ffd0cd;background:rgba(255,75,62,.08);font-size:12px;font-weight:900;}
-    .lock-attempt span{color:#ff7b72;font-size:17px;line-height:0;}
+    /* Plus de pastille : la cause de la remontée se lit en une ligne. */
+    .lock-attempt{display:inline-flex;align-items:center;gap:7px;margin:0 0 12px;color:#ffb0aa;font-size:13.5px;font-weight:800;}
+    .lock-attempt span{color:#ff7b72;font-size:17px;line-height:1;}
     .lock-lead{max-width:650px;margin:0 0 18px;color:#c7e1ed;font-size:15px;font-weight:700;line-height:1.55;}
     /* Carte « Prochaine prise de commande possible » (page indice) */
-    .lock-resume-card{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:14px 16px;border:1px solid rgba(142,231,255,.3);border-radius:15px;background:rgba(0,0,0,.2);}
-    .lock-resume-icon{display:grid;place-items:center;flex:0 0 auto;width:38px;height:38px;border-radius:12px;background:rgba(142,231,255,.13);color:#bff5ff;font-size:18px;}
+    .lock-resume-card{display:flex;align-items:center;gap:12px;margin:0 0 12px;}
+    .lock-resume-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:22px;line-height:1;}
     .lock-resume-card>div{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0;}
     .lock-resume-date{color:#fff;font-family:Consolas,"Courier New",monospace;font-size:clamp(15px,2.5vw,19px);line-height:1.25;overflow-wrap:anywhere;}
     .lock-resume-duration{color:#9bc4d4;font-size:12px;font-weight:800;}
@@ -596,8 +601,8 @@
     .lock-home-link{display:inline-flex;align-items:center;justify-content:center;margin-top:18px;padding:11px 16px;border-radius:11px;color:#061420;background:var(--fnac);font-size:13px;font-weight:1000;text-decoration:none;box-shadow:0 8px 18px rgba(245,176,39,.2);}
     .lock-home-link:hover{filter:brightness(1.06);transform:translateY(-1px);}
     @media(max-width:520px){
-      .lock-screen{padding:19px 16px;border-radius:18px;}
-      .lock-heading{align-items:flex-start;}.lock-heading-icon{width:42px;height:42px;border-radius:13px;font-size:21px;}
+      .lock-heading{align-items:flex-start;}
+      .lock-heading-icon{font-size:30px;}
       .lock-home-link{display:flex;width:100%;}
     }
 
@@ -691,15 +696,18 @@
    plus aucune animation sur le titre. */
 .won-screen.celebration h2{font-size:clamp(30px,6vw,52px);text-shadow:0 0 22px rgba(91,224,155,.55)}
 .won-badge{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;margin:0 auto 10px;border-radius:50%;font-size:44px;background:linear-gradient(145deg,#ffd36c,#f5b027);box-shadow:0 0 0 6px rgba(245,176,39,.16),0 0 34px rgba(245,176,39,.55);animation:badgePulse 1.8s ease-in-out infinite}
-.won-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:520px;margin:18px auto;text-align:center}
-.won-stat{padding:11px 8px;border:1px solid rgba(142,231,255,.25);border-radius:12px;background:rgba(0,0,0,.24)}
+.won-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:520px;margin:18px auto;text-align:center}
+/* Statistiques SANS boîte : trois valeurs côte à côte, la carte suffit
+   comme cadre. */
+.won-stat{padding:4px 6px}
 .won-stat strong{display:block;color:#fff;font:1000 21px Consolas,"Courier New",monospace}.won-stat span{display:block;margin-top:4px;color:#9bc4d4;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
 @keyframes badgePulse{50%{transform:scale(1.08);box-shadow:0 0 0 10px rgba(245,176,39,.10),0 0 46px rgba(245,176,39,.75)}}@keyframes celebrationSweep{to{background-position:180px 0}}
 
 /* ===== Écran « Épreuve validée ! » : nouveaux blocs ===== */
 .won-line{color:#dfffe8;font-size:16px;line-height:1.5;margin:8px 0}
 .won-line--bravo{color:#bcd9e6;font-size:14px;margin:6px 0}
-.won-unlock-note{background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.5);color:#dfffe8;border-radius:14px;padding:10px 14px;max-width:560px;margin:6px auto 0;font-size:13.5px;line-height:1.5}
+/* Note de déblocage SANS encadré : une simple ligne verte centrée. */
+.won-unlock-note{color:#5be09b;max-width:560px;margin:6px auto 0;font-size:14px;line-height:1.5;font-weight:700}
 /* ===== Bloc « PROCHAINE IMMERSION » — refonte v3 de la fin de l'écran
    de victoire (demande capitaine : spectaculaire, immersif, COURT).
    Remplace l'ancien panneau pliable « DIRECTION VERS LA ZONE DE
@@ -724,9 +732,12 @@
 /* Refonte du cap sur le QR Code : DEUX encarts côte à côte —
    1) Rallier la Zone de recherche + descriptif de la zone ;
    2) Passer au prochain palier + bouton « Scanner le QR Code trouvé ». */
-.won-zone-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 auto 24px;width:100%;max-width:860px}
+.won-zone-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;margin:0 auto 24px;width:100%;max-width:860px}
 @media(max-width:640px){.won-zone-steps{grid-template-columns:1fr;gap:12px}}
-.won-zone-panel{display:flex;flex-direction:column;gap:13px;text-align:left;padding:16px;border:1px solid rgba(142,231,255,.32);border-radius:16px;background:rgba(0,0,0,.32)}
+/* Les DEUX encarts « Rallier la zone » / « Passer au palier » SANS boîte :
+   une tête numérotée + un texte, posés à plat dans le bloc « CAP SUR LE
+   QR CODE ». */
+.won-zone-panel{display:flex;flex-direction:column;gap:8px;text-align:left;padding:0}
 .won-zone-head{display:flex;align-items:center;gap:10px}
 .won-zone-num{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--fnac);color:#111;font-size:13px;font-weight:1000}
 .won-zone-title{font-weight:900;color:#fff;font-size:14px;letter-spacing:.04em;text-transform:uppercase;line-height:1.25}
