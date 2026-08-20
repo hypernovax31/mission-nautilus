@@ -46,7 +46,12 @@
     .topbar-title{font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;font-size:clamp(20px,3vw,30px);color:#fff;letter-spacing:.04em;text-transform:uppercase;text-shadow:2px 2px 0 #000;}
     .topbar-info{display:flex;gap:14px;align-items:center;font-size:13px;color:#9bc4d4;flex-wrap:wrap;}
     .topbar-info b{color:var(--fnac);}
-    main{max-width:1180px;margin:0 auto;padding:24px 18px 80px;display:grid;gap:18px;}
+    /* PLEINE LARGEUR « comme le Palier 2 » : les blocs d'AVANT le mini-jeu
+       (identification, équipage actif, journal de bord, BRIEFING DU
+       CAPITAINE) s'étendent sur toute la fenêtre visible, plafonnés au
+       même cadre que css/palier2.css (1720 px). L'épreuve, elle, garde
+       son gabarit standard (voir #gameCard plus bas). */
+    main{max-width:1720px;margin:0 auto;padding:24px 18px 80px;display:grid;gap:18px;}
     .card{
       background:rgba(7,26,43,.85);
       /* Liseré d'or commun à TOUS les blocs du site (style du bloc
@@ -62,6 +67,15 @@
        fenêtre). Cette marge de défilement dégage la barre du haut
        (sticky, ~62 px) pour que le titre ne passe jamais dessous. */
     #gameCard{scroll-margin-top:74px;}
+    /* L'ÉPREUVE (morse) conserve son gabarit standard de 1180 px : la
+       pleine largeur ne concerne que les vues d'AVANT le mini-jeu. La
+       carte reste centrée dans le cadre élargi, à l'identique de
+       l'ancienne mise en page. */
+    #gameCard{
+      justify-self:center;
+      width:100%;
+      max-width:1180px;
+    }
     /* MISE EN PAGE « AU MOMENT DE JOUER » : pendant la partie, la page
        ne laisse QUE cette carte (l'équipage actif et le journal de bord
        sont rangés sur la vue briefing). Elle devient la scène unique :
