@@ -157,7 +157,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, deleteField, onSnapshot, collection
+  getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteField, onSnapshot, collection
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ---------- CONFIGURATION ---------- */
@@ -220,8 +220,9 @@ const STEPS = {
 
 /* Banque de mots : 40 mots, 7+ lettres, AVEC accents (UIT-R M.1677-1)
    Chaque mot a un hint thématique interne (pour l'indice nº2 ou pour le log).
-   ATTENTION : ces mots varient l'épreuve (anti-triche par rejouabilité)
-   mais le LIEU DU QR DANS LE MAGASIN est FIXE — voir QR_LOCATION_HINT. */
+   RÈGLE : un mot DIFFÉRENT est assigné à CHAQUE équipage (voir
+   getMotEquipage) — le même équipage garde le même mot à chaque tentative.
+   Le LIEU DU QR DANS LE MAGASIN est FIXE — voir QR_LOCATION_HINT. */
 const MORSE_WORDS = [
   { w:"NAUTILE",   h:"Animal marin à coquille spiralée" },
   { w:"ABYSSES",   h:"Profondeurs inexplorées de l'océan" },
@@ -750,6 +751,65 @@ function markHintsExhausted(word) {
   if (idx >= 0) _usedWords.add(idx);
 }
 
+/* ---------- MOT FIXE PAR ÉQUIPAGE (Palier 1) ----------
+   REGLE : chaque équipage a SON mot à deviner, toujours le même d'une
+   tentative à l'autre, et différent de celui des autres équipages.
+   Le mot est assigné UNE SEULE FOIS (au premier lancement) puis conservé
+   dans le document de l'équipe sous forme d'empreinte (morseWordHash) —
+   jamais le mot en clair, même convention que la session. */
+function motEntry(w) {
+  const m = MORSE_WORDS.find(x => x.w === w);
+  return m || null;
+}
+async function getMotEquipage(team) {
+  /* Repli ultime : un mot local si tout échoue (jamais de blocage). */
+  const repli = () => MORSE_WORDS[Math.floor(Math.random() * MORSE_WORDS.length)];
+  if (!team || !team.teamCode) return repli();
+  try {
+    const snap = await getDoc(doc(db, 'teams', team.teamCode));
+    const data = snap.exists() ? snap.data() : {};
+    if (typeof data.morseWordHash === 'number') {
+      const w = wordFromHash(data.morseWordHash);
+      if (w) return motEntry(w);
+    }
+    /* Compatibilité : un éventuel mot stocké en clair par une ancienne
+       version est relu tel quel. */
+    if (data.morseWord && typeof data.morseWord === 'string') {
+      const e = motEntry(data.morseWord);
+      if (e) return e;
+    }
+    const w = await assignerMotEquipage(team.teamCode);
+    return motEntry(w) || repli();
+  } catch (e) {
+    return repli();
+  }
+}
+async function assignerMotEquipage(teamCode) {
+  /* Choisit un mot NON encore attribué à un autre équipage. */
+  const used = new Set();
+  try {
+    const allSnap = await getDocs(collection(db, 'teams'));
+    allSnap.forEach(d => {
+      if (d.id === teamCode) return;
+      const dd = d.data();
+      if (typeof dd.morseWordHash === 'number') used.add(dd.morseWordHash);
+      if (dd.morseWord) used.add(hashString(dd.morseWord));
+    });
+  } catch (e) { /* lecture impossible : on tire quand même */ }
+  let choix = null;
+  for (const m of MORSE_WORDS) {
+    if (!used.has(hashString(m.w))) { choix = m; break; }
+  }
+  if (!choix) choix = MORSE_WORDS[Math.floor(Math.random() * MORSE_WORDS.length)];
+  try {
+    await updateDoc(doc(db, 'teams', teamCode), {
+      morseWordHash: hashString(choix.w),
+      updatedAt: new Date().toISOString()
+    });
+  } catch (e) { /* écriture impossible : le mot vaut pour cette partie */ }
+  return choix.w;
+}
+
 /* ---------- UI HELPERS (chambre de pilotage live) ---------- */
 function showToast(message, type = 'info', duration = 4000) {
   let container = document.getElementById('nautilus-toast-container');
@@ -842,6 +902,7 @@ window.Nautilus = {
   isTestMode, isTestMember,
   isSoundEnabled, getAudioCtx, getMorseCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
+  getMotEquipage, assignerMotEquipage,
   showToast, addLogEntry, addActe, clearLog, heartbeat, effacerPresence
 };
 
@@ -2096,9 +2157,10 @@ window.Nautilus = {
        partie. Un matelot a paye 1 h de blocage pour les obtenir ; il
        serait injuste que la releve reparte de zero et doive repayer.
        On les reporte donc sur la nouvelle partie.
-       A noter : le mot change a chaque partie, mais les indices restent
-       justes — le nombre de lettres et la premiere lettre sont lus sur le
-       NOUVEAU mot au moment de l'affichage, jamais figes. */
+       A noter : le mot est désormais FIXE pour l'équipage (assigné une
+       seule fois), donc les indices restent exacts d'une tentative à
+       l'autre — le nombre de lettres et la première lettre sont relus sur
+       le mot au moment de l'affichage, jamais figés. */
     let indicesAcquis = [false, false, false];
     try {
       const precedente = state.session
@@ -2108,9 +2170,14 @@ window.Nautilus = {
       }
     } catch (e) { /* pas de partie precedente lisible : on repart a zero */ }
 
-    /* Choisir un mot et démarrer. Chaque mot a son indice géographique associé
-       (où se trouve le QR du palier 2 dans le magasin). */
-    const entry = N.pickWord();
+    /* MOT FIXE PAR ÉQUIPAGE : chaque équipage a SON mot à deviner, toujours
+       le même d'une tentative à l'autre, et différent de celui des autres
+       équipages. Il est assigné une seule fois (au premier lancement) puis
+       conservé dans le document de l'équipe (morseWordHash). En mode test
+       (aucune écriture), on garde un simple tirage local. */
+    const entry = state.isTest
+      ? N.pickWord()
+      : await N.getMotEquipage(state.team);
     state.word = entry.w;
     state.typed = '';        // repart d'une reponse vide
 
