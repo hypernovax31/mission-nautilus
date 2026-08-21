@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v295';
+const CACHE_NAME = 'nautilus-v296';
 const PRECACHE = [
   './',
   './index.html',
@@ -13,11 +13,11 @@ const PRECACHE = [
   './css/hublots.css?v=15',
   './css/palier1.css?v=49',
   './css/palier2.css?v=26',
-  './css/palier3.css?v=1',
+  './css/palier3.css?v=2',
   './css/admin.css?v=10',
   './son-partage.js?v=2',
   './sonar-button.js?v=4',
-  './admin-button.js?v=24',
+  './admin-button.js?v=25',
   './palier-annonces.js?v=3',
   './journal-bord.js?v=6',
   './palier-sas.js?v=13',
@@ -26,11 +26,12 @@ const PRECACHE = [
   './reserve-o2.js?v=4',
   './equipage-actif.js?v=10',
   './mots-croises.js?v=9',
-  './cluedo-palier3.js?v=1',
+  './puzzle-palier3.js?v=1',
   './victoire-palier.js?v=12',
   './records-palier.js?v=2',
   './install-promo.js?v=6',
   './assets/fond-nautilus.jpg',
+  './assets/palier3-lieu.jpg',
   './assets/ambiance-sonar.mp3',
   './assets/Victoire.mp3',
   './assets/Submarine_alarm.mp3',

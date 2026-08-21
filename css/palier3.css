@@ -1,149 +1,87 @@
 /* =============================================================
-   PALIER 3 — « CLUEDO DES ABYSSES »
+   PALIER 3 — « PUZZLE PHOTO DU LIEU »
    S'ajoute à palier1.css : même liseré d'or, même ambiance.
    ============================================================= */
 
-/* Page pleine largeur, comme le Palier 2 : la déduction s'étend sur
-   toute la fenêtre. */
+/* Page pleine largeur, comme le Palier 2. */
 main{ max-width:1720px; }
 
-/* ---------- Scène de déduction ---------- */
-.cluedo{ display:flex; flex-direction:column; gap:16px; }
+/* ---------- Scène du puzzle ---------- */
+.puzzle{ display:flex; flex-direction:column; gap:14px; }
 
-.cluedo-intro{
-  color:#dff6ff; line-height:1.55; font-size:14px;
-  border-left:3px solid var(--fnac); padding-left:12px;
+.puzzle-status{
+  color:#8ee7ff; font-size:13px; font-weight:900;
+  letter-spacing:.06em; text-transform:uppercase;
 }
-.cluedo-intro b{ color:#ffe2a0; }
 
-/* Grille de déduction : 3 colonnes (produit / rayon / emplacement). */
-.cluedo-grid{
-  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px;
-}
-.cluedo-col{
-  display:flex; flex-direction:column; gap:8px;
-  border:1px solid rgba(142,231,255,.18);
-  border-radius:14px; padding:10px; background:rgba(0,0,0,.20);
-}
-.cluedo-col-head{
-  color:#8ee7ff; font-size:12px; font-weight:1000;
-  letter-spacing:.12em; text-transform:uppercase; text-align:center;
-  padding-bottom:6px; border-bottom:1px solid rgba(142,231,255,.18);
-}
-.cluedo-item{
-  margin:0; padding:9px 8px; text-align:left;
-  font-family:inherit; font-size:13px; font-weight:800; line-height:1.3;
-  color:#dff6ff; background:rgba(255,255,255,.04);
-  border:1px solid rgba(142,231,255,.22); border-radius:10px; cursor:pointer;
-  overflow-wrap:anywhere;
-}
-.cluedo-item:active{ transform:scale(.98); }
-/* État « hors de cause » : rayé, éteint, liseré rouge léger. */
-.cluedo-item.elim{
-  color:rgba(155,196,212,.45);
-  text-decoration:line-through; text-decoration-color:rgba(255,123,114,.7);
-  background:rgba(255,75,62,.06); border-color:rgba(255,123,114,.30);
-}
-/* État « suspecte » : surligné ambre. */
-.cluedo-item.suspect{
-  color:#111; background:var(--fnac); border-color:var(--fnac);
-  box-shadow:0 0 12px rgba(245,176,39,.35);
-}
-.cluedo-legende{ color:#9bc4d4; font-size:12px; font-weight:700; margin-top:-6px; }
-.cluedo-legende b{ color:#dff6ff; }
+/* La scène contient la grille (haut) et la pioche (bas), en une seule
+   zone de coordonnées pour le glisser-déposer. */
+.puzzle-stage{ position:relative; width:100%; }
 
-/* ---------- Sections ---------- */
-.cluedo-section{
-  border:1px solid rgba(142,231,255,.16); border-radius:14px;
-  padding:14px; background:rgba(0,0,0,.16);
+/* GRILLE : la photo se reconstitue ici. Emplacements matérialisés par
+   de fines cases sombres (aucune image fantôme : la photo ne doit pas
+   se lire tant qu'elle n'est pas remontée). */
+.puzzle-board{
+  position:absolute; top:0; left:0;
+  background:rgba(0,0,0,.30);
+  border:1px solid rgba(245,176,39,.35); border-radius:10px;
+  box-shadow:inset 0 2px 14px rgba(0,0,0,.5);
+  overflow:hidden;
 }
-.cluedo-section-head{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  color:#ffd36c; font-size:13px; font-weight:1000;
-  letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px;
+.puzzle-slot{
+  position:absolute;
+  background:rgba(2,8,18,.55);
+  box-shadow:inset 0 0 0 1px rgba(142,231,255,.14);
+  border-radius:2px;
 }
-.cluedo-erreurs{
-  color:#9bc4d4; font-size:12px; letter-spacing:.03em; text-transform:none;
-}
-.cluedo-erreurs::before{ content:'• '; color:var(--fnac); }
 
-/* Cartes « hors de cause » : pastilles pleine largeur du conteneur. */
-.cluedo-cards{ display:flex; flex-wrap:wrap; gap:8px; }
-.cluedo-chip{
-  flex:1 1 240px; display:inline-block;
-  padding:9px 12px; border-radius:10px;
-  background:rgba(91,224,155,.08); border:1px solid rgba(91,224,155,.35);
-  color:#d9f7e7; font-size:13px; font-weight:700; line-height:1.45;
+/* PIOCHE : les éclats mélangés reposent ici, sous la grille. */
+.puzzle-tray{
+  position:absolute; left:0; width:100%;
+  border:1px dashed rgba(142,231,255,.20); border-radius:10px;
+  background:rgba(0,0,0,.16);
 }
-.cluedo-chip--new{
-  background:rgba(245,176,39,.10); border:1px solid rgba(245,176,39,.45);
-  color:#ffe2a0;
-}
-.cluedo-empty{ color:#9bc4d4; font-style:italic; font-size:13px; }
 
-/* Témoignages. */
-.cluedo-tems{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
-.cluedo-tem{
-  border-left:3px solid rgba(142,231,255,.4); padding-left:12px;
+/* PIÈCES : fragments de la photo (sprite CSS), glissables au doigt. */
+.puzzle-piece{
+  position:absolute;
+  background-repeat:no-repeat;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);
+  border-radius:2px;
+  cursor:grab;
+  touch-action:none;               /* le doigt déplace la pièce, pas la page */
+  user-select:none; -webkit-user-select:none;
+  transition:left .18s ease, top .18s ease;
+  will-change:left, top;
 }
-.cluedo-tem-head{ color:#8ee7ff; font-size:12px; font-weight:1000; letter-spacing:.1em; text-transform:uppercase; margin-bottom:4px; }
-.cluedo-tem-rule{ color:#dff6ff; font-weight:800; font-size:14px; line-height:1.5; margin-bottom:6px; }
-.cluedo-tem-rule b{ color:#ffe2a0; }
-.cluedo-tem-atoms{ list-style:none; margin:0; padding:0 0 0 16px; }
-.cluedo-tem-atoms li{
-  position:relative; color:#bcd9e6; font-size:13.5px; line-height:1.5; padding:2px 0;
-}
-.cluedo-tem-atoms li::before{ content:'—'; position:absolute; left:-16px; color:rgba(142,231,255,.5); }
+.puzzle-piece--drag{ transition:none; cursor:grabbing; box-shadow:inset 0 0 0 1px rgba(245,176,39,.6), 0 6px 18px rgba(0,0,0,.55); }
+.puzzle-piece--lock{ cursor:default; box-shadow:inset 0 0 0 1px rgba(91,224,155,.5); }
 
-/* Sonar + accusation. */
-.cluedo-selects{
-  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:12px;
-}
-.cluedo-selects label{ display:flex; flex-direction:column; gap:6px; color:#9bc4d4; font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
-.cluedo-selects select{
-  width:100%; min-height:44px; padding:8px 10px;
-  border:1px solid rgba(142,231,255,.35); border-radius:10px;
-  background:rgba(0,0,0,.3); color:#fff; font:800 14px Arial,Helvetica,sans-serif;
-}
-.cluedo-selects select:focus{ outline:none; border-color:var(--fnac); box-shadow:0 0 0 3px rgba(245,176,39,.18); }
-.cluedo-actions{ display:flex; flex-wrap:wrap; gap:10px; }
-.cluedo-btn{
-  margin:0; flex:1 1 200px; min-height:46px; border:0; border-radius:12px;
+.puzzle-actions{ display:flex; flex-wrap:wrap; gap:10px; }
+.puzzle-btn{
+  margin:0; flex:1 1 220px; min-height:46px; border:0; border-radius:12px;
   font-family:inherit; font-weight:1000; font-size:14px; cursor:pointer;
+  background:rgba(142,231,255,.14); color:#8ee7ff;
+  border:1px solid rgba(142,231,255,.45);
 }
-.cluedo-btn--probe{ background:rgba(142,231,255,.14); color:#8ee7ff; border:1px solid rgba(142,231,255,.45); }
-.cluedo-btn--probe:hover:not(:disabled){ background:rgba(142,231,255,.24); }
-.cluedo-btn--probe:disabled{ opacity:.4; cursor:not-allowed; }
-.cluedo-btn--accuse{ background:var(--fnac); color:#111; }
-.cluedo-btn--accuse:hover{ filter:brightness(1.07); }
-.cluedo-feedback{ margin-top:12px; }
-.cluedo-feedback:empty{ display:none; }
-.cluedo-feedback-msg{
-  padding:10px 12px; border-radius:10px; font-size:13px; font-weight:800; line-height:1.55;
-  background:rgba(142,231,255,.10); border:1px solid rgba(142,231,255,.35); color:#dff6ff;
-}
-.cluedo-feedback-msg.warn{ background:rgba(245,176,39,.12); border-color:rgba(245,176,39,.45); color:#ffe2a0; }
-.cluedo-feedback-msg.danger{ background:rgba(255,75,62,.14); border-color:rgba(255,75,62,.5); color:#ffd0cd; }
+.puzzle-btn:hover:not(:disabled){ background:rgba(142,231,255,.24); }
+.puzzle-btn:disabled{ opacity:.4; cursor:not-allowed; }
 
-/* Lien de retour à l'accueil (équivalent de .gate-home du Palier 2). */
-.cluedo-home{
+.puzzle-feedback{
+  min-height:22px; font-size:13px; font-weight:800; line-height:1.5;
+  color:#dff6ff;
+}
+.puzzle-feedback.is-warn{ color:#ffe2a0; }
+
+/* Lien de retour à l'accueil. */
+.puzzle-home{
   display:inline-block; margin-top:8px;
   background:rgba(255,255,255,.08); color:#fff;
   border:1px solid rgba(245,176,39,.5); border-radius:12px;
   padding:11px 20px; font-weight:900; font-size:13px; text-decoration:none;
   letter-spacing:.04em; text-transform:uppercase;
 }
-.cluedo-home:hover{ background:rgba(245,176,39,.85); color:#111; }
-
-/* Responsive : sur téléphone, les 3 colonnes restent côte à côte mais
-   compactes ; les sélecteurs passent en une colonne. */
-@media(max-width:640px){
-  .cluedo-grid{ gap:6px; }
-  .cluedo-col{ padding:7px; }
-  .cluedo-item{ font-size:12px; padding:8px 6px; }
-  .cluedo-selects{ grid-template-columns:1fr; }
-  .cluedo-chip{ flex:1 1 100%; }
-}
+.puzzle-home:hover{ background:rgba(245,176,39,.85); color:#111; }
 
 /* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur ===== */
 html{font-size:100%;}
