@@ -11,7 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=49">
+  <link rel="stylesheet" href="css/palier1.css?v=50">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=2" defer></script>
@@ -138,6 +138,66 @@
 </main>
 
 <div class="notif-floating" id="notifFloating"></div>
+
+<!-- POPUP DE CONFIRMATION DE LA DEMANDE D'INDICE — « VEUX-TU TE
+     SACRIFIER ? ». Remplace le window.confirm du navigateur (texte brut,
+     hors charte, et purement ignoré par certaines fenêtres intégrées) par
+     une vraie boîte de dialogue du Nautilus. Elle annonce CLAIREMENT le
+     marché, en 3 points : l'indice est gagné par TOUT l'équipage, celui
+     qui le demande remonte en surface 1 h, et un autre matelot reprend
+     aussitôt les commandes — c'est la relève, pas une punition.
+     Fermée par défaut : seule la classe .show l'affiche (et rejoue
+     l'animation d'entrée à chaque ouverture). -->
+<div class="sacrifice-overlay" id="sacrificeModal" aria-hidden="true">
+  <div class="sacrifice-panel" role="alertdialog" aria-modal="true"
+       aria-labelledby="sacrificeTitle" aria-describedby="sacrificeLead">
+    <div class="sacrifice-emblem" aria-hidden="true">🆘</div>
+    <p class="sacrifice-kicker">Demande d’indice</p>
+    <h2 class="sacrifice-title" id="sacrificeTitle">Veux-tu te sacrifier ?</h2>
+    <p class="sacrifice-lead" id="sacrificeLead">
+      L’indice sera gagné par <b>tout l’équipage</b>… mais c’est <b>toi</b> qui
+      remonteras en surface et laisseras les commandes à un coéquipier.
+    </p>
+
+    <div class="sacrifice-steps">
+      <div class="sacrifice-step">
+        <span class="sacrifice-step-num" aria-hidden="true">1</span>
+        <div class="sacrifice-step-body">
+          <div class="sacrifice-step-title" id="sacrificeIndice">Indice nº1 sur 3 révélé aussitôt</div>
+          <p class="sacrifice-step-desc">Il s’affiche en clair chez tout le monde et reste acquis à l’équipage, même après ton départ.</p>
+        </div>
+      </div>
+      <div class="sacrifice-step">
+        <span class="sacrifice-step-num" aria-hidden="true">2</span>
+        <div class="sacrifice-step-body">
+          <div class="sacrifice-step-title">Toi, tu remontes en surface pendant 1 heure</div>
+          <p class="sacrifice-step-desc">Tu ne peux plus jouer ce palier pendant 1 h. Ton compteur d’échecs reste inchangé : demander de l’aide n’est pas un échec.</p>
+        </div>
+      </div>
+      <div class="sacrifice-step">
+        <span class="sacrifice-step-num" aria-hidden="true">3</span>
+        <div class="sacrifice-step-body">
+          <div class="sacrifice-step-title">Un autre matelot prend les commandes</div>
+          <p class="sacrifice-step-desc">L’épreuve s’arrête pour toi et repart aussitôt sur l’appareil d’un coéquipier, l’indice déjà sous les yeux.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="sacrifice-note" id="sacrificeReste"></p>
+    <p class="sacrifice-note sacrifice-note--essai" id="sacrificeTestNote" hidden>
+      🧪 Partie d’essai : ton blocage expirera aussitôt, tu pourras enchaîner les tests.
+    </p>
+
+    <div class="sacrifice-actions">
+      <button type="button" class="sacrifice-btn sacrifice-btn--non" id="sacrificeCancel">↩︎ Non, je garde les commandes</button>
+      <button type="button" class="sacrifice-btn sacrifice-btn--yes" id="sacrificeConfirm">🤿 Oui, je me sacrifie</button>
+    </div>
+    <p class="sacrifice-foot">
+      Un seul matelot joue à la fois : la relève se fait sur l’appareil du coéquipier qui prend les commandes.
+    </p>
+  </div>
+</div>
+
 <div class="oxygen-end-alarm" id="oxygenEndAlarm" aria-live="assertive" aria-hidden="true">
   <div class="oxygen-end-panel">
     <div class="oxygen-end-title">RÉSERVES ÉPUISÉES</div>
@@ -2063,7 +2123,7 @@ window.Nautilus = {
           <li class="warn"><span class="ico" aria-hidden="true">❌</span>
             <span><b>3 erreurs</b> : le matelot remonte en surface — un équipier prend le relais immédiatement.</span></li>
           <li class="warn"><span class="ico" aria-hidden="true">🆘</span>
-            <span>Indice demandé : <b>1 h de blocage</b>.</span></li>
+            <span>Indice demandé : <b>remontée en surface 1 h</b> — un coéquipier prend ta place.</span></li>
         </ul>
 
         <button class="brief-cta" id="takeLeadBtn">⚓ PRENDRE LES COMMANDES</button>
@@ -2302,9 +2362,9 @@ window.Nautilus = {
 
         <div class="morse-hint-target">
             <div class="morse-hint-target-info">
-              🆘 <b>Besoin d'aide ?</b> Tu peux demander un indice,
-              mais cela te coûte <b>1 h de blocage personnel</b> et tu
-              remontes en surface. Un coéquipier prendra ta place.
+              🆘 <b>Besoin d'aide ?</b> Un indice est gagné par
+              <b>tout l'équipage</b>, mais celui qui le demande remonte en
+              surface <b>1 h</b> et laisse sa place à un coéquipier.
             </div>
             <button class="morse-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '✅ Tous les indices révélés' : '🆘 Demander un indice'}</button>
           </div>
@@ -2714,6 +2774,126 @@ window.Nautilus = {
     }
   }
 
+  /* === POPUP DE CONFIRMATION « VEUX-TU TE SACRIFIER ? » ===
+
+     Remplace le window.confirm natif de la demande d'indice. Trois
+     raisons, toutes constatees sur le terrain :
+       1. il s'affichait hors charte (texte brut, titre du site en
+          en-tete) la ou le joueur attend une boite du Nautilus ;
+       2. son texte etait trop court pour expliquer la RELÈVE — celui qui
+          demande l'indice ne comprend pas tout de suite qu'il remonte en
+          surface et qu'un coéquipier prend sa place ;
+       3. certaines fenetres integrees (navigateurs d'application, mode
+          PWA sur iPhone) l'IGNORENT : l'indice partait sans confirmation.
+     La boite ci-dessous est donc du HTML de la page : impossible a
+     escamoter par le navigateur, et lisible en 3 points numerotes.
+     Le focus part sur « Non, je garde les commandes » : un appui
+     involontaire (Entrée, barre d'espace) n'engage jamais le sacrifice. */
+  let sacrificeResolve = null;       // promesse du popup ouvert (null si ferme)
+  let sacrificeFocusRappel = null;   // element a re-focaliser a la fermeture
+  let sacrificeScrollPrecedent = ''; // defilement de la page, restaure a la fermeture
+
+  function sacrificeKeys(e) {
+    if (!sacrificeResolve) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fermerSacrifice(false); return; }
+    /* Le mini-jeu ecoute lui aussi le clavier sur document (lettres,
+       Backspace, Entree = Valider). Tant que la boite est ouverte on coupe
+       TOUT ici : sans cela, un appui sur Entree — pour repondre au popup —
+       validait au passage la reponse restee affichee derriere. Entree et
+       Espace activent quand meme le bouton qui porte le focus : leur
+       action par defaut n'est pas annulee par stopPropagation. */
+    e.stopPropagation();
+    if (e.key !== 'Tab') return;
+    const modale = $('sacrificeModal');
+    if (!modale) return;
+    const focusables = [...modale.querySelectorAll('button')].filter(b => !b.disabled);
+    if (!focusables.length) return;
+    const premier = focusables[0];
+    const dernier = focusables[focusables.length - 1];
+    const actif = document.activeElement;
+    /* Piège à focus : Tab ne doit JAMAIS sortir du popup, sinon le joueur
+       se retrouve a « cliquer » dans le mini-jeu masque par la boite. */
+    if (e.shiftKey && (actif === premier || !modale.contains(actif))) {
+      e.preventDefault(); dernier.focus();
+    } else if (!e.shiftKey && (actif === dernier || !modale.contains(actif))) {
+      e.preventDefault(); premier.focus();
+    }
+  }
+
+  function fermerSacrifice(choix) {
+    const modale = $('sacrificeModal');
+    const resoudre = sacrificeResolve;
+    if (!modale || !resoudre) return;          // rien d'ouvert
+    sacrificeResolve = null;
+    modale.classList.remove('show');
+    modale.setAttribute('aria-hidden', 'true');
+    document.removeEventListener('keydown', sacrificeKeys, true);
+    document.body.style.overflow = sacrificeScrollPrecedent || '';
+    const rappel = sacrificeFocusRappel;
+    sacrificeFocusRappel = null;
+    if (rappel && document.contains(rappel)) { try { rappel.focus(); } catch (e) {} }
+    resoudre(!!choix);
+  }
+
+  /* Ouvre le popup et rend une promesse : true = sacrifice accepte. */
+  function demanderConfirmationSacrifice(session) {
+    const modale = $('sacrificeModal');
+    const btnNon = $('sacrificeCancel');
+    const btnOui = $('sacrificeConfirm');
+    const s = session || state.session || {};
+    const dispo = (s.hintsRevealed || [false, false, false])
+      .map((v, i) => v ? -1 : i).filter(i => i >= 0);
+
+    /* Repli (HTML plus ancien encore en cache sur un telephone) : on
+       retrouve la boite native plutot que de bloquer la demande d'aide. */
+    if (!modale || !btnNon || !btnOui) {
+      return Promise.resolve(window.confirm(
+        'Veux-tu te sacrifier ?\n\n' +
+        'L’indice sera révélé à tout l’équipage. Mais tu remonteras en surface pendant 1 heure\n' +
+        'et un autre matelot devra reprendre les commandes.\n\n' +
+        'Confirmer la demande ?'
+      ));
+    }
+    /* Une seule boite a la fois : un second clic pendant l'ouverture ne
+       doit pas empiler deux confirmations (le premier « Oui » suffit). */
+    if (sacrificeResolve) return Promise.resolve(false);
+
+    const numero = (dispo[0] ?? 0) + 1;
+    const restants = dispo.length;
+    const titreIndice = $('sacrificeIndice');
+    if (titreIndice) titreIndice.textContent = `Indice nº${numero} sur 3 révélé aussitôt`;
+    const reste = $('sacrificeReste');
+    if (reste) {
+      reste.innerHTML = restants > 1
+        ? `Il restera <b>${restants - 1} indice${restants - 1 > 1 ? 's' : ''}</b> à découvrir après celui-ci.`
+        : 'C’est le <b>dernier indice</b> encore verrouillé.';
+    }
+    /* Partie d'essai : l'annonce des 1 h serait mensongere, le blocage
+       expire immediatement (voir blockMatelotForHint). */
+    const noteEssai = $('sacrificeTestNote');
+    if (noteEssai) noteEssai.hidden = !state.isTest;
+
+    return new Promise(resolve => {
+      sacrificeResolve = resolve;
+      sacrificeFocusRappel = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      modale.classList.add('show');
+      modale.setAttribute('aria-hidden', 'false');
+      document.addEventListener('keydown', sacrificeKeys, true);
+      /* Verrouille le defilement de la page derriere la boite (mobile). */
+      sacrificeScrollPrecedent = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => { try { btnNon.focus(); } catch (e) {} });
+    });
+  }
+
+  /* Le clic sur le fond sombre annule : jamais de « oui » par erreur,
+     seule la touche « Oui, je me sacrifie » engage le blocage. */
+  $('sacrificeCancel')?.addEventListener('click', () => fermerSacrifice(false));
+  $('sacrificeConfirm')?.addEventListener('click', () => fermerSacrifice(true));
+  $('sacrificeModal')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) fermerSacrifice(false);
+  });
+
   /* === INDICE : REVELE AUSSITOT, MAIS COUTE 1 H DE BLOCAGE ===
 
      ANCIEN FONCTIONNEMENT (supprime) : l'indice etait envoye a un AUTRE
@@ -2728,34 +2908,53 @@ window.Nautilus = {
        - son auteur est aussitot bloque 1 h et remonte en surface ;
        - un autre matelot peut alors reprendre le mini-jeu.
      L'indice reste acquis a l'equipage : celui qui prend la releve le
-     retrouve deja revele dans son encart. */
+     retrouve deja revele dans son encart.
+
+     AVANT D'APPLIQUER : le popup « Veux-tu te sacrifier ? » (voir plus
+     haut) resuma la regle en 3 points, et rien n'est ecrit tant que le
+     matelot n'a pas confirme. */
   const HINT_LOCK_HOURS = 1;
+
+  /* Premiers indices encore verrouilles, dans l'ordre (le nº1 est le plus
+     general, le nº3 le plus precis). */
+  function indicesDisponibles(session) {
+    return (session?.hintsRevealed || [false, false, false])
+      .map((v, i) => v ? -1 : i).filter(i => i >= 0);
+  }
 
   async function requestHint() {
     if (!state.session || !state.me) return;
-    const dispo = (state.session.hintsRevealed || [false, false, false])
-      .map((v, i) => v ? -1 : i).filter(i => i >= 0);
-    if (dispo.length === 0) { N.showToast('Tous les indices sont déjà révélés.', 'info'); return; }
+    if (indicesDisponibles(state.session).length === 0) {
+      N.showToast('Tous les indices sont déjà révélés.', 'info');
+      return;
+    }
 
-    /* Confirmation explicite : demander un indice interrompra cette partie
-       et te bloquera personnellement pendant une heure. */
-    const confirmer = window.confirm(
-      'Demander cet indice ?\n\n' +
-      'L’indice sera révélé à tout l’équipage, mais tu remonteras en surface pendant 1 heure.\n' +
-      'Un autre matelot devra reprendre les commandes.\n\n' +
-      'Confirmer la demande ?'
-    );
+    /* Confirmation explicite — popup de la page, pas window.confirm :
+       demander un indice interrompt cette partie, bloque le matelot 1 h
+       et le remplace par un coequipier. */
+    const confirmer = await demanderConfirmationSacrifice(state.session);
     if (!confirmer) return;
 
-    /* Un seul indice a la fois, dans l'ordre : le nº1 est le plus general,
-       le nº3 le plus precis. Tirer au hasard pouvait donner d'emblee la
-       premiere lettre et vider l'epreuve de son interet. */
+    /* La session a pu changer pendant la lecture du popup (un coequipier
+       a valide ou echoue entre-temps). On la RELIT avant d'ecrire quoi
+       que ce soit, et on sert le premier indice encore verrouille. */
+    const session = state.session;
+    if (!session || !state.me) {
+      N.showToast('La partie n’est plus en cours : l’indice n’a pas été demandé.', 'info', 6000);
+      return;
+    }
+    const dispo = indicesDisponibles(session);
+    if (dispo.length === 0) { N.showToast('Tous les indices sont déjà révélés.', 'info'); return; }
+
+    /* Un seul indice a la fois, dans l'ordre. Tirer au hasard pouvait
+       donner d'emblee la premiere lettre et vider l'epreuve de son
+       interet. */
     const idx = dispo[0];
 
     const btn = $('morseHintBtn');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Transmission…'; }
 
-    const hints = [...(state.session.hintsRevealed || [false, false, false])];
+    const hints = [...(session.hintsRevealed || [false, false, false])];
     hints[idx] = true;
     const patch = { hintsRevealed: hints, lastEvent: 'hint_revealed',
                     lastHintBy: state.me.name, lastHintIndex: idx };
@@ -2807,7 +3006,7 @@ window.Nautilus = {
       blockedAt: new Date().toISOString()
     };
     state.team = await N.saveTeam(state.team, { matelotLocks: locks, lastEvent: 'matelot_hint_lock' });
-    N.showToast(`🆘 Indice obtenu ! Tu remontes en surface jusqu’à ${N.formatDate(until)}. Un coéquipier peut reprendre.`, 'warning', 7000);
+    N.showToast(`🆘 Indice obtenu, révélé à tout l’équipage ! Tu remontes en surface jusqu’à ${N.formatDate(until)} — un coéquipier peut prendre les commandes dès maintenant.`, 'warning', 8000);
   }
 
   function buildHintContent(idx) {
@@ -2866,7 +3065,8 @@ window.Nautilus = {
             <div class="morse-hint-target-info">
               🧭 <b>Indices de l’équipage.</b> Les indices débloqués
               s’affichent ici. Le matelot aux commandes peut en demander
-              un nouveau — cela lui coûte 1 h de blocage personnel.
+              un nouveau — il remonte alors en surface 1 h et laisse sa
+              place à un coéquipier, l’indice restant acquis à tous.
             </div>
           </div>
           <div class="morse-hints-grid">

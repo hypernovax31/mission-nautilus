@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aperçu — popup « Veux-tu te sacrifier ? » (Mission Nautilus)</title>
+  <meta name="description" content="Outil de développement : aperçu isolé du popup de confirmation de la demande d'indice du Palier 1. Aucun impact sur le jeu." />
+  <link rel="icon" type="image/svg+xml" href="../assets/icon.svg" />
+  <!-- Feuille de style du jeu : le popup s'affiche exactement comme dans
+       palier1.html (même charte, mêmes gabarits). -->
+  <link rel="stylesheet" href="../css/palier1.css?v=50" />
+  <style>
+    /* Barre d'outils de l'aperçu, posée au-dessus de tout. */
+    .apercu-barre{
+      position:fixed;top:0;left:0;right:0;z-index:20000;
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      padding:10px 14px;font-size:13px;color:#9bc4d4;
+      background:rgba(2,8,18,.88);border-bottom:1px solid rgba(245,176,39,.28);
+      backdrop-filter:blur(6px);
+    }
+    .apercu-barre button{
+      padding:9px 14px;border:0;border-radius:10px;background:var(--fnac);
+      color:#111;font-weight:1000;font-size:12.5px;cursor:pointer;
+    }
+    .apercu-barre button.alt{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.24)}
+    .apercu-barre .apercu-note{flex:1 1 240px;line-height:1.4}
+    .apercu-mini{
+      display:none;max-width:640px;margin:96px auto 40px;padding:20px;
+      border:1px dashed rgba(142,231,255,.32);border-radius:16px;color:#9bc4d4;
+      font-size:13px;line-height:1.5;text-align:center;
+    }
+    .apercu-mini.show{display:block}
+    .apercu-mini b{color:#ffd36c}
+  </style>
+</head>
+<body>
+
+<div class="apercu-barre">
+  <button type="button" id="ouvrir">Ouvrir le popup</button>
+  <button type="button" class="alt" id="ouvrirEssai">Variante « partie d’essai »</button>
+  <button type="button" class="alt" id="ouvrirDernier">Variante « dernier indice »</button>
+  <span class="apercu-note">
+    Outil de développement : l’aperçu <b>extrait le vrai popup de palier1.html</b>
+    (même source, donc jamais désynchronisé). Aucun effet sur le jeu.
+  </span>
+</div>
+
+<div class="apercu-mini show" id="mini">
+  Le popup n’est pas encore chargé… Si ce message reste affiché, ouvrez cette page
+  depuis le serveur local (<b>/tools/apercu-popup-sacrifice.html</b>) : le navigateur
+  interdit la lecture de <b>palier1.html</b> depuis un simple fichier local.
+</div>
+
+<script>
+  /* =====================================================================
+     APERÇU (développement) — popup de confirmation de la demande d'indice.
+     Le balisage est EXTRAIT de palier1.html : une seule source de vérité.
+     On ne charge pas le module du jeu (Firebase, équipage…) : les boutons
+     ferment simplement la boîte.
+     ===================================================================== */
+  (function () {
+    const hote = document.body;
+    const mini = document.getElementById('mini');
+    let modale = null;
+
+    function fermer() {
+      if (!modale) return;
+      modale.classList.remove('show');
+      modale.setAttribute('aria-hidden', 'true');
+    }
+
+    function ouvrir(variante) {
+      if (!modale) return;
+      const numero = variante === 'dernier' ? 3 : (variante === 'essai' ? 2 : 1);
+      const restants = variante === 'essai' ? 2 : (variante === 'dernier' ? 1 : 3);
+      const titre = modale.querySelector('#sacrificeIndice');
+      if (titre) titre.textContent = `Indice nº${numero} sur 3 révélé aussitôt`;
+      const reste = modale.querySelector('#sacrificeReste');
+      if (reste) {
+        reste.innerHTML = restants > 1
+          ? `Il restera <b>${restants - 1} indice${restants - 1 > 1 ? 's' : ''}</b> à découvrir après celui-ci.`
+          : 'C’est le <b>dernier indice</b> encore verrouillé.';
+      }
+      const essai = modale.querySelector('#sacrificeTestNote');
+      if (essai) essai.hidden = variante !== 'essai';
+      modale.classList.add('show');
+      modale.setAttribute('aria-hidden', 'false');
+    }
+
+    fetch('../palier1.html').then((r) => r.text()).then((html) => {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      modale = doc.getElementById('sacrificeModal');
+      if (!modale) return;
+      hote.appendChild(modale);          // adoption automatique du noeud
+      mini.classList.remove('show');
+      modale.querySelector('#sacrificeCancel')?.addEventListener('click', fermer);
+      modale.querySelector('#sacrificeConfirm')?.addEventListener('click', fermer);
+      modale.addEventListener('click', (e) => { if (e.target === e.currentTarget) fermer(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermer(); });
+      ouvrir('normal');
+    }).catch(() => { mini.classList.add('show'); });
+
+    document.getElementById('ouvrir').addEventListener('click', () => ouvrir('normal'));
+    document.getElementById('ouvrirEssai').addEventListener('click', () => ouvrir('essai'));
+    document.getElementById('ouvrirDernier').addEventListener('click', () => ouvrir('dernier'));
+  })();
+</script>
+
+</body>
+</html>
