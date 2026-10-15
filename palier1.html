@@ -184,6 +184,7 @@
     </div>
 
     <p class="sacrifice-note" id="sacrificeReste"></p>
+    <p class="sacrifice-note" id="sacrificeEscalade"></p>
     <p class="sacrifice-note sacrifice-note--essai" id="sacrificeTestNote" hidden>
       🧪 Partie d’essai : ton blocage expirera aussitôt, tu pourras enchaîner les tests.
     </p>
@@ -668,10 +669,29 @@ function getLockHours(failCount) {
   const n = Math.max(1, Number(failCount) || 1);
   return n <= LOCK_HOURS.length ? LOCK_HOURS[n - 1] : 24;
 }
-function getLockedUntilISO(failCount) {
+function getLockedUntilISO(nextRang) {
   const d = new Date();
-  d.setHours(d.getHours() + getLockHours(failCount));
+  d.setHours(d.getHours() + getLockHours(nextRang));
   return d.toISOString();
+}
+/* RANG DE REMONTÉE — LE COMPTEUR QUI FAIT AVANCER LE BARÈME.
+   Deux compteurs cohabitent dans matelotLocks[clé] :
+     • failCount   : le nombre d'ÉCHECS (affiché comme tel, jamais
+                     incrémenté par une demande d'indice) ;
+     • surfaceCount: le nombre de REMONTÉES EN SURFACE, échecs ET
+                     demandes d'indice confondus.
+   C'est le rang de remontée qui décide de la durée — sinon un matelot
+   remonté 1 h pour un indice se voyait annoncer « au prochain échec,
+   ce sera 1 h », exactement la peine qu'il venait de subir. Désormais,
+   après une remontée d'1 h, la suivante coûte 2 h.
+   Les fiches écrites AVANT cette règle n'ont pas de surfaceCount : on
+   retombe alors sur failCount, soit exactement l'ancien calcul. */
+function remonteesDe(lock) {
+  return Number(lock?.surfaceCount ?? lock?.failCount ?? 0);
+}
+/* Peine que coûtera la PROCHAINE remontée de ce matelot. */
+function prochainePeineH(lock) {
+  return getLockHours(remonteesDe(lock) + 1);
 }
 /* Blocage de tout l'equipage : ne subsiste que par decision d'un admin. */
 /* isLocked() a ete SUPPRIMEE : plus rien ne bloque une equipe entiere.
@@ -957,7 +977,8 @@ window.Nautilus = {
   getCurrentMatelotCode, getMatelotByCode,
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, getSessionBrute, watchSession, createSession, updateSession, endSession, clearSession,
-  getLockHours, getLockedUntilISO, getMatelotLock, isMatelotLocked, formatDate,
+  getLockHours, getLockedUntilISO, remonteesDe, prochainePeineH,
+  getMatelotLock, isMatelotLocked, formatDate,
   getMissionConfig,
   isTestMode, isTestMember,
   isSoundEnabled, getAudioCtx, getMorseCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
@@ -1334,7 +1355,9 @@ window.Nautilus = {
       completedSteps: [],
       status: 'active', failCount: 1,
       matelotLocks: {
-        DEMO: { name: 'DÉMO', failCount: 1, lastLockHours: 1, lockedUntil: plus1h, reason: 'morse_too_many_errors', blockedAt: new Date(maintenant - 600e3).toISOString() }
+        /* surfaceCount = 1 remontée : l'aperçu montre donc la règle
+           d'escalade en vrai — « ta prochaine remontée coûtera 2 h ». */
+        DEMO: { name: 'DÉMO', failCount: 1, surfaceCount: 1, lastLockHours: 1, lockedUntil: plus1h, reason: 'morse_too_many_errors', blockedAt: new Date(maintenant - 600e3).toISOString() }
       },
       members: [
         { name: 'DÉMO', service: 'PE', memberKey: 'DEMO', registeredAt: new Date(maintenant - 7200e3).toISOString() },
@@ -2677,15 +2700,21 @@ window.Nautilus = {
        UNIQUEMENT le matelot qui vient d'echouer. Son compteur d'echecs lui
        est propre : son 1er echec coute 1 h, meme si ses camarades en ont
        deja accumule. Les autres gardent l'acces au palier et peuvent le
-       reprendre chacun leur tour. */
+       reprendre chacun leur tour.
+       La DUREE, elle, suit le RANG DE REMONTEE (surfaceCount) : les
+       demandes d'indice font monter le bareme au meme titre que les
+       echecs. Apres une remontee d'1 h, la suivante coute donc 2 h —
+       quelle qu'en soit la raison. failCount, lui, ne compte que les
+       echecs : il reste juste pour l'affichage et le classement. */
     const key = state.me.memberKey;
     const ancien = N.getMatelotLock(state.team, key);
     const nextFail = Number(ancien?.failCount || 0) + 1;
-    const hours = N.getLockHours(nextFail);
+    const nextSurface = N.remonteesDe(ancien) + 1;
+    const hours = N.getLockHours(nextSurface);
     /* MODE CONCEPTEUR (partie d'essai) : jamais bridé par les erreurs —
        le blocage est immédiatement expiré : l'écran de défaite et le
        compteur s'affichent, mais le testeur rejoue sans attendre. */
-    const until = state.isTest ? new Date().toISOString() : N.getLockedUntilISO(nextFail);
+    const until = state.isTest ? new Date().toISOString() : N.getLockedUntilISO(nextSurface);
 
     /* BUG CORRIGE : le resultat de saveTeam() etait jete.
        L'ecran de defaite affiche "Reprise possible le <lockedUntil>" en
@@ -2698,7 +2727,8 @@ window.Nautilus = {
        contient deja le blocage. */
     const locks = { ...(state.team.matelotLocks || {}) };
     locks[key] = {
-      name: state.me.name, failCount: nextFail, lastLockHours: hours,
+      name: state.me.name, failCount: nextFail, surfaceCount: nextFail,
+      lastLockHours: hours,
       lockedUntil: until, reason: reason || '', blockedAt: new Date().toISOString()
     };
     /* L'INSTANT est releve AVANT l'ecriture reseau. Sans cela, la ligne
@@ -2868,6 +2898,16 @@ window.Nautilus = {
         ? `Il restera <b>${restants - 1} indice${restants - 1 > 1 ? 's' : ''}</b> à découvrir après celui-ci.`
         : 'C’est le <b>dernier indice</b> encore verrouillé.';
     }
+    /* LE PRIX APRÈS CE SACRIFICE. Le barème monte d'un cran à CHAQUE
+       remontée, indice compris : le joueur doit le savoir AVANT de
+       confirmer, pas le découvrir sur l'écran de blocage. */
+    const escalade = $('sacrificeEscalade');
+    if (escalade) {
+      const monLock = (state.team && state.me)
+        ? N.getMatelotLock(state.team, state.me.memberKey) : null;
+      escalade.innerHTML = `Après ce sacrifice, ta prochaine remontée — échec ou indice — coûtera <b>${N.prochainePeineH(monLock)} h</b> en surface.`;
+      escalade.hidden = !!state.isTest;
+    }
     /* Partie d'essai : l'annonce des 1 h serait mensongere, le blocage
        expire immediatement (voir blockMatelotForHint). */
     const noteEssai = $('sacrificeTestNote');
@@ -2997,16 +3037,38 @@ window.Nautilus = {
                                : new Date(Date.now() + HINT_LOCK_HOURS * 3600 * 1000).toISOString();
     const locks = { ...(state.team.matelotLocks || {}) };
     const ancien = locks[key] || {};
+    /* LE RANG DE REMONTÉE AVANCE AUSSI POUR UN INDICE.
+       C'est le cœur de la règle : sans cela, l'écran « Statut personnel »
+       annonçait à un matelot tout juste remonté 1 h pour un indice…
+       que son prochain échec coûterait 1 h. Chaque remontée — échec ou
+       indice — fait donc monter le barème d'un cran (1 h, 2 h, 4 h…),
+       et la durée ANNONCÉE est toujours celle que la prochaine
+       remontée coûtera réellement. L'indice lui-même reste facturé
+       HINT_LOCK_HOURS (1 h) : demander de l'aide ne doit pas coûter
+       huit heures.
+       failCount, lui, N'EST PAS incrémenté : demander de l'aide n'est
+       pas un échec, les « avaries » de l'équipage et le classement
+       l'ignorent, et le compteur personnel d'échecs reste juste. */
+    const dejaRemonte = N.remonteesDe(ancien);          // échecs + indices déjà subis
     locks[key] = {
       name: state.me.name,
       failCount: Number(ancien.failCount || 0),   // inchange : ce n'est pas un echec
-      lastLockHours: HINT_LOCK_HOURS,
+      surfaceCount: dejaRemonte + 1,              // le barème avance d'un cran
+      remontees: dejaRemonte + 1,                 // (bis, pour les fiches anciennes)
+      lastLockHours: HINT_LOCK_HOURS,             // l'indice coûte 1 h
       lockedUntil: until,
       reason: 'indice_demande',
       blockedAt: new Date().toISOString()
     };
     state.team = await N.saveTeam(state.team, { matelotLocks: locks, lastEvent: 'matelot_hint_lock' });
-    N.showToast(`🆘 Indice obtenu, révélé à tout l’équipage ! Tu remontes en surface jusqu’à ${N.formatDate(until)} — un coéquipier peut prendre les commandes dès maintenant.`, 'warning', 8000);
+    /* ANNONCE HONNÊTE : on dit la durée de CETTE remontée (1 h) ET le
+       prix de la suivante, celui qui s'affichera sur l'écran de blocage. */
+    const suivante = N.prochainePeineH(locks[key]);
+    N.showToast(
+      `🆘 Indice obtenu, révélé à tout l’équipage ! Tu remontes en surface 1 h (jusqu’à ${N.formatDate(until)}) — `
+      + `un coéquipier peut prendre les commandes dès maintenant.`
+      + (state.isTest ? '' : ` Attention : ta prochaine remontée, échec ou indice, coûtera ${suivante} h.`),
+      'warning', 9000);
   }
 
   function buildHintContent(idx) {
@@ -3314,11 +3376,20 @@ window.Nautilus = {
     const hours = Number(monLock.lastLockHours || 1);
     const { suivante, relais, relayHours } = peineEtRelais(t, monLock);
     const noms = relais.slice(0, 3).map(m => esc(m.nom)).join(', ');
+    /* CEINTURE ET BRETELLES : la peine annoncée est TOUJOURS celle que la
+       prochaine remontée coûtera vraiment. Si une fiche ancienne (ou un
+       cas imprévu) divergeait, on préfère l'afficher telle qu'elle sera
+       plutôt que de promettre une durée fausse. */
+    const suivanteAffichee = Math.max(suivante, N.prochainePeineH(monLock));
     if (variante === 'indice') {
       return `
         <div class="lock-ligne">
           <span class="lock-ligne-ico" aria-hidden="true">✓</span>
           <span>L'indice reste disponible pour <b>tout l'équipage</b>.</span>
+        </div>
+        <div class="lock-ligne lock-ligne--next">
+          <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
+          <span>Prochaine remontée, échec ou indice : <b>${esc(String(suivanteAffichee))} h</b> en surface.</span>
         </div>`;
     }
     return `
@@ -3334,7 +3405,7 @@ window.Nautilus = {
         </div>
         <div class="lock-ligne lock-ligne--next">
           <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
-          <span>Prochain échec : <b>${esc(String(suivante))} h</b> en surface (compteur personnel).</span>
+          <span>Prochaine remontée, échec ou indice : <b>${esc(String(suivanteAffichee))} h</b> en surface (compteur personnel).</span>
         </div>`;
   }
 
@@ -3356,19 +3427,24 @@ window.Nautilus = {
   }
 
   function peineEtRelais(t, l) {
-    const echecs = Number(l?.failCount || 0);
-    /* Un blocage pour indice n'augmente PAS le compteur d'échecs : la
-       prochaine peine se calcule donc sur echecs + 1 dans les deux cas. */
-    const suivante = N.getLockHours(echecs + 1);
+    /* LA PEINE SUIVANTE SE CALCULE SUR LE RANG DE REMONTÉE, jamais sur le
+       seul compteur d'échecs : un matelot remonté 1 h pour un INDICE a
+       déjà « consommé » son cran de 1 h, la suivante coûte donc 2 h.
+       C'est le bug corrigé ici : l'écran annonçait « au prochain échec,
+       ce sera 1 h » juste après une remontée de 1 h. */
+    const suivante = N.prochainePeineH(l);
     const locks = (t && t.matelotLocks) || {};
     const relais = ((t && t.members) || [])
       .filter(m => !isTestMember(m))   // le compte test n'est jamais d'un équipage
       .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
       .filter(m => m.cle && m.cle !== (state.me && state.me.memberKey) && !N.isMatelotLocked(t, m.cle))
-      .map(m => ({ ...m, echecs: Number(locks[m.cle]?.failCount || 0) }))
-      .filter(m => N.getLockHours(m.echecs + 1) < suivante)
-      .sort((a, b) => a.echecs - b.echecs);
-    return { suivante, relais, relayHours: relais[0] ? N.getLockHours(relais[0].echecs + 1) : null };
+      /* Un coéquipier n'est un « relais » que si SA remontée coûte moins
+         cher que la mienne : on compare les rangs de remontée, pas les
+         échecs (un camarade peut avoir demandé des indices sans faillir). */
+      .map(m => ({ ...m, remontees: N.remonteesDe(locks[m.cle]) }))
+      .filter(m => N.getLockHours(m.remontees + 1) < suivante)
+      .sort((a, b) => a.remontees - b.remontees);
+    return { suivante, relais, relayHours: relais[0] ? N.getLockHours(relais[0].remontees + 1) : null };
   }
 
   /* === ÉCRAN : blocage PERSONNEL (le matelot seul est en surface) ===
@@ -3495,6 +3571,6 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=4" defer></script>
-<script src="admin-button.js?v=25" type="module"></script>
+<script src="admin-button.js?v=26" type="module"></script>
 </body>
 </html>

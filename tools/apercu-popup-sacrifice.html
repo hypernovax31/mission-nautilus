@@ -23,6 +23,11 @@
       color:#111;font-weight:1000;font-size:12.5px;cursor:pointer;
     }
     .apercu-barre button.alt{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.24)}
+    .apercu-lien{
+      padding:8px 12px;border-radius:10px;border:1px solid rgba(142,231,255,.3);
+      color:#dff6ff;text-decoration:none;font-weight:800;font-size:12.5px;white-space:nowrap;
+    }
+    .apercu-lien:hover{border-color:var(--fnac);color:#ffd36c}
     .apercu-barre .apercu-note{flex:1 1 240px;line-height:1.4}
     .apercu-mini{
       display:none;max-width:640px;margin:96px auto 40px;padding:20px;
@@ -39,6 +44,8 @@
   <button type="button" id="ouvrir">Ouvrir le popup</button>
   <button type="button" class="alt" id="ouvrirEssai">Variante « partie d’essai »</button>
   <button type="button" class="alt" id="ouvrirDernier">Variante « dernier indice »</button>
+  <a class="apercu-lien" href="../palier1.html">Ouvrir le Palier 1</a>
+  <a class="apercu-lien" href="../index.html">Ouvrir l’accueil</a>
   <span class="apercu-note">
     Outil de développement : l’aperçu <b>extrait le vrai popup de palier1.html</b>
     (même source, donc jamais désynchronisé). Aucun effet sur le jeu.
@@ -83,6 +90,16 @@
       }
       const essai = modale.querySelector('#sacrificeTestNote');
       if (essai) essai.hidden = variante !== 'essai';
+      /* Ligne « ce que coûtera la prochaine remontée » : le barème est
+         1 h, 2 h, 4 h, 8 h, 12 h, 24 h (rang de remontée). */
+      const bareme = [1, 2, 4, 8, 12];
+      const rang = variante === 'dernier' ? 3 : (variante === 'essai' ? 2 : 1);
+      const escalade = modale.querySelector('#sacrificeEscalade');
+      if (escalade) {
+        const suivante = bareme[rang] ?? 24;
+        escalade.innerHTML = `Après ce sacrifice, ta prochaine remontée — échec ou indice — coûtera <b>${suivante} h</b> en surface.`;
+        escalade.hidden = variante === 'essai';
+      }
       modale.classList.add('show');
       modale.setAttribute('aria-hidden', 'false');
     }

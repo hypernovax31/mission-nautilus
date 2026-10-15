@@ -15,8 +15,13 @@
    doit JAMAIS hériter du blocage de ce collègue.
 
    Barème commun (en phase avec LOCK_HOURS de palier1.html) :
-   1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h dès le 6ᵉ échec — le compteur
-   d'échecs (failCount) suit le matelot d'un palier à l'autre.
+   1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h dès le 6ᵉ cran.
+   LE CRAN SE COMPTE EN REMONTÉES EN SURFACE, échecs ET demandes
+   d'indice confondus (champ surfaceCount de la fiche) : un matelot
+   remonté 1 h pour un indice voit la remontée suivante coûter 2 h —
+   sinon l'écran de statut lui annonçait « au prochain échec, 1 h »,
+   soit exactement la peine qu'il venait de subir. failCount, lui,
+   ne compte que les échecs (affichage, classement).
 
    Identité : Code Matelot (paramètre ?m= de l'URL, à défaut
    localStorage « nautilusMatelotCode » — mêmes conventions que
@@ -33,7 +38,7 @@
    qui est exactement le bug résolu ici.
 
    Utilisation :
-     <script src="matelot-blocages.js?v=1"></script>
+     <script src="matelot-blocages.js?v=3"></script>
      const moi   = await NautilusBlocages.identiteCourante();
      const bloc  = await NautilusBlocages.blocageActif(moi);
      const pose  = await NautilusBlocages.poserBlocage(moi, 'raison');
@@ -65,9 +70,20 @@
       .replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]/gi, ''));
   }
 
-  function heuresBlocage(failCount) {
-    var n = Math.max(1, Number(failCount) || 1);
+  /* Le CRAN du barème se compte en REMONTÉES EN SURFACE (échecs +
+     demandes d'indice), jamais en seuls échecs — même règle qu'au
+     Palier 1 et sur l'accueil. Un matelot tout juste remonté 1 h pour
+     un indice doit voir la remontée suivante coûter 2 h. */
+  function heuresBlocage(rang) {
+    var n = Math.max(1, Number(rang) || 1);
     return n <= LOCK_HOURS.length ? LOCK_HOURS[n - 1] : 24;
+  }
+  /* Remontées déjà subies par ce matelot (repli sur failCount pour les
+     fiches antérieures à la règle : ancien calcul, à l'identique). */
+  function remonteesDe(lock) {
+    if (!lock) return 0;
+    return Number(lock.surfaceCount != null ? lock.surfaceCount
+                 : (lock.failCount != null ? lock.failCount : 0)) || 0;
   }
 
   /* Firebase mutualisé : getApp() si la page (ou le bouton admin) a
@@ -186,17 +202,22 @@
     var data = snap.exists() ? (snap.data() || {}) : {};
     var ancien = (data.matelotLocks || {})[ident.memberKey] || null;
     var nextFail = Number((ancien && ancien.failCount) || 0) + 1;
-    var hours = heuresBlocage(nextFail);
+    /* La durée suit le RANG DE REMONTÉE (échecs + indices déjà subis),
+       pas le seul compteur d'échecs : après une remontée d'1 h pour un
+       indice, l'échec suivant coûte 2 h. */
+    var nextSurface = remonteesDe(ancien) + 1;
+    var hours = heuresBlocage(nextSurface);
     var until = new Date(Date.now() + hours * 3600e3).toISOString();
     var patch = {};
     patch['matelotLocks.' + ident.memberKey] = {
-      name: ident.name, failCount: nextFail, lastLockHours: hours,
+      name: ident.name, failCount: nextFail, surfaceCount: nextSurface,
+      lastLockHours: hours,
       lockedUntil: until, reason: reason || '', blockedAt: new Date().toISOString()
     };
     patch.failCount = Number(data.failCount || 0) + 1;
     patch.lastEvent = 'matelot_blocked';
     await x.fs.updateDoc(ref, patch);
-    return { failCount: nextFail, hours: hours, lockedUntil: until };
+    return { failCount: nextFail, surfaceCount: nextSurface, hours: hours, lockedUntil: until };
   }
 
   /* Palier franchi : TOUT blocage personnel encore actif s'efface pour
@@ -235,6 +256,7 @@
     poserBlocage: poserBlocage,
     leverBlocages: leverBlocages,
     heuresBlocage: heuresBlocage,
+    remonteesDe: remonteesDe,
     memberKey: memberKey,
     CODE_TEST: CODE_TEST
   };

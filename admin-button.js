@@ -1016,6 +1016,16 @@
   /* Liste des matelots actuellement en surface (blocage personnel).
      Sans cet affichage, un blocage individuel serait invisible depuis
      l'admin : impossible de savoir qui est bloque, ni de le liberer. */
+  /* Remontées en surface d'un matelot (échecs + demandes d'indice) :
+     c'est ce rang qui décide de la durée du blocage — même règle que
+     index.html / palier1.html / matelot-blocages.js. Repli sur
+     failCount pour les fiches antérieures à cette règle. */
+  function remonteesDe(lock){
+    if(!lock) return 0;
+    return Number(lock.surfaceCount != null ? lock.surfaceCount
+                 : (lock.failCount != null ? lock.failCount : 0)) || 0;
+  }
+
   function renderMatelotLocksHtml(t){
     const locks = t.matelotLocks || {};
     const now = Date.now();
@@ -1026,7 +1036,7 @@
     }
     const lignes = actifs.map(([key, l]) =>
       `<li style="margin:4px 0">🔒 <b>${esc(l.name || key)}</b> — jusqu'au ${esc(formatDate(l.lockedUntil))}
-        (${esc(String(l.failCount || 1))} échec(s))
+        (échecs : ${esc(String(l.failCount || 0))} · remontées : ${esc(String(remonteesDe(l)))} · cette fois ${esc(String(l.lastLockHours || 1))} h)
         <button class="secondary lk-free-one" type="button" data-key="${esc(key)}" style="margin-left:8px;padding:3px 10px;font-size:12px">Libérer</button></li>`
     ).join('');
     return `<div class="small" style="margin-bottom:10px">

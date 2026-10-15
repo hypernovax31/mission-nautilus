@@ -484,13 +484,25 @@
   /* BLOCAGE : il est PERSONNEL, pas collectif.
      Un echec ne repousse en surface que le matelot qui l'a commis ; ses
      camarades gardent l'acces au palier et le reprennent chacun leur tour.
-     Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e echec. */
+     Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e cran.
+
+     LE CRAN SE COMPTE EN REMONTEES, PAS EN ECHECS (voir remonteesDe) :
+     une demande d'indice remonte le matelot au meme titre qu'un echec.
+     Sinon, un matelot tout juste remonte 1 h pour un indice lisait
+     « au prochain echec, ce sera 1 h » — exactement la peine qu'il
+     venait de subir. Meme regle que palier1.html. */
   const LOCK_HOURS = [1, 2, 4, 8, 12];
-  function getLockHours(failCount){
-    const n = Math.max(1, Number(failCount) || 1);
+  function getLockHours(rang){
+    const n = Math.max(1, Number(rang) || 1);
     return n <= LOCK_HOURS.length ? LOCK_HOURS[n-1] : 24;
   }
-  function getLockedUntilISO(failCount){const d=new Date();d.setHours(d.getHours()+getLockHours(failCount));return d.toISOString();}
+  /* Nombre de remontees en surface (echecs + demandes d'indice) d'un
+     matelot. Les fiches ecrites avant cette regle n'ont pas de
+     surfaceCount : on retombe sur failCount, soit l'ancien calcul. */
+  function remonteesDe(lock){
+    return Number(lock?.surfaceCount ?? lock?.failCount ?? 0);
+  }
+  function getLockedUntilISO(rang){const d=new Date();d.setHours(d.getHours()+getLockHours(rang));return d.toISOString();}
   /* Blocage de TOUT l'equipage : ne subsiste que par decision d'un admin. */
   function isLocked(team){return team?.status==='blocked'&&team.lockedUntil&&new Date(team.lockedUntil).getTime()>Date.now();}
   /* Blocages personnels, ranges dans teams/{code}.matelotLocks[memberKey]. */
@@ -3636,14 +3648,23 @@ function qrDataUri(text, opts){
         + '<div class="ck-screen">'
         +   '<div class="ck-screen-label"><span class="ck-alarm-lamp"></span>Statut personnel</div>'
         +   '<div class="ck-screen-value">REMONTÉE FORCÉE</div>'
-        +   '<p class="ck-screen-desc">Ton échec ne bloque que <b>toi</b> : le reste de l’équipage poursuit la plongée.<br>'
+        /* LE MOTIF D'ABORD. L'écran parlait de « ton échec » à un matelot
+           qui venait simplement de demander un indice : faux, et vexant.
+           Une demande d'indice n'est pas une faute — on le dit, et on
+           rappelle que l'indice reste acquis à l'équipage. */
+        +   (monLock.reason === 'indice_demande'
+              ? '<p class="ck-screen-desc">Tu as demandé un indice : il reste acquis à <b>tout l’équipage</b>, personne ne repart de zéro.<br>'
+                + 'Cette remontée ne bloque que <b>toi</b> : le reste de l’équipage poursuit la plongée.<br>'
+              : '<p class="ck-screen-desc">Ton échec ne bloque que <b>toi</b> : le reste de l’équipage poursuit la plongée.<br>')
         +     'Tu pourras reprendre les commandes le <b>' + esc(formatDate(monLock.lockedUntil)) + '</b>'
-        +     ' (' + esc(String(monLock.lastLockHours || '?')) + ' h de blocage).<br>'
-        /* On annonce DES MAINTENANT la peine suivante : c'est pendant
-           l'attente que le matelot decide s'il repartira lui-meme ou s'il
-           laissera un camarade au compteur plus leger prendre la barre. */
-        +     'Au prochain échec, ce sera <b class="ck-risque-h">'
-        +     getLockHours(Number(monLock.failCount || 0) + 1) + ' h</b>.</p>'
+        +     ' (' + esc(String(monLock.lastLockHours || '?')) + ' h en surface).<br>'
+        /* Peine suivante : elle se calcule sur le RANG DE REMONTÉE
+           (échecs + indices), pas sur les seuls échecs. Avant cette
+           correction, un matelot remonté 1 h pour un indice lisait ici
+           « au prochain échec, ce sera 1 h » — la peine qu'il venait
+           d'écoper, répétée à l'identique. */
+        +     'Ta prochaine remontée, échec ou indice, coûtera <b class="ck-risque-h">'
+        +     getLockHours(remonteesDe(monLock) + 1) + ' h</b>.</p>'
         + '</div>'
         + cockpitTrackHtml(currentTeam)
         /* Indispensable ici : c'est le matelot bloque qui a le plus besoin
@@ -6505,7 +6526,7 @@ function qrDataUri(text, opts){
     }
     const lignes = actifs.map(([key, l]) =>
       `<li style="margin:4px 0">🔒 <b>${esc(l.name || key)}</b> — jusqu'au ${esc(formatDate(l.lockedUntil))}
-        (${esc(String(l.failCount || 1))} échec(s))
+        (échecs : ${esc(String(l.failCount || 0))} · remontées : ${esc(String(remonteesDe(l)))} · cette fois ${esc(String(l.lastLockHours || 1))} h)
         <button class="secondary lk-free-one" type="button" data-key="${esc(key)}" style="margin-left:8px;padding:3px 10px;font-size:12px">Libérer</button></li>`
     ).join('');
     return `<div class="small" style="margin-bottom:10px">
@@ -7350,7 +7371,7 @@ window.PWAInstall = {
   aUnPrompt: () => Boolean(pwaDeferredPrompt)
 };
 </script>
-<script src="admin-button.js?v=25" type="module"></script>
+<script src="admin-button.js?v=26" type="module"></script>
 </body>
 </html>
 
