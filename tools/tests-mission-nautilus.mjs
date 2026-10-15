@@ -347,6 +347,10 @@ ok('le clic sur START est un vrai geste (bouton réel, jamais un div)',
 ok('le bouton porte le nom exigé : START', /<span class="ec-start-label">START<\/span>/.test(corps));
 ok('l\'écoutille est retirée du DOM une fois ouverte (rien ne tourne en fond)',
    porte.includes('racine.remove()') && porte.includes('nautilus:ecoutille-ouverte'));
+ok('un seul curseur clignotant dans le journal de départ',
+   (corps.match(/class="ec-curseur"/g) || []).length === 1);
+ok('le curseur est DÉPLACÉ d\'une ligne à l\'autre (jamais semé)',
+   porte.includes('function poserCurseur()') && porte.includes('if(_curseur) _curseur.remove()'));
 
 /* --- La feuille de style -------------------------------------------------- */
 ok('la page de garde passe au-dessus de tout, panneau d\'administration compris',

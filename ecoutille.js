@@ -326,17 +326,29 @@
   let _annule = false;
   const attendre = delai => P(_annule ? 0 : delai);
 
+  /* UN SEUL curseur, à la fin de la dernière ligne : c'est un terminal, pas
+     une grille de curseurs. On le déplace donc à chaque nouvelle ligne au
+     lieu d'en semer un par ligne. À la fin, il reste et clignote : le poste
+     attend un ordre — et c'est justement le doigt sur START. */
+  let _curseur = null;
+  function poserCurseur(){
+    if(_curseur) _curseur.remove();
+    _curseur = document.createElement('span');
+    _curseur.className = 'ec-curseur';
+    journal.appendChild(_curseur);
+  }
+
   async function taperJournal(dejaVue){
     if(!journal) return;
+    /* Le curseur du balisage de départ : c'est lui qu'on déplacera. */
+    _curseur = journal.querySelector('.ec-curseur');
     const lignes = lignesDuJournal(dejaVue);
     for(const ligne of lignes){
       if(_annule) return;
       const li = document.createElement('li');
       if(ligne.alerte) li.className = 'ec-alerte';
-      const curseur = document.createElement('span');
-      curseur.className = 'ec-curseur';
       journal.appendChild(li);
-      journal.appendChild(curseur);
+      poserCurseur();
       /* Trois lignes au maximum restent affichées : le panneau ne grandit pas. */
       const trop = journal.querySelectorAll('li');
       if(trop.length > 3) trop[0].remove();
@@ -348,9 +360,6 @@
       }
       await attendre(ligne.alerte ? 620 : 420);
     }
-    if(_annule) return;
-    const c = journal.parentElement.querySelector('.ec-curseur');
-    if(c) c.remove();
   }
 
   /* ------------------------------------------------------------------ *
@@ -570,6 +579,8 @@
         li.className = 'ec-alerte';
         li.textContent = 'APPUIE SUR START POUR OUVRIR';
         journal.appendChild(li);
+        _curseur = null;
+        poserCurseur();
       }
       racine.classList.add('ec-alarme');
       couperAlarme();
