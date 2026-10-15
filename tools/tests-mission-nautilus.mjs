@@ -14,7 +14,10 @@
         remontées — échecs + indices — et non en échecs seuls) ;
      2. le blocage déclenché par une demande d'indice ;
      3. le module partagé des paliers ≥ 2 (matelot-blocages.js) ;
-     4. la cohérence des écrans qui ANNONCENT ces durées.
+     4. la cohérence des écrans qui ANNONCENT ces durées ;
+     5. l'écran de blocage de l'accueil, rendu pour de vrai ;
+     6. la page de garde (écoutille) : géométrie des pales, sentinelle
+        du <head>, silence respecté, mise en cache.
 
    Aucune écriture, aucun accès réseau : Firebase est remplacé par une
    fausse base en mémoire.
@@ -238,6 +241,130 @@ if (debutEcr < 0 || finEcr < 0) {
   ok('scénario signalé : après un blocage de 1 h, ce n’est plus « ce sera 1 h »',
      !vueSuite.includes('>1 h</b>') && vueSuite.includes('>2 h</b>'));
 }
+
+/* =====================================================================
+   6. LA PAGE DE GARDE (ÉCOUTILLE DU PREMIER CHARGEMENT)
+   ===================================================================== */
+titre('6. Page de garde — écoutille du premier chargement');
+
+const porte = lire('ecoutille.js');
+const porteCss = lire('css/ecoutille.css');
+const sw = lire('sw.js');
+
+ok('la feuille de la page de garde existe et est liée avec sa version',
+   /<link rel="stylesheet" href="css\/ecoutille\.css\?v=\d+">/.test(accueil));
+ok('le moteur de la page de garde est chargé en différé (après les modules du site)',
+   /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
+
+const corps = accueil.slice(accueil.indexOf('<body>'));
+ok('l\'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)',
+   corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
+
+/* --- La sentinelle du <head> : écran en place, ou pas, dès la 1re image --- */
+const sentinelle = accueil.slice(
+  accueil.indexOf('  (function(){\n    try{\n      var racine = document.documentElement;'),
+  accueil.indexOf('  })();', accueil.indexOf('  (function(){\n    try{\n      var racine = document.documentElement;')) + 7);
+ok('la décision est prise dans le <head>, avant le premier rendu', sentinelle.length > 200);
+ok('nouvelle visite : la garde est jouée (aucun marqueur de session)',
+   sentinelle.includes("sessionStorage.getItem('nautilusEcoutille')"));
+ok('déjà ouverte : la classe ec-passee est posée avant tout dessin',
+   sentinelle.includes("racine.classList.add('ec-passee')"));
+ok('la garde verrouille le défilement de l\'accueil (ec-bloque)',
+   sentinelle.includes("racine.classList.add('ec-bloque')"));
+ok('?ecoutille=1 / ?ecoutille=0 pilotent la garde',
+   sentinelle.includes("d === '1'") && sentinelle.includes("d === '0'"));
+ok('filet de sécurité : le site se rouvre si le moteur ne charge pas (20 s)',
+   sentinelle.includes('__ecoutilleMinuteurSecours') && sentinelle.includes('20000'));
+ok('sans JavaScript, aucune écoutille (personne ne reste enfermé)',
+   accueil.includes('<noscript><style>#ecoutille{display:none !important}</style></noscript>'));
+
+/* --- Les huit pales : géométrie vérifiée par calcul de couverture ------- */
+const nbPales = (corps.match(/class="ec-pale-bascule"/g) || []).length;
+ok('huit pales dans le diaphragme', nbPales === 8);
+const rotations = [...corps.matchAll(/class="ec-pale" transform="rotate\((\d+) 500 500\)"/g)].map(m => Number(m[1]));
+ok('les pales sont posées tous les 45° (0 à 315)',
+   rotations.length === 8 && rotations.every((r, i) => r === i * 45));
+
+const corpsPale = /<circle class="ec-pale-corps" cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"\/>/.exec(corps);
+ok('chaque pale est un disque (rayon et centre définis)', Boolean(corpsPale));
+const [cxPale, cyPale, rPale] = corpsPale ? [Number(corpsPale[1]), Number(corpsPale[2]), Number(corpsPale[3])] : [500, 210, 290];
+/* Deux nombres portent toute la mécanique : la pale est un disque de rayon
+   rPale dont le centre est à cyPale du pivot — autrement dit le bord de la
+   pale passe EXACTEMENT par le centre de l'écoutille (500). C'est ce qui
+   rend l'écoutille parfaitement étanche une fois fermée, et c'est aussi ce
+   qu'un diaphragme d'optique fait : les lamelles s'appuient au centre. */
+const cyPaleC = cyPale;
+ok('l\'arc de la pale passe par le centre de l\'écoutille (cy + rayon = 500)',
+   cyPale + rPale === 500, cyPale + ' + ' + rPale);
+ok('le pivot des pales est bien le bord de l\'écoutille (rotate … 500 0)',
+   corps.includes('rotate(0 500 0)'));
+
+const rotMax = Number((/const PALE_ROTATION\s*=\s*([\d.]+)/.exec(porte) || [])[1]);
+const glisseMax = Number((/const PALE_GLISSE\s*=\s*([\d.]+)/.exec(porte) || [])[1]);
+ok('les constantes d\'ouverture sont lisibles dans le moteur', rotMax > 0 && glisseMax > 0);
+
+/* On REFAIT le calcul du jeu : disques de pale placés sur la couronne,
+   chacun pivotant autour de son point du bord. Fermé, l'ensemble doit
+   couvrir tout le disque de l'écoutille ; ouvert, il doit le libérer. */
+function couverture(angleDeg, glisse, pas = 8){
+  const R = 500, N = 8;
+  const pivot = i => { const t = i * Math.PI / 4; return [500 + R * Math.sin(t), 500 - R * Math.cos(t)]; };
+  const tourner = (p, c, deg) => { const t = deg * Math.PI / 180, s = Math.sin(t), k = Math.cos(t);
+    const x = p[0] - c[0], y = p[1] - c[1]; return [c[0] + x * k - y * s, c[1] + x * s + y * k]; };
+  const centres = [];
+  for(let i = 0; i < N; i++){
+    const P = pivot(i);
+    const vx = 500 - P[0], vy = 500 - P[1], n = Math.hypot(vx, vy);
+    const Q = tourner([P[0] + vx / n * cyPaleC, P[1] + vy / n * cyPaleC], P, angleDeg);
+    centres.push([Q[0] - vx / n * glisse, Q[1] - vy / n * glisse]);
+  }
+  let dedans = 0, total = 0;
+  for(let y = 0; y <= 1000; y += pas) for(let x = 0; x <= 1000; x += pas){
+    const dx = x - 500, dy = y - 500;
+    if(dx * dx + dy * dy > R * R) continue;
+    total++;
+    if(centres.some(c => (x - c[0]) ** 2 + (y - c[1]) ** 2 <= rPale * rPale)) dedans++;
+  }
+  return 100 * dedans / total;
+}
+const couvertFerme = couverture(0, 0);
+const couvertOuvert = couverture(rotMax, glisseMax);
+ok('écoutille fermée : les pales couvrent la totalité du disque (' + couvertFerme.toFixed(2) + ' %)',
+   couvertFerme >= 99.9);
+ok('écoutille ouverte : les pales libèrent le passage (' + couvertOuvert.toFixed(1) + ' % restant)',
+   couvertOuvert <= 12);
+ok('l\'ouverture est bien plus large que la fermeture', couvertFerme - couvertOuvert > 85);
+
+/* --- Le son : la garde est le geste qui débloque le sonar du site -------- */
+ok('le moteur lit la préférence de sonar du site (nautilusSoundOn)',
+   porte.includes("localStorage.getItem('nautilusSoundOn') === '0'"));
+ok('silence respecté : aucun contexte audio n\'est créé si le sonar est coupé',
+   /function contexte\(\)\{\s*\n\s*if\(_ctx\) return _ctx;\s*\n\s*if\(silencieux\(\)\) return null;/.test(porte));
+ok('silence respecté : l\'alarme de bord ne joue pas non plus',
+   /function alarmeDeBord\(dureeMs\)\{\s*\n\s*if\(silencieux\(\)\) return;/.test(porte));
+ok('le clic sur START est un vrai geste (bouton réel, jamais un div)',
+   /<button id="ecStart" class="ec-start" type="button"/.test(corps));
+ok('le bouton porte le nom exigé : START', /<span class="ec-start-label">START<\/span>/.test(corps));
+ok('l\'écoutille est retirée du DOM une fois ouverte (rien ne tourne en fond)',
+   porte.includes('racine.remove()') && porte.includes('nautilus:ecoutille-ouverte'));
+
+/* --- La feuille de style -------------------------------------------------- */
+ok('la page de garde passe au-dessus de tout, panneau d\'administration compris',
+   /#ecoutille\{[\s\S]{0,900}z-index:13000 !important/.test(porteCss));
+ok('déjà franchie : la garde ne s\'affiche pas du tout',
+   porteCss.includes('.ec-passee #ecoutille{display:none !important}'));
+ok('le verrou de défilement est posé sur html et body',
+   porteCss.includes('.ec-bloque, .ec-bloque body{overflow:hidden !important}'));
+ok('moins d\'animation est respecté (pas de stroboscope)',
+   porteCss.includes('prefers-reduced-motion'));
+ok('repli prévu pour un navigateur sans masque CSS',
+   porteCss.includes('.ec-sans-masque .ec-voile'));
+
+/* --- Le service worker : page de garde disponible hors ligne -------------- */
+ok('la feuille de la page de garde est précachée', sw.includes("'./css/ecoutille.css?v="));
+ok('le moteur de la page de garde est précaché', sw.includes("'./ecoutille.js?v="));
+const versionCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]);
+ok('le cache du service worker a été versionné pour cette nouveauté', versionCache >= 299);
 
 /* =====================================================================
    RÉSULTAT

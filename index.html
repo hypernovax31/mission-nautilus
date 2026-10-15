@@ -22,6 +22,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="css/index.css?v=54">
   <link rel="stylesheet" href="css/hublots.css?v=15">
+  <!-- Page de garde « ÉCOUTILLE » (premier chargement) : feuille dédiée,
+       chargée en dernier pour pouvoir habiller son écran par-dessus tout
+       le reste du site (z-index 13000). -->
+  <link rel="stylesheet" href="css/ecoutille.css?v=1">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
        principal : les scripts différés s'exécutent dans l'ordre du
@@ -32,11 +36,254 @@
        ce drapeau est posé avant son chargement (deferred), et l'ordre
        de mission émet 'nautilus:fin-typewriter' à sa dernière lettre. -->
   <script>window.nautilusAttendreTypewriter = true;</script>
+  <!-- ===== PAGE DE GARDE : DÉCISION PRISE AVANT LE PREMIER RENDU =====
+       Un seul cas demande de jouer l'écoutille : la PREMIÈRE visite. Elle
+       n'est donc jamais revue à l'intérieur d'une même session (un
+       rechargement pendant qu'on joue la saute), mais elle revient à
+       chaque nouvelle visite — c'est-à-dire chaque fois qu'un navigateur
+       exige un vrai geste avant d'autoriser le son : c'est justement son
+       rôle, et sans elle le site démarrerait muet.
+       Ce script s'exécute AVANT tout dessin : la page de garde est donc
+       en place, ou pas, dès la toute première image. Rien ne clignote.
+         ?ecoutille=1 → on la rejoue · ?ecoutille=0 → on la passe. -->
+  <script>
+  (function(){
+    try{
+      var racine = document.documentElement;
+      var p, d = '', jouer;
+      try{ p = new URLSearchParams(location.search); d = (p.get('ecoutille') || p.get('splash') || '').toLowerCase(); }catch(e){ p = null; }
+      if(d === '1' || d === 'oui'){ jouer = true; }
+      else if(d === '0' || d === 'non'){ jouer = false; }
+      else {
+        var fait = false;
+        try{ fait = sessionStorage.getItem('nautilusEcoutille') === '1'; }catch(e){}
+        jouer = !fait;
+      }
+      if(!jouer){ racine.classList.add('ec-passee'); return; }
+      racine.classList.add('ec-bloque');
+      /* FILET DE SECURITÉ : ecoutille.js n'a peut-être pas pu se charger
+         (mise en cache cassée, vieux navigateur...). Passé 20 s sans
+         signe de vie, on rouvre le site au lieu de laisser le visiteur
+         enfermé derrière la cloison. */
+      window.__ecoutilleMinuteurSecours = setTimeout(function(){
+        if(window.__ecoutillePrete) return;
+        racine.classList.remove('ec-bloque');
+        racine.classList.add('ec-passee');
+      }, 20000);
+    }catch(e){}
+  })();
+  </script>
+  <!-- Garde-fou MINIMAL, écrit ici et non dans la feuille dédiée : si
+       css/ecoutille.css ne se chargeait pas (réseau coupé au mauvais
+       moment), l'écran de garde s'afficherait en TEXTE BRUT par-dessus
+       l'accueil. Ces quelques lignes suffisent à l'empêcher : plein écran,
+       opaque, au-dessus de tout. La feuille dédiée reprend la main
+       aussitôt après (même spécificité, chargée plus tard). -->
+  <style>
+    #ecoutille{position:fixed;inset:0;z-index:13000;overflow:hidden;background:#05080b}
+    .ec-passee #ecoutille{display:none}
+  </style>
+  <!-- Sans JavaScript, il n'y a pas de page de garde : personne ne doit
+       rester bloqué devant une écoutille qui ne peut pas s'ouvrir. -->
+  <noscript><style>#ecoutille{display:none !important}</style></noscript>
   <!-- Animation d'incitation à installer l'app : tempête → eaux sereines. -->
-  <script src="install-promo.js?v=6" defer></script>
+  <script src="install-promo.js?v=7" defer></script>
+  <!-- Moteur de la page de garde (journal de bord, iris, ouverture).
+       Différé : il s'exécute après les modules qui installent le
+       guetteur de premier geste, dont dépend le sonar du site. -->
+  <script src="ecoutille.js?v=1" defer></script>
 
 </head>
 <body>
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PAGE DE GARDE — L'ÉCOUTILLE DU NAUTILUS
+     Au premier chargement, c'est la seule chose que voit le visiteur, et
+     rien n'est accessible tant que le BOUTON ROUGE « START » n'a pas été
+     frappé. Pourquoi un bouton, et non un simple clic n'importe où ?
+     Parce qu'un navigateur n'ouvre le son qu'après un VRAI geste de
+     l'utilisateur : ce clic est le sas par lequel passent le sonar du bord,
+     la frappe de l'ordre de mission et toutes les animations de l'accueil.
+     Les 8 pales forment un diaphragme d'optique : chaque pale est un disque
+     de rayon 290 dont le centre est à 210 du pivot, et les arcs passent TOUS
+     par le centre de l'écoutille — fermées, elles couvrent 100 % du disque
+     (vérifié point par point) ; chaque pale basculant de 88° autour de son
+     pivot, l'ouverture laisse 94 % du passage à la lumière du sas.
+     Structure : css/ecoutille.css habille, ecoutille.js anime.
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="ecoutille" role="dialog" aria-modal="true" aria-label="Écoutille du Nautilus — appuie sur START pour embarquer">
+  <!-- Un seul bloc qui tremble quand la coque travaille : cloison + iris. -->
+  <div class="ec-secousseur">
+
+    <!-- LA CLOISON BLINDÉE : le trou de l'écoutille est découpé dans son
+         centre par un masque dont le rayon suit --ec-k (voir la feuille). -->
+    <div class="ec-voile">
+      <div class="ec-toles"></div>
+      <div class="ec-rivets"></div>
+      <div class="ec-chevrons"></div>
+
+      <!-- LA BAGUE : anneau boulonné qui encadre l'écoutille. -->
+      <svg class="ec-bague" viewBox="0 0 1000 1000" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="ecAcierBague" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#b9c4cc"/>
+            <stop offset=".35" stop-color="#79848d"/>
+            <stop offset=".62" stop-color="#414b54"/>
+            <stop offset="1" stop-color="#161d23"/>
+          </linearGradient>
+          <linearGradient id="ecJoncBague" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffe6a8"/>
+            <stop offset="1" stop-color="#c9902a"/>
+          </linearGradient>
+          <radialGradient id="ecTeteBoulon" cx=".35" cy=".3" r=".75">
+            <stop offset="0" stop-color="#dfe7ec"/>
+            <stop offset=".55" stop-color="#79848d"/>
+            <stop offset="1" stop-color="#232b31"/>
+          </radialGradient>
+        </defs>
+        <circle cx="500" cy="500" r="575" fill="url(#ecAcierBague)"/>
+        <circle cx="500" cy="500" r="500" fill="#0b1015"/>
+        <circle cx="500" cy="500" r="530" fill="none" stroke="url(#ecJoncBague)" stroke-width="7"/>
+        <circle cx="500" cy="500" r="568" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="3"/>
+        <circle cx="500" cy="500" r="556" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="8"/>
+        <g fill="url(#ecTeteBoulon)" stroke="rgba(0,0,0,.55)" stroke-width="2">
+          <circle cx="500" cy="38" r="17"/><circle cx="500" cy="962" r="17"/>
+          <circle cx="38" cy="500" r="17"/><circle cx="962" cy="500" r="17"/>
+          <circle cx="173.4" cy="173.4" r="17"/><circle cx="826.6" cy="173.4" r="17"/>
+          <circle cx="173.4" cy="826.6" r="17"/><circle cx="826.6" cy="826.6" r="17"/>
+          <circle cx="316" cy="94" r="17"/><circle cx="684" cy="94" r="17"/>
+          <circle cx="316" cy="906" r="17"/><circle cx="684" cy="906" r="17"/>
+          <circle cx="94" cy="316" r="17"/><circle cx="94" cy="684" r="17"/>
+          <circle cx="906" cy="316" r="17"/><circle cx="906" cy="684" r="17"/>
+        </g>
+      </svg>
+
+      <!-- L'ORDINATEUR DE BORD : bande de lecture + voyants de contrôle. -->
+      <div class="ec-haut">
+        <div class="ec-marque">
+          <b>Mission Nautilus</b>
+          <span>Poste de plongée · cloison étanche n°7</span>
+        </div>
+        <div class="ec-plaque">Protocole d'embarquement</div>
+        <!-- LA BALISE ROUGE D'ALERTE : elle bat pendant l'alarme. -->
+        <div class="ec-balise" aria-hidden="true"></div>
+      </div>
+      <div class="ec-lecture">
+        <p class="ec-lecture-titre">Journal de bord — automatique</p>
+        <ul class="ec-lecture-liste" id="ecJournal"><li>CONNEXION AU POSTE DE PLONGÉE</li><span class="ec-curseur"></span></ul>
+      </div>
+      <div class="ec-voyants">
+        <div class="ec-voyant vert"><i></i>Coque étanche</div>
+        <div class="ec-voyant ambre"><i></i>Sas sous pression</div>
+        <div class="ec-voyant rouge"><i></i>Écoutille verrouillée</div>
+      </div>
+
+    </div>
+
+    <!-- Hors de la cloison : ce qui doit rester visible DANS le trou.
+         Les pales d'abord, la lumière du sas ensuite (elle éclaire le bord). -->
+    <div class="ec-iris">
+      <div class="ec-lueur"></div>
+      <svg class="ec-pales" viewBox="0 0 1000 1000" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="ecAcierPale" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#d5dde3"/>
+            <stop offset=".38" stop-color="#939fa9"/>
+            <stop offset=".72" stop-color="#69737c"/>
+            <stop offset="1" stop-color="#39424a"/>
+          </linearGradient>
+          <linearGradient id="ecOmbrePale" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0a0f13" stop-opacity="0"/>
+            <stop offset=".72" stop-color="#0a0f13" stop-opacity=".28"/>
+            <stop offset="1" stop-color="#0a0f13" stop-opacity=".62"/>
+          </linearGradient>
+        </defs>
+          <g class="ec-pale" transform="rotate(0 500 500)">
+            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
+              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
+              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
+              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
+              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
+            </g>
+          </g>
+          <g class="ec-pale" transform="rotate(45 500 500)">
+            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
+              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
+              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
+              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
+              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
+            </g>
+          </g>
+          <g class="ec-pale" transform="rotate(90 500 500)">
+            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
+              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
+              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
+              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
+              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
+            </g>
+          </g>
+          <g class="ec-pale" transform="rotate(135 500 500)">
+            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
+              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
+              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
+              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
+              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
+            </g>
+          </g>
+          <g class="ec-pale" transform="rotate(180 500 500)">
+            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
+              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
+              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
+              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
+              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
+            </g>
+          </g>
+          <g class="ec-pale" transform="rotate(225 500 500)">
+            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
+              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
+              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
+              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
+              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
+            </g>
+          </g>
+          <g class="ec-pale" transform="rotate(270 500 500)">
+            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
+              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
+              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
+              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
+              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
+            </g>
+          </g>
+          <g class="ec-pale" transform="rotate(315 500 500)">
+            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
+              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
+              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
+              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
+              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
+            </g>
+          </g>
+      </svg>
+    </div>
+    <div class="ec-halo"></div>
+    <div class="ec-grain"></div>
+    <div class="ec-vignette"></div>
+    <div class="ec-alerte"></div>
+  </div>
+
+  <!-- LA COMMANDE : le bouton rouge d'alarme. -->
+  <div class="ec-bas">
+    <p class="ec-panneau-titre">Décompression du sas — ouverture manuelle</p>
+    <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir l'écoutille et lancer le sonar du bord">
+      <span class="ec-dome" aria-hidden="true"></span>
+      <span class="ec-start-label">START</span>
+    </button>
+    <p class="ec-consigne">Appuie sur <b>START</b> : l'écoutille s'ouvre, le sonar s'allume et le bord se réveille.</p>
+    <button id="ecPasser" class="ec-passer" type="button">Passer l'intro</button>
+  </div>
+  <div class="ec-cinema ec-cinema--haut"></div>
+  <div class="ec-cinema ec-cinema--bas"></div>
+  <div class="ec-flash"></div>
+  <div class="ec-flare"></div>
+</div>
 <!-- L'attribut autoplay demande le demarrage des le chargement : sur un site
      deja connu de l'appareil (app installee, visites repetees) le navigateur
      l'accorde et le son part tout seul.
@@ -4528,13 +4775,49 @@ function qrDataUri(text, opts){
     lancer(document.visibilityState === 'visible');
   }
 
+  /* ===== LA PAGE DE GARDE ATTEND SON HEURE (premier chargement) =====
+
+     L'ordre de mission qui se frappe et ses bips sont LA grande animation de
+     l'accueil. Au premier chargement, la page de garde « écoutille » occupe
+     l'écran : sans cette attente, le visiteur la découvrirait déjà terminée
+     au moment où l'écoutille s'ouvre — et la machine à écrire aurait crié
+     dans le vide, puisque le navigateur n'autorise le son qu'après le clic
+     sur START.
+     Le signal vient donc de l'écoutille elle-même (ecoutille.js). Trois
+     issues sont prévues, dans l'ordre du vécu :
+       · pas de page de garde (visite suivante, palier, page sans bloc) ;
+       · la classe ec-passee apparaît (écoutille qui se démonte) ;
+       · l'événement nautilus:ecoutille-ouverte (ouverture normale).
+     Et un filet de sécurité : au bout de 25 s on démarre coûte que coûte. */
+  function quandEcoutilleOuverte(fn){
+    const porte = document.getElementById('ecoutille');
+    if(!porte || document.documentElement.classList.contains('ec-passee')){ fn(); return; }
+    let fait = false;
+    const partir = () => {
+      if(fait) return;
+      fait = true;
+      window.removeEventListener('nautilus:ecoutille-ouverte', partir);
+      if(observateur) observateur.disconnect();
+      clearTimeout(filet);
+      fn();
+    };
+    let observateur = null;
+    let filet = null;
+    window.addEventListener('nautilus:ecoutille-ouverte', partir);
+    try{
+      observateur = new MutationObserver(partir);
+      observateur.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
+    }catch(e){ /* moteur sans MutationObserver : l'événement et le filet suffisent */ }
+    filet = setTimeout(partir, 25000);
+  }
+
   /* Départ maîtrisé : l'ordre et ses bips commencent exactement une seconde
      après le chargement complet, plutôt qu'au premier scroll ou au premier
      clic. Si l'onglet n'est pas visible à cet instant, le texte s'écrit sans
      programmer de bips (voir le test visibilityState ci-dessus). */
   function scheduleMissionOrderTypewriter(){
     const startAfterOneSecond = () => {
-      setTimeout(startMissionOrderTypewriter, 1000);
+      setTimeout(() => quandEcoutilleOuverte(startMissionOrderTypewriter), 1000);
     };
     if(document.readyState === 'complete') startAfterOneSecond();
     else window.addEventListener('load', startAfterOneSecond, { once:true });

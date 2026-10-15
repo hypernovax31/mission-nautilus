@@ -38,6 +38,9 @@
   var SNOOZE_MS = 3 * 24 * 3600 * 1000;   // 3 jours de répit après un report
   var DELAI_AFFICHAGE_MS = 3500;          // pages sans machine à écrire
   var GARDEFOU_TYPEWRITER_MS = 15000;     // si le signal n'arrive jamais
+  var GARDEFOU_ECOUTILLE_MS = 25000;      /* page de garde refermée de force
+     (même délai que le filet d'index.html) : la promo ne peut pas être
+     avalée par une écoutille qui refuserait de s'ouvrir. */
   var DUREE_CALME_MS = 3000;              /* « EAUX SEREINES » : 3 secondes
      EN TOUT avant d'envoyer le reste (instructions ou fermeture). */
 
@@ -255,13 +258,34 @@
 
   /* ---------- déclenchement, calé sur la fin de la machine à écrire --- */
   var declenche = false;
+  /* ---------- la page de garde « écoutille » ----------
+     Au tout premier chargement, l'écoutille occupe l'écran. Une promo qui
+     s'ouvrirait derrière elle serait perdue pour de bon (et son report de
+     3 jours la ferait disparaître pour de vrai). Comme la machine à écrire,
+     la promo attend donc que l'écoutille s'ouvre : le visiteur la découvre
+     à l'instant où l'accueil apparaît. */
+  function apresEcoutille(fn) {
+    var porte = document.getElementById('ecoutille');
+    if (!porte || document.documentElement.classList.contains('ec-passee')) { fn(); return; }
+    var fait = false;
+    var partir = function () {
+      if (fait) return;
+      fait = true;
+      window.removeEventListener('nautilus:ecoutille-ouverte', partir);
+      fn();
+    };
+    window.addEventListener('nautilus:ecoutille-ouverte', partir);
+    /* Ceinture de sécurité : si le signal se perd, on affiche quand même. */
+    setTimeout(partir, GARDEFOU_ECOUTILLE_MS);
+  }
+
   function signalerFinTypewriter() {
     /* Appelé par la page (événement 'nautilus:fin-typewriter') ou par la
        ceinture de sécurité : la promo ne surgit qu'UNE fois, exactement
        à la fin de l'ordre de mission. */
     if (declenche) return;
     declenche = true;
-    if (!estInstallee()) ouvrir();
+    if (!estInstallee()) apresEcoutille(ouvrir);
   }
 
   /* Passage à la mer calme + suite selon la plateforme */
@@ -351,6 +375,7 @@
     signalerFinTypewriter: signalerFinTypewriter,
     SNOOZE_MS: SNOOZE_MS, DELAI_AFFICHAGE_MS: DELAI_AFFICHAGE_MS,
     DUREE_CALME_MS: DUREE_CALME_MS, GARDEFOU_TYPEWRITER_MS: GARDEFOU_TYPEWRITER_MS,
+    GARDEFOU_ECOUTILLE_MS: GARDEFOU_ECOUTILLE_MS,
     CLE_SNOOZE: CLE_SNOOZE
   };
 })();
