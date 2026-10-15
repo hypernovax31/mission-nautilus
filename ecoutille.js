@@ -62,8 +62,9 @@
   /* ------------------------------------------------------------------ *
    * 1. RÉGLAGES
    * ------------------------------------------------------------------ */
-  const CLE_SESSION = 'nautilusEcoutille';      // ouverte pendant cette session
-  const CLE_VUE     = 'nautilusEcoutilleVue';   // vue au moins une fois
+  const CLE_SESSION = 'nautilusEcoutille';        // ouverte pendant cette session
+  const CLE_VUE     = 'nautilusEcoutilleVue';     // vue au moins une fois
+  const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
   /* Géométrie de l'iris — valeurs VÉRIFIÉES par calcul de couverture :
      0°/0 mm : 100,00 % du disque couvert (étanche)
@@ -499,6 +500,9 @@
     html.classList.add('ec-arrivee');
     noter(CLE_SESSION);
     noter(CLE_VUE);
+    /* L'ordre exprès ne doit servir qu'UNE fois : sinon « Revoir
+       l'écoutille » rejouerait la garde à chaque rechargement. */
+    try{ sessionStorage.removeItem(CLE_FORCE); }catch(e){}
 
     racine.classList.add('ec-passee');
     racine.remove();
@@ -515,16 +519,50 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * 9. MISE EN ROUTE
+   * 9. REVOIR L'ÉCOUTILLE (bouton du pied de page de l'accueil)
+   * ------------------------------------------------------------------ */
+  /* L'écoutille ne s'affiche qu'à la PREMIÈRE visite de l'onglet. Ce bouton
+     la ramène quand on veut : il efface le marqueur de session, pose un
+     ordre exprès (au cas où l'adresse ne transporterait rien) et recharge.
+     C'est aussi la sortie de secours si un jour l'adresse « ?ecoutille=1 »
+     se perdait en route — proxy, lien raccourci, application installée. */
+  (function binderRevoir(){
+    const bouton = document.getElementById('ecRevoirBtn');
+    if(!bouton) return;
+    bouton.addEventListener('click', () => {
+      try{
+        sessionStorage.removeItem(CLE_SESSION);
+        sessionStorage.setItem(CLE_FORCE, '1');
+      }catch(e){ /* mode privé : on tentera quand même le rechargement */ }
+      location.reload();
+    });
+  })();
+
+  /* ------------------------------------------------------------------ *
+   * 10. MISE EN ROUTE
    * ------------------------------------------------------------------ */
   if(!racine){ return; }        /* page sans écoutille : rien à faire */
 
-  const params = new URLSearchParams(location.search);
-  const drapeau = (params.get('ecoutille') || params.get('splash') || '').toLowerCase();
+  /* L'ORDRE VIENT DE LA SENTINELLE DU <head> : c'est elle qui a décidé
+     avant le premier rendu, et elle a posé sa réponse sur window. On la
+     relit ici pour ne jamais rejouer un calcul qui pourrait diverger.
+     (Repli : si un jour ecoutille.js était chargé sur une page sans
+     sentinelle, on refait alors la même déduction.) */
   const dejaVue = lireVue();
   let jouer;
-  if(drapeau === '1' || drapeau === '0' || drapeau === 'oui') jouer = drapeau !== '0';
-  else jouer = !lireSession();
+  if(typeof window.__ecoutilleJouer === 'boolean'){
+    jouer = window.__ecoutilleJouer;
+  }else{
+    let adresse = '';
+    try{ adresse = (location.pathname + location.search + location.hash).toLowerCase(); }catch(e){}
+    if(/ecoutille=(0|non)/.test(adresse) || /ecoutille\/(passer|fermer|non)/.test(adresse)) jouer = false;
+    else if(/ecoutille=(1|oui)/.test(adresse) || /\/ecoutille(\/|$)/.test(adresse)) jouer = true;
+    else {
+      let force = false;
+      try{ force = sessionStorage.getItem(CLE_FORCE) === '1'; }catch(e){}
+      jouer = force || !lireSession();
+    }
+  }
 
   if(!jouer){
     /* La classe est déjà posée dans le <head> ; on nettoie par acquit de

@@ -465,6 +465,21 @@
 }
 
 /* ==========================================================================
+   6 bis. REVOIR L'ÉCOUTILLE : le bouton du pied de page de l'accueil
+   ========================================================================== */
+/* Discret mais toujours là : l'écoutille ne se montre qu'à la première
+   visite d'un onglet, ce bouton la ramène à la demande. */
+.ec-revoir{
+  margin:0 10px 0 0; padding:6px 10px; border-radius:999px;
+  border:1px solid rgba(142,231,255,.22); background:rgba(2,10,18,.5);
+  color:#8fb4c6; font-family:Consolas,"Courier New",monospace;
+  font-size:clamp(9px,2vmin,11.5px); letter-spacing:.1em; text-transform:uppercase;
+  cursor:pointer; transition:border-color .2s ease, color .2s ease;
+}
+.ec-revoir:hover{ border-color:rgba(245,176,39,.6); color:#ffd36c }
+.ec-revoir:focus-visible{ outline:2px solid #8ee7ff; outline-offset:2px }
+
+/* ==========================================================================
    7. ARRIVÉE SUR L'ACCUEIL : la page se pose après l'éclat
    ========================================================================== */
 html.ec-arrivee body>header,

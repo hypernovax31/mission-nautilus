@@ -20,12 +20,25 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
+  <!-- Garde-fou MINIMAL de la page de garde, écrit ici et non dans la
+       feuille dédiée : si css/ecoutille.css ne se chargeait pas (réseau
+       coupé au mauvais moment), l'écran de garde s'afficherait en TEXTE
+       BRUT par-dessus l'accueil. Ces quelques lignes suffisent à l'empêcher.
+       ATTENTION À L'ORDRE : ce bloc doit rester AVANT les feuilles de style.
+       À spécificité égale, c'est la DERNIÈRE règle écrite qui gagne — placé
+       après, son fond opaque masquait le background:transparent de
+       css/ecoutille.css, et le trou de l'écoutille ne montrait plus l'accueil,
+       mais du noir. (Bug constaté et corrigé.) -->
+  <style>
+    #ecoutille{position:fixed;inset:0;z-index:13000;overflow:hidden;background:#05080b}
+    .ec-passee #ecoutille{display:none}
+  </style>
   <link rel="stylesheet" href="css/index.css?v=54">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Page de garde « ÉCOUTILLE » (premier chargement) : feuille dédiée,
        chargée en dernier pour pouvoir habiller son écran par-dessus tout
        le reste du site (z-index 13000). -->
-  <link rel="stylesheet" href="css/ecoutille.css?v=1">
+  <link rel="stylesheet" href="css/ecoutille.css?v=2">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
        principal : les scripts différés s'exécutent dans l'ordre du
@@ -50,18 +63,46 @@
   (function(){
     try{
       var racine = document.documentElement;
-      var p, d = '', jouer;
-      try{ p = new URLSearchParams(location.search); d = (p.get('ecoutille') || p.get('splash') || '').toLowerCase(); }catch(e){ p = null; }
-      if(d === '1' || d === 'oui'){ jouer = true; }
-      else if(d === '0' || d === 'non'){ jouer = false; }
-      else {
-        var fait = false;
-        try{ fait = sessionStorage.getItem('nautilusEcoutille') === '1'; }catch(e){}
-        jouer = !fait;
+
+      /* OÙ CHERCHER L'ORDRE ? Dans toute l'adresse : paramètre, ancre ET
+         CHEMIN. Le chemin compte autant que le paramètre : l'hébergement du
+         jeu renvoie TOUTES les adresses vers index.html (voir firebase.json,
+         rewrite « ** » → /index.html), et un « ?ecoutille=1 » peut se perdre
+         en route (proxy, lien raccourci, application installée). /ecoutille
+         marche donc toujours.
+         Le bouton « Revoir l'écoutille » du pied de page, lui, ne dépend
+         d'aucune adresse : il pose un ordre exprès avant de recharger. */
+      var adresse = '';
+      try{ adresse = (location.pathname + location.search + location.hash).toLowerCase(); }catch(e){}
+      var passer = /ecoutille=(0|non)/.test(adresse)
+                || /ecoutille\/(passer|fermer|non)/.test(adresse);
+      var forcer = /ecoutille=(1|oui)/.test(adresse)
+                || /\/ecoutille(\/|$)/.test(adresse)
+                || /[?&#]splash(=1)?(&|$)/.test(adresse);
+      if(!forcer){
+        try{ forcer = sessionStorage.getItem('nautilusEcoutilleForce') === '1'; }catch(e){}
       }
+
+      var jouer;
+      if(passer) jouer = false;
+      else if(forcer) jouer = true;
+      else {
+        /* Une seule question, et c'est la bonne : cette visite est-elle la
+           PREMIÈRE de l'onglet ? Si oui, l'écoutille se joue — c'est le seul
+           moyen d'obtenir du navigateur le droit de faire du bruit. */
+        var deja = false;
+        try{ deja = sessionStorage.getItem('nautilusEcoutille') === '1'; }catch(e){}
+        jouer = !deja;
+      }
+
+      /* DÉCISION UNIQUE, prise ici et nulle part ailleurs : ecoutille.js la
+         relit, il ne la refait pas. Deux calculs séparés finiraient par
+         diverger un jour. */
+      window.__ecoutilleJouer = jouer;
       if(!jouer){ racine.classList.add('ec-passee'); return; }
+
       racine.classList.add('ec-bloque');
-      /* FILET DE SECURITÉ : ecoutille.js n'a peut-être pas pu se charger
+      /* FILET DE SÉCURITÉ : ecoutille.js n'a peut-être pas pu se charger
          (mise en cache cassée, vieux navigateur...). Passé 20 s sans
          signe de vie, on rouvre le site au lieu de laisser le visiteur
          enfermé derrière la cloison. */
@@ -73,16 +114,6 @@
     }catch(e){}
   })();
   </script>
-  <!-- Garde-fou MINIMAL, écrit ici et non dans la feuille dédiée : si
-       css/ecoutille.css ne se chargeait pas (réseau coupé au mauvais
-       moment), l'écran de garde s'afficherait en TEXTE BRUT par-dessus
-       l'accueil. Ces quelques lignes suffisent à l'empêcher : plein écran,
-       opaque, au-dessus de tout. La feuille dédiée reprend la main
-       aussitôt après (même spécificité, chargée plus tard). -->
-  <style>
-    #ecoutille{position:fixed;inset:0;z-index:13000;overflow:hidden;background:#05080b}
-    .ec-passee #ecoutille{display:none}
-  </style>
   <!-- Sans JavaScript, il n'y a pas de page de garde : personne ne doit
        rester bloqué devant une écoutille qui ne peut pas s'ouvrir. -->
   <noscript><style>#ecoutille{display:none !important}</style></noscript>
@@ -91,7 +122,7 @@
   <!-- Moteur de la page de garde (journal de bord, iris, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=1" defer></script>
+  <script src="ecoutille.js?v=2" defer></script>
 
 </head>
 <body>
@@ -603,6 +634,10 @@
 
 <!-- Pied de page ancré : l'engrenage scrolle avec la page -->
 <footer class="site-footer" role="contentinfo">
+  <!-- Rejouer l'écran d'embarquement, à tout moment et sans taper
+       d'adresse : l'écoutille ne s'affiche qu'à la première visite de
+       l'onglet, et ce bouton remet le compteur à zéro avant de recharger. -->
+  <button id="ecRevoirBtn" class="ec-revoir" type="button" title="Rejouer l'écran d'embarquement">🎬 Revoir l'écoutille d'embarquement</button>
   <button id="adminFabBtn" type="button" aria-label="Maintenance" title="Maintenance">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
   </button>

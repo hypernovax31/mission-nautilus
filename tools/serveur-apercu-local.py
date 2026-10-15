@@ -41,8 +41,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         # La racine ouvre le VRAI accueil : c'est lui qu'on vient regarder
         # (page de garde « écoutille » comprise). L'aperçu du popup de
         # sacrifice garde son adresse dédiée.
-        if self.path in ('/', '/index.html?apercu=1', '/apercu-popup', '/apercu-popup.html'):
-            self.path = APERCU_POPUP if self.path != '/' else '/index.html'
+        chemin = self.path.split('?')[0].split('#')[0]
+        # Comme l'hébergement du jeu (firebase.json : « ** » → /index.html),
+        # toute adresse inconnue ramène à l'accueil — et /ecoutille, /ecoutille/1
+        # ou ?ecoutille=1 le ramènent en REJOUANT la page de garde.
+        if chemin in ('/', '/index.html'):
+            self.path = '/index.html'
+        elif chemin in ('/apercu-popup', '/apercu-popup.html'):
+            self.path = APERCU_POPUP
+        elif chemin.startswith('/ecoutille') or chemin == '/splash':
+            self.path = '/index.html'
         return super().do_GET()
 
     def end_headers(self):

@@ -261,9 +261,8 @@ ok('l\'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <a
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 
 /* --- La sentinelle du <head> : écran en place, ou pas, dès la 1re image --- */
-const sentinelle = accueil.slice(
-  accueil.indexOf('  (function(){\n    try{\n      var racine = document.documentElement;'),
-  accueil.indexOf('  })();', accueil.indexOf('  (function(){\n    try{\n      var racine = document.documentElement;')) + 7);
+const _s0 = accueil.indexOf('  (function(){\n    try{\n      var racine = document.documentElement;');
+const sentinelle = accueil.slice(_s0, accueil.indexOf('  })();', _s0) + 7);
 ok('la décision est prise dans le <head>, avant le premier rendu', sentinelle.length > 200);
 ok('nouvelle visite : la garde est jouée (aucun marqueur de session)',
    sentinelle.includes("sessionStorage.getItem('nautilusEcoutille')"));
@@ -272,7 +271,25 @@ ok('déjà ouverte : la classe ec-passee est posée avant tout dessin',
 ok('la garde verrouille le défilement de l\'accueil (ec-bloque)',
    sentinelle.includes("racine.classList.add('ec-bloque')"));
 ok('?ecoutille=1 / ?ecoutille=0 pilotent la garde',
-   sentinelle.includes("d === '1'") && sentinelle.includes("d === '0'"));
+   sentinelle.includes("ecoutille=(1|oui)") && sentinelle.includes("ecoutille=(0|non)"));
+ok('la décision est prise UNE fois et posée sur window (le moteur la relit)',
+   sentinelle.includes('window.__ecoutilleJouer = jouer') && porte.includes('window.__ecoutilleJouer'));
+ok('le moteur ne recalcule PAS la décision quand la sentinelle l\'a prise',
+   /if\(typeof window\.__ecoutilleJouer === 'boolean'\)/.test(porte));
+ok('ORDRE PAR LE CHEMIN : /ecoutille rejoue la garde, sans aucun paramètre',
+   sentinelle.includes('/\\/ecoutille(\\/|$)/'),
+   'un paramètre peut se perdre en route (proxy, lien raccourci, app installée)');
+ok('l\'ancre aussi (/#ecoutille=1) : rien ne peut se perdre',
+   sentinelle.includes('location.pathname + location.search + location.hash'));
+ok('le bouton « Revoir l\'écoutille » peut forcer la garde, sans adresse',
+   sentinelle.includes("sessionStorage.getItem('nautilusEcoutilleForce')") &&
+   porte.includes("sessionStorage.setItem(CLE_FORCE, '1')"));
+ok('l\'ordre exprès ne sert qu\'une fois (pas de garde à chaque rechargement)',
+   porte.includes('sessionStorage.removeItem(CLE_FORCE)'));
+ok('l\'accueil offre un bouton pour rejouer l\'écoutille à tout moment',
+   accueil.includes('id="ecRevoirBtn"'));
+ok('ce bouton efface le marqueur de session avant de recharger',
+   /ecRevoirBtn[\s\S]{0,700}removeItem\(CLE_SESSION\)/.test(porte));
 ok('filet de sécurité : le site se rouvre si le moteur ne charge pas (20 s)',
    sentinelle.includes('__ecoutilleMinuteurSecours') && sentinelle.includes('20000'));
 ok('sans JavaScript, aucune écoutille (personne ne reste enfermé)',
@@ -364,11 +381,33 @@ ok('moins d\'animation est respecté (pas de stroboscope)',
 ok('repli prévu pour un navigateur sans masque CSS',
    porteCss.includes('.ec-sans-masque .ec-voile'));
 
+/* --- Un bug d'ORDRE, invisible à la lecture ----------------------------- */
+/* Le bloc <style> de secours doit rester AVANT les feuilles de style. Placé
+   après, à spécificité égale, son fond opaque écrasait le
+   background:transparent de la feuille dédiée : le trou de l'écoutille ne
+   montrait plus l'accueil, mais du noir. Régression à ne jamais refaire. */
+const iGarde = accueil.indexOf('#ecoutille{position:fixed;inset:0;z-index:13000');
+const iStyles = accueil.search(/<link rel="stylesheet" href="css\//);
+ok('le garde-fou de secours est écrit AVANT les feuilles de style',
+   iGarde > 0 && iStyles > 0 && iGarde < iStyles,
+   'garde-fou à ' + iGarde + ', feuilles à ' + iStyles);
+ok('la feuille dédiée garde la main sur le fond (trou transparent)',
+   porteCss.includes('background:transparent'));
+
 /* --- Le service worker : page de garde disponible hors ligne -------------- */
 ok('la feuille de la page de garde est précachée', sw.includes("'./css/ecoutille.css?v="));
 ok('le moteur de la page de garde est précaché', sw.includes("'./ecoutille.js?v="));
 const versionCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]);
 ok('le cache du service worker a été versionné pour cette nouveauté', versionCache >= 299);
+/* Les fichiers de la garde ont CHANGÉ après leur première mise en ligne : le
+   cache-first du service worker servirait l'ancienne version à jamais si le
+   numéro de version ne bougeait pas. */
+const versionCSS = Number((/<link rel="stylesheet" href="css\/ecoutille\.css\?v=(\d+)">/.exec(accueil) || [])[1]);
+const versionJS = Number((/<script src="ecoutille\.js\?v=(\d+)" defer><\/script>/.exec(accueil) || [])[1]);
+ok('la feuille de la garde est en version 2 ou plus', versionCSS >= 2, 'v' + versionCSS);
+ok('le moteur de la garde est en version 2 ou plus', versionJS >= 2, 'v' + versionJS);
+ok('le service worker précache exactement ces versions',
+   sw.includes("'./css/ecoutille.css?v=" + versionCSS + "'") && sw.includes("'./ecoutille.js?v=" + versionJS + "'"));
 
 /* =====================================================================
    RÉSULTAT
