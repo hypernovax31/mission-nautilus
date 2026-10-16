@@ -16,9 +16,9 @@
      3. le module partagé des paliers ≥ 2 (matelot-blocages.js) ;
      4. la cohérence des écrans qui ANNONCENT ces durées ;
      5. l'écran de blocage de l'accueil, rendu pour de vrai ;
-     6. la page de garde (écoutille) : dessin simple et solide (coque
-        opaque, un seul mouvement, aucune dépendance externe), sentinelle
-        du <head>, silence respecté, mise en cache.
+     6. la page de garde (le Nautilus) : le décor de bande-annonce, un
+        seul bouton, aucune superposition possible, sentinelle du <head>,
+        silence respecté, mise en cache.
 
    Aucune écriture, aucun accès réseau : Firebase est remplacé par une
    fausse base en mémoire.
@@ -246,89 +246,147 @@ if (debutEcr < 0 || finEcr < 0) {
 /* =====================================================================
    6. LA PAGE DE GARDE (ÉCOUTILLE DU PREMIER CHARGEMENT)
    ===================================================================== */
-titre('6. Page de garde — écoutille du premier chargement');
+titre('6. Page de garde — le Nautilus du premier chargement');
 
-const porte   = lire('ecoutille.js');
-const sw      = lire('sw.js');
-const corps   = accueil.slice(accueil.indexOf('<body>'));
-const iSocle  = accueil.indexOf('SOCLE DE LA PAGE DE GARDE');
+const porte    = lire('ecoutille.js');
+const sw       = lire('sw.js');
+const corps    = accueil.slice(accueil.indexOf('<body>'));
+const iSocle   = accueil.indexOf('SOCLE DE LA PAGE DE GARDE');
 const socleCss = accueil.slice(accueil.indexOf('<style>', iSocle), accueil.indexOf('</style>', iSocle));
-const socleJs  = accueil.slice(accueil.indexOf('SOCLE — LE CLIC'), accueil.indexOf('</script>', accueil.indexOf('SOCLE — LE CLIC')));
+const iSocleJs = accueil.indexOf('SOCLE — LE CLIC');
+const socleJs  = accueil.slice(iSocleJs, accueil.indexOf('</script>', iSocleJs));
+const gardeHtml = accueil.slice(accueil.indexOf('<div id="ecoutille"'), iSocleJs);
 const bloc = (re) => (socleCss.match(re) || [''])[0];
 
 /* --- Rien à charger : le dessin de la garde est écrit DANS la page --------
    Deux rapports « rien ne s'affiche » : la page de garde ne doit plus jamais
    pouvoir manquer à cause d'un fichier qui n'arrive pas. Le moindre risque
-   pris ici, c'est un visiteur enfermé derrière une cloison.                 */
+   pris ici, c'est un visiteur enfermé derrière le hublot.                   */
 ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v6)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v6'));
+ok('un repère de version dit quelle page de garde est chargée (garde v7)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v7'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
-ok('sans JavaScript, aucune écoutille (personne ne reste enfermé)',
+ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
    accueil.includes('<noscript><style>#ecoutille{display:none !important}</style></noscript>'));
+ok('la garde ne charge AUCUNE image (tout est dégradé CSS)',
+   !/<img|<svg|background-image:\s*url/.test(gardeHtml + socleCss));
 
-/* --- LE DESSIN SIMPLE : plus rien qui puisse déborder ---------------------
-   Bug signalé sur iPhone : pendant l'ouverture, « le métal et la lumière
-   partaient dans tous les sens hors du hublot ». La cause était le découpage
-   de l'écoutille (masque radial et clip-path) posé sur des éléments ANIMÉS :
-   WebKit leur donne une couche de composition et perd le découpage. La
-   refonte ne corrige pas la cause, elle la SUPPRIME : plus de trou, donc
-   plus rien à découper. Ces tests verrouillent ce choix — les remettre en
-   cause, c'est ramener le bug.                                              */
-ok('le socle ne découpe RIEN (ni clip-path, ni masque) et ne charge aucune image',
-   !/clip-path|mask-image|-webkit-mask/.test(socleCss) && !/url\(/.test(socleCss));
-ok('ceinture de sécurité : rien ne peut sortir du cadre de la garde (overflow:hidden)',
+/* --- RIEN À CLIQUER D'INUTILE ------------------------------------------- */
+/* Demande explicite du joueur : sur la page de lancement, tout ce qui
+   n'ouvre pas le sas encombre. Il ne doit donc rester qu'UN bouton. */
+ok('la page de lancement ne contient QU’UN SEUL bouton (START)',
+   (gardeHtml.match(/<button/g) || []).length === 1);
+ok('aucun lien <a> sur la page de lancement (rien d’inutile à cliquer)',
+   !/<a\s/.test(gardeHtml));
+ok('plus aucun « Passer l’intro » (il ne servait qu’à sauter le récit)',
+   !accueil.includes('ecPasser') && !accueil.includes("Passer l'intro") && !porte.includes('ecPasser'));
+
+/* --- LES CHEVAUCHEMENTS SONT INTERDITS PAR CONSTRUCTION ------------------ */
+/* Le joueur l'a demandé : « évite les chevauchements, il y a beaucoup de
+   place à l'affichage ». Les trois zones de texte sont donc posées PAR LE
+   FLUX — une colonne, trois bandes, de l'air entre elles — et jamais en
+   position absolue : elles ne PEUVENT pas se superposer, quelle que soit la
+   taille de l'écran. Seules les cartes du récit se remplacent entre elles,
+   à l'intérieur de leur propre bande réservée. */
+const blocScene = bloc(/#ecoutille \.ec-scene\{[\s\S]*?\}/);
+ok('les trois zones sont empilées par le flux (colonne + space-between)',
+   blocScene.includes('display:flex') && blocScene.includes('flex-direction:column') &&
+   blocScene.includes('justify-content:space-between'));
+ok('les zones de texte ne sont JAMAIS en position absolue (aucune superposition possible)',
+   ['.ec-enseigne', '.ec-recit', '.ec-pied'].every(sel =>
+     !/position:absolute/.test(bloc(new RegExp('#ecoutille \\.' + sel.slice(1) + '\\{[\\s\\S]*?\\}')))));
+ok('la commande est un bouton du flux, posé sous sa consigne',
+   /#ecoutille \.ec-pied\{[\s\S]*?display:flex/.test(socleCss) &&
+   !/position:absolute/.test(bloc(/#ecoutille \.ec-start\{[\s\S]*?\}/)));
+ok('la bande du récit réserve sa hauteur (le bas de l’écran ne bouge jamais)',
+   /#ecoutille \.ec-recit\{[\s\S]*?min-height:clamp\(/.test(socleCss));
+ok('les cartes du récit se remplacent DANS leur bande (.ec-recit relative)',
+   bloc(/#ecoutille \.ec-recit\{[\s\S]*?\}/).includes('position:relative') &&
+   bloc(/#ecoutille \.ec-recit-carte\{[\s\S]*?\}/).includes('position:absolute'));
+ok('une seule carte visible à la fois (toutes les autres sont éteintes)',
+   /#ecoutille \.ec-recit-carte\{[\s\S]*?opacity:0/.test(socleCss) &&
+   socleCss.includes('#ecoutille .ec-recit-carte.ec-recit-vu{opacity:1}'));
+
+/* --- LE DÉCOR : FANTASTIQUE ET GRANDIOSE -------------------------------- */
+/* Le hublot du salon du Nautilus : la nuit des grands fonds, les rais de
+   lumière de la surface, les bulles, les échos du sonar, le bateau noir, le
+   cadre de cuivre. Chaque couche est vérifiée : elle doit exister dans le
+   socle ET dans le balisage, sinon le décor est incomplet. */
+const couches = {
+  'ec-abysse':  'la nuit des grands fonds',
+  'ec-rayons':  'les rais de lumière de la surface',
+  'ec-bulles':  'les colonnes de bulles',
+  'ec-pings':   'les échos du sonar',
+  'ec-cadre':   'le cadre de cuivre du hublot',
+  'ec-passage': 'le passage du bateau'
+};
+for(const [classe, quoi] of Object.entries(couches)){
+  ok('le décor a ' + quoi + ' (.' + classe + ')',
+     socleCss.includes('.' + classe) && gardeHtml.includes('class="' + classe + '"'));
+}
+const pieces = ['n-coque', 'n-etrave', 'n-kiosque', 'n-coursive', 'n-peri', 'n-hublots', 'n-projecteur', 'n-faisceau', 'n-helice', 'n-sillage'];
+ok('le Nautilus est dessiné en entier (coque, kiosque, hublots, projecteur, hélice, sillage)',
+   pieces.every(p => socleCss.includes('.' + p) && gardeHtml.includes('class="' + p + '"')));
+ok('ses hublots sont allumés (la lumière fait le bateau)',
+   /\.n-hublots i\{[\s\S]*?radial-gradient\(circle/.test(socleCss) &&
+   /\.n-hublots i\{[\s\S]*?box-shadow:0 0/.test(socleCss));
+ok('son projecteur projette un faisceau (aucun découpage : un dégradé conique)',
+   socleCss.includes('conic-gradient(from 88deg at 6% 50%'));
+ok('le titre est en lettres de bronze, avec un repli doré s’il n’est pas possible',
+   socleCss.includes('background-clip:text') && socleCss.includes('@supports') &&
+   /\.ec-titre\{[\s\S]*?color:#f6e3b6/.test(socleCss));
+ok('le récit est une bande-annonce d’au moins cinq cartes',
+   (gardeHtml.match(/class="ec-recit-carte/g) || []).length >= 5);
+ok('la première carte s’affiche même si le moteur ne charge pas',
+   gardeHtml.includes('class="ec-recit-carte ec-recit-vu"'));
+ok('le décor parle aux yeux, pas aux lecteurs d’écran (phrase dédiée à la place)',
+   /class="ec-recit" aria-hidden="true"/.test(gardeHtml) &&
+   /class="ec-lu">[^<]{20,}/.test(gardeHtml));
+ok('le décor entier reste dans le cadre (overflow:hidden sur la garde)',
    /#ecoutille\{[\s\S]{0,420}overflow:hidden/.test(socleCss));
 
-const blocCoque = bloc(/#ecoutille \.ec-coque\{[\s\S]*?\}/);
-ok('la coque est OPAQUE : son dernier fond est un aplat plein écran',
-   /radial-gradient\(125% 95% at 50% 34%, #46525c 0%, #2b353d 38%, #1a2228 66%, #0c1216 88%, #05080b 100%\)/.test(blocCoque));
-ok('la coque ne comporte ni fond transparent ni demi-teinte (aucun trou possible)',
-   !/background:\s*transparent/.test(blocCoque) && !/opacity/.test(blocCoque));
-ok("l'ouverture est UN SEUL mouvement : translateY(-102 %) de la coque",
-   /#ecoutille\.ec-levee \.ec-coque\{transform:translateY\(-102%\)\}/.test(socleCss) &&
-   !/rotate\(|scale\(|skew|matrix/.test(blocCoque));
-
-const blocLueur = bloc(/#ecoutille \.ec-lueur\{[\s\S]*?\}/);
-ok('la lumière du sas est pleine page (absolute + inset:0) et déjà PLEINE',
-   blocLueur.includes('position:absolute') && blocLueur.includes('inset:0') &&
-   blocLueur.includes('opacity:1') &&
-   /radial-gradient\([^)]*#ffffff/.test(blocLueur) && blocLueur.includes('rgba(28,104,178,.97)'));
-ok('la lumière s’efface en UN SEUL fondu, et c’est lui qui révèle l’accueil',
-   /#ecoutille\.ec-lumiere-sortie \.ec-lueur\{opacity:0\}/.test(socleCss));
-ok('la coque est son propre empilement (le panneau du bas ne passe pas sous le métal)',
-   blocCoque.includes('isolation:isolate'));
-ok('la lumière est déclarée AVANT la coque : elle est donc dessous',
-   accueil.indexOf('class="ec-lueur"') > 0 &&
-   accueil.indexOf('class="ec-lueur"') < accueil.indexOf('class="ec-coque"'));
-
+/* --- LA SORTIE : LE PROJECTEUR NOUS ÉBLOUIT ----------------------------- */
+ok('la sortie est l’éblouissement du projecteur, opaque au centre',
+   /#ecoutille \.ec-flood\{[\s\S]*?opacity:0/.test(socleCss) &&
+   /#ecoutille \.ec-flood\{[\s\S]*?radial-gradient\(closest-side,\s*#ffffff/.test(socleCss));
+ok('il s’ouvre depuis un point (échelle) puis remplit l’écran',
+   /#ecoutille\.ec-eclat \.ec-flood\{opacity:1; transform:scale\(1\)\}/.test(socleCss));
+ok('et son fondu final découvre l’accueil',
+   /#ecoutille\.ec-sortie \.ec-flood\{opacity:0/.test(socleCss));
+ok('l’éclair d’impact ajoute la touche hollywoodienne',
+   socleCss.includes('#ecoutille.ec-impact .ec-flash{animation:ecFlash') &&
+   socleCss.includes('@keyframes ecFlash'));
+ok('le décor entier s’efface en douceur pendant que la lumière se retire',
+   /#ecoutille\.ec-sortie \.ec-ecran\{opacity:0\}/.test(socleCss) &&
+   /#ecoutille\.ec-sortie \.ec-scene\{opacity:0/.test(socleCss));
 /* Ce qui s'anime doit rester dans transform / opacité / filtre : les seules
    propriétés que tous les moteurs animent sans recalcul de mise en page —
-   donc sans à-coup, et sans surprise sur iPhone.                            */
+   donc sans à-coup, et sans surprise sur iPhone. */
 const transitions = [...socleCss.matchAll(/transition:\s*([^;}]+)/g)].map(m => m[1].trim());
 ok('aucune transition ne touche la mise en page (que transform, opacité, filtre)',
    transitions.length > 0 &&
    transitions.every(t => !/\b(top|left|right|bottom|width|height|inset|mask|clip-path|background)\b/.test(t)));
-ok('moins d’animation est respecté (préférence système)',
-   socleCss.includes('prefers-reduced-motion'));
-ok('l’alerte du sas bat tant que la porte est fermée (.ec-alarme)',
-   socleCss.includes('#ecoutille.ec-alarme .ec-alerte{opacity:1; animation:ecAlarme') &&
-   socleCss.includes('@keyframes ecAlarme'));
-ok('le bouton rouge est habillé dans la page (dôme + collier + libellé + halo)',
-   socleCss.includes('.ec-dome') && socleCss.includes('.ec-start::before') &&
-   socleCss.includes('.ec-start::after') && socleCss.includes('.ec-start-label'));
+ok('aucun découpage dans tout le socle (ni clip-path, ni masque)',
+   !/clip-path|mask-image|-webkit-mask/.test(socleCss));
+ok('le socle de la garde est écrit AVANT les feuilles de style',
+   iSocle > 0 && accueil.search(/<link rel="stylesheet" href="css\//) > iSocle);
+ok('la garde est pleine page, au-dessus de tout, et ne touche pas à la page du jeu',
+   /#ecoutille\{[\s\S]{0,300}position:fixed/.test(socleCss) &&
+   /#ecoutille\{[\s\S]{0,300}z-index:13000 !important/.test(socleCss) &&
+   /#ecoutille\{[\s\S]{0,400}background:transparent/.test(socleCss));
 ok('déjà franchie : la garde ne s’affiche pas du tout',
    socleCss.includes('.ec-passee #ecoutille{display:none !important}'));
 ok('le verrou de défilement est posé sur html et body',
    socleCss.includes('.ec-bloque, .ec-bloque body{overflow:hidden !important}'));
-ok('le socle de la page de garde est écrit AVANT les feuilles de style',
-   iSocle > 0 && accueil.search(/<link rel="stylesheet" href="css\//) > iSocle);
-ok('le socle garde le fond transparent (la page du jeu reste intacte derrière)',
-   /#ecoutille\{[\s\S]{0,400}background:transparent/.test(socleCss));
+ok('le bouton rouge garde son collier de cuivre, son dôme et son libellé',
+   socleCss.includes('.ec-start::before') && socleCss.includes('.ec-dome') &&
+   socleCss.includes('.ec-start-label') && socleCss.includes('conic-gradient'));
+ok('moins d’animation est respecté : le décor se pose au lieu de tourner',
+   socleCss.includes('prefers-reduced-motion'));
 
 /* --- La sentinelle du <head> : écran en place, ou pas, dès la 1re image --- */
 const _s0 = accueil.indexOf('  (function(){\n    try{\n      var racine = document.documentElement;');
@@ -341,7 +399,7 @@ ok('elle ne dépend PLUS d’un marqueur de session (cause du « rien ne s’aff
 ok('la sentinelle est écrite AVANT les feuilles de style (décision la plus précoce possible)',
    accueil.indexOf('PAGE DE GARDE : DÉCISION') > 0 &&
    accueil.indexOf('PAGE DE GARDE : DÉCISION') < accueil.search(/<link rel="stylesheet" href="css\//));
-ok('le titre de l’onglet témoigne que l’écoutille est chargée',
+ok('le titre de l’onglet témoigne que la page de garde est chargée',
    sentinelle.includes('ÉCOUTILLE FERMÉE') && porte.includes('window.__ecoutilleTitre'));
 ok('déjà ouverte : la classe ec-passee est posée avant tout dessin',
    sentinelle.includes("racine.classList.add('ec-passee')"));
@@ -357,7 +415,7 @@ ok('ORDRE PAR LE CHEMIN : /ecoutille rejoue la garde, sans aucun paramètre',
    sentinelle.includes('/\\/ecoutille(\\/|$)/'));
 ok('l’ancre aussi (/#ecoutille=1) : rien ne peut se perdre',
    sentinelle.includes('location.pathname + location.search + location.hash'));
-ok('le bouton « Revoir l’écoutille » peut forcer la garde, sans adresse',
+ok('le bouton « Revoir le Nautilus » peut forcer la garde, sans adresse',
    sentinelle.includes("sessionStorage.getItem('nautilusEcoutilleForce')") &&
    porte.includes("sessionStorage.setItem(CLE_FORCE, '1')"));
 ok('l’ordre exprès ne sert qu’une fois (pas de garde à chaque rechargement)',
@@ -371,46 +429,47 @@ ok('filet de sécurité : le site se rouvre si le moteur ne charge pas (20 s)',
 ok('le filet de sécurité rend aussi son titre à l’onglet',
    /__ecoutilleMinuteurSecours[\s\S]{0,400}document\.title = window\.__ecoutilleTitre/.test(sentinelle));
 
-/* --- Le balisage de la garde --------------------------------------------- */
-ok('la porte est annoncée comme une boîte de dialogue (lecteurs d’écran)',
+/* --- Le balisage de la garde -------------------------------------------- */
+ok('la page de garde est annoncée comme une boîte de dialogue (lecteurs d’écran)',
    /id="ecoutille" role="dialog" aria-modal="true"/.test(corps));
 ok('le clic sur START est un vrai geste (bouton réel, jamais un div)',
    /<button id="ecStart" class="ec-start" type="button"/.test(corps));
 ok('le bouton porte le nom exigé : START', /<span class="ec-start-label">START<\/span>/.test(corps));
-ok('une seule lumière, une seule coque, une seule alerte dans le balisage',
-   (corps.match(/class="ec-lueur"/g) || []).length === 1 &&
-   (corps.match(/class="ec-coque"/g) || []).length === 1 &&
-   (corps.match(/class="ec-alerte"/g) || []).length === 1);
-ok('un seul curseur clignotant dans le journal de départ',
-   (corps.match(/class="ec-curseur"/g) || []).length === 1);
 
-/* --- Le moteur : le geste, le journal, le son ---------------------------- */
+/* --- Le moteur : le geste, le récit, le son ----------------------------- */
+ok('le moteur fait défiler le récit, carte par carte',
+   porte.includes('jouerRecit') && porte.includes("classList.add('ec-recit-vu')"));
+ok('il s’ARRÊTE sur la dernière carte : c’est l’invitation à ouvrir le sas',
+   /if\(i >= cartes\.length\) return;/.test(porte));
+ok('à la dernière carte, le bouton appelle plus fort (ec-invite)',
+   porte.includes("classList.add('ec-invite')"));
 ok('le moteur lit la préférence de sonar du site (nautilusSoundOn)',
    porte.includes("localStorage.getItem('nautilusSoundOn') === '0'"));
 ok('silence respecté : aucun contexte audio n’est créé si le sonar est coupé',
    /function contexte\(\)\{\s*if\(_ctx\) return _ctx;\s*if\(silencieux\(\)\) return null;/.test(porte));
-ok('silence respecté : l’alarme de bord ne joue pas non plus',
+ok('silence respecté : l’alarme du bord ne joue pas non plus',
    /function alarmeDeBord\(dureeMs\)\{\s*if\(silencieux\(\)\) return;/.test(porte));
-ok('l’alarme de bord réutilise le lecteur du site (puis le rend intact)',
+ok('l’alarme du bord réutilise le lecteur du site (puis le rend intact)',
    porte.includes("getElementById('alarmAudio')") && porte.includes('a.currentTime = 0'));
-ok('le clic sur START déclenche l’ouverture', /start\?\.addEventListener\('click', ouvrir\)/.test(porte));
-ok('le moteur ajoute la classe qui lève la coque', /classList\.add\('ec-levee'\)/.test(porte));
-ok('puis la classe qui laisse passer la lumière', /classList\.add\('ec-lumiere-sortie'\)/.test(porte));
+ok('le clic sur START déclenche la sortie', /start\?\.addEventListener\('click', ouvrir\)/.test(porte));
+ok('la plongée s’engage, puis le projecteur s’allume, puis l’éclair',
+   porte.includes("classList.add('ec-plongee')") &&
+   porte.includes("classList.add('ec-eclat')") &&
+   porte.includes("classList.add('ec-impact')"));
+ok('le projecteur s’allume avec l’écho du sonar', porte.includes('sonEcho()'));
+ok('la lumière se retire pour révéler l’accueil', porte.includes("classList.add('ec-sortie')"));
 ok('l’ouverture est annoncée à la page (le sonar du site se débloque)',
    porte.includes("new CustomEvent('nautilus:ecoutille-ouverte')"));
-ok('l’écoutille est retirée du DOM une fois ouverte (rien ne tourne en fond)',
+ok('la page de garde est retirée du DOM après la lumière (rien ne tourne en fond)',
    porte.includes('racine.remove()'));
-ok('le journal se tape tout seul dans la liste déjà présente dans la page',
-   porte.includes('journal.appendChild') && corps.includes('id="ecJournal"'));
-ok('le curseur est DÉPLACÉ d’une ligne à l’autre (jamais semé)',
-   porte.includes('function poserCurseur()') && porte.includes('if(_curseur) _curseur.remove()'));
 
-/* --- Le socle de secours écrit dans la page ------------------------------ */
-ok('socle : un mini-script ouvre l’écoutille sans aucun fichier externe',
+/* --- Le socle de secours écrit dans la page ----------------------------- */
+ok('socle : un mini-script ouvre la garde sans aucun fichier externe',
    socleJs.includes("getElementById('ecStart')") && socleJs.includes('addEventListener'));
-ok('socle : il fait la même ouverture (coque levée, lumière sortie, garde retirée)',
-   socleJs.includes("classList.add('ec-levee')") &&
-   socleJs.includes("classList.add('ec-lumiere-sortie')") &&
+ok('socle : il fait la même sortie (éblouissement, éclair, lumière retirée, garde ôtée)',
+   socleJs.includes("classList.add('ec-eclat')") &&
+   socleJs.includes("classList.add('ec-impact')") &&
+   socleJs.includes("classList.add('ec-sortie')") &&
    socleJs.includes("classList.add('ec-passee')"));
 ok('socle : il prévient le reste du site (même événement que le moteur)',
    socleJs.includes('nautilus:ecoutille-ouverte'));
@@ -421,18 +480,18 @@ ok('socle : le moteur reprend la main (un seul gestionnaire actif)',
 ok('socle : écriture tolérante au mode privé (try/catch)',
    /try\{[\s\S]{0,200}sessionStorage\.setItem\('nautilusEcoutille'/.test(socleJs));
 
-/* --- Le service worker : page de garde disponible hors ligne -------------- */
+/* --- Le service worker : page de garde disponible hors ligne --------------- */
 ok('le moteur de la page de garde est précaché', sw.includes("'./ecoutille.js?v="));
-/* Le moteur de la garde a CHANGÉ de fond en comble : le cache-first du
-   service worker servirait l'ancienne version à jamais si le numéro de
-   version ne bougeait pas. */
+/* Le moteur de la garde a de nouveau CHANGÉ de fond en comble : le
+   cache-first du service worker servirait l'ancienne version à jamais si le
+   numéro de version ne bougeait pas. */
 const versionJS = Number((/<script src="ecoutille\.js\?v=(\d+)" defer><\/script>/.exec(accueil) || [])[1]);
 const versionCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]);
-ok('le moteur de la garde est en version 6 ou plus (v' + versionJS + ')', versionJS >= 6);
+ok('le moteur de la garde est en version 7 ou plus (v' + versionJS + ')', versionJS >= 7);
 ok('le service worker précache EXACTEMENT cette version',
    sw.includes("'./ecoutille.js?v=" + versionJS + "'"));
 ok('le cache du service worker a été relevé pour cette refonte (v' + versionCache + ')',
-   versionCache >= 305);
+   versionCache >= 306);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL
