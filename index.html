@@ -25,15 +25,15 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « garde v8 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « garde v9 ». On entre par le hublot du salon du Nautilus :
        un FILM tourne en fond — quatre plans du Nautilus dans les grands
        fonds, montés avec des mouvements de caméra, un étalonnage cinéma, du
        grain et des fondus au noir. Autour, le décor CSS prend le relais :
        les rais de lumière, les colonnes de bulles, les échos du sonar et le
        cadre de cuivre du hublot. Au centre, le titre en lettres de bronze,
-       puis le récit qui défile comme une bande-annonce. Pour finir, le
-       projecteur du Nautilus nous éblouit et l'accueil apparaît dans la
-       lumière.
+       puis la console du bord — six cadrans qui vivent et le journal de
+       plongée. Pour finir, le projecteur du Nautilus nous éblouit et
+       l'accueil apparaît dans la lumière.
 
        RIEN QUI PUISSE CASSER — c'est la leçon des deux versions précédentes :
          · aucun découpage, aucun masque, aucune image : ni clip-path, ni
@@ -187,7 +187,7 @@
          largeur si l'écran est étroit. */
       height:min(58vh, 56.25vw);
       width:calc(min(58vh, 56.25vw) * 1.7778);
-      background:#020a12 url("assets/film-nautilus-L.jpg?v=1") center/cover no-repeat;
+      background:#020a12 url("assets/film-nautilus-L.jpg?v=2") center/cover no-repeat;
       overflow:hidden;
       box-shadow:0 0 9vmin 3vmin rgba(1,7,14,.7), 0 0 26vmin 10vmin rgba(1,7,14,.45);
     }
@@ -204,7 +204,7 @@
       #ecoutille .ec-hero{
         left:0; right:0; top:0; transform:none;
         width:auto; height:100%;
-        background-image:url("assets/film-nautilus-P.jpg?v=1");
+        background-image:url("assets/film-nautilus-P.jpg?v=2");
         box-shadow:none;
       }
     }
@@ -252,34 +252,115 @@
       text-shadow:0 2px 12px rgba(0,0,0,.75);
     }
 
-    /* ── 4. LE RÉCIT — une bande-annonce ───────────────────────────────────
-       Une carte à la fois, au centre. Le cadre du récit est un rectangle de
-       hauteur minimale réservée : les cartes s'y superposent ENTRE ELLES
-       (jamais avec le titre ni avec le bouton), et une seule est visible. */
-    #ecoutille .ec-recit{
-      position:relative; width:100%; min-height:clamp(5.4rem, 19vh, 12rem);
-      display:grid; align-items:center; justify-items:center;
-      background:radial-gradient(58% 132% at 50% 50%, rgba(1,7,14,.86), rgba(1,7,14,0) 72%);
+    /* ── 4. LA CONSOLE D'INSTRUMENTS DU BORD ──────────────────────────────
+       Ici se trouvait un récit qui défilait, une carte à la fois, au milieu
+       de la page. C'était joli et faux : de grands textes flottants. À la
+       place, la vraie console du bord — six cadrans qui DONNENT DES CHIFFRES
+       RÉELS ou calculés (l'horloge du visiteur, la pression déduite de
+       l'immersion), une barre de ballast qui vit, un écho du sonar qui se
+       rapproche, et un journal d'une seule ligne qui annonce ce que fait le
+       bateau. C'est le décor qui renseigne, au lieu de raconter. */
+    #ecoutille .ec-console{
+      position:relative; width:100%; max-width:min(940px, 94vw);
+      padding:clamp(8px, 1.7vmin, 18px) clamp(10px, 2.2vmin, 22px);
+      border:1px solid rgba(150,220,245,.22); border-radius:14px;
+      background:linear-gradient(180deg, rgba(3,14,22,.66), rgba(2,9,15,.8));
+      box-shadow:0 2vmin 6vmin rgba(0,0,0,.5), inset 0 0 3vmin rgba(0,0,0,.55);
     }
-    #ecoutille .ec-recit-carte{
-      position:absolute; inset:0; margin:0; padding:0 5%;
-      display:grid; align-content:center; justify-items:center; gap:.36em;
-      opacity:0; transition:opacity .62s ease;
-      font-family:Georgia,"Times New Roman",serif; font-size:clamp(14px, 2.5vmin, 27px);
-      line-height:1.32; color:#eaf9ff; text-align:center;
-      text-shadow:0 3px 18px rgba(0,0,0,.85), 0 0 40px rgba(0,0,0,.6);
+    #ecoutille .ec-console-titre{
+      display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+      margin:0 0 clamp(5px, 1.1vmin, 10px);
+      font-size:clamp(7.5px, 1.5vmin, 10px); letter-spacing:.26em;
+      text-transform:uppercase; color:#7fb0c4;
     }
-    #ecoutille .ec-recit-carte.ec-recit-vu{opacity:1}
-    #ecoutille .ec-recit-carte em{
-      font-size:.72em; letter-spacing:.34em; text-transform:uppercase; font-style:normal;
-      color:#9fd4e6;
+    #ecoutille .ec-console-titre b{color:#ffd36c; font-weight:700}
+    #ecoutille .ec-cadrans{
+      display:grid; grid-template-columns:repeat(2, minmax(0,1fr));
+      column-gap:clamp(10px, 2.6vw, 28px); row-gap:clamp(5px, 1.2vmin, 11px);
     }
-    #ecoutille .ec-recit-carte b{
-      font-family:Impact,Haettenschweiler,"Arial Black",sans-serif; font-weight:400;
-      font-size:clamp(20px, 4.6vmin, 50px); line-height:1.02; letter-spacing:.04em;
-      text-transform:uppercase; color:#f7dfae;
-      text-shadow:0 4px 0 rgba(0,0,0,.4), 0 12px 30px rgba(0,0,0,.75);
+    /* Écran large : trois colonnes, la console reste basse. */
+    @media (orientation: landscape) and (min-width: 620px){
+      #ecoutille .ec-cadrans{grid-template-columns:repeat(3, minmax(0,1fr))}
     }
+    #ecoutille .ec-cadran{display:flex; flex-direction:column; gap:2px; min-width:0}
+    #ecoutille .ec-cadran-l{
+      display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+      font-size:clamp(7.5px, 1.45vmin, 10px); letter-spacing:.16em;
+      text-transform:uppercase; color:#7ea9bc;
+    }
+    #ecoutille .ec-cadran-v{
+      font-weight:700; font-size:clamp(11px, 2.1vmin, 15px); color:#c9f2ff;
+      font-variant-numeric:tabular-nums; white-space:nowrap;
+      text-shadow:0 0 1.6vmin rgba(120,220,255,.35);
+    }
+    #ecoutille .ec-cadran-v i{font-style:normal; font-size:.72em; color:#7ea9bc; letter-spacing:.08em}
+    /* Les jauges : animées par TRANSFORM seulement (aucun calcul de mise en
+       page déplacé à chaque rafraîchissement — c'est ce qui garde tout fluide
+       sur un téléphone). */
+    #ecoutille .ec-jauge{
+      position:relative; height:3px; border-radius:2px;
+      background:rgba(140,220,255,.16); overflow:hidden;
+    }
+    #ecoutille .ec-jauge span{
+      position:absolute; left:0; top:0; bottom:0; width:100%;
+      transform:scaleX(.4); transform-origin:left center;
+      background:linear-gradient(90deg, rgba(90,220,255,.45), #b6f0ff);
+      box-shadow:0 0 1.2vmin rgba(120,230,255,.6);
+      transition:transform .3s linear;
+    }
+    #ecoutille .ec-cadran.ec-cadran-alerte .ec-cadran-v{color:#ffb3ac; text-shadow:0 0 1.8vmin rgba(255,75,62,.5)}
+    /* LE JOURNAL DU BORD : une seule ligne, comme sur un vrai bateau. Elle ne
+       défile pas : elle annonce, puis se tait. */
+    #ecoutille .ec-journal{
+      margin:clamp(6px, 1.3vmin, 12px) 0 0; padding-top:clamp(5px, 1.1vmin, 10px);
+      border-top:1px solid rgba(150,220,245,.16);
+      font-size:clamp(8.5px, 1.7vmin, 12px); letter-spacing:.14em; text-transform:uppercase;
+      color:#9fe3c2; min-height:1.5em;
+    }
+    #ecoutille .ec-journal::before{content:"› "; color:#5be09b}
+    #ecoutille .ec-journal.alerte{color:#ffb3ac}
+    #ecoutille .ec-journal.alerte::before{content:"! "; color:#ff4b3e}
+
+    /* ── 4 bis. LA PATINE DU CINÉMA ────────────────────────────────────────
+       Trois signatures de film : l'étalonnage (bleu en haut, ambre en bas),
+       les fanaux de lentille — avec leur trait horizontal, la marque des
+       optiques anamorphiques — et le témoin d'enregistrement. Tous sont des
+       surfaces pleines, animées en opacité et en transform : elles ne
+       peuvent ni découper ni déborder. */
+    #ecoutille .ec-etalo{
+      position:absolute; inset:0; pointer-events:none;
+      mix-blend-mode:soft-light; opacity:.5;
+      background:linear-gradient(180deg, rgba(0,190,255,.55), rgba(0,0,0,0) 46%, rgba(255,150,40,.5));
+    }
+    #ecoutille .ec-fanaux{position:absolute; inset:0; pointer-events:none}
+    #ecoutille .ec-fanaux i{
+      position:absolute; border-radius:50%;
+      background:radial-gradient(closest-side,
+        rgba(255,255,255,.5), rgba(150,224,255,.2) 42%, rgba(150,224,255,0) 78%);
+      animation:ecFanal 9s ease-in-out infinite;
+    }
+    /* le trait anamorphique, de part et d'autre du fanal */
+    #ecoutille .ec-fanaux i::after{
+      content:""; position:absolute; left:-250%; top:50%; width:600%; height:2px; margin-top:-1px;
+      background:linear-gradient(90deg, rgba(150,225,255,0), rgba(206,242,255,.6), rgba(150,225,255,0));
+    }
+    #ecoutille .ec-fanaux i:nth-child(1){left:9%; top:20%; width:15vmin; height:15vmin}
+    #ecoutille .ec-fanaux i:nth-child(2){right:7%; top:56%; width:21vmin; height:21vmin; animation-delay:3.4s; animation-duration:12s}
+    @keyframes ecFanal{
+      0%,100%{ opacity:.10; transform:translate3d(0,0,0) scale(.9) }
+      50%    { opacity:.46; transform:translate3d(1.4%, -1.2%, 0) scale(1.07) }
+    }
+    #ecoutille .ec-hud{
+      width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-size:clamp(7.5px, 1.5vmin, 10.5px); letter-spacing:.2em;
+      text-transform:uppercase; color:#8fb6c8;
+    }
+    #ecoutille .ec-rec{display:inline-flex; align-items:center; gap:6px}
+    #ecoutille .ec-rec b{
+      width:.62em; height:.62em; border-radius:50%; background:#ff4b3e;
+      box-shadow:0 0 1vmin rgba(255,75,62,.8); animation:ecRec 1.6s steps(2,end) infinite;
+    }
+    @keyframes ecRec{50%{opacity:.22}}
 
     /* ── 5. LES TROIS ZONES, EMPILÉES ──────────────────────────────────────
        C'est ICI que se règle la question des chevauchements : une colonne,
@@ -296,7 +377,7 @@
       transition:transform 1.15s cubic-bezier(.2,.72,.2,1), opacity .45s ease;
     }
     #ecoutille .ec-enseigne,
-    #ecoutille .ec-recit,
+    #ecoutille .ec-console,
     #ecoutille .ec-pied{width:100%; max-width:min(1180px, 95vw)}
     #ecoutille.ec-plongee .ec-scene{transform:scale(1.045)}
     #ecoutille.ec-sortie .ec-scene{opacity:0; transition:opacity .35s ease}
@@ -397,9 +478,10 @@
       #ecoutille .ec-titre{font-size:clamp(26px, 7.4vmin, 58px)}
       #ecoutille .ec-regle{width:min(360px, 62%)}
       #ecoutille .ec-sous-titre{font-size:clamp(10px, 2vmin, 15px)}
-      #ecoutille .ec-recit{min-height:clamp(3.6rem, 26vh, 6rem)}
-      #ecoutille .ec-recit-carte{font-size:clamp(12px, 2.2vmin, 18px)}
-      #ecoutille .ec-recit-carte b{font-size:clamp(16px, 3.6vmin, 30px)}
+      #ecoutille .ec-hud{font-size:clamp(7px, 1.4vmin, 9px)}
+      #ecoutille .ec-console{padding:6px 10px}
+      #ecoutille .ec-cadran-v{font-size:clamp(10px, 1.9vmin, 13px)}
+      #ecoutille .ec-journal{display:none}   /* la console suffit sur une bande */
       #ecoutille .ec-consigne{display:none}
       #ecoutille .ec-start{width:clamp(84px, 20vmin, 132px)}
       #ecoutille .ec-start-label{font-size:clamp(13px, 3.2vmin, 22px)}
@@ -409,6 +491,8 @@
       #ecoutille .ec-rayons{animation:none; opacity:.6}
       #ecoutille .ec-bulles{animation-duration:120s}
       #ecoutille .ec-pings i{animation-duration:11s}
+      #ecoutille .ec-fanaux i{animation:none; opacity:.22}
+      #ecoutille .ec-jauge span{transition:none}
       #ecoutille .ec-start::after{animation:none; opacity:.55}
       #ecoutille .ec-flood{transition-duration:.4s}
     }
@@ -509,13 +593,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=8" defer></script>
+  <script src="ecoutille.js?v=9" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — 20 000 LIEUX SOUS LES MERS, À BORD DU NAUTILUS
-     (« garde v8 », film et bande-annonce)
+     (« garde v9 », film et console de bord)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus, la nuit des grands fonds, le bateau noir qui
@@ -553,10 +637,12 @@
          grâce au fond de .ec-hero. -->
     <div class="ec-hero">
       <video class="ec-film" autoplay muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1">
-        <source src="assets/film-nautilus-P.mp4?v=1" type="video/mp4" media="(orientation: portrait)">
-        <source src="assets/film-nautilus-L.mp4?v=1" type="video/mp4">
+        <source src="assets/film-nautilus-P.mp4?v=2" type="video/mp4" media="(orientation: portrait)">
+        <source src="assets/film-nautilus-L.mp4?v=2" type="video/mp4">
       </video>
     </div>
+    <div class="ec-etalo"></div>
+    <div class="ec-fanaux"><i></i><i></i></div>
     <div class="ec-vignette"></div>
     <div class="ec-cadre"></div>
   </div>
@@ -566,23 +652,59 @@
   <div class="ec-scene">
 
     <header class="ec-enseigne">
-      <p class="ec-verne">Jules Verne</p>
-      <h1 class="ec-titre">Mission Nautilus</h1>
+      <!-- Le bandeau du cadreur : témoin d'enregistrement, timecode qui
+           compte vraiment, et le format de prise. C'est du décor — mais du
+           décor COHÉRENT, comme les repères gravés en marge d'une pellicule. -->
+      <div class="ec-hud" aria-hidden="true">
+        <span class="ec-rec"><b></b>REC · <span id="ecTimecode">00:00:00:00</span></span>
+        <span>2.39:1 · 24 i/s · prise 12</span>
+      </div>
+      <p class="ec-verne">D&#8217;après Jules Verne</p>
+      <h1 class="ec-titre">20&#160;000 Lieues à la Fnac</h1>
       <div class="ec-regle" aria-hidden="true"></div>
-      <p class="ec-sous-titre">20 000 lieues sous les mers</p>
+      <p class="ec-sous-titre">Sous les mers, à bord du Nautilus</p>
     </header>
 
-    <!-- LE RÉCIT : une carte à la fois, au centre. La première est visible
-         même sans le moteur (mais sans JavaScript, toute la garde est
-         masquée : personne ne reste enfermé). -->
-    <main class="ec-recit" aria-hidden="true">
-      <p class="ec-recit-carte ec-recit-vu"><em>1866</em>Les mers du globe sont hantées.</p>
-      <p class="ec-recit-carte"><em>Le monstre</em>Une machine de fer, plus rapide qu'une baleine.</p>
-      <p class="ec-recit-carte"><em>L'expédition</em>Le professeur Aronnax embarque à sa poursuite.</p>
-      <p class="ec-recit-carte"><em>Le plongeon</em>Il ne reviendra pas. Il plongera.</p>
-      <p class="ec-recit-carte"><em>Le capitaine</em>« Je suis le capitaine Nemo. »</p>
-      <p class="ec-recit-carte"><b>Ouvre le sas</b><em>Le Nautilus appareille</em></p>
-    </main>
+    <!-- LA CONSOLE D'INSTRUMENTS DU BORD : six cadrans qui vivent, et le
+         journal du bord sur une seule ligne. Les chiffres ne sont pas des
+         faux : l'heure est celle du visiteur, la pression est calculée depuis
+         l'immersion, l'écho du sonar se rapproche pour de vrai. -->
+    <section class="ec-console" aria-hidden="true">
+      <p class="ec-console-titre"><span>Console de plongée</span><b>Nautilus · classe « N »</b></p>
+      <div class="ec-cadrans">
+        <div class="ec-cadran">
+          <div class="ec-cadran-l"><span>Immersion</span><span>m</span></div>
+          <div class="ec-cadran-v"><span id="ecImmersion">0</span></div>
+          <div class="ec-jauge"><span id="ecImmersionJauge"></span></div>
+        </div>
+        <div class="ec-cadran">
+          <div class="ec-cadran-l"><span>Pression</span><span>bar</span></div>
+          <div class="ec-cadran-v"><span id="ecPression">1,0</span></div>
+          <div class="ec-jauge"><span id="ecPressionJauge"></span></div>
+        </div>
+        <div class="ec-cadran">
+          <div class="ec-cadran-l"><span>Écho sonar</span><span>m</span></div>
+          <div class="ec-cadran-v"><span id="ecEcho">—</span> <i id="ecEchoNote">recherche</i></div>
+          <div class="ec-jauge"><span id="ecEchoJauge"></span></div>
+        </div>
+        <div class="ec-cadran">
+          <div class="ec-cadran-l"><span>Ballast</span><span>%</span></div>
+          <div class="ec-cadran-v"><span id="ecBallast">68</span></div>
+          <div class="ec-jauge"><span id="ecBallastJauge"></span></div>
+        </div>
+        <div class="ec-cadran">
+          <div class="ec-cadran-l"><span>Cap</span><span>°</span></div>
+          <div class="ec-cadran-v"><span id="ecCap">217</span></div>
+          <div class="ec-jauge"><span id="ecCapJauge"></span></div>
+        </div>
+        <div class="ec-cadran">
+          <div class="ec-cadran-l"><span>Horloge de bord</span><span>UTC+1</span></div>
+          <div class="ec-cadran-v"><span id="ecHeure">--:--:--</span></div>
+          <div class="ec-jauge"><span id="ecHeureJauge"></span></div>
+        </div>
+      </div>
+      <p class="ec-journal" id="ecJournal">Sas étanche · équipage 4/4 · prêt à appareiller</p>
+    </section>
 
     <footer class="ec-pied">
       <p class="ec-consigne">Appuie sur <b>START</b> — le premier geste allume le sonar du bord.</p>
@@ -590,7 +712,7 @@
         <span class="ec-dome" aria-hidden="true"></span>
         <span class="ec-start-label">START</span>
       </button>
-      <span class="ec-version">garde v8</span>
+      <span class="ec-version">garde v9</span>
     </footer>
   </div>
 
@@ -599,7 +721,7 @@
   <div class="ec-flash" aria-hidden="true"></div>
 
   <!-- Ce que lisent les lecteurs d'écran (le décor ci-dessus est muet). -->
-  <p class="ec-lu">Embarquement à bord du Nautilus. Appuie sur START pour ouvrir le sas et lancer l'aventure.</p>
+  <p class="ec-lu">20 000 lieues à la Fnac — embarque à bord du Nautilus, sous les mers. La console de plongée indique la profondeur, la pression et les échos du sonar. Appuie sur START pour ouvrir le sas et lancer l'aventure.</p>
 </div>
 
 <!-- ═══════════ SOCLE — LE CLIC ═══════════
@@ -655,6 +777,23 @@
      fond reste, et c'est déjà une belle image du film. */
   var film = racine.querySelector('.ec-film');
   function filmVisible(){ racine.classList.add('ec-film-pret'); }
+
+  /* QUEL FORMAT DE FILM ? On ne s'en remet pas au navigateur : le choix est
+     fait ici, noir sur blanc. Un téléphone debout reçoit le montage VERTICAL
+     (9:16), tout le reste reçoit la version large (16:9). Les balises
+     <source> du balisage gardent le premier dessin, mais c'est cette ligne
+     qui décide — et elle décide pareil partout. */
+  function formatDuFilm(relancer){
+    if(!film) return;
+    var portrait = !!(window.matchMedia && window.matchMedia('(orientation: portrait)').matches);
+    var voulu = portrait ? 'assets/film-nautilus-P.mp4?v=2' : 'assets/film-nautilus-L.mp4?v=2';
+    if(film.getAttribute('src') === voulu) return;
+    film.setAttribute('src', voulu);
+    if(relancer !== false) film.load();
+  }
+  formatDuFilm(false);
+  window.addEventListener('orientationchange', function(){ formatDuFilm(true); });
+
   if(film){
     if(film.readyState >= 2) filmVisible();
     film.addEventListener('playing', filmVisible);

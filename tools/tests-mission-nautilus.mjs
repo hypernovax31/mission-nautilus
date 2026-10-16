@@ -266,8 +266,8 @@ ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v8)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v8'));
+ok('un repère de version dit quelle page de garde est chargée (garde v9)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v9'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
@@ -304,14 +304,11 @@ ok('les zones de texte ne sont JAMAIS en position absolue (aucune superposition 
 ok('la commande est un bouton du flux, posé sous sa consigne',
    /#ecoutille \.ec-pied\{[\s\S]*?display:flex/.test(socleCss) &&
    !/position:absolute/.test(bloc(/#ecoutille \.ec-start\{[\s\S]*?\}/)));
-ok('la bande du récit réserve sa hauteur (le bas de l’écran ne bouge jamais)',
-   /#ecoutille \.ec-recit\{[\s\S]*?min-height:clamp\(/.test(socleCss));
-ok('les cartes du récit se remplacent DANS leur bande (.ec-recit relative)',
-   bloc(/#ecoutille \.ec-recit\{[\s\S]*?\}/).includes('position:relative') &&
-   bloc(/#ecoutille \.ec-recit-carte\{[\s\S]*?\}/).includes('position:absolute'));
-ok('une seule carte visible à la fois (toutes les autres sont éteintes)',
-   /#ecoutille \.ec-recit-carte\{[\s\S]*?opacity:0/.test(socleCss) &&
-   socleCss.includes('#ecoutille .ec-recit-carte.ec-recit-vu{opacity:1}'));
+ok('la console a sa place réservée (le bas de l’écran ne bouge jamais)',
+   /#ecoutille \.ec-console\{[\s\S]*?padding:clamp\(/.test(socleCss) &&
+   /#ecoutille \.ec-console\{[\s\S]*?border-radius:14px/.test(socleCss));
+ok('le journal du bord tient sur UNE ligne (il ne « défile » pas)',
+   /#ecoutille \.ec-journal\{[\s\S]*?min-height:1\.5em/.test(socleCss));
 
 /* --- LE DÉCOR : FANTASTIQUE ET GRANDIOSE -------------------------------- */
 /* Le hublot du salon du Nautilus : la nuit des grands fonds, les rais de
@@ -372,8 +369,8 @@ ok('la fenêtre garde EXACTEMENT le rapport 16:9 du film (aucun plan tronqué)',
 ok('sur un téléphone debout, le film passe plein écran (aucun cadre à chevaucher)',
    /@media \(orientation: portrait\)\{[\s\S]*?#ecoutille \.ec-hero\{[\s\S]*?height:100%/.test(socleCss));
 ok('l’affiche du film tient la place pendant le chargement (et si la lecture est refusée)',
-   /#ecoutille \.ec-hero\{[\s\S]*?url\("assets\/film-nautilus-L\.jpg\?v=1"\)/.test(socleCss) &&
-   /orientation: portrait[\s\S]{0,400}film-nautilus-P\.jpg/.test(socleCss));
+   /#ecoutille \.ec-hero\{[\s\S]*?url\("assets\/film-nautilus-L\.jpg\?v=2"\)/.test(socleCss) &&
+   /orientation: portrait[\s\S]{0,400}film-nautilus-P\.jpg\?v=2/.test(socleCss));
 ok('le film ne s’affiche qu’une fois qu’il joue vraiment (pas de rectangle noir)',
    /#ecoutille \.ec-film\{[\s\S]*?opacity:0/.test(socleCss) &&
    socleCss.includes('#ecoutille.ec-film-pret .ec-film{opacity:1}'));
@@ -395,20 +392,131 @@ ok('chaque pièce du décor a son style (aucune classe orpheline)',
    sansStyle.length === 0, sansStyle.join(', '));
 
 ok('le film tourne aussi hors ligne : les affiches sont précachées (pas les 5 Mo de vidéo)',
-   sw.includes("'./assets/film-nautilus-L.jpg?v=1'") &&
-   sw.includes("'./assets/film-nautilus-P.jpg?v=1'") &&
+   sw.includes("'./assets/film-nautilus-L.jpg?v=2'") &&
+   sw.includes("'./assets/film-nautilus-P.jpg?v=2'") &&
    !sw.includes("film-nautilus-L.mp4'"));
 ok('les URLs du film sont versionnées (le cache du service worker les garde)',
-   gardeHtml.includes('film-nautilus-L.mp4?v=1') && gardeHtml.includes('film-nautilus-P.mp4?v=1'));
+   gardeHtml.includes('film-nautilus-L.mp4?v=2') && gardeHtml.includes('film-nautilus-P.mp4?v=2'));
+/* On lit l'en-tête du film (atome « mvhd ») pour connaître sa VRAIE durée :
+   un fichier tronqué, ou une vieille version de 25 s restée en place, serait
+   invisible autrement. Aucun outil externe : juste l'octet-à-octet du MP4. */
+function dureeMp4(fichier){
+  const b = fs.readFileSync(fichier);
+  const i = b.indexOf(Buffer.from('mvhd'));
+  if(i < 0) return 0;
+  /* « mvhd » : version (1) + drapeaux (3), puis, en version 0 :
+     création (4), modification (4), ÉCHELLE (4), DURÉE (4). Autrement dit
+     l'échelle est à +16 et la durée à +20 du mot « mvhd ». */
+  const version = b.readUInt8(i + 4);
+  const echelle = b.readUInt32BE(i + (version === 1 ? 20 : 16));
+  const duree   = version === 1
+    ? Number(b.readBigUInt64BE(i + 24))
+    : b.readUInt32BE(i + 20);
+  return echelle ? duree / echelle : 0;
+}
+const durees = films.map(f => dureeMp4(chemin(f)));
+ok('chaque film dure bien ses 34,5 s (au moins 30 s : les six plans sont là)',
+   durees.every(d => d >= 30 && d <= 40),
+   durees.map(d => d.toFixed(1) + ' s').join(' · '));
+ok('le choix du format est décidé en JS, pas laissé au hasard du navigateur',
+   /function formatDuFilm\(relancer\)\{/.test(socleJs) &&
+   /film\.setAttribute\('src', voulu\)/.test(socleJs) &&
+   socleJs.includes("assets/film-nautilus-P.mp4?v=2") &&
+   socleJs.includes("assets/film-nautilus-L.mp4?v=2"));
+ok('le moteur revérifie le format (même règle, au cas où le socle manque)',
+   /film\.getAttribute\('src'\) !== voulu/.test(porte) &&
+   porte.includes("assets/film-nautilus-P.mp4?v=2"));
 ok('le titre est en lettres de bronze, avec un repli doré s’il n’est pas possible',
    socleCss.includes('background-clip:text') && socleCss.includes('@supports') &&
    /\.ec-titre\{[\s\S]*?color:#f6e3b6/.test(socleCss));
-ok('le récit est une bande-annonce d’au moins cinq cartes',
-   (gardeHtml.match(/class="ec-recit-carte/g) || []).length >= 5);
-ok('la première carte s’affiche même si le moteur ne charge pas',
-   gardeHtml.includes('class="ec-recit-carte ec-recit-vu"'));
-ok('le décor parle aux yeux, pas aux lecteurs d’écran (phrase dédiée à la place)',
-   /class="ec-recit" aria-hidden="true"/.test(gardeHtml) &&
+ok('le titre de la page de démarrage est bien « 20 000 Lieues à la Fnac »',
+   /<h1 class="ec-titre">20&#160;000 Lieues à la Fnac<\/h1>/.test(gardeHtml));
+ok('l’ancien titre (« Mission Nautilus ») n’est plus le titre de la garde',
+   !/<h1 class="ec-titre">[^<]*Mission Nautilus/.test(gardeHtml));
+ok('la mention dit maintenant que c’est d’après Jules Verne',
+   gardeHtml.includes("D&#8217;après Jules Verne"));
+ok('la ligne sous le titre situe le film : sous les mers, à bord du Nautilus',
+   /<p class="ec-sous-titre">Sous les mers, à bord du Nautilus<\/p>/.test(gardeHtml));
+
+/* --- LA CONSOLE PREND LA PLACE DES TEXTES DÉFILANTS --------------------- */
+/* Demande du joueur : « trouve une meilleure idée que les textes défilants
+   au milieu de la page ». Les cartes de bande-annonce ont donc disparu, et à
+   leur place : six cadrans qui vivent et un journal d'UNE ligne. On vérifie
+   que les cartes n'existent plus (sinon on aurait deux systèmes de front) et
+   que chaque cadran du balisage a son style ET son code. */
+ok('plus aucune carte de récit défilant (le système a été retiré partout)',
+   !gardeHtml.includes('ec-recit') && !socleCss.includes('ec-recit') && !porte.includes('ec-recit'));
+ok('la console du bord est là, avec ses six cadrans',
+   gardeHtml.includes('class="ec-console"') &&
+   (gardeHtml.match(/class="ec-cadran"/g) || []).length === 6);
+const IDs_CADRANS = ['ecImmersion', 'ecPression', 'ecEcho', 'ecBallast', 'ecCap', 'ecHeure'];
+for(const id of IDs_CADRANS){
+  ok('le cadran ' + id + ' est dans la page ET branché dans le moteur',
+     gardeHtml.includes('id="' + id + '"') && porte.includes("el('" + id + "')"));
+}
+ok('les six jauges aussi (elles sont animées par transform seulement)',
+   (gardeHtml.match(/ec-jauge/g) || []).length === 6 &&
+   /\.ec-jauge span\{[\s\S]*?transform:scaleX\(/.test(socleCss) &&
+   /\.ec-jauge span\{[\s\S]*?transition:transform/.test(socleCss));
+ok('l’HORLOGE de bord donne l’heure réelle du visiteur (new Date)',
+   /const d = new Date\(\);/.test(porte) && /poserTexte\(INSTRUMENTS\.heure/.test(porte));
+ok('la PRESSION est CALCULÉE depuis l’immersion (1 bar + 1 bar par 10 m)',
+   /const pression = 1 \+ immersion \/ 10\.06;/.test(porte));
+ok('l’IMMERSION descend vraiment (elle suit le temps passé à bord)',
+   /const immersion = PROFONDEUR_FOSSE \* \(1 - Math\.exp\(-t \* VITESSE_PLONGEE \/ PROFONDEUR_FOSSE\)\)/.test(porte));
+/* Le réalisme se vérifie aussi : un sous-marin descend à quelques mètres par
+   seconde, pas à 70 km/h. On lit la constante dans le moteur et on la borne. */
+const vitessePlongee = Number((/const VITESSE_PLONGEE\s*=\s*([\d.]+)/.exec(porte) || [])[1]);
+ok('la vitesse de descente reste crédible (1 à 10 m/s, pas une chute libre)',
+   vitessePlongee >= 1 && vitessePlongee <= 10, vitessePlongee + ' m/s');
+const profFosse = Number((/const PROFONDEUR_FOSSE\s*=\s*([\d.]+)/.exec(porte) || [])[1]);
+ok('la fosse visée est une vraie profondeur (2 000 à 6 000 m)',
+   profFosse >= 2000 && profFosse <= 6000, profFosse + ' m');
+ok('l’ÉCHO du sonar est ancré sur la profondeur (le fond se rapproche quand on descend)',
+   /const echo = Math\.max\(80, 2600 - immersion \* 0\.72\)/.test(porte) &&
+   porte.includes("'rocher'"));
+ok('le BALLAST se remplit pour la descente',
+   /const ballast = \d+ \+ \d+ \* \(1 - Math\.exp\(-t \/ \d+\)\)/.test(porte));
+ok('le TIMECODE du cadreur compte à 24 images par seconde',
+   /Math\.floor\(t \* 24\)/.test(porte) && porte.includes("el('ecTimecode')"));
+ok('le JOURNAL raconte le film, plan par plan, et cite le calmar géant',
+   /const JOURNAL = \[/.test(porte) && porte.includes('calmar géant sur la coque'));
+ok('il repart avec le film, qui tourne en boucle',
+   porte.includes('FILM_BOUCLE') && /Math\.floor\(t \/ FILM_BOUCLE\)/.test(porte));
+ok('la console s’arrête quand le sas s’ouvre (elle n’écrit plus dans le vide)',
+   /function arreterInstruments\(\)/.test(porte) && porte.includes('Sas ouvert — bienvenue à bord'));
+ok('la console est dans le flux (aucune position absolue : pas de chevauchement)',
+   /#ecoutille \.ec-console\{[\s\S]*?position:relative/.test(socleCss) &&
+   !/#ecoutille \.ec-console\{[^}]*position:absolute/.test(socleCss));
+ok('les cadrans sont une grille (deux colonnes sur téléphone, trois sur large)',
+   /#ecoutille \.ec-cadrans\{[\s\S]*?grid-template-columns:repeat\(2, minmax\(0,1fr\)\)/.test(socleCss) &&
+   /min-width: 620px\)\{\s*#ecoutille \.ec-cadrans\{grid-template-columns:repeat\(3, minmax\(0,1fr\)\)\}/.test(socleCss));
+
+/* --- LES SIGNATURES DE CINÉMA ------------------------------------------ */
+/* Ce qui fait qu'une image a l'air d'un film : l'étalonnage, les fanaux de
+   lentille (avec leur trait horizontal — la marque des optiques
+   anamorphiques), et le témoin d'enregistrement. Tous des surfaces pleines,
+   animées en opacité et en transform : aucune découpe, aucun débordement. */
+ok('l’étalonnage du film est là (bleu froid en haut, ambre en bas)',
+   /#ecoutille \.ec-etalo\{[\s\S]*?mix-blend-mode:soft-light/.test(socleCss) &&
+   /#ecoutille \.ec-etalo\{[\s\S]*?rgba\(255,150,40,\.5\)/.test(socleCss));
+ok('deux fanaux de lentille, avec le trait anamorphique des optiques de cinéma',
+   gardeHtml.includes('class="ec-fanaux"') &&
+   /\.ec-fanaux i::after\{[\s\S]*?height:2px/.test(socleCss) &&
+   /@keyframes ecFanal/.test(socleCss));
+ok('le témoin d’enregistrement bat dans le bandeau du cadreur',
+   gardeHtml.includes('class="ec-rec"') && /@keyframes ecRec/.test(socleCss));
+ok('le bandeau annonce le format de prise (2.39:1 · 24 i/s)',
+   gardeHtml.includes('2.39:1 · 24 i/s'));
+ok('le bandeau du cadreur est DANS le flux (il ne chevauche rien)',
+   /<div class="ec-hud" aria-hidden="true">/.test(gardeHtml) &&
+   /#ecoutille \.ec-hud\{[\s\S]*?width:100%/.test(socleCss) &&
+   !/#ecoutille \.ec-hud\{[^}]*position:absolute/.test(socleCss));
+ok('les fanaux et l’étalonnage s’éteignent si l’on demande moins d’animation',
+   /prefers-reduced-motion[\s\S]{0,400}\.ec-fanaux i\{animation:none/.test(socleCss));
+ok('la console et le bandeau sont muets pour les lecteurs d’écran (phrase dédiée à la place)',
+   /class="ec-console" aria-hidden="true"/.test(gardeHtml) &&
+   /class="ec-hud" aria-hidden="true"/.test(gardeHtml) &&
    /class="ec-lu">[^<]{20,}/.test(gardeHtml));
 ok('le décor entier reste dans le cadre (overflow:hidden sur la garde)',
    /#ecoutille\{[\s\S]{0,420}overflow:hidden/.test(socleCss));
@@ -501,10 +609,10 @@ ok('le clic sur START est un vrai geste (bouton réel, jamais un div)',
 ok('le bouton porte le nom exigé : START', /<span class="ec-start-label">START<\/span>/.test(corps));
 
 /* --- Le moteur : le geste, le récit, le son ----------------------------- */
-ok('le moteur fait défiler le récit, carte par carte',
-   porte.includes('jouerRecit') && porte.includes("classList.add('ec-recit-vu')"));
-ok('il s’ARRÊTE sur la dernière carte : c’est l’invitation à ouvrir le sas',
-   /if\(i >= cartes\.length\) return;/.test(porte));
+ok('le moteur démarre la console dès la première image',
+   /demarrerInstruments\(\);/.test(porte) && /function demarrerInstruments\(\)/.test(porte));
+ok('et c’est LA dernière ligne du journal qui invite à ouvrir le sas',
+   /invite: true/.test(porte) && /if\(ligne\.invite\) racine\.classList\.add\('ec-invite'\)/.test(porte));
 ok('à la dernière carte, le bouton appelle plus fort (ec-invite)',
    porte.includes("classList.add('ec-invite')"));
 ok('le moteur lit la préférence de sonar du site (nautilusSoundOn)',
@@ -551,11 +659,11 @@ ok('le moteur de la page de garde est précaché', sw.includes("'./ecoutille.js?
    numéro de version ne bougeait pas. */
 const versionJS = Number((/<script src="ecoutille\.js\?v=(\d+)" defer><\/script>/.exec(accueil) || [])[1]);
 const versionCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]);
-ok('le moteur de la garde est en version 8 ou plus (v' + versionJS + ')', versionJS >= 8);
+ok('le moteur de la garde est en version 9 ou plus (v' + versionJS + ')', versionJS >= 9);
 ok('le service worker précache EXACTEMENT cette version',
    sw.includes("'./ecoutille.js?v=" + versionJS + "'"));
 ok('le cache du service worker a été relevé pour cette refonte (v' + versionCache + ')',
-   versionCache >= 307);
+   versionCache >= 308);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL

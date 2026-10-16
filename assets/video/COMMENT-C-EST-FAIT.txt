@@ -1,0 +1,81 @@
+═══════════════════════════════════════════════════════════════════════════════
+ LE FILM DE LA PAGE DE DÉMARRAGE — OÙ IL EST, ET COMMENT IL A ÉTÉ FAIT
+═══════════════════════════════════════════════════════════════════════════════
+
+RÉPONSE COURTE : dans le dossier « assets » du site, à la racine.
+
+  https://hypernovax31.github.io/mission-nautilus/assets/film-nautilus-L.mp4
+  https://hypernovax31.github.io/mission-nautilus/assets/film-nautilus-P.mp4
+
+  assets/film-nautilus-L.mp4   1280x720  (16:9)  34 s  ~5,3 Mo  → ordinateurs
+  assets/film-nautilus-P.mp4    810x1440 (9:16)  34 s  ~4,9 Mo  → téléphones debout
+  assets/film-nautilus-L.jpg    l'affiche du format paysage (120 Ko)
+  assets/film-nautilus-P.jpg    l'affiche du format vertical (120 Ko)
+
+Les affiches servent de fond pendant le chargement du film — et de seule image
+si la lecture vidéo est refusée. Elles sont précachées par le service worker,
+les vidéos non (trop lourdes) : le navigateur les garde lui-même après la
+première lecture.
+
+Tout le dossier « assets/video » (ce dossier-ci) contient de quoi refaire,
+remonter ou refaire tourner le film autrement : chaque plan à l'image près,
+les deux affiches, et la recette de montage ci-dessous.
+
+
+───────────────────────────────────────────────────────────────────────────────
+ LES SIX PLANS, DANS L'ORDRE
+───────────────────────────────────────────────────────────────────────────────
+
+  1  plan-1-entree-du-nautilus.jpg   L'entrée du Nautilus, projecteur allumé.
+  2  plan-2-la-traversee.jpg         La traversée au-dessus du champ d'algues.
+  3  plan-3-le-calmar-geant.png      LE CALMAR GÉANT enroulé autour de la coque.
+  4  plan-4-le-hublot-dore.png       Le hublot doré : on entre dedans.
+  5  plan-5-le-salon-de-nemo.png     Le salon du Nautilus, la silhouette de Nemo.
+  6  plan-6-la-descente-dans-l-abime.jpg  La descente : le Nautilus devient minuscule.
+
+
+───────────────────────────────────────────────────────────────────────────────
+ LA RECETTE DE MONTAGE (à refaire avec ffmpeg, si besoin)
+───────────────────────────────────────────────────────────────────────────────
+
+Pour chaque plan, en 16:9 (1280x720) — la fenêtre découpe le plan au format du
+film, puis une poussée de caméra très lente fait vivre l'image :
+
+  ffmpeg -loop 1 -framerate 24 -t <durée> -i plan.png -filter_complex \
+    "[0:v]crop=1366:768:5:0,scale=1792:1008:flags=lanczos,setsar=1,\
+     zoompan=z='min(1.02+0.0011*on,1.15)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1280x720:fps=24,\
+     eq=contrast=1.07:saturation=1.13:brightness=-0.012,\
+     colorbalance=rs=-0.02:bs=0.06:rm=0.005:bm=0.035,\
+     vignette=PI/4.6,noise=alls=3:allf=t,fade=in:0:12,fade=out:st=<durée-0.8>:d=0.8" \
+    -c:v libx264 -preset slow -tune film -crf 25 -pix_fmt yuv420p -g 48 -movflags +faststart sortie.mp4
+
+  · 24 i/s : la cadence du cinéma ;
+  · « zoompan » : le mouvement de caméra (poussée vers l'avant, ou recul pour
+    le dernier plan : z='max(1.22-0.0010*on,1.02)') ;
+  · « eq » + « colorbalance » + « vignette » : l'étalonnage (contraste, bleus
+    profonds, hautes lumières chaudes, bords assombris) ;
+  · « noise » : le grain, léger ;
+  · « fade » : les fondus au noir entre les plans.
+
+Pour le format vertical (810x1440), le cadre du film n'occupe que 3/4 de la
+hauteur et la mer (la même image, floutée) remplit le reste : sur un écran
+debout, on ne voit jamais de bandes noires.
+
+  ffmpeg -loop 1 -framerate 24 -t <durée> -i plan.png -filter_complex \
+    "[0:v]crop=576:768:400:0,scale=1134:1512:flags=lanczos,setsar=1,\
+     zoompan=z='<poussée>':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=810x1080:fps=24[fg];\
+     [fg]split[a][b];\
+     [a]scale=810:1440:force_original_aspect_ratio=increase,crop=810:1440,boxblur=44:2,eq=brightness=-0.07:saturation=0.9[bg];\
+     [bg][b]overlay=(W-w)/2:(H-h)/2,scale=810:1440,<étalonnage>" \
+    -c:v libx264 -preset slow -tune film -crf 26 -pix_fmt yuv420p -g 48 -movflags +faststart sortie.mp4
+
+Puis les six plans se collent bout à bout sans réencodage :
+
+  printf "file 'seg/L-01.mp4'\nfile 'seg/L-02.mp4'\n..." > liste.txt
+  ffmpeg -f concat -safe 0 -i liste.txt -c copy -movflags +faststart film-nautilus-L.mp4
+
+Les durées : 6,0 · 5,5 · 4,5 · 5,0 · 5,0 · 6,0 s  (total 34 s, en boucle).
+
+ATTENTION aux URLs : dans index.html, le film est appelé avec « ?v=2 ».
+Le service worker sert les médias « cache d'abord » : pour remplacer le film
+sans changer d'adresse, il faut relever ce numéro (et CACHE_NAME dans sw.js).
