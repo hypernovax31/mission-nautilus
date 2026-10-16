@@ -398,6 +398,21 @@ ok('moins d\'animation est respecté (pas de stroboscope)',
 ok('repli prévu pour un navigateur sans masque CSS',
    porteCss.includes('.ec-sans-masque .ec-voile'));
 
+/* --- Les pales enfermées DANS l'écoutille, sur iPhone aussi --------------- */
+/* Bug signalé : pendant l'ouverture sur iPhone, les pales et la lumière du
+   sas débordaient de l'écoutille — « tout est trop grand, coupé par le
+   bord ». Un clip-path seul ne suffit pas : posé sur l'élément animé
+   (--ec-cam), WebKit le perd parfois quand il crée sa couche de
+   composition. D'où un découpage de boîte en plus, même géométrie. */
+const blocIris = (porteCss.match(/\.ec-iris\{[\s\S]*?\n\}/) || [''])[0];
+ok('les pales sont découpées TROIS fois (clip-path + rond + overflow)',
+   blocIris.includes('clip-path:circle(') && blocIris.includes('border-radius:50%') &&
+   blocIris.includes('overflow:hidden'));
+ok('le socle écrit dans la page découpe par la boîte lui aussi',
+   /#ecoutille \.ec-iris\{[\s\S]{0,700}border-radius:50%; overflow:hidden/.test(accueil));
+const vueCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]);
+ok('le cache du service worker a été relevé pour cette correction', vueCache >= 303, 'v' + vueCache);
+
 /* --- Un bug d'ORDRE, invisible à la lecture ----------------------------- */
 /* Le bloc <style> de secours doit rester AVANT les feuilles de style. Placé
    après, à spécificité égale, son fond opaque écrasait le

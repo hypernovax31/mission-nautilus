@@ -185,6 +185,28 @@
      la bague, exactement comme un vrai diaphragme. */
   clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
   -webkit-clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
+  /* ===== TRIPLE CEINTURE — BUG « TOUT EST TROP GRAND » SUR IPHONE =====
+     Signalé pendant l'ouverture, sur iPhone : les pales et la lumière du
+     sas DÉBORDENT de l'écoutille — des morceaux de métal et de clarté
+     partent dans tous les sens, coupés par les bords de l'écran.
+
+     Cause : le seul découpage était un clip-path, posé sur l'élément QUE
+     L'ON ANIME (--ec-cam le met à l'échelle). WebKit donne alors à cet
+     élément sa propre couche de composition… et oublie parfois de lui
+     appliquer le découpage : les pales, qui glissent de 295 unités en
+     dehors du cercle, s'échappent librement.
+
+     Deux découpages supplémentaires, tous deux dans la MÊME géométrie
+     (l'écoutille est un carré de côté --ec-hatch, donc son cercle inscrit
+     est le rond 50 %) :
+       · border-radius + overflow:hidden — un découpage de boîte, le plus
+         fiable de tous les moteurs, et gratuit pour la carte graphique ;
+       · le clip-path ci-dessus, conservé : sur un moteur qui l'honore
+         (ordinateur), l'image est exactement la même.
+     Trois façons de découper au même endroit : il faudrait que les trois
+     échouent pour que les pales s'échappent encore. */
+  border-radius:50%;
+  overflow:hidden;
   pointer-events:none;
 }
 .ec-lueur{

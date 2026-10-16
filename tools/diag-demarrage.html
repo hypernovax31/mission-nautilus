@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnostic — mise en page de démarrage (écoutille)</title>
+<style>
+  :root{ color-scheme:dark }
+  *{ box-sizing:border-box }
+  body{ margin:0; font:14px/1.45 -apple-system,system-ui,"Segoe UI",Arial,sans-serif;
+        background:#0b1116; color:#dff6ff }
+  h1{ font-size:17px; margin:0 0 6px }
+  .note{ font-size:12px; color:#93b6c6; margin:0 0 10px }
+  #panneau{ position:relative; z-index:6; min-height:100vh; padding:14px 12px 220px }
+  #cadre{ position:fixed; inset:0; z-index:4; border:0; width:100vw; height:100vh; background:#000 }
+  #cadre[hidden]{ display:none }
+  #barre{ position:fixed; left:0; right:0; bottom:0; z-index:5;
+          background:rgba(4,10,15,.96); border-top:1px solid #22323c;
+          padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px)) }
+  button{ font:inherit; font-weight:700; padding:11px 14px; border-radius:10px;
+          border:1px solid #2b4a5a; background:#12313f; color:#dff6ff; margin:0 6px 6px 0 }
+  button.principal{ background:#1d6b4a; border-color:#2f9c6c }
+  button.discret{ background:#232a31; border-color:#3b434b }
+  pre{ white-space:pre-wrap; word-break:break-word; background:#08131a; border:1px solid #1d2f39;
+       border-radius:10px; padding:10px; font-size:12px; line-height:1.5; margin:0 }
+  .ok{ color:#7bf0ae } .ko{ color:#ff9f96 }
+</style>
+</head>
+<body>
+
+<div id="panneau">
+  <h1>Diagnostic — mise en page de démarrage</h1>
+  <p class="note">
+    À ouvrir sur l'appareil qui pose problème (l'iPhone). Le bouton vert rejoue
+    l'ouverture de l'écoutille dans un cadre plein écran et relève, image par image :
+    la taille du disque de lumière, le zoom de la caméra, le masque de la coquille.
+    À la fin, touchez « Copier le rapport » et collez-le dans la conversation.
+  </p>
+  <pre id="rapport">(aucune mesure pour l'instant)</pre>
+  <p class="note" id="etat"></p>
+  <div id="zone" style="display:none"><textarea id="zoneTexte" style="width:100%;height:120px"></textarea></div>
+</div>
+
+<iframe id="cadre" title="Écoutille en cours de mesure" hidden></iframe>
+
+<div id="barre">
+  <button class="principal" id="btnRejouer" type="button">▶︎ Rejouer l'ouverture et mesurer</button>
+  <button id="btnEcran" type="button">Mesurer l'écran seul</button>
+  <button id="btnCopier" type="button">Copier le rapport</button>
+  <button class="discret" id="btnFermer" type="button">Masquer le cadre</button>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var cadre   = document.getElementById('cadre');
+  var rapport = document.getElementById('rapport');
+  var lignes  = [];
+  var compteur = 0;                 // numérote les mesures successives
+
+  function ecrire(s){ lignes.push(s); rapport.textContent = lignes.join('\n'); }
+  function titre(s){ ecrire(''); ecrire('— ' + s + ' —'); }
+  function valeur(v, n){ n = n || 2; return (Math.round(v * Math.pow(10, n)) / Math.pow(10, n)).toFixed(n); }
+  function support(nom, decl){
+    try{ return CSS.supports(nom, decl) ? 'ok' : 'NON'; }catch(e){ return 'erreur'; }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 1. L'ÉCRAN
+   * ------------------------------------------------------------------ */
+  function mesuresEcran(){
+    try{
+      var vv = window.visualViewport || {};
+      titre('écran');
+      ecrire('fenêtre (innerWidth×innerHeight) : ' + window.innerWidth + ' × ' + window.innerHeight);
+      ecrire('viewport visuel                  : ' + Math.round(vv.width || 0) + ' × ' + Math.round(vv.height || 0) +
+             '  · échelle ' + valeur(vv.scale || 1) + '  · décalage haut ' + Math.round(vv.offsetTop || 0));
+      ecrire('écran physique (screen)          : ' + screen.width + ' × ' + screen.height +
+             '  · densité ' + (window.devicePixelRatio || 1));
+      ecrire('orientation                      : ' + (window.matchMedia('(orientation:landscape)').matches ? 'paysage' : 'portrait'));
+      var reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      ecrire('animations réduites (réglage iOS) : ' + (reduit ? 'OUI → l’ouverture est 3× plus rapide' : 'non'));
+      ecrire('navigateur                       : ' + navigator.userAgent);
+      titre('support des règles CSS utilisées par l’écoutille');
+      [['min()',                 'width:min(1px,2px)'],
+       ['clamp()',               'width:clamp(1px,2px,3px)'],
+       ['aspect-ratio',          'aspect-ratio:1'],
+       ['mask-image',            'mask-image:radial-gradient(#000,#fff)'],
+       ['-webkit-mask-image',    '-webkit-mask-image:radial-gradient(#000,#fff)'],
+       ['mask-image + calc(var)','mask-image:radial-gradient(circle,transparent 0 calc(var(--x,10px) * 2),#000 3px)'],
+       ['clip-path',             'clip-path:circle(10px at 50% 50%)'],
+       ['-webkit-clip-path',     '-webkit-clip-path:circle(10px at 50% 50%)']
+      ].forEach(function(essai){
+        ecrire('  ' + (essai[0] + '                         ').slice(0, 26) + support(essai[1], essai[2]));
+      });
+    }catch(e){ ecrire('❌ mesure écran impossible : ' + e.message); }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 2. L'ÉCOUTILLE : RELEVÉS PENDANT L'OUVERTURE
+   * ------------------------------------------------------------------ */
+  function champs(d, w){
+    var porte = d.getElementById('ecoutille');
+    if(!porte) return null;
+    var iris  = porte.querySelector('.ec-iris');
+    var voile = porte.querySelector('.ec-voile');
+    var halo  = porte.querySelector('.ec-halo');
+    return {
+      d: d, w: w, porte: porte, iris: iris, voile: voile, halo: halo,
+      csPorte: w.getComputedStyle(porte),
+      csIris: iris ? w.getComputedStyle(iris) : null,
+      csVoile: voile ? w.getComputedStyle(voile) : null
+    };
+  }
+
+  function variable(ch, nom){
+    try{ return (ch.csPorte.getPropertyValue(nom) || '').trim() || '(vide)'; }catch(e){ return '?'; }
+  }
+
+  /* Le disque de lumière couvre-t-il l'écran ? On interroge la VRAIE boîte
+     de l'iris (getBoundingClientRect tient compte du zoom) et l'on regarde
+     les quatre coins de la fenêtre. « Il manque N px » est le chiffre qui
+     dit « trop petit ». */
+  function couverture(ch){
+    var r = ch.iris.getBoundingClientRect();
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var rayon = r.width / 2;
+    /* Deux cadres de référence : la fenêtre du cadre (ce que le jeu croit
+       remplir) et la zone RÉELLEMENT visible sur le téléphone (viewport
+       visuel) — c'est celle-là qui compte à l'œil. */
+    var vv = window.visualViewport || {};
+    var res = { rayon: rayon, boite: r, centre: [cx, cy], coins: 0, manque: 0, visible: 0, manqueVisible: 0 };
+    [[Math.round(vv.width || window.innerWidth), Math.round(vv.height || window.innerHeight), 'visible'],
+     [window.innerWidth, window.innerHeight, 'fenêtre']].forEach(function(cadre){
+      var w = cadre[0], h = cadre[1], dedans = 0, manque = 0;
+      [[0, 0], [w, 0], [0, h], [w, h]].forEach(function(c){
+        var dist = Math.hypot(c[0] - cx, c[1] - cy);
+        if(dist <= rayon) dedans++; else manque = Math.max(manque, dist - rayon);
+      });
+      if(cadre[2] === 'fenêtre'){ res.coins = dedans * 25; res.manque = manque; }
+      else { res.visible = dedans * 25; res.manqueVisible = manque; }
+    });
+    return res;
+  }
+
+  function releve(ch, t){
+    var k = variable(ch, '--ec-k');
+    var cam = variable(ch, '--ec-cam');
+    var lueur = variable(ch, '--ec-lueur');
+    var cov = couverture(ch);
+    ecrire(('   ' + t + ' ms').slice(-8) +
+           '  k=' + k.padEnd(7) + ' cam=' + cam.padEnd(7) + ' lueur=' + lueur.padEnd(6) +
+           '  disque ' + Math.round(cov.boite.width) + 'px' +
+           '  couverture fenêtre ' + cov.coins + '% / visible ' + cov.visible + '%' +
+           (cov.manqueVisible > 0 ? '  (il manque ' + Math.round(cov.manqueVisible) + ' px)' : ''));
+    return cov;
+  }
+
+  function masque(ch){
+    try{
+      var v = ch.csVoile.maskImage || ch.csVoile.webkitMaskImage || '';
+      return v ? v.replace(/\s+/g, ' ').slice(0, 130) : '(vide)';
+    }catch(e){ return '?'; }
+  }
+
+  function transformation(ch, el){
+    try{
+      var t = ch.w.getComputedStyle(el).transform;
+      return t ? t.replace('matrix(', 'matrix(').slice(0, 90) : '(aucune)';
+    }catch(e){ return '?'; }
+  }
+
+  /* La formule de ecoutille.js, refaite ici, pour comparer avec ce qui est
+     réellement appliqué à la fin de l'ouverture. */
+  function camFinTheorique(ch){
+    var iris = ch.iris, porte = ch.porte;
+    var hatch = iris.offsetWidth || 0;
+    var larg = porte.offsetWidth || window.innerWidth || 0;
+    var haut = porte.offsetHeight || window.innerHeight || 0;
+    if(!(hatch > 0 && larg > 0 && haut > 0)) return 0;
+    var demiDiag = Math.hypot(larg, haut) / 2;
+    return Math.max(2.55, (demiDiag + 48) / (hatch / 2 + 2));
+  }
+
+  function lancerMesure(){
+    compteur++;
+    lignes = [];
+    ecrire('MEASURE #' + compteur + ' · ' + new Date().toLocaleString('fr-FR'));
+    mesuresEcran();
+
+    titre('chargement de l’accueil avec l’écoutille');
+    cadre.hidden = false;
+    cadre.onload = function(){
+      cadre.onload = null;
+      setTimeout(relever, 900);
+    };
+    cadre.src = '../index.html?ecoutille=1&diag=' + Date.now();
+    ecrire('… le cadre s’ouvre (l’accueil + la page de garde)');
+  }
+
+  function relever(){
+    var w, d;
+    try{ w = cadre.contentWindow; d = cadre.contentDocument; }
+    catch(e){ ecrire('❌ cadre illisible : ' + e.message); return; }
+    var ch = champs(d, w);
+    if(!ch || !ch.iris){ ecrire('❌ écoutille introuvable dans le cadre'); return; }
+
+    /* La sonde de la feuille riche : 7 px quand css/ecoutille.css est là. */
+    var riche = false;
+    try{
+      var sonde = d.createElement('i');
+      sonde.className = 'ec-sonde';
+      d.body.appendChild(sonde);
+      riche = w.getComputedStyle(sonde).width === '7px';
+      sonde.remove();
+    }catch(e){}
+
+    titre('état de la page de garde');
+    ecrire('feuille riche css/ecoutille.css  : ' + (riche ? 'chargée' : 'ABSENTE → mode socle'));
+    ecrire('classes de <html>                : ' + d.documentElement.className);
+    ecrire('taille de l’écoutille (--ec-hatch) : ' + variable(ch, '--ec-hatch') + '   (--ec-rayon : ' + variable(ch, '--ec-rayon') + ')');
+    ecrire('boîte de #ecoutille              : ' + ch.porte.offsetWidth + ' × ' + ch.porte.offsetHeight +
+           '  · fenêtre ' + w.innerWidth + ' × ' + w.innerHeight);
+    ecrire('masque de la coquille            : ' + (masque(ch) === '(vide)' ? 'ABSENT ⚠︎' : 'appliqué'));
+    ecrire('pales découpées (clip-path)      : ' + (ch.csIris.clipPath && ch.csIris.clipPath !== 'none' ? 'appliqué' : 'ABSENT ⚠︎'));
+    ecrire('camFin calculé (formule du jeu)  : ' + valeur(camFinTheorique(ch)));
+    titre('masque au repos');
+    ecrire('  ' + masque(ch));
+    titre('transform au repos');
+    ecrire('  .ec-voile : ' + transformation(ch, ch.voile));
+    ecrire('  .ec-iris  : ' + transformation(ch, ch.iris));
+
+    var start = d.getElementById('ecStart');
+    if(!start){ ecrire('❌ bouton START introuvable'); return; }
+
+    titre('ouverture (valeurs relevées en direct)');
+    ecrire('   temps      trou          zoom          lumière  taille du disque   couverture de l’écran');
+
+    var premier = null, dernier = null, kMax = 0, camMax = 0;
+    var dates = [0, 250, 600, 1200, 1900, 2200, 2500, 2800, 3100, 3300, 3500];
+    var i = 0;
+
+    start.click();
+    (function suivant(){
+      if(i >= dates.length){ conclure(); return; }
+      var t = dates[i++];
+      setTimeout(function(){
+        try{
+          var cov = releve(ch, t);
+          if(!premier) premier = cov;
+          dernier = cov;
+          var k = parseFloat(variable(ch, '--ec-k')) || 0;
+          var cam = parseFloat(variable(ch, '--ec-cam')) || 0;
+          kMax = Math.max(kMax, k); camMax = Math.max(camMax, cam);
+        }catch(e){ ecrire('  (' + t + ' ms : relevé impossible — ' + e.message + ')'); }
+        suivant();
+      }, t - (i > 1 ? dates[i - 2] : 0));
+    })();
+
+    function conclure(){
+      titre('verdict');
+      ecrire('disque de lumière au repos   : ' + Math.round(premier.boite.width) + ' px de diamètre');
+      ecrire('disque de lumière à la fin   : ' + Math.round(dernier.boite.width) + ' px de diamètre');
+      ecrire('couverture finale · fenêtre du jeu : ' + dernier.coins + ' %' +
+             (dernier.manque > 0 ? '  (manque ' + Math.round(dernier.manque) + ' px)' : '  (plein écran)'));
+      ecrire('couverture finale · zone VISIBLE  : ' + dernier.visible + ' %' +
+             (dernier.manqueVisible > 0
+                ? '  → IL MANQUE ' + Math.round(dernier.manqueVisible) + ' px : le bord du disque se voit, coupé par le bord de l’écran ⚠︎'
+                : '  → le disque remplit tout l’écran ✔'));
+      ecrire('--ec-k  atteint              : ' + valeur(kMax, 3) + '   (le jeu monte à 2.6)');
+      ecrire('--ec-cam atteint             : ' + valeur(camMax, 3) + '   (le jeu visait ' + valeur(camFinTheorique(ch)) + ')');
+      if(kMax <= 1.001 && camMax <= 1.001){
+        ecrire('⚠︎ NI le trou NI le zoom n’ont bougé : cet appareil ne met pas à jour');
+        ecrire('   les variables CSS de l’animation (bug de rendu, pas de réglage).');
+      }else if(camMax < camFinTheorique(ch) - 0.05){
+        ecrire('⚠︎ le zoom n’atteint pas la valeur prévue : l’animation est écourtée');
+        ecrire('   sur cet appareil (ouverture plus courte = « trop petit »).');
+      }
+      titre('masque à la fin');
+      ecrire('  ' + masque(ch));
+      titre('transform à la fin');
+      ecrire('  .ec-voile : ' + transformation(ch, ch.voile));
+      ecrire('  .ec-iris  : ' + transformation(ch, ch.iris));
+      ecrire('');
+      ecrire('→ Touchez « Copier le rapport » et collez-le dans la conversation.');
+      try{ cadre.hidden = true; }catch(e){}
+      try{ rapport.scrollIntoView({ block:'start' }); }catch(e){}
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 3. BOUTONS
+   * ------------------------------------------------------------------ */
+  document.getElementById('btnRejouer').addEventListener('click', lancerMesure);
+
+  document.getElementById('btnEcran').addEventListener('click', function(){
+    lignes = [];
+    ecrire('MEASURE écran seul · ' + new Date().toLocaleString('fr-FR'));
+    mesuresEcran();
+  });
+
+  document.getElementById('btnCopier').addEventListener('click', function(){
+    var texte = rapport.textContent;
+    function repli(){
+      try{
+        var zone = document.createElement('textarea');
+        zone.value = texte;
+        document.body.appendChild(zone);
+        zone.select();
+        document.execCommand('copy');
+        zone.remove();
+        return true;
+      }catch(e){ return false; }
+    }
+    function annoncer(txt){ document.getElementById('etat').textContent = txt; }
+    function montrer(){
+      var zone = document.getElementById('zone');
+      var zoneTexte = document.getElementById('zoneTexte');
+      zoneTexte.value = texte;
+      zone.style.display = 'block';
+      zoneTexte.focus();
+      zoneTexte.select();
+      annoncer('Copie automatique refusée : le rapport est dans la zone ci-dessus — touchez « Tout sélectionner », puis copiez.');
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(texte).then(
+        function(){ annoncer('Rapport copié ✔ — collez-le dans la conversation.'); },
+        function(){ montrer(); }
+      );
+      return;
+    }
+    if(repli()) annoncer('Rapport copié ✔ (mode de secours) — collez-le dans la conversation.');
+    else montrer();
+  });
+
+  document.getElementById('btnFermer').addEventListener('click', function(){
+    try{ cadre.hidden = true; }catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
