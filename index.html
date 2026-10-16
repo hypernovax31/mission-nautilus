@@ -20,18 +20,127 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <!-- Garde-fou MINIMAL de la page de garde, écrit ici et non dans la
-       feuille dédiée : si css/ecoutille.css ne se chargeait pas (réseau
-       coupé au mauvais moment), l'écran de garde s'afficherait en TEXTE
-       BRUT par-dessus l'accueil. Ces quelques lignes suffisent à l'empêcher.
-       ATTENTION À L'ORDRE : ce bloc doit rester AVANT les feuilles de style.
-       À spécificité égale, c'est la DERNIÈRE règle écrite qui gagne — placé
-       après, son fond opaque masquait le background:transparent de
-       css/ecoutille.css, et le trou de l'écoutille ne montrait plus l'accueil,
-       mais du noir. (Bug constaté et corrigé.) -->
+  <!-- ═══════════ SOCLE DE LA PAGE DE GARDE — L'ÉCOUTILLE, AVANT TOUT ═══════════
+       Ce bloc est écrit DANS la page, volontairement. L'écoutille doit
+       s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive : réseau
+       coupé au mauvais moment, ancienne version encore en cache, hébergement
+       qui répond mal. Ici, elle ne dépend de rien.
+       css/ecoutille.css, chargée plus loin dans ce <head>, enrichit par-dessus
+       (tôles et rivets, chevrons, halos, grain, bandes cinéma) : MÊME
+       GÉOMÉTRIE, plus de détails. L'ordre compte — à spécificité égale, la
+       dernière feuille gagne, et c'est bien celle-là qui doit garder la main
+       sur le fond (sinon le trou de l'écoutille montre du noir).
+       Le script de secours est en fin de balisage (voir « SOCLE — le clic »). -->
   <style>
-    #ecoutille{position:fixed;inset:0;z-index:13000;overflow:hidden;background:#05080b}
+    #ecoutille{
+      --ec-hatch:min(88vmin,56vh,640px);
+      --ec-rayon:calc(var(--ec-hatch)/2);
+      --ec-k:1; --ec-cam:1; --ec-lueur:0;
+      position:fixed; inset:0; z-index:13000; overflow:hidden;
+      background:transparent;              /* le trou montre le vrai accueil */
+      color:#dff6ff; font-family:Consolas,"Courier New",monospace;
+      touch-action:none; -webkit-tap-highlight-color:transparent;
+    }
     .ec-passee #ecoutille{display:none}
+    .ec-bloque, .ec-bloque body{overflow:hidden !important}
+
+    /* La cloison : du métal partout, SAUF l'écoutille elle-même, laissée
+       transparente — c'est la fenêtre sur l'accueil. */
+    #ecoutille .ec-voile{
+      position:absolute; inset:0;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 2px, rgba(0,0,0,.06) 2px 4px, transparent 4px 64px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, rgba(0,0,0,.05) 1px 2px, transparent 2px 104px),
+        radial-gradient(circle at 50% 50%,
+          transparent 0 calc(var(--ec-rayon) + 1px),
+          #0a1116 calc(var(--ec-rayon) + 2px),
+          #2b353d calc(var(--ec-rayon) + 32vmin),
+          #46525c 72%, #1a2228 100%);
+    }
+
+    /* La lumière du sas : sous les pales, elle s'allume à l'ouverture. */
+    #ecoutille .ec-iris{
+      position:absolute; left:50%; top:50%;
+      width:var(--ec-hatch); height:var(--ec-hatch);
+      transform:translate(-50%,-50%); transform-origin:50% 50%;
+      clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
+      -webkit-clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
+      pointer-events:none;
+    }
+    #ecoutille .ec-lueur{
+      position:absolute; inset:-60%; opacity:var(--ec-lueur);
+      transform:scale(calc(.35 + var(--ec-lueur) * .95)); transform-origin:50% 50%;
+      background:radial-gradient(circle at 50% 50%, #fff 0 4%, #eafcff 12%,
+        rgba(150,225,255,.6) 34%, rgba(80,180,255,.2) 55%, transparent 74%);
+    }
+    #ecoutille .ec-pales{display:block; width:100%; height:100%; overflow:visible}
+    #ecoutille .ec-pale-corps{fill:url(#ecAcierPale); stroke:rgba(6,10,14,.85); stroke-width:2.5}
+    #ecoutille .ec-pale-ombre{fill:url(#ecOmbrePale)}
+    #ecoutille .ec-pale-creux{fill:rgba(8,13,18,.5)}
+    #ecoutille .ec-pale-fil{fill:none; stroke:rgba(214,242,255,.5); stroke-width:2.2; stroke-linecap:round}
+
+    /* La bague boulonnée qui encadre l'écoutille. */
+    #ecoutille .ec-bague{
+      position:absolute; left:50%; top:50%;
+      width:calc(var(--ec-hatch) * 1.42); height:calc(var(--ec-hatch) * 1.42);
+      transform:translate(-50%,-50%); overflow:visible; pointer-events:none;
+    }
+    /* Les décors de la version riche : invisibles sans la feuille dédiée. */
+    #ecoutille .ec-halo{position:absolute; inset:0; opacity:var(--ec-lueur); pointer-events:none;
+      background:radial-gradient(circle at 50% 50%,
+        transparent 0 calc(var(--ec-rayon) * .96), rgba(226,250,255,.7) calc(var(--ec-rayon)),
+        rgba(140,225,255,.3) calc(var(--ec-rayon) * 1.06), transparent calc(var(--ec-rayon) * 1.45))}
+    #ecoutille .ec-balise{position:absolute; right:6%; top:clamp(14px,3vmin,26px);
+      width:clamp(24px,6vmin,42px); aspect-ratio:1; border-radius:50%;
+      background:radial-gradient(circle at 50% 36%, #ff9d92, #e2201b 55%, #6d0906 100%);
+      box-shadow:0 0 0 3px rgba(0,0,0,.5), 0 0 26px rgba(255,60,50,.45)}
+
+    /* L'ordinateur de bord : marque, plaque, journal, bouton rouge. */
+    #ecoutille .ec-haut{position:absolute; left:0; right:0; top:0;
+      padding:clamp(12px,3vmin,24px) clamp(14px,4vw,38px);
+      display:flex; gap:12px; align-items:flex-start; justify-content:space-between}
+    #ecoutille .ec-marque b{display:block; font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
+      font-size:clamp(16px,4.2vmin,28px); letter-spacing:.06em; color:#f6fbff; text-transform:uppercase}
+    #ecoutille .ec-marque span{font-size:clamp(9px,2vmin,12px); letter-spacing:.2em; text-transform:uppercase; color:#8fb4c6}
+    #ecoutille .ec-plaque{padding:5px 9px; border-radius:8px; border:1px solid rgba(245,176,39,.45);
+      background:rgba(245,176,39,.14); color:#ffe0a6; font-weight:700;
+      font-size:clamp(9px,1.9vmin,11.5px); letter-spacing:.1em; text-transform:uppercase}
+    #ecoutille .ec-lecture{position:absolute; left:clamp(14px,4vw,38px); top:clamp(66px,15vmin,106px);
+      width:min(72vw,332px); padding:9px 11px; border:1px solid rgba(142,231,255,.28);
+      border-radius:10px; background:rgba(2,10,18,.82)}
+    #ecoutille .ec-lecture-titre{margin:0 0 5px; font-size:clamp(8px,1.8vmin,10.5px);
+      letter-spacing:.2em; text-transform:uppercase; color:#6f9db0}
+    #ecoutille .ec-lecture-liste{margin:0; padding:0; list-style:none; min-height:4.6em;
+      font-size:clamp(10px,2.1vmin,13px); line-height:1.5; font-weight:700; color:#baffd2}
+    #ecoutille .ec-lecture-liste li::before{content:"\203A "; color:#5be09b}
+    #ecoutille .ec-lecture-liste li.ec-alerte{color:#ffb3ac}
+    #ecoutille .ec-lecture-liste li.ec-alerte::before{content:"! "; color:#ff4b3e}
+    #ecoutille .ec-bas{position:absolute; left:0; right:0; bottom:0;
+      padding:clamp(10px,3vmin,20px) 16px clamp(14px,3vmin,26px);
+      display:flex; flex-direction:column; align-items:center; gap:clamp(8px,2vmin,13px); text-align:center}
+    #ecoutille .ec-panneau-titre{margin:0; font-size:clamp(8px,2vmin,11px); letter-spacing:.24em;
+      text-transform:uppercase; color:#ffb3ac}
+    #ecoutille .ec-start{position:relative; width:clamp(96px,24vmin,160px); aspect-ratio:1;
+      padding:0; border:0; background:none; cursor:pointer; display:grid; place-items:center; border-radius:50%}
+    #ecoutille .ec-dome{position:absolute; inset:0; border-radius:50%;
+      background:radial-gradient(circle at 34% 26%, #ffb0a5 0 5%, #ff5747 22%, #e02318 48%, #9c1109 76%, #4d0603 100%);
+      box-shadow:0 10px 20px rgba(0,0,0,.6), 0 0 0 4px rgba(0,0,0,.45),
+        0 0 40px rgba(255,64,48,.5), inset 0 5px 12px rgba(255,255,255,.3), inset 0 -8px 16px rgba(0,0,0,.6)}
+    #ecoutille .ec-start-label{position:relative; z-index:2; color:#fff;
+      font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
+      font-size:clamp(15px,3.6vmin,24px); letter-spacing:.16em;
+      text-shadow:0 2px 4px rgba(0,0,0,.6), 0 0 16px rgba(255,140,130,.6)}
+    #ecoutille .ec-consigne{margin:0; max-width:min(560px,92vw); font-size:clamp(8px,2vmin,12px);
+      letter-spacing:.08em; text-transform:uppercase; color:#9ec2d2}
+    #ecoutille .ec-consigne b{color:#ffd36c}
+    #ecoutille .ec-passer{margin:0; padding:5px 4px; border:0; background:none; font:inherit;
+      font-size:clamp(8px,1.9vmin,11px); letter-spacing:.12em; text-transform:uppercase;
+      color:#8fb4c6; text-decoration:underline; cursor:pointer}
+
+    /* Repère de version : discret, il dit quelle version de la page de garde
+       est réellement chargée. C'est le seul témoin visible en cas de doute. */
+    #ecoutille .ec-version{position:absolute; right:8px; bottom:6px; font-size:10px;
+      letter-spacing:.08em; color:#5d7f8e; pointer-events:none}
   </style>
 
   <!-- ===== PAGE DE GARDE : DÉCISION PRISE AVANT LE PREMIER RENDU =====
@@ -318,12 +427,66 @@
     </button>
     <p class="ec-consigne">Appuie sur <b>START</b> : l'écoutille s'ouvre, le sonar s'allume et le bord se réveille.</p>
     <button id="ecPasser" class="ec-passer" type="button">Passer l'intro</button>
+  <span class="ec-version">garde v4</span>
   </div>
   <div class="ec-cinema ec-cinema--haut"></div>
   <div class="ec-cinema ec-cinema--bas"></div>
   <div class="ec-flash"></div>
   <div class="ec-flare"></div>
 </div>
+
+<!-- ═══════════ SOCLE — LE CLIC ═══════════
+     Ce mini-script est écrit DANS la page : le bouton rouge peut donc ouvrir
+     l'écoutille même si ecoutille.js n'arrive pas (réseau, cache, fichier
+     manquant). Il fait le strict nécessaire : effacer l'écoutille, rendre le
+     défilement à l'accueil, prévenir le reste du site.
+     Quand ecoutille.js se charge, il RETIRE ce gestionnaire et prend la main
+     pour l'ouverture cinématique (voir « SECOURS » dans ecoutille.js).
+     Sans lui, un visiteur enfermé derrière une cloison ne pourrait plus rien
+     faire : c'est la garantie qu'un clic ouvre TOUJOURS. -->
+<script>
+(function(){
+  var racine = document.getElementById('ecoutille');
+  if(!racine) return;
+  window.__ecoutillePrete = true;   /* quelque chose est là pour ouvrir */
+
+  function ouvrirNU(){
+    if(!window.__ecoutilleSecours) return;      /* ecoutille.js a pris la main */
+    if(racine.dataset.renduNU) return;
+    racine.dataset.renduNU = '1';
+    try{
+      sessionStorage.setItem('nautilusEcoutille', '1');
+      localStorage.setItem('nautilusEcoutilleVue', '1');
+      sessionStorage.removeItem('nautilusEcoutilleForce');
+    }catch(e){}
+    var html = document.documentElement;
+    html.classList.remove('ec-bloque');
+    html.classList.add('ec-arrivee');
+    try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
+    racine.style.transition = 'opacity .55s ease';
+    racine.style.opacity = '0';
+    setTimeout(function(){ if(racine.parentNode) racine.parentNode.removeChild(racine); }, 600);
+    try{ window.dispatchEvent(new CustomEvent('nautilus:ecoutille-ouverte')); }catch(e){}
+  }
+
+  var start = document.getElementById('ecStart');
+  var passer = document.getElementById('ecPasser');
+  if(start) start.addEventListener('click', ouvrirNU);
+  if(passer) passer.addEventListener('click', ouvrirNU);
+  /* Le clavier aussi : ÉCHAP et ENTRÉE ouvrent, comme le bouton. */
+  document.addEventListener('keydown', function(e){
+    if(!window.__ecoutilleSecours) return;
+    if(e.key === 'Escape' || e.key === 'Enter' || e.key === ' '){ e.preventDefault(); ouvrirNU(); }
+  }, true);
+
+  /* ecoutille.js appellera ceci pour reprendre la main. */
+  window.__ecoutilleSecours = function(){
+    if(start) start.removeEventListener('click', ouvrirNU);
+    if(passer) passer.removeEventListener('click', ouvrirNU);
+    window.__ecoutilleSecours = null;
+  };
+})();
+</script>
 <!-- L'attribut autoplay demande le demarrage des le chargement : sur un site
      deja connu de l'appareil (app installee, visites repetees) le navigateur
      l'accorde et le son part tout seul.

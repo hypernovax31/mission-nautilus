@@ -51,14 +51,37 @@ APERCU_POPUP = '/tools/apercu-popup-sacrifice.html'
 JOURNAL = RACINE / '.nautilus-requetes.log'
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 
-# Effacé avant chaque rendu de l'accueil : le marqueur de session qui, sur le
-# vrai site, fait sauter la page de garde à la deuxième visite. En aperçu, on
-# veut la voir à chaque fois (voir l'en-tête).
-EFFACER_MARQUEUR = (
-    '<script>try{'
+# Injecté juste après <head>, AVANT tout le reste. Trois missions :
+#   1. effacer l'ancien marqueur de session de l'écoutille (voir en-tête) ;
+#   2. DÉSINSCRIRE le service worker et VIDER son cache. C'est le piège qui a
+#      fait croire que rien ne s'affichait : le service worker du jeu garde
+#      une copie de la page et la ressert quand le réseau manque (et le
+#      serveur d'aperçu est arrêté entre deux sessions !). On nettoyait donc
+#      l'ancienne page, sans la page de garde, indéfiniment. Ici, en aperçu,
+#      on repart du serveur à chaque fois.
+#   3. recharger UNE fois si un service worker était encore actif, pour que le
+#      visiteur voie la version fraîche sans rien faire (jamais deux fois :
+#      le marqueur « apercu-purge » l'en empêche).
+SNIPPET = (
+    '<script>(function(){try{'
     "sessionStorage.removeItem('nautilusEcoutille');"
     "sessionStorage.removeItem('nautilusEcoutilleForce');"
-    '}catch(e){}</script>\n'
+    '}catch(e){}'
+    "if('serviceWorker' in navigator){"
+    'navigator.serviceWorker.getRegistrations().then(function(rs){'
+    'var actif = rs.length > 0;'
+    'return Promise.all(rs.map(function(r){return r.unregister();})).then(function(){'
+    'return caches.keys().then(function(ks){'
+    'return Promise.all(ks.map(function(k){return caches.delete(k);}));'
+    '});}).then(function(){'
+    "var deja = false; try{ deja = sessionStorage.getItem('apercu-purge') === '1'; }catch(e){}"
+    'if(actif && !deja){'
+    "try{ sessionStorage.setItem('apercu-purge','1'); }catch(e){}"
+    'location.reload();'
+    '}'
+    '});})'
+    ".catch(function(){});}"
+    '})();</script>\n'
 )
 
 
@@ -123,7 +146,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         force = self.parametre('ecoutille') not in ('0', 'non')
         if force and '<head>' in html:
-            html = html.replace('<head>', '<head>\n' + EFFACER_MARQUEUR, 1)
+            html = html.replace('<head>', '<head>\n' + SNIPPET, 1)
         corps = html.encode('utf-8')
 
         self.send_response(200)

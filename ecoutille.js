@@ -92,6 +92,32 @@
   const html   = document.documentElement;
   const racine = document.getElementById('ecoutille');
 
+  /* LE SOCLE A DÉJÀ PRIS LE RELAIS. Un mini-script écrit dans la page (voir
+     « SOCLE — LE CLIC » dans index.html) a rendu le bouton rouge cliquable
+     dès le chargement, au cas où ce fichier n'arriverait jamais. Il fait le
+     strict nécessaire ; nous, nous faisons le cinéma. On lui retire donc la
+     main — sinon un clic déclencherait l'ouverture rude ET la belle. */
+  if(typeof window.__ecoutilleSecours === 'function'){
+    try{ window.__ecoutilleSecours(); }catch(e){}
+  }
+
+  /* LA FEUILLE RICHE EST-ELLE LÀ ? Le socle écrit dans index.html suffit à
+     afficher et ouvrir l'écoutille, mais il n'a ni masque, ni halo, ni éclat.
+     La sonde est un élément de 7 px qui n'existe que dans css/ecoutille.css :
+     s'il mesure 7 px, la feuille est chargée et le grand jeu peut se jouer. */
+  let RICHE = false;
+  try{
+    const sonde = document.createElement('i');
+    sonde.className = 'ec-sonde';
+    document.body.appendChild(sonde);
+    RICHE = getComputedStyle(sonde).width === '7px';
+    sonde.remove();
+  }catch(e){ RICHE = false; }
+  if(racine && !RICHE){
+    /* Version sans feuille dédiée : on le dit dans le DOM, au cas où. */
+    racine.classList.add('ec-nu');
+  }
+
   /* La sentinelle posée dans le <head> d'index.html surveille ce drapeau :
      s'il n'est jamais levé (fichier absent, erreur de chargement), elle
      retire la page de garde au bout de 20 s. On ne laisse JAMAIS un
@@ -505,8 +531,14 @@
        l'écoutille » rejouerait la garde à chaque rechargement. */
     try{ sessionStorage.removeItem(CLE_FORCE); }catch(e){}
 
+    if(!RICHE){
+      /* Pas de feuille dédiée : pas d'éclat possible. On referme l'écoutille
+         en fondu — c'est sobre, et surtout ça marche à tous les coups. */
+      racine.style.transition = 'opacity .6s ease';
+      racine.style.opacity = '0';
+    }
     racine.classList.add('ec-passee');
-    racine.remove();
+    plusTard(() => racine.remove(), RICHE ? 0 : 620);
 
     requestAnimationFrame(() => {
       voile.classList.add('ec-blanc-sortie');

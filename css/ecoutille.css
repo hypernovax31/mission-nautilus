@@ -61,6 +61,12 @@
 
 #ecoutille button{ touch-action:manipulation }
 
+/* SONDE : la seule règle de tout le site qui dise « la feuille dédiée est
+   chargée ». ecoutille.js la mesure (7 px) pour savoir s'il peut dérouler
+   l'ouverture cinématique ou s'il doit se contenter du socle écrit dans la
+   page. Ne pas la retirer : sans elle, le repli ne se déclenche jamais. */
+.ec-sonde{ position:absolute !important; left:-9999px; top:-9999px; width:7px; height:7px }
+
 /* Ce bloc contient la cloison, la lumière du sas et l'iris. Il est secoué
    d'un seul tenant : aucun enfant ne porte de transform propre qui serait
    écrasé par l'animation. */

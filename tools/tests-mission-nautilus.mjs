@@ -395,13 +395,50 @@ ok('repli prévu pour un navigateur sans masque CSS',
    après, à spécificité égale, son fond opaque écrasait le
    background:transparent de la feuille dédiée : le trou de l'écoutille ne
    montrait plus l'accueil, mais du noir. Régression à ne jamais refaire. */
-const iGarde = accueil.indexOf('#ecoutille{position:fixed;inset:0;z-index:13000');
+const iSocle = accueil.indexOf('SOCLE DE LA PAGE DE GARDE');
 const iStyles = accueil.search(/<link rel="stylesheet" href="css\//);
-ok('le garde-fou de secours est écrit AVANT les feuilles de style',
-   iGarde > 0 && iStyles > 0 && iGarde < iStyles,
-   'garde-fou à ' + iGarde + ', feuilles à ' + iStyles);
+ok('le socle de la page de garde est écrit AVANT les feuilles de style',
+   iSocle > 0 && iStyles > 0 && iSocle < iStyles,
+   'socle à ' + iSocle + ', feuilles à ' + iStyles);
 ok('la feuille dédiée garde la main sur le fond (trou transparent)',
    porteCss.includes('background:transparent'));
+ok('le socle garde lui aussi le fond transparent (le trou montre l\'accueil)',
+   /#ecoutille\{[\s\S]{0,400}background:transparent/.test(accueil));
+
+/* --- L'ÉCOUTILLE NE DÉPEND D'AUCUN FICHIER EXTERNE ----------------------- */
+/* Deux rapports « rien ne se voit » : on ne peut plus laisser la page de
+   garde dépendre d'un fichier qui peut ne pas arriver. Le socle écrit DANS
+   index.html doit suffire à l'afficher ET à l'ouvrir. */
+const socleCss = accueil.slice(accueil.indexOf('<style>', iSocle), accueil.indexOf('</style>', iSocle));
+ok('socle : l\'écoutille est plein écran, au-dessus de tout',
+   /position:fixed/.test(socleCss) && /z-index:13000/.test(socleCss));
+ok('socle : le bouton rouge est habillé (dôme + libellé)',
+   socleCss.includes('.ec-dome') && socleCss.includes('.ec-start-label'));
+ok('socle : les pales ont leurs couleurs (la forme fermée est visible)',
+   socleCss.includes('.ec-pale-corps'));
+ok('socle : la cloison est écrite dans la page (le trou reste une fenêtre)',
+   /#ecoutille \.ec-voile\{[\s\S]{0,300}radial-gradient\(circle at 50% 50%,[\s\S]{0,80}transparent 0/.test(socleCss));
+const socleJs = accueil.slice(accueil.indexOf('SOCLE — LE CLIC'), accueil.indexOf('</script>', accueil.indexOf('SOCLE — LE CLIC')));
+ok('socle : un mini-script ouvre l\'écoutille sans aucun fichier externe',
+   socleJs.includes("getElementById('ecStart')") && socleJs.includes('addEventListener'));
+ok('socle : il prévient le reste du site (même événement que le moteur)',
+   socleJs.includes('nautilus:ecoutille-ouverte'));
+ok('socle : il rend son titre à l\'onglet et le défilement à l\'accueil',
+   socleJs.includes('document.title') && socleJs.includes("classList.remove('ec-bloque')"));
+ok('socle : le moteur reprend la main (un seul gestionnaire actif)',
+   socleJs.includes('__ecoutilleSecours = function') && porte.includes('window.__ecoutilleSecours'));
+ok('socle : écriture tolérante au mode privé (try/catch)',
+   /try\{[\s\S]{0,200}sessionStorage\.setItem\('nautilusEcoutille'/.test(socleJs));
+ok('un repère de version dit quelle page de garde est chargée',
+   /class="ec-version"/.test(accueil));
+
+/* --- La sonde : le moteur sait si la feuille riche est là ---------------- */
+ok('la feuille dédiée déclare la sonde de détection (7 px)',
+   porteCss.includes('.ec-sonde') && porteCss.includes('width:7px'));
+ok('le moteur mesure la sonde pour choisir son mode',
+   /classList\.add\('ec-sonde'\)|className = 'ec-sonde'/.test(porte) && porte.includes('RICHE'));
+ok('sans feuille riche, l\'écoutille se referme en fondu (pas d\'éclat fantôme)',
+   /if\(!RICHE\)\{[\s\S]{0,300}opacity/.test(porte));
 
 /* --- Le service worker : page de garde disponible hors ligne -------------- */
 ok('la feuille de la page de garde est précachée', sw.includes("'./css/ecoutille.css?v="));
