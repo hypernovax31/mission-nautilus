@@ -405,13 +405,16 @@ ok('repli prévu pour un navigateur sans masque CSS',
    (--ec-cam), WebKit le perd parfois quand il crée sa couche de
    composition. D'où un découpage de boîte en plus, même géométrie. */
 const blocIris = (porteCss.match(/\.ec-iris\{[\s\S]*?\n\}/) || [''])[0];
-ok('les pales sont découpées TROIS fois (clip-path + rond + overflow)',
+ok('l’iris est découpé QUATRE fois (clip-path + rond + overflow + masque)',
    blocIris.includes('clip-path:circle(') && blocIris.includes('border-radius:50%') &&
-   blocIris.includes('overflow:hidden'));
-ok('le socle écrit dans la page découpe par la boîte lui aussi',
-   /#ecoutille \.ec-iris\{[\s\S]{0,700}border-radius:50%; overflow:hidden/.test(accueil));
+   blocIris.includes('overflow:hidden') && blocIris.includes('mask-image:radial-gradient('),
+   'un seul clip-path est perdu par WebKit sur un élément animé : le métal et la lumière s’échappent');
+ok('le masque de l’iris est STATIQUE (aucune variable d’animation dedans)',
+   /mask-image:radial-gradient\(circle at 50% 50%,\s*\n?\s*#000 0 calc\(var\(--ec-rayon\) \+ 1px\), transparent calc\(var\(--ec-rayon\) \+ 2px\)\)/.test(blocIris));
+ok('le socle écrit dans la page découpe par la boîte et par masque lui aussi',
+   /#ecoutille \.ec-iris\{[\s\S]{0,900}border-radius:50%; overflow:hidden;[\s\S]{0,400}mask-image:radial-gradient/.test(accueil));
 const vueCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]);
-ok('le cache du service worker a été relevé pour cette correction', vueCache >= 303, 'v' + vueCache);
+ok('le cache du service worker a été relevé pour cette correction', vueCache >= 304, 'v' + vueCache);
 
 /* --- Un bug d'ORDRE, invisible à la lecture ----------------------------- */
 /* Le bloc <style> de secours doit rester AVANT les feuilles de style. Placé

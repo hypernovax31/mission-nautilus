@@ -183,30 +183,45 @@
   transform-origin:50% 50%;
   /* Les pales ne se voient QUE dans l'écoutille : elles glissent derrière
      la bague, exactement comme un vrai diaphragme. */
+  /* ===== QUADRUPLE CEINTURE — BUG « TOUT PART DANS TOUS LES SENS » =====
+     Confirmé en jeu, sur iPhone, pendant l'ouverture : le MÉTAL et la
+     LUMIÈRE du sas s'échappent de l'écoutille et filent en travers de
+     l'écran. Or les deux seules choses enfermées dans l'iris sont
+     justement les pales (le métal) et .ec-lueur (la lumière) : c'est donc
+     le découpage de l'iris lui-même qui lâche.
+
+     Pourquoi ? Le seul découpage était le clip-path ci-dessous, posé sur
+     l'élément QUE L'ON ANIME (--ec-cam le met à l'échelle pendant la
+     traversée). WebKit lui donne alors sa propre couche de composition et
+     oublie parfois le découpage — sans oublier le transform, lui.
+     Aggravant : .ec-lueur porte son propre transform (scale), ce qui la
+     promeut elle aussi sur une couche, et un enfant composité échappe
+     encore plus volontiers au clip-path de son parent.
+
+     Quatre découpages, tous de la MÊME géométrie (l'écoutille est un carré
+     de côté --ec-hatch : son cercle inscrit est le rond 50 %, de rayon
+     --ec-rayon) :
+       1. clip-path + -webkit-clip-path : l'original, gardé pour les
+          moteurs qui l'honorent (ordinateur) ;
+       2. border-radius:50% + overflow:hidden : un découpage de BOÎTE, le
+          plus fiable de tous, et gratuit pour la carte graphique ;
+       3. un masque radial STATIQUE : le découpage est alors fait par le
+          pipeline de composition, après coup — un enfant composité ne peut
+          plus s'y soustraire, contrairement au clip-path ;
+       4. (le fond n'est pas une option : le trou doit laisser voir
+          l'accueil, donc rien d'opaque ici.)
+     Le premier qui fonctionne suffit ; il faudrait que les trois échouent
+     pour que le métal reparte en vrille. Sur un moteur qui honore déjà le
+     clip-path, l'image est exactement la même qu'avant. */
   clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
   -webkit-clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
-  /* ===== TRIPLE CEINTURE — BUG « TOUT EST TROP GRAND » SUR IPHONE =====
-     Signalé pendant l'ouverture, sur iPhone : les pales et la lumière du
-     sas DÉBORDENT de l'écoutille — des morceaux de métal et de clarté
-     partent dans tous les sens, coupés par les bords de l'écran.
-
-     Cause : le seul découpage était un clip-path, posé sur l'élément QUE
-     L'ON ANIME (--ec-cam le met à l'échelle). WebKit donne alors à cet
-     élément sa propre couche de composition… et oublie parfois de lui
-     appliquer le découpage : les pales, qui glissent de 295 unités en
-     dehors du cercle, s'échappent librement.
-
-     Deux découpages supplémentaires, tous deux dans la MÊME géométrie
-     (l'écoutille est un carré de côté --ec-hatch, donc son cercle inscrit
-     est le rond 50 %) :
-       · border-radius + overflow:hidden — un découpage de boîte, le plus
-         fiable de tous les moteurs, et gratuit pour la carte graphique ;
-       · le clip-path ci-dessus, conservé : sur un moteur qui l'honore
-         (ordinateur), l'image est exactement la même.
-     Trois façons de découper au même endroit : il faudrait que les trois
-     échouent pour que les pales s'échappent encore. */
   border-radius:50%;
   overflow:hidden;
+  -webkit-mask-image:radial-gradient(circle at 50% 50%,
+      #000 0 calc(var(--ec-rayon) + 1px), transparent calc(var(--ec-rayon) + 2px));
+          mask-image:radial-gradient(circle at 50% 50%,
+      #000 0 calc(var(--ec-rayon) + 1px), transparent calc(var(--ec-rayon) + 2px));
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
   pointer-events:none;
 }
 .ec-lueur{

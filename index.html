@@ -65,10 +65,16 @@
       transform:translate(-50%,-50%); transform-origin:50% 50%;
       clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
       -webkit-clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
-      /* Même triple ceinture que la feuille dédiée (voir son commentaire) :
-         le rond de l'écoutille est aussi obtenu par un découpage de boîte,
-         que WebKit n'oublie jamais, même sur un élément animé. */
+      /* Même quadruple ceinture que la feuille dédiée (voir son commentaire) :
+         le rond de l'écoutille est obtenu par un découpage de BOÎTE et par un
+         masque radial statique, que WebKit n'oublie pas — même sur un élément
+         animé, et même pour un enfant composité comme la lumière du sas. */
       border-radius:50%; overflow:hidden;
+      -webkit-mask-image:radial-gradient(circle at 50% 50%,
+        #000 0 calc(var(--ec-rayon) + 1px), transparent calc(var(--ec-rayon) + 2px));
+              mask-image:radial-gradient(circle at 50% 50%,
+        #000 0 calc(var(--ec-rayon) + 1px), transparent calc(var(--ec-rayon) + 2px));
+      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
       pointer-events:none;
     }
     #ecoutille .ec-lueur{
@@ -224,7 +230,7 @@
   <!-- Page de garde « ÉCOUTILLE » (premier chargement) : feuille dédiée,
        chargée en dernier pour pouvoir habiller son écran par-dessus tout
        le reste du site (z-index 13000). -->
-  <link rel="stylesheet" href="css/ecoutille.css?v=3">
+  <link rel="stylesheet" href="css/ecoutille.css?v=4">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
        principal : les scripts différés s'exécutent dans l'ordre du
