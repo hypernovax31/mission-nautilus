@@ -25,13 +25,15 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « garde v7 ». On entre par le hublot du salon du Nautilus :
-       la nuit des grands fonds, les rais de lumière de la surface, les
-       colonnes de bulles, les échos du sonar — et le bateau noir qui traverse
-       lentement l'écran, ses hublots allumés. Un cadre de cuivre borde le
-       hublot ; au centre, le titre en lettres de bronze, puis le récit qui
-       défile comme une bande-annonce. Pour finir, le projecteur du Nautilus
-       nous éblouit et l'accueil du jeu apparaît dans la lumière.
+       GRANDEUR — « garde v8 ». On entre par le hublot du salon du Nautilus :
+       un FILM tourne en fond — quatre plans du Nautilus dans les grands
+       fonds, montés avec des mouvements de caméra, un étalonnage cinéma, du
+       grain et des fondus au noir. Autour, le décor CSS prend le relais :
+       les rais de lumière, les colonnes de bulles, les échos du sonar et le
+       cadre de cuivre du hublot. Au centre, le titre en lettres de bronze,
+       puis le récit qui défile comme une bande-annonce. Pour finir, le
+       projecteur du Nautilus nous éblouit et l'accueil apparaît dans la
+       lumière.
 
        RIEN QUI PUISSE CASSER — c'est la leçon des deux versions précédentes :
          · aucun découpage, aucun masque, aucune image : ni clip-path, ni
@@ -123,7 +125,9 @@
       to  { transform:translate3d(-1.5%, 33.33%, 0) }
     }
     /* LES ÉCHOS DU SONAR : trois anneaux qui s'ouvrent depuis le bateau. */
-    #ecoutille .ec-pings{position:absolute; left:50%; top:58%; width:0; height:0}
+    /* Les échos du sonar : une trace discrète DERRIÈRE le film (le film
+       a ses propres bulles et sa propre lumière). */
+    #ecoutille .ec-pings{position:absolute; left:50%; top:58%; width:0; height:0; opacity:.3}
     #ecoutille .ec-pings i{
       position:absolute; left:0; top:0; width:30vmin; height:30vmin; margin:-15vmin 0 0 -15vmin;
       border:2px solid rgba(168,240,255,.5); border-radius:50%; opacity:0;
@@ -156,115 +160,53 @@
       position:absolute; inset:0;
       background:
         radial-gradient(120% 80% at 50% 50%, rgba(1,6,12,0) 42%, rgba(1,6,12,.55) 78%, rgba(1,6,12,.82) 100%),
-        linear-gradient(180deg, rgba(1,6,12,.62), rgba(1,6,12,0) 22% 78%, rgba(1,6,12,.7));
+        linear-gradient(180deg, rgba(1,6,12,.62), rgba(1,6,12,0) 20% 58%, rgba(1,6,12,.88));
     }
 
-    /* ── 2. LE BATEAU NOIR ─────────────────────────────────────────────────
-       Dessiné entièrement en dégradés : une coque, un kiosque, un
-       périscope, cinq hublots allumés, le projecteur et son faisceau, une
-       hélice qui tourne et un sillage de bulles. Le bateau traverse l'écran
-       en deux passages (le second plus près, plus grand), puis recommence. */
-    #ecoutille .ec-passage{
-      position:absolute; left:0; right:0; top:52%; height:clamp(74px, 19vmin, 210px);
-      opacity:0; animation:ecTraversee 42s linear infinite;
+    /* ── 2. LE FILM : LE NAUTILUS DANS LES GRANDS FONDS ───────────────────
+       Un vrai film tourne en fond : quatre plans du Nautilus (l'entrée du
+       sous-marin, sa traversée, son hublot, sa descente dans l'abîme),
+       montés avec des mouvements de caméra, un étalonnage cinéma, du grain
+       et des fondus au noir. Deux formats sont fournis : 16:9 pour les
+       grands écrans, 9:16 (vertical) pour les téléphones — le navigateur
+       choisit tout seul, et il y a TOUJOURS un plan de secours (l'affiche,
+       en image de fond) pendant le chargement ou si la lecture est refusée.
+
+       La fenêtre du film :
+         · ÉCRAN LARGE — une bande 16:9 au centre, à la bonne place pour ne
+           croiser ni le titre (en haut) ni le bouton (en bas) ;
+         · TÉLÉPHONE DEBOUT — le film remplit l'écran (il est déjà tourné en
+           vertical), le texte se pose dessus, la vignette le protège.
+       Le film est MUET : le son du bord, c'est le site qui le fait. */
+    #ecoutille .ec-hero{
+      position:absolute; left:50%; top:52%; transform:translate(-50%,-50%);
+      /* La fenêtre garde EXACTEMENT le rapport du film (16:9) : le cadre est
+         donc la seule découpe, et elle ne coupe rien — on voit le plan tel
+         qu'il a été tourné, jamais une bande tronquée. Le côté se cale sur
+         la place disponible : 58 % de la hauteur d'écran, ou toute la
+         largeur si l'écran est étroit. */
+      height:min(58vh, 56.25vw);
+      width:calc(min(58vh, 56.25vw) * 1.7778);
+      background:#020a12 url("assets/film-nautilus-L.jpg?v=1") center/cover no-repeat;
+      overflow:hidden;
+      box-shadow:0 0 9vmin 3vmin rgba(1,7,14,.7), 0 0 26vmin 10vmin rgba(1,7,14,.45);
     }
-    #ecoutille .ec-nautilus{
-      position:absolute; left:0; top:0; height:100%; width:clamp(190px, 44vmin, 430px);
-      animation:ecPassage 42s cubic-bezier(.36,.04,.64,.96) infinite;
+    #ecoutille .ec-film{
+      display:block; width:100%; height:100%; object-fit:cover;
+      opacity:0; transition:opacity 1.1s ease;
     }
-    @keyframes ecTraversee{
-      0%    { opacity:0 }
-      5%    { opacity:.52 }
-      42%   { opacity:.6 }
-      46%   { opacity:0 }
-      47%   { opacity:0 }
-      53%   { opacity:.92 }
-      90%   { opacity:.95 }
-      100%  { opacity:0 }
-    }
-    @keyframes ecPassage{
-      0%   { transform:translate3d(-42vw, 26%, 0) scale(.6) }
-      34%  { transform:translate3d(18vw, 6%, 0) scale(.68) }
-      46%  { transform:translate3d(72vw, -4%, 0) scale(.72) }
-      47%  { transform:translate3d(-42vw, 44%, 0) scale(.98) }
-      88%  { transform:translate3d(22vw, 20%, 0) scale(1.04) }
-      100% { transform:translate3d(84vw, 12%, 0) scale(1.08) }
-    }
-    #ecoutille .ec-nautilus > *{position:absolute}
-    /* La coque : une lentille d'acier sombre, éclairée par le haut. */
-    #ecoutille .n-coque{
-      left:3%; top:20%; width:90%; height:60%; border-radius:50%/50%;
-      background:linear-gradient(180deg, #4a5b69 0 10%, #2a3742 32%, #0e1822 66%, #050a0f 100%);
-      box-shadow:inset 0 -14% 18% rgba(0,0,0,.75), 0 1.6vmin 3vmin rgba(0,0,0,.5);
-    }
-    /* L'éperon, à l'avant. */
-    #ecoutille .n-etrave{
-      right:0; top:33%; width:11%; height:34%; border-radius:0 70% 70% 0;
-      background:linear-gradient(180deg, #3d4b58, #0a1017);
-    }
-    /* Le kiosque, sa coursive vitrée, le périscope. */
-    #ecoutille .n-kiosque{
-      left:41%; top:5%; width:21%; height:23%; border-radius:4px 4px 2px 2px;
-      background:linear-gradient(180deg, #465663, #16202b 68%, #0a1017);
-      box-shadow:inset 0 2px 0 rgba(255,255,255,.14);
-    }
-    #ecoutille .n-coursive{
-      left:44.4%; top:11%; width:14.2%; height:6%; border-radius:3px;
-      background:linear-gradient(90deg, #ffe4a0 0 22%, rgba(255,228,160,.35) 22% 34%, #ffe4a0 34% 56%, rgba(255,228,160,.35) 56% 68%, #ffe4a0 68% 100%);
-      box-shadow:0 0 1.4vmin rgba(255,214,140,.6);
-    }
-    #ecoutille .n-peri{
-      left:52.6%; top:-9%; width:2.6%; height:15%; border-radius:2px;
-      background:linear-gradient(180deg, #55646f, #1b2530);
-    }
-    /* Les cinq hublots allumés : l'âme du Nautilus. */
-    #ecoutille .n-hublots{
-      left:22%; top:39%; width:52%; display:flex; justify-content:space-between; align-items:center;
-    }
-    #ecoutille .n-hublots i{
-      width:7%; aspect-ratio:1; border-radius:50%;
-      background:radial-gradient(circle at 50% 46%, #fffbe8 0 24%, #ffd47a 48%, #b8791d 74%, #2a1a05 100%);
-      box-shadow:0 0 1.8vmin rgba(255,196,96,.75), 0 0 .7vmin rgba(255,242,208,.9);
-    }
-    /* Le projecteur et son faisceau, devant l'éperon. */
-    #ecoutille .n-projecteur{
-      right:9%; top:40%; width:4.4%; aspect-ratio:1; border-radius:50%;
-      background:radial-gradient(circle, #ffffff 0 34%, rgba(214,246,255,.55) 72%, rgba(214,246,255,0) 100%);
-      box-shadow:0 0 2.6vmin rgba(226,250,255,.85);
-    }
-    #ecoutille .n-faisceau{
-      right:-34%; top:22%; width:100%; height:56%;
-      background:conic-gradient(from 88deg at 6% 50%,
-        rgba(224,248,255,.42) 0 10deg, rgba(224,248,255,.16) 10deg 17deg, rgba(224,248,255,0) 17deg 360deg);
-      opacity:.75; animation:ecFaisceau 7.5s ease-in-out infinite;
-    }
-    @keyframes ecFaisceau{
-      0%,100%{ opacity:.5 }
-      50%    { opacity:.95 }
-    }
-    /* L'hélice, à l'arrière. */
-    #ecoutille .n-helice{
-      left:1%; top:32%; width:6%; height:36%; border-radius:50%/50%;
-      background:linear-gradient(180deg, rgba(226,244,255,.55), rgba(226,244,255,.12) 50%, rgba(226,244,255,.55));
-      animation:ecHelice 1.15s linear infinite;
-    }
-    @keyframes ecHelice{
-      from{ transform:rotate(0) }
-      to  { transform:rotate(360deg) }
-    }
-    /* Le sillage : trois bulles qui montent derrière l'hélice. */
-    #ecoutille .n-sillage{left:2%; top:66%; width:16%; height:34%; opacity:0; animation:ecSillage 3.6s linear infinite}
-    #ecoutille .n-sillage i{
-      position:absolute; border-radius:50%;
-      background:radial-gradient(circle at 40% 36%, rgba(226,250,255,.75), rgba(226,250,255,.18) 70%, rgba(226,250,255,0));
-    }
-    #ecoutille .n-sillage i:nth-child(1){left:64%; top:62%; width:22%; aspect-ratio:1; animation:ecSillage 3.6s linear infinite}
-    #ecoutille .n-sillage i:nth-child(2){left:26%; top:40%; width:14%; aspect-ratio:1; animation:ecSillage 3.6s linear .9s infinite}
-    #ecoutille .n-sillage i:nth-child(3){left:4%; top:20%; width:10%; aspect-ratio:1; animation:ecSillage 3.6s linear 1.8s infinite}
-    @keyframes ecSillage{
-      0%  { transform:translate3d(0,0,0); opacity:0 }
-      22% { opacity:.9 }
-      100%{ transform:translate3d(-42%, -120%, 0); opacity:0 }
+    /* Le film ne se montre qu'une fois qu'il joue vraiment : sinon, on
+       verrait un rectangle noir avant le premier plan. */
+    #ecoutille.ec-film-pret .ec-film{opacity:1}
+    /* Téléphone debout : le film passe plein écran (aucun chevauchement de
+       cadres : il n'y a plus de fenêtre, juste le fond). */
+    @media (orientation: portrait){
+      #ecoutille .ec-hero{
+        left:0; right:0; top:0; transform:none;
+        width:auto; height:100%;
+        background-image:url("assets/film-nautilus-P.jpg?v=1");
+        box-shadow:none;
+      }
     }
 
     /* ── 3. LE TITRE EN LETTRES DE BRONZE ──────────────────────────────────
@@ -467,11 +409,6 @@
       #ecoutille .ec-rayons{animation:none; opacity:.6}
       #ecoutille .ec-bulles{animation-duration:120s}
       #ecoutille .ec-pings i{animation-duration:11s}
-      #ecoutille .ec-passage{animation:none; opacity:.5; top:62%}
-      #ecoutille .ec-nautilus{animation:none; left:50%; transform:translateX(-50%) scale(.86)}
-      #ecoutille .n-faisceau{animation:none; opacity:.6}
-      #ecoutille .n-helice{animation-duration:3.4s}
-      #ecoutille .n-sillage i{animation:none; opacity:0}
       #ecoutille .ec-start::after{animation:none; opacity:.55}
       #ecoutille .ec-flood{transition-duration:.4s}
     }
@@ -572,13 +509,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=7" defer></script>
+  <script src="ecoutille.js?v=8" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — 20 000 LIEUX SOUS LES MERS, À BORD DU NAUTILUS
-     (« garde v7 », entrée de bande-annonce)
+     (« garde v8 », film et bande-annonce)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus, la nuit des grands fonds, le bateau noir qui
@@ -599,31 +536,27 @@
      ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="ecoutille" role="dialog" aria-modal="true" aria-label="Le Nautilus — appuie sur START pour ouvrir le sas et embarquer">
 
-  <!-- TOUT LE DÉCOR : la mer, les rais, les bulles, le sonar, le bateau,
-       le cadre de cuivre. Aucun clic, aucun découpage, aucune image. -->
+  <!-- LE DÉCOR ET LE FILM : la mer, les rais, les bulles, les échos du
+       sonar, le film du Nautilus, le cadre de cuivre. Aucun clic, aucun
+       découpage : le film est encadré par une fenêtre qui le recadre, il ne
+       déborde donc jamais. -->
   <div class="ec-ecran" aria-hidden="true">
     <div class="ec-abysse"></div>
     <div class="ec-rayons"></div>
     <div class="ec-bulles"></div>
     <div class="ec-pings"><i></i><i></i><i></i></div>
 
-    <!-- LE BATEAU NOIR : la coque, le kiosque, les hublots allumés, le
-         projecteur et son faisceau, l'hélice, le sillage. -->
-    <div class="ec-passage">
-      <div class="ec-nautilus">
-        <div class="n-coque"></div>
-        <div class="n-etrave"></div>
-        <div class="n-kiosque"></div>
-        <div class="n-coursive"></div>
-        <div class="n-peri"></div>
-        <div class="n-hublots"><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="n-projecteur"></div>
-        <div class="n-faisceau"></div>
-        <div class="n-helice"></div>
-        <div class="n-sillage"><i></i><i></i><i></i></div>
-      </div>
+    <!-- LE FILM : le Nautilus dans les grands fonds. Muet, en boucle, sans
+         aucune commande à l'écran : c'est un fond, pas un lecteur vidéo.
+         Le navigateur choisit le format selon l'orientation de l'écran ;
+         pendant le chargement, l'affiche (une image du film) tient la place
+         grâce au fond de .ec-hero. -->
+    <div class="ec-hero">
+      <video class="ec-film" autoplay muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1">
+        <source src="assets/film-nautilus-P.mp4?v=1" type="video/mp4" media="(orientation: portrait)">
+        <source src="assets/film-nautilus-L.mp4?v=1" type="video/mp4">
+      </video>
     </div>
-
     <div class="ec-vignette"></div>
     <div class="ec-cadre"></div>
   </div>
@@ -657,7 +590,7 @@
         <span class="ec-dome" aria-hidden="true"></span>
         <span class="ec-start-label">START</span>
       </button>
-      <span class="ec-version">garde v7</span>
+      <span class="ec-version">garde v8</span>
     </footer>
   </div>
 
@@ -696,6 +629,9 @@
     }catch(e){ /* mode privé : on ouvre quand même */ }
     racine.classList.add('ec-presse');
     setTimeout(function(){ racine.classList.remove('ec-presse'); }, 240);
+    /* Le geste relance le film au besoin (lecture refusée, batterie faible) :
+       c'est le même geste qui débloque tout le reste. Le film reste muet. */
+    try{ if(film){ var relance = film.play(); if(relance && relance.catch) relance.catch(function(){}); } }catch(e){}
     setTimeout(function(){ racine.classList.add('ec-plongee'); }, 120);
     setTimeout(function(){ racine.classList.add('ec-eclat'); }, 520);
     setTimeout(function(){ racine.classList.add('ec-impact'); }, 1000);
@@ -710,6 +646,24 @@
       racine.classList.add('ec-passee');
       setTimeout(function(){ if(racine.parentNode) racine.parentNode.removeChild(racine); }, 80);
     }, 2400);
+  }
+
+  /* LE FILM DE FOND : muet, en boucle, sans aucune commande. On ne montre
+     la vidéo qu'une fois qu'elle joue VRAIMENT (sinon on verrait un
+     rectangle noir avant le premier plan) ; si le navigateur refuse la
+     lecture — ou si la personne a demandé moins d'animations — l'affiche du
+     fond reste, et c'est déjà une belle image du film. */
+  var film = racine.querySelector('.ec-film');
+  function filmVisible(){ racine.classList.add('ec-film-pret'); }
+  if(film){
+    if(film.readyState >= 2) filmVisible();
+    film.addEventListener('playing', filmVisible);
+    film.addEventListener('loadeddata', filmVisible);
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      try{ film.autoplay = false; film.pause(); }catch(e){}
+    }else{
+      try{ var lecture = film.play(); if(lecture && lecture.catch) lecture.catch(function(){}); }catch(e){}
+    }
   }
 
   var start = document.getElementById('ecStart');

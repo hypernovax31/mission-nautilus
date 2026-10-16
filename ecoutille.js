@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v7 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v8 »
 
    Ce que fait ce fichier
    ----------------------
@@ -324,6 +324,16 @@
     couperAlarme();
     alarmeDeBord(ms(1300));
 
+    /* Le film, lui, reste MUET — mais on relance sa lecture au passage : si
+       le navigateur l'avait refusée (batterie faible, économie d'énergie),
+       ce geste la débloque. C'est le même geste pour tout. */
+    if(film){
+      try{
+        const lecture = film.play();
+        if(lecture && typeof lecture.catch === 'function') lecture.catch(() => {});
+      }catch(e){}
+    }
+
     /* — la plongée s'engage : le décor avance, l'eau s'engouffre — */
     plusTard(() => {
       racine.classList.add('ec-plongee');
@@ -431,6 +441,17 @@
   }
 
   html.classList.add('ec-bloque');
+
+  /* LE FILM DE FOND : muet, en boucle, sans aucune commande. On ne le montre
+     qu'une fois qu'il joue vraiment — sinon, un rectangle noir apparaîtrait
+     avant le premier plan (l'affiche du fond, elle, est là tout de suite). */
+  const film = racine.querySelector('.ec-film');
+  if(film){
+    const montreLeFilm = () => racine.classList.add('ec-film-pret');
+    if(film.readyState >= 2) montreLeFilm();
+    film.addEventListener('playing', montreLeFilm);
+    film.addEventListener('loadeddata', montreLeFilm);
+  }
 
   const start = document.getElementById('ecStart');
   start?.addEventListener('click', ouvrir);

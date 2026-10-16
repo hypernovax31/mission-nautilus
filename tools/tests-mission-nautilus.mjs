@@ -16,9 +16,9 @@
      3. le module partagé des paliers ≥ 2 (matelot-blocages.js) ;
      4. la cohérence des écrans qui ANNONCENT ces durées ;
      5. l'écran de blocage de l'accueil, rendu pour de vrai ;
-     6. la page de garde (le Nautilus) : le décor de bande-annonce, un
-        seul bouton, aucune superposition possible, sentinelle du <head>,
-        silence respecté, mise en cache.
+     6. la page de garde (le Nautilus) : le film de fond et son affiche,
+        le décor de bande-annonce, un seul bouton, aucune superposition
+        possible, sentinelle du <head>, silence respecté, mise en cache.
 
    Aucune écriture, aucun accès réseau : Firebase est remplacé par une
    fausse base en mémoire.
@@ -266,14 +266,16 @@ ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v7)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v7'));
+ok('un repère de version dit quelle page de garde est chargée (garde v8)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v8'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
    accueil.includes('<noscript><style>#ecoutille{display:none !important}</style></noscript>'));
-ok('la garde ne charge AUCUNE image (tout est dégradé CSS)',
-   !/<img|<svg|background-image:\s*url/.test(gardeHtml + socleCss));
+ok('la garde ne charge ni image cliquable, ni SVG, ni illustration externe',
+   !/<img|<svg/.test(gardeHtml) &&
+   (socleCss.match(/url\(/g) || []).length === (socleCss.match(/film-nautilus-[LP]\.jpg/g) || []).length,
+   'les seules images du socle sont les affiches du film');
 
 /* --- RIEN À CLIQUER D'INUTILE ------------------------------------------- */
 /* Demande explicite du joueur : sur la page de lancement, tout ce qui
@@ -322,20 +324,82 @@ const couches = {
   'ec-bulles':  'les colonnes de bulles',
   'ec-pings':   'les échos du sonar',
   'ec-cadre':   'le cadre de cuivre du hublot',
-  'ec-passage': 'le passage du bateau'
+  'ec-hero':    'la fenêtre du film de fond'
 };
 for(const [classe, quoi] of Object.entries(couches)){
   ok('le décor a ' + quoi + ' (.' + classe + ')',
      socleCss.includes('.' + classe) && gardeHtml.includes('class="' + classe + '"'));
 }
-const pieces = ['n-coque', 'n-etrave', 'n-kiosque', 'n-coursive', 'n-peri', 'n-hublots', 'n-projecteur', 'n-faisceau', 'n-helice', 'n-sillage'];
-ok('le Nautilus est dessiné en entier (coque, kiosque, hublots, projecteur, hélice, sillage)',
-   pieces.every(p => socleCss.includes('.' + p) && gardeHtml.includes('class="' + p + '"')));
-ok('ses hublots sont allumés (la lumière fait le bateau)',
-   /\.n-hublots i\{[\s\S]*?radial-gradient\(circle/.test(socleCss) &&
-   /\.n-hublots i\{[\s\S]*?box-shadow:0 0/.test(socleCss));
-ok('son projecteur projette un faisceau (aucun découpage : un dégradé conique)',
-   socleCss.includes('conic-gradient(from 88deg at 6% 50%'));
+/* LE FILM : un vrai film tourne en fond — le Nautilus dans les grands fonds.
+   Quatre plans montés (entrée du sous-marin, traversée, hublot, descente dans
+   l'abîme), étalonnés, avec du grain et des fondus au noir. Deux formats sont
+   livrés : 16:9 pour les grands écrans, 9:16 pour les téléphones — le second
+   est important, car un film 16:9 « étiré » sur un écran debout serait trois
+   fois trop petit. Les fichiers sont vérifiés SUR LE DISQUE : un <video> qui
+   pointe vers un fichier absent serait une page de garde sans fond. */
+/* (fs, path et ici sont déjà déclarés en tête de fichier) */
+const chemin = (rel) => path.join(ici, '..', rel);
+const films = ['assets/film-nautilus-L.mp4', 'assets/film-nautilus-P.mp4'];
+const affiches = ['assets/film-nautilus-L.jpg', 'assets/film-nautilus-P.jpg'];
+for(const f of films){
+  ok('le film existe vraiment dans le dépôt : ' + f,
+     fs.existsSync(chemin(f)) && fs.statSync(chemin(f)).size > 800 * 1024,
+     Math.round((fs.existsSync(chemin(f)) ? fs.statSync(chemin(f)).size : 0) / 1024) + ' Ko');
+}
+for(const a of affiches){
+  ok('l’affiche du film existe (le fond avant la lecture) : ' + a,
+     fs.existsSync(chemin(a)) && fs.statSync(chemin(a)).size > 20 * 1024);
+}
+ok('le film est dans la page, muet, en boucle, sans commandes',
+   /<video class="ec-film" autoplay muted loop playsinline preload="auto"/.test(gardeHtml) &&
+   !/controls/.test(gardeHtml));
+ok('il ne mange jamais le geste du joueur (aucun clic, aucun focus)',
+   /<video[^>]*aria-hidden="true"[^>]*tabindex="-1"/.test(gardeHtml) ||
+   /<video[^>]*tabindex="-1"[^>]*aria-hidden="true"/.test(gardeHtml));
+ok('le format VERTICAL est proposé aux téléphones (le 16:9 y serait minuscule)',
+   /<source src="assets\/film-nautilus-P\.mp4[^"]*" type="video\/mp4" media="\(orientation: portrait\)">/.test(gardeHtml) &&
+   gardeHtml.indexOf('film-nautilus-P.mp4') < gardeHtml.indexOf('film-nautilus-L.mp4'));
+ok('le film est une fenêtre qui le recadre : il ne peut pas déborder',
+   /#ecoutille \.ec-hero\{[\s\S]*?overflow:hidden/.test(socleCss) &&
+   /#ecoutille \.ec-film\{[\s\S]*?object-fit:cover/.test(socleCss));
+ok('sur un écran large, la fenêtre du film est centrée (ni le titre ni le bouton dessus)',
+   /#ecoutille \.ec-hero\{[\s\S]*?top:52%/.test(socleCss) &&
+   /#ecoutille \.ec-hero\{[\s\S]*?transform:translate\(-50%,-50%\)/.test(socleCss));
+ok('la fenêtre garde EXACTEMENT le rapport 16:9 du film (aucun plan tronqué)',
+   /#ecoutille \.ec-hero\{[\s\S]*?height:min\(58vh, 56\.25vw\)/.test(socleCss) &&
+   /#ecoutille \.ec-hero\{[\s\S]*?width:calc\(min\(58vh, 56\.25vw\) \* 1\.7778\)/.test(socleCss),
+   '16/9 : une bande plus large que haute couperait le hublot du troisième plan');
+ok('sur un téléphone debout, le film passe plein écran (aucun cadre à chevaucher)',
+   /@media \(orientation: portrait\)\{[\s\S]*?#ecoutille \.ec-hero\{[\s\S]*?height:100%/.test(socleCss));
+ok('l’affiche du film tient la place pendant le chargement (et si la lecture est refusée)',
+   /#ecoutille \.ec-hero\{[\s\S]*?url\("assets\/film-nautilus-L\.jpg\?v=1"\)/.test(socleCss) &&
+   /orientation: portrait[\s\S]{0,400}film-nautilus-P\.jpg/.test(socleCss));
+ok('le film ne s’affiche qu’une fois qu’il joue vraiment (pas de rectangle noir)',
+   /#ecoutille \.ec-film\{[\s\S]*?opacity:0/.test(socleCss) &&
+   socleCss.includes('#ecoutille.ec-film-pret .ec-film{opacity:1}'));
+ok('le moteur surveille la lecture du film (« playing ») et le montre alors',
+   porte.includes("addEventListener('playing', montreLeFilm)") || porte.includes("addEventListener('playing', filmVisible)"));
+ok('le geste du joueur relance la lecture si le navigateur l’avait refusée',
+   /if\(film\)\{\s*try\{\s*const lecture = film\.play\(\);/.test(porte) &&
+   /if\(film\)\{ var relance = film\.play\(\)/.test(accueil.replace(/\/\*[\s\S]*?\*\//g, '')));
+ok('moins d’animation : le film est mis en pause, l’affiche reste',
+   /prefers-reduced-motion[\s\S]{0,200}film\.pause\(\)/.test(socleJs));
+/* Un nom de classe mal orthographié ne casse rien de visible : l'élément
+   devient simplement invisible, et une pièce du décor disparaît sans que
+   personne ne s'en aperçoive. On vérifie donc que TOUT ce qui est nommé
+   dans le balisage a son style dans le socle. */
+const classesTableau = [...new Set((gardeHtml.match(/class="[^"]+"/g) || [])
+  .flatMap(m => m.slice(7, -1).split(/\s+/).filter(Boolean)))];
+const sansStyle = classesTableau.filter(c => !socleCss.includes('.' + c));
+ok('chaque pièce du décor a son style (aucune classe orpheline)',
+   sansStyle.length === 0, sansStyle.join(', '));
+
+ok('le film tourne aussi hors ligne : les affiches sont précachées (pas les 5 Mo de vidéo)',
+   sw.includes("'./assets/film-nautilus-L.jpg?v=1'") &&
+   sw.includes("'./assets/film-nautilus-P.jpg?v=1'") &&
+   !sw.includes("film-nautilus-L.mp4'"));
+ok('les URLs du film sont versionnées (le cache du service worker les garde)',
+   gardeHtml.includes('film-nautilus-L.mp4?v=1') && gardeHtml.includes('film-nautilus-P.mp4?v=1'));
 ok('le titre est en lettres de bronze, avec un repli doré s’il n’est pas possible',
    socleCss.includes('background-clip:text') && socleCss.includes('@supports') &&
    /\.ec-titre\{[\s\S]*?color:#f6e3b6/.test(socleCss));
@@ -487,11 +551,11 @@ ok('le moteur de la page de garde est précaché', sw.includes("'./ecoutille.js?
    numéro de version ne bougeait pas. */
 const versionJS = Number((/<script src="ecoutille\.js\?v=(\d+)" defer><\/script>/.exec(accueil) || [])[1]);
 const versionCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]);
-ok('le moteur de la garde est en version 7 ou plus (v' + versionJS + ')', versionJS >= 7);
+ok('le moteur de la garde est en version 8 ou plus (v' + versionJS + ')', versionJS >= 8);
 ok('le service worker précache EXACTEMENT cette version',
    sw.includes("'./ecoutille.js?v=" + versionJS + "'"));
 ok('le cache du service worker a été relevé pour cette refonte (v' + versionCache + ')',
-   versionCache >= 306);
+   versionCache >= 307);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL

@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v306';
+const CACHE_NAME = 'nautilus-v307';
 const PRECACHE = [
   './',
   './index.html',
@@ -30,7 +30,7 @@ const PRECACHE = [
   './victoire-palier.js?v=12',
   './records-palier.js?v=2',
   './install-promo.js?v=7',
-  './ecoutille.js?v=7',
+  './ecoutille.js?v=8',
   './assets/fond-nautilus.jpg',
   './assets/palier3-lieu.jpg',
   './assets/ambiance-sonar.mp3',
@@ -39,7 +39,9 @@ const PRECACHE = [
   './assets/hublot-click.wav',
   './assets/icon.svg',
   './assets/icon-192.png',
-  './assets/icon-512.png'
+  './assets/icon-512.png',
+  './assets/film-nautilus-L.jpg?v=1',
+  './assets/film-nautilus-P.jpg?v=1'
 ];
 
 self.addEventListener('install', (event) => {
