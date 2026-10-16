@@ -264,8 +264,15 @@ ok('l\'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <a
 const _s0 = accueil.indexOf('  (function(){\n    try{\n      var racine = document.documentElement;');
 const sentinelle = accueil.slice(_s0, accueil.indexOf('  })();', _s0) + 7);
 ok('la décision est prise dans le <head>, avant le premier rendu', sentinelle.length > 200);
-ok('nouvelle visite : la garde est jouée (aucun marqueur de session)',
-   sentinelle.includes("sessionStorage.getItem('nautilusEcoutille')"));
+ok('la garde se joue à CHAQUE chargement (le son doit être redébloqué à chaque fois)',
+   /var jouer = !passer \|\| forcer;/.test(sentinelle));
+ok('elle ne dépend PLUS d\'un marqueur de session (cause du « rien ne s\'affiche »)',
+   !/jouer = !deja/.test(sentinelle) && !/getItem\('nautilusEcoutille'\) === '1'/.test(sentinelle));
+ok('la sentinelle est écrite AVANT les feuilles de style (décision la plus précoce possible)',
+   accueil.indexOf('PAGE DE GARDE : DÉCISION') > 0 &&
+   accueil.indexOf('PAGE DE GARDE : DÉCISION') < accueil.search(/<link rel="stylesheet" href="css\//));
+ok('le titre de l\'onglet témoigne que l\'écoutille est chargée',
+   sentinelle.includes('ÉCOUTILLE FERMÉE') && porte.includes('window.__ecoutilleTitre'));
 ok('déjà ouverte : la classe ec-passee est posée avant tout dessin',
    sentinelle.includes("racine.classList.add('ec-passee')"));
 ok('la garde verrouille le défilement de l\'accueil (ec-bloque)',
@@ -292,6 +299,8 @@ ok('ce bouton efface le marqueur de session avant de recharger',
    /ecRevoirBtn[\s\S]{0,700}removeItem\(CLE_SESSION\)/.test(porte));
 ok('filet de sécurité : le site se rouvre si le moteur ne charge pas (20 s)',
    sentinelle.includes('__ecoutilleMinuteurSecours') && sentinelle.includes('20000'));
+ok('le filet de sécurité rend aussi son titre à l\'onglet',
+   /__ecoutilleMinuteurSecours[\s\S]{0,400}document\.title = window\.__ecoutilleTitre/.test(sentinelle));
 ok('sans JavaScript, aucune écoutille (personne ne reste enfermé)',
    accueil.includes('<noscript><style>#ecoutille{display:none !important}</style></noscript>'));
 

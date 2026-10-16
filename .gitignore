@@ -3,3 +3,6 @@ apercu-*.wav
 
 __pycache__/
 *.pyc
+
+# Journal des requetes du serveur d'apercu (outil de developpement)
+.nautilus-requetes.log

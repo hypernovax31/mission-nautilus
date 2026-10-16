@@ -31,14 +31,13 @@
 
    Quand la revoit-on ?
    --------------------
-   · tout premier chargement du site                 → elle s'affiche ;
-   · rechargement dans la même session (onglet)      → elle est passée,
-     la classe « ec-passee » est posée dans le <head> avant le premier
-     rendu : pas un pixel de clignotement ;
-   · nouvelle visite, nouvel onglet, ouverture de la
-     PWA installée                                    → elle revient :
-     c'est elle qui débloque le son à chaque fois.
-   · URL ?ecoutille=1 → on la rejoue de force ; ?ecoutille=0 → on la passe.
+   À CHAQUE chargement de l'accueil. Ce n'est pas un excès de zèle : à
+   chaque chargement, le navigateur repart de zéro et refuse tout son tant
+   qu'il n'a pas vu un vrai geste de l'utilisateur. L'écoutille EST ce
+   geste — la sauter reviendrait à rendre le site muet.
+     · ?ecoutille=0 ou /ecoutille/passer → on la passe (silence assumé) ;
+     · la classe « ec-passee », posée dans le <head> avant le premier
+       rendu, ne sert donc qu'à ce cas-là : pas un pixel de clignotement.
 
    L'IRIS (note technique)
    -----------------------
@@ -498,6 +497,8 @@
 
     html.classList.remove('ec-bloque');
     html.classList.add('ec-arrivee');
+    /* L'onglet reprend son vrai nom : celui de l'accueil, plus de l'écoutille. */
+    try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
     noter(CLE_SESSION);
     noter(CLE_VUE);
     /* L'ordre exprès ne doit servir qu'UNE fois : sinon « Revoir
@@ -555,12 +556,12 @@
   }else{
     let adresse = '';
     try{ adresse = (location.pathname + location.search + location.hash).toLowerCase(); }catch(e){}
-    if(/ecoutille=(0|non)/.test(adresse) || /ecoutille\/(passer|fermer|non)/.test(adresse)) jouer = false;
-    else if(/ecoutille=(1|oui)/.test(adresse) || /\/ecoutille(\/|$)/.test(adresse)) jouer = true;
-    else {
-      let force = false;
-      try{ force = sessionStorage.getItem(CLE_FORCE) === '1'; }catch(e){}
-      jouer = force || !lireSession();
+    const forcer = /ecoutille=(1|oui)/.test(adresse) || /\/ecoutille(\/|$)/.test(adresse);
+    const passer = /ecoutille=(0|non)/.test(adresse) || /ecoutille\/(passer|fermer|non)/.test(adresse);
+    /* Comme la sentinelle : TOUJOURS, sauf ordre contraire. */
+    jouer = !passer || forcer;
+    if(!jouer){
+      try{ if(sessionStorage.getItem(CLE_FORCE) === '1') jouer = true; }catch(e){}
     }
   }
 

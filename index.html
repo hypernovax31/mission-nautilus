@@ -33,6 +33,79 @@
     #ecoutille{position:fixed;inset:0;z-index:13000;overflow:hidden;background:#05080b}
     .ec-passee #ecoutille{display:none}
   </style>
+
+  <!-- ===== PAGE DE GARDE : DÉCISION PRISE AVANT LE PREMIER RENDU =====
+       L'écoutille s'affiche à CHAQUE chargement de l'accueil. Ce n'est pas
+       un excès de zèle : à chaque chargement, le navigateur repart de zéro
+       et refuse tout son tant qu'il n'a pas vu un vrai geste de
+       l'utilisateur. Le clic sur START est ce geste — c'est exactement le
+       rôle de la page de garde, et la sauter reviendrait à rendre le site
+       muet. Elle se montre donc toujours, sauf ordre contraire.
+
+       Ce script s'exécute AVANT tout dessin (avant même les feuilles de
+       style) : la page de garde est en place, ou pas, dès la toute
+       première image. Rien ne clignote.
+
+       POUR LA PASSER :   ?ecoutille=0   ·   /ecoutille/passer
+       POUR LA FORCER :   ?ecoutille=1   ·   /ecoutille   ·   /ecoutille/1
+                          /#ecoutille=1  ·  ?splash=1
+
+       LE TITRE DE L'ONGLET le dit tant que l'écoutille est fermée :
+       « ⚠ ÉCOUTILLE FERMÉE ». Impossible de se demander si elle est là. -->
+  <script>
+  (function(){
+    try{
+      var racine = document.documentElement;
+
+      /* OÙ CHERCHER L'ORDRE ? Dans toute l'adresse : paramètre, ancre ET
+         CHEMIN. Le chemin compte autant que le paramètre : l'hébergement du
+         jeu renvoie TOUTES les adresses vers index.html (voir firebase.json,
+         rewrite « ** » → /index.html), et un « ?ecoutille=1 » peut se perdre
+         en route (proxy, lien raccourci, application installée).
+         Le bouton « Revoir l'écoutille » du pied de page, lui, ne dépend
+         d'aucune adresse : il pose un ordre exprès avant de recharger. */
+      var adresse = '';
+      try{ adresse = (location.pathname + location.search + location.hash).toLowerCase(); }catch(e){}
+      var passer = /ecoutille=(0|non)/.test(adresse)
+                || /ecoutille\/(passer|fermer|non)/.test(adresse);
+      var forcer = /ecoutille=(1|oui)/.test(adresse)
+                || /\/ecoutille(\/|$)/.test(adresse)
+                || /[?&#]splash(=1)?(&|$)/.test(adresse);
+      if(!forcer){
+        try{ forcer = sessionStorage.getItem('nautilusEcoutilleForce') === '1'; }catch(e){}
+      }
+
+      /* TOUJOURS, sauf ordre contraire (voir l'en-tête ci-dessus). */
+      var jouer = !passer || forcer;
+
+      /* DÉCISION UNIQUE, prise ici et nulle part ailleurs : ecoutille.js la
+         relit, il ne la refait pas. Deux calculs séparés finiraient par
+         diverger un jour. */
+      window.__ecoutilleJouer = jouer;
+      if(!jouer){ racine.classList.add('ec-passee'); return; }
+
+      /* LE TITRE DE L'ONGLET DIT OÙ ON EN EST : c'est le seul témoin qui
+         reste si l'affichage lui-même fait défaut. ecoutille.js rétablit le
+         titre de la page au moment de la révéler. */
+      try{
+        window.__ecoutilleTitre = document.title;
+        document.title = '⚠ ÉCOUTILLE FERMÉE — Mission Nautilus';
+      }catch(e){}
+
+      racine.classList.add('ec-bloque');
+      /* FILET DE SÉCURITÉ : ecoutille.js n'a peut-être pas pu se charger
+         (mise en cache cassée, vieux navigateur...). Passé 20 s sans
+         signe de vie, on rouvre le site au lieu de laisser le visiteur
+         enfermé derrière la cloison. */
+      window.__ecoutilleMinuteurSecours = setTimeout(function(){
+        if(window.__ecoutillePrete) return;
+        racine.classList.remove('ec-bloque');
+        racine.classList.add('ec-passee');
+        try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
+      }, 20000);
+    }catch(e){}
+  })();
+  </script>
   <link rel="stylesheet" href="css/index.css?v=54">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Page de garde « ÉCOUTILLE » (premier chargement) : feuille dédiée,
@@ -49,71 +122,7 @@
        ce drapeau est posé avant son chargement (deferred), et l'ordre
        de mission émet 'nautilus:fin-typewriter' à sa dernière lettre. -->
   <script>window.nautilusAttendreTypewriter = true;</script>
-  <!-- ===== PAGE DE GARDE : DÉCISION PRISE AVANT LE PREMIER RENDU =====
-       Un seul cas demande de jouer l'écoutille : la PREMIÈRE visite. Elle
-       n'est donc jamais revue à l'intérieur d'une même session (un
-       rechargement pendant qu'on joue la saute), mais elle revient à
-       chaque nouvelle visite — c'est-à-dire chaque fois qu'un navigateur
-       exige un vrai geste avant d'autoriser le son : c'est justement son
-       rôle, et sans elle le site démarrerait muet.
-       Ce script s'exécute AVANT tout dessin : la page de garde est donc
-       en place, ou pas, dès la toute première image. Rien ne clignote.
-         ?ecoutille=1 → on la rejoue · ?ecoutille=0 → on la passe. -->
-  <script>
-  (function(){
-    try{
-      var racine = document.documentElement;
 
-      /* OÙ CHERCHER L'ORDRE ? Dans toute l'adresse : paramètre, ancre ET
-         CHEMIN. Le chemin compte autant que le paramètre : l'hébergement du
-         jeu renvoie TOUTES les adresses vers index.html (voir firebase.json,
-         rewrite « ** » → /index.html), et un « ?ecoutille=1 » peut se perdre
-         en route (proxy, lien raccourci, application installée). /ecoutille
-         marche donc toujours.
-         Le bouton « Revoir l'écoutille » du pied de page, lui, ne dépend
-         d'aucune adresse : il pose un ordre exprès avant de recharger. */
-      var adresse = '';
-      try{ adresse = (location.pathname + location.search + location.hash).toLowerCase(); }catch(e){}
-      var passer = /ecoutille=(0|non)/.test(adresse)
-                || /ecoutille\/(passer|fermer|non)/.test(adresse);
-      var forcer = /ecoutille=(1|oui)/.test(adresse)
-                || /\/ecoutille(\/|$)/.test(adresse)
-                || /[?&#]splash(=1)?(&|$)/.test(adresse);
-      if(!forcer){
-        try{ forcer = sessionStorage.getItem('nautilusEcoutilleForce') === '1'; }catch(e){}
-      }
-
-      var jouer;
-      if(passer) jouer = false;
-      else if(forcer) jouer = true;
-      else {
-        /* Une seule question, et c'est la bonne : cette visite est-elle la
-           PREMIÈRE de l'onglet ? Si oui, l'écoutille se joue — c'est le seul
-           moyen d'obtenir du navigateur le droit de faire du bruit. */
-        var deja = false;
-        try{ deja = sessionStorage.getItem('nautilusEcoutille') === '1'; }catch(e){}
-        jouer = !deja;
-      }
-
-      /* DÉCISION UNIQUE, prise ici et nulle part ailleurs : ecoutille.js la
-         relit, il ne la refait pas. Deux calculs séparés finiraient par
-         diverger un jour. */
-      window.__ecoutilleJouer = jouer;
-      if(!jouer){ racine.classList.add('ec-passee'); return; }
-
-      racine.classList.add('ec-bloque');
-      /* FILET DE SÉCURITÉ : ecoutille.js n'a peut-être pas pu se charger
-         (mise en cache cassée, vieux navigateur...). Passé 20 s sans
-         signe de vie, on rouvre le site au lieu de laisser le visiteur
-         enfermé derrière la cloison. */
-      window.__ecoutilleMinuteurSecours = setTimeout(function(){
-        if(window.__ecoutillePrete) return;
-        racine.classList.remove('ec-bloque');
-        racine.classList.add('ec-passee');
-      }, 20000);
-    }catch(e){}
-  })();
-  </script>
   <!-- Sans JavaScript, il n'y a pas de page de garde : personne ne doit
        rester bloqué devant une écoutille qui ne peut pas s'ouvrir. -->
   <noscript><style>#ecoutille{display:none !important}</style></noscript>
@@ -122,7 +131,7 @@
   <!-- Moteur de la page de garde (journal de bord, iris, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=2" defer></script>
+  <script src="ecoutille.js?v=3" defer></script>
 
 </head>
 <body>
