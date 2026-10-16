@@ -240,7 +240,7 @@
   <!-- Moteur de la page de garde (journal de bord, iris, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=3" defer></script>
+  <script src="ecoutille.js?v=4" defer></script>
 
 </head>
 <body>
@@ -255,9 +255,12 @@
      Les 8 pales forment un diaphragme d'optique : chaque pale est un disque
      de rayon 290 dont le centre est à 210 du pivot, et les arcs passent TOUS
      par le centre de l'écoutille — fermées, elles couvrent 100 % du disque
-     (vérifié point par point) ; chaque pale basculant de 88° autour de son
-     pivot, l'ouverture laisse 94 % du passage à la lumière du sas.
-     Structure : css/ecoutille.css habille, ecoutille.js anime.
+     (vérifié point par point) ; chaque pale bascule de 88° autour de son
+     pivot et glisse de 295 unités vers l'extérieur, assez pour se retirer
+     entièrement derrière le bord de l'écoutille : l'ouverture est TOTALE
+     (100 %), aucun anneau de métal ne subsiste au bord du trou avant
+     l'éclat — sinon on voit un cercle opaque qui bloque la fin de
+     l'animation. Structure : css/ecoutille.css habille, ecoutille.js anime.
      ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="ecoutille" role="dialog" aria-modal="true" aria-label="Écoutille du Nautilus — appuie sur START pour embarquer">
   <!-- Un seul bloc qui tremble quand la coque travaille : cloison + iris. -->
@@ -427,7 +430,7 @@
     </button>
     <p class="ec-consigne">Appuie sur <b>START</b> : l'écoutille s'ouvre, le sonar s'allume et le bord se réveille.</p>
     <button id="ecPasser" class="ec-passer" type="button">Passer l'intro</button>
-  <span class="ec-version">garde v4</span>
+  <span class="ec-version">garde v5</span>
   </div>
   <div class="ec-cinema ec-cinema--haut"></div>
   <div class="ec-cinema ec-cinema--bas"></div>

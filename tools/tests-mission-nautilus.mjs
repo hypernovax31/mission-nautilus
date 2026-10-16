@@ -331,8 +331,13 @@ ok('les constantes d\'ouverture sont lisibles dans le moteur', rotMax > 0 && gli
 
 /* On REFAIT le calcul du jeu : disques de pale placés sur la couronne,
    chacun pivotant autour de son point du bord. Fermé, l'ensemble doit
-   couvrir tout le disque de l'écoutille ; ouvert, il doit le libérer. */
-function couverture(angleDeg, glisse, pas = 8){
+   couvrir tout le disque de l'écoutille ; ouvert, il doit le libérer
+   TOTALEMENT : le moindre reste dessine un anneau de métal au bord du
+   trou — le « cercle » opaque qui bloquait la fin de l'ouverture, pile
+   avant l'éclat. Le clip CSS découpe en plus .ec-iris à « rayon + 2 px »
+   (pire cas ~511 unités du dessin, sur petit écran) : les pales doivent
+   sortir de ce cercle aussi, sinon leur bord reste visible sur la bague. */
+function couverture(angleDeg, glisse, pas = 8, rayonDisque = 500){
   const R = 500, N = 8;
   const pivot = i => { const t = i * Math.PI / 4; return [500 + R * Math.sin(t), 500 - R * Math.cos(t)]; };
   const tourner = (p, c, deg) => { const t = deg * Math.PI / 180, s = Math.sin(t), k = Math.cos(t);
@@ -347,7 +352,7 @@ function couverture(angleDeg, glisse, pas = 8){
   let dedans = 0, total = 0;
   for(let y = 0; y <= 1000; y += pas) for(let x = 0; x <= 1000; x += pas){
     const dx = x - 500, dy = y - 500;
-    if(dx * dx + dy * dy > R * R) continue;
+    if(dx * dx + dy * dy > rayonDisque * rayonDisque) continue;
     total++;
     if(centres.some(c => (x - c[0]) ** 2 + (y - c[1]) ** 2 <= rPale * rPale)) dedans++;
   }
@@ -357,8 +362,11 @@ const couvertFerme = couverture(0, 0);
 const couvertOuvert = couverture(rotMax, glisseMax);
 ok('écoutille fermée : les pales couvrent la totalité du disque (' + couvertFerme.toFixed(2) + ' %)',
    couvertFerme >= 99.9);
-ok('écoutille ouverte : les pales libèrent le passage (' + couvertOuvert.toFixed(1) + ' % restant)',
-   couvertOuvert <= 12);
+ok('écoutille ouverte : les pales libèrent le passage ENTIÈREMENT (' + couvertOuvert.toFixed(1) + ' % restant)',
+   couvertOuvert < 1);
+const couvertClip = couverture(rotMax, glisseMax, 8, 511);
+ok('les pales sortent aussi du clip (rayon + 2 px) : aucun anneau ne reste au bord (' + couvertClip.toFixed(1) + ' %)',
+   couvertClip < 1);
 ok('l\'ouverture est bien plus large que la fermeture', couvertFerme - couvertOuvert > 85);
 
 /* --- Le son : la garde est le geste qui débloque le sonar du site -------- */

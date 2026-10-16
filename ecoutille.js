@@ -45,9 +45,11 @@
    bord de chaque pale est un arc de rayon A dont le centre est à la
    distance A du centre de l'écoutille. Fermées, les huit pales se
    recouvrent et couvrent 100 % du disque (vérifié point par point) ;
-   chacune basculant de 88° autour de son pivot et glissant vers
-   l'extérieur, elles laissent 93 % de l'ouverture libre. C'est exactement
-   la construction d'un diaphragme photographique à 8 lamelles.
+   chacune bascule de 88° autour de son pivot et glisse vers l'extérieur
+   assez loin pour se retirer ENTIÈREMENT derrière le bord de l'écoutille :
+   l'ouverture est totale (100 %), aucun anneau de métal ne subsiste au
+   bord du trou quand l'iris est ouvert. C'est exactement la construction
+   d'un diaphragme photographique à 8 lamelles.
 
    L'ouverture est pilotée en JavaScript, image par image, en écrivant
    l'attribut transform="translate(...) rotate(a 500 0)" de chaque pale :
@@ -66,10 +68,15 @@
   const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
   /* Géométrie de l'iris — valeurs VÉRIFIÉES par calcul de couverture :
-     0°/0 mm : 100,00 % du disque couvert (étanche)
-     88°/230  :  6,3 % couvert (93,7 % d'ouverture utile). */
+     0°/0 mm   : 100,00 % du disque couvert (étanche)
+     88°/295 mm :   0,00 % couvert — à l'arrêt, chaque pale est entièrement
+     sortie du cercle de l'écoutille (le clip CSS découpe à rayon + 2 px,
+     soit ~503 à ~511 unités du dessin selon l'écran) : l'ouverture est
+     totale, plus aucun cercle de métal ne reste au bord avant l'éclat.
+     (À 88°/230, il restait 6,3 % couverts : un anneau denté, opaque, qui
+     bloquait la fin de l'ouverture et cassait la fluidité de l'animation.) */
   const PALE_ROTATION = 88;      // degrés de bascule de chaque pale
-  const PALE_GLISSE   = 230;     // écartement vers l'extérieur (unités du dessin)
+  const PALE_GLISSE   = 295;     // écartement vers l'extérieur (unités du dessin)
   const PALE_DUREE    = 1950;    // ms pour l'ouverture complète
   const PALE_DECALAGE = 55;      // ms de décalage d'une pale à la suivante
 
@@ -492,9 +499,29 @@
     plusTard(() => {
       racine.classList.add('ec-poussee');
       sonSouffle(ms(1500));
+      /* La caméra doit pousser le disque de lumière — l'écoutille découpée
+         dans .ec-iris — entièrement HORS de l'écran avant l'éclat : sinon
+         son bord dur reste visible à la fin de la traversée, un cercle
+         de lumière posé sur la page, pile avant le flash blanc. La cible
+         dépend de la taille de l'écran (téléphone, tablette, ordinateur) :
+         on la calcule depuis le diamètre RÉEL de l'écoutille (offsetWidth
+         n'est pas modifié par les transform) et la diagonale du viewport.
+         2.55 suffisait sur téléphone ; sur ordinateur, le bord du disque
+         restait à l'écran jusqu'à l'éclat. */
+      let camFin = 2.55;
+      try{
+        const iris = racine.querySelector('.ec-iris');
+        const hatch = iris ? iris.offsetWidth : 0;
+        const larg = racine.offsetWidth || window.innerWidth || 0;
+        const haut = racine.offsetHeight || window.innerHeight || 0;
+        if(hatch > 0 && larg > 0 && haut > 0){
+          const demiDiag = Math.hypot(larg, haut) / 2;
+          camFin = Math.max(2.55, (demiDiag + 48) / (hatch / 2 + 2));
+        }
+      }catch(e){ /* moteur exotique : on garde la valeur par défaut */ }
       /* la trouée s'élargit ET la caméra avance : on traverse l'écoutille */
       animer(ms(T.pousseeFin - T.poussee), 1, 2.6, v => poserVar('ec-k', v.toFixed(4)));
-      animer(ms(T.pousseeFin - T.poussee), 1, 2.55, v => poserVar('ec-cam', v.toFixed(4)));
+      animer(ms(T.pousseeFin - T.poussee), 1, camFin, v => poserVar('ec-cam', v.toFixed(4)));
       animer(ms(T.pousseeFin - T.poussee), .78, .5, v => poserVar('ec-lueur', v.toFixed(3)));
     }, ms(T.poussee));
 
