@@ -21,136 +21,245 @@
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
   <!-- ═══════════ SOCLE DE LA PAGE DE GARDE — L'ÉCOUTILLE, AVANT TOUT ═══════════
-       Ce bloc est écrit DANS la page, volontairement. L'écoutille doit
-       s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive : réseau
-       coupé au mauvais moment, ancienne version encore en cache, hébergement
-       qui répond mal. Ici, elle ne dépend de rien.
-       css/ecoutille.css, chargée plus loin dans ce <head>, enrichit par-dessus
-       (tôles et rivets, chevrons, halos, grain, bandes cinéma) : MÊME
-       GÉOMÉTRIE, plus de détails. L'ordre compte — à spécificité égale, la
-       dernière feuille gagne, et c'est bien celle-là qui doit garder la main
-       sur le fond (sinon le trou de l'écoutille montre du noir).
-       Le script de secours est en fin de balisage (voir « SOCLE — le clic »). -->
+       Ce bloc est écrit DANS la page, volontairement : la page de garde doit
+       s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
+       coupé, ancienne version encore en cache, hébergement qui répond mal).
+
+       DESSIN SIMPLE — ET C'EST VOULU (« garde v6 »). La version précédente
+       ouvrait un diaphragme de huit pales, trouait la cloison d'un masque
+       pour laisser voir la page au travers, puis poussait une « caméra »
+       dans le trou. Superbe sur un ordinateur, catastrophique sur iPhone :
+       le métal et la lumière s'échappaient de l'écoutille à chaque
+       ouverture. Il ne reste ici que ce qui ne peut PAS casser :
+
+         · la coque est OPAQUE : plus de masque, plus de trou, plus rien à
+           traverser — la page du jeu reste intacte derrière ;
+         · l'ouverture est UN SEUL mouvement : la coque se lève d'un bloc,
+           comme une porte de sas (translateY, rien d'autre) ;
+         · la lumière du sas est une couche opaque posée DERRIÈRE la coque :
+           elle apparaît quand la coque monte, puis s'efface en fondu, et
+           c'est ce fondu qui fait apparaître l'accueil ;
+         · aucune image, aucun SVG animé, aucun découpage : uniquement
+           transform et opacity — les deux propriétés que tous les moteurs
+           animent proprement, iPhone compris.
+
+       La version réellement chargée est écrite dans le coin : « garde v6 ». -->
   <style>
     #ecoutille{
-      --ec-hatch:min(88vmin,56vh,640px);
-      --ec-rayon:calc(var(--ec-hatch)/2);
-      --ec-k:1; --ec-cam:1; --ec-lueur:0;
-      position:fixed; inset:0; z-index:13000; overflow:hidden;
-      background:transparent;              /* le trou montre le vrai accueil */
+      position:fixed; inset:0; z-index:13000 !important; overflow:hidden;
+      background:transparent;      /* la page du jeu est derrière, jamais touchée */
       color:#dff6ff; font-family:Consolas,"Courier New",monospace;
       touch-action:none; -webkit-tap-highlight-color:transparent;
+      user-select:none; -webkit-user-select:none;
     }
-    .ec-passee #ecoutille{display:none}
+    /* Page de garde déjà franchie : elle ne s'affiche pas du tout. */
+    .ec-passee #ecoutille{display:none !important}
+    /* Pendant la garde : la page ne défile pas (le temps du sas). */
     .ec-bloque, .ec-bloque body{overflow:hidden !important}
+    .ec-bloque{overscroll-behavior:none}
+    #ecoutille button{touch-action:manipulation}
 
-    /* La cloison : du métal partout, SAUF l'écoutille elle-même, laissée
-       transparente — c'est la fenêtre sur l'accueil. */
-    #ecoutille .ec-voile{
-      position:absolute; inset:0;
+    /* ── 1. LA LUMIÈRE DU SAS ────────────────────────────────────────────
+       Opaque et plein écran, posée DERRIÈRE la coque. Elle est là dès le
+       premier instant, mais invisible : la coque la couvre. Quand la coque
+       se lève, elle ne découvre donc jamais l'accueil à moitié — elle
+       découvre une lumière PLEINE, et c'est le fondu de cette lumière qui
+       fait apparaître la page du jeu. Un seul fondu, à la toute fin. */
+    #ecoutille .ec-lueur{
+      position:absolute; inset:0; opacity:1;
+      background:radial-gradient(125% 95% at 50% 64%,
+        #ffffff 0 10%, #eafcff 24%, #cdf2ff 42%,
+        rgba(150,224,255,.97) 62%, rgba(74,170,240,.96) 84%, rgba(28,104,178,.97) 100%);
+      transition:opacity .64s ease;
+    }
+    #ecoutille.ec-lumiere-sortie .ec-lueur{opacity:0}
+
+    /* ── 2. LA COQUE BLINDÉE ─────────────────────────────────────────────
+       Opaque, et c'est tout : trois dégradés répétés suffisent à faire des
+       tôles, des soudures et du métal brossé. Rien à charger, rien à
+       découper, rien à calculer. */
+    #ecoutille .ec-coque{
+      position:absolute; inset:0; isolation:isolate;
       background:
         repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 2px, rgba(0,0,0,.06) 2px 4px, transparent 4px 64px),
         repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, rgba(0,0,0,.05) 1px 2px, transparent 2px 104px),
-        radial-gradient(circle at 50% 50%,
-          transparent 0 calc(var(--ec-rayon) + 1px),
-          #0a1116 calc(var(--ec-rayon) + 2px),
-          #2b353d calc(var(--ec-rayon) + 32vmin),
-          #46525c 72%, #1a2228 100%);
+        repeating-linear-gradient(96deg, rgba(255,255,255,.045) 0 1px, rgba(0,0,0,.035) 1px 2px, transparent 2px 7px),
+        radial-gradient(125% 95% at 50% 34%, #46525c 0%, #2b353d 38%, #1a2228 66%, #0c1216 88%, #05080b 100%);
+      transition:transform .78s cubic-bezier(.22,.86,.24,1);
+      will-change:transform;
+    }
+    /* LE SEUIL : un liseré clair au bas de la coque, pour que la porte se
+       lise comme une porte qui coulisse. */
+    #ecoutille .ec-coque::after{
+      content:""; position:absolute; left:0; right:0; bottom:0; height:10px;
+      background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,.55));
+      box-shadow:0 6px 18px rgba(0,0,0,.6);
+    }
+    /* L'OUVERTURE : un seul transform, du début à la fin. */
+    #ecoutille.ec-levee .ec-coque{transform:translateY(-102%)}
+
+    /* Rivets : une trame régulière de têtes bombées. */
+    #ecoutille .ec-rivets{
+      position:absolute; inset:0; pointer-events:none; opacity:.75;
+      background-image:
+        radial-gradient(circle at 50% 42%, #cfd8de 0 1.5px, #7c868e 1.5px 3.1px, rgba(0,0,0,.55) 3.6px, transparent 4.4px),
+        radial-gradient(circle at 50% 42%, #b9c3ca 0 1.1px, #6c767e 1.1px 2.4px, rgba(0,0,0,.45) 3px, transparent 3.6px);
+      background-size:96px 96px, 96px 96px;
+      background-position:0 0, 48px 48px;
+    }
+    /* Lignes de tôles : la trame régulière de la cloison. */
+    #ecoutille .ec-toles{
+      position:absolute; inset:0; pointer-events:none;
+      background:repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 3px, rgba(0,0,0,.05) 3px 4px, transparent 4px 74px);
     }
 
-    /* La lumière du sas : sous les pales, elle s'allume à l'ouverture. */
-    #ecoutille .ec-iris{
-      position:absolute; left:50%; top:50%;
-      width:var(--ec-hatch); height:var(--ec-hatch);
-      transform:translate(-50%,-50%); transform-origin:50% 50%;
-      clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
-      -webkit-clip-path:circle(calc(var(--ec-rayon) + 2px) at 50% 50%);
-      /* Même quadruple ceinture que la feuille dédiée (voir son commentaire) :
-         le rond de l'écoutille est obtenu par un découpage de BOÎTE et par un
-         masque radial statique, que WebKit n'oublie pas — même sur un élément
-         animé, et même pour un enfant composité comme la lumière du sas. */
-      border-radius:50%; overflow:hidden;
-      -webkit-mask-image:radial-gradient(circle at 50% 50%,
-        #000 0 calc(var(--ec-rayon) + 1px), transparent calc(var(--ec-rayon) + 2px));
-              mask-image:radial-gradient(circle at 50% 50%,
-        #000 0 calc(var(--ec-rayon) + 1px), transparent calc(var(--ec-rayon) + 2px));
-      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
-      pointer-events:none;
+    /* ── 3. LE POSTE DE PLONGÉE : marque, plaque, journal, balise ─────── */
+    #ecoutille .ec-haut{
+      position:absolute; left:0; right:0; top:0;
+      padding:clamp(12px,3vmin,24px) clamp(14px,4vw,38px);
+      display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
     }
-    #ecoutille .ec-lueur{
-      position:absolute; inset:-60%; opacity:var(--ec-lueur);
-      transform:scale(calc(.35 + var(--ec-lueur) * .95)); transform-origin:50% 50%;
-      background:radial-gradient(circle at 50% 50%, #fff 0 4%, #eafcff 12%,
-        rgba(150,225,255,.6) 34%, rgba(80,180,255,.2) 55%, transparent 74%);
+    #ecoutille .ec-marque{display:flex; flex-direction:column; gap:3px; min-width:0}
+    #ecoutille .ec-marque b{
+      display:block; font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
+      font-size:clamp(16px,4.2vmin,28px); letter-spacing:.06em; color:#f6fbff;
+      text-transform:uppercase;
     }
-    #ecoutille .ec-pales{display:block; width:100%; height:100%; overflow:visible}
-    #ecoutille .ec-pale-corps{fill:url(#ecAcierPale); stroke:rgba(6,10,14,.85); stroke-width:2.5}
-    #ecoutille .ec-pale-ombre{fill:url(#ecOmbrePale)}
-    #ecoutille .ec-pale-creux{fill:rgba(8,13,18,.5)}
-    #ecoutille .ec-pale-fil{fill:none; stroke:rgba(214,242,255,.5); stroke-width:2.2; stroke-linecap:round}
-
-    /* La bague boulonnée qui encadre l'écoutille. */
-    #ecoutille .ec-bague{
-      position:absolute; left:50%; top:50%;
-      width:calc(var(--ec-hatch) * 1.42); height:calc(var(--ec-hatch) * 1.42);
-      transform:translate(-50%,-50%); overflow:visible; pointer-events:none;
+    #ecoutille .ec-marque span{
+      font-size:clamp(9px,2vmin,12px); letter-spacing:.2em; text-transform:uppercase;
+      color:#8fb4c6;
     }
-    /* Les décors de la version riche : invisibles sans la feuille dédiée. */
-    #ecoutille .ec-halo{position:absolute; inset:0; opacity:var(--ec-lueur); pointer-events:none;
-      background:radial-gradient(circle at 50% 50%,
-        transparent 0 calc(var(--ec-rayon) * .96), rgba(226,250,255,.7) calc(var(--ec-rayon)),
-        rgba(140,225,255,.3) calc(var(--ec-rayon) * 1.06), transparent calc(var(--ec-rayon) * 1.45))}
-    #ecoutille .ec-balise{position:absolute; right:6%; top:clamp(14px,3vmin,26px);
+    #ecoutille .ec-plaque{
+      padding:5px 9px; border-radius:8px; border:1px solid rgba(245,176,39,.45);
+      background:rgba(245,176,39,.14); color:#ffe0a6; font-weight:700;
+      font-size:clamp(9px,1.9vmin,11.5px); letter-spacing:.1em; text-transform:uppercase;
+    }
+    /* La balise rouge : elle bat tant que le sas est fermé. */
+    #ecoutille .ec-balise{
+      position:absolute; right:6%; top:clamp(14px,3vmin,26px);
       width:clamp(24px,6vmin,42px); aspect-ratio:1; border-radius:50%;
       background:radial-gradient(circle at 50% 36%, #ff9d92, #e2201b 55%, #6d0906 100%);
-      box-shadow:0 0 0 3px rgba(0,0,0,.5), 0 0 26px rgba(255,60,50,.45)}
+      box-shadow:0 0 0 3px rgba(0,0,0,.5), 0 0 26px rgba(255,60,50,.45);
+    }
+    #ecoutille.ec-alarme .ec-balise{animation:ecBalise .7s steps(2,end) infinite}
+    @keyframes ecBalise{50%{opacity:.25}}
 
-    /* L'ordinateur de bord : marque, plaque, journal, bouton rouge. */
-    #ecoutille .ec-haut{position:absolute; left:0; right:0; top:0;
-      padding:clamp(12px,3vmin,24px) clamp(14px,4vw,38px);
-      display:flex; gap:12px; align-items:flex-start; justify-content:space-between}
-    #ecoutille .ec-marque b{display:block; font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
-      font-size:clamp(16px,4.2vmin,28px); letter-spacing:.06em; color:#f6fbff; text-transform:uppercase}
-    #ecoutille .ec-marque span{font-size:clamp(9px,2vmin,12px); letter-spacing:.2em; text-transform:uppercase; color:#8fb4c6}
-    #ecoutille .ec-plaque{padding:5px 9px; border-radius:8px; border:1px solid rgba(245,176,39,.45);
-      background:rgba(245,176,39,.14); color:#ffe0a6; font-weight:700;
-      font-size:clamp(9px,1.9vmin,11.5px); letter-spacing:.1em; text-transform:uppercase}
-    #ecoutille .ec-lecture{position:absolute; left:clamp(14px,4vw,38px); top:clamp(66px,15vmin,106px);
-      width:min(72vw,332px); padding:9px 11px; border:1px solid rgba(142,231,255,.28);
-      border-radius:10px; background:rgba(2,10,18,.82)}
-    #ecoutille .ec-lecture-titre{margin:0 0 5px; font-size:clamp(8px,1.8vmin,10.5px);
-      letter-spacing:.2em; text-transform:uppercase; color:#6f9db0}
-    #ecoutille .ec-lecture-liste{margin:0; padding:0; list-style:none; min-height:4.6em;
-      font-size:clamp(10px,2.1vmin,13px); line-height:1.5; font-weight:700; color:#baffd2}
+    /* Le journal de bord : ce que « dit » l'ordinateur du bord. */
+    #ecoutille .ec-lecture{
+      position:absolute; left:clamp(14px,4vw,38px); top:clamp(66px,15vmin,106px);
+      width:min(72vw,332px); padding:9px 11px;
+      border:1px solid rgba(142,231,255,.28); border-radius:10px; background:rgba(2,10,18,.82);
+    }
+    #ecoutille .ec-lecture-titre{
+      margin:0 0 5px; font-size:clamp(8px,1.8vmin,10.5px); letter-spacing:.2em;
+      text-transform:uppercase; color:#6f9db0;
+    }
+    #ecoutille .ec-lecture-liste{
+      margin:0; padding:0; list-style:none; min-height:4.6em;
+      font-size:clamp(10px,2.1vmin,13px); line-height:1.5; font-weight:700; color:#baffd2;
+      white-space:pre-wrap; overflow-wrap:anywhere;
+    }
     #ecoutille .ec-lecture-liste li::before{content:"\203A "; color:#5be09b}
     #ecoutille .ec-lecture-liste li.ec-alerte{color:#ffb3ac}
     #ecoutille .ec-lecture-liste li.ec-alerte::before{content:"! "; color:#ff4b3e}
-    #ecoutille .ec-bas{position:absolute; left:0; right:0; bottom:0;
-      padding:clamp(10px,3vmin,20px) 16px clamp(14px,3vmin,26px);
-      display:flex; flex-direction:column; align-items:center; gap:clamp(8px,2vmin,13px); text-align:center}
-    #ecoutille .ec-panneau-titre{margin:0; font-size:clamp(8px,2vmin,11px); letter-spacing:.24em;
-      text-transform:uppercase; color:#ffb3ac}
-    #ecoutille .ec-start{position:relative; width:clamp(96px,24vmin,160px); aspect-ratio:1;
-      padding:0; border:0; background:none; cursor:pointer; display:grid; place-items:center; border-radius:50%}
-    #ecoutille .ec-dome{position:absolute; inset:0; border-radius:50%;
-      background:radial-gradient(circle at 34% 26%, #ffb0a5 0 5%, #ff5747 22%, #e02318 48%, #9c1109 76%, #4d0603 100%);
-      box-shadow:0 10px 20px rgba(0,0,0,.6), 0 0 0 4px rgba(0,0,0,.45),
-        0 0 40px rgba(255,64,48,.5), inset 0 5px 12px rgba(255,255,255,.3), inset 0 -8px 16px rgba(0,0,0,.6)}
-    #ecoutille .ec-start-label{position:relative; z-index:2; color:#fff;
-      font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
-      font-size:clamp(15px,3.6vmin,24px); letter-spacing:.16em;
-      text-shadow:0 2px 4px rgba(0,0,0,.6), 0 0 16px rgba(255,140,130,.6)}
-    #ecoutille .ec-consigne{margin:0; max-width:min(560px,92vw); font-size:clamp(8px,2vmin,12px);
-      letter-spacing:.08em; text-transform:uppercase; color:#9ec2d2}
-    #ecoutille .ec-consigne b{color:#ffd36c}
-    #ecoutille .ec-passer{margin:0; padding:5px 4px; border:0; background:none; font:inherit;
-      font-size:clamp(8px,1.9vmin,11px); letter-spacing:.12em; text-transform:uppercase;
-      color:#8fb4c6; text-decoration:underline; cursor:pointer}
+    #ecoutille .ec-curseur{display:inline-block; width:.55em; height:1em; margin-left:2px;
+      background:#5be09b; vertical-align:-.14em; animation:ecCurseur 1s steps(2,end) infinite}
+    @keyframes ecCurseur{50%{opacity:0}}
 
-    /* Repère de version : discret, il dit quelle version de la page de garde
-       est réellement chargée. C'est le seul témoin visible en cas de doute. */
+    /* ── 4. LA COMMANDE : le bouton rouge d'alarme ────────────────────── */
+    #ecoutille .ec-bas{
+      position:absolute; left:0; right:0; bottom:0;
+      padding:clamp(10px,3vmin,22px) clamp(14px,4vw,40px) clamp(14px,3.4vmin,30px);
+      display:flex; flex-direction:column; align-items:center; gap:clamp(8px,2vmin,14px);
+      text-align:center;
+    }
+    #ecoutille .ec-bas::before{
+      content:""; position:absolute; inset:-4% -10% -12%; z-index:-1; pointer-events:none;
+      background:
+        radial-gradient(60% 120% at 50% 100%, rgba(255,60,48,.16), transparent 70%),
+        linear-gradient(180deg, transparent, rgba(3,9,14,.72) 34%, rgba(2,6,10,.94));
+    }
+    #ecoutille .ec-panneau-titre{
+      margin:0; font-weight:700; font-size:clamp(8.5px,2vmin,11.5px);
+      letter-spacing:.24em; text-transform:uppercase; color:#ffb3ac;
+      text-shadow:0 0 14px rgba(255,75,62,.4);
+    }
+    #ecoutille .ec-start{
+      position:relative; width:clamp(104px,25vmin,170px); aspect-ratio:1;
+      padding:0; margin:0; border:0; background:none; cursor:pointer;
+      display:grid; place-items:center; border-radius:50%;
+    }
+    /* collier métallique */
+    #ecoutille .ec-start::before{
+      content:""; position:absolute; inset:0; border-radius:50%;
+      background:radial-gradient(circle at 50% 20%, #7d8891 0 16%, #414b54 44%, #222a31 70%, #0a0f13 100%);
+      border:2px solid rgba(255,255,255,.09);
+      box-shadow:0 20px 38px rgba(0,0,0,.6), inset 0 2px 0 rgba(255,255,255,.22), inset 0 -6px 14px rgba(0,0,0,.7);
+    }
+    /* halo d'appel : le bouton respire tant qu'on n'a rien fait */
+    #ecoutille .ec-start::after{
+      content:""; position:absolute; inset:-16%; border-radius:50%; pointer-events:none;
+      background:radial-gradient(circle, rgba(255,75,62,.45) 38%, rgba(255,75,62,.12) 58%, transparent 74%);
+      animation:ecAppel 2.5s ease-in-out infinite;
+    }
+    @keyframes ecAppel{0%,100%{opacity:.32; transform:scale(.95)}50%{opacity:.85; transform:scale(1.07)}}
+    #ecoutille .ec-dome{
+      position:absolute; inset:15%; border-radius:50%;
+      background:radial-gradient(circle at 34% 26%, #ffb0a5 0 5%, #ff5747 20%, #e02318 46%, #9c1109 74%, #4d0603 100%);
+      box-shadow:0 12px 20px rgba(0,0,0,.6), 0 0 0 3px rgba(0,0,0,.45),
+        inset 0 5px 12px rgba(255,255,255,.28), inset 0 -8px 16px rgba(0,0,0,.6);
+      transition:transform .11s ease, filter .2s ease;
+    }
+    #ecoutille .ec-start-label{
+      position:relative; z-index:2; font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
+      font-size:clamp(15px,3.9vmin,25px); letter-spacing:.16em; line-height:1; color:#fff;
+      text-shadow:0 2px 0 rgba(0,0,0,.6), 0 3px 6px rgba(0,0,0,.5), 0 0 16px rgba(255,140,130,.6);
+    }
+    #ecoutille .ec-start:hover .ec-dome{filter:brightness(1.07)}
+    #ecoutille .ec-start:focus-visible{outline:3px solid #8ee7ff; outline-offset:6px}
+    #ecoutille.ec-presse .ec-dome{transform:translateY(3px) scale(.965); filter:brightness(.9)}
+    #ecoutille.ec-presse .ec-start::after{animation:none; opacity:0}
+    #ecoutille .ec-consigne{
+      margin:0; max-width:min(560px,92vw); font-size:clamp(9px,2.1vmin,12.5px);
+      letter-spacing:.1em; text-transform:uppercase; color:#9ec2d2;
+    }
+    #ecoutille .ec-consigne b{color:#ffd36c}
+    #ecoutille .ec-passer{
+      margin:0; padding:6px 4px; border:0; background:none; color:#8fb4c6;
+      font:inherit; font-size:clamp(9px,2vmin,11.5px); letter-spacing:.12em;
+      text-transform:uppercase; text-decoration:underline; text-underline-offset:3px; cursor:pointer;
+    }
+    #ecoutille .ec-passer:hover{color:#ffd36c}
+    #ecoutille .ec-passer:focus-visible{outline:2px solid #8ee7ff; outline-offset:2px}
+
+    /* Repère de version : discret, il dit quelle page de garde est chargée. */
     #ecoutille .ec-version{position:absolute; right:8px; bottom:6px; font-size:10px;
       letter-spacing:.08em; color:#5d7f8e; pointer-events:none}
+
+    /* Le battement rouge de l'alerte, tant que le sas est fermé. */
+    #ecoutille .ec-alerte{
+      position:absolute; inset:0; pointer-events:none; opacity:0;
+      background:
+        radial-gradient(120% 90% at 50% 50%, transparent 40%, rgba(255,30,20,.35) 78%, rgba(255,0,0,.6) 100%),
+        linear-gradient(180deg, rgba(255,40,30,.28), transparent 30%, transparent 70%, rgba(255,40,30,.28));
+      transition:opacity .25s ease;
+    }
+    #ecoutille.ec-alarme .ec-alerte{opacity:1; animation:ecAlarme 1.05s ease-in-out infinite}
+    @keyframes ecAlarme{0%,100%{opacity:.45}50%{opacity:1}}
+
+    /* Téléphone couché : on gagne de la place en hauteur. */
+    @media (orientation:landscape) and (max-height:560px){
+      #ecoutille .ec-lecture{width:min(30vw,232px); top:clamp(42px,12vmin,70px)}
+      #ecoutille .ec-consigne{display:none}
+      #ecoutille .ec-bas{padding-bottom:clamp(8px,2vmin,16px)}
+    }
+    /* Moins d'animation : le mouvement est plus court, mais l'ouverture
+       reste vivante — la lumière passe, puis l'accueil apparaît. */
+    @media (prefers-reduced-motion: reduce){
+      #ecoutille .ec-coque{transition:transform .28s ease}
+      #ecoutille.ec-alarme .ec-alerte{animation:none; opacity:.6}
+      #ecoutille .ec-start::after{animation:none; opacity:.5}
+    }
   </style>
 
   <!-- ===== PAGE DE GARDE : DÉCISION PRISE AVANT LE PREMIER RENDU =====
@@ -227,10 +336,8 @@
   </script>
   <link rel="stylesheet" href="css/index.css?v=54">
   <link rel="stylesheet" href="css/hublots.css?v=15">
-  <!-- Page de garde « ÉCOUTILLE » (premier chargement) : feuille dédiée,
-       chargée en dernier pour pouvoir habiller son écran par-dessus tout
-       le reste du site (z-index 13000). -->
-  <link rel="stylesheet" href="css/ecoutille.css?v=4">
+  <!-- Page de garde « ÉCOUTILLE » : son style est écrit DANS la page (voir
+       le socle dans le <head>) — rien à charger, rien qui puisse manquer. -->
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
        principal : les scripts différés s'exécutent dans l'ordre du
@@ -247,214 +354,82 @@
   <noscript><style>#ecoutille{display:none !important}</style></noscript>
   <!-- Animation d'incitation à installer l'app : tempête → eaux sereines. -->
   <script src="install-promo.js?v=7" defer></script>
-  <!-- Moteur de la page de garde (journal de bord, iris, ouverture).
+  <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=5" defer></script>
+  <script src="ecoutille.js?v=6" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
-     PAGE DE GARDE — L'ÉCOUTILLE DU NAUTILUS
-     Au premier chargement, c'est la seule chose que voit le visiteur, et
-     rien n'est accessible tant que le BOUTON ROUGE « START » n'a pas été
-     frappé. Pourquoi un bouton, et non un simple clic n'importe où ?
-     Parce qu'un navigateur n'ouvre le son qu'après un VRAI geste de
-     l'utilisateur : ce clic est le sas par lequel passent le sonar du bord,
-     la frappe de l'ordre de mission et toutes les animations de l'accueil.
-     Les 8 pales forment un diaphragme d'optique : chaque pale est un disque
-     de rayon 290 dont le centre est à 210 du pivot, et les arcs passent TOUS
-     par le centre de l'écoutille — fermées, elles couvrent 100 % du disque
-     (vérifié point par point) ; chaque pale bascule de 88° autour de son
-     pivot et glisse de 295 unités vers l'extérieur, assez pour se retirer
-     entièrement derrière le bord de l'écoutille : l'ouverture est TOTALE
-     (100 %), aucun anneau de métal ne subsiste au bord du trou avant
-     l'éclat — sinon on voit un cercle opaque qui bloque la fin de
-     l'animation. Structure : css/ecoutille.css habille, ecoutille.js anime.
+     PAGE DE GARDE — L'ÉCOUTILLE DU NAUTILUS  (« garde v6 », dessin simple)
+     Au premier chargement, c'est la seule chose que voit le visiteur, et rien
+     n'est accessible tant que le BOUTON ROUGE « START » n'a pas été frappé.
+     Pourquoi un bouton, et non un simple clic n'importe où ? Parce qu'un
+     navigateur n'ouvre le son qu'après un VRAI geste de l'utilisateur : ce
+     clic est le sas par lequel passent le sonar du bord, la frappe de l'ordre
+     de mission et toutes les animations de l'accueil.
+
+     L'OUVERTURE, EN UNE PHRASE : la coque blindée se lève d'un bloc, la
+     lumière du sas passe, l'accueil apparaît. C'est tout. Pas de pales, pas
+     de masque, pas de découpage, pas de caméra, aucune image à charger :
+     uniquement du transform et de l'opacité, les deux propriétés que tous
+     les moteurs animent sans se tromper — iPhone compris.
+     Le style est écrit DANS cette page (voir le socle dans le <head>) ;
+     ecoutille.js anime le journal, l'alarme et l'ouverture.
      ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="ecoutille" role="dialog" aria-modal="true" aria-label="Écoutille du Nautilus — appuie sur START pour embarquer">
-  <!-- Un seul bloc qui tremble quand la coque travaille : cloison + iris. -->
-  <div class="ec-secousseur">
 
-    <!-- LA CLOISON BLINDÉE : le trou de l'écoutille est découpé dans son
-         centre par un masque dont le rayon suit --ec-k (voir la feuille). -->
-    <div class="ec-voile">
-      <div class="ec-toles"></div>
-      <div class="ec-rivets"></div>
-      <div class="ec-chevrons"></div>
+  <!-- LA LUMIÈRE DU SAS : posée DERRIÈRE la coque, donc invisible tant que
+       la coque est fermée. Elle est découverte quand la coque se lève, et
+       c'est son fondu qui révèle l'accueil du jeu. -->
+  <div class="ec-lueur" aria-hidden="true"></div>
 
-      <!-- LA BAGUE : anneau boulonné qui encadre l'écoutille. -->
-      <svg class="ec-bague" viewBox="0 0 1000 1000" aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id="ecAcierBague" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#b9c4cc"/>
-            <stop offset=".35" stop-color="#79848d"/>
-            <stop offset=".62" stop-color="#414b54"/>
-            <stop offset="1" stop-color="#161d23"/>
-          </linearGradient>
-          <linearGradient id="ecJoncBague" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#ffe6a8"/>
-            <stop offset="1" stop-color="#c9902a"/>
-          </linearGradient>
-          <radialGradient id="ecTeteBoulon" cx=".35" cy=".3" r=".75">
-            <stop offset="0" stop-color="#dfe7ec"/>
-            <stop offset=".55" stop-color="#79848d"/>
-            <stop offset="1" stop-color="#232b31"/>
-          </radialGradient>
-        </defs>
-        <circle cx="500" cy="500" r="575" fill="url(#ecAcierBague)"/>
-        <circle cx="500" cy="500" r="500" fill="#0b1015"/>
-        <circle cx="500" cy="500" r="530" fill="none" stroke="url(#ecJoncBague)" stroke-width="7"/>
-        <circle cx="500" cy="500" r="568" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="3"/>
-        <circle cx="500" cy="500" r="556" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="8"/>
-        <g fill="url(#ecTeteBoulon)" stroke="rgba(0,0,0,.55)" stroke-width="2">
-          <circle cx="500" cy="38" r="17"/><circle cx="500" cy="962" r="17"/>
-          <circle cx="38" cy="500" r="17"/><circle cx="962" cy="500" r="17"/>
-          <circle cx="173.4" cy="173.4" r="17"/><circle cx="826.6" cy="173.4" r="17"/>
-          <circle cx="173.4" cy="826.6" r="17"/><circle cx="826.6" cy="826.6" r="17"/>
-          <circle cx="316" cy="94" r="17"/><circle cx="684" cy="94" r="17"/>
-          <circle cx="316" cy="906" r="17"/><circle cx="684" cy="906" r="17"/>
-          <circle cx="94" cy="316" r="17"/><circle cx="94" cy="684" r="17"/>
-          <circle cx="906" cy="316" r="17"/><circle cx="906" cy="684" r="17"/>
-        </g>
-      </svg>
+  <!-- LA COQUE BLINDÉE : opaque, elle se lève d'un bloc. -->
+  <div class="ec-coque">
+    <div class="ec-toles" aria-hidden="true"></div>
+    <div class="ec-rivets" aria-hidden="true"></div>
 
-      <!-- L'ORDINATEUR DE BORD : bande de lecture + voyants de contrôle. -->
-      <div class="ec-haut">
-        <div class="ec-marque">
-          <b>Mission Nautilus</b>
-          <span>Poste de plongée · cloison étanche n°7</span>
-        </div>
-        <div class="ec-plaque">Protocole d'embarquement</div>
-        <!-- LA BALISE ROUGE D'ALERTE : elle bat pendant l'alarme. -->
-        <div class="ec-balise" aria-hidden="true"></div>
+    <!-- LE POSTE : marque, plaque, balise d'alerte. -->
+    <div class="ec-haut">
+      <div class="ec-marque">
+        <b>Mission Nautilus</b>
+        <span>Poste de plongée · cloison étanche n°7</span>
       </div>
-      <div class="ec-lecture">
-        <p class="ec-lecture-titre">Journal de bord — automatique</p>
-        <ul class="ec-lecture-liste" id="ecJournal"><li>CONNEXION AU POSTE DE PLONGÉE</li><span class="ec-curseur"></span></ul>
-      </div>
-      <div class="ec-voyants">
-        <div class="ec-voyant vert"><i></i>Coque étanche</div>
-        <div class="ec-voyant ambre"><i></i>Sas sous pression</div>
-        <div class="ec-voyant rouge"><i></i>Écoutille verrouillée</div>
-      </div>
-
+      <div class="ec-plaque">Protocole d'embarquement</div>
+      <div class="ec-balise" aria-hidden="true"></div>
     </div>
 
-    <!-- Hors de la cloison : ce qui doit rester visible DANS le trou.
-         Les pales d'abord, la lumière du sas ensuite (elle éclaire le bord). -->
-    <div class="ec-iris">
-      <div class="ec-lueur"></div>
-      <svg class="ec-pales" viewBox="0 0 1000 1000" aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id="ecAcierPale" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#d5dde3"/>
-            <stop offset=".38" stop-color="#939fa9"/>
-            <stop offset=".72" stop-color="#69737c"/>
-            <stop offset="1" stop-color="#39424a"/>
-          </linearGradient>
-          <linearGradient id="ecOmbrePale" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#0a0f13" stop-opacity="0"/>
-            <stop offset=".72" stop-color="#0a0f13" stop-opacity=".28"/>
-            <stop offset="1" stop-color="#0a0f13" stop-opacity=".62"/>
-          </linearGradient>
-        </defs>
-          <g class="ec-pale" transform="rotate(0 500 500)">
-            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
-              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
-              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
-              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
-              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
-            </g>
-          </g>
-          <g class="ec-pale" transform="rotate(45 500 500)">
-            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
-              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
-              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
-              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
-              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
-            </g>
-          </g>
-          <g class="ec-pale" transform="rotate(90 500 500)">
-            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
-              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
-              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
-              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
-              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
-            </g>
-          </g>
-          <g class="ec-pale" transform="rotate(135 500 500)">
-            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
-              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
-              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
-              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
-              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
-            </g>
-          </g>
-          <g class="ec-pale" transform="rotate(180 500 500)">
-            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
-              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
-              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
-              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
-              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
-            </g>
-          </g>
-          <g class="ec-pale" transform="rotate(225 500 500)">
-            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
-              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
-              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
-              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
-              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
-            </g>
-          </g>
-          <g class="ec-pale" transform="rotate(270 500 500)">
-            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
-              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
-              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
-              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
-              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
-            </g>
-          </g>
-          <g class="ec-pale" transform="rotate(315 500 500)">
-            <g class="ec-pale-bascule" transform="translate(0 0) rotate(0 500 0)">
-              <circle class="ec-pale-corps" cx="500" cy="210" r="290"/>
-              <circle class="ec-pale-ombre" cx="500" cy="210" r="290"/>
-              <path class="ec-pale-creux" d="M500 500A290 290 0 0 1 500-80L500-40A250 250 0 0 0 500 500Z"/>
-              <path class="ec-pale-fil" d="M276.7 105A290 290 0 0 1 723.3 105"/>
-            </g>
-          </g>
-      </svg>
+    <!-- LE JOURNAL DE BORD : l'ordinateur du bord tape tout seul. -->
+    <div class="ec-lecture">
+      <p class="ec-lecture-titre">Journal de bord — automatique</p>
+      <ul class="ec-lecture-liste" id="ecJournal"><li>CONNEXION AU POSTE DE PLONGÉE</li><span class="ec-curseur"></span></ul>
     </div>
-    <div class="ec-halo"></div>
-    <div class="ec-grain"></div>
-    <div class="ec-vignette"></div>
-    <div class="ec-alerte"></div>
+
+    <!-- LA COMMANDE : le bouton rouge d'alarme. -->
+    <div class="ec-bas">
+      <p class="ec-panneau-titre">Décompression du sas — ouverture manuelle</p>
+      <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir le sas et lancer le sonar du bord">
+        <span class="ec-dome" aria-hidden="true"></span>
+        <span class="ec-start-label">START</span>
+      </button>
+      <p class="ec-consigne">Appuie sur <b>START</b> : le sas s'ouvre, le sonar s'allume et le bord se réveille.</p>
+      <button id="ecPasser" class="ec-passer" type="button">Passer l'intro</button>
+      <span class="ec-version">garde v6</span>
+    </div>
   </div>
 
-  <!-- LA COMMANDE : le bouton rouge d'alarme. -->
-  <div class="ec-bas">
-    <p class="ec-panneau-titre">Décompression du sas — ouverture manuelle</p>
-    <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir l'écoutille et lancer le sonar du bord">
-      <span class="ec-dome" aria-hidden="true"></span>
-      <span class="ec-start-label">START</span>
-    </button>
-    <p class="ec-consigne">Appuie sur <b>START</b> : l'écoutille s'ouvre, le sonar s'allume et le bord se réveille.</p>
-    <button id="ecPasser" class="ec-passer" type="button">Passer l'intro</button>
-  <span class="ec-version">garde v5</span>
-  </div>
-  <div class="ec-cinema ec-cinema--haut"></div>
-  <div class="ec-cinema ec-cinema--bas"></div>
-  <div class="ec-flash"></div>
-  <div class="ec-flare"></div>
+  <!-- Le battement rouge de l'alerte, par-dessus la coque. -->
+  <div class="ec-alerte" aria-hidden="true"></div>
 </div>
 
 <!-- ═══════════ SOCLE — LE CLIC ═══════════
      Ce mini-script est écrit DANS la page : le bouton rouge peut donc ouvrir
      l'écoutille même si ecoutille.js n'arrive pas (réseau, cache, fichier
-     manquant). Il fait le strict nécessaire : effacer l'écoutille, rendre le
-     défilement à l'accueil, prévenir le reste du site.
+     manquant). Il fait la même ouverture que le moteur, en plus court : la
+     coque se lève, la lumière passe, la page de garde s'en va.
      Quand ecoutille.js se charge, il RETIRE ce gestionnaire et prend la main
-     pour l'ouverture cinématique (voir « SECOURS » dans ecoutille.js).
+     pour l'ouverture complète (sons, journal, révélation).
      Sans lui, un visiteur enfermé derrière une cloison ne pourrait plus rien
      faire : c'est la garantie qu'un clic ouvre TOUJOURS. -->
 <script>
@@ -476,9 +451,13 @@
     html.classList.remove('ec-bloque');
     html.classList.add('ec-arrivee');
     try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
-    racine.style.transition = 'opacity .55s ease';
-    racine.style.opacity = '0';
-    setTimeout(function(){ if(racine.parentNode) racine.parentNode.removeChild(racine); }, 600);
+    /* La coque se lève, la lumière passe, la page de garde s'efface. */
+    racine.classList.add('ec-levee');
+    setTimeout(function(){ racine.classList.add('ec-lumiere-sortie'); }, 520);
+    setTimeout(function(){
+      racine.classList.add('ec-passee');
+      setTimeout(function(){ if(racine.parentNode) racine.parentNode.removeChild(racine); }, 60);
+    }, 1180);
     try{ window.dispatchEvent(new CustomEvent('nautilus:ecoutille-ouverte')); }catch(e){}
   }
 
