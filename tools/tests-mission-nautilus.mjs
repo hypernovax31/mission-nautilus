@@ -464,6 +464,154 @@ ok('le service worker précache exactement ces versions',
    sw.includes("'./css/ecoutille.css?v=" + versionCSS + "'") && sw.includes("'./ecoutille.js?v=" + versionJS + "'"));
 
 /* =====================================================================
+   7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL
+   ---------------------------------------------------------------------
+   Rappel du bug signalé : « le but de l'animation d'accueil est
+   d'activer tous les sons de la page ; ça ne fonctionne pas ».
+   Cause : le clic sur START ne débloquait que ce qui EXISTAIT déjà à cet
+   instant (l'ambiance, le contexte des hublots). Tout le reste naissait
+   ou se jouait PLUS TARD, hors du geste :
+     · le contexte privé de la frappe, créé une seconde après la
+       révélation — sur iOS, un contexte né hors geste reste suspendu et
+       resume() n'est accepté que dans la pile de l'événement ;
+     · les lecteurs <audio> des alarmes (mission, révélation d'équipage),
+       jamais lancés dans un geste, donc verrouillés ;
+     · l'ambiance elle-même, dont le play() était différé de 80 ms.
+   Ces tests verrouillent les quatre règles qui réparent cela.
+   ===================================================================== */
+titre('7. Sons de l’accueil débloqués par le clic sur START (page de garde)');
+
+ok('la frappe de l’ordre de mission vit sur le contexte audio PARTAGÉ',
+   /function _openTypeAudio\(\)\{[\s\S]{0,400}sfxContext\(\)/.test(accueil),
+   'c’est ce contexte-là qui est créé et réveillé dans le clic sur START');
+ok('plus aucun contexte privé pour la frappe (né hors geste = suspendu sur iOS)',
+   !/_typeCtx/.test(accueil));
+ok('le bus de frappe est préparé dans le PREMIER geste, avec l’alarme de fin et Victoire',
+   /surPremierGeste\(\(\) => \{ chargerSonAlarmeFin\(\); chargerSonVictoire\(\); \}, 3\);/.test(accueil));
+ok('le contexte partagé n’est jamais fermé par la frappe (sinon retour au bug)',
+   !/function _closeTypeAudio\(\)\{[\s\S]{0,400}\.close\(\)/.test(accueil));
+
+ok('une veille réveille le contexte partagé DANS la pile du geste (règle iOS)',
+   accueil.includes('function _veillerContextePartage()') &&
+   /if\(_sfxCtx\.state === 'suspended'\) _sfxCtx\.resume\(\)/.test(accueil));
+ok('la veille n’écoute que de VRAIS gestes (ni mousemove, ni scroll)',
+   accueil.includes("const VRAIS_GESTES = ['pointerdown','touchstart','mousedown','keydown','click','touchend'];"));
+ok('la veille se retire une fois le contexte en marche (aucun écouteur qui traîne)',
+   /if\(_sfxCtx\.state === 'running'\)\{[\s\S]{0,300}removeEventListener/.test(accueil));
+
+ok('l’ambiance est démasquée DANS le geste, sans attendre les 80 ms',
+   /if\(a\.paused\) return _demasquerAmbiance\(a\);[\s\S]{0,400}setTimeout\(resolve, 80\)/.test(accueil),
+   'sinon, sur iOS, le play() arrivait après la fenêtre du geste');
+ok('le démasquage est écrit UNE fois (deux appels, même code)',
+   (accueil.match(/return _demasquerAmbiance\(a\);/g) || []).length === 2 &&
+   accueil.includes('function _demasquerAmbiance(a){'));
+
+ok('l’alarme de mission essaie Web Audio AVANT le lecteur <audio>',
+   accueil.indexOf('if(jouerAlarmeFinWebAudio(durationMs || 6300)) return;') > 0 &&
+   accueil.indexOf('if(jouerAlarmeFinWebAudio(durationMs || 6300)) return;') <
+     accueil.indexOf("const alarmAudio = document.getElementById('alarmAudio');",
+       accueil.indexOf('function playSubmarineAlarm')), 'le <audio> reste le repli');
+ok('la révélation d’un équipage joue Victoire.mp3 par Web Audio d’abord',
+   /function playAlarmOnce\(\)\{[\s\S]{0,3000}if\(jouerVictoireWebAudio\(0, finish\)\)/.test(accueil));
+ok('Victoire.mp3 est téléchargée et décodée dans le premier geste, sans être jouée',
+   /function chargerSonVictoire\(\)\{[\s\S]{0,500}decodeAudioData/.test(accueil));
+ok('sonar coupé : les deux lecteurs Web Audio refusent de jouer',
+   /function jouerVictoireWebAudio\(offset, onEnded\)\{\s*if\(!isSoundEnabled\(\)\) return false;/.test(accueil) &&
+   /function jouerAlarmeFinWebAudio\(dureeMs\)\{\s*if\(!isSoundEnabled\(\)\) return false;/.test(accueil));
+ok('hors écran : la source Web Audio s’arrête et retient sa position',
+   accueil.includes('_revealOffset = _positionVictoire();') &&
+   accueil.includes('function _positionVictoire()') &&
+   /_revealVoix\.arreter\(\)/.test(accueil));
+ok('un arrêt volontaire ne passe pas pour une fin d’annonce',
+   /src\.onended = \(\) => \{\s*if\(stoppe\) return;/.test(accueil));
+
+/* --- Comportement RÉEL des nouveaux lecteurs, sur un faux contexte -------
+   On extrait les deux fonctions du fichier et on les fait tourner avec un
+   faux Web Audio : c'est le seul moyen de prouver, sans navigateur, que
+   l'annonce se termine bien à la fin du son, qu'un arrêt volontaire (bloc
+   sorti de l'écran) ne la termine PAS, et que la position de reprise est
+   juste — y compris après une extinction qui fige l'horloge du contexte. */
+const sourceVictoire = accueil.slice(
+  accueil.indexOf('function jouerVictoireWebAudio(offset, onEnded){'),
+  accueil.indexOf('/* Preparation au premier geste : TELECHARGEMENT + DECODAGE uniquement.')
+);
+if (!sourceVictoire) { console.log('  ❌ lecteurs Web Audio introuvables dans index.html'); process.exit(1); }
+
+const fabriqueLecteurs = new Function(`
+  let _revealVoix = null, _revealEnCours = false, _revealOffset = 0, _revealFin = null;
+  let _victoireBuffer = { duration: 4.1 };
+  let _son = true, _ctx = null;
+  function isSoundEnabled(){ return _son; }
+  function sfxContext(){ return _ctx; }
+  ${sourceVictoire}
+  return {
+    jouerVictoireWebAudio, _positionVictoire,
+    poserCtx: c => { _ctx = c; },
+    couper: v => { _son = v; },
+    voix: () => _revealVoix,
+    buffer: () => { const b = _victoireBuffer; _victoireBuffer = null; return b; },
+    rendre: b => { _victoireBuffer = b; }
+  };
+`);
+
+function fauxContexte(){
+  const ctx = {
+    currentTime: 0,
+    destination: {},
+    derniereSource: null,
+    createBufferSource(){
+      const s = { buffer: null, onended: null, debut: null, arretee: false,
+        connect(){ }, start(q, offset){ s.debut = [q, offset]; },
+        stop(){ s.arretee = true; if (s.onended) s.onended(); } };
+      ctx.derniereSource = s;
+      return s;
+    },
+    createGain(){ return { gain: { value: 1 }, connect(){ } }; }
+  };
+  return ctx;
+}
+
+const L = fabriqueLecteurs();
+const ctxA = fauxContexte();
+L.poserCtx(ctxA);
+let finsNaturelles = 0;
+ok('Web Audio : le son part depuis le début et prévient à sa fin',
+   L.jouerVictoireWebAudio(0, () => { finsNaturelles++; }) === true &&
+   ctxA.derniereSource.debut.join(',') === '0,0');
+ctxA.currentTime = 1.5;
+ok('Web Audio : la position de reprise suit l’horloge du contexte (' + L._positionVictoire().toFixed(2) + ' s)',
+   Math.abs(L._positionVictoire() - 1.5) < 0.001);
+ctxA.derniereSource.onended();
+ok('Web Audio : la fin naturelle termine l’annonce une seule fois',
+   finsNaturelles === 1 && L.voix() === null);
+
+/* Mise en pause du bloc : on arrête la source, et sa fin ne doit PAS
+   compter comme une fin d'annonce (sinon la file des révélations
+   s'enchaînerait pendant que le joueur regarde ailleurs). */
+const ctxB = fauxContexte();
+L.poserCtx(ctxB);
+let finsPendantPause = 0;
+L.jouerVictoireWebAudio(0, () => { finsPendantPause++; });
+ctxB.currentTime = 2.0;
+const position = L._positionVictoire();
+L.voix().arreter();
+ok('Web Audio : un arrêt volontaire ne termine pas l’annonce (position retenue ' + position.toFixed(2) + ' s)',
+   finsPendantPause === 0 && Math.abs(position - 2.0) < 0.001);
+ok('Web Audio : la reprise repart de la position retenue',
+   L.jouerVictoireWebAudio(position, () => {}) === true &&
+   ctxB.derniereSource.debut.join(',') === '0,2');
+
+/* Sonar coupé : aucun chemin Web Audio ne joue (règle absolue du son). */
+L.couper(false);
+ok('Web Audio : sonar coupé = aucune lecture, même décodée',
+   L.jouerVictoireWebAudio(0, () => {}) === false);
+L.couper(true);
+const garde = L.buffer();
+ok('Web Audio : sans fichier décodé, on renvoie false (le <audio> prend le relais)',
+   L.jouerVictoireWebAudio(0, () => {}) === false);
+L.rendre(garde);
+
+/* =====================================================================
    RÉSULTAT
    ===================================================================== */
 console.log('\n' + (echoues ? '❌ ' : '✅ ') + reussis + ' test(s) réussi(s), ' + echoues + ' échec(s).');

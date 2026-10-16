@@ -1217,6 +1217,16 @@
   let _blipByTeam = {};         // teamCode -> numero de blip (1..5)
   let _lastTeams = [];          // dernier etat connu des equipes actives
 
+  /* Etat du SIGNAL DE VICTOIRE (Victoire.mp3), partage entre playAlarmOnce()
+     (qui le lance et attend sa fin) et setRadarPaused() (qui le met en pause
+     quand le joueur quitte le bloc des yeux). Deux chemins de lecture
+     coexistent : Web Audio d'abord (source suivie ici, source de verite des
+     positions), <audio> en repli — voir jouerVictoireWebAudio(). */
+  let _revealVoix = null;       // { src, debut, offset, stoppe } : source Web Audio en cours
+  let _revealEnCours = false;   // un signal de victoire est en cours de lecture
+  let _revealOffset = 0;        // position (s) ou reprendre apres une pause
+  let _revealFin = null;        // a appeler quand le signal se termine
+
   /* Note audio : les navigateurs n'autorisent la lecture qu'apres un VRAI
      geste (clic/tap/touche). Si l'utilisateur n'a fait que scroller,
      l'alarme peut rester muette : l'animation se deroule quand meme grace
@@ -1243,11 +1253,34 @@
     if(stage) stage.classList.toggle('anim-idle', paused);
     // Le signal de victoire est mis en pause lui aussi : si le joueur revient,
     // le son reprend où il en était au lieu d'avoir joué dans le vide.
-    const a = document.getElementById('revealAlarmAudio');
-    if(a){
-      if(paused){ if(!a.paused) a.pause(); }
-      else if(a.dataset.revealPlaying === '1' && a.paused){ a.play().catch(() => {}); }
+    if(paused){
+      /* Web Audio : on arrete la source et on retient la position exacte
+         atteinte — c'est elle qui servira a reprendre. arreter() marque la
+         source comme arretee volontairement : sa fin ne doit pas passer
+         pour une fin d'annonce. */
+      if(_revealVoix){
+        _revealOffset = _positionVictoire();
+        _revealVoix.arreter();
+        _revealVoix = null;
+      }
+      const a = document.getElementById('revealAlarmAudio');
+      if(a && !a.paused) a.pause();
+      return;
     }
+    /* Retour sous les yeux du joueur : on reprend ou l'on s'etait arrete.
+       Le chemin Web Audio repart de la position retenue ; le <audio>, lui,
+       se contente de reprendre (il n'a jamais bouge de place). */
+    if(!_revealEnCours){
+      const c = document.getElementById('revealAlarmAudio');
+      if(c && c.dataset.revealPlaying === '1' && c.paused){ c.play().catch(() => {}); }
+      return;
+    }
+    if(_revealVoix) return;                 /* deja en train de jouer */
+    const reprise = _revealOffset;
+    _revealOffset = 0;
+    if(_victoireBuffer && jouerVictoireWebAudio(reprise, _revealFin)) return;
+    const a = document.getElementById('revealAlarmAudio');
+    if(a && a.dataset.revealPlaying === '1' && a.paused){ a.play().catch(() => {}); }
   }
 
   (function watchRadarVisibility(){
@@ -1874,7 +1907,16 @@
     }
   }
 
-  /* Joue le signal de victoire une seule fois et résout à la fin du son. */
+  /* Joue le signal de victoire une seule fois et résout à la fin du son.
+     DEUX CHEMINS, dans cet ordre :
+       1. WEB AUDIO — Victoire.mp3 est décodée EN SILENCE dans le geste qui
+          ouvre l'écoutille (chargerSonVictoire, rang 3). La lecture tient
+          alors même quand c'est le RÉSEAU qui la déclenche : le contexte
+          partagé est débloqué pour de bon, exactement ce que la page de
+          garde promettait. C'est le seul chemin fiable sur iOS, où un
+          <audio> jamais lancé dans un geste refuse de jouer.
+       2. <audio> #revealAlarmAudio — repli inchangé (navigateur sans Web
+          Audio, ou décodage pas encore prêt). */
   function playAlarmOnce(){
     return new Promise(resolve => {
       // Sonar eteint : pas de son, mais l'animation garde son rythme
@@ -1895,6 +1937,9 @@
       const finish = () => {
         if(done) return;
         done = true;
+        _revealEnCours = false;
+        _revealFin = null;
+        _revealOffset = 0;
         a.onended = null;
         a.dataset.revealPlaying = '0';
         clearInterval(watchdog);
@@ -1912,6 +1957,20 @@
         waited += 200;
         if(waited >= REVEAL_SOUND_FALLBACK_MS + 900) finish();
       }, 200);
+
+      /* 1er choix : le signal décodé, joué sur le contexte partagé.
+         La source est suivie dans _revealVoix pour que setRadarPaused()
+         puisse l'arrêter et la reprendre où elle en était. */
+      _revealEnCours = true;
+      _revealFin = finish;
+      _revealOffset = 0;
+      if(jouerVictoireWebAudio(0, finish)){
+        a.dataset.revealPlaying = '0';   // le <audio> n'est pas utilisé
+        return;
+      }
+
+      /* 2e choix : le lecteur <audio> (repli). */
+      _revealVoix = null;
       a.onended = finish;
       try{
         a.pause();
@@ -4397,6 +4456,37 @@ function qrDataUri(text, opts){
     return _sfxCtx;
   }
 
+  /* ===== VEILLE DU CONTEXTE PARTAGE : ON LE REVEILLE DANS LE GESTE =====
+
+     Le contexte partage est cree par le premier « premier geste » observe
+     sur la page — et cet evenement n'est PAS forcement un geste pour le
+     navigateur : la liste surveillee comprend aussi le DEPLACEMENT DE
+     SOURIS, le DEFILEMENT et la MOLETTE, qui ne comptent pas comme
+     activation. Un contexte ne a cet instant-la nait donc suspendu, et
+     WebKit (iOS/Safari) refuse ensuite tout resume() venu d'un minuteur :
+     il exige d'etre rappele DANS LA PILE d'un vrai evenement utilisateur.
+
+     Cette veille minuscule comble exactement ce trou : a chaque vrai
+     geste (doigt pose, souris cliquee, touche enfoncee), si le contexte
+     dort encore, on le reveille — et des qu'il tourne, la veille se
+     retire d'elle-meme : plus un seul ecouteur en place.
+     Elle ne joue AUCUN son : un resume() est muet par nature. */
+  const VRAIS_GESTES = ['pointerdown','touchstart','mousedown','keydown','click','touchend'];
+  function _veillerContextePartage(){
+    if(!_sfxCtx) return;          /* rien a reveiller : sfxContext() s'en chargera */
+    if(_sfxCtx.state === 'suspended') _sfxCtx.resume().catch(()=>{});
+    if(_sfxCtx.state === 'running'){
+      VRAIS_GESTES.forEach(evt => {
+        document.removeEventListener(evt, _veillerContextePartage, true);
+        window.removeEventListener(evt, _veillerContextePartage, true);
+      });
+    }
+  }
+  VRAIS_GESTES.forEach(evt => {
+    document.addEventListener(evt, _veillerContextePartage, { passive:true, capture:true });
+    window.addEventListener(evt, _veillerContextePartage, { passive:true, capture:true });
+  });
+
   /* Telecharge et decode le son une seule fois. */
   function chargerSonHublot(){
     if(_hublotBuffer || _hublotDecodage) return _hublotDecodage;
@@ -4635,8 +4725,11 @@ function qrDataUri(text, opts){
     }, 3);
   })();
 
-  let _typeCtx = null;        // contexte audio dedie, cree puis referme
   let _typewriterCancelled = false;
+  /* Le bus de la frappe vit sur le CONTEXTE PARTAGE (sfxContext()), celui
+     que la page de garde a cree ET reveille DANS le clic sur START — voir
+     la note de _openTypeAudio() ci-dessous. Il n'y a donc plus de contexte
+     prive pour la frappe : ni a creer, ni a refermer. */
   let _typeBus = null;        // volume general de la frappe
   /* -1 et non 0 : sur un contexte audio tout neuf, currentTime vaut ~0.
      Avec 0 comme valeur de depart, le test anti-saturation ci-dessous
@@ -4644,49 +4737,70 @@ function qrDataUri(text, opts){
      appel et AVALAIT systematiquement le clic de la premiere lettre. */
   let _typeLastAt = -1;       // garde-fou anti-saturation
 
+  /* ===== POURQUOI LE CONTEXTE DE LA FRAPPE EST CELUI DES HUBLOTS =====
+
+     BUG CORRIGE : l'ordre de mission se tapait EN SILENCE sur iPhone,
+     alors meme que la page de garde « ecoutille » venait d'etre ouverte
+     par un vrai clic — c'est-a-dire par le geste cense debloquer tous
+     les sons de l'accueil.
+
+     La frappe avait son PROPRE contexte audio, cree par _openTypeAudio()
+     au demarrage de la machine a ecrire, soit une seconde APRES la
+     revelation de l'accueil. Or un contexte qui nait hors d'un geste
+     reste suspendu, et WebKit (iOS/Safari) n'accorde resume() que s'il
+     est appele DANS LA PILE d'un evenement utilisateur : ni les trois
+     reprises de _retryTypeAudioWhileTyping() (des minuteries), ni la
+     reprise tentee lettre apres lettre par _typeClick() ne pouvaient le
+     reveiller. Le contexte restait suspendu pour toute la duree de la
+     phrase, et les 245 bips ne sortaient pas.
+
+     Desormais la frappe se branche sur le CONTEXTE PARTAGE sfxContext(),
+     celui des hublots et de l'alarme de fin d'O2 : il est cree et
+     reveille par surPremierGeste() (rang 3) PENDANT le clic qui ouvre
+     l'ecoutille, donc dans la pile du geste. C'est exactement ce que la
+     page de garde promettait : après son ouverture, tous les sons de
+     l'accueil sont debloques, y compris ceux qui naitront plus tard.
+     Benefice secondaire : un contexte Web Audio en moins sur la page
+     (les moteurs en limitent le nombre), et rien de plus a fermer. */
   function _openTypeAudio(){
-    if(_typeCtx) return _typeCtx;
+    if(_typeBus) return _typeBus.context;
     _typeLastAt = -1;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return null;
+    const ctx = sfxContext();
+    if(!ctx) return null;
     try{
-      _typeCtx = new AC();
-      /* Registre partage (NautilusSon) : couper le sonar suspend aussi les
-         bips de frappe deja programmes. */
-      if(window.NautilusSon) window.NautilusSon.registerContexte(_typeCtx);
-      _typeBus = _typeCtx.createGain();
+      _typeBus = ctx.createGain();
       /* Volume de frappe reduit : discret sous l'ambiance sonar, sans
          disparaitre completement (0,45 -> 0,15, environ moitie moins fort
          a l'oreille). */
       _typeBus.gain.value = 0.15;
-      _typeBus.connect(_typeCtx.destination);
-      /* Le contexte n'est cree qu'apres un clic sur la page (voir le
-         garde-fou dans _typeClick) : la reprise est donc deja accordee.
-         On la tente quand meme sans erreur visible ; si elle est refusee,
-         le texte continue simplement sans bip. */
-      if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
-      return _typeCtx;
-    }catch(e){ _typeCtx = null; return null; }
+      _typeBus.connect(ctx.destination);
+      return ctx;
+    }catch(e){ _typeBus = null; return null; }
   }
 
   /* Certains navigateurs accordent l'audio quelques instants après le média
-     d'ambiance muet. On retente donc brièvement le contexte des bips pendant
-     l'animation, sans jamais attendre un clic ni jouer hors écran. */
+     d'ambiance muet. On retente donc brièvement la reprise du contexte
+     partagé pendant l'animation — mais la seule reprise qui compte est
+     celle de _veillerContextePartage(), faite DANS le geste. */
   function _retryTypeAudioWhileTyping(){
     [280, 900, 2200].forEach(delay => {
       setTimeout(() => {
-        if(!_typeCtx || _typewriterCancelled || document.visibilityState !== 'visible') return;
-        if(_typeCtx.state === 'suspended') _typeCtx.resume().catch(()=>{});
+        if(!_sfxCtx || _typewriterCancelled || document.visibilityState !== 'visible') return;
+        if(_sfxCtx.state === 'suspended') _sfxCtx.resume().catch(()=>{});
       }, delay);
     });
   }
 
+  /* Fin de phrase : on detache le bus de la frappe, on ne ferme RIEN.
+     Le contexte partage appartient a toute la page (hublots, alarme de
+     fin d'O2, annonces) : le fermer ici eteindrait les autres, et le
+     refermer/recreer a chaque phrase ramenerait exactement le bug
+     ci-dessus — un contexte neuf ne serait plus debloque. Le telephone,
+     lui, ne paie rien de plus : ce contexte tournait deja. */
   function _closeTypeAudio(){
-    if(!_typeCtx) return;
-    const ctx = _typeCtx;
+    if(!_typeBus) return;
+    try{ _typeBus.disconnect(); }catch(e){ /* deja detache */ }
     _typeBus = null;
-    _typeCtx = null;
-    setTimeout(() => { try{ ctx.close(); }catch(e){} }, 400);
   }
 
   /* Un clic de touche. `fort` = vrai pour la barre d'espace et la
@@ -4787,10 +4901,11 @@ function qrDataUri(text, opts){
      Meme matiere sonore que les bips de frappe (sinus + octave discrete,
      filtres), pour que la fin appartienne au meme instrument. */
   function _typeDing(){
-    /* La clochette de fin obeit a la meme coupure hors ecran que les bips. */
-    if(!isSoundEnabled() || !_typeCtx || !_typewriterOnScreen) return;
+    /* La clochette de fin obeit a la meme coupure hors ecran que les bips,
+       et au meme bus que la frappe (contexte partage de la page). */
+    if(!isSoundEnabled() || !_typeBus || !_typewriterOnScreen) return;
     try{
-      const ctx = _typeCtx;
+      const ctx = _typeBus.context;
       /* Meme facture que les bips : sinusoides filtrees, plus de carre.
          Deux notes montantes (sol5 puis do6), une octave et demie plus bas
          qu'avant, et un peu plus longues pour qu'elles respirent. */
@@ -5216,9 +5331,84 @@ function qrDataUri(text, opts){
     }catch(e){ return false; }
   }
 
+  /* ===== REVELATION D'UN EQUIPAGE : VICTOIRE.MP3 PAR WEB AUDIO =====
+     Meme recette, meme raison que l'alarme de fin d'O2 ci-dessus : ce son
+     part d'un evenement RESEAU (un equipage decouvert par Firestore), donc
+     jamais d'un geste. Le lecteur #revealAlarmAudio restait verrouille sur
+     iOS (play() refuse hors geste tant que l'element n'a pas ete lance une
+     fois dans un geste) : la revelation se faisait en silence. On decode
+     donc Victoire.mp3 en silence au premier geste et on la joue par Web
+     Audio ; le <audio> reste le repli, inchange. */
+  let _victoireBuffer = null;       // son decode, pret a jouer
+  let _victoireDecodage = null;     // decodage en cours (evite les doublons)
+  /* (_revealVoix, _revealEnCours, _revealOffset et _revealFin sont declares
+     plus haut, pres de la file de revelation : setRadarPaused() en a besoin
+     bien avant cette section.) */
+
+  function chargerSonVictoire(){
+    if(_victoireBuffer || _victoireDecodage) return _victoireDecodage;
+    const ctx = sfxContext();
+    if(!ctx) return null;
+    _victoireDecodage = fetch('assets/Victoire.mp3')
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(buf => ctx.decodeAudioData(buf))
+      .then(dec => { _victoireBuffer = dec; return dec; })
+      .catch(() => { _victoireDecodage = null; return null; });
+    return _victoireDecodage;
+  }
+
+  /* Joue Victoire.mp3 depuis `offset` secondes (0 = depuis le debut).
+     Renvoie false si le chemin Web Audio n'est pas disponible : l'appelant
+     bascule alors sur le lecteur <audio>.
+     `onEnded` n'est appele QUE pour une fin naturelle : un arret volontaire
+     (mise en pause du bloc hors ecran) passe par voix.arreter() et ne doit
+     surtout pas terminer l'annonce en cours. */
+  function jouerVictoireWebAudio(offset, onEnded){
+    if(!isSoundEnabled()) return false;
+    if(!_victoireBuffer) return false;
+    const ctx = sfxContext();
+    if(!ctx) return false;
+    try{
+      const src = ctx.createBufferSource();
+      src.buffer = _victoireBuffer;
+      const g = ctx.createGain();
+      g.gain.value = 0.82;
+      src.connect(g);
+      g.connect(ctx.destination);
+      let stoppe = false;                    // arret volontaire, propre a CETTE source
+      const voix = {
+        src, ctx,
+        debut: ctx.currentTime,              // horloge du contexte (se fige a la suspension)
+        offset: offset || 0,
+        arreter(){ stoppe = true; try{ src.stop(); }catch(e){ /* deja arretee */ } }
+      };
+      src.onended = () => {
+        if(stoppe) return;                   // arret volontaire : l'appelant decide
+        if(_revealVoix === voix) _revealVoix = null;
+        if(typeof onEnded === 'function') onEnded();
+      };
+      _revealVoix = voix;
+      src.start(0, voix.offset);
+      return true;
+    }catch(e){ _revealVoix = null; return false; }
+  }
+
+  /* Position reelle de lecture, en secondes : l'horloge du contexte audio
+     se fige pendant une extinction generale (sonar coupe), donc ce calcul
+     reste juste meme apres un suspend()/resume(). */
+  function _positionVictoire(){
+    if(!_revealVoix) return 0;
+    const ecoule = Math.max(0, _revealVoix.ctx.currentTime - _revealVoix.debut);
+    const duree = _victoireBuffer ? _victoireBuffer.duration : 0;
+    return Math.min(duree ? duree - 0.05 : ecoule, _revealVoix.offset + ecoule);
+  }
+
   /* Preparation au premier geste : TELECHARGEMENT + DECODAGE uniquement.
-     Aucune lecture, donc aucun fragment audible possible. */
-  surPremierGeste(() => { chargerSonAlarmeFin(); }, 3);
+     Aucune lecture, donc aucun fragment audible possible. Les deux sons
+     qui partent d'un minuteur ou du reseau (alarme de fin, victoire des
+     annonces) sont prepares ici : c'est LE moment ou le navigateur
+     accorde l'audio. */
+  surPremierGeste(() => { chargerSonAlarmeFin(); chargerSonVictoire(); }, 3);
 
   function showOxygenEndAlarm(endAt){
     const key = String(endAt);
@@ -5231,7 +5421,8 @@ function qrDataUri(text, opts){
     let remaining = 5;
     count.textContent = remaining;
     /* Silence immédiat de toute la page avant l'alarme finale, y compris
-       le contexte Web Audio du typewriter et ses notes déjà programmées.
+       le bus de la frappe (contexte Web Audio partagé) et ses notes déjà
+       programmées : le bus est détaché, donc plus rien ne peut sortir.
        Les timers de frappe sont aussi annulés pour qu'aucun bip ne reparte
        au clic suivant. */
     _typewriterCancelled = true;
@@ -5526,6 +5717,24 @@ function qrDataUri(text, opts){
        rouge vit seule. Plus aucun paramètre « force » n'existe : la
        porte dérobée a été supprimée, pas seulement fermée. */
     if(!isSoundEnabled()) return;
+
+    /* PRIORITÉ AU CHEMIN WEB AUDIO (bug corrigé).
+       Cette alarme part d'un MINUTEUR (alerte reçue passivement, fin de
+       mission), jamais d'un geste. Un <audio> qui n'a jamais été lancé
+       DANS un geste reste verrouillé sur iOS : play() y est refusé, et
+       l'alarme ne sonnait pas — même après que l'écoutille eut « activé
+       les sons » de l'accueil, puisque le clic sur START ne débloque pas
+       les lecteurs <audio>, il débloque le contexte Web Audio partagé.
+       Or le fichier de cette alarme est DÉJÀ décodé au premier geste
+       (chargerSonAlarmeFin, même fichier Submarine_alarm.mp3) : on le
+       joue donc par Web Audio, en boucle, exactement la durée demandée.
+       Le lecteur <audio> reste le repli, inchangé, pour les navigateurs
+       sans Web Audio ou si le décodage n'est pas prêt. */
+    /* Sans durée demandée, le lecteur <audio> enchaînait 3 passages du
+       fichier (~2,1 s chacun) : on demande exactement la même chose au
+       Web Audio, pour que l'alarme ne raccourcisse pas au passage. */
+    if(jouerAlarmeFinWebAudio(durationMs || 6300)) return;
+
     const alarmAudio = document.getElementById('alarmAudio');
     if(!alarmAudio) return;
 
@@ -5887,6 +6096,29 @@ function qrDataUri(text, opts){
     }
   }
 
+  /* Rend l'ambiance audible pour de bon : play() + etat du bouton sonar.
+     Ecrit UNE fois, appele de deux endroits du cas 1 de startOceanAudio()
+     — tout de suite quand le demasquage a mis le lecteur en pause (pile du
+     geste de l'utilisateur), puis 80 ms plus tard en filet de securite. */
+  function _demasquerAmbiance(a){
+    a.muted = false;
+    a.volume = OCEAN_VOLUME;
+    return a.play().then(() => {
+      clearTimeout(_autoplayRecoveryTimer);
+      _autoplayRecoveryTimer = null;
+      setSonarButtonState(true);
+      return true;
+    }).catch(() => {
+      /* Refus : on repart en sourdine pour rester pret pour le prochain
+         geste (clic notamment). */
+      a.muted = true;
+      a.volume = 0;
+      a.play().catch(() => { _primedSilently = false; });
+      setSonarButtonState(false);
+      return false;
+    });
+  }
+
   /* Rend le son audible. Renvoie true si l'ambiance joue vraiment. */
   function startOceanAudio(){
     /* VERROU CENTRAL : si le joueur a coupe le sonar, rien ne doit rallumer
@@ -5900,30 +6132,22 @@ function qrDataUri(text, opts){
     if(!a) return Promise.resolve(false);
 
     // Cas 1 : la lecture muette anticipee tourne deja -> on demasque.
-    // Aucun geste requis : la lecture a deja ete accordee.
     if(_primedSilently && !a.paused){
       a.muted = false;
       a.volume = OCEAN_VOLUME;
-      // Safari peut mettre l'element en pause en le demasquant : on laisse
-      // passer une image puis on verifie qu'il joue toujours.
+      /* DEMASQUAGE DANS LA PILE DU GESTE (bug corrige) :
+         plusieurs navigateurs — Chrome compris — mettent le lecteur en
+         PAUSE a l'instant meme ou l'on leve la sourdine sans autorisation.
+         Ce play() doit alors partir TOUT DE SUITE : c'est la seule fenetre
+         ou le geste de l'utilisateur est encore valable (iOS n'accepte
+         play()/resume() que dans la pile de l'evenement). L'ancienne
+         version attendait 80 ms AVANT toute tentative : sur iOS, l'ecoutille
+         s'ouvrait, le silence durait, et l'ambiance ne demarrait jamais.
+         Le controle a 80 ms reste, mais en FILET DE SECURITE (Safari peut
+         aussi mettre en pause juste apres le demasquage). */
+      if(a.paused) return _demasquerAmbiance(a);
       return new Promise(resolve => setTimeout(resolve, 80)).then(() => {
-        if(a.paused){
-          return a.play().then(() => {
-            clearTimeout(_autoplayRecoveryTimer);
-            _autoplayRecoveryTimer = null;
-            setSonarButtonState(true);
-            return true;
-          })
-                         .catch(() => {
-                           // Refus : on repart en sourdine pour rester pret
-                           // pour le prochain geste (clic notamment).
-                           a.muted = true;
-                           a.volume = 0;
-                           a.play().catch(() => { _primedSilently = false; });
-                           setSonarButtonState(false);
-                           return false;
-                         });
-        }
+        if(a.paused) return _demasquerAmbiance(a);
         clearTimeout(_autoplayRecoveryTimer);
         _autoplayRecoveryTimer = null;
         setSonarButtonState(true);
