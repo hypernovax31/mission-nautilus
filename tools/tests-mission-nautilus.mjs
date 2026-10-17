@@ -315,12 +315,22 @@ ok('les zones de texte ne sont JAMAIS en position absolue (aucune superposition 
 ok('la commande est un bouton du flux, posé sous sa consigne',
    /#ecoutille \.ec-pied\{[\s\S]*?display:flex/.test(socleCss) &&
    !/position:absolute/.test(bloc(/#ecoutille \.ec-start\{[\s\S]*?\}/)));
+/* Le titre a changé (« Expédition dans le Nautilus » : six lettres de plus
+   que le précédent) et la pile a été recalibrée en conséquence, par le calcul
+   sur douze gabarits (iPhone debout et couché, portables, iPad, bureau, ultra-
+   large) : la marge restante est toujours d'au moins 35 px. Ces bornes sont
+   donc le résultat d'un calcul, pas d'un réglage à l'œil : les toucher sans
+   refaire le calcul ramènerait le débordement. */
 ok('le hublot a sa place réservée dans la colonne (le bas de l’écran ne bouge jamais)',
-   /#ecoutille \.ec-hublot\{[\s\S]*?width:min\(52vh, 78vw\)/.test(socleCss) &&
-   /#ecoutille \.ec-hublot\{[\s\S]*?height:min\(52vh, 78vw\)/.test(socleCss));
+   /#ecoutille \.ec-hublot\{[\s\S]*?width:min\(44vh, 78vw\)/.test(socleCss) &&
+   /#ecoutille \.ec-hublot\{[\s\S]*?height:min\(44vh, 78vw\)/.test(socleCss));
 ok('sur un écran bas, le hublot se resserre ENCORE (rien ne peut déborder)',
-   /@media \(max-height: 700px\)\{[\s\S]*?width:min\(46vh, 70vw\)/.test(socleCss) &&
-   /orientation: landscape\) and \(max-height: 500px\)[\s\S]*?width:min\(36vh, 52vw\)/.test(socleCss));
+   /@media \(max-height: 700px\)\{[\s\S]*?width:min\(40vh, 66vw\)/.test(socleCss) &&
+   /orientation: landscape\) and \(max-height: 500px\)[\s\S]*?width:min\(34vh, 48vw\)/.test(socleCss));
+ok('le titre plus long est borné pour tenir sans pousser la pile',
+   /#ecoutille \.ec-titre\{[\s\S]*?font-size:clamp\(24px, 6\.9vmin, 78px\)/.test(socleCss));
+ok('le bouton reste proportionné (170 px au plus, et non 230)',
+   /#ecoutille \.ec-start\{[\s\S]*?width:clamp\(96px, 20vmin, 170px\)/.test(socleCss));
 
 /* --- LE DÉCOR : FANTASTIQUE ET GRANDIOSE -------------------------------- */
 /* Le hublot du salon du Nautilus : la nuit des grands fonds, les rais de
@@ -444,8 +454,12 @@ ok('le moteur revérifie le format (même règle, au cas où le socle manque)',
 ok('le titre est en lettres de bronze, avec un repli doré s’il n’est pas possible',
    socleCss.includes('background-clip:text') && socleCss.includes('@supports') &&
    /\.ec-titre\{[\s\S]*?color:#f6e3b6/.test(socleCss));
-ok('le titre de la page de démarrage est bien « 20 000 Lieues à la Fnac »',
-   /<h1 class="ec-titre">20&#160;000 Lieues à la Fnac<\/h1>/.test(gardeHtml));
+ok('le titre de la page de démarrage est bien « Expédition dans le Nautilus »',
+   /<h1 class="ec-titre">Expédition dans le Nautilus<\/h1>/.test(gardeHtml));
+ok('l’ancien titre (« 20 000 Lieues à la Fnac ») a bien quitté la page de garde',
+   !gardeHtml.includes('Lieues à la Fnac'));
+ok('la phrase des lecteurs d’écran porte le même titre',
+   /class="ec-lu">Expédition dans le Nautilus —/.test(gardeHtml));
 ok('l’ancien titre (« Mission Nautilus ») n’est plus le titre de la garde',
    !/<h1 class="ec-titre">[^<]*Mission Nautilus/.test(gardeHtml));
 ok('la mention dit maintenant que c’est d’après Jules Verne',
@@ -703,8 +717,10 @@ const versionCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]
 ok('le moteur de la garde est en version 10 ou plus (v' + versionJS + ')', versionJS >= 10);
 ok('le service worker précache EXACTEMENT cette version',
    sw.includes("'./ecoutille.js?v=" + versionJS + "'"));
-ok('le cache du service worker a été relevé pour cette refonte (v' + versionCache + ')',
-   versionCache >= 309);
+/* index.html est dans le PRECACHE : changer le titre de la garde sans relever
+   ce numéro laisserait l'ancien titre en cache sur les appareils déjà venus. */
+ok('le cache du service worker a été relevé après le changement de titre (v' + versionCache + ')',
+   versionCache >= 310);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL

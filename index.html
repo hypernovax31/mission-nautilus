@@ -137,18 +137,18 @@
       /* La taille est BORNÉE par la hauteur ET par la largeur : entre le
          titre et le bouton, le hublot ne peut jamais les pousser dehors, même
          sur un téléphone couché. */
-      width:min(52vh, 78vw); height:min(52vh, 78vw);
+      width:min(44vh, 78vw); height:min(44vh, 78vw);
       margin:clamp(2px, 1vmin, 10px) 0;
       filter:drop-shadow(0 2vmin 5vmin rgba(0,0,0,.75));
     }
     /* Écran bas (téléphone couché, petite fenêtre) : on resserre encore. */
     @media (max-height: 700px){
-      #ecoutille .ec-hublot{ width:min(46vh, 70vw); height:min(46vh, 70vw) }
+      #ecoutille .ec-hublot{ width:min(40vh, 66vw); height:min(40vh, 66vw) }
     }
     @media (orientation: landscape) and (max-height: 500px){
       /* Calculé, pas deviné : sur 390 px de haut, titre + hublot + bouton
          dépassaient de ~45 px. On resserre donc le hublot ET les marges. */
-      #ecoutille .ec-hublot{ width:min(36vh, 52vw); height:min(36vh, 52vw); margin:0 }
+      #ecoutille .ec-hublot{ width:min(34vh, 48vw); height:min(34vh, 48vw); margin:0 }
       #ecoutille .ec-scene{ padding:8px 18px; gap:6px }
       #ecoutille .ec-titre{ font-size:clamp(22px, 6.4vmin, 40px) }
       #ecoutille .ec-sous-titre{ display:none }
@@ -365,7 +365,11 @@
     }
     #ecoutille .ec-titre{
       margin:0; font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;
-      font-size:clamp(31px, 8.6vmin, 104px); line-height:.94; letter-spacing:.03em;
+      /* « EXPÉDITION DANS LE NAUTILUS » est plus long que l'ancien titre :
+         les bornes sont resserrées pour qu'il tienne sur une ligne sur
+         grand écran, et deux au pire sur téléphone — sans jamais pousser
+         le hublot ni le bouton hors de la page. */
+      font-size:clamp(24px, 6.9vmin, 78px); line-height:.94; letter-spacing:.02em;
       text-transform:uppercase; color:#f6e3b6;
       text-shadow:0 4px 0 rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.7);
     }
@@ -462,7 +466,7 @@
     }
     #ecoutille .ec-consigne b{color:#ffd36c}
     #ecoutille .ec-start{
-      position:relative; width:clamp(112px, 26vmin, 230px); aspect-ratio:1;
+      position:relative; width:clamp(96px, 20vmin, 170px); aspect-ratio:1;
       padding:0; margin:0; border:0; background:none; cursor:pointer;
       display:grid; place-items:center; border-radius:50%;
     }
@@ -711,7 +715,7 @@
         <span>2.39:1 · 24 i/s · prise 12</span>
       </div>
       <p class="ec-verne">D&#8217;après Jules Verne</p>
-      <h1 class="ec-titre">20&#160;000 Lieues à la Fnac</h1>
+      <h1 class="ec-titre">Expédition dans le Nautilus</h1>
       <div class="ec-regle" aria-hidden="true"></div>
       <p class="ec-sous-titre">Sous les mers, à bord du Nautilus</p>
     </header>
@@ -757,7 +761,7 @@
   <div class="ec-flash" aria-hidden="true"></div>
 
   <!-- Ce que lisent les lecteurs d'écran (le décor ci-dessus est muet). -->
-  <p class="ec-lu">20 000 Lieues à la Fnac — d'après Jules Verne. Derrière le hublot du Nautilus, la mer et le bateau. Appuie sur START pour ouvrir le sas et lancer l'aventure.</p>
+  <p class="ec-lu">Expédition dans le Nautilus — d'après Jules Verne. Derrière le hublot du Nautilus, la mer et le bateau. Appuie sur START pour ouvrir le sas et lancer l'aventure.</p>
 </div>
 
 <!-- ═══════════ SOCLE — LE CLIC ═══════════
