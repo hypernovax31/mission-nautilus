@@ -9,10 +9,9 @@
      1. on entre par le hublot du salon du Nautilus : la nuit des grands
         fonds, les rais de lumière, les bulles, les échos du sonar, et le
         bateau noir qui traverse l'écran, ses hublots allumés ;
-     2. la console du bord travaille : six cadrans qui DONNENT DES CHIFFRES
-        réels ou calculés (l'horloge du visiteur, la pression déduite de
-        l'immersion), et le journal de plongée sur une seule ligne, qui
-        annonce ce que fait le bateau — plan par plan ;
+     2. derrière le verre du hublot, la mer vit (rais, caustiques, neige
+        marine, bulles) pendant que le film tourne, et le bandeau du cadreur
+        égrène son timecode ;
      3. le visiteur frappe le BOUTON ROUGE « START » ;
      4. le projecteur du Nautilus nous éblouit : la lumière s'ouvre jusqu'à
         remplir l'écran, un éclair passe, puis son fondu découvre l'accueil —
@@ -83,20 +82,6 @@
     sortie:  1500,
     retrait: 2400
   };
-
-  /* La durée d'une boucle du film, en secondes : le journal de plongée
-     raconte ce qui passe à l'image, il doit donc repartir avec elle. */
-  const FILM_BOUCLE = 34.5;
-
-  /* LE PROFIL DE PLONGÉE — crédible AVANT d'être spectaculaire.
-     Un sous-marin ne tombe pas : il descend. On part donc d'une vitesse de
-     descente réaliste (6 m/s au début, soit ~21 km/h — déjà rapide pour un
-     bateau de 1866) qui faiblit à mesure que la coque se rapproche de sa
-     profondeur d'équilibre : la fosse de 3 420 m. Sur trente secondes, le
-     cadran passe de 0 à ~180 m : c'est peu, et c'est VRAI. Ce qu'un vrai
-     poste de plongée montre, c'est un compteur qui monte doucement. */
-  const PROFONDEUR_FOSSE = 3420;
-  const VITESSE_PLONGEE   = 6;
 
   /* Tous les navigateurs du parc savent le dire ; le test est protégé pour
      qu'un moteur exotique ne fasse pas tomber la page de garde entière.
@@ -285,152 +270,42 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * 4. LA CONSOLE DU BORD : DES CHIFFRES QUI SONT VRAIS
+   * 4. LE BANDEAU DU CADREUR
    * ------------------------------------------------------------------ */
-  /* Pourquoi des chiffres qui bougent ? Parce que c'est ce qui fait « vrai ».
-     Un cadre qui affiche « Immersion 3 240 m » immobile est une image ; le
-     même cadran dont le nombre descend, dont la pression suit — et elle est
-     CALCULÉE (1 bar à la surface, puis 1 bar de plus tous les 10 m) — dont
-     l'écho du sonar se rapproche, et dont l'horloge donne l'heure RÉELLE du
-     visiteur, ne se lit plus comme un décor. C'est le bateau qui travaille.
+  /* Le tableau de bord à six cadrans a été retiré, sur décision du joueur.
+     Reste la seule chose qui ne demande rien à lire : le bandeau du cadreur,
+     au-dessus du titre. Son TIMECODE compte pour de vrai, à 24 images par
+     seconde (la cadence du film qui tourne dans le hublot) : c'est le repère
+     d'une prise de vues, pas un instrument de navigation.
 
-     Et le journal, lui, raconte ce qui passe À L'ÉCRAN : chaque ligne tombe
-     sur le plan du film qu'elle décrit (les amarres à l'entrée du Nautilus,
-     le calmar quand il attaque, le salon quand on le voit…). Un vrai poste de
-     plongée ne « défile » pas : il annonce.
+     Un seul minuteur, qui ne touche QUE du texte — rien d'autre ne bouge sur
+     la page. S'il n'y a pas de bandeau (page sans garde), il ne se passe
+     rien. */
+  const timecode = document.getElementById('ecTimecode');
+  let _cadreur = null;      /* minuteur du bandeau (null : pas encore lancé) */
+  let _cadreurMort = false;
 
-     On ne touche que du texte et des transforms : jamais de mise en page. */
-  const el = id => document.getElementById(id);
-  const INSTRUMENTS = {
-    immersion: { v: el('ecImmersion'), jauge: el('ecImmersionJauge') },
-    pression:  { v: el('ecPression'),  jauge: el('ecPressionJauge') },
-    echo:      { v: el('ecEcho'),      jauge: el('ecEchoJauge'), note: el('ecEchoNote') },
-    ballast:   { v: el('ecBallast'),   jauge: el('ecBallastJauge') },
-    cap:       { v: el('ecCap'),       jauge: el('ecCapJauge') },
-    heure:     { v: el('ecHeure'),     jauge: el('ecHeureJauge') }
-  };
-  const journalBord = el('ecJournal');
-  const timecode    = el('ecTimecode');
-
-  /* 3 240 s'écrit 3 240 : une espace fine, comme sur un vrai cadran. */
-  const chiffre = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F');
-  const cadran  = document.querySelectorAll('.ec-cadran');
-  const celAlerte = c => { if(cadran[c]) cadran[c].classList.add('ec-cadran-alerte'); };
-  const celCalme  = c => { if(cadran[c]) cadran[c].classList.remove('ec-cadran-alerte'); };
-  /* Accepte aussi bien un cadran ({v: nœud}) qu'un nœud nu (la petite note
-     « rocher » de l'écho, qui n'a pas de valeur entre guillemets). */
-  function poserTexte(inst, valeur){
-    const nœud = inst && inst.v ? inst.v : inst;
-    if(nœud && nœud.textContent !== valeur) nœud.textContent = valeur;
-  }
-  function poserJauge(inst, part){
-    if(inst && inst.jauge) inst.jauge.style.transform = 'scaleX(' + Math.max(0, Math.min(1, part)).toFixed(3) + ')';
-  }
-  function deux(n){ return String(n).padStart(2, '0'); }
-
-  /* LE JOURNAL DE PLONGÉE — chaque ligne tombe sur le plan qu'elle décrit. */
-  const JOURNAL = [
-    { t:  1.5, texte: 'Le Nautilus largue les amarres' },
-    { t:  7.0, texte: 'Cap 217° — traversée du champ d\'algues' },
-    { t: 12.0, texte: 'Alerte : calmar géant sur la coque', alerte: true },
-    { t: 17.0, texte: 'Hublot — descente dans la lumière' },
-    { t: 22.0, texte: 'Salon du bord : le capitaine observe la nuit' },
-    { t: 27.0, texte: 'Fosse — 3 400 m sous la surface' },
-    { t: 31.0, texte: 'Décompression du sas — appuie sur START', alerte: true, invite: true }
-  ];
-
-  let _instr = null;
-  let _instrArretes = false;
-  let _lignesDites = 0;
-  let _cycle = 0;
-
-  function ligneDuJournal(ligne){
-    if(!journalBord) return;
-    journalBord.textContent = ligne.texte;
-    journalBord.classList.toggle('alerte', !!ligne.alerte);
-    /* À la dernière ligne, le bouton appelle plus fort : c'est le moment
-       d'ouvrir le sas. */
-    if(ligne.invite) racine.classList.add('ec-invite');
-  }
-
-  function demarrerInstruments(){
-    if(!racine || _instr) return;
+  function demarrerCadreur(){
+    if(!timecode || _cadreur) return;
     const t0 = Date.now();
-    let dernierTC = '';
+    let dernier = '';
     const tic = () => {
-      if(_instrArretes || _ouverte) return;
-      const t   = (Date.now() - t0) / 1000;
-      const duree = CALME ? 0.8 : 0.25;      /* moins d'animation : on ralentit */
-
-      /* ── L'IMMERSION : le bord descend, puis se stabilise dans la fosse ──
-         Le rythme est celui d'un vrai bateau qui plonge : quelques mètres par
-         seconde au début, puis une descente qui s'installe. Pas de chute
-         libre spectaculaire — un Nautilus ne tombe pas, il descend. */
-      const immersion = PROFONDEUR_FOSSE * (1 - Math.exp(-t * VITESSE_PLONGEE / PROFONDEUR_FOSSE))
-                      + 3 * Math.sin(t / 3.1);
-      poserTexte(INSTRUMENTS.immersion, chiffre(immersion));
-      poserJauge(INSTRUMENTS.immersion, immersion / PROFONDEUR_FOSSE);
-      /* ── LA PRESSION : calculée depuis l'immersion, pas inventée ──────────
-         1 bar à la surface, puis 1 bar de plus tous les 10 m : c'est la règle
-         des océanographes, et c'est pour ça que les deux cadrans restent
-         toujours d'accord entre eux. */
-      const pression = 1 + immersion / 10.06;
-      poserTexte(INSTRUMENTS.pression, pression.toFixed(1).replace('.', ','));
-      poserJauge(INSTRUMENTS.pression, pression / 340);
-      /* ── L'ÉCHO DU SONAR : la distance au fond, qui se rapproche à mesure
-         que le bateau descend, avec le ballant de la houle au-dessus. Quand
-         le fond remonte sous la quille, le cadran passe à l'alerte. */
-      const echo = Math.max(80, 2600 - immersion * 0.72) + 90 * Math.sin(t / 6.5);
-      poserTexte(INSTRUMENTS.echo, chiffre(echo));
-      poserJauge(INSTRUMENTS.echo, 1 - echo / 2800);
-      if(INSTRUMENTS.echo.note){
-        const note = echo < 320 ? 'rocher' : (echo < 900 ? 'fond' : 'libre');
-        poserTexte(INSTRUMENTS.echo.note, note);
-      }
-      if(echo < 320){ celAlerte(2); } else { celCalme(2); }
-      /* ── LE BALLAST : se remplit pour descendre, puis respire ───────────── */
-      const ballast = 62 + 14 * (1 - Math.exp(-t / 60)) + 2 * Math.sin(t / 5);
-      poserTexte(INSTRUMENTS.ballast, chiffre(ballast));
-      poserJauge(INSTRUMENTS.ballast, ballast / 100);
-      /* ── LE CAP : un cap qui tient, avec la barre qui vit ──────────────── */
-      const cap = 217 + 2.6 * Math.sin(t / 17);
-      poserTexte(INSTRUMENTS.cap, chiffre(cap));
-      poserJauge(INSTRUMENTS.cap, cap / 360);
-      /* ── L'HORLOGE DE BORD : l'heure RÉELLE de la montre du visiteur ────── */
-      const d = new Date();
-      poserTexte(INSTRUMENTS.heure, deux(d.getHours()) + ':' + deux(d.getMinutes()) + ':' + deux(d.getSeconds()));
-      poserJauge(INSTRUMENTS.heure, d.getSeconds() / 60);
-      /* ── LE TIMECODE DU CADREUR : il compte, image par image, à 24 i/s ─── */
-      let tc = '';
-      if(timecode){
-        const im = Math.floor(t * 24);
-        tc = deux(Math.floor(t / 3600)) + ':' + deux(Math.floor(t / 60) % 60) + ':'
-           + deux(Math.floor(t) % 60) + ':' + deux(im % 24);
-        if(tc !== dernierTC){ timecode.textContent = tc; dernierTC = tc; }
-      }
-      /* ── LE JOURNAL : il annonce ce qui passe à l'image, et recommence
-            quand le film recommence (il tourne en boucle, lui aussi) ──────── */
-      const boucle = Math.floor(t / FILM_BOUCLE);
-      if(boucle !== _cycle){ _cycle = boucle; _lignesDites = 0; }
-      const dansLaBoucle = t - boucle * FILM_BOUCLE;
-      while(_lignesDites < JOURNAL.length && dansLaBoucle >= JOURNAL[_lignesDites].t){
-        ligneDuJournal(JOURNAL[_lignesDites]);
-        _lignesDites++;
-      }
-      _instr = plusTard(tic, duree * 1000);
+      if(_cadreurMort || _ouverte) return;
+      const t  = (Date.now() - t0) / 1000;
+      const im = Math.floor(t * 24);
+      const tc = deux(Math.floor(t / 3600)) + ':' + deux(Math.floor(t / 60) % 60) + ':'
+               + deux(Math.floor(t) % 60) + ':' + deux(im % 24);
+      if(tc !== dernier){ timecode.textContent = tc; dernier = tc; }
+      _cadreur = plusTard(tic, CALME ? 1000 : 250);
     };
     tic();
   }
-  function arreterInstruments(){
-    _instrArretes = true;
-    if(_instr) clearTimeout(_instr);
-    _instr = null;
-    racine.classList.remove('ec-invite');
-    if(journalBord){
-      journalBord.textContent = 'Sas ouvert — bienvenue à bord';
-      journalBord.classList.remove('alerte');
-    }
+  function arreterCadreur(){
+    _cadreurMort = true;
+    if(_cadreur) clearTimeout(_cadreur);
+    _cadreur = null;
   }
+  function deux(n){ return String(n).padStart(2, '0'); }
 
   /* ------------------------------------------------------------------ *
    * 5. LA SORTIE : le projecteur nous éblouit
@@ -440,7 +315,7 @@
   function ouvrir(){
     if(_ouverte) return;
     _ouverte = true;
-    arreterInstruments();
+    arreterCadreur();
 
     const start = document.getElementById('ecStart');
     racine.classList.add('ec-presse');
@@ -594,7 +469,7 @@
   start?.addEventListener('click', ouvrir);
   start?.focus({ preventScroll: true });
 
-  /* La console travaille dès la première image ; le bouton, lui, est actif
-     tout de suite — on peut ouvrir le sas sans attendre le film. */
-  demarrerInstruments();
+  /* Le bandeau du cadreur compte dès la première image ; le bouton, lui, est
+     actif tout de suite — on peut ouvrir le sas sans attendre le film. */
+  demarrerCadreur();
 })();

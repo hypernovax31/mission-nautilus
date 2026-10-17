@@ -266,16 +266,22 @@ ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v9)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v9'));
+ok('un repère de version dit quelle page de garde est chargée (garde v10)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v10'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
    accueil.includes('<noscript><style>#ecoutille{display:none !important}</style></noscript>'));
-ok('la garde ne charge ni image cliquable, ni SVG, ni illustration externe',
+/* Les seules images externes du socle sont les AFFICHES du film et les DEUX
+   textures de caustiques — c'est-à-dire la mer elle-même. Tout le reste (le
+   hublot, le bronze, le verre, la coque) est peint en dégradés. */
+const IMAGES_DU_SOCLE = ['film-nautilus-L.jpg', 'film-nautilus-P.jpg', 'caustique-1.jpg', 'caustique-2.jpg'];
+const urlsDuSocle = socleCss.match(/url\(["']?([^"')]+)/g) || [];
+ok('la garde ne charge que les images de la mer (aucune illustration, aucun SVG)',
    !/<img|<svg/.test(gardeHtml) &&
-   (socleCss.match(/url\(/g) || []).length === (socleCss.match(/film-nautilus-[LP]\.jpg/g) || []).length,
-   'les seules images du socle sont les affiches du film');
+   urlsDuSocle.length === IMAGES_DU_SOCLE.reduce((n, f) =>
+     n + (socleCss.match(new RegExp(f.replace('.', '\\.'), 'g')) || []).length, 0),
+   'images du socle : ' + urlsDuSocle.map(u => u.replace(/^url\(["']?/, '')).join(', '));
 
 /* --- RIEN À CLIQUER D'INUTILE ------------------------------------------- */
 /* Demande explicite du joueur : sur la page de lancement, tout ce qui
@@ -294,21 +300,27 @@ ok('plus aucun « Passer l’intro » (il ne servait qu’à sauter le récit)',
    position absolue : elles ne PEUVENT pas se superposer, quelle que soit la
    taille de l'écran. Seules les cartes du récit se remplacent entre elles,
    à l'intérieur de leur propre bande réservée. */
-const blocScene = bloc(/#ecoutille \.ec-scene\{[\s\S]*?\}/);
+const blocScene = [...socleCss.matchAll(/#ecoutille \.ec-scene\{[\s\S]*?\}/g)].map(m => m[0]).find(b => b.includes('flex-direction')) || '';
+/* /.ec-scene{ … }/ trouve d'abord la variante de la ligne suivante ; on
+   prend donc le bloc qui contient réellement la colonne. */
+const blocsScene = [...socleCss.matchAll(/#ecoutille \.ec-scene\{[\s\S]*?\}/g)].map(m => m[0]);
+const blocScenePlein = blocsScene.find(b => b.includes('flex-direction')) || blocsScene[0] || '';
 ok('les trois zones sont empilées par le flux (colonne + space-between)',
-   blocScene.includes('display:flex') && blocScene.includes('flex-direction:column') &&
-   blocScene.includes('justify-content:space-between'));
+   blocScenePlein.includes('display:flex') && blocScenePlein.includes('flex-direction:column') &&
+   /justify-content:\s*space-between/.test(blocScenePlein),
+   (blocScenePlein.match(/justify-content:[^;]+/) || ['bloc absent'])[0]);
 ok('les zones de texte ne sont JAMAIS en position absolue (aucune superposition possible)',
-   ['.ec-enseigne', '.ec-recit', '.ec-pied'].every(sel =>
+   ['.ec-enseigne', '.ec-hublot', '.ec-pied'].every(sel =>
      !/position:absolute/.test(bloc(new RegExp('#ecoutille \\.' + sel.slice(1) + '\\{[\\s\\S]*?\\}')))));
 ok('la commande est un bouton du flux, posé sous sa consigne',
    /#ecoutille \.ec-pied\{[\s\S]*?display:flex/.test(socleCss) &&
    !/position:absolute/.test(bloc(/#ecoutille \.ec-start\{[\s\S]*?\}/)));
-ok('la console a sa place réservée (le bas de l’écran ne bouge jamais)',
-   /#ecoutille \.ec-console\{[\s\S]*?padding:clamp\(/.test(socleCss) &&
-   /#ecoutille \.ec-console\{[\s\S]*?border-radius:14px/.test(socleCss));
-ok('le journal du bord tient sur UNE ligne (il ne « défile » pas)',
-   /#ecoutille \.ec-journal\{[\s\S]*?min-height:1\.5em/.test(socleCss));
+ok('le hublot a sa place réservée dans la colonne (le bas de l’écran ne bouge jamais)',
+   /#ecoutille \.ec-hublot\{[\s\S]*?width:min\(52vh, 78vw\)/.test(socleCss) &&
+   /#ecoutille \.ec-hublot\{[\s\S]*?height:min\(52vh, 78vw\)/.test(socleCss));
+ok('sur un écran bas, le hublot se resserre ENCORE (rien ne peut déborder)',
+   /@media \(max-height: 700px\)\{[\s\S]*?width:min\(46vh, 70vw\)/.test(socleCss) &&
+   /orientation: landscape\) and \(max-height: 500px\)[\s\S]*?width:min\(36vh, 52vw\)/.test(socleCss));
 
 /* --- LE DÉCOR : FANTASTIQUE ET GRANDIOSE -------------------------------- */
 /* Le hublot du salon du Nautilus : la nuit des grands fonds, les rais de
@@ -316,17 +328,17 @@ ok('le journal du bord tient sur UNE ligne (il ne « défile » pas)',
    cadre de cuivre. Chaque couche est vérifiée : elle doit exister dans le
    socle ET dans le balisage, sinon le décor est incomplet. */
 const couches = {
-  'ec-abysse':  'la nuit des grands fonds',
-  'ec-rayons':  'les rais de lumière de la surface',
-  'ec-bulles':  'les colonnes de bulles',
-  'ec-pings':   'les échos du sonar',
-  'ec-cadre':   'le cadre de cuivre du hublot',
-  'ec-hero':    'la fenêtre du film de fond'
+  'ec-paroi':   'la paroi blindée de la coque',
+  'ec-halo':    'la lumière du hublot sur la tôle',
+  'ec-cadre':   'le cadre de cuivre du salon',
+  'ec-vignette':'la vignette qui met le verre en valeur',
+  'ec-etalo':   'l’étalonnage du film'
 };
 for(const [classe, quoi] of Object.entries(couches)){
   ok('le décor a ' + quoi + ' (.' + classe + ')',
      socleCss.includes('.' + classe) && gardeHtml.includes('class="' + classe + '"'));
 }
+
 /* LE FILM : un vrai film tourne en fond — le Nautilus dans les grands fonds.
    Quatre plans montés (entrée du sous-marin, traversée, hublot, descente dans
    l'abîme), étalonnés, avec du grain et des fondus au noir. Deux formats sont
@@ -356,21 +368,24 @@ ok('il ne mange jamais le geste du joueur (aucun clic, aucun focus)',
 ok('le format VERTICAL est proposé aux téléphones (le 16:9 y serait minuscule)',
    /<source src="assets\/film-nautilus-P\.mp4[^"]*" type="video\/mp4" media="\(orientation: portrait\)">/.test(gardeHtml) &&
    gardeHtml.indexOf('film-nautilus-P.mp4') < gardeHtml.indexOf('film-nautilus-L.mp4'));
-ok('le film est une fenêtre qui le recadre : il ne peut pas déborder',
-   /#ecoutille \.ec-hero\{[\s\S]*?overflow:hidden/.test(socleCss) &&
-   /#ecoutille \.ec-film\{[\s\S]*?object-fit:cover/.test(socleCss));
-ok('sur un écran large, la fenêtre du film est centrée (ni le titre ni le bouton dessus)',
-   /#ecoutille \.ec-hero\{[\s\S]*?top:52%/.test(socleCss) &&
-   /#ecoutille \.ec-hero\{[\s\S]*?transform:translate\(-50%,-50%\)/.test(socleCss));
-ok('la fenêtre garde EXACTEMENT le rapport 16:9 du film (aucun plan tronqué)',
-   /#ecoutille \.ec-hero\{[\s\S]*?height:min\(58vh, 56\.25vw\)/.test(socleCss) &&
-   /#ecoutille \.ec-hero\{[\s\S]*?width:calc\(min\(58vh, 56\.25vw\) \* 1\.7778\)/.test(socleCss),
-   '16/9 : une bande plus large que haute couperait le hublot du troisième plan');
-ok('sur un téléphone debout, le film passe plein écran (aucun cadre à chevaucher)',
-   /@media \(orientation: portrait\)\{[\s\S]*?#ecoutille \.ec-hero\{[\s\S]*?height:100%/.test(socleCss));
-ok('l’affiche du film tient la place pendant le chargement (et si la lecture est refusée)',
-   /#ecoutille \.ec-hero\{[\s\S]*?url\("assets\/film-nautilus-L\.jpg\?v=2"\)/.test(socleCss) &&
-   /orientation: portrait[\s\S]{0,400}film-nautilus-P\.jpg\?v=2/.test(socleCss));
+ok('le film est DANS un hublot rond (une baie de verre, pas un rectangle)',
+   /#ecoutille \.ec-fenetre\{[\s\S]*?border-radius:50%/.test(socleCss) &&
+   /#ecoutille \.ec-fenetre\{[\s\S]*?overflow:hidden/.test(socleCss) &&
+   /#ecoutille \.ec-film\{[\s\S]*?border-radius:50%/.test(socleCss),
+   'double ceinture : la baie ET la vidéo elle-même sont rondes');
+ok('le hublot est DANS LE FLUX, entre le titre et le bouton (aucun chevauchement possible)',
+   /#ecoutille \.ec-hublot\{[\s\S]*?position:relative/.test(socleCss) &&
+   !/#ecoutille \.ec-hublot\{[^}]*position:absolute/.test(socleCss) &&
+   gardeHtml.indexOf('<header class="ec-enseigne"') < gardeHtml.indexOf('class="ec-hublot"') &&
+   gardeHtml.indexOf('class="ec-hublot"') < gardeHtml.indexOf('<footer class="ec-pied"'));
+ok('le hublot ne bouge pas à l’ouverture (c’est la paroi qui avance)',
+   !/ec-plongee[^{]*\.ec-hublot/.test(socleCss) &&
+   /#ecoutille\.ec-plongee \.ec-ecran\{transform:scale/.test(socleCss));
+
+ok('l’affiche du film tient la place dans le hublot pendant le chargement',
+   /#ecoutille \.ec-fenetre\{[\s\S]*?url\("assets\/film-nautilus-L\.jpg\?v=2"\)/.test(socleCss) &&
+   /orientation: portrait[\s\S]{0,400}film-nautilus-P\.jpg\?v=2/.test(socleCss),
+   'et si la lecture est refusée, le verre garde une image de mer');
 ok('le film ne s’affiche qu’une fois qu’il joue vraiment (pas de rectangle noir)',
    /#ecoutille \.ec-film\{[\s\S]*?opacity:0/.test(socleCss) &&
    socleCss.includes('#ecoutille.ec-film-pret .ec-film{opacity:1}'));
@@ -438,59 +453,86 @@ ok('la mention dit maintenant que c’est d’après Jules Verne',
 ok('la ligne sous le titre situe le film : sous les mers, à bord du Nautilus',
    /<p class="ec-sous-titre">Sous les mers, à bord du Nautilus<\/p>/.test(gardeHtml));
 
-/* --- LA CONSOLE PREND LA PLACE DES TEXTES DÉFILANTS --------------------- */
-/* Demande du joueur : « trouve une meilleure idée que les textes défilants
-   au milieu de la page ». Les cartes de bande-annonce ont donc disparu, et à
-   leur place : six cadrans qui vivent et un journal d'UNE ligne. On vérifie
-   que les cartes n'existent plus (sinon on aurait deux systèmes de front) et
-   que chaque cadran du balisage a son style ET son code. */
-ok('plus aucune carte de récit défilant (le système a été retiré partout)',
-   !gardeHtml.includes('ec-recit') && !socleCss.includes('ec-recit') && !porte.includes('ec-recit'));
-ok('la console du bord est là, avec ses six cadrans',
-   gardeHtml.includes('class="ec-console"') &&
-   (gardeHtml.match(/class="ec-cadran"/g) || []).length === 6);
-const IDs_CADRANS = ['ecImmersion', 'ecPression', 'ecEcho', 'ecBallast', 'ecCap', 'ecHeure'];
-for(const id of IDs_CADRANS){
-  ok('le cadran ' + id + ' est dans la page ET branché dans le moteur',
-     gardeHtml.includes('id="' + id + '"') && porte.includes("el('" + id + "')"));
+/* --- LE TABLEAU DE BORD EST RETIRÉ ------------------------------------- */
+/* Demande du joueur : « supprime le tableau de bord de la page de démarrage ».
+   Les six cadrans, les jauges et le journal de plongée ont donc disparu — du
+   balisage, du style ET du moteur. On vérifie les trois, car un reste dans un
+   seul des trois produirait du code mort ou un trou dans la page. */
+ok('plus aucun cadran, aucune jauge, aucun journal de plongée dans la page',
+   !gardeHtml.includes('ec-cadran') && !gardeHtml.includes('ec-jauge') &&
+   !gardeHtml.includes('ec-journal') && !gardeHtml.includes('ec-console'));
+ok('plus aucune trace de la console dans le style',
+   !socleCss.includes('ec-cadran') && !socleCss.includes('ec-jauge') &&
+   !socleCss.includes('ec-journal') && !socleCss.includes('ec-console'));
+ok('plus aucune trace de la console dans le moteur (rien ne tourne dans le vide)',
+   !porte.includes('INSTRUMENTS') && !porte.includes('demarrerInstruments') &&
+   !porte.includes('PROFONDEUR_FOSSE') && !porte.includes('JOURNAL'));
+
+/* --- LA MER, VRAIE, DANS LE VERRE DU HUBLOT ---------------------------- */
+/* Demande du joueur : « fais des effets de mer réaliste dans le hublot ».
+   Le hublot n'est pas une image de hublot : c'est une baie de verre ronde
+   dans laquelle tourne le film, recouverte de quatre couches d'eau vivante —
+   rais, caustiques (deux nappes à vitesses différentes), neige marine et
+   bulles — plus l'épaisseur du verre : reflet frisant, buée, gouttes.
+   Ces couches ne bougent QU'EN transform et en opacité. */
+const mer = [['m-rayons',   'les rais qui descendent de la surface'],
+             ['m-caustique','les caustiques de l’eau'],
+             ['m-neige',    'la neige marine'],
+             ['m-bulles',   'les bulles qui montent']];
+for(const [classe, quoi] of mer){
+  ok('le hublot a ' + quoi + ' (.' + classe + ')',
+     socleCss.includes('.' + classe) && gardeHtml.includes('class="' + classe + '"'));
 }
-ok('les six jauges aussi (elles sont animées par transform seulement)',
-   (gardeHtml.match(/ec-jauge/g) || []).length === 6 &&
-   /\.ec-jauge span\{[\s\S]*?transform:scaleX\(/.test(socleCss) &&
-   /\.ec-jauge span\{[\s\S]*?transition:transform/.test(socleCss));
-ok('l’HORLOGE de bord donne l’heure réelle du visiteur (new Date)',
-   /const d = new Date\(\);/.test(porte) && /poserTexte\(INSTRUMENTS\.heure/.test(porte));
-ok('la PRESSION est CALCULÉE depuis l’immersion (1 bar + 1 bar par 10 m)',
-   /const pression = 1 \+ immersion \/ 10\.06;/.test(porte));
-ok('l’IMMERSION descend vraiment (elle suit le temps passé à bord)',
-   /const immersion = PROFONDEUR_FOSSE \* \(1 - Math\.exp\(-t \* VITESSE_PLONGEE \/ PROFONDEUR_FOSSE\)\)/.test(porte));
-/* Le réalisme se vérifie aussi : un sous-marin descend à quelques mètres par
-   seconde, pas à 70 km/h. On lit la constante dans le moteur et on la borne. */
-const vitessePlongee = Number((/const VITESSE_PLONGEE\s*=\s*([\d.]+)/.exec(porte) || [])[1]);
-ok('la vitesse de descente reste crédible (1 à 10 m/s, pas une chute libre)',
-   vitessePlongee >= 1 && vitessePlongee <= 10, vitessePlongee + ' m/s');
-const profFosse = Number((/const PROFONDEUR_FOSSE\s*=\s*([\d.]+)/.exec(porte) || [])[1]);
-ok('la fosse visée est une vraie profondeur (2 000 à 6 000 m)',
-   profFosse >= 2000 && profFosse <= 6000, profFosse + ' m');
-ok('l’ÉCHO du sonar est ancré sur la profondeur (le fond se rapproche quand on descend)',
-   /const echo = Math\.max\(80, 2600 - immersion \* 0\.72\)/.test(porte) &&
-   porte.includes("'rocher'"));
-ok('le BALLAST se remplit pour la descente',
-   /const ballast = \d+ \+ \d+ \* \(1 - Math\.exp\(-t \/ \d+\)\)/.test(porte));
-ok('le TIMECODE du cadreur compte à 24 images par seconde',
-   /Math\.floor\(t \* 24\)/.test(porte) && porte.includes("el('ecTimecode')"));
-ok('le JOURNAL raconte le film, plan par plan, et cite le calmar géant',
-   /const JOURNAL = \[/.test(porte) && porte.includes('calmar géant sur la coque'));
-ok('il repart avec le film, qui tourne en boucle',
-   porte.includes('FILM_BOUCLE') && /Math\.floor\(t \/ FILM_BOUCLE\)/.test(porte));
-ok('la console s’arrête quand le sas s’ouvre (elle n’écrit plus dans le vide)',
-   /function arreterInstruments\(\)/.test(porte) && porte.includes('Sas ouvert — bienvenue à bord'));
-ok('la console est dans le flux (aucune position absolue : pas de chevauchement)',
-   /#ecoutille \.ec-console\{[\s\S]*?position:relative/.test(socleCss) &&
-   !/#ecoutille \.ec-console\{[^}]*position:absolute/.test(socleCss));
-ok('les cadrans sont une grille (deux colonnes sur téléphone, trois sur large)',
-   /#ecoutille \.ec-cadrans\{[\s\S]*?grid-template-columns:repeat\(2, minmax\(0,1fr\)\)/.test(socleCss) &&
-   /min-width: 620px\)\{\s*#ecoutille \.ec-cadrans\{grid-template-columns:repeat\(3, minmax\(0,1fr\)\)\}/.test(socleCss));
+ok('deux nappes de caustiques décalées : c’est ce décalage qui fait vivre l’eau',
+   (gardeHtml.match(/class="m-caustique/g) || []).length === 2 &&
+   /#ecoutille \.m-caustique\.b\{[\s\S]*?animation-duration:47s/.test(socleCss));
+/* La mer doit être RÉELLE : les caustiques ne sont pas des taches peintes en
+   CSS, mais un motif de lumière calculé, gravé dans une image, et projeté en
+   « screen » sur le film. On vérifie que le fichier existe vraiment et que le
+   style le demande — sinon le hublot perdrait sa lumière sans rien signaler. */
+for(const f of ['assets/mer/caustique-1.jpg', 'assets/mer/caustique-2.jpg']){
+  ok('la texture de caustiques existe vraiment : ' + f,
+     fs.existsSync(chemin(f)) && fs.statSync(chemin(f)).size > 8 * 1024,
+     Math.round((fs.existsSync(chemin(f)) ? fs.statSync(chemin(f)).size : 0) / 1024) + ' Ko');
+}
+ok('les caustiques sont projetées EN LUMIÈRE sur le film (mode screen)',
+   /#ecoutille \.m-caustique\{[\s\S]*?mix-blend-mode:screen/.test(socleCss) &&
+   /#ecoutille \.m-caustique\{[\s\S]*?url\("assets\/mer\/caustique-1\.jpg\?v=1"\)/.test(socleCss) &&
+   /#ecoutille \.m-caustique\.b\{[\s\S]*?caustique-2\.jpg\?v=1/.test(socleCss));
+ok('elles glissent sans couture (translation + rotation + échelle, quatre temps)',
+   /@keyframes ecMerCaustique\{[\s\S]*?25%[\s\S]*?50%[\s\S]*?75%[\s\S]*?100%/.test(socleCss) &&
+   /#ecoutille \.m-caustique\{[\s\S]*?animation:ecMerCaustique 31s linear infinite/.test(socleCss));
+ok('les deux textures sont précachées (le hublot garde sa lumière hors ligne)',
+   sw.includes("'./assets/mer/caustique-1.jpg?v=1'") && sw.includes("'./assets/mer/caustique-2.jpg?v=1'"));
+ok('deux rideaux de bulles, à deux vitesses',
+   (gardeHtml.match(/class="m-bulles/g) || []).length === 2 &&
+   /#ecoutille \.m-bulles\.b\{[\s\S]*?animation-duration:38s/.test(socleCss));
+ok('toutes les animations de la mer tiennent dans transform et opacité',
+   ['ecMerRais','ecMerCaustique','ecMerNeige','ecMerBulles'].every(k => {
+     const i = socleCss.indexOf('@keyframes ' + k);
+     if(i < 0) return false;
+     const bloc = socleCss.slice(i, socleCss.indexOf('\n    }', i) + 6);
+     return !/\b(top|left|right|bottom|width|height|inset|background-position)\s*:/.test(bloc);
+   }));
+ok('l’eau reste enfermée dans le verre (la baie et la mer sont rondes)',
+   /#ecoutille \.ec-mer\{[\s\S]*?border-radius:50%/.test(socleCss) &&
+   /#ecoutille \.ec-mer\{[\s\S]*?overflow:hidden/.test(socleCss));
+ok('le verre a son épaisseur : reflet frisant, buée des angles et gouttes',
+   /#ecoutille \.ec-verre\{[\s\S]*?radial-gradient\(120% 90% at 28% 6%/.test(socleCss) &&
+   /#ecoutille \.ec-verre\{[\s\S]*?inset 0 0 5vmin 1vmin/.test(socleCss));
+ok('un reflet du salon traverse lentement la vitre (la preuve qu’il y a un verre)',
+   socleCss.includes('.ec-reflet::before') && /@keyframes ecReflet/.test(socleCss));
+ok('le bronze du hublot : anneau massif et DOUZE rivets plantés DANS le métal',
+   /#ecoutille \.ec-cercle\{[\s\S]*?border:clamp\(9px/.test(socleCss) &&
+   /#ecoutille \.ec-cercle::after\{[\s\S]*?inset:calc\(-1 \* clamp\(9px/.test(socleCss) &&
+   (socleCss.match(/\d+\.\d+% \d+\.\d+%/g) || []).length >= 12,
+   'les rivets sont posés sur la boîte du cadre, donc sur le bronze');
+ok('des gouttes glissent sur la face extérieure du verre',
+   /#ecoutille \.ec-verre::after\{[\s\S]*?radial-gradient\(ellipse/.test(socleCss) &&
+   /@keyframes ecGouttes/.test(socleCss));
+ok('moins d’animation : l’eau ralentit, elle ne disparaît pas',
+   /prefers-reduced-motion[\s\S]{0,500}\.m-caustique\{animation-duration:60s/.test(socleCss));
+
 
 /* --- LES SIGNATURES DE CINÉMA ------------------------------------------ */
 /* Ce qui fait qu'une image a l'air d'un film : l'étalonnage, les fanaux de
@@ -514,8 +556,8 @@ ok('le bandeau du cadreur est DANS le flux (il ne chevauche rien)',
    !/#ecoutille \.ec-hud\{[^}]*position:absolute/.test(socleCss));
 ok('les fanaux et l’étalonnage s’éteignent si l’on demande moins d’animation',
    /prefers-reduced-motion[\s\S]{0,400}\.ec-fanaux i\{animation:none/.test(socleCss));
-ok('la console et le bandeau sont muets pour les lecteurs d’écran (phrase dédiée à la place)',
-   /class="ec-console" aria-hidden="true"/.test(gardeHtml) &&
+ok('le hublot et le bandeau sont muets pour les lecteurs d’écran (phrase dédiée à la place)',
+   /class="ec-ecran" aria-hidden="true"/.test(gardeHtml) &&
    /class="ec-hud" aria-hidden="true"/.test(gardeHtml) &&
    /class="ec-lu">[^<]{20,}/.test(gardeHtml));
 ok('le décor entier reste dans le cadre (overflow:hidden sur la garde)',
@@ -609,12 +651,11 @@ ok('le clic sur START est un vrai geste (bouton réel, jamais un div)',
 ok('le bouton porte le nom exigé : START', /<span class="ec-start-label">START<\/span>/.test(corps));
 
 /* --- Le moteur : le geste, le récit, le son ----------------------------- */
-ok('le moteur démarre la console dès la première image',
-   /demarrerInstruments\(\);/.test(porte) && /function demarrerInstruments\(\)/.test(porte));
-ok('et c’est LA dernière ligne du journal qui invite à ouvrir le sas',
-   /invite: true/.test(porte) && /if\(ligne\.invite\) racine\.classList\.add\('ec-invite'\)/.test(porte));
-ok('à la dernière carte, le bouton appelle plus fort (ec-invite)',
-   porte.includes("classList.add('ec-invite')"));
+ok('le moteur démarre le bandeau du cadreur dès la première image',
+   /demarrerCadreur\(\);/.test(porte) && /function demarrerCadreur\(\)/.test(porte));
+ok('la page de garde n’a plus AUCUN cadran à nourrir (ni intrusion ni sonar)',
+   !porte.includes('INSTRUMENTS') && !porte.includes('ecImmersion') &&
+   !porte.includes('ecEcho') && !porte.includes('ecPression'));
 ok('le moteur lit la préférence de sonar du site (nautilusSoundOn)',
    porte.includes("localStorage.getItem('nautilusSoundOn') === '0'"));
 ok('silence respecté : aucun contexte audio n’est créé si le sonar est coupé',
@@ -659,11 +700,11 @@ ok('le moteur de la page de garde est précaché', sw.includes("'./ecoutille.js?
    numéro de version ne bougeait pas. */
 const versionJS = Number((/<script src="ecoutille\.js\?v=(\d+)" defer><\/script>/.exec(accueil) || [])[1]);
 const versionCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]);
-ok('le moteur de la garde est en version 9 ou plus (v' + versionJS + ')', versionJS >= 9);
+ok('le moteur de la garde est en version 10 ou plus (v' + versionJS + ')', versionJS >= 10);
 ok('le service worker précache EXACTEMENT cette version',
    sw.includes("'./ecoutille.js?v=" + versionJS + "'"));
 ok('le cache du service worker a été relevé pour cette refonte (v' + versionCache + ')',
-   versionCache >= 308);
+   versionCache >= 309);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL
