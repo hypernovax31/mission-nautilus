@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v9 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v11 »
 
    Ce que fait ce fichier
    ----------------------
@@ -10,8 +10,9 @@
         fonds, les rais de lumière, les bulles, les échos du sonar, et le
         bateau noir qui traverse l'écran, ses hublots allumés ;
      2. derrière le verre du hublot, la mer vit (rais, caustiques, neige
-        marine, bulles) pendant que le film tourne, et le bandeau du cadreur
-        égrène son timecode ;
+        marine, bulles) pendant que le film tourne ; en haut, la jauge
+        d'oxygène se vide au rythme réel de l'équipage et l'ardoise du
+        cadreur égrène son timecode ;
      3. le visiteur frappe le BOUTON ROUGE « START » ;
      4. le projecteur du Nautilus nous éblouit : la lumière s'ouvre jusqu'à
         remplir l'écran, un éclair passe, puis son fondu découvre l'accueil —
@@ -273,33 +274,72 @@
    * 4. LE BANDEAU DU CADREUR
    * ------------------------------------------------------------------ */
   /* Le tableau de bord à six cadrans a été retiré, sur décision du joueur.
-     Reste la seule chose qui ne demande rien à lire : le bandeau du cadreur,
-     au-dessus du titre. Son TIMECODE compte pour de vrai, à 24 images par
-     seconde (la cadence du film qui tourne dans le hublot) : c'est le repère
-     d'une prise de vues, pas un instrument de navigation.
+     Restent deux choses, en haut de la garde : la JAUGE D'OXYGÈNE (à gauche)
+     et l'ardoise de prise (à droite).
 
-     Un seul minuteur, qui ne touche QUE du texte — rien d'autre ne bouge sur
-     la page. S'il n'y a pas de bandeau (page sans garde), il ne se passe
-     rien. */
+     La jauge n'est pas un décor : elle se calcule. Un homme au repos consomme
+     0,30 litre d'oxygène par minute ; l'équipage du Nautilus compte vingt
+     hommes, soit 6 litres par minute. La réserve nominale des soutes est de
+     6 000 litres ; il en reste 5 880 à l'ouverture de la garde (98 %), de
+     quoi tenir seize heures quarante. Le chiffre baisse donc pour de vrai,
+     et la lumière de la piste suit.
+
+     Le TIMECODE, lui, compte à 24 images par seconde — la cadence du film qui
+     tourne dans le hublot. C'est le repère d'une prise de vues, pas un
+     instrument de navigation.
+
+     Un seul minuteur, qui ne touche QUE du texte et une transformation —
+     rien d'autre ne bouge sur la page. Pas de bandeau (page sans garde) :
+     il ne se passe rien. */
   const timecode = document.getElementById('ecTimecode');
+  const O2_RESERVE_L   = 6000;  /* capacité nominale des soutes, en litres */
+  const O2_DEPART_L    = 5880;  /* ce qu'il reste au chargement de la garde */
+  const O2_CONSO_L_MIN = 6;     /* vingt hommes × 0,30 L/min, au repos */
+  const o2Valeur = document.getElementById('ecO2Valeur');
+  const o2Niveau = document.getElementById('ecO2Niveau');
   let _cadreur = null;      /* minuteur du bandeau (null : pas encore lancé) */
   let _cadreurMort = false;
+  let _o2Litres = -1;       /* dernier chiffre écrit (on n'écrit que s'il change) */
+  let _o2Echelle = -1;      /* dernière échelle posée sur la piste */
 
   function demarrerCadreur(){
-    if(!timecode || _cadreur) return;
+    if((!timecode && !o2Niveau) || _cadreur) return;
     const t0 = Date.now();
     let dernier = '';
     const tic = () => {
       if(_cadreurMort || _ouverte) return;
       const t  = (Date.now() - t0) / 1000;
-      const im = Math.floor(t * 24);
-      const tc = deux(Math.floor(t / 3600)) + ':' + deux(Math.floor(t / 60) % 60) + ':'
-               + deux(Math.floor(t) % 60) + ':' + deux(im % 24);
-      if(tc !== dernier){ timecode.textContent = tc; dernier = tc; }
+      if(timecode){
+        const im = Math.floor(t * 24);
+        const tc = deux(Math.floor(t / 3600)) + ':' + deux(Math.floor(t / 60) % 60) + ':'
+                 + deux(Math.floor(t) % 60) + ':' + deux(im % 24);
+        if(tc !== dernier){ timecode.textContent = tc; dernier = tc; }
+      }
+      majOxygene(t);
       _cadreur = plusTard(tic, CALME ? 1000 : 250);
     };
     tic();
   }
+
+  /* La réserve ne descend jamais sous zéro : même après une veille de
+     plusieurs jours, l'instrument ne peut pas afficher un chiffre absurde. */
+  function majOxygene(t){
+    if(!o2Niveau) return;
+    const litres = Math.max(0, O2_DEPART_L - O2_CONSO_L_MIN * t / 60);
+    const echelle = Number((litres / O2_RESERVE_L).toFixed(4));
+    if(echelle !== _o2Echelle){
+      _o2Echelle = echelle;
+      o2Niveau.style.transform = 'scaleX(' + echelle + ')';  /* transform seul */
+    }
+    const arrondi = Math.round(litres);
+    if(o2Valeur && arrondi !== _o2Litres){
+      _o2Litres = arrondi;
+      o2Valeur.textContent = milliers(arrondi) + ' L';
+    }
+  }
+  /* 5 880 s'écrit avec une espace fine insécable, comme sur un cadran. */
+  function milliers(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f'); }
+
   function arreterCadreur(){
     _cadreurMort = true;
     if(_cadreur) clearTimeout(_cadreur);

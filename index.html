@@ -25,14 +25,15 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « garde v10 ». On entre par le hublot du salon du Nautilus :
-       un FILM tourne en fond — quatre plans du Nautilus dans les grands
-       fonds, montés avec des mouvements de caméra, un étalonnage cinéma, du
-       grain et des fondus au noir. Autour, le décor CSS prend le relais :
-       les rais de lumière, les colonnes de bulles, les échos du sonar et le
-       cadre de cuivre du hublot. Au centre, le titre en lettres de bronze,
-       puis le titre, et pour finir le projecteur du Nautilus nous éblouit :
-       l'accueil apparaît dans la lumière.
+       GRANDEUR — « garde v11 ». On entre par le hublot du salon du Nautilus :
+       un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
+       traversée, le calmar géant, le hublot doré, le salon de Nemo, la
+       descente dans l'abîme. Par-dessus, la mer est calculée : rais de
+       lumière, caustiques réelles, neige marine, bulles. En haut, la JAUGE
+       D'OXYGÈNE du bord (elle se vide pour de vrai) et l'ardoise du cadreur ;
+       au centre, le titre en lettres de bronze ; sous le hublot, le bouton
+       rouge. Et pour finir, le projecteur du Nautilus nous éblouit : l'accueil
+       apparaît dans la lumière.
 
        RIEN QUI PUISSE CASSER — c'est la leçon des deux versions précédentes :
          · aucun découpage, aucun masque, aucune image : ni clip-path, ni
@@ -137,13 +138,23 @@
       /* La taille est BORNÉE par la hauteur ET par la largeur : entre le
          titre et le bouton, le hublot ne peut jamais les pousser dehors, même
          sur un téléphone couché. */
-      width:min(44vh, 78vw); height:min(44vh, 78vw);
+      width:min(42vh, 78vw); height:min(42vh, 78vw);
       margin:clamp(2px, 1vmin, 10px) 0;
       filter:drop-shadow(0 2vmin 5vmin rgba(0,0,0,.75));
+    }
+    /* Portables et tablettes en paysage (768 px de haut) : c'est là que la
+       pile était la plus juste. Le hublot perd deux centimètres de rayon et
+       le bouton garde sa marge. */
+    @media (max-height: 820px){
+      #ecoutille .ec-hublot{ width:min(40vh, 74vw); height:min(40vh, 74vw) }
     }
     /* Écran bas (téléphone couché, petite fenêtre) : on resserre encore. */
     @media (max-height: 700px){
       #ecoutille .ec-hublot{ width:min(40vh, 66vw); height:min(40vh, 66vw) }
+      /* Peu de hauteur : l'ardoise garde son timecode et lâche le format,
+         comme un viseur qui dégraisse son affichage. Le bandeau reste ainsi
+         sur UNE ligne et ne prend rien au hublot. */
+      #ecoutille .ec-format{ display:none }
     }
     @media (orientation: landscape) and (max-height: 500px){
       /* Calculé, pas deviné : sur 390 px de haut, titre + hublot + bouton
@@ -342,7 +353,7 @@
     /* Téléphone debout : le hublot se cale sur la largeur, la paroi garde le
        reste. Un seul cadrage, rond, quel que soit l'écran. */
     @media (orientation: portrait){
-      #ecoutille .ec-hublot{ width:min(58vh, 80vw); height:min(58vh, 80vw) }
+      #ecoutille .ec-hublot{ width:min(48vh, 80vw); height:min(48vh, 80vw) }
       /* Même affiche que le film : le premier pixel est déjà le bon plan. */
       #ecoutille .ec-fenetre{ background-image:url("assets/film-nautilus-P.jpg?v=2") }
     }
@@ -428,12 +439,47 @@
       font-size:clamp(7.5px, 1.5vmin, 10.5px); letter-spacing:.2em;
       text-transform:uppercase; color:#8fb6c8;
     }
-    #ecoutille .ec-rec{display:inline-flex; align-items:center; gap:6px}
-    #ecoutille .ec-rec b{
-      width:.62em; height:.62em; border-radius:50%; background:#ff4b3e;
-      box-shadow:0 0 1vmin rgba(255,75,62,.8); animation:ecRec 1.6s steps(2,end) infinite;
+    /* LA JAUGE D'OXYGÈNE a pris la place du témoin REC, en haut à gauche.
+       Elle ne raconte rien : elle mesure. Une réserve, une piste graduée,
+       une lumière qui se retire, un chiffre en litres. Le chiffre est calculé
+       par le moteur à chaque battement (section 4), à partir d'une consom-
+       mation réelle d'équipage : c'est un instrument, pas une décoration. */
+    #ecoutille .ec-o2{display:inline-flex; align-items:center; gap:clamp(4px,.9vmin,8px); min-width:0}
+    #ecoutille .ec-o2-nom{font-weight:700; letter-spacing:.14em; color:#bff5dc; flex:none}
+    #ecoutille .ec-o2-piste{
+      position:relative; flex:none;
+      width:clamp(44px, 7.2vmin, 92px); height:clamp(6px, 1.2vmin, 9px);
+      border:1px solid rgba(150,236,202,.45); background:rgba(3,22,20,.6);
+      box-shadow:inset 0 0 4px rgba(0,0,0,.65);
     }
-    @keyframes ecRec{50%{opacity:.22}}
+    /* La lumière de la jauge ne change JAMAIS de largeur : elle change
+       d'échelle, depuis la gauche. Une transformation, donc aucun recalcul
+       de la page — même sur un iPhone, même après une heure. */
+    #ecoutille .ec-o2-niveau{
+      position:absolute; inset:1px; transform-origin:left center;
+      transform:scaleX(.98); background:linear-gradient(90deg,#1f9a72,#8ef0c4);
+      box-shadow:0 0 6px rgba(120,240,190,.6);
+    }
+    /* Les graduations sont gravées PAR-DESSUS la lumière, comme sur un verre
+       de manomètre : la réserve baisse, les repères ne bougent pas. */
+    #ecoutille .ec-o2-piste::after{
+      content:""; position:absolute; inset:0; pointer-events:none;
+      background:repeating-linear-gradient(90deg,
+        rgba(2,18,16,0) 0 5px, rgba(2,18,16,.82) 5px 7px);
+    }
+    #ecoutille .ec-o2-valeur{
+      font-variant-numeric:tabular-nums; letter-spacing:.1em; color:#d8fff0;
+      white-space:nowrap; flex:none;
+    }
+    /* La plaquette du cadreur, à droite. Sur un grand écran, elle tient sur
+       UNE ligne — le bandeau ne prend pas un pixel de plus qu'avant la jauge.
+       Sur téléphone, où la largeur manque mais la hauteur abonde, elle
+       s'empile (timecode au-dessus du format) et reste alignée à droite. */
+    #ecoutille .ec-slate{display:flex; align-items:baseline; gap:.9em; text-align:right}
+    @media (max-width: 700px){
+      #ecoutille .ec-slate{flex-direction:column; align-items:flex-end; gap:.2em; line-height:1.12}
+    }
+    #ecoutille .ec-format{color:#7ba7b8; letter-spacing:.14em}
 
     /* ── 5. LES TROIS ZONES, EMPILÉES ──────────────────────────────────────
        C'est ICI que se règle la question des chevauchements : une colonne,
@@ -445,7 +491,7 @@
       display:flex; flex-direction:column; align-items:center;
       justify-content:space-between;
       gap:clamp(8px, 2.2vmin, 28px);
-      padding:clamp(14px, 3.6vmin, 44px) clamp(16px, 4.4vmin, 56px);
+      padding:clamp(14px, 3.6vmin, 34px) clamp(16px, 4.4vmin, 56px);
       text-align:center;
       transition:transform 1.15s cubic-bezier(.2,.72,.2,1), opacity .45s ease;
     }
@@ -457,7 +503,10 @@
     /* La commande : le bouton rouge d'alarme, puis sa consigne. */
     #ecoutille .ec-pied{
       display:flex; flex-direction:column; align-items:center;
-      gap:clamp(6px, 1.6vmin, 16px);
+      /* Le bouton s'entoure d'un halo qui déborde de sa boîte : la consigne
+         reste donc à bonne distance. 12 px au minimum, mesurés entre le bas
+         du texte et le haut du halo — le texte ne peut pas le toucher. */
+      gap:clamp(12px, 2.4vmin, 22px);
     }
     #ecoutille .ec-consigne{
       margin:0; max-width:min(620px, 92vw);
@@ -664,13 +713,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=10" defer></script>
+  <script src="ecoutille.js?v=11" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
-     PAGE DE GARDE — 20 000 LIEUX SOUS LES MERS, À BORD DU NAUTILUS
-     (« garde v10 », film et console de bord)
+     PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
+     (« garde v11 », film, jauge d'oxygène et ardoise de prise)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -707,17 +756,25 @@
   <div class="ec-scene">
 
     <header class="ec-enseigne">
-      <!-- Le bandeau du cadreur : témoin d'enregistrement, timecode qui
-           compte vraiment, et le format de prise. C'est du décor — mais du
-           décor COHÉRENT, comme les repères gravés en marge d'une pellicule. -->
+      <!-- Le bandeau du cadreur. À GAUCHE, plus de témoin REC mais la jauge
+           d'oxygène du bord : elle se vide vraiment, au rythme de la consom-
+           mation de l'équipage. À DROITE, l'ardoise de prise : le timecode
+           qui compte à 24 images par seconde, et le format du film. -->
       <div class="ec-hud" aria-hidden="true">
-        <span class="ec-rec"><b></b>REC · <span id="ecTimecode">00:00:00:00</span></span>
-        <span>2.39:1 · 24 i/s · prise 12</span>
+        <span class="ec-o2">
+          <b class="ec-o2-nom">O₂</b>
+          <span class="ec-o2-piste"><i id="ecO2Niveau" class="ec-o2-niveau"></i></span>
+          <span id="ecO2Valeur" class="ec-o2-valeur">5&#8239;880 L</span>
+        </span>
+        <span class="ec-slate">
+          <span id="ecTimecode">00:00:00:00</span>
+          <span class="ec-format">2.39:1 · 24 i/s · prise 12</span>
+        </span>
       </div>
       <p class="ec-verne">D&#8217;après Jules Verne</p>
       <h1 class="ec-titre">Expédition dans le Nautilus</h1>
       <div class="ec-regle" aria-hidden="true"></div>
-      <p class="ec-sous-titre">Sous les mers, à bord du Nautilus</p>
+      <p class="ec-sous-titre">INT. NAUTILUS — LE SALON — 1867</p>
     </header>
 
     <!-- LE HUBLOT DU SALON : la mer, vraie, dans le verre. Le film du
@@ -747,12 +804,12 @@
     </div>
 
     <footer class="ec-pied">
-      <p class="ec-consigne">Appuie sur <b>START</b> — le premier geste allume le sonar du bord.</p>
+      <p class="ec-consigne">Séance unique · un geste, et <b>ça tourne</b>.</p>
       <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir le sas du Nautilus et lancer l'aventure">
         <span class="ec-dome" aria-hidden="true"></span>
         <span class="ec-start-label">START</span>
       </button>
-      <span class="ec-version">garde v10</span>
+      <span class="ec-version">garde v11</span>
     </footer>
   </div>
 
@@ -761,7 +818,7 @@
   <div class="ec-flash" aria-hidden="true"></div>
 
   <!-- Ce que lisent les lecteurs d'écran (le décor ci-dessus est muet). -->
-  <p class="ec-lu">Expédition dans le Nautilus — d'après Jules Verne. Derrière le hublot du Nautilus, la mer et le bateau. Appuie sur START pour ouvrir le sas et lancer l'aventure.</p>
+  <p class="ec-lu">Expédition dans le Nautilus — d'après Jules Verne. Dans le salon, derrière le hublot, la mer et le Nautilus. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et lancer l'aventure.</p>
 </div>
 
 <!-- ═══════════ SOCLE — LE CLIC ═══════════

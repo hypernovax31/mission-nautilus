@@ -266,8 +266,8 @@ ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v10)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v10'));
+ok('un repère de version dit quelle page de garde est chargée (garde v11)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v11'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
@@ -322,8 +322,12 @@ ok('la commande est un bouton du flux, posé sous sa consigne',
    donc le résultat d'un calcul, pas d'un réglage à l'œil : les toucher sans
    refaire le calcul ramènerait le débordement. */
 ok('le hublot a sa place réservée dans la colonne (le bas de l’écran ne bouge jamais)',
-   /#ecoutille \.ec-hublot\{[\s\S]*?width:min\(44vh, 78vw\)/.test(socleCss) &&
-   /#ecoutille \.ec-hublot\{[\s\S]*?height:min\(44vh, 78vw\)/.test(socleCss));
+   /#ecoutille \.ec-hublot\{[\s\S]*?width:min\(42vh, 78vw\)/.test(socleCss) &&
+   /#ecoutille \.ec-hublot\{[\s\S]*?height:min\(42vh, 78vw\)/.test(socleCss));
+ok('debout, le hublot se cale sur la largeur mais reste plafonné (tablette comprise)',
+   /orientation: portrait\)\{[\s\S]*?width:min\(48vh, 80vw\)/.test(socleCss));
+ok('sur un portable ou une tablette de 768 px de haut, le hublot se resserre déjà',
+   /@media \(max-height: 820px\)\{[\s\S]*?width:min\(40vh, 74vw\)/.test(socleCss));
 ok('sur un écran bas, le hublot se resserre ENCORE (rien ne peut déborder)',
    /@media \(max-height: 700px\)\{[\s\S]*?width:min\(40vh, 66vw\)/.test(socleCss) &&
    /orientation: landscape\) and \(max-height: 500px\)[\s\S]*?width:min\(34vh, 48vw\)/.test(socleCss));
@@ -464,8 +468,20 @@ ok('l’ancien titre (« Mission Nautilus ») n’est plus le titre de la garde'
    !/<h1 class="ec-titre">[^<]*Mission Nautilus/.test(gardeHtml));
 ok('la mention dit maintenant que c’est d’après Jules Verne',
    gardeHtml.includes("D&#8217;après Jules Verne"));
-ok('la ligne sous le titre situe le film : sous les mers, à bord du Nautilus',
-   /<p class="ec-sous-titre">Sous les mers, à bord du Nautilus<\/p>/.test(gardeHtml));
+/* Le joueur a demandé une ligne « plus cinéphile et moins explicative » :
+   le sous-titre n'explique plus où l'on est, il l'écrit comme un script. */
+ok('la ligne sous le titre est une amorce de scénario, pas une explication',
+   /<p class="ec-sous-titre">INT\. NAUTILUS — LE SALON — 1867<\/p>/.test(gardeHtml));
+ok('la consigne parle cinéma (« un geste, et ça tourne ») et ne fait plus le mode d’emploi',
+   /<p class="ec-consigne">Séance unique · un geste, et <b>ça tourne<\/b>\.<\/p>/.test(gardeHtml) &&
+   !gardeHtml.includes('le premier geste allume le sonar du bord'));
+
+/* Rien ne doit pouvoir toucher le bouton START : la consigne et lui sont deux
+   enfants du même pied, séparés par un écart d'au moins 12 px — le halo du
+   bouton (17 % de son diamètre) ne peut donc jamais atteindre le texte. */
+ok('la consigne est séparée du bouton START par un écart calculé (≥ 12 px)',
+   /#ecoutille \.ec-pied\{[\s\S]*?gap:clamp\(12px/.test(socleCss) &&
+   !/position:absolute/.test(bloc(/#ecoutille \.ec-consigne\{[\s\S]*?\}/)));
 
 /* --- LE TABLEAU DE BORD EST RETIRÉ ------------------------------------- */
 /* Demande du joueur : « supprime le tableau de bord de la page de démarrage ».
@@ -560,10 +576,26 @@ ok('deux fanaux de lentille, avec le trait anamorphique des optiques de cinéma'
    gardeHtml.includes('class="ec-fanaux"') &&
    /\.ec-fanaux i::after\{[\s\S]*?height:2px/.test(socleCss) &&
    /@keyframes ecFanal/.test(socleCss));
-ok('le témoin d’enregistrement bat dans le bandeau du cadreur',
-   gardeHtml.includes('class="ec-rec"') && /@keyframes ecRec/.test(socleCss));
+/* Demande du joueur : « le REC en haut à gauche sera remplacé par une jauge
+   d'oxygène ». Vérifié des trois côtés — le balisage, le dessin, et le calcul
+   qui la fait vivre (voir plus bas, côté moteur). */
+ok('le témoin REC a bien quitté le bandeau du cadreur',
+   !gardeHtml.includes('ec-rec') && !socleCss.includes('ec-rec') &&
+   !socleCss.includes('ecRec'));
+ok('une jauge d’oxygène le remplace, à la même place (nom, piste, valeur en litres)',
+   /<span class="ec-o2">[\s\S]*?<b class="ec-o2-nom">O₂<\/b>[\s\S]*?<span class="ec-o2-piste"><i id="ecO2Niveau" class="ec-o2-niveau"><\/i><\/span>[\s\S]*?<span id="ecO2Valeur" class="ec-o2-valeur">5&#8239;880 L<\/span>/.test(gardeHtml));
+ok('la jauge est graduée et sa lumière ne bouge qu’en transformation',
+   /#ecoutille \.ec-o2-piste::after\{[\s\S]*?repeating-linear-gradient/.test(socleCss) &&
+   /#ecoutille \.ec-o2-niveau\{[\s\S]*?transform-origin:left center/.test(socleCss) &&
+   !/#ecoutille \.ec-o2-niveau\{[^}]*animation/.test(socleCss));
+ok('la jauge est un instrument du bord, pas un cadran du tableau de bord',
+   gardeHtml.includes('ec-o2') && !gardeHtml.includes('ec-cadran'));
 ok('le bandeau annonce le format de prise (2.39:1 · 24 i/s)',
    gardeHtml.includes('2.39:1 · 24 i/s'));
+ok('le timecode reste dans le bandeau, au-dessus du format',
+   /<span class="ec-slate">[\s\S]*?<span id="ecTimecode">00:00:00:00<\/span>[\s\S]*?<span class="ec-format">2\.39:1 · 24 i\/s · prise 12<\/span>/.test(gardeHtml));
+ok('sur un écran bas, l’ardoise lâche le format pour rester sur une ligne',
+   /@media \(max-height: 700px\)\{[\s\S]*?\.ec-format\{ display:none \}/.test(socleCss));
 ok('le bandeau du cadreur est DANS le flux (il ne chevauche rien)',
    /<div class="ec-hud" aria-hidden="true">/.test(gardeHtml) &&
    /#ecoutille \.ec-hud\{[\s\S]*?width:100%/.test(socleCss) &&
@@ -667,6 +699,20 @@ ok('le bouton porte le nom exigé : START', /<span class="ec-start-label">START<
 /* --- Le moteur : le geste, le récit, le son ----------------------------- */
 ok('le moteur démarre le bandeau du cadreur dès la première image',
    /demarrerCadreur\(\);/.test(porte) && /function demarrerCadreur\(\)/.test(porte));
+/* La jauge ne clignote pas au hasard : elle obéit à une consommation réelle
+   (0,30 L/min par homme, vingt hommes, réserve de 6 000 L). Ces trois
+   constantes sont le cœur du calcul : si l'une bouge sans les autres, la
+   jauge devient un mensonge. */
+ok('la jauge part d’une réserve et d’une consommation réelles',
+   /O2_RESERVE_L\s*=\s*6000/.test(porte) && /O2_DEPART_L\s*=\s*5880/.test(porte) &&
+   /O2_CONSO_L_MIN\s*=\s*6/.test(porte) && /Math\.max\(0, O2_DEPART_L/.test(porte));
+ok('la jauge est mise à jour par le même minuteur, sans jamais passer sous zéro',
+   /majOxygene\(t\);/.test(porte) && /Math\.max\(0,/.test(porte) &&
+   /scaleX\(/.test(porte));
+ok('la valeur affichée est en litres, avec l’espace fine des milliers',
+   /milliers\(arrondi\) \+ ' L'/.test(porte) && /\\u202f/.test(porte));
+ok('la jauge suit une préférence de mouvement réduit sans cesser de mesurer',
+   /CALME \? 1000 : 250/.test(porte));
 ok('la page de garde n’a plus AUCUN cadran à nourrir (ni intrusion ni sonar)',
    !porte.includes('INSTRUMENTS') && !porte.includes('ecImmersion') &&
    !porte.includes('ecEcho') && !porte.includes('ecPression'));
@@ -719,8 +765,8 @@ ok('le service worker précache EXACTEMENT cette version',
    sw.includes("'./ecoutille.js?v=" + versionJS + "'"));
 /* index.html est dans le PRECACHE : changer le titre de la garde sans relever
    ce numéro laisserait l'ancien titre en cache sur les appareils déjà venus. */
-ok('le cache du service worker a été relevé après le changement de titre (v' + versionCache + ')',
-   versionCache >= 310);
+ok('le cache du service worker a été relevé après la jauge d’oxygène (v' + versionCache + ')',
+   versionCache >= 311);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL
