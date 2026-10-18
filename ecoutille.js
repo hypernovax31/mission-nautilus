@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v15 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v16 »
 
    Ce que fait ce fichier
    ----------------------
@@ -12,7 +12,7 @@
      2. derrière le verre du hublot, la mer vit (rais, caustiques, neige
         marine, bulles) pendant que le film tourne ; en haut, la jauge
         d'oxygène se vide au rythme réel de l'équipage pendant que le
-        relèvement annonce le retour du signal et que le chronomètre tourne ;
+        relèvement annonce le retour du signal ;
      3. le visiteur frappe le BOUTON ROUGE « START » ;
      4. le projecteur du Nautilus nous éblouit : la lumière s'ouvre jusqu'à
         remplir l'écran, un éclair passe, puis son fondu découvre l'accueil —
@@ -284,17 +284,17 @@
      0,30 litre d'oxygène par minute ; l'équipage du Nautilus compte vingt
      hommes, soit 6 litres par minute. La réserve nominale des soutes est de
      6 000 litres ; il en reste 5 880 à l'ouverture de la garde (98 %), de
-     quoi tenir seize heures quarante. Le chiffre baisse donc pour de vrai,
+     quoi tenir seize heures vingt. Le chiffre baisse donc pour de vrai,
      et la lumière de la piste suit.
 
-     Le TIMECODE, lui, compte à 24 images par seconde — la cadence du film qui
-     tourne dans le hublot. C'est le repère d'une prise de vues, pas un
-     instrument de navigation.
+     Le timecode qui occupait la droite du bandeau a été retiré : il pouvait
+     passer pour un compteur de mission. Il ne reste ici que la réserve du
+     bord, en litres, et le relèvement du signal ; le compte à rebours commun
+     vit dans le panneau « Réserve O₂ » de l’accueil, après START.
 
-     Un seul minuteur, qui ne touche QUE du texte et une transformation —
+     Un seul minuteur, qui ne touche que la valeur en litres et une transformation —
      rien d'autre ne bouge sur la page. Pas de bandeau (page sans garde) :
      il ne se passe rien. */
-  const timecode = document.getElementById('ecTimecode');
   const O2_RESERVE_L   = 6000;  /* capacité nominale des soutes, en litres */
   const O2_DEPART_L    = 5880;  /* ce qu'il reste au chargement de la garde */
   const O2_CONSO_L_MIN = 6;     /* vingt hommes × 0,30 L/min, au repos */
@@ -306,18 +306,11 @@
   let _o2Echelle = -1;      /* dernière échelle posée sur la piste */
 
   function demarrerCadreur(){
-    if((!timecode && !o2Niveau) || _cadreur) return;
+    if(!o2Niveau || _cadreur) return;
     const t0 = Date.now();
-    let dernier = '';
     const tic = () => {
       if(_cadreurMort || _ouverte) return;
       const t  = (Date.now() - t0) / 1000;
-      if(timecode){
-        const im = Math.floor(t * 24);
-        const tc = deux(Math.floor(t / 3600)) + ':' + deux(Math.floor(t / 60) % 60) + ':'
-                 + deux(Math.floor(t) % 60) + ':' + deux(im % 24);
-        if(tc !== dernier){ timecode.textContent = tc; dernier = tc; }
-      }
       majOxygene(t);
       _cadreur = plusTard(tic, CALME ? 1000 : 250);
     };
@@ -348,7 +341,6 @@
     if(_cadreur) clearTimeout(_cadreur);
     _cadreur = null;
   }
-  function deux(n){ return String(n).padStart(2, '0'); }
 
   /* ------------------------------------------------------------------ *
    * 5. LA SORTIE : le projecteur nous éblouit

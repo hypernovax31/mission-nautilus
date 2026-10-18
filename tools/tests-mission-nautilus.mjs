@@ -266,8 +266,14 @@ ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v15)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v15'));
+ok('un repère de version dit quelle page de garde est chargée (garde v16)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v16'));
+ok('le raccourci vers la réserve vit sur l’accueil, jamais dans la garde fermée',
+   accueil.includes('id="reserveMissionBtn"') && !gardeHtml.includes('reserveMissionBtn') &&
+   accueil.includes('O₂ Consulter la réserve'));
+ok('ce raccourci vise le vrai panneau de mission de l’accueil (#oxygenPanel, pas #o2Bar)',
+   /reserveMissionBtn'\)\?\.addEventListener\('click'[\s\S]{0,220}smartScroll\(document\.getElementById\('oxygenPanel'\), true\)/.test(accueil) &&
+   !gardeHtml.includes('o2Bar'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
@@ -603,8 +609,9 @@ ok('la jauge est un instrument du bord, pas un cadran du tableau de bord',
    gardeHtml.includes('ec-o2') && !gardeHtml.includes('ec-cadran'));
 ok('le bandeau annonce le retour du signal après 156 ans',
    gardeHtml.includes('Signal détecté après 156 ans'));
-ok('le chronomètre reste dans le bandeau, au-dessus du relèvement du signal',
-   /<span class="ec-slate">[\s\S]*?<span id="ecTimecode">00:00:00:00<\/span>[\s\S]*?<span class="ec-signal">Signal détecté après 156 ans<\/span>/.test(gardeHtml));
+ok('le timecode a quitté le bandeau : seul le relèvement du signal reste à droite',
+   !gardeHtml.includes('ecTimecode') &&
+   /<span class="ec-slate">[\s\S]*?<span class="ec-signal">Signal détecté après 156 ans<\/span>/.test(gardeHtml));
 ok('sur un écran bas, le bandeau lâche le relèvement pour rester sur une ligne',
    /@media \(max-height: 700px\)\{[\s\S]*?\.ec-signal\{ display:none \}/.test(socleCss));
 ok('le bandeau du bord est DANS le flux (il ne chevauche rien)',
@@ -727,6 +734,8 @@ ok('la jauge suit une préférence de mouvement réduit sans cesser de mesurer',
 ok('la page de garde n’a plus AUCUN cadran à nourrir (ni intrusion ni sonar)',
    !porte.includes('INSTRUMENTS') && !porte.includes('ecImmersion') &&
    !porte.includes('ecEcho') && !porte.includes('ecPression'));
+ok('le moteur ne nourrit plus aucun timecode (le compteur commun vit dans l’accueil)',
+   !porte.includes('ecTimecode') && !porte.includes('const timecode') && !/\bdeux\(/.test(porte));
 ok('le moteur lit la préférence de sonar du site (nautilusSoundOn)',
    porte.includes("localStorage.getItem('nautilusSoundOn') === '0'"));
 ok('silence respecté : aucun contexte audio n’est créé si le sonar est coupé',
@@ -791,8 +800,8 @@ ok('le service worker précache EXACTEMENT cette version',
 /* index.html est dans le PRECACHE : changer les textes de la garde sans
    relever ce numéro laisserait les anciennes lignes en cache sur les
    appareils déjà venus. */
-ok('le cache du service worker a été relevé après le sas des gestes (v' + versionCache + ')',
-   versionCache >= 315);
+ok('le cache du service worker a été relevé après le retrait du timecode (v' + versionCache + ')',
+   versionCache >= 316);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL

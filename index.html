@@ -25,7 +25,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « garde v15 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « garde v16 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -151,7 +151,7 @@
     /* Écran bas (téléphone couché, petite fenêtre) : on resserre encore. */
     @media (max-height: 700px){
       #ecoutille .ec-hublot{ width:min(40vh, 66vw); height:min(40vh, 66vw) }
-      /* Peu de hauteur : le bandeau garde son chronomètre et lâche le
+      /* Peu de hauteur : le bandeau garde sa jauge et lâche le
          relèvement, comme un viseur qui dégraisse son affichage. Il reste
          ainsi sur UNE ligne et ne prend rien au hublot. */
       #ecoutille .ec-signal{ display:none }
@@ -471,10 +471,9 @@
       font-variant-numeric:tabular-nums; letter-spacing:.1em; color:#d8fff0;
       white-space:nowrap; flex:none;
     }
-    /* Le relèvement du bord, à droite. Sur un grand écran, il tient sur
-       UNE ligne — le bandeau ne prend pas un pixel de plus qu'avant la jauge.
-       Sur téléphone, où la largeur manque mais la hauteur abonde, il
-       s'empile (chronomètre au-dessus du relèvement) et reste aligné à droite. */
+    /* Le relèvement du bord, à droite. Il tient sur UNE ligne — le bandeau
+       ne prend pas un pixel de plus qu'avant la jauge. Sur téléphone, il
+       reste simplement aligné à droite, en face de la réserve. */
     #ecoutille .ec-slate{display:flex; align-items:baseline; gap:.9em; text-align:right}
     @media (max-width: 700px){
       #ecoutille .ec-slate{flex-direction:column; align-items:flex-end; gap:.2em; line-height:1.12}
@@ -713,13 +712,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=15" defer></script>
+  <script src="ecoutille.js?v=16" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« garde v15 », film, jauge d'oxygène et sas des gestes)
+     (« garde v16 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -758,8 +757,9 @@
     <header class="ec-enseigne">
       <!-- Le bandeau du bord. À GAUCHE, plus de témoin REC mais la jauge
            d'oxygène : elle se vide vraiment, au rythme de la consommation
-           de l'équipage. À DROITE, le relèvement du signal : le chronomètre
-           de plongée et le signal détecté après 156 ans de silence. -->
+           de l'équipage. À DROITE, le seul relèvement du signal : le
+           Nautilus répond après 156 ans de silence. Aucun timecode ici :
+           le compte à rebours commun de la mission vit dans l’accueil. -->
       <div class="ec-hud" aria-hidden="true">
         <span class="ec-o2">
           <b class="ec-o2-nom">O₂</b>
@@ -767,7 +767,6 @@
           <span id="ecO2Valeur" class="ec-o2-valeur">5&#8239;880 L</span>
         </span>
         <span class="ec-slate">
-          <span id="ecTimecode">00:00:00:00</span>
           <span class="ec-signal">Signal détecté après 156 ans</span>
         </span>
       </div>
@@ -809,7 +808,7 @@
         <span class="ec-dome" aria-hidden="true"></span>
         <span class="ec-start-label">START</span>
       </button>
-      <span class="ec-version">garde v15</span>
+      <span class="ec-version">garde v16</span>
     </footer>
   </div>
 
@@ -1024,7 +1023,7 @@
   </div>
   <h1 class="hero-title">Mission Nautilus</h1>
   <h2 class="hero-line">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</h2>
-  <div class="hero-actions"><button class="hero-cta pulse-engage btn-pulse" id="launchMissionBtn">⚓ Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la plongée</button></div>
+  <div class="hero-actions"><button class="hero-cta pulse-engage btn-pulse" id="launchMissionBtn">⚓ Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la plongée</button><button class="hero-cta ghost" id="reserveMissionBtn" type="button">O₂ Consulter la réserve</button></div>
 </header>
 <main>
   <section class="card intro-card">
@@ -7017,6 +7016,14 @@ function qrDataUri(text, opts){
         input.select();
       }
     }, 700);
+  });
+  /* Le raccourci demandé dans la conversation Ashna, corrigé à la réalité
+     de cette page : il vit sur l'accueil OUVERT (jamais dans la garde
+     fermée, où seul START peut agir) et il vise le panneau complet de la
+     réserve, #oxygenPanel — #o2Bar est l'identifiant des pages de palier. */
+  $('reserveMissionBtn')?.addEventListener('click', () => {
+    startOceanAudio();
+    smartScroll(document.getElementById('oxygenPanel'), true);
   });
 
 
