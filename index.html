@@ -25,12 +25,12 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « garde v11 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « garde v12 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
        lumière, caustiques réelles, neige marine, bulles. En haut, la JAUGE
-       D'OXYGÈNE du bord (elle se vide pour de vrai) et l'ardoise du cadreur ;
+       D'OXYGÈNE du bord (elle se vide pour de vrai) et le relèvement du signal ;
        au centre, le titre en lettres de bronze ; sous le hublot, le bouton
        rouge. Et pour finir, le projecteur du Nautilus nous éblouit : l'accueil
        apparaît dans la lumière.
@@ -151,10 +151,10 @@
     /* Écran bas (téléphone couché, petite fenêtre) : on resserre encore. */
     @media (max-height: 700px){
       #ecoutille .ec-hublot{ width:min(40vh, 66vw); height:min(40vh, 66vw) }
-      /* Peu de hauteur : l'ardoise garde son timecode et lâche le format,
-         comme un viseur qui dégraisse son affichage. Le bandeau reste ainsi
-         sur UNE ligne et ne prend rien au hublot. */
-      #ecoutille .ec-format{ display:none }
+      /* Peu de hauteur : le bandeau garde son chronomètre et lâche le
+         relèvement, comme un viseur qui dégraisse son affichage. Il reste
+         ainsi sur UNE ligne et ne prend rien au hublot. */
+      #ecoutille .ec-signal{ display:none }
     }
     @media (orientation: landscape) and (max-height: 500px){
       /* Calculé, pas deviné : sur 390 px de haut, titre + hublot + bouton
@@ -471,15 +471,15 @@
       font-variant-numeric:tabular-nums; letter-spacing:.1em; color:#d8fff0;
       white-space:nowrap; flex:none;
     }
-    /* La plaquette du cadreur, à droite. Sur un grand écran, elle tient sur
+    /* Le relèvement du bord, à droite. Sur un grand écran, il tient sur
        UNE ligne — le bandeau ne prend pas un pixel de plus qu'avant la jauge.
-       Sur téléphone, où la largeur manque mais la hauteur abonde, elle
-       s'empile (timecode au-dessus du format) et reste alignée à droite. */
+       Sur téléphone, où la largeur manque mais la hauteur abonde, il
+       s'empile (chronomètre au-dessus du relèvement) et reste aligné à droite. */
     #ecoutille .ec-slate{display:flex; align-items:baseline; gap:.9em; text-align:right}
     @media (max-width: 700px){
       #ecoutille .ec-slate{flex-direction:column; align-items:flex-end; gap:.2em; line-height:1.12}
     }
-    #ecoutille .ec-format{color:#7ba7b8; letter-spacing:.14em}
+    #ecoutille .ec-signal{color:#7ba7b8; letter-spacing:.14em}
 
     /* ── 5. LES TROIS ZONES, EMPILÉES ──────────────────────────────────────
        C'est ICI que se règle la question des chevauchements : une colonne,
@@ -713,13 +713,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=11" defer></script>
+  <script src="ecoutille.js?v=12" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« garde v11 », film, jauge d'oxygène et ardoise de prise)
+     (« garde v12 », film, jauge d'oxygène et signal retrouvé)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -756,10 +756,10 @@
   <div class="ec-scene">
 
     <header class="ec-enseigne">
-      <!-- Le bandeau du cadreur. À GAUCHE, plus de témoin REC mais la jauge
-           d'oxygène du bord : elle se vide vraiment, au rythme de la consom-
-           mation de l'équipage. À DROITE, l'ardoise de prise : le timecode
-           qui compte à 24 images par seconde, et le format du film. -->
+      <!-- Le bandeau du bord. À GAUCHE, plus de témoin REC mais la jauge
+           d'oxygène : elle se vide vraiment, au rythme de la consommation
+           de l'équipage. À DROITE, le relèvement du signal : le chronomètre
+           de plongée et le point où le Nautilus vient d'être détecté. -->
       <div class="ec-hud" aria-hidden="true">
         <span class="ec-o2">
           <b class="ec-o2-nom">O₂</b>
@@ -768,13 +768,13 @@
         </span>
         <span class="ec-slate">
           <span id="ecTimecode">00:00:00:00</span>
-          <span class="ec-format">2.39:1 · 24 i/s · prise 12</span>
+          <span class="ec-signal">Signal détecté · Fnac Labège</span>
         </span>
       </div>
-      <p class="ec-verne">D&#8217;après Jules Verne</p>
+      <p class="ec-verne">Jules Verne · 156 ans plus tard</p>
       <h1 class="ec-titre">Expédition dans le Nautilus</h1>
       <div class="ec-regle" aria-hidden="true"></div>
-      <p class="ec-sous-titre">INT. NAUTILUS — LE SALON — 1867</p>
+      <p class="ec-sous-titre">Huit paliers avant la surface</p>
     </header>
 
     <!-- LE HUBLOT DU SALON : la mer, vraie, dans le verre. Le film du
@@ -804,12 +804,12 @@
     </div>
 
     <footer class="ec-pied">
-      <p class="ec-consigne">Séance unique · un geste, et <b>ça tourne</b>.</p>
+      <p class="ec-consigne">Sonar allumé — <b>ouvrez le sas</b>.</p>
       <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir le sas du Nautilus et lancer l'aventure">
         <span class="ec-dome" aria-hidden="true"></span>
         <span class="ec-start-label">START</span>
       </button>
-      <span class="ec-version">garde v11</span>
+      <span class="ec-version">garde v12</span>
     </footer>
   </div>
 
@@ -818,7 +818,7 @@
   <div class="ec-flash" aria-hidden="true"></div>
 
   <!-- Ce que lisent les lecteurs d'écran (le décor ci-dessus est muet). -->
-  <p class="ec-lu">Expédition dans le Nautilus — d'après Jules Verne. Dans le salon, derrière le hublot, la mer et le Nautilus. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et lancer l'aventure.</p>
+  <p class="ec-lu">Expédition dans le Nautilus — d'après Jules Verne. Cent cinquante-six ans après sa disparition, le signal du Nautilus est détecté à la Fnac Labège. Huit paliers séparent les équipages de la surface. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et recevoir l'ordre de mission.</p>
 </div>
 
 <!-- ═══════════ SOCLE — LE CLIC ═══════════

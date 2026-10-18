@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v11 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v12 »
 
    Ce que fait ce fichier
    ----------------------
@@ -11,8 +11,8 @@
         bateau noir qui traverse l'écran, ses hublots allumés ;
      2. derrière le verre du hublot, la mer vit (rais, caustiques, neige
         marine, bulles) pendant que le film tourne ; en haut, la jauge
-        d'oxygène se vide au rythme réel de l'équipage et l'ardoise du
-        cadreur égrène son timecode ;
+        d'oxygène se vide au rythme réel de l'équipage pendant que le
+        relèvement du signal désigne Labège et que le chronomètre tourne ;
      3. le visiteur frappe le BOUTON ROUGE « START » ;
      4. le projecteur du Nautilus nous éblouit : la lumière s'ouvre jusqu'à
         remplir l'écran, un éclair passe, puis son fondu découvre l'accueil —
@@ -271,11 +271,11 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * 4. LE BANDEAU DU CADREUR
+   * 4. LE BANDEAU DU BORD
    * ------------------------------------------------------------------ */
   /* Le tableau de bord à six cadrans a été retiré, sur décision du joueur.
      Restent deux choses, en haut de la garde : la JAUGE D'OXYGÈNE (à gauche)
-     et l'ardoise de prise (à droite).
+     et le relèvement du signal (à droite).
 
      La jauge n'est pas un décor : elle se calcule. Un homme au repos consomme
      0,30 litre d'oxygène par minute ; l'équipage du Nautilus compte vingt

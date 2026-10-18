@@ -266,8 +266,8 @@ ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v11)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v11'));
+ok('un repère de version dit quelle page de garde est chargée (garde v12)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v12'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
@@ -464,16 +464,21 @@ ok('l’ancien titre (« 20 000 Lieues à la Fnac ») a bien quitté la page de 
    !gardeHtml.includes('Lieues à la Fnac'));
 ok('la phrase des lecteurs d’écran porte le même titre',
    /class="ec-lu">Expédition dans le Nautilus —/.test(gardeHtml));
+ok('cette phrase raconte aussi le signal retrouvé et les huit paliers du jeu',
+   gardeHtml.includes('le signal du Nautilus est détecté à la Fnac Labège') &&
+   gardeHtml.includes('Huit paliers séparent les équipages de la surface'));
 ok('l’ancien titre (« Mission Nautilus ») n’est plus le titre de la garde',
    !/<h1 class="ec-titre">[^<]*Mission Nautilus/.test(gardeHtml));
-ok('la mention dit maintenant que c’est d’après Jules Verne',
-   gardeHtml.includes("D&#8217;après Jules Verne"));
-/* Le joueur a demandé une ligne « plus cinéphile et moins explicative » :
-   le sous-titre n'explique plus où l'on est, il l'écrit comme un script. */
-ok('la ligne sous le titre est une amorce de scénario, pas une explication',
-   /<p class="ec-sous-titre">INT\. NAUTILUS — LE SALON — 1867<\/p>/.test(gardeHtml));
-ok('la consigne parle cinéma (« un geste, et ça tourne ») et ne fait plus le mode d’emploi',
-   /<p class="ec-consigne">Séance unique · un geste, et <b>ça tourne<\/b>\.<\/p>/.test(gardeHtml) &&
+ok('la mention au-dessus du titre relance l’expédition de Jules Verne, 156 ans plus tard',
+   gardeHtml.includes('Jules Verne · 156 ans plus tard'));
+/* Le joueur a demandé des textes plus immersifs AU JEU : la garde annonce
+   donc l’intrigue et l’enjeu réels de la partie — un signal retrouvé, huit
+   paliers, puis la surface — sans redevenir un mode d’emploi. */
+ok('la ligne sous le titre donne l’enjeu de la partie : huit paliers avant la surface',
+   /<p class="ec-sous-titre">Huit paliers avant la surface<\/p>/.test(gardeHtml));
+ok('la consigne met le matelot à son poste sans faire le mode d’emploi',
+   /<p class="ec-consigne">Sonar allumé — <b>ouvrez le sas<\/b>\.<\/p>/.test(gardeHtml) &&
+   !gardeHtml.includes('Séance unique · un geste, et') &&
    !gardeHtml.includes('le premier geste allume le sonar du bord'));
 
 /* Rien ne doit pouvoir toucher le bouton START : la consigne et lui sont deux
@@ -590,13 +595,13 @@ ok('la jauge est graduée et sa lumière ne bouge qu’en transformation',
    !/#ecoutille \.ec-o2-niveau\{[^}]*animation/.test(socleCss));
 ok('la jauge est un instrument du bord, pas un cadran du tableau de bord',
    gardeHtml.includes('ec-o2') && !gardeHtml.includes('ec-cadran'));
-ok('le bandeau annonce le format de prise (2.39:1 · 24 i/s)',
-   gardeHtml.includes('2.39:1 · 24 i/s'));
-ok('le timecode reste dans le bandeau, au-dessus du format',
-   /<span class="ec-slate">[\s\S]*?<span id="ecTimecode">00:00:00:00<\/span>[\s\S]*?<span class="ec-format">2\.39:1 · 24 i\/s · prise 12<\/span>/.test(gardeHtml));
-ok('sur un écran bas, l’ardoise lâche le format pour rester sur une ligne',
-   /@media \(max-height: 700px\)\{[\s\S]*?\.ec-format\{ display:none \}/.test(socleCss));
-ok('le bandeau du cadreur est DANS le flux (il ne chevauche rien)',
+ok('le bandeau localise le signal retrouvé : Fnac Labège',
+   gardeHtml.includes('Signal détecté · Fnac Labège'));
+ok('le chronomètre reste dans le bandeau, au-dessus du relèvement du signal',
+   /<span class="ec-slate">[\s\S]*?<span id="ecTimecode">00:00:00:00<\/span>[\s\S]*?<span class="ec-signal">Signal détecté · Fnac Labège<\/span>/.test(gardeHtml));
+ok('sur un écran bas, le bandeau lâche le relèvement pour rester sur une ligne',
+   /@media \(max-height: 700px\)\{[\s\S]*?\.ec-signal\{ display:none \}/.test(socleCss));
+ok('le bandeau du bord est DANS le flux (il ne chevauche rien)',
    /<div class="ec-hud" aria-hidden="true">/.test(gardeHtml) &&
    /#ecoutille \.ec-hud\{[\s\S]*?width:100%/.test(socleCss) &&
    !/#ecoutille \.ec-hud\{[^}]*position:absolute/.test(socleCss));
@@ -763,10 +768,11 @@ const versionCache = Number((/CACHE_NAME = 'nautilus-v(\d+)'/.exec(sw) || [])[1]
 ok('le moteur de la garde est en version 10 ou plus (v' + versionJS + ')', versionJS >= 10);
 ok('le service worker précache EXACTEMENT cette version',
    sw.includes("'./ecoutille.js?v=" + versionJS + "'"));
-/* index.html est dans le PRECACHE : changer le titre de la garde sans relever
-   ce numéro laisserait l'ancien titre en cache sur les appareils déjà venus. */
-ok('le cache du service worker a été relevé après la jauge d’oxygène (v' + versionCache + ')',
-   versionCache >= 311);
+/* index.html est dans le PRECACHE : changer les textes de la garde sans
+   relever ce numéro laisserait les anciennes lignes en cache sur les
+   appareils déjà venus. */
+ok('le cache du service worker a été relevé après les textes immersifs (v' + versionCache + ')',
+   versionCache >= 312);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL
