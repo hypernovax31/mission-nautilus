@@ -266,8 +266,8 @@ ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v12)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v12'));
+ok('un repère de version dit quelle page de garde est chargée (garde v13)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v13'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
@@ -464,20 +464,26 @@ ok('l’ancien titre (« 20 000 Lieues à la Fnac ») a bien quitté la page de 
    !gardeHtml.includes('Lieues à la Fnac'));
 ok('la phrase des lecteurs d’écran porte le même titre',
    /class="ec-lu">Expédition dans le Nautilus —/.test(gardeHtml));
-ok('cette phrase raconte aussi le signal retrouvé et les huit paliers du jeu',
-   gardeHtml.includes('le signal du Nautilus est détecté à la Fnac Labège') &&
-   gardeHtml.includes('Huit paliers séparent les équipages de la surface'));
+ok('cette phrase relie le signal, les rayons de Labège et les huit paliers du jeu',
+   gardeHtml.includes('grand jeu interne de la Fnac Labège') &&
+   gardeHtml.includes('dans les 1 500 mètres carrés du magasin de Labège 2') &&
+   gardeHtml.includes('le signal du Nautilus réapparaît sous les rayons') &&
+   gardeHtml.includes('huit paliers séparent les équipages de la surface'));
+ok('elle traverse les vrais rayons du parcours, des Livres au Drone',
+   gardeHtml.includes('Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone') &&
+   gardeHtml.includes('le premier à remonter le Nautilus entrera dans la légende du magasin'));
 ok('l’ancien titre (« Mission Nautilus ») n’est plus le titre de la garde',
    !/<h1 class="ec-titre">[^<]*Mission Nautilus/.test(gardeHtml));
-ok('la mention au-dessus du titre relance l’expédition de Jules Verne, 156 ans plus tard',
-   gardeHtml.includes('Jules Verne · 156 ans plus tard'));
-/* Le joueur a demandé des textes plus immersifs AU JEU : la garde annonce
-   donc l’intrigue et l’enjeu réels de la partie — un signal retrouvé, huit
-   paliers, puis la surface — sans redevenir un mode d’emploi. */
-ok('la ligne sous le titre donne l’enjeu de la partie : huit paliers avant la surface',
-   /<p class="ec-sous-titre">Huit paliers avant la surface<\/p>/.test(gardeHtml));
-ok('la consigne met le matelot à son poste sans faire le mode d’emploi',
-   /<p class="ec-consigne">Sonar allumé — <b>ouvrez le sas<\/b>\.<\/p>/.test(gardeHtml) &&
+ok('la mention au-dessus du titre ancre l’expédition à la Fnac Labège, 156 ans plus tard',
+   gardeHtml.includes('Fnac Labège · 156 ans plus tard'));
+/* Le joueur a demandé de combiner les contenus du magasin et ceux du jeu :
+   la garde fait donc traverser les rayons réels du parcours avant de
+   rappeler son enjeu — huit paliers, puis le Nautilus à la surface — sans
+   redevenir un mode d’emploi. */
+ok('la ligne sous le titre traverse les rayons du magasin, des Livres aux Drones',
+   /<p class="ec-sous-titre">Des Livres aux Drones, sous les rayons<\/p>/.test(gardeHtml));
+ok('la consigne donne l’objectif du jeu sans faire le mode d’emploi',
+   /<p class="ec-consigne">Huit paliers — <b>remontez le Nautilus<\/b>\.<\/p>/.test(gardeHtml) &&
    !gardeHtml.includes('Séance unique · un geste, et') &&
    !gardeHtml.includes('le premier geste allume le sonar du bord'));
 
@@ -595,10 +601,10 @@ ok('la jauge est graduée et sa lumière ne bouge qu’en transformation',
    !/#ecoutille \.ec-o2-niveau\{[^}]*animation/.test(socleCss));
 ok('la jauge est un instrument du bord, pas un cadran du tableau de bord',
    gardeHtml.includes('ec-o2') && !gardeHtml.includes('ec-cadran'));
-ok('le bandeau localise le signal retrouvé : Fnac Labège',
-   gardeHtml.includes('Signal détecté · Fnac Labège'));
+ok('le bandeau donne le périmètre réel de recherche : Labège 2, 1 500 m²',
+   gardeHtml.includes('Signal · Labège 2 · 1&#8239;500 m²'));
 ok('le chronomètre reste dans le bandeau, au-dessus du relèvement du signal',
-   /<span class="ec-slate">[\s\S]*?<span id="ecTimecode">00:00:00:00<\/span>[\s\S]*?<span class="ec-signal">Signal détecté · Fnac Labège<\/span>/.test(gardeHtml));
+   /<span class="ec-slate">[\s\S]*?<span id="ecTimecode">00:00:00:00<\/span>[\s\S]*?<span class="ec-signal">Signal · Labège 2 · 1&#8239;500 m²<\/span>/.test(gardeHtml));
 ok('sur un écran bas, le bandeau lâche le relèvement pour rester sur une ligne',
    /@media \(max-height: 700px\)\{[\s\S]*?\.ec-signal\{ display:none \}/.test(socleCss));
 ok('le bandeau du bord est DANS le flux (il ne chevauche rien)',
@@ -771,8 +777,8 @@ ok('le service worker précache EXACTEMENT cette version',
 /* index.html est dans le PRECACHE : changer les textes de la garde sans
    relever ce numéro laisserait les anciennes lignes en cache sur les
    appareils déjà venus. */
-ok('le cache du service worker a été relevé après les textes immersifs (v' + versionCache + ')',
-   versionCache >= 312);
+ok('le cache du service worker a été relevé après l’ancrage Fnac Labège (v' + versionCache + ')',
+   versionCache >= 313);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL
