@@ -25,7 +25,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « garde v14 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « garde v15 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -713,13 +713,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=14" defer></script>
+  <script src="ecoutille.js?v=15" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« garde v14 », film, jauge d'oxygène et mer entre les rayons)
+     (« garde v15 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -809,7 +809,7 @@
         <span class="ec-dome" aria-hidden="true"></span>
         <span class="ec-start-label">START</span>
       </button>
-      <span class="ec-version">garde v14</span>
+      <span class="ec-version">garde v15</span>
     </footer>
   </div>
 
@@ -904,6 +904,51 @@
 
   var start = document.getElementById('ecStart');
   if(start) start.addEventListener('click', ouvrirNU);
+
+  /* LE SAS DES GESTES : tant que l'écoutille est fermée, un clic hors
+     START ne doit réveiller ni l'accueil, ni ses sons, ni sa machine à
+     écrire. Or plusieurs guetteurs de l'accueil écoutent le PREMIER geste
+     sur tout le document, en capture : le décor de la garde leur donnait
+     donc le signal avant même que le sas soit ouvert.
+
+     On se place sur window, en capture, avant eux. Hors du bouton,
+     l'événement s'arrête ici ; quand START est réellement enfoncé (doigt,
+     souris, Entrée ou Espace), il continue et reste le vrai geste qui
+     débloque le son. Aucun preventDefault : le focus et le comportement
+     natif du bouton restent intacts. */
+  var GESTES_DU_SAS = ['pointerdown','pointerup','touchstart','touchend','touchmove',
+                       'mousedown','mouseup','click','mousemove','pointermove',
+                       'wheel','scroll','keydown','keyup'];
+  function ecoutilleFermee(){
+    if(window.__ecoutilleJouer === false) return false;
+    if(!racine || !document.documentElement.contains(racine)) return false;
+    if(racine.classList.contains('ec-passee')) return false;
+    var h = document.documentElement;
+    return !(h.classList.contains('ec-arrivee') || h.classList.contains('ec-passee'));
+  }
+  function enfonceStart(event){
+    var cible = event && event.target;
+    if(!cible || !cible.closest || !cible.closest('#ecStart')) return false;
+    if(event.type === 'keydown' || event.type === 'keyup'){
+      return event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+    }
+    return ['pointerdown','touchstart','touchend','mousedown','mouseup','click']
+      .indexOf(event.type) >= 0;
+  }
+  function retenirGesteAccueil(event){
+    if(!ecoutilleFermee()){
+      GESTES_DU_SAS.forEach(function(type){
+        window.removeEventListener(type, retenirGesteAccueil, true);
+      });
+      return;
+    }
+    if(enfonceStart(event)) return;
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+  }
+  GESTES_DU_SAS.forEach(function(type){
+    window.addEventListener(type, retenirGesteAccueil, { capture:true, passive:true });
+  });
 
   /* ecoutille.js appellera ceci pour reprendre la main. */
   window.__ecoutilleSecours = function(){
@@ -5078,6 +5123,25 @@ function qrDataUri(text, opts){
   /* Ordre au premier geste : l'ambiance passe avant la préparation muette
      des hublots. La frappe de l'ordre de mission est traitée séparément au
      chargement, uniquement si l'onglet est visible. */
+  /* LE SAS, CÔTÉ ACCUEIL : deuxième verrou, au cas où un geste arriverait
+     jusqu'ici malgré le socle. Tant que la garde est fermée, seul un vrai
+     enfoncement de START compte comme premier geste ; un clic dans son
+     décor, un survol du bouton ou un défilement sont ignorés et les
+     écouteurs restent en place pour le geste autorisé. */
+  function ecoutilleFermeePourGeste(event){
+    const porte = document.getElementById('ecoutille');
+    if(!porte || window.__ecoutilleJouer === false) return false;
+    const h = document.documentElement;
+    if(h.classList.contains('ec-arrivee') || h.classList.contains('ec-passee') ||
+       porte.classList.contains('ec-passee')) return false;
+    const surStart = !!event?.target?.closest?.('#ecStart');
+    if(!surStart) return true;
+    if(event.type === 'keydown' || event.type === 'keyup'){
+      return !(event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar');
+    }
+    return !['pointerdown','touchstart','touchend','mousedown','mouseup','click']
+      .includes(event.type);
+  }
   function surPremierGeste(cb, rang){
     if(_gesteRecu){ cb(); return; }
     _gesteCbs.push({ cb, rang: (typeof rang === 'number' ? rang : 9) });
@@ -5091,7 +5155,7 @@ function qrDataUri(text, opts){
     const evts = ['pointerdown','touchstart','mousedown','keydown','click',
       'scroll','wheel','touchmove','mousemove'];
     const go = event => {
-      if(_gesteRecu) return;
+      if(_gesteRecu || ecoutilleFermeePourGeste(event)) return;
       _gesteRecu = true;
       /* Si le premier geste vise un hublot, son bruitage est ignoré une fois :
          le seul son audible au démarrage reste ambiance-sonar.mp3. */
@@ -5533,28 +5597,41 @@ function qrDataUri(text, opts){
      Le signal vient donc de l'écoutille elle-même (ecoutille.js). Trois
      issues sont prévues, dans l'ordre du vécu :
        · pas de page de garde (visite suivante, palier, page sans bloc) ;
-       · la classe ec-passee apparaît (écoutille qui se démonte) ;
+       · les classes ec-arrivee ou ec-passee apparaissent (ouverture ou
+         garde passée / filet de la sentinelle) ;
        · l'événement nautilus:ecoutille-ouverte (ouverture normale).
-     Et un filet de sécurité : au bout de 25 s on démarre coûte que coûte. */
+     Aucun départ n'est forcé tant que START n'a pas été frappé : le
+     minuteur ci-dessous ne fait que relire l'état réel, il ne peut pas
+     ouvrir le sas à la place du joueur. */
   function quandEcoutilleOuverte(fn){
-    const porte = document.getElementById('ecoutille');
-    if(!porte || document.documentElement.classList.contains('ec-passee')){ fn(); return; }
+    const ouverte = () => {
+      const porte = document.getElementById('ecoutille');
+      const h = document.documentElement;
+      return !porte || window.__ecoutilleJouer === false ||
+        h.classList.contains('ec-arrivee') || h.classList.contains('ec-passee') ||
+        porte.classList.contains('ec-passee');
+    };
+    if(ouverte()){ fn(); return; }
     let fait = false;
+    let observateur = null;
+    let filet = null;
     const partir = () => {
-      if(fait) return;
+      /* L'observateur peut voir d'autres classes de la garde (film prêt,
+         bouton pressé, plongée…) : aucune ne vaut ouverture. */
+      if(fait || !ouverte()) return;
       fait = true;
       window.removeEventListener('nautilus:ecoutille-ouverte', partir);
       if(observateur) observateur.disconnect();
       clearTimeout(filet);
       fn();
     };
-    let observateur = null;
-    let filet = null;
+    const porte = document.getElementById('ecoutille');
     window.addEventListener('nautilus:ecoutille-ouverte', partir);
     try{
       observateur = new MutationObserver(partir);
       observateur.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
-    }catch(e){ /* moteur sans MutationObserver : l'événement et le filet suffisent */ }
+      if(porte) observateur.observe(porte, { attributes:true, attributeFilter:['class'] });
+    }catch(e){ /* moteur sans MutationObserver : l'événement suffit */ }
     filet = setTimeout(partir, 25000);
   }
 
@@ -6640,8 +6717,12 @@ function qrDataUri(text, opts){
   const AUDIO_WAKE_EVENTS = ['scroll','wheel','touchmove','pointerdown','touchstart',
     'touchend','mousedown','click','keydown','mousemove'];
 
-  async function activateAudioFromNavigation(){
+  async function activateAudioFromNavigation(event){
     if(_audioWakeDone) return;
+    /* Ses propres écouteurs doublent le registre du premier geste : ils
+       obéissent donc au même sas. START seul peut démasquer l'ambiance
+       tant que l'écoutille est fermée. */
+    if(event && ecoutilleFermeePourGeste(event)) return;
     // Sonar eteint volontairement : le scroll ne doit RIEN rallumer.
     if(_soundOffByUser) return;
     const a = _ambiance();

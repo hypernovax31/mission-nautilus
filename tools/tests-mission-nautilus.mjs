@@ -266,8 +266,8 @@ ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v14)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v14'));
+ok('un repère de version dit quelle page de garde est chargée (garde v15)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v15'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
@@ -763,6 +763,20 @@ ok('socle : le moteur reprend la main (un seul gestionnaire actif)',
    socleJs.includes('__ecoutilleSecours = function') && porte.includes('window.__ecoutilleSecours'));
 ok('socle : écriture tolérante au mode privé (try/catch)',
    /try\{[\s\S]{0,200}sessionStorage\.setItem\('nautilusEcoutille'/.test(socleJs));
+/* Bug signalé par le joueur : un clic dans le décor de la garde réveillait
+   l'accueil, car ses guetteurs de premier geste écoutent tout le document.
+   Le socle pose donc un sas sur window, en capture, avant eux. */
+ok('socle : un sas retient les gestes hors START tant que la garde est fermée',
+   socleJs.includes('LE SAS DES GESTES') &&
+   /window\.addEventListener\(type, retenirGesteAccueil, \{ capture:true, passive:true \}\)/.test(socleJs) &&
+   socleJs.includes('event.stopImmediatePropagation()'));
+ok('socle : seul un vrai enfoncement de START traverse le sas',
+   socleJs.includes("closest('#ecStart')") &&
+   socleJs.includes("event.key === 'Enter'") &&
+   socleJs.includes("'pointerdown','touchstart','touchend','mousedown','mouseup','click'"));
+ok('socle : le sas se retire une fois l’accueil réellement révélé',
+   socleJs.includes("h.classList.contains('ec-arrivee')") &&
+   /window\.removeEventListener\(type, retenirGesteAccueil, true\)/.test(socleJs));
 
 /* --- Le service worker : page de garde disponible hors ligne --------------- */
 ok('le moteur de la page de garde est précaché', sw.includes("'./ecoutille.js?v="));
@@ -777,8 +791,8 @@ ok('le service worker précache EXACTEMENT cette version',
 /* index.html est dans le PRECACHE : changer les textes de la garde sans
    relever ce numéro laisserait les anciennes lignes en cache sur les
    appareils déjà venus. */
-ok('le cache du service worker a été relevé après la nouvelle accroche (v' + versionCache + ')',
-   versionCache >= 314);
+ok('le cache du service worker a été relevé après le sas des gestes (v' + versionCache + ')',
+   versionCache >= 315);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL
@@ -816,6 +830,14 @@ ok('la veille n’écoute que de VRAIS gestes (ni mousemove, ni scroll)',
 ok('la veille se retire une fois le contexte en marche (aucun écouteur qui traîne)',
    /if\(_sfxCtx\.state === 'running'\)\{[\s\S]{0,300}removeEventListener/.test(accueil));
 
+ok('le registre du premier geste ignore un clic dans le décor de la garde',
+   /function ecoutilleFermeePourGeste\(event\)\{[\s\S]{0,900}closest\?\.\('#ecStart'\)/.test(accueil) &&
+   /if\(_gesteRecu \|\| ecoutilleFermeePourGeste\(event\)\) return;/.test(accueil));
+ok('les écouteurs propres à l’ambiance obéissent au même sas',
+   /async function activateAudioFromNavigation\(event\)\{[\s\S]{0,700}ecoutilleFermeePourGeste\(event\)/.test(accueil));
+ok('l’ordre de mission ne part que sur un état réellement ouvert',
+   /function quandEcoutilleOuverte\(fn\)\{[\s\S]{0,1800}if\(fait \|\| !ouverte\(\)\) return;/.test(accueil) &&
+   /h\.classList\.contains\('ec-arrivee'\)/.test(accueil));
 ok('l’ambiance est démasquée DANS le geste, sans attendre les 80 ms',
    /if\(a\.paused\) return _demasquerAmbiance\(a\);[\s\S]{0,400}setTimeout\(resolve, 80\)/.test(accueil),
    'sinon, sur iOS, le play() arrivait après la fenêtre du geste');

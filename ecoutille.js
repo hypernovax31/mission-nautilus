@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v14 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v15 »
 
    Ce que fait ce fichier
    ----------------------
@@ -41,7 +41,10 @@
    Le clic sur START est ce geste : il satisfait le guetteur de premier geste
    d'index.html (guetterPremierGeste / surPremierGeste), qui démasque
    l'ambiance sonore et prépare les sons du bord. Le site démarre donc avec
-   le son, au lieu de rester muet jusqu'au premier clic de hasard.
+   le son, au lieu de rester muet jusqu'au premier clic de hasard. Le socle
+   retient au contraire tout geste hors START tant que l'écoutille est
+   fermée : un clic dans le décor ne peut donc ni démasquer l'ambiance ni
+   lancer l'ordre de mission en coulisses.
    C'est aussi le moment où l'alarme du bord peut enfin se faire entendre :
    avant le geste, aucun navigateur ne la jouerait.
 
