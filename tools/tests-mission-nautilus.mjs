@@ -266,8 +266,8 @@ ok('la feuille externe de la garde a disparu (le dessin est dans la page)',
    !accueil.includes('ecoutille.css') && !sw.includes('ecoutille.css'));
 ok('le moteur de la garde est chargé en différé (après le guetteur du 1er geste)',
    /<script src="ecoutille\.js\?v=\d+" defer><\/script>/.test(accueil));
-ok('un repère de version dit quelle page de garde est chargée (garde v13)',
-   /class="ec-version"/.test(accueil) && accueil.includes('garde v13'));
+ok('un repère de version dit quelle page de garde est chargée (garde v14)',
+   /class="ec-version"/.test(accueil) && accueil.includes('garde v14'));
 ok("l'écoutille est le TOUT PREMIER élément du <body> (avant les lecteurs <audio>)",
    corps.indexOf('id="ecoutille"') > 0 && corps.indexOf('id="ecoutille"') < corps.indexOf('id="ambianceAudio"'));
 ok('sans JavaScript, aucune page de garde (personne ne reste enfermé)',
@@ -474,16 +474,16 @@ ok('elle traverse les vrais rayons du parcours, des Livres au Drone',
    gardeHtml.includes('le premier à remonter le Nautilus entrera dans la légende du magasin'));
 ok('l’ancien titre (« Mission Nautilus ») n’est plus le titre de la garde',
    !/<h1 class="ec-titre">[^<]*Mission Nautilus/.test(gardeHtml));
-ok('la mention au-dessus du titre ancre l’expédition à la Fnac Labège, 156 ans plus tard',
-   gardeHtml.includes('Fnac Labège · 156 ans plus tard'));
-/* Le joueur a demandé de combiner les contenus du magasin et ceux du jeu :
-   la garde fait donc traverser les rayons réels du parcours avant de
-   rappeler son enjeu — huit paliers, puis le Nautilus à la surface — sans
-   redevenir un mode d’emploi. */
-ok('la ligne sous le titre traverse les rayons du magasin, des Livres aux Drones',
-   /<p class="ec-sous-titre">Des Livres aux Drones, sous les rayons<\/p>/.test(gardeHtml));
-ok('la consigne donne l’objectif du jeu sans faire le mode d’emploi',
-   /<p class="ec-consigne">Huit paliers — <b>remontez le Nautilus<\/b>\.<\/p>/.test(gardeHtml) &&
+ok('la mention au-dessus du titre fait passer Jules Verne à la Fnac Labège',
+   gardeHtml.includes('De Jules Verne à la Fnac Labège'));
+/* Le joueur a demandé mieux qu’un inventaire du parcours : les lignes
+   visibles deviennent une accroche — les matelots sont apostrophés, la mer
+   envahit les rayons et l’enjeu tient en huit paliers pour une légende.
+   Le détail des zones reste dans la phrase des lecteurs d’écran. */
+ok('la ligne sous le titre apostrophe les matelots et fait monter la mer entre les rayons',
+   /<p class="ec-sous-titre">Matelots, la mer monte entre les rayons<\/p>/.test(gardeHtml));
+ok('la consigne condense l’enjeu du jeu sans faire le mode d’emploi',
+   /<p class="ec-consigne">Huit paliers\. <b>Une seule légende\.<\/b><\/p>/.test(gardeHtml) &&
    !gardeHtml.includes('Séance unique · un geste, et') &&
    !gardeHtml.includes('le premier geste allume le sonar du bord'));
 
@@ -601,10 +601,10 @@ ok('la jauge est graduée et sa lumière ne bouge qu’en transformation',
    !/#ecoutille \.ec-o2-niveau\{[^}]*animation/.test(socleCss));
 ok('la jauge est un instrument du bord, pas un cadran du tableau de bord',
    gardeHtml.includes('ec-o2') && !gardeHtml.includes('ec-cadran'));
-ok('le bandeau donne le périmètre réel de recherche : Labège 2, 1 500 m²',
-   gardeHtml.includes('Signal · Labège 2 · 1&#8239;500 m²'));
+ok('le bandeau annonce le retour du signal après 156 ans',
+   gardeHtml.includes('Signal détecté après 156 ans'));
 ok('le chronomètre reste dans le bandeau, au-dessus du relèvement du signal',
-   /<span class="ec-slate">[\s\S]*?<span id="ecTimecode">00:00:00:00<\/span>[\s\S]*?<span class="ec-signal">Signal · Labège 2 · 1&#8239;500 m²<\/span>/.test(gardeHtml));
+   /<span class="ec-slate">[\s\S]*?<span id="ecTimecode">00:00:00:00<\/span>[\s\S]*?<span class="ec-signal">Signal détecté après 156 ans<\/span>/.test(gardeHtml));
 ok('sur un écran bas, le bandeau lâche le relèvement pour rester sur une ligne',
    /@media \(max-height: 700px\)\{[\s\S]*?\.ec-signal\{ display:none \}/.test(socleCss));
 ok('le bandeau du bord est DANS le flux (il ne chevauche rien)',
@@ -777,8 +777,8 @@ ok('le service worker précache EXACTEMENT cette version',
 /* index.html est dans le PRECACHE : changer les textes de la garde sans
    relever ce numéro laisserait les anciennes lignes en cache sur les
    appareils déjà venus. */
-ok('le cache du service worker a été relevé après l’ancrage Fnac Labège (v' + versionCache + ')',
-   versionCache >= 313);
+ok('le cache du service worker a été relevé après la nouvelle accroche (v' + versionCache + ')',
+   versionCache >= 314);
 
 /* =====================================================================
    7. LE GESTE DE LA PAGE DE GARDE DÉBLOQUE *TOUS* LES SONS DE L'ACCUEIL

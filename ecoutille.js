@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v13 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v14 »
 
    Ce que fait ce fichier
    ----------------------
@@ -12,7 +12,7 @@
      2. derrière le verre du hublot, la mer vit (rais, caustiques, neige
         marine, bulles) pendant que le film tourne ; en haut, la jauge
         d'oxygène se vide au rythme réel de l'équipage pendant que le
-        relèvement du signal cadre Labège 2 et que le chronomètre tourne ;
+        relèvement annonce le retour du signal et que le chronomètre tourne ;
      3. le visiteur frappe le BOUTON ROUGE « START » ;
      4. le projecteur du Nautilus nous éblouit : la lumière s'ouvre jusqu'à
         remplir l'écran, un éclair passe, puis son fondu découvre l'accueil —

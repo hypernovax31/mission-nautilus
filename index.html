@@ -25,7 +25,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « garde v13 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « garde v14 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -713,13 +713,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=13" defer></script>
+  <script src="ecoutille.js?v=14" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« garde v13 », film, jauge d'oxygène et signal sous les rayons)
+     (« garde v14 », film, jauge d'oxygène et mer entre les rayons)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -759,7 +759,7 @@
       <!-- Le bandeau du bord. À GAUCHE, plus de témoin REC mais la jauge
            d'oxygène : elle se vide vraiment, au rythme de la consommation
            de l'équipage. À DROITE, le relèvement du signal : le chronomètre
-           de plongée et le périmètre réel de recherche, à Labège 2. -->
+           de plongée et le signal détecté après 156 ans de silence. -->
       <div class="ec-hud" aria-hidden="true">
         <span class="ec-o2">
           <b class="ec-o2-nom">O₂</b>
@@ -768,13 +768,13 @@
         </span>
         <span class="ec-slate">
           <span id="ecTimecode">00:00:00:00</span>
-          <span class="ec-signal">Signal · Labège 2 · 1&#8239;500 m²</span>
+          <span class="ec-signal">Signal détecté après 156 ans</span>
         </span>
       </div>
-      <p class="ec-verne">Fnac Labège · 156 ans plus tard</p>
+      <p class="ec-verne">De Jules Verne à la Fnac Labège</p>
       <h1 class="ec-titre">Expédition dans le Nautilus</h1>
       <div class="ec-regle" aria-hidden="true"></div>
-      <p class="ec-sous-titre">Des Livres aux Drones, sous les rayons</p>
+      <p class="ec-sous-titre">Matelots, la mer monte entre les rayons</p>
     </header>
 
     <!-- LE HUBLOT DU SALON : la mer, vraie, dans le verre. Le film du
@@ -804,12 +804,12 @@
     </div>
 
     <footer class="ec-pied">
-      <p class="ec-consigne">Huit paliers — <b>remontez le Nautilus</b>.</p>
+      <p class="ec-consigne">Huit paliers. <b>Une seule légende.</b></p>
       <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir le sas du Nautilus et lancer l'aventure">
         <span class="ec-dome" aria-hidden="true"></span>
         <span class="ec-start-label">START</span>
       </button>
-      <span class="ec-version">garde v13</span>
+      <span class="ec-version">garde v14</span>
     </footer>
   </div>
 
