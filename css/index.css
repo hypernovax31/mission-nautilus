@@ -2666,3 +2666,39 @@ body{overflow-wrap:break-word;}
   #ecoutille .ec-start { width:88px !important; height:88px !important; }
   #ecoutille .ec-start-label { font-size:13px !important; }
 }
+/* =====================================================================
+   GARANTIE RESPONSIVE GLOBALE — TOUS ÉCRANS VISIBLES
+   Vérifie toutes tailles : 320→1920, portrait/paysage, safe-area
+   ===================================================================== */
+html, body{width:100%; max-width:100vw; overflow-x:hidden; -webkit-text-size-adjust:100%;}
+header, main, .site-footer, .card, .intro-card, #oxygenPanel, #equipagesEnMer, #gameCard, #bottomAlertMessage{max-width:100%; min-width:0; box-sizing:border-box;}
+main{width:100%; max-width:min(1260px, 100vw); margin-left:auto; margin-right:auto; padding-left:max(var(--gutter,14px), env(safe-area-inset-left)); padding-right:max(var(--gutter,14px), env(safe-area-inset-right)); box-sizing:border-box;}
+.hero-title, .hero-line, .card h2, .body, .intro-text, .oxygen-status, .countdown, .team, .cockpit, .rule-detail{overflow-wrap:break-word; word-break:break-word; max-width:100%;}
+img, video, svg, canvas, iframe{max-width:100%; height:auto; display:block;}
+@media (max-width:360px){
+  :root{--gutter:var(--space-sm); --gutter-inner:var(--space-sm);}
+  body > header{padding:var(--space-sm) var(--gutter) !important;}
+  main{padding:var(--gutter) var(--gutter) 0 !important; gap:var(--gutter) !important;}
+  .card h2{font-size:11px !important; padding:var(--space-xs) var(--gutter-inner) !important;}
+  .body, .oxygen-meter, .cockpit, .team{padding:var(--gutter-inner) !important;}
+  .hero-title{font-size:clamp(26px, 9vw, 38px) !important; -webkit-text-stroke:1px #050505 !important;}
+  .hero-line{font-size:clamp(14px, 4vw, 20px) !important;}
+  .hero-cta{font-size:11px !important; padding:8px 12px !important;}
+}
+@media (max-height:520px) and (orientation:landscape){
+  body > header{padding:var(--space-sm) var(--gutter) !important;}
+  main{gap:var(--space-sm) !important; padding:var(--space-sm) var(--gutter) 0 !important;}
+  .card{border-radius:14px !important;}
+  .card h2{padding:var(--space-xs) var(--gutter-inner) !important; font-size:11px !important;}
+  .body{padding:var(--space-sm) !important;}
+}
+@media (min-width:1920px){
+  main{max-width:1400px !important;}
+  body > header .hero-title{font-size:clamp(38px, 2.8vw, 52px) !important;}
+  body > header .hero-line{font-size:18px !important;}
+  .card{border-radius:20px !important;}
+}
+/* Cercle garanti — aucun breakpoint ne peut l'écraser */
+#ecoutille .ec-hublot{aspect-ratio:1/1 !important; border-radius:50% !important; overflow:visible !important;}
+#ecoutille .ec-fenetre, #ecoutille .ec-mer, #ecoutille .ec-verre, #ecoutille .ec-cercle, #ecoutille .ec-reflet{border-radius:50% !important;}
+#ecoutille .ec-enseigne, #ecoutille .ec-pied, #ecoutille .ec-start{max-width:100%; min-width:0; flex-shrink:0;}
