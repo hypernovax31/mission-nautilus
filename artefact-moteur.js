@@ -47,7 +47,7 @@
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   'use strict';
 
-  var VERSION_MOTEUR = '1.1.0';   // canonicalisation des codes (6c07 = 06-C-07)
+  var VERSION_MOTEUR = '1.2.0';   // vocabulaire de disponibilité réel (fnac-lecteur.js)
 
   /* ==================================================================
      1. SHA-256 PUR JS — identique dans le navigateur, Node et une
@@ -371,14 +371,30 @@
      ================================================================== */
   var FENETRE_FRAICHEUR_MINUTES = 15;
 
+  /* Affirmations EXPLICITES que l'ouvrage est déjà en rayon : elles
+     valent « sous 1 h ». Le lecteur de fiche (fnac-lecteur.js) ne produit
+     jamais ces mots par déduction — il ne recopie que ce que la page
+     écrit — et l'opérateur ne les saisit que s'il les a constatés. */
+  var DELAIS_EN_RAYON = ['en rayon', 'immediat', 'immediate', 'sur place',
+                         'aujourd hui', 'deja en magasin', 'en stock en magasin',
+                         'en stock magasin', '0 h', '0h'];
+
   /* « Retrait gratuit sous 1H », « retrait en magasin sous 1 heure »,
-     « 60 min » → ACCEPTÉS.
+     « 60 min », « en rayon » → ACCEPTÉS.
      « sous 1J », « 24 h », « 2 h », « 1 h 30 », « demain », ou un délai
      illisible → REFUSÉS. On ne devine jamais : un délai qu'on ne sait
      pas lire vaut un délai trop long. */
   function delaiAccepte(delai) {
     var d = nettoyerTexte(delai, 60).toLowerCase().replace(/[\u2019']/g, '');
     if (!d) return false;
+    /* Les mots « déjà en rayon » d'abord : « retrait immédiat » ne porte
+       aucun chiffre, le motif numérique ci-dessous ne le verrait pas. */
+    /* Comparaison sans espaces : « aujourd'hui » perd son apostrophe au
+       nettoyage, « aujourd hui » et « aujourdhui » doivent tomber juste. */
+    var plat = sansAccents(d).replace(/[^a-z0-9]+/g, '').trim();
+    for (var k = 0; k < DELAIS_EN_RAYON.length; k++) {
+      if (plat.indexOf(sansAccents(DELAIS_EN_RAYON[k]).replace(/[^a-z0-9]+/g, '')) >= 0) return true;
+    }
     /* « 1 h 30 » : les minutes comptent, ce n'est plus « sous 1 h ». */
     var hm = d.match(/(\d+)\s*(?:h|heure|heures)\s*(\d{1,2})/);
     if (hm && Number(hm[2]) > 0) return false;
@@ -401,6 +417,13 @@
     }
     if (magasinId && dispo.magasin && String(dispo.magasin) !== String(magasinId)) {
       return { ok: false, motif: 'disponibilité confirmée pour un autre magasin' };
+    }
+    /* Une disponibilité ANNONCÉE pour un magasin (nom lu sur la fiche
+       Fnac) mais non rattachée à un identifiant officiel ne vaut rien :
+       le lecteur refuse déjà de l'attribuer, on le revérifie ici. */
+    if (magasinId && !dispo.magasin && dispo.magasinAnnonce) {
+      return { ok: false, motif: 'disponibilité annoncée pour « ' + nettoyerTexte(dispo.magasinAnnonce, 60)
+        + ' » sans magasin identifié dans la liste officielle' };
     }
     if (String(dispo.vendeur || 'fnac').toLowerCase() === 'partenaire') {
       return { ok: false, motif: 'offre d’un vendeur partenaire (hors Fnac)' };
@@ -1026,7 +1049,12 @@
          elle provient soit du tri préalable (candidats()), soit de la
          fiche de l'ouvrage, soit de l'appelant (Cloud Function). Sans
          elle, la cartouche n'est pas sélectionnable — c'est voulu. */
-      disponibilite: normaliserDisponibilite(l._disponibilite
+      /* La cartouche est PUBLIQUE : elle ne porte que ce dont le joueur a
+         besoin (son magasin, l'état, le délai, l'heure de contrôle). Les
+         champs de preuve relevés sur la fiche Fnac (nom du magasin
+         annoncé, libellés bruts, motif de refus) restent dans le coffre
+         chiffré, à l'usage de l'organisateur. */
+      disponibilite: disponibilitePublique(l._disponibilite
         || o.disponibilite
         || ((l.disponibilite || {})[o.magasinId]) || null, o.magasinId),
       empreinteLivre: sha256Hex(sel + '|' + l.ean + '|' + l.titre).slice(0, 16)
@@ -1053,12 +1081,35 @@
 
   function normaliserDisponibilite(dispo, magasinId) {
     if (!dispo || typeof dispo !== 'object') return null;
-    return {
+    var n = {
       magasin: String(dispo.magasin || magasinId || ''),
       statut: String(dispo.statut || 'disponible'),
       delai: nettoyerTexte(dispo.delai, 60),
       checkedAt: nettoyerTexte(dispo.checkedAt, 40),
       vendeur: String(dispo.vendeur || 'fnac')
+    };
+    /* Preuve lisible de l'origine : le nom du magasin tel que la fiche
+       publique l'annonçait, et le libellé brut du délai. Ces deux champs
+       ne sont JAMAIS montrés au joueur (la cartouche n'en contient rien),
+       ils servent à l'opérateur pour trancher. */
+    if (dispo.magasinAnnonce) n.magasinAnnonce = nettoyerTexte(dispo.magasinAnnonce, 80);
+    if (dispo.etatBrut) n.etatBrut = nettoyerTexte(dispo.etatBrut, 40);
+    if (dispo.delaiBrut) n.delaiBrut = nettoyerTexte(dispo.delaiBrut, 20);
+    if (dispo.source) n.source = nettoyerTexte(dispo.source, 40);
+    if (dispo.motif) n.motif = nettoyerTexte(dispo.motif, 200);
+    return n;
+  }
+
+  /* Version publique de la disponibilité : cinq champs, rien d'autre. */
+  function disponibilitePublique(dispo, magasinId) {
+    var n = normaliserDisponibilite(dispo, magasinId);
+    if (!n) return null;
+    return {
+      magasin: n.magasin,
+      statut: n.statut,
+      delai: n.delai,
+      checkedAt: n.checkedAt,
+      vendeur: n.vendeur
     };
   }
 
@@ -1221,6 +1272,8 @@
       controlerMagasins: controlerMagasins, SEUIL_CHUTE_LISTE: SEUIL_CHUTE_LISTE,
       /* disponibilité */
       disponibiliteValide: disponibiliteValide, delaiAccepte: delaiAccepte,
+      normaliserDisponibilite: normaliserDisponibilite, disponibilitePublique: disponibilitePublique,
+      DELAIS_EN_RAYON: DELAIS_EN_RAYON,
       FENETRE_FRAICHEUR_MINUTES: FENETRE_FRAICHEUR_MINUTES,
       /* sélection */
       candidats: candidats, choisirLivre: choisirLivre, rangPriorite: rangPriorite,

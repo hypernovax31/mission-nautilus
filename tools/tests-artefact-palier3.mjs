@@ -67,23 +67,24 @@ if (!M || !A) { console.log('❌ modules non chargés'); process.exit(1); }
 
 /* ------------------------------------------------------------------ */
 /* Jeu de données : UN ouvrage réel vérifié + des ouvrages fictifs     */
-/* (l'ouvrage réel ne sert qu'aux tests : il n'est écrit nulle part    */
-/* dans les fichiers servis aux joueurs — le test 8 le vérifie)        */
+/* (ouvrage FICTIF : aucun titre, EAN ou SKU réel n'est écrit dans le  */
+/* dépôt — GitHub Pages publie tout, y compris tools/. Le test 7 le     */
+/* vérifie structurellement, sans avoir à connaître les vraies valeurs) */
 /* ------------------------------------------------------------------ */
 const ATLAS = {
   id: 'atlas-monde-7e',
-  titre: 'Le Nouvel atlas géographique du monde',
+  titre: 'Le Nouvel atlas fictif des océans',
   auteur: 'Collectif',
   auteurType: 'collectif',
-  editeur: 'Glénat',
-  collection: 'Référence',
+  editeur: 'Éditions Imaginaires',
+  collection: 'Grand Large',
   edition: '7e édition',
   editionNumero: 7,
   annee: 2026,
   pages: 368,
   format: 'broché',
-  ean: '9782344076668',
-  sku: '5100302',
+  ean: '2000000001005',
+  sku: 'EXEMPLE-1005',
   categorieFnac: 'Atlas / carte (broché)',
   rayon: 'Géographie',
   type: 'atlas-mondial',
@@ -143,10 +144,10 @@ ok('empreinte : casse et espaces ignorés',
 ok('empreinte : une autre réponse ne passe pas',
   !M.verifier(M.empreinte('ATLAS', 'sel', 1000), M.empreintesAcceptees(' nouvel ', 'sel', 1000, 'texte')));
 ok('EAN de référence valide (clé de contrôle)', M.eanValide(ATLAS.ean));
-ok('EAN dont la clé est fausse : rejeté', !M.eanValide('9782344076669'));
-ok('EAN à 12 chiffres : rejeté', !M.eanValide('978234407666'));
+ok('EAN dont la clé est fausse : rejeté', !M.eanValide('2000000001006'));
+ok('EAN à 12 chiffres : rejeté', !M.eanValide('200000000100'));
 ok('EAN normalisé : espaces et tirets retirés',
-  M.eanNormalise(' 978-2 344 076 668 ') === '9782344076668');
+  M.eanNormalise(' 200-0 000 001 005 ') === '2000000001005');
 ok('EAN inventé non numérique : rejeté', M.eanNormalise('abcdefghijklm') === '');
 
 ok('délai « Retrait gratuit sous 1H » accepté', M.delaiAccepte('Retrait gratuit sous 1H'));
@@ -244,11 +245,11 @@ titre('3. Cartouche publique — aucune donnée réelle ne fuit');
 /* ===================================================================== */
 const publique = JSON.stringify(g.cartouche);
 ok('aucun EAN en clair dans la cartouche', publique.indexOf(ATLAS.ean) < 0);
-ok('aucun titre en clair', publique.indexOf('Nouvel atlas') < 0 && publique.indexOf('atlas géographique') < 0);
+ok('aucun titre en clair', publique.indexOf('Nouvel atlas fictif') < 0 && publique.indexOf('océans') < 0);
 ok('aucun SKU en clair', publique.indexOf(ATLAS.sku) < 0);
-ok('aucun nom d’éditeur en clair', publique.indexOf('Glénat') < 0);
+ok('aucun nom d’éditeur en clair', publique.indexOf('Éditions Imaginaires') < 0);
 ok('aucun nom d’auteur en clair (la clé « aides.auteur » ne contient que la méthode)',
-  publique.indexOf('Collectif') < 0 && publique.indexOf('Glénat') < 0);
+  publique.indexOf('Collectif') < 0 && publique.indexOf('Éditions Imaginaires') < 0);
 ok('aucune réponse en clair (premier mot, signature, code final)',
   publique.indexOf(g.secret.reponses.premierMot) < 0
   && publique.indexOf(g.secret.reponses.signature) < 0
@@ -302,7 +303,7 @@ ok('même ouvrage, même sel : cartouche identique (rejouable)',
 /* ===================================================================== */
 titre('4. Règles d’énigme — premier mot significatif, signatures, chambre forte');
 /* ===================================================================== */
-ok('l’article initial est ignoré : « Le Nouvel atlas… » → NOUVEL',
+ok('l’article initial est ignoré : « Le Nouvel atlas fictif… » → NOUVEL',
   M.premierMot(ATLAS.titre) === 'NOUVEL');
 ok('« L’Odyssée du Nautilus » → ODYSSEE', M.premierMot('L’Odyssée du Nautilus') === 'ODYSSEE');
 ok('« Les Vingt mille lieues… » → VINGT', M.premierMot('Les Vingt mille lieues sous les mers') === 'VINGT');
@@ -391,7 +392,7 @@ ok('catalogue publié : 3 ouvrages', publi.count === 3);
 ok('publication : aucun ouvrage écarté pour invalidité', publi.problemes.length === 0);
 
 const brutStocke = JSON.stringify(A.stockage()._base['artefacts/catalogue'] || {});
-ok('le catalogue stocké ne contient AUCUN titre en clair', brutStocke.indexOf('Nouvel atlas') < 0);
+ok('le catalogue stocké ne contient AUCUN titre en clair', brutStocke.indexOf('Nouvel atlas fictif') < 0);
 ok('le catalogue stocké ne contient AUCUN EAN en clair', brutStocke.indexOf(ATLAS.ean) < 0);
 ok('le catalogue stocké ne contient AUCUN SKU en clair', brutStocke.indexOf(ATLAS.sku) < 0);
 
@@ -402,7 +403,7 @@ const cartouches = await A.listerCartouches('cl57');
 ok('les cartouches sont stockées avec leur disponibilité', cartouches.length === 3
   && cartouches.every((c) => c.disponibilite && c.disponibilite.checkedAt));
 ok('aucune donnée réelle dans les cartouches stockées',
-  !JSON.stringify(cartouches).includes(ATLAS.ean) && !JSON.stringify(cartouches).includes('Glénat'));
+  !JSON.stringify(cartouches).includes(ATLAS.ean) && !JSON.stringify(cartouches).includes('Éditions Imaginaires'));
 
 /* --- session verrouillée --- */
 const s1 = await A.ouvrirSession('NEMO', 'cl57');
@@ -605,15 +606,49 @@ titre('7. Aucun secret dans les fichiers servis aux joueurs');
 /* ===================================================================== */
 const fichiersJoueurs = [
   'index.html', '1831411720.html', 'artefact-moteur.js', 'artefact-service.js',
-  'artefact-palier3.js', 'magasin-fnac.js', 'css/artefact.css',
+  'artefact-palier3.js', 'magasin-fnac.js', 'fnac-lecteur.js', 'css/artefact.css',
   'data/catalogue-artefacts.example.json'
 ];
 const contenu = fichiersJoueurs.map((f) => ({ f, s: lire(f) }));
+/* GitHub Pages publie TOUT le dépôt : tools/ et ses fixtures compris.
+   Aucun fichier versionné ne doit porter de donnée Fnac réelle. */
+const fichiersFixtures = fs.readdirSync(path.join(racine, 'tools', 'fixtures'))
+  .filter((f) => /\.(html|md|json|txt)$/i.test(f))
+  .map((f) => ({ f: 'tools/fixtures/' + f, s: lire('tools/fixtures/' + f) }));
+const fichiersPublies = contenu.concat(fichiersFixtures, [
+  { f: 'tools/sync-catalogue-artefacts.mjs', s: lire('tools/sync-catalogue-artefacts.mjs') },
+  { f: 'tools/sync-magasins-fnac.mjs', s: lire('tools/sync-magasins-fnac.mjs') },
+  { f: 'tools/tests-artefact-palier3.mjs', s: lire('tools/tests-artefact-palier3.mjs') }
+]);
 ok('aucun EAN réel (978/979…) dans les fichiers joueurs',
   contenu.every(({ s }) => !/\b9(?:78|79)\d{10}\b/.test(s)));
-ok('aucun SKU réel de l’ouvrage de référence', contenu.every(({ s }) => s.indexOf('5100302') < 0));
-ok('aucun titre réel de l’ouvrage de référence',
-  contenu.every(({ s }) => !/Nouvel atlas géographique/i.test(s)));
+ok('aucun SKU numérique à 7 chiffres (format Fnac) dans les fichiers joueurs',
+  contenu.every(({ s }) => !/sku['"]?\s*[:=]\s*['"]?\d{7}\b/i.test(s)));
+/* Un vrai livre porte un EAN « Bookland » 978… ou 979…. C'est LA marque
+   d'une donnée Fnac réelle : elle ne doit apparaître dans AUCUN fichier
+   versionné, GitHub Pages publiant tout le dépôt (tools/ compris).
+   Les EAN volontairement faux des tests (1234567890123, clé erronée)
+   restent permis : ils ne désignent aucun ouvrage réel. */
+ok('aucun EAN de livre réel (978/979…) dans un fichier publié du dépôt',
+  fichiersPublies.every(({ s }) => !/\b9(?:78|79)\d{10}\b/.test(s)));
+ok('les fixtures de collecte ne portent que des EAN fictifs valides (plage 200-299)',
+  fichiersFixtures.every(({ s }) => (s.match(/\b\d{13}\b/g) || [])
+    .every((e) => /^2\d{12}$/.test(e) && M.eanValide(e))));
+ok('au moins une fixture porte un EAN fictif exploitable par les tests',
+  fichiersFixtures.some(({ s }) => (s.match(/\b2\d{12}\b/g) || []).some((e) => M.eanValide(e))));
+/* Garde-fou vivant : si l'opérateur a collecté un VRAI catalogue local,
+   aucune de ses données ne doit se retrouver dans un fichier publié. */
+const catalogueLocal = 'data/catalogue-artefacts.local.json';
+if (fs.existsSync(path.join(racine, catalogueLocal))) {
+  const reels = JSON.parse(lire(catalogueLocal)).livres || [];
+  const fuites = reels.filter((l) => fichiersPublies.some(({ s }) =>
+    (l.ean && s.includes(l.ean)) || (l.sku && s.includes(l.sku))
+    || (l.titre && l.titre.length > 8 && s.includes(l.titre))));
+  ok('le catalogue local réel ne fuit dans aucun fichier publié (' + reels.length + ' ouvrage(s) vérifié(s))',
+    fuites.length === 0);
+} else {
+  ok('aucun catalogue local réel présent (rien à faire fuiter)', true);
+}
 ok('l’exemple publié n’utilise que la plage interne 200-299',
   JSON.parse(lire('data/catalogue-artefacts.example.json')).livres
     .every((l) => /^2\d{12}$/.test(l.ean) && M.eanValide(l.ean)));
@@ -745,11 +780,21 @@ ok('les DEUX copies du panneau admin décrivent le Palier 3 de la même façon',
 ok('les DEUX copies de STEPS annoncent 3 réponses refusées au Palier 3',
   /son:\{[^}]*errors:3/.test(accueil) && /son:\{[^}]*errors:3/.test(adminBtn));
 
-ok('service worker : cache passé en v317', sw.indexOf("nautilus-v317") >= 0 && sw.indexOf("nautilus-v316") < 0);
+/* La version est lue, pas recopiée : un test qui épelle le numéro de cache
+   casse à chaque publication sans rien garantir. */
+const versionCache = Number((sw.match(/nautilus-v(\d+)/) || [])[1] || 0);
+ok('service worker : cache bumpé pour les nouveaux modules (>= v318)', versionCache >= 318);
+ok('service worker : une seule version de cache déclarée',
+  (sw.match(/nautilus-v\d+/g) || []).filter((v, i, t) => t.indexOf(v) === i).length === 1);
 ok('service worker : les nouveaux modules sont préchargés',
   ['artefact-moteur.js', 'artefact-service.js', 'magasin-fnac.js', 'artefact-palier3.js',
-   'admin-artefact.js', 'css/artefact.css', 'data/magasins-fnac.json']
+   'fnac-lecteur.js', 'admin-artefact.js', 'css/artefact.css', 'data/magasins-fnac.json']
     .every((f) => sw.indexOf(f) >= 0));
+ok('Palier 3 : fnac-lecteur.js est chargé, et AVANT le panneau admin',
+  page3.indexOf('fnac-lecteur.js') >= 0
+  && page3.indexOf('fnac-lecteur.js') < page3.indexOf('admin-artefact.js'));
+ok('Palier 3 : le moteur est bien chargé avant le lecteur de fiches',
+  page3.indexOf('artefact-moteur.js') < page3.indexOf('fnac-lecteur.js'));
 ok('service worker : l’ancien puzzle et sa photo ne sont plus préchargés',
   sw.indexOf('puzzle-palier3.js') < 0 && sw.indexOf('palier3-lieu.jpg') < 0 && sw.indexOf('css/palier3.css') < 0);
 

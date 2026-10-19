@@ -157,8 +157,12 @@
      AUCUN de ces fichiers ne contient de titre d'ouvrage, d'EAN, de SKU,
      de catégorie Fnac ou de réponse : les vérifications portent sur des
      empreintes salées calculées à la volée. -->
-<script src="artefact-moteur.js?v=1"></script>
-<script src="artefact-service.js?v=1"></script>
+<script src="artefact-moteur.js?v=2"></script>
+<!-- Lecteur des fiches publiques fnac.com : strictement hors ligne, jamais
+     appelé depuis le jeu. Sert au panneau admin (onglet 📖 Artefact) pour lire
+     une fiche enregistrée par l’organisateur, et à l’outil Node de collecte. -->
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="artefact-service.js?v=2"></script>
 <script src="magasin-fnac.js?v=1"></script>
 <script src="artefact-palier3.js?v=1"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
@@ -721,7 +725,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 <script src="palier-annonces.js?v=3" defer></script>
 <!-- Onglet ADMIN de l'artefact : s'injecte dans le panneau admin existant
      (admin-button.js) sans modifier son HTML dupliqué. -->
-<script src="admin-artefact.js?v=1" defer></script>
+<script src="admin-artefact.js?v=2" defer></script>
 <script src="admin-button.js?v=27" type="module"></script>
 </body>
 </html>

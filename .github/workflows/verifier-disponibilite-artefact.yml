@@ -1,0 +1,177 @@
+# =====================================================================
+# Vérification de la disponibilité « retrait sous 1 h » des artefacts
+#
+#   node tools/sync-catalogue-artefacts.mjs --magasin <cl<N>> --fiche …
+#
+# ---------------------------------------------------------------------
+# CE QUE CETTE EXÉCUTION FAIT — ET CE QU'ELLE NE FAIT PAS
+# ---------------------------------------------------------------------
+# Elle LIT des fiches produit publiques fnac.com (rendues côté serveur)
+# et recopie ce qu'elles AFFIRMENT : « En stock en magasin »,
+# « Retrait gratuit sous 1H », le nom du magasin annoncé. Rien d'autre.
+#
+# Elle ne modifie JAMAIS le dépôt : aucun commit, aucune pull request,
+# aucune donnée réelle écrite. Le rapport produit est ANONYME
+# (--anonyme) : ni titre, ni EAN, ni SKU, ni identifiant produit, ni nom
+# de magasin — seulement des compteurs, des états et des motifs. C'est
+# indispensable parce que les artefacts d'un dépôt public sont
+# téléchargeables par tout le monde.
+#
+# ---------------------------------------------------------------------
+# LA LIMITE HONNÊTE DE CETTE EXÉCUTION
+# ---------------------------------------------------------------------
+# Le magasin annoncé sur une fiche dépend de la SESSION du visiteur
+# (cookie de choix de magasin, sinon géolocalisation IP). Depuis un
+# runner GitHub, l'IP est celle d'un centre de données : la page
+# annoncera un magasin quelconque, pas nécessairement celui du jeu.
+#
+#   · SANS le secret FNAC_SESSION_COOKIE, cette exécution vérifie que la
+#     LECTURE fonctionne encore (format de page inchangé, libellés
+#     reconnus) et signale « magasin-different » : c'est un contrôle de
+#     santé du lecteur, pas une preuve de disponibilité.
+#   · AVEC le secret (un cookie de session appartenant à l'organisateur,
+#     obtenu en choisissant le magasin dans son propre navigateur), la
+#     page annonce le bon magasin et le contrôle devient probant.
+#
+# Le secret n'est jamais affiché, jamais écrit dans le dépôt, jamais
+# copié dans l'artefact : il est posé dans $RUNNER_TEMP puis supprimé.
+#
+# Aucun CAPTCHA, aucun défi anti-bot n'est contourné : si le site oppose
+# un mur (403/429/503 ou page de vérification), l'outil s'arrête et le
+# rapport le dit. La référence reste la validation humaine dans le
+# panneau admin (onglet « 📖 Artefact »).
+#
+# Déclenchement MANUEL uniquement : on ne mitraille pas fnac.com à
+# heure fixe. Pour un contrôle hebdomadaire, ajouter une planification
+# `schedule` une fois le secret en place — et pas avant.
+# =====================================================================
+name: Disponibilité des artefacts (Fnac)
+
+on:
+  workflow_dispatch:
+    inputs:
+      magasin:
+        description: 'Identifiant du magasin choisi (cl57 = Labège)'
+        required: true
+        default: 'cl57'
+      fiches:
+        description: 'Fiches à lire : URL ou identifiant a<id>, séparés par des espaces ou des virgules'
+        required: true
+        default: ''
+      max:
+        description: 'Plafond de fiches lues'
+        required: false
+        default: '12'
+      avec_cookie:
+        description: 'Utiliser le cookie de session (secret FNAC_SESSION_COOKIE) pour viser le magasin'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: disponibilite-artefacts
+  cancel-in-progress: false
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Les fiches à lire sont obligatoires
+        run: |
+          if [ -z "${{ inputs.fiches }}" ]; then
+            echo "::error::Renseigne « fiches » : des URL https://www.fnac.com/a<id> ou des identifiants a<id>."
+            echo "Aucune page de recherche n'est utilisée (robots.txt interdit SFilt et PageIndex) :"
+            echo "ouvre un rayon public (/s<id>, /e<id>, /ia<id>) ou une fiche, et copie ses URL."
+            exit 1
+          fi
+
+      - name: Cookie de session (jamais affiché, jamais conservé)
+        id: cookie
+        run: |
+          if [ "${{ inputs.avec_cookie }}" != "true" ]; then
+            echo "utilise=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ Sans cookie de session, la page annoncera un magasin quelconque :"
+            echo "   cette exécution contrôle la LECTURE, pas la disponibilité réelle."
+            exit 0
+          fi
+          if [ -z "${{ secrets.FNAC_SESSION_COOKIE }}" ]; then
+            echo "::error::Secret FNAC_SESSION_COOKIE absent. Ajoute-le (cookie de TON navigateur, après avoir choisi le magasin sur fnac.com), ou relance avec avec_cookie=false."
+            exit 1
+          fi
+          fichier="$RUNNER_TEMP/fnac-session.txt"
+          printf '%s' "${{ secrets.FNAC_SESSION_COOKIE }}" > "$fichier"
+          chmod 600 "$fichier"
+          echo "fichier=$fichier" >> "$GITHUB_OUTPUT"
+          echo "utilise=true" >> "$GITHUB_OUTPUT"
+
+      - name: Lecture des fiches publiques
+        id: lecture
+        continue-on-error: true
+        run: |
+          args="--magasin ${{ inputs.magasin }} --max ${{ inputs.max }} --dry-run --anonyme"
+          if [ "${{ steps.cookie.outputs.utilise }}" = "true" ]; then
+            args="$args --cookie-file ${{ steps.cookie.outputs.fichier }}"
+          fi
+          for f in $(echo "${{ inputs.fiches }}" | tr ',' ' '); do
+            args="$args --fiche $f"
+          done
+          # --dry-run : RIEN n'est écrit dans le dépôt. --anonyme : le
+          # rapport ne contient aucune donnée d'ouvrage.
+          node tools/sync-catalogue-artefacts.mjs $args | tee rapport-disponibilite.json
+
+      - name: Suppression du cookie
+        if: always()
+        run: |
+          if [ -n "${{ steps.cookie.outputs.fichier }}" ]; then
+            rm -f "${{ steps.cookie.outputs.fichier }}"
+            echo "Cookie de session supprimé du runner."
+          fi
+
+      - name: Le dépôt n'a PAS été modifié
+        if: always()
+        run: |
+          if ! git diff --quiet --ignore-submodules -- . ':(exclude)rapport-disponibilite.json'; then
+            echo "::error::Cette exécution a modifié le dépôt : elle ne doit écrire aucune donnée réelle."
+            git status --porcelain
+            exit 1
+          fi
+          echo "✅ Dépôt intact (aucune donnée réelle versionnée)."
+
+      - name: Rapport (anonyme)
+        if: always()
+        run: |
+          {
+            echo "### Disponibilité des artefacts — magasin \`${{ inputs.magasin }}\`"
+            echo
+            echo '```json'
+            sed -n '/^{/,$p' rapport-disponibilite.json 2>/dev/null | head -80 || echo "aucun rapport"
+            echo '```'
+            echo
+            echo "Rapport **anonyme** : aucun titre, EAN, SKU ni nom de magasin."
+            echo "La référence reste la confirmation humaine dans le panneau admin."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Artefact de rapport
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-disponibilite-anonyme
+          path: rapport-disponibilite.json
+          if-no-files-found: ignore

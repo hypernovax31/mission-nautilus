@@ -99,7 +99,19 @@ function verifierDisponibilite(cartouche, magasinId, cfg) {
   /* Brancher ICI un éventuel flux officiel Fnac (partenaire, API
      contractuelle) : renvoyer { statut, delai, checkedAt }. En attendant,
      la seule source est la confirmation de l'organisateur — jamais une
-     requête vers fnac.com depuis cette fonction. */
+     requête vers fnac.com depuis cette fonction.
+
+     Pourquoi ne pas aller lire la fiche publique ici, alors qu'elle
+     affiche bien « En stock en magasin / Retrait gratuit sous 1H » ?
+     Parce que le magasin annoncé dépend de la SESSION du visiteur
+     (cookie de choix de magasin, sinon géolocalisation IP) : depuis une
+     IP de Google Cloud, cette fonction lirait un magasin tiré au hasard
+     — pas celui du matelot — et buterait de surcroît sur la protection
+     anti-bot du site. La collecte se fait donc là où elle a un sens :
+     sur le poste de l'organisateur (tools/sync-catalogue-artefacts.mjs)
+     ou dans le panneau admin, qui lit hors ligne une fiche enregistrée
+     (fnac-lecteur.js). Ici, on ne fait que VÉRIFIER ce qui a été
+     confirmé, horodaté, puis on applique la fenêtre de fraîcheur. */
   return MOTEUR.disponibiliteValide(cartouche.disponibilite, magasinId, {
     fenetreMinutes: Number(cfg.fenetreMinutes) || MOTEUR.FENETRE_FRAICHEUR_MINUTES
   });

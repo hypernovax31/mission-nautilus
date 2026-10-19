@@ -86,16 +86,26 @@ dupliquer le HTML du panneau).
    `localStorage`, ni Firestore, ni URL) et s'efface en fermant la page.
    Prends une **phrase longue** (≥ 20 caractères), différente du code admin.
 2. **Magasin de référence** — choisis le magasin où joue l'équipage.
-3. **Catalogue** — ajoute les ouvrages compatibles (titre, auteur + nature de la
-   signature, éditeur, mention et numéro d'édition, année, **EAN**, **SKU**,
-   libellé déroulant Fnac, rayon, type). Import JSON possible ; export local
-   possible **vers `.nautilus-safe/`** (dossier ignoré par git) — **jamais dans
-   le dépôt**, GitHub Pages servirait les solutions au monde entier.
-4. **Disponibilité** — vérifie **à la main** sur fnac.com que ces ouvrages sont
-   bien « retrait sous 1 h » dans ce magasin, saisis le libellé exact, puis
-   clique **« Reconfirmer toutes les pistes du magasin »**. Cette confirmation
-   est horodatée et n'est valable que **15 minutes au lancement** d'une mission
-   (jamais un chrono pour le matelot).
+3. **Catalogue** — trois chemins, tous hors ligne depuis le navigateur :
+   * **📋 Lire une fiche fnac.com (collée ici)** — ouvre la fiche sur fnac.com
+     **avec ton magasin sélectionné** (« Choisir un autre magasin »), enregistre
+     la page (Ctrl+S) ou copie son contenu, colle-le dans le panneau. Le lecteur
+     recopie titre, auteurs, éditeur, collection, parution, pages, format,
+     **EAN**, **ISBN**, **SKU** et le **libellé déroulant Fnac**, puis il lit le
+     bloc disponibilité. **Aucune requête ne part du poste** : la page est lue
+     localement par `fnac-lecteur.js`.
+   * **➕ Ajouter un ouvrage** — saisie manuelle, champ par champ.
+   * **📥 Importer un JSON** — par exemple le fichier produit par l'outil de
+     collecte (`data/catalogue-artefacts.local.json`, **ignoré par git**).
+
+   L'export local va **vers `.nautilus-safe/`** (ignoré par git) — jamais dans le
+   dépôt : GitHub Pages servirait les solutions au monde entier.
+4. **Disponibilité** — elle n'est attribuée **que** si la page annonce le magasin
+   choisi **et** un retrait sous 1 h. Sinon l'ouvrage entre au catalogue **sans**
+   disponibilité exploitable et le moteur l'écarte. Tu peux toujours confirmer à
+   la main (libellé exact, puis **« Reconfirmer toutes les pistes du magasin »**) :
+   c'est la référence. Cette confirmation est horodatée et n'est valable que
+   **15 minutes au lancement** d'une mission (jamais un chrono pour le matelot).
 5. **Pistes** — clique **« Générer les pistes du magasin »** : une cartouche
    anonymisée par ouvrage disponible.
 6. **Pendant la partie** — l'onglet affiche chaque session : étape, réponses
@@ -125,18 +135,27 @@ artefact-service.js     données : stockage (Firestore / mémoire / local),
 magasin-fnac.js         liste des magasins, recherche, géoloc, sélecteur
 artefact-palier3.js     le jeu : écrans, sceau (scan EAN), pupitre, indices
 admin-artefact.js       onglet admin, injecté dans le panneau existant
+fnac-lecteur.js         lit une fiche fnac.com ENREGISTRÉE (aucun réseau,
+                        aucun DOM) → métadonnées + disponibilité
 1831411720.html         page du Palier 3 (sas QR → briefing → épreuve)
 index.html              carte « MAGASIN DE LA MISSION »
 css/artefact.css        .af-* (jeu), .magasin-* (sélecteur), .adm-af-* (admin)
 data/magasins-fnac.json 191 magasins (source : localiseur officiel Fnac)
 data/catalogue-artefacts.example.json   structure + aperçu + tests (FICTIF)
+data/catalogue-artefacts.local.json     catalogue RÉEL collecté — ignoré par git
 tools/sync-magasins-fnac.mjs            synchronisation hebdomadaire
+tools/sync-catalogue-artefacts.mjs      collecte des fiches (opérateur / CI)
+tools/fixtures/fiche-fnac-*.html        gabarits observés, ouvrages FICTIFS
 functions/                              Cloud Function facultative (mode serveur)
+.github/workflows/                      liste des magasins (hebdo) +
+                                        disponibilité (manuelle, rapport anonyme)
 ```
 
 Le moteur est **UMD** : le même fichier sert au navigateur, aux tests Node et à
 la Cloud Function (copié au prédeploy). Une seule source de vérité pour les
-règles.
+règles. `fnac-lecteur.js` est **UMD** lui aussi : le panneau admin (lecture hors
+ligne d'une page collée), l'outil Node et les tests utilisent **exactement le
+même** code de lecture — jamais deux interprétations d'un même libellé.
 
 ### Collections Firestore (`artefacts/…`)
 
@@ -201,10 +220,14 @@ contexte sécurisé : en HTTP simple ou `file://`, le module **refuse** et le di
   réglage est volontairement bas pour rester fluide sur téléphone (~30 ms par
   réponse, ~120 ms par scan). En mode `fonction`, aucune empreinte n'est
   publiée et la question disparaît.
-* **La disponibilité est déclarative.** Pas d'API publique Fnac fiable : c'est
-  l'organisateur qui confirme, et la confirmation n'est valable que 15 minutes
-  au lancement. Si un flux officiel/partenaire existe un jour, il se branche
-  dans `verifierDisponibilite()` (`functions/index.js`) — et nulle part ailleurs.
+* **La disponibilité est LUE, pas prouvée.** Les fiches publiques affichent bien
+  `En stock en magasin` / `Retrait gratuit sous 1H`, mais le magasin annoncé suit
+  la **session du visiteur** et il n'existe **aucune API publique de stock** :
+  une lecture sans session de l'organisateur ne prouve rien pour *son* magasin.
+  Le lecteur n'attribue donc la disponibilité que sur annonce explicite, et la
+  confirmation humaine reste la référence — valable **15 minutes au lancement**
+  seulement. Si un flux officiel/partenaire existe un jour, il se branche dans
+  `verifierDisponibilite()` (`functions/index.js`) — et nulle part ailleurs.
 * **Les coordonnées des magasins sont des centroïdes de commune** (précision
   déclarée dans le fichier). Elles **suggèrent** le magasin le plus proche,
   elles ne le prouvent pas.
@@ -237,12 +260,101 @@ contexte sécurisé : en HTTP simple ou `file://`, le module **refuse** et le di
 
 ---
 
+## 6bis. La disponibilité en magasin — ce que fnac.com donne vraiment
+
+Relevé effectué le **19/10/2026** sur les pages publiques (rendues côté
+serveur, donc lisibles sans JavaScript) :
+
+| Ce que la fiche écrit | Lecture | Verdict |
+|---|---|---|
+| `En stock en magasin` + `Retrait gratuit sous 1H` | ouvrage déjà en rayon | ✅ **exploitable** |
+| `Livrable en magasin` + `Retrait gratuit sous 1J` | ouvrage à acheminer | ⛔ refusé (il n'est pas en rayon) |
+| `Indisponible en magasin` | rien à chercher | ⛔ refusé |
+| `Stock en ligne épuisé` | parle du **site**, pas du rayon | ⛔ ne prouve rien |
+| `En stock en magasin` + `Retrait gratuit` (sans délai) | délai non précisé | ⚠️ **à confirmer à la main** |
+| `Vendu et livré par <X>` | offre marketplace | ⚠️ consignée, ne qualifie pas l'offre Fnac |
+
+Le libellé déroulant de la fiche (`Atlas / carte (broché)`, `Roman (Poche)`,
+`Guide de voyage (broché)`) est **collé à la date de parution** en tête de page :
+le lecteur le découpe et s'en sert comme **classification Fnac**, laquelle
+détermine la famille d'énigmes — avant les mots du titre.
+
+### La limite à connaître : le magasin suit la session du visiteur
+
+Le magasin affiché dans le bloc disponibilité dépend du **cookie de choix de
+magasin** (sinon de la géolocalisation IP). La même URL a annoncé
+`Fnac Bordeaux` puis `Fnac Paris - Saint-Lazare` à quelques minutes
+d'intervalle, et une URL préfixée par le magasin (`…/cl57/a…`) retombe sur la
+fiche générique. **Il n'existe donc aucune URL qui épingle un magasin**, et
+aucune API publique de stock (le namespace `/api/` existe mais n'est pas
+documenté, et `Noindex` dans `robots.txt`).
+
+D'où la règle du lecteur, qui **ne devine jamais** :
+
+> Une disponibilité n'est retenue que si la page **annonce explicitement** le
+> magasin demandé (rapproché de la liste officielle par son nom) **et** un
+> retrait sous 1 h. Dans tous les autres cas l'ouvrage est enregistré **sans**
+> disponibilité, et le moteur l'écarte de la sélection automatique.
+
+Un magasin annoncé **ambigu** (`Fnac Lyon Part-Dieu` correspond à deux fiches
+officielles) ou **fermé** est refusé, avec le motif — jamais tranché au hasard.
+
+### Les trois modes de collecte
+
+| Mode | Où | Comment | Visée du magasin |
+|---|---|---|---|
+| **Hors ligne** | panneau admin | coller la page enregistrée (Ctrl+S) | fiable : c'est **ta** session |
+| **Poste opérateur** | `tools/sync-catalogue-artefacts.mjs --fiche/--rayon/--html` | lecture directe ou pages enregistrées, `--cookie-file` pour ta session | fiable avec ton cookie, sinon signalée |
+| **CI manuelle** | workflow *Disponibilité des artefacts (Fnac)* | `workflow_dispatch`, rapport **anonyme** | contrôle de santé du lecteur |
+
+```bash
+# une fiche, pour le magasin du jeu
+node tools/sync-catalogue-artefacts.mjs --magasin cl57 \
+     --fiche https://www.fnac.com/a<id>
+
+# découverte depuis un rayon PUBLIC (jamais une page de recherche)
+node tools/sync-catalogue-artefacts.mjs --magasin cl57 --max 12 \
+     --rayon https://www.fnac.com/Toulouse-Labege/Fnac-Labege/cl57/livre
+
+# hors ligne, avec ta session : la page annonce ton magasin
+node tools/sync-catalogue-artefacts.mjs --magasin cl57 \
+     --cookie-file ~/.nautilus-safe/fnac.cookie --fiche https://www.fnac.com/a<id>
+
+# contrôler un catalogue déjà écrit
+node tools/sync-catalogue-artefacts.mjs --check data/catalogue-artefacts.local.json
+```
+
+Sortie : `data/catalogue-artefacts.local.json`, **ignoré par git** (l'outil
+**refuse** d'écrire vers un chemin non ignoré : GitHub Pages publie tout le
+dépôt). À importer ensuite depuis le panneau admin, qui le chiffre avec la
+phrase secrète avant publication.
+
+### Politesse et légalité
+
+* `robots.txt` est **vérifié avant chaque appel** : `/Account/`, `/OrderPipe/`,
+  `/basket/*`, `/api/*` et la recherche filtrée (`SearchResult/ResultList.aspx`
+  avec `SFilt` ou `PageIndex`) sont refusés **par l'outil lui-même** ;
+* **aucun** CAPTCHA, **aucun** défi anti-bot résolu, **aucun** jeton fabriqué —
+  les jetons que le site ajoute à ses URL (`wanderlu=`, `kerfu=`, `mumbo-j=`)
+  sont seulement **constatés** et signalés ;
+* un mur (403/429/503 ou page de vérification) **arrête** la collecte : ce qui
+  a déjà été lu est conservé, rien n'est forcé ;
+* cadence ≥ 3 s entre deux requête, plafond de pages (`--max`, dur à 60),
+  `User-Agent` identifiable ;
+* la **Cloud Function ne demande rien à fnac.com** (invariant verrouillé par les
+  tests) : depuis une IP de centre de données elle lirait un magasin tiré au
+  hasard et buterait sur l'anti-bot. Elle ne fait que **vérifier** ce qui a été
+  confirmé.
+
+---
+
 ## 7. Tests
 
 ```bash
 node tools/tests-mission-nautilus.mjs       # 224 assertions (suite existante)
-node tools/tests-artefact-palier3.mjs       # 266 assertions (règles, service, sécurité, intégration)
-node tools/tests-artefact-interface.mjs     #  55 assertions (le jeu rendu pour de vrai, via jsdom)
+node tools/tests-artefact-palier3.mjs       # 272 assertions (règles, service, sécurité, intégration)
+node tools/tests-fnac-lecteur.mjs           # 145 assertions (lecture des fiches, collecte, robots, CI)
+node tools/tests-artefact-interface.mjs     #  78 assertions (le jeu ET le panneau admin rendus, via jsdom)
 ```
 
 Les deux premières suites tournent **sans aucune dépendance**. La troisième a
@@ -255,6 +367,12 @@ npm install --prefix tools/.deps jsdom --no-audit --no-fund   # tools/.deps est 
 Sans jsdom, elle affiche un avertissement et rend la main avec un code de retour
 nul.
 
+La suite `tests-fnac-lecteur.mjs` joue sur des **fixtures** qui reproduisent les
+gabarits réellement observés (`tools/fixtures/fiche-fnac-*.html`) avec des
+ouvrages **fictifs** (EAN de la plage interne 200-299) : aucune donnée Fnac
+réelle n'est versionnée, et un test le vérifie structurellement (aucun EAN
+`978…`/`979…`, aucun SKU numérique à 7 chiffres dans un fichier publié).
+
 Ce qu'elles vérifient, entre autres : sélection et exclusions motivées,
 fraîcheur appliquée **au lancement seulement**, cartouche sans fuite, empreintes
 déterministes, mauvais EAN rejeté, code illisible non compté, 3ᵉ erreur =
@@ -262,8 +380,14 @@ remontée, indices payants non répétés, livre introuvable sans pénalité,
 resélection (avec et sans sceau déjà validé), chiffrement/déchiffrement et refus
 sans la phrase, textes (relais mot pour mot, vocabulaire « matelot » /
 « équipier », jamais « plongeur », jamais « balise »), garde-fous de
-synchronisation, et — pour l'interface — l'enchaînement réel des écrans avec la
-vérification qu'**aucune donnée d'ouvrage n'apparaît jamais dans le DOM**.
+synchronisation, lecture des fiches (libellé déroulant collé à la date,
+disponibilité, magasin annoncé ambigu ou fermé, texte collé sans HTML), respect
+de `robots.txt`, absence de contournement anti-bot, rapport **anonyme** pour la
+CI, refus d'écrire un catalogue réel vers un chemin publié — et, pour
+l'interface, l'enchaînement réel des écrans **et** du panneau admin (coller une
+fiche, la lire, l'ajouter, cas « sous 1J », cas « sans magasin », cas « pas une
+fiche ») avec la vérification qu'**aucune donnée d'ouvrage n'apparaît jamais
+dans le DOM du joueur**.
 
 ---
 
@@ -305,6 +429,11 @@ les deux fichiers de données (le sélecteur et l'aperçu fonctionnent hors lign
   mais aucun déploiement n'a été effectué.
 * Un jour : brancher un flux officiel de disponibilité (partenaire Fnac) dans
   `verifierDisponibilite()`, et passer les règles en écriture serveur exclusive.
-* Le catalogue se saisit à la main. Un import assisté (coller une fiche produit,
-  extraction des métadonnées **côté CI** puis validation humaine) est la suite
-  logique — jamais depuis le navigateur.
+* L'import assisté existe (coller une fiche dans le panneau admin, outil Node de
+  collecte, workflow manuel). Ce qui manque encore : une **session** permettant
+  de viser un magasin depuis un automate. Sans cookie d'organisateur, la CI ne
+  contrôle que la santé du lecteur — c'est écrit dans le workflow, pas caché.
+* La liste des ouvrages candidats reste à constituer par l'organisateur : le
+  lecteur ne **choisit** jamais un livre tout seul dans le site (la recherche
+  filtrée est interdite par `robots.txt`, et une page de rayon ne dit pas ce qui
+  est en rayon ce jour-là).

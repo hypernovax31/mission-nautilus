@@ -175,6 +175,26 @@
     +     '</div>'
     +     '<p class="adm-af-note" id="afAdmCatMsg"></p>'
     +   '</details>'
+
+    /* --- lire une fiche fnac.com collée ici (hors ligne) --- */
+    +   '<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">📋 Lire une fiche fnac.com (collée ici)</summary>'
+    +     '<p class="adm-af-note">Ouvre la fiche sur <code>fnac.com</code> avec <b>ton magasin sélectionné</b> '
+    +       '(« Choisir un autre magasin »), enregistre la page (Ctrl+S) ou copie son contenu, puis colle-le '
+    +       'ci-dessous. <b>Aucune requête n’est envoyée à fnac.com depuis ce poste</b> : la lecture est locale. '
+    +       'Le lecteur recopie ce que la page AFFIRME — il ne devine ni le magasin, ni le délai, ni le stock.</p>'
+    +     '<div class="adm-af-ligne">'
+    +       '<input id="afCatFicheUrl" class="adm-af-input" placeholder="URL de la fiche (facultatif) — sert à l’identifiant produit">'
+    +     '</div>'
+    +     '<textarea id="afCatFicheHtml" class="adm-af-input" rows="6" style="width:100%;font-family:monospace;font-size:11px" '
+    +       'placeholder="Colle ici le HTML enregistré ou le texte copié de la fiche…"></textarea>'
+    +     '<div class="adm-af-ligne" style="margin-top:8px">'
+    +       '<button id="afCatFicheLire" class="secondary" type="button">🔎 Lire la fiche</button>'
+    +       '<button id="afCatFicheAjouter" class="primary" type="button" disabled>➕ Ajouter au catalogue</button>'
+    +       '<button id="afCatFicheVider" class="secondary" type="button">🧹 Vider</button>'
+    +     '</div>'
+    +     '<div id="afCatFicheResultat"></div>'
+    +     '<p class="adm-af-note" id="afCatFicheMsg"></p>'
+    +   '</details>'
     + '</div>'
 
     /* --- pistes (cartouches) --- */
@@ -307,6 +327,9 @@
     $('afAdmCatExporter').addEventListener('click', exporterCatalogue);
     $('afAdmCatFichier').addEventListener('change', importerFichier);
     $('afCatAjouter').addEventListener('click', ajouterOuvrage);
+    $('afCatFicheLire').addEventListener('click', lireFicheCollee);
+    $('afCatFicheAjouter').addEventListener('click', ajouterFicheCollee);
+    $('afCatFicheVider').addEventListener('click', viderFicheCollee);
 
     $('afAdmGenerer').addEventListener('click', genererPistes);
     $('afAdmCartouchesReload').addEventListener('click', rafraichirCartouches);
@@ -539,6 +562,153 @@
     rendreCatalogue();
     dire('afAdmCatMsg', '✅ « ' + esc(livre.titre) + ' » ajouté à la copie de travail (' + _catalogue.length
       + ' ouvrage(s)). Publie le catalogue pour l’enregistrer chiffré.', 'ok');
+  }
+
+  /* ------------------------------------------------------------------
+     LECTURE D'UNE FICHE fnac.com COLLÉE — strictement locale.
+
+     Pourquoi coller plutôt que récupérer ? Parce que le navigateur du
+     joueur (et celui de l'organisateur depuis le site) ne doit JAMAIS
+     interroger fnac.com : CORS bloquant, empreinte réseau au nom d'un
+     tiers, et surtout respect des conditions du site. L'organisateur
+     visite fnac.com comme n'importe quel visiteur, choisit son magasin,
+     enregistre la page — et c'est cette page qui est lue ici, hors ligne,
+     par fnac-lecteur.js (le même lecteur que l'outil Node et la fonction
+     serveur : une seule source de règles).
+     ------------------------------------------------------------------ */
+  var _ficheLue = null;
+
+  function lecteurFnac() { return window.NautilusFnacLecteur; }
+
+  function magasinsConnus() {
+    if (!_liste) return [];
+    return Array.isArray(_liste) ? _liste : (_liste.magasins || []);
+  }
+
+  function majBoutonFiche() {
+    var b = $('afCatFicheAjouter');
+    if (b) b.disabled = !(_ficheLue && _ficheLue.livre && _ficheLue.livre.ean);
+  }
+
+  function lireFicheCollee() {
+    var LF = lecteurFnac();
+    if (!LF) {
+      dire('afCatFicheMsg', '❌ <code>fnac-lecteur.js</code> n’est pas chargé sur cette page.', 'danger');
+      return;
+    }
+    var contenu = $('afCatFicheHtml').value || '';
+    if (contenu.trim().length < 40) {
+      _ficheLue = null; majBoutonFiche();
+      dire('afCatFicheMsg', '❌ Colle le contenu d’une fiche fnac.com (page enregistrée ou texte copié).', 'danger');
+      return;
+    }
+    var r;
+    try {
+      r = LF.lireFiche(contenu, {
+        url: ($('afCatFicheUrl').value || '').trim(),
+        magasinId: _magasinId,
+        magasins: magasinsConnus(),
+        maintenant: Date.now()
+      });
+    } catch (e) {
+      _ficheLue = null; majBoutonFiche();
+      dire('afCatFicheMsg', '❌ Lecture impossible : ' + esc(e && e.message || e), 'danger');
+      return;
+    }
+    _ficheLue = r;
+    majBoutonFiche();
+
+    if (!r.livre || !r.livre.ean) {
+      dire('afCatFicheMsg', '❌ Aucun EAN à 13 chiffres valide trouvé : cette page n’est pas une fiche ouvrage '
+        + 'lisible (mur anti-bot, page de recherche, ou copie partielle).', 'danger');
+      $('afCatFicheResultat').innerHTML = '';
+      return;
+    }
+    var l = r.livre;
+    var res = r.resolution || {};
+    var lignes = ''
+      + '<div class="adm-af-note" style="border:1px solid #cfd8e3;border-radius:8px;padding:8px;margin-top:8px">'
+      + '<b>📖 ' + esc(l.titre) + '</b>' + (l.edition ? ' — ' + esc(l.edition) : '') + '<br>'
+      + 'EAN <code>' + esc(l.ean) + '</code> · SKU <code>' + esc(l.sku || '—') + '</code> · '
+      + 'Éditeur ' + esc(l.editeur || '—') + ' · Collection ' + esc(l.collection || '—') + '<br>'
+      + 'Parution ' + esc(String(l.annee || '—')) + ' · ' + esc(String(l.pages || '—')) + ' p. · '
+      + 'Format ' + esc(l.format || '—') + ' · Libellé Fnac « ' + esc(l.categorieFnac || l.etiquetteFnac || '—') + ' »<br>'
+      + 'Auteur(s) ' + esc(l.auteur || '—') + (l.auteurType ? ' (' + esc(l.auteurType) + ')' : '') + '<br>'
+      + 'Type retenu : <code>' + esc(l.type || 'aucun') + '</code>'
+      + (l.type ? '' : ' — <b>aucun lien thématique exploitable</b>, le moteur l’écartera') + '<br>'
+      + '<b>Magasin annoncé par la page</b> : ' + (r.magasinAnnonce ? '« ' + esc(r.magasinAnnonce) + ' »' : '<i>aucun</i>')
+      + (res.id ? ' → <code>' + esc(res.id) + '</code> (' + esc(res.nom) + ')'
+                : (res.motif ? ' → ' + esc(res.motif) : '')) + '<br>'
+      + '<b>Disponibilité</b> : ' + esc(r.etat) + (r.delai ? ' · délai « ' + esc(r.delai) + ' »' : ' · délai non précisé')
+      + ' → ' + (r.exploitable
+          ? '✅ <b>exploitable</b> : ' + esc(r.motif)
+          : '⛔ non exploitable : ' + esc(r.motif)) + '<br>'
+      + (r.vendeursPartenaires && r.vendeursPartenaires.length
+          ? 'Offres partenaires constatées (hors offre Fnac) : ' + esc(r.vendeursPartenaires.join(', ')) + '<br>' : '')
+      + (r.alertes.length ? '⚠️ ' + r.alertes.map(function (a) {
+          return (a.bloquant ? '<b>' : '') + esc(a.code) + (a.bloquant ? '</b>' : '') + ' : ' + esc(a.message);
+        }).join('<br>⚠️ ') : '')
+      + '</div>';
+    $('afCatFicheResultat').innerHTML = lignes;
+
+    if (r.exploitable && _magasinId && r.magasinId === _magasinId) {
+      dire('afCatFicheMsg', '✅ Retrait sous 1 h confirmé pour <b>' + esc(_magasinId) + '</b>. '
+        + 'Ajoute l’ouvrage, puis publie le catalogue et régénère les pistes.', 'ok');
+    } else if (!_magasinId) {
+      dire('afCatFicheMsg', 'ℹ️ Choisis d’abord le <b>magasin de référence</b> ci-dessus : sans lui, aucune '
+        + 'disponibilité ne peut être attribuée (l’ouvrage sera ajouté SANS disponibilité exploitable).', 'warn');
+    } else {
+      dire('afCatFicheMsg', '⚠️ L’ouvrage sera ajouté, mais <b>sans disponibilité exploitable</b> pour '
+        + esc(_magasinId) + ' : le moteur l’écartera de la sélection automatique tant que tu ne l’auras pas '
+        + 'confirmée à la main.', 'warn');
+    }
+  }
+
+  function ajouterFicheCollee() {
+    if (!_ficheLue || !_ficheLue.livre || !_ficheLue.livre.ean) {
+      dire('afCatFicheMsg', '❌ Lis d’abord une fiche valide.', 'danger');
+      return;
+    }
+    if (!_catalogue) _catalogue = [];
+    var v = M().validerLivre(_ficheLue.livre);
+    if (!v.livre) {
+      dire('afCatFicheMsg', '❌ Ouvrage refusé par le moteur : ' + esc(v.erreurs.join(' ; ')), 'danger');
+      return;
+    }
+    var livre = v.livre;
+    if (!livre.id) livre.id = 'fnac-' + livre.ean;
+    /* Une disponibilité n'est reprise QUE si la page annonçait bien le
+       magasin de travail avec un retrait sous 1 h. Sinon la clé reste
+       absente : mieux vaut un ouvrage écarté qu'un ouvrage introuvable. */
+    var confirme = !!(_ficheLue.exploitable && _magasinId && _ficheLue.magasinId === _magasinId);
+    if (!confirme) livre.disponibilite = {};
+    var deja = _catalogue.filter(function (l) { return l.id === livre.id || (l.ean && l.ean === livre.ean); });
+    if (deja.length) {
+      dire('afCatFicheMsg', 'ℹ️ Cet ouvrage (EAN ' + esc(livre.ean) + ') est déjà dans la copie de travail : '
+        + 'sa disponibilité a été mise à jour.', 'warn');
+      deja[0].disponibilite = Object.assign({}, deja[0].disponibilite || {}, livre.disponibilite || {});
+      rendreCatalogue();
+      return;
+    }
+    _catalogue.push(livre);
+    rendreCatalogue();
+    dire('afCatFicheMsg', (confirme ? '✅ « ' : '➕ « ') + esc(livre.titre) + ' » ajouté ('
+      + (confirme ? 'disponible sous 1 h à ' + esc(_magasinId) : 'sans disponibilité exploitable')
+      + '). Publie le catalogue pour le chiffrer.', confirme ? 'ok' : 'warn');
+    _ficheLue = null;
+    $('afCatFicheHtml').value = '';
+    $('afCatFicheUrl').value = '';
+    $('afCatFicheResultat').innerHTML = '';
+    majBoutonFiche();
+  }
+
+  function viderFicheCollee() {
+    _ficheLue = null;
+    $('afCatFicheHtml').value = '';
+    $('afCatFicheUrl').value = '';
+    $('afCatFicheResultat').innerHTML = '';
+    dire('afCatFicheMsg', '', '');
+    majBoutonFiche();
   }
 
   function publierCatalogue() {

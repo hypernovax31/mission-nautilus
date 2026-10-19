@@ -14,3 +14,14 @@ tools/.deps/
 # Liste des magasins conservée par l'outil de synchronisation : l'historique
 # git suffit, pas besoin de la version précédente dans le dépôt.
 data/magasins-fnac.previous.json
+
+# --- Palier 3 « l'artefact du Nautilus » : données RÉELLES, jamais publiées ---
+# Le catalogue collecté contient des titres, EAN et SKU réels : GitHub Pages
+# publie tout ce qui est commité, il ne doit donc jamais entrer dans le dépôt.
+data/catalogue-artefacts.local.json
+data/catalogue-artefacts.local.json.*
+data/*.local.json
+# Cookie de session de l'opérateur (choix du magasin sur fnac.com) : personnel.
+*.fnac-cookie
+*.cookie
+data/cookies-*

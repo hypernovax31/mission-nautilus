@@ -395,6 +395,97 @@ MG.effacer();
 ok('le choix peut être effacé', MG.courant() === null);
 
 /* ===================================================================== */
+titre('7. Panneau admin — lire une fiche fnac.com collée (hors ligne)');
+/* ===================================================================== */
+/* L'espace d'administration que admin-artefact.js s'injecte tout seul. */
+win.document.body.insertAdjacentHTML('beforeend',
+  '<div id="adminPanel"><div id="adminWorkspace"><div class="admin-tabs">'
+  + '<button class="admin-tab" data-tab="general">Général</button>'
+  + '<button class="admin-tab" data-tab="danger">Danger</button>'
+  + '</div></div></div>');
+['fnac-lecteur.js', 'admin-artefact.js'].forEach((f) => win.eval(lire(f)));
+const ADM = win.NautilusAdminArtefact;
+const champ = (id) => win.document.getElementById(id);
+ok('le lecteur et le panneau admin sont chargés dans la fenêtre',
+  !!ADM && !!win.NautilusFnacLecteur);
+ADM.injecter();
+const ongletArtefact = win.document.querySelector('.admin-tab[data-tab="artefact"]');
+ok('l’onglet 📖 Artefact s’injecte', !!ongletArtefact);
+ok('l’onglet se place AVANT la zone Danger',
+  !!win.document.querySelector('[data-tab="danger"]')
+  && Array.from(win.document.querySelectorAll('.admin-tab')).findIndex((b) => b.dataset.tab === 'artefact')
+     < Array.from(win.document.querySelectorAll('.admin-tab')).findIndex((b) => b.dataset.tab === 'danger'));
+const volet = win.document.querySelector('[data-pane="artefact"]');
+ok('le volet propose de lire une fiche fnac.com collée', /Lire une fiche fnac\.com/.test(volet.textContent));
+ok('le volet promet noir sur blanc qu’aucune requête ne part du poste',
+  /Aucune requête n’est envoyée/.test(volet.textContent.replace(/\s+/g, ' ')));
+ok('« Ajouter au catalogue » reste désactivé tant que rien n’est lu',
+  champ('afCatFicheAjouter').disabled === true);
+
+await ADM.rafraichirTout();
+await attendre(80);
+const selecteur = champ('afAdmMagasin');
+ok('la liste officielle alimente le sélecteur admin', selecteur.options.length > 100);
+selecteur.value = 'cl57';
+selecteur.dispatchEvent(new win.Event('change', { bubbles: true }));
+await attendre(40);
+
+/* --- cas nominal : la page annonce « Retrait gratuit sous 1H » ------- */
+champ('afCatFicheUrl').value = 'https://www.fnac.com/a99000001/Collectif-Atlas';
+champ('afCatFicheHtml').value = lire('tools/fixtures/fiche-fnac-en-stock-1h.html');
+await clic('#afCatFicheLire');
+const resultat = () => champ('afCatFicheResultat').textContent.replace(/\s+/g, ' ');
+const msgFiche = () => champ('afCatFicheMsg').textContent.replace(/\s+/g, ' ');
+ok('la lecture montre l’EAN et le titre à l’ORGANISATEUR (jamais au joueur)',
+  /2000000001005/.test(resultat()) && /oceans perdus/.test(resultat()));
+ok('la lecture montre le magasin ANNONCÉ par la page et son identifiant officiel',
+  /Toulouse - Labège/.test(resultat()) && /cl57/.test(resultat()));
+ok('la lecture montre le délai recopié de la fiche', /sous 1H/.test(resultat()));
+ok('la fiche est déclarée exploitable', /exploitable/.test(resultat()) && /confirmé/i.test(msgFiche()));
+ok('« Ajouter au catalogue » devient actif', champ('afCatFicheAjouter').disabled === false);
+await clic('#afCatFicheAjouter');
+ok('l’ouvrage entre dans la copie de travail',
+  /2000000001005/.test(champ('afAdmCatTable').textContent));
+ok('le champ collé est vidé après import (rien ne traîne dans le DOM)',
+  champ('afCatFicheHtml').value === '' && champ('afCatFicheResultat').textContent === '');
+
+/* --- cas défavorable : la page annonce « Retrait gratuit sous 1J » --- */
+champ('afCatFicheHtml').value = lire('tools/fixtures/fiche-fnac-livrable-1j.html');
+await clic('#afCatFicheLire');
+ok('un retrait sous 1 jour est annoncé NON exploitable',
+  /non exploitable/.test(resultat()) && /sous 1J/.test(resultat()));
+ok('le motif dit que l’ouvrage n’est pas en rayon', /acheminer/i.test(resultat()));
+ok('un magasin annoncé différent du magasin choisi est signalé',
+  /magasin-different/.test(resultat()) || /Paris - Saint-Lazare/.test(resultat()));
+await clic('#afCatFicheAjouter');
+ok('l’ouvrage est ajouté SANS disponibilité exploitable, et l’admin le sait',
+  /sans disponibilité exploitable/i.test(msgFiche()));
+
+/* --- cas piège : page sans magasin annoncé --------------------------- */
+champ('afCatFicheHtml').value = lire('tools/fixtures/fiche-fnac-sans-magasin.html');
+await clic('#afCatFicheLire');
+ok('une page sans magasin le dit, au lieu de conclure à la disponibilité',
+  /aucun/i.test(resultat()) && /non précisé/i.test(resultat()) && /non exploitable/.test(resultat()));
+
+/* --- cas piège : ce n'est pas une fiche ouvrage ---------------------- */
+champ('afCatFicheHtml').value = '<html><body><p>Page de recherche, pas une fiche</p></body></html>';
+await clic('#afCatFicheLire');
+ok('une page sans EAN est refusée nettement',
+  /Aucun EAN/i.test(msgFiche()) && champ('afCatFicheAjouter').disabled === true);
+champ('afCatFicheHtml').value = 'trop court';
+await clic('#afCatFicheLire');
+ok('un collage trop court est refusé sans planter', /Colle le contenu/i.test(msgFiche()));
+await clic('#afCatFicheVider');
+ok('« Vider » remet le volet à zéro',
+  champ('afCatFicheHtml').value === '' && champ('afCatFicheResultat').textContent === '');
+
+/* --- étanchéité : rien ne fuit du panneau admin vers le jeu ---------- */
+const zoneJeu = ($('#hote') ? $('#hote').textContent : '');
+ok('la zone du joueur ne contient AUCUNE donnée de la fiche lue par l’admin',
+  !/2000000001005/.test(zoneJeu) && !/oceans perdus/i.test(zoneJeu)
+  && !/EXEMPLE-1005/.test(zoneJeu) && !/Éditions Imaginaires/.test(zoneJeu));
+
+/* ===================================================================== */
 console.log('\n' + '─'.repeat(60));
 console.log(reussis + ' test(s) d’interface réussi(s), ' + echoues + ' échec(s).');
 console.log('RESULTAT_HEX=' + Buffer.from(reussis + '/' + echoues).toString('hex'));

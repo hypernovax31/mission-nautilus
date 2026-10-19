@@ -9,7 +9,10 @@
       "**/functions/**",
       "**/tools/**",
       "**/docs/**",
-      "**/*.md"
+      "**/*.md",
+      "data/*.local.json",
+      "data/catalogue-artefacts.local.json",
+      "tools/fixtures/**"
     ],
     "rewrites": [
       {
