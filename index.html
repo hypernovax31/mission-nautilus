@@ -8749,43 +8749,61 @@ window.PWAInstall = {
 (function(){
   function initEcMagasin(){
     var sel = document.getElementById('ecMagasinSelect');
-    if(!sel || !window.NautilusMagasin) return;
+    var btn = document.getElementById('ecStart');
+    var caisse = document.querySelector('.ec-magasin-case');
+    if(!sel || !window.NautilusMagasin || !btn || !caisse) return;
     var courant = window.NautilusMagasin.courant();
     function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c];}); }
+    function triAlpha(a,b){
+      var na=(a.nom||'').toLowerCase(), nb=(b.nom||'').toLowerCase();
+      if(na<nb) return -1; if(na>nb) return 1;
+      var va=(a.ville||'').toLowerCase(), vb=(b.ville||'').toLowerCase();
+      if(va<vb) return -1; if(va>vb) return 1;
+      return 0;
+    }
     function remplir(r){
       var liste = r.magasins || [];
-      var utilisables = liste.filter(function(m){return m && m.id && m.actif!==false;}).sort(function(a,b){
-        var na=(a.nom||'').toLowerCase(), nb=(b.nom||'').toLowerCase();
-        if(na<nb) return -1; if(na>nb) return 1;
-        var va=(a.ville||'').toLowerCase(), vb=(b.ville||'').toLowerCase();
-        if(va<vb) return -1; if(va>vb) return 1;
-        return 0;
-      });
-      var html = '<option value=\"\">— choisis ton magasin —</option>';
+      var utilisables = liste.filter(function(m){return m && m.id && m.actif!==false;}).sort(triAlpha);
+      var html = '<option value="">— choisis ton magasin —</option>';
       utilisables.forEach(function(m){
-        html += '<option value=\"' + esc(m.id) + '\">' + esc('Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (m.cp ? ' ('+m.cp+')' : '')) + '</option>';
+        html += '<option value="' + esc(m.id) + '">' + esc('Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (m.cp ? ' ('+m.cp+')' : '')) + '</option>';
       });
       sel.innerHTML = html;
       if(courant && courant.id) sel.value = courant.id;
     }
     window.NautilusMagasin.chargerListe().then(remplir).catch(function(){
-      sel.innerHTML = '<option value=\"\">Liste indisponible — recharge la page</option>';
+      sel.innerHTML = '<option value="">Liste indisponible — recharge la page</option>';
     });
     sel.addEventListener('change', function(){
       var id = sel.value; if(!id) return;
       window.NautilusMagasin.chargerListe().then(function(r){
         var m = (r.magasins||[]).find(function(x){return x.id===id;});
-        if(m) window.NautilusMagasin.memoriser(m, 'ecoutille');
+        if(m){ window.NautilusMagasin.memoriser(m, 'ecoutille'); courant = window.NautilusMagasin.courant(); sel.style.borderColor='#d8e0e6'; sel.style.boxShadow=''; }
       });
     });
-    var btn = document.getElementById('ecStart');
-    if(btn) btn.addEventListener('click', function(){
+    btn.addEventListener('click', function(){
       var id = sel.value; if(!id) return;
       window.NautilusMagasin.chargerListe().then(function(r){
         var m = (r.magasins||[]).find(function(x){return x.id===id;});
         if(m) window.NautilusMagasin.memoriser(m, 'ecoutille-start');
       });
     });
+    // validation AVANT ouverture : exige un magasin (capture avant ecoutille.js)
+    btn.addEventListener('click', function(e){
+      if(sel.value) return;
+      var deja = window.NautilusMagasin.courant();
+      if(deja && deja.id){ sel.value = deja.id; return; }
+      e.preventDefault(); e.stopImmediatePropagation();
+      sel.focus();
+      sel.style.borderColor = '#e74c3c';
+      sel.style.boxShadow = '0 0 0 4px rgba(231,76,60,.22)';
+      caisse.style.transition = 'transform .12s';
+      caisse.style.transform = 'translateX(-4px)';
+      setTimeout(function(){ caisse.style.transform = 'translateX(4px)'; }, 80);
+      setTimeout(function(){ caisse.style.transform = 'translateX(0)'; }, 160);
+      var lbl = document.querySelector('.ec-magasin-label');
+      if(lbl){ var orig = lbl.textContent; lbl.textContent = 'choisis d\u2019abord ton magasin \u2193'; lbl.style.color = '#ff6b6b'; setTimeout(function(){ lbl.textContent = orig; lbl.style.color = ''; }, 2200); }
+    }, true);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initEcMagasin);
   else initEcMagasin();
