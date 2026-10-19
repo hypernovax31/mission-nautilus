@@ -397,7 +397,22 @@
         filter:drop-shadow(0 .5vmin 1.6vmin rgba(0,0,0,.72));
       }
     }
-    /* Titre unique fusionné : 3 textes en 1 */
+    /* Bloc titre resserré et ajusté au contenu : H1 + H3 centrés */
+    #ecoutille .ec-titre-bloc{
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:clamp(4px,.9vmin,9px);
+      width:fit-content; max-width:100%; margin:0 auto;
+      padding:clamp(2px,.6vmin,8px) clamp(10px,2vmin,18px);
+      text-align:center;
+    }
+    #ecoutille .ec-titre{ text-align:center }
+    #ecoutille .ec-sous-titre-h3{
+      margin:0; font-family:Georgia,"Times New Roman",serif; font-style:normal;
+      font-size:clamp(10px, 2vmin, 17px); line-height:1.25; letter-spacing:.18em;
+      text-transform:uppercase; color:#bfe8f7; text-align:center;
+      text-shadow:0 2px 12px rgba(0,0,0,.75);
+    }
+    /* Compat ancien titre unique */
     #ecoutille .ec-titre-unique span{
       display:block; margin-top:6px;
       font-family:Georgia,"Times New Roman",serif; font-style:italic;
@@ -786,7 +801,10 @@
           <span class="ec-signal">Signal détecté après 156 ans</span>
         </span>
       </div>
-      <h1 class="ec-titre ec-titre-unique">Expédition dans le Nautilus<br><span>De Jules Verne à la Fnac Labège — Matelots, la mer monte entre les rayons</span></h1>
+      <div class="ec-titre-bloc">
+        <h1 class="ec-titre">Expedition du nautilus</h1>
+        <h3 class="ec-sous-titre-h3">Dans les haute-mers des rayons Fnac</h3>
+      </div>
     </header>
 
     <!-- LE HUBLOT DU SALON : la mer, vraie, dans le verre. Le film du
