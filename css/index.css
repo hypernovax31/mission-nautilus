@@ -2440,79 +2440,107 @@ body{overflow-wrap:break-word;}
   body > header .hero-meta { justify-content:center !important; }
   body > header .hero-title { font-size: clamp(56px,6vw,110px) !important; margin:12px auto 0 !important; text-align:center !important; width:auto !important; }
   body > header .hero-line { margin:14px auto 0 !important; text-align:center !important; max-width:42ch !important; }
-  body > header .hero-actions { justify-content:center !important; display:flex !important; visibility:visible !important; opacity:1 !important; gap:14px !important; margin-top:28px !important; flex-wrap:wrap !important; flex-direction:column !important; align-items:center !important; }
-  body > header .hero-actions .hero-cta { display:inline-flex !important; visibility:visible !important; opacity:1 !important; width:100% !important; max-width:420px !important; min-width:0 !important; padding:16px 26px !important; font-size:14px !important; border-radius:999px !important; justify-content:center !important; }
+  body > header .hero-actions { justify-content:center !important; display:flex !important; visibility:visible !important; opacity:1 !important; gap:14px !important; margin-top:28px !important; flex-wrap:wrap !important; flex-direction:row !important; align-items:center !important; }
+  body > header .hero-actions .hero-cta { display:inline-flex !important; visibility:visible !important; opacity:1 !important; width:auto !important; min-width:210px !important; max-width:none !important; padding:16px 26px !important; font-size:14px !important; border-radius:999px !important; justify-content:center !important; }
   .top-bar { top:18px !important; right:50% !important; left:auto !important; transform:translateX(50%); width:auto !important; max-width:none !important; gap:10px !important; justify-content:center !important; background:rgba(6,22,38,.62); backdrop-filter:blur(12px); border:1px solid rgba(142,231,255,.22); border-radius:999px; padding:6px; }
   .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle { height:38px !important; padding:0 18px !important; font-size:12px !important; flex:0 0 auto !important; max-width:none !important; }
-  main { max-width:760px !important; margin:0 auto !important; padding:28px 20px 0 !important; display:flex !important; flex-direction:column !important; gap:28px !important; }
+  /* 2 colonnes PC : accueil en grille, pleine largeur pour les grands blocs */
+  main { max-width:1220px !important; margin:0 auto !important; padding:28px 20px 0 !important; display:grid !important; grid-template-columns:1fr 1fr !important; gap:24px !important; align-items:start !important; }
+  main .intro-card { grid-column:1 / -1 !important; }
+  main #oxygenPanel { grid-column:1 / -1 !important; }
+  main #equipagesEnMer { grid-column:1 / -1 !important; }
+  main #gameCard { grid-column:1 / -1 !important; }
+  main #bottomAlertMessage { grid-column:1 / -1 !important; }
+  main #embarquementMatelot { grid-column:1 !important; }
+  main #retrouverEquipage { grid-column:2 !important; }
   .card { border-radius:24px !important; }
-  #embarquementMatelot, #retrouverEquipage, #magasinPanel, #oxygenPanel, #equipagesEnMer, #gameCard, #bottomAlertMessage, .intro-card { grid-column:auto !important; display:block !important; opacity:1 !important; visibility:visible !important; }
+  #embarquementMatelot, #retrouverEquipage, #oxygenPanel, #equipagesEnMer, #gameCard, #bottomAlertMessage, .intro-card { display:block !important; opacity:1 !important; visibility:visible !important; }
   .intro-card .body { display:block !important; }
-  .intro-card .mission-steps { display:flex !important; flex-direction:column !important; gap:14px !important; }
-  /* 1 seule colonne : toutes les grilles internes passent en pile verticale */
-  .grid, .boarding-grid, .matelot-reveal, .teamlist, .ck-gauges, .admin-form-grid, .admin-form-grid-6, .admin-o2-form, .oxygen-bottom, .member-edit-row, .team-edit-row, .me-sub { display:flex !important; flex-direction:column !important; gap:14px !important; grid-template-columns:1fr !important; }
-  .grid > div, .boarding-grid > div { width:100% !important; min-width:0 !important; }
-  .boarding-grid input, .boarding-grid select, .boarding-action, .boarding-action button { width:100% !important; min-width:0 !important; }
-  .boarding-action { grid-column:auto !important; }
-  .teamlist .team, .grid .card, .countdown-card, .sonar-loader { width:100% !important; max-width:100% !important; }
-  .oxygen-meter-top { flex-direction:column !important; align-items:flex-start !important; }
-  .oxygen-bottom { align-items:stretch !important; }
-  .countdown-block { align-items:flex-start !important; margin-left:0 !important; text-align:left !important; }
-  .site-footer { max-width:760px; margin:18px auto 0 !important; padding:18px 20px 28px !important; flex-direction:column !important; align-items:center !important; gap:10px !important; }
-  #adminPanel { max-width:760px !important; margin:18px auto 0 !important; }
+  .intro-card .mission-steps { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:14px !important; }
+  /* Grilles internes en PC : on restaure les colonnes d'origine */
+  .grid { display:grid !important; grid-template-columns:1fr 1fr !important; gap:14px !important; }
+  .boarding-grid { display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:14px !important; }
+  .matelot-reveal { display:grid !important; grid-template-columns:1fr 1fr !important; gap:14px !important; }
+  .teamlist { display:grid !important; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)) !important; gap:16px !important; }
+  .ck-gauges { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+  .admin-form-grid { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.4fr) !important; }
+  .admin-o2-form { display:grid !important; grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,auto) minmax(0,1fr) !important; }
+  .oxygen-bottom { display:flex !important; flex-direction:row !important; align-items:center !important; gap:14px !important; }
+  .countdown-block { align-items:flex-end !important; margin-left:auto !important; text-align:right !important; }
+  .site-footer { max-width:1220px; margin:18px auto 0 !important; padding:18px 20px 28px !important; flex-direction:row !important; align-items:center !important; justify-content:space-between !important; }
+  #adminPanel { max-width:1220px !important; margin:18px auto 0 !important; }
 }
 /* =====================================================================
    ÉCOUTILLES PC — tout visible à l'écran (PC)
-   Sur PC, l'écoutille doit tenir en 100dvh sans scroll, boutons compris.
+   Sur PC, l'écoutille doit tenir sans scroll et montrer START.
+   Fix: min-height + overflow:auto + flex centré, hublot fluidifié.
    ===================================================================== */
 @media (min-width: 1100px) {
   #ecoutille {
-    height: 100dvh !important;
     min-height: 100dvh !important;
+    height: auto !important;
     max-height: 100dvh !important;
-    overflow: hidden !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    align-items: safe center !important;
+    justify-content: center !important;
   }
+  #ecoutille .ec-ecran { position: fixed !important; inset:0 !important; }
   #ecoutille .ec-scene {
-    height: 100dvh !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 1080px !important;
+    margin: 0 auto !important;
     min-height: 100dvh !important;
-    max-height: 100dvh !important;
-    padding: clamp(10px, 1.5vh, 18px) clamp(16px, 2vw, 32px) clamp(10px, 1.2vh, 16px) !important;
-    gap: clamp(6px, 1vh, 12px) !important;
-    justify-content: space-evenly !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: clamp(10px, 1.8vh, 20px) clamp(16px, 2vw, 32px) clamp(14px, 2vh, 20px) !important;
+    gap: clamp(8px, 1.4vh, 14px) !important;
+    justify-content: center !important;
+    align-items: center !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
-  #ecoutille .ec-enseigne { gap: 6px !important; flex-shrink: 0; }
+  #ecoutille .ec-enseigne { gap: 6px !important; flex: 0 0 auto !important; width: 100% !important; }
   #ecoutille .ec-verne { font-size: 11px !important; letter-spacing:.38em !important; }
   #ecoutille .ec-titre { font-size: clamp(28px, 3.2vw, 52px) !important; line-height:.92 !important; }
-  #ecoutille .ec-regle { margin: 4px 0 !important; }
+  #ecoutille .ec-regle { margin: 4px auto !important; }
   #ecoutille .ec-sous-titre { font-size: 13px !important; }
   #ecoutille .ec-hud { font-size: 9px !important; padding: 0 !important; }
-  /* Hublot calibré pour PC : tient entre enseigne et pied sans pousser */
+  /* Hublot fluidifié : garde ratio mais ne pousse jamais le bouton hors écran */
   #ecoutille .ec-hublot {
-    width: min(42vh, 520px) !important;
-    height: min(42vh, 520px) !important;
-    max-width: 520px !important; max-height: 520px !important;
-    margin: 6px 0 !important;
+    width: min(38vh, 460px) !important;
+    height: min(38vh, 460px) !important;
+    max-width: min(85vw, 460px) !important;
+    max-height: min(38vh, 460px) !important;
+    min-width: 160px !important;
+    min-height: 160px !important;
+    margin: 4px 0 !important;
     flex: 0 1 auto !important;
+    align-self: center !important;
   }
-  #ecoutille .ec-pied { gap: 10px !important; flex-shrink: 0; padding-bottom: 4px; }
+  #ecoutille .ec-pied { gap: 10px !important; flex: 0 0 auto !important; width: 100% !important; padding-bottom: 8px !important; }
   #ecoutille .ec-consigne { font-size: 11px !important; display:block !important; }
   #ecoutille .ec-start {
-    width: clamp(110px, 11vw, 148px) !important;
-    flex-shrink: 0;
+    width: clamp(108px, 10vw, 142px) !important;
+    flex: 0 0 auto !important;
   }
-  #ecoutille .ec-start-label { font-size: 18px !important; }
-  #ecoutille .ec-version { font-size: 9px !important; opacity:.7; }
+  #ecoutille .ec-start-label { font-size: 17px !important; }
+  #ecoutille .ec-version { font-size: 9px !important; opacity:.7; position: absolute !important; }
 }
+/* Écrans PC bas : on réduit encore le hublot et la typo pour garder START visible */
 @media (min-width: 1100px) and (max-height: 820px) {
-  #ecoutille .ec-hublot { width: min(36vh, 440px) !important; height: min(36vh, 440px) !important; }
-  #ecoutille .ec-titre { font-size: clamp(26px, 3vw, 44px) !important; }
+  #ecoutille .ec-hublot { width: min(34vh, 400px) !important; height: min(34vh, 400px) !important; max-width:400px !important; max-height:400px !important; }
+  #ecoutille .ec-titre { font-size: clamp(24px, 2.9vw, 42px) !important; }
   #ecoutille .ec-pied { gap: 8px !important; }
+  #ecoutille .ec-start { width: clamp(100px, 9vw, 128px) !important; }
 }
 @media (min-width: 1100px) and (max-height: 720px) {
+  #ecoutille .ec-scene { gap: 6px !important; padding: 8px 16px 10px !important; }
   #ecoutille .ec-sous-titre { display:none !important; }
-  #ecoutille .ec-hublot { width: min(32vh, 380px) !important; height: min(32vh, 380px) !important; }
+  #ecoutille .ec-hublot { width: min(30vh, 340px) !important; height: min(30vh, 340px) !important; max-width:340px !important; max-height:340px !important; }
+  #ecoutille .ec-consigne { font-size: 10px !important; }
 }
 /* =====================================================================
    1 SEULE COLONNE — TABLETTE (641–1099px) : même pile que PC
