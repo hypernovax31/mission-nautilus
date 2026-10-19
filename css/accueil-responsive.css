@@ -1,0 +1,124 @@
+/* Mission Nautilus — accueil responsive PC + mobile.
+   À charger après css/index.css et avant les styles spécifiques des jeux.
+*/
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { max-width: 100%; overflow-x: hidden; }
+
+/* PC : conserver l’essentiel dans la fenêtre visible. */
+@media (min-width: 761px) {
+  body { min-height: 100dvh; }
+  header {
+    min-height: auto;
+    padding: clamp(12px, 2.8vh, 30px) clamp(20px, 4vw, 64px) clamp(14px, 2.8vh, 28px);
+  }
+  header .hero-title {
+    font-size: clamp(42px, 7.4vw, 108px);
+    line-height: .9;
+    margin-top: clamp(8px, 1.8vh, 20px);
+  }
+  header .hero-line {
+    font-size: clamp(17px, 2.2vw, 31px);
+    line-height: 1.08;
+    margin-top: clamp(8px, 1.6vh, 17px);
+  }
+  header .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: clamp(12px, 2.3vh, 24px);
+  }
+  header .hero-cta {
+    min-width: 180px;
+    min-height: 44px;
+    padding: 10px 18px;
+  }
+  main { padding-top: clamp(8px, 2vh, 20px); }
+  .mission-steps {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(8px, 1.2vw, 16px);
+    margin-top: clamp(8px, 1.8vh, 18px);
+  }
+  button.mission-step {
+    width: 100%;
+    max-width: none;
+    min-height: clamp(64px, 11vh, 104px);
+  }
+  header .hero-actions .pulse-engage {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    background: #c62828;
+    color: #fff;
+    border: 2px solid #ff8a80;
+    box-shadow: 0 0 18px rgba(198, 40, 40, .55);
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .mission-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 761px) and (max-height: 700px) {
+  header { padding-top: 8px; padding-bottom: 10px; }
+  header .hero-kicker { display: none; }
+  header .hero-title { font-size: clamp(36px, 6.2vw, 76px); margin-top: 4px; }
+  header .hero-line { font-size: clamp(15px, 1.8vw, 24px); margin-top: 5px; }
+  header .hero-actions { margin-top: 8px; }
+  main { padding-top: 6px; }
+  .mission-steps { margin-top: 6px; }
+  button.mission-step { min-height: 56px; }
+}
+
+/* Mobile : aucun élément ne dépasse la largeur de l’écran. */
+@media (max-width: 760px) {
+  body { min-width: 0; width: 100%; }
+  header, main, footer { width: 100%; max-width: 100%; min-width: 0; }
+  header { padding: 18px 16px 20px; }
+  header > * { max-width: 100%; }
+  header .brand { font-size: clamp(10px, 2.8vw, 13px); letter-spacing: .12em; }
+  header .hero-kicker { margin-top: 8px; font-size: clamp(10px, 3vw, 13px); line-height: 1.25; }
+  header .hero-title {
+    max-width: 100%;
+    font-size: clamp(38px, 14vw, 72px);
+    line-height: .9;
+    letter-spacing: -.045em;
+    overflow-wrap: anywhere;
+    margin-top: 14px;
+  }
+  header .hero-line {
+    max-width: 100%;
+    font-size: clamp(17px, 5.4vw, 27px);
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+    margin-top: 12px;
+  }
+  header .hero-actions { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 18px; }
+  header .hero-cta,
+  header .hero-actions .pulse-engage { width: 100%; min-width: 0; min-height: 48px; padding: 12px 16px; }
+  main { padding: 14px 16px 18px; }
+  .mission-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  button.mission-step { width: 100%; min-width: 0; min-height: 74px; padding: 10px 8px; }
+  footer { padding: 12px 16px; }
+}
+
+@media (max-width: 380px) {
+  header { padding-inline: 12px; }
+  main { padding-inline: 12px; }
+  header .hero-title { font-size: clamp(34px, 13.5vw, 54px); }
+  header .hero-line { font-size: clamp(16px, 5.2vw, 22px); }
+  .mission-steps { gap: 7px; }
+  button.mission-step { min-height: 64px; font-size: 12px; }
+  footer { padding-inline: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
