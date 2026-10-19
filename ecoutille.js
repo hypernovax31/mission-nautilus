@@ -341,6 +341,26 @@
     if(_cadreur) clearTimeout(_cadreur);
     _cadreur = null;
   }
+  // Vraie jauge O₂ (mission réelle) — appelée depuis index.html quand Firestore répond
+  // ratio01 : 0..1 (1 = 100% → 6000 L), litres : optionnel, sinon déduit de ratio
+  window.nautilusSetEcoutilleO2 = function(ratio01, litres){
+    arreterCadreur();
+    const ratio = Math.max(0, Math.min(1, Number(ratio01) || 0));
+    if(o2Niveau && ratio !== _o2Echelle){
+      _o2Echelle = ratio;
+      o2Niveau.style.transform = 'scaleX(' + ratio.toFixed(4) + ')';
+    }
+    let lit = litres;
+    if(lit == null && ratio01 != null) lit = Math.round(O2_RESERVE_L * ratio);
+    if(o2Valeur && lit != null){
+      const arrondi = Math.round(lit);
+      if(arrondi !== _o2Litres){
+        _o2Litres = arrondi;
+        o2Valeur.textContent = milliers(arrondi) + ' L';
+      }
+    }
+  };
+  window.nautilusStopEcoutilleO2 = arreterCadreur;
 
   /* ------------------------------------------------------------------ *
    * 5. LA SORTIE : le projecteur nous éblouit
