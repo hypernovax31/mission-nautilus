@@ -405,6 +405,13 @@
       padding:clamp(2px,.5vmin,6px) clamp(8px,1.6vmin,16px);
       text-align:center;
     }
+    /* Portrait : bloc titre aéré + hublot à 10px du bord du bloc titre */
+    @media (orientation:portrait){
+      #ecoutille .ec-titre-bloc{padding:clamp(10px,2.4vmin,16px) clamp(14px,3.4vmin,22px) !important; gap:clamp(6px,1.6vmin,10px) !important;}
+      #ecoutille .ec-enseigne{gap:0 !important;}
+      #ecoutille .ec-scene{gap:10px !important;}
+      #ecoutille .ec-hublot{margin:0 auto !important;}
+    }
     #ecoutille .ec-titre{ text-align:center }
     #ecoutille .ec-sous-titre-h3,
     #ecoutille .ec-sous-titre-h4{
@@ -755,7 +762,7 @@
     }catch(e){}
   })();
   </script>
-  <link rel="stylesheet" href="css/index.css?v=68">
+  <link rel="stylesheet" href="css/index.css?v=69">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Sélecteur de magasin (accueil) + onglet admin de l'artefact (Palier 3). -->
   <link rel="stylesheet" href="css/artefact.css?v=1">
