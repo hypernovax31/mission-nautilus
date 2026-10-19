@@ -664,6 +664,11 @@
     @media (min-height:1000px) and (orientation:portrait){
       #ecoutille .ec-hublot{width:min(30vh, 66vw) !important; height:min(30vh, 66vw) !important}
     }
+    /* ── 8ter. BOUTON À 10PX DU CADRE, TEXTE CENTRÉ ENTRE HUBLOT ET BOUTON ─────── */
+    #ecoutille .ec-scene{padding-bottom:calc(clamp(7px, 2.2vmin, 24px) + 10px + env(safe-area-inset-bottom)) !important; justify-content:space-between !important;}
+    #ecoutille .ec-consigne--inter{flex:1 1 auto !important; display:flex !important; align-items:center !important; justify-content:center !important; margin:0 auto !important; padding:clamp(4px, 1vmin, 8px) 0 !important; min-height:clamp(20px, 3vh, 40px) !important; max-width:min(620px, 92vw) !important; text-align:center !important; width:100% !important;}
+    #ecoutille .ec-pied{flex:0 0 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:flex-end !important; gap:0 !important; padding:0 !important; margin:0 !important; width:100% !important;}
+    #ecoutille .ec-start{margin:0 auto !important; flex-shrink:0 !important;}
     /* ── 9. MOINS D'ANIMATION : le décor se pose, tout reste lisible ─────── */
     @media (prefers-reduced-motion: reduce){
       #ecoutille .m-rayons{animation:none; opacity:.45}
@@ -750,7 +755,7 @@
     }catch(e){}
   })();
   </script>
-  <link rel="stylesheet" href="css/index.css?v=66">
+  <link rel="stylesheet" href="css/index.css?v=67">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Sélecteur de magasin (accueil) + onglet admin de l'artefact (Palier 3). -->
   <link rel="stylesheet" href="css/artefact.css?v=1">
@@ -865,8 +870,8 @@
       <div class="ec-cercle"></div>
     </div>
 
+    <p class="ec-consigne ec-consigne--inter">Huit paliers. <b>Une seule légende.</b></p>
     <footer class="ec-pied">
-      <p class="ec-consigne">Huit paliers. <b>Une seule légende.</b></p>
       <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir le sas du Nautilus et lancer l'aventure">
         <span class="ec-dome" aria-hidden="true"></span>
         <span class="ec-start-label">START</span>
