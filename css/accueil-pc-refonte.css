@@ -1,0 +1,43 @@
+/* Mission Nautilus — refonte de l’accueil PC. Mobile inchangé. */
+
+@media (min-width: 761px) {
+  :root { --home-pc-gutter: clamp(28px, 5vw, 84px); --home-pc-max-width: 1440px; }
+  body { overflow-x: hidden; }
+  header {
+    min-height: min(58vh, 470px); box-sizing: border-box; display: flex; flex-direction: column;
+    justify-content: center; padding: clamp(24px, 5vh, 64px) var(--home-pc-gutter) clamp(28px, 5vh, 56px);
+    position: relative; isolation: isolate;
+  }
+  header::before {
+    content: ""; position: absolute; inset: 10% 4% auto auto; width: min(34vw, 460px); aspect-ratio: 1;
+    border: 1px solid rgba(111,220,255,.12); border-radius: 50%;
+    box-shadow: 0 0 0 22px rgba(111,220,255,.025), 0 0 0 44px rgba(111,220,255,.018);
+    pointer-events: none; z-index: -1;
+  }
+  header > * { width: min(100%, var(--home-pc-max-width)); margin-left: auto; margin-right: auto; }
+  header .brand { letter-spacing: .22em; font-size: clamp(11px, .9vw, 14px); }
+  header .hero-kicker { margin-top: clamp(10px, 1.5vh, 18px); max-width: 720px; font-size: clamp(12px, 1.05vw, 16px); line-height: 1.35; }
+  header .hero-title { max-width: 1120px; margin-top: clamp(18px, 3vh, 32px); font-size: clamp(64px, 9.5vw, 148px); line-height: .88; letter-spacing: -.055em; text-wrap: balance; }
+  header .hero-line { max-width: 820px; margin-top: clamp(18px, 3vh, 30px); font-size: clamp(21px, 2.5vw, 38px); line-height: 1.08; text-wrap: balance; }
+  header .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: clamp(24px, 4vh, 40px); }
+  header .hero-cta { min-height: 48px; min-width: 210px; padding: 13px 24px; font-size: clamp(13px, 1vw, 16px); }
+  main { width: min(calc(100% - 2 * var(--home-pc-gutter)), var(--home-pc-max-width)); margin-inline: auto; padding-top: clamp(20px, 4vh, 48px); }
+  .mission-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 24px); margin-top: clamp(18px, 3vh, 32px); }
+  button.mission-step { width: 100%; max-width: none; min-height: 116px; }
+  footer { width: min(calc(100% - 2 * var(--home-pc-gutter)), var(--home-pc-max-width)); margin-inline: auto; }
+}
+@media (min-width: 761px) and (max-height: 850px) {
+  header { min-height: 0; padding-top: 22px; padding-bottom: 28px; }
+  header .hero-kicker { margin-top: 8px; }
+  header .hero-title { margin-top: 14px; font-size: clamp(56px, 8.4vw, 112px); }
+  header .hero-line { margin-top: 14px; font-size: clamp(19px, 2.35vw, 31px); }
+  header .hero-actions { margin-top: 20px; }
+  main { padding-top: 18px; }
+  .mission-steps { margin-top: 16px; }
+  button.mission-step { min-height: 94px; }
+}
+@media (min-width: 761px) and (max-width: 1100px) { .mission-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 761px) and (max-width: 820px) {
+  header .hero-actions { align-items: stretch; }
+  header .hero-cta { min-width: 180px; flex: 1 1 180px; }
+}
