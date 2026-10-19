@@ -205,10 +205,10 @@ ok('les aides de méthode ne sont PAS affichées avant le sacrifice',
   !texte().includes('volume qui mesure, classe et situe'));
 
 /* ===================================================================== */
-titre('2. Le sceau : scan refusé, code illisible, scan accepté');
+titre('2. Le hublot : scan refusé, code illisible, scan accepté');
 /* ===================================================================== */
 await clic('#afTrouve');
-ok('l’écran du sceau s’affiche', Boolean($('#afCamBtn')) && Boolean($('#afEan')));
+ok('l’écran du hublot s’affiche', Boolean($('#afCamBtn')) && Boolean($('#afEan')));
 ok('la saisie manuelle est proposée quand la caméra est absente', Boolean($('#afManuelBtn')));
 
 /* Un code invalide : le sceau ne l'examine pas, aucune erreur comptée. */
@@ -225,8 +225,8 @@ const mauvais = [cleEan('200000000200'), cleEan('200000000210'), cleEan('2000000
 await saisir('#afEan', mauvais[0]);
 await clic('#afEanOk');
 await attendre(200);
-ok('le sceau rejette un autre ouvrage avec un message épique',
-  /sceau du Nautilus rejette|profondeurs gardent leur secret/i.test(texte()));
+ok('le hublot rejette un autre ouvrage avec un message épique',
+  /hublot du Nautilus rejette|profondeurs gardent leur secret/i.test(texte()));
 ok('une diode de la jauge est grillée', win.document.querySelectorAll('.af-jauge-pt.is-grille').length === 1);
 ok('l’erreur est remontée à la page', appels.erreurs.length === 1 && appels.erreurs[0].n === 1);
 ok('le rejet n’affiche jamais l’EAN attendu', SECRET_INTERDIT.every((s) => !texte().includes(s)));
@@ -241,7 +241,7 @@ await saisir('#afEan', REPONSES.ean);
 await clic('#afEanOk');
 await attendre(300);
 await deboguer('NEMO');
-ok('le sceau reconnaît l’artefact', /reconnaît l['’]artefact/i.test(texte()));
+ok('le hublot reconnaît l’artefact', /reconnaît l['’]artefact/i.test(texte()));
 await attendre(1700);                       // l'enchaînement d'écran est temporisé
 ok('l’épreuve de la couverture suit le sceau', /couverture/i.test(texte()) && Boolean($('#afReponseChamp')));
 ok('la consigne demande le premier mot SANS donner la réponse',
@@ -278,7 +278,7 @@ await clic('#afTrouve');
 await saisir('#afEan', R2.ean);
 await clic('#afEanOk');
 await attendre(2000);
-ok('le sceau validé mène à la couverture', Boolean($('#afReponseChamp')));
+ok('le hublot validé mène à la couverture', Boolean($('#afReponseChamp')));
 
 await saisir('#afReponseChamp', R2.premierMot.toLowerCase());
 await clic('#afValider');

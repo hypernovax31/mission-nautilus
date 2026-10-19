@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 3 · L'artefact du Nautilus</title>
-  <meta name="description" content="Palier 3 de la Mission Nautilus : retrouve l'artefact du Nautilus dans les rayons du magasin, présente-le au sceau et ouvre la chambre forte." />
+  <meta name="description" content="Palier 3 de la Mission Nautilus : retrouve l'artefact du Nautilus dans les rayons du magasin, passe-le au hublot d'identification et ouvre la chambre forte." />
   <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil). -->
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -153,7 +153,7 @@
        artefact-moteur.js  les règles pures : empreintes, épreuves, messages
        artefact-service.js les données : catalogue chiffré, cartouches, sessions
        magasin-fnac.js     le magasin du joueur : liste, recherche, géoloc
-       artefact-palier3.js le jeu : indice, sceau (scan EAN), signature, coffre
+       artefact-palier3.js le jeu : indice, hublot (scan EAN), signature, coffre
      AUCUN de ces fichiers ne contient de titre d'ouvrage, d'EAN, de SKU,
      de catégorie Fnac ou de réponse : les vérifications portent sur des
      empreintes salées calculées à la volée. -->
@@ -576,7 +576,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       journal('🧪 Aperçu : choisis un magasin pour préparer les pistes d’exemple.', 'info');
     }
 
-    statut('📖 <b>Épreuve : l’artefact du Nautilus.</b> Retrouve l’ouvrage désigné, présente-le au sceau, '
+    statut('📖 <b>Épreuve : l’artefact du Nautilus.</b> Retrouve l’ouvrage désigné, passe-le au hublot d'identification, '
       + 'puis ouvre la chambre forte. <b>3 réponses refusées</b> = remontée en surface.'
       + (magasin ? '<br>📍 Magasin : <b>' + esc(magasin.nom || magasin.id) + '</b>.' : ''), 'info');
 
@@ -657,11 +657,11 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     intro: "Bienvenue à bord, matelot. Le <b>Nautilus</b> a dissimulé un <b>artefact</b> quelque part dans les rayons "
       + "de ton magasin : un ouvrage réel, disponible, compatible avec la mission. Personne ne connaît son titre à "
       + "l'avance — pas même le capitaine, qui ne voit que des <b>empreintes scellées</b>. Suis l'indice, retrouve "
-      + "l'artefact, présente-le au <b>sceau</b> : c'est le code-barres qui prouvera que tu tiens le bon.",
+      + "l'artefact, passe-le au <b>hublot d'identification</b> : c'est le code-barres qui prouvera que tu tiens le bon.",
     consignes: [
       { ico: '📍', html: "Choisis le <b>magasin</b> où tu joues (ou laisse la géolocalisation te proposer le plus proche). Les règles s'adaptent à ce magasin." },
       { ico: '🧭', html: "Une <b>énigme</b> te désigne le rayon, sans jamais le nommer. Chaque mot compte, et rien ne s'ouvre : la couverture et la fiche suffisent." },
-      { ico: '🔏', html: "Trouvé ? <b>Scanne le code-barres</b> au dos de l'ouvrage (ou saisis ses 13 chiffres). Le sceau accepte ou rejette — sans jamais te dire pourquoi." },
+      { ico: '🔏', html: "Trouvé ? <b>Scanne le code-barres</b> au dos de l'ouvrage (ou saisis ses 13 chiffres). Le hublot accepte ou rejette — sans jamais te dire pourquoi." },
       { ico: '📜', html: "Trois épreuves suivent, tirées de la couverture : un mot, une <b>signature</b> chiffrée, puis le <b>code de la chambre forte</b>." },
       { warn: true, ico: '❌', html: "<b>3 réponses refusées</b> = remontée forcée en surface (1 h, puis 2 h, puis 4 h…) et un coéquipier prend le relais. Un code-barres <b>illisible</b> ne compte pas." },
       { warn: true, ico: '🕯️', html: "Trois indices payants : le <b>rayon</b> (1 h), l'<b>édition</b> (2 h), l'<b>auteur</b> (4 h). Chacun exige un sacrifice volontaire — mais il reste acquis à <b>tout l'équipage</b>." },

@@ -226,26 +226,45 @@
       });
     }
 
-    /* --- écran : magasin non confirmé ------------------------------ */
+    /* --- écran : magasin — site-wide : on confirme, on ne re-choisit pas --- */
     function vueMagasin() {
       etat.vue = 'magasin';
+      var deja = etat.magasin || (magasins && magasins.courant && magasins.courant()) || null;
+      if (deja && deja.id) {
+        var nomMag = deja.nom || deja.id;
+        var villeMag = deja.ville ? ' — ' + deja.ville : '';
+        var cpMag = deja.cp ? ' (' + deja.cp + ')' : '';
+        rendre('<div class="af-carte">'
+          + '<p class="af-kicker">Magasin de la mission</p>'
+          + '<h3 class="af-titre">📍 Fnac ' + echapper(nomMag) + echapper(villeMag) + echapper(cpMag) + '</h3>'
+          + '<p class="af-msg">Ce magasin a été choisi sur la page de démarrage et vaut <b>pour tout le site</b> (c’est ta géolocalisation de mission).<br>Tu peux le garder ou le changer.</p>'
+          + '<div class="af-actions">'
+          +   '<button type="button" class="af-btn af-btn--or" id="afMagasinOk">✔️ Confirmer et plonger</button>'
+          +   '<a href="index.html#magasinPanel" class="af-btn af-btn--ghost">📍 Changer de magasin</a>'
+          + '</div>'
+          + '</div>');
+        var btn = hote.querySelector('#afMagasinOk');
+        if(btn) btn.addEventListener('click', function(){
+          etat.magasin = deja;
+          journal('📍 Magasin confirmé pour cette plongée : <b>' + echapper(nomMag) + '</b>.', 'info');
+          Promise.resolve(onMagasinChoisi ? onMagasinChoisi(deja) : null).catch(function(){}).then(function(){ charger(); });
+        });
+        return;
+      }
+      // Aucun magasin site-wide : on affiche le sélecteur intégré (thème) — choix unique pour tout le site
       rendre('<div class="af-carte">'
         + '<p class="af-kicker">Avant de plonger</p>'
         + '<h3 class="af-titre">' + lignes(M.MESSAGES.magasinRequis) + '</h3>'
+        + '<p class="af-msg">Choisis ton magasin Fnac <b>une fois pour tout le site</b> : la sélection vaut pour le Palier 3 et tous les besoins géographiques. Le plus proche sera indiqué en tête si ta géolocalisation est disponible, sinon la liste est alphabétique.</p>'
         + '<div id="afMagasinHote"></div>'
         + '</div>');
       var sous = hote.querySelector('#afMagasinHote');
       if (magasins && magasins.monterSelecteur) {
         magasins.monterSelecteur(sous, {
-          /* La géolocalisation reste un GESTE du matelot : aucune demande
-             d'autorisation automatique, et aucune position conservée. */
-          suggereGeo: false,
+          suggereGeo: true,
           onConfirme: function (fiche) {
             etat.magasin = fiche;
-            journal('📍 Magasin de la mission : <b>' + echapper(fiche.nom) + '</b>.', 'info');
-            /* La page peut avoir des préparatifs propres au magasin (aperçu
-               organisateur : génération des pistes d'exemple). On les attend
-               avant de chercher un ouvrage. */
+            journal('📍 Magasin de la mission : <b>' + echapper(fiche.nom) + '</b> — mémorisé pour tout le site.', 'info');
             Promise.resolve(onMagasinChoisi ? onMagasinChoisi(fiche) : null)
               .catch(function () {})
               .then(function () { charger(); });
@@ -307,12 +326,12 @@
       brancherPupitre();
     }
 
-    /* --- écran : le sceau (scan EAN) ------------------------------ */
+    /* --- écran : le hublot (scan EAN) ------------------------------ */
     function vueSceau() {
       etat.vue = 'sceau';
       rendre('<div class="af-carte">'
-        + '<p class="af-kicker">Le sceau du Nautilus</p>'
-        + '<h3 class="af-titre">🔏 Présente l’ouvrage au sceau</h3>'
+        + '<p class="af-kicker">Le hublot d\'identification</p>'
+        + '<h3 class="af-titre">🔏 Passe l’ouvrage au hublot d\'identification</h3>'
         + '<p class="af-msg">' + lignes(M.MESSAGES.scanInvite) + '</p>'
         + '<div class="af-scanbox" id="afScanbox">'
         +   '<video id="afCam" class="af-cam" playsinline autoplay muted hidden></video>'
@@ -327,7 +346,7 @@
         + '<div class="af-manuel" id="afManuel" hidden>'
         +   '<label for="afEan">Les 13 chiffres imprimés sous le code-barres</label>'
         +   '<input id="afEan" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="9 781234 567890">'
-        +   '<button type="button" class="af-btn" id="afEanOk">Présenter au sceau</button>'
+        +   '<button type="button" class="af-btn" id="afEanOk">Passer au hublot d\'identification</button>'
         + '</div>'
         + '<div class="af-reponse" id="afReponse" role="status" aria-live="polite"></div>'
         + pupitre()
@@ -348,12 +367,12 @@
         btn.disabled = true;
         dire('📷 Autorise l’accès à la caméra, puis vise le code-barres au dos de l’ouvrage.', '');
         demarrerLecteur(video, function (code) {
-          dire('🔎 Code lu — le sceau examine l’ouvrage…', '');
+          dire('🔎 Code lu — le hublot examine l’ouvrage…', '');
           proposer(code);
         }, function (motif) {
           btn.disabled = false;
           dire(motif === 'autorisation-refusee'
-            ? '🚫 Accès caméra refusé. Utilise « Saisir les chiffres » : le sceau accepte aussi la saisie manuelle.'
+            ? '🚫 Accès caméra refusé. Utilise « Saisir les chiffres » : le hublot accepte aussi la saisie manuelle.'
             : '⚠️ Caméra indisponible sur cet appareil. Utilise « Saisir les chiffres ».', 'warn');
         }).then(function (lecteur) {
           etat.lecteur = lecteur;
@@ -385,23 +404,23 @@
       function proposer(code) {
         var normalise = M.eanNormalise(code);
         if (!normalise || !M.eanValide(normalise)) {
-          /* Code invalide : le sceau ne l'examine même pas → AUCUNE
+          /* Code invalide : le hublot ne l'examine même pas → AUCUNE
              erreur comptée. Un scan à moitié lu ne doit jamais coûter
              une tentative au matelot. */
           dire('⚠️ ' + lignes(M.MESSAGES.eanInvalide), 'warn');
           return;
         }
-        dire('🔏 Le sceau examine l’ouvrage…', '');
+        dire('🔏 Le hublot examine l’ouvrage…', '');
         service.verifierEtape(etat.session.equipe, 'sceau', normalise).then(function (r) {
           majSession(r);
           if (r.ok) {
-            journal('🔏 <b>Le sceau reconnaît l’ouvrage.</b> L’artefact du Nautilus est authentifié.', 'success');
+            journal('🔏 <b>Le hublot reconnait l\'ouvrage.</b> L’artefact du Nautilus est authentifié.', 'success');
             dire('✅ ' + lignes(M.MESSAGES.scanAccepte), 'ok');
             setTimeout(function () { etapeSuivante(); }, 1600);
             return;
           }
           if (r.erreur) {
-            journal('🔏 Le sceau a rejeté un ouvrage (' + r.erreurs + '/' + r.maxErreurs + ').', 'warning');
+            journal('🔍 Le hublot a rejete un ouvrage (' + r.erreurs + '/' + r.maxErreurs + ').', 'warning');
             dire('❌ ' + lignes(r.motif) + (r.dernierAvertissement ? '<br><b>' + lignes(r.dernierAvertissement) + '</b>' : ''), 'danger');
             majErreurs(r);
           } else {
@@ -479,8 +498,8 @@
 
     /* Le service est la source de vérité : après chaque vérification, la
        copie locale de la session est remise à jour. Sans cela, l'écran
-       suivant serait recalculé sur une progression périmée (et le sceau
-       validé ferait revenir au sceau). */
+       suivant serait recalculé sur une progression périmée (et le hublot
+       validé ferait revenir au hublot). */
     function majSession(r) {
       if (!r || !etat.session) return;
       if (Array.isArray(r.etapesValidees)) {
@@ -631,7 +650,7 @@
     function reprendre() {
       var validees = (etat.session && etat.session.etapesValidees) || [];
       if (!validees.length) { vueIndice(); return; }
-      /* Le sceau est franchi : on enchaîne sur les épreuves de l'ouvrage. */
+      /* Le hublot est franchi : on enchaîne sur les épreuves de l'ouvrage. */
       etapeSuivante();
     }
 

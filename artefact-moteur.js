@@ -883,16 +883,16 @@
   var MESSAGES = {
     lancement: "Le Nautilus prépare une nouvelle expédition.\n"
              + "Son équipage recherche un ouvrage dissimulé parmi les rayons compatibles avec la mission.\n"
-             + "Suis les indices, retrouve l'artefact et présente-le au sceau du Nautilus.",
-    artefactTrouve: "Lorsque tu penses tenir l'ouvrage, présente-le au sceau du Nautilus.",
-    scanInvite: "Balise le sceau : vise le code-barres imprimé au dos de l'ouvrage.",
-    scanAccepte: "Le sceau reconnaît l'artefact du Nautilus.\n"
+             + "Suis les indices, retrouve l'artefact et passe-le au hublot d'identification du Nautilus.",
+    artefactTrouve: "Lorsque tu penses tenir l'ouvrage, passe-le au hublot d'identification du Nautilus.",
+    scanInvite: "Passe l'ouvrage au hublot : vise le code-barres imprimé au dos de l'ouvrage.",
+    scanAccepte: "Le hublot d'identification reconnaît l'artefact du Nautilus.\n"
                + "L'ouvrage recherché vient d'être identifié. Le journal de bord peut s'ouvrir.",
-    scanRejete: "Le sceau du Nautilus rejette cet ouvrage.\n"
+    scanRejete: "Le hublot du Nautilus rejette cet ouvrage.\n"
               + "Ce livre n'appartient pas à la route que tu poursuis. Les profondeurs gardent leur secret.",
-    scanRejeteCourt: "Le sceau du Nautilus rejette cet ouvrage. La route reste scellée.",
-    scanIllisible: "Le sceau n'a rien pu lire. Approche le code-barres, ou saisis les chiffres imprimés sous les barres.",
-    eanInvalide: "Ce code n'est pas un code-barres de livre valide : le sceau ne l'a même pas examiné (aucune erreur comptée).",
+    scanRejeteCourt: "Le hublot du Nautilus rejette cet ouvrage. La route reste scellée.",
+    scanIllisible: "Le hublot n'a rien pu lire. Approche le code-barres, ou saisis les chiffres imprimés sous les barres.",
+    eanInvalide: "Ce code n'est pas un code-barres de livre valide : le hublot ne l'a même pas examiné (aucune erreur comptée).",
     dernierAvertissement: "Le Nautilus te laisse une dernière tentative avant la remontée.",
     remontee1: "Remontée forcée à la surface\n"
              + "Trois erreurs ont mis ta mission en péril. Le Nautilus interrompt ta plongée et te ramène à la surface pendant 1 heure.\n"
@@ -1007,7 +1007,7 @@
        se faire sans relire la cartouche entière (et sans jamais exiger le
        secret, qui lui reste chez l'admin). */
     var etapes = [
-      { id: 'sceau', type: 'ean', libelle: 'Le sceau du Nautilus',
+      { id: 'sceau', type: 'ean', libelle: 'Le hublot d\'identification',
         consigne: MESSAGES.scanInvite, sel: sel,
         iterations: iterEan,
         empreintes: empreintesAcceptees(valeurs.ean, sel, iterEan, 'ean') },

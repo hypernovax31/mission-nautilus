@@ -37,7 +37,7 @@ fiches d'équipage, les records et le cockpit ne bougent pas.
    Nautilus : atlas du monde, atlas maritimes, guides, récits d'exploration,
    sciences des profondeurs, littérature d'aventure, nature marine, technique,
    jeunesse, images, études).
-3. **Le sceau.** Le matelot présente l'ouvrage : lecture du code-barres
+3. **Le hublot d'identification.** Le matelot présente l'ouvrage : lecture du code-barres
    (EAN-13) par `BarcodeDetector` natif, sinon ZXing, sinon **saisie des 13
    chiffres**. Aucune image n'est envoyée nulle part.
 4. **Trois épreuves**, tirées de la couverture et de la fiche — jamais de
@@ -113,7 +113,7 @@ dupliquer le HTML du panneau).
    * **📯 Transmettre l'indice** (la valeur exacte est pré-remplie depuis le
      coffre chiffré, modifiable avant envoi) ;
    * **🔁 Resélectionner le livre** (autre piste, **aucune erreur**, progression
-     conservée ; si le sceau avait déjà reconnu l'ancien ouvrage, la séquence
+     conservée ; si le hublot avait déjà reconnu l'ancien ouvrage, la séquence
      liée au livre repart de zéro — on ne mélange jamais deux éditions) ;
    * **🚫 Marquer l'ouvrage indisponible** (puis resélection) ;
    * **♻️ Réinitialiser la session**.
@@ -133,7 +133,7 @@ artefact-moteur.js      règles pures (aucun DOM, aucun réseau) : empreintes,
 artefact-service.js     données : stockage (Firestore / mémoire / local),
                         chiffrement du catalogue, pistes, sessions
 magasin-fnac.js         liste des magasins, recherche, géoloc, sélecteur
-artefact-palier3.js     le jeu : écrans, sceau (scan EAN), pupitre, indices
+artefact-palier3.js     le jeu : écrans, hublot (scan EAN), pupitre, indices
 admin-artefact.js       onglet admin, injecté dans le panneau existant
 fnac-lecteur.js         lit une fiche fnac.com ENREGISTRÉE (aucun réseau,
                         aucun DOM) → métadonnées + disponibilité
@@ -377,7 +377,7 @@ Ce qu'elles vérifient, entre autres : sélection et exclusions motivées,
 fraîcheur appliquée **au lancement seulement**, cartouche sans fuite, empreintes
 déterministes, mauvais EAN rejeté, code illisible non compté, 3ᵉ erreur =
 remontée, indices payants non répétés, livre introuvable sans pénalité,
-resélection (avec et sans sceau déjà validé), chiffrement/déchiffrement et refus
+resélection (avec et sans hublot déjà validé), chiffrement/déchiffrement et refus
 sans la phrase, textes (relais mot pour mot, vocabulaire « matelot » /
 « équipier », jamais « plongeur », jamais « balise »), garde-fous de
 synchronisation, lecture des fiches (libellé déroulant collé à la date,

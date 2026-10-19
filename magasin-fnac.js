@@ -225,8 +225,13 @@
       cp: nettoyer(magasin.cp, 12), source: source || 'manuel', choisiLe: new Date().toISOString(),
       versionListe: (_cache && _cache.version) || 'inconnue'
     };
-    /* AUCUNE coordonnée GPS n'est conservée : seulement le magasin. */
-    try { localStorage.setItem(CLE_STOCKAGE, JSON.stringify(fiche)); } catch (e) {}
+    /* AUCUNE coordonnée GPS n'est conservée : seulement le magasin — c'est la géoloc site-wide. */
+    try {
+      localStorage.setItem(CLE_STOCKAGE, JSON.stringify(fiche));
+      // Diffuse à tout le site (autres onglets / futurs paliers)
+      try { window.dispatchEvent(new CustomEvent('nautilus:magasin-change', {detail: fiche})); } catch(_){}
+      try { localStorage.setItem('nautilusMagasinId', fiche.id); } catch(_){}
+    } catch (e) {}
     return fiche;
   }
 
@@ -275,11 +280,27 @@
       msg.className = 'magasin-msg' + (kind ? ' is-' + kind : '');
     }
 
-    function remplir(magasins, garder) {
+    function triAlpha(a,b){
+      var na=(a.nom||'').toLowerCase(), nb=(b.nom||'').toLowerCase();
+      if(na<nb) return -1; if(na>nb) return 1;
+      var va=(a.ville||'').toLowerCase(), vb=(b.ville||'').toLowerCase();
+      if(va<vb) return -1; if(va>vb) return 1;
+      return (a.cp||'').localeCompare(b.cp||'');
+    }
+    function remplir(magasins, garder, plusProcheId) {
       var options = ['<option value="">— Choisir un magasin —</option>'];
+      if(plusProcheId){
+        var proche = magasins.filter(function(m){return m.id===plusProcheId;})[0];
+        if(proche){
+          options.push('<option value="' + echapper(proche.id) + '" selected>📍 Le plus proche — Fnac ' + echapper(proche.nom) + (proche.ville ? ' — ' + proche.ville : '') + '</option>');
+          options.push('<option disabled>─────────────</option>');
+        }
+      }
       magasins.forEach(function (m) {
+        // Évite doublon si déjà mis en "plus proche"
+        if(plusProcheId && m.id===plusProcheId) return;
         options.push('<option value="' + echapper(m.id) + '"'
-          + (garder && garder === m.id ? ' selected' : '') + '>'
+          + (garder && garder === m.id && !plusProcheId ? ' selected' : '') + '>'
           + echapper('Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (m.cp ? ' (' + m.cp + ')' : ''))
           + '</option>');
       });
@@ -305,7 +326,8 @@
     }
 
     rech.addEventListener('input', function () {
-      remplir(rechercher(liste, rech.value), choix && choix.id);
+      var filtres = rechercher(liste, rech.value).slice().sort(triAlpha);
+      remplir(filtres, choix && choix.id);
     });
 
     btnGeo.addEventListener('click', function () {
@@ -340,17 +362,31 @@
 
     chargerListe().then(function (r) {
       liste = r.magasins || [];
-      var utilisablesListe = utilisables(liste);
-      remplir(utilisablesListe, choix && choix.id);
-      dire('Liste officielle Fnac chargée : <b>' + utilisablesListe.length + ' magasins</b>'
+      var utilisablesListe = utilisables(liste).slice().sort(triAlpha);
+      // Si un magasin déjà mémorisé site-wide, on l'affiche et on ne re-géolocalise pas
+      if (choix) {
+        remplir(utilisablesListe, choix.id);
+        dire('Magasin de la mission : <b>' + echapper(choix.nom) + ' — ' + echapper(choix.ville||'') + '</b> (mémorisé pour tout le site). <a href="#" id="magasinChanger" style="color:var(--fnac)">Changer ?</a>', 'ok');
+        var ch = hote.querySelector('#magasinChanger');
+        if(ch) ch.addEventListener('click', function(e){ e.preventDefault(); choix=null; try{localStorage.removeItem(CLE_STOCKAGE);}catch(_){ } remplir(utilisablesListe, null); dire('Choisis ton magasin Fnac dans la liste ci-dessous.', ''); });
+        // Bouton Confirmer devient "Continuer"
+        btnOk.textContent = '✔️ Continuer avec ce magasin';
+        if (o.pret) o.pret(utilisablesListe);
+        return;
+      }
+      // Pas de choix : on tente la géoloc en 1 fois, sinon alphabétique
+      remplir(utilisablesListe, null);
+      dire('Liste officielle Fnac chargée : <b>' + utilisablesListe.length + ' magasins</b> par ordre alphabétique'
         + ' (version ' + echapper(r.version) + (r.syncedAt ? ', vérifiée le '
-          + echapper(new Date(r.syncedAt).toLocaleString('fr-FR')) : '') + ').', '');
-      if (o.suggereGeo !== false && !choix) {
-        /* Suggestion automatique une seule fois, et seulement si aucun
-           magasin n'est encore confirmé : on ne surprend pas un matelot
-           qui a déjà choisi. */
-        suggerer({ nombre: 3 }).then(function (s) {
-          if (s && s.suggestions && s.suggestions.length) appliquerSuggestion(s.suggestions);
+          + echapper(new Date(r.syncedAt).toLocaleString('fr-FR')) : '') + ').<br>Si ton appareil le permet, ton magasin le plus proche sera indiqué en tête de liste.', '');
+      if (o.suggereGeo !== false) {
+        suggerer({ nombre: 1, delaiMs: 7000 }).then(function (s) {
+          if (s && s.suggestions && s.suggestions.length) {
+            var procheId = s.suggestions[0].magasin.id;
+            var dist = s.suggestions[0].distanceKm;
+            remplir(utilisablesListe, null, procheId);
+            dire('📍 <b>Magasin le plus proche détecté : ' + echapper(libelle(s.suggestions[0].magasin)) + ' — ' + dist + ' km</b><br>Il est pré-sélectionné. Confirme ou choisis un autre dans la liste.', 'geo');
+          }
         });
       }
       if (o.pret) o.pret(utilisablesListe);

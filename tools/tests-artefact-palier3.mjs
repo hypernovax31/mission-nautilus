@@ -755,8 +755,8 @@ ok('le Palier 3 conserve le sas QR, le briefing et le journal de bord',
     .every((f) => page3.indexOf(f) >= 0));
 ok('le Palier 3 branche la remontée sur le module partagé des blocages',
   page3.indexOf("poserBlocage(ident, motif === 'indice' ? 'indice_demande' : 'artefact_trois_erreurs')") >= 0);
-ok('le briefing annonce le magasin, le sceau et les 3 réponses refusées',
-  /magasin/i.test(page3) && /sceau/i.test(page3) && /3 réponses refusées/i.test(page3));
+ok('le briefing annonce le magasin, le hublot et les 3 réponses refusées',
+  /magasin/i.test(page3) && /hublot|sceau/i.test(page3) && /3 réponses refusées/i.test(page3));
 ok('le briefing annonce les trois indices payants (1 h / 2 h / 4 h)',
   /rayon<\/b> \(1 h\)/.test(page3) && /édition<\/b> \(2 h\)/.test(page3) && /auteur<\/b> \(4 h\)/.test(page3));
 ok('le briefing annonce « Livre introuvable » sans erreur',
