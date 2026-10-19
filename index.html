@@ -671,11 +671,17 @@
     @media (min-height:1000px) and (orientation:portrait){
       #ecoutille .ec-hublot{width:min(30vh, 66vw) !important; height:min(30vh, 66vw) !important}
     }
-    /* ── 8ter. BOUTON À 10PX DU CADRE, TEXTE CENTRÉ ENTRE HUBLOT ET BOUTON ─────── */
+    /* ── 8ter. BOUTON À 10PX DU CADRE, CENTRE ENTRE HUBLOT ET BOUTON ─────── */
     #ecoutille .ec-scene{padding-bottom:calc(clamp(7px, 2.2vmin, 24px) + 10px + env(safe-area-inset-bottom)) !important; justify-content:space-between !important;}
-    #ecoutille .ec-consigne--inter{flex:1 1 auto !important; display:flex !important; align-items:center !important; justify-content:center !important; margin:0 auto !important; padding:clamp(4px, 1vmin, 8px) 0 !important; min-height:clamp(20px, 3vh, 40px) !important; max-width:min(620px, 92vw) !important; text-align:center !important; width:100% !important;}
+    #ecoutille .ec-centre{flex:1 1 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:10px !important; width:100% !important; max-width:min(620px, 92vw) !important; margin:0 auto !important; padding:clamp(4px, 1vmin, 8px) 0 !important; min-height:clamp(40px, 6vh, 80px) !important;}
+    #ecoutille .ec-consigne{margin:0 !important; padding:0 !important; text-align:center !important; width:100% !important; max-width:100% !important;}
     #ecoutille .ec-pied{flex:0 0 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:flex-end !important; gap:0 !important; padding:0 !important; margin:0 !important; width:100% !important;}
     #ecoutille .ec-start{margin:0 auto !important; flex-shrink:0 !important;}
+    /* ── 8quater. SÉLECTEUR MAGASIN SUR PAGE DÉMARRAGE — reprend CSS jeu ─────── */
+    #ecoutille .ec-magasin-case{display:flex !important; flex-direction:column !important; align-items:center !important; gap:6px !important; width:min(92vw, 380px) !important; margin:0 auto !important; padding:0 !important; flex:0 0 auto !important;}
+    #ecoutille .ec-magasin-label{font-size:clamp(10px, 1.8vmin, 12px) !important; font-weight:900 !important; letter-spacing:.08em !important; text-transform:uppercase !important; color:#a9cfe0 !important; text-shadow:0 1px 4px rgba(0,0,0,.6) !important; text-align:center !important; margin:0 !important;}
+    #ecoutille .ec-magasin-select{width:100% !important; height:38px !important; min-height:38px !important; max-height:38px !important; padding:0 10px !important; line-height:38px !important; font-size:14px !important; font-family:'Exo 2',Arial,Helvetica,sans-serif !important; font-weight:600 !important; border:2px solid #d8e0e6 !important; border-radius:10px !important; background:#fff !important; color:#111 !important; text-align:center !important; text-align-last:center !important; box-sizing:border-box !important; appearance:auto !important; -webkit-appearance:auto !important;}
+    #ecoutille .ec-magasin-select:focus{outline:none !important; border-color:#f5b027 !important; box-shadow:0 0 0 4px rgba(245,176,39,.22) !important;}
     /* ── 9. MOINS D'ANIMATION : le décor se pose, tout reste lisible ─────── */
     @media (prefers-reduced-motion: reduce){
       #ecoutille .m-rayons{animation:none; opacity:.45}
@@ -762,7 +768,7 @@
     }catch(e){}
   })();
   </script>
-  <link rel="stylesheet" href="css/index.css?v=70">
+  <link rel="stylesheet" href="css/index.css?v=71">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Sélecteur de magasin (accueil) + onglet admin de l'artefact (Palier 3). -->
   <link rel="stylesheet" href="css/artefact.css?v=1">
@@ -877,7 +883,13 @@
       <div class="ec-cercle"></div>
     </div>
 
-    <p class="ec-consigne ec-consigne--inter">Huit paliers. <b>Une seule légende.</b></p>
+    <div class="ec-centre">
+      <p class="ec-consigne">Huit paliers. <b>Une seule légende.</b></p>
+      <div class="ec-magasin-case">
+        <label for="ecMagasinSelect" class="ec-magasin-label">choisis ton magasin de jeu</label>
+        <select id="ecMagasinSelect" class="ec-magasin-select"><option value="">Chargement des magasins…</option></select>
+      </div>
+    </div>
     <footer class="ec-pied">
       <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir le sas du Nautilus et lancer l'aventure">
         <span class="ec-dome" aria-hidden="true"></span>
@@ -8730,6 +8742,53 @@ window.PWAInstall = {
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', monter);
   else monter();
+})();
+</script>
+<script>
+// Sélecteur magasin sur la page de démarrage — sous l'écoutille, mémorisé pour appareil + matelot
+(function(){
+  function initEcMagasin(){
+    var sel = document.getElementById('ecMagasinSelect');
+    if(!sel || !window.NautilusMagasin) return;
+    var courant = window.NautilusMagasin.courant();
+    function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c];}); }
+    function remplir(r){
+      var liste = r.magasins || [];
+      var utilisables = liste.filter(function(m){return m && m.id && m.actif!==false;}).sort(function(a,b){
+        var na=(a.nom||'').toLowerCase(), nb=(b.nom||'').toLowerCase();
+        if(na<nb) return -1; if(na>nb) return 1;
+        var va=(a.ville||'').toLowerCase(), vb=(b.ville||'').toLowerCase();
+        if(va<vb) return -1; if(va>vb) return 1;
+        return 0;
+      });
+      var html = '<option value=\"\">— choisis ton magasin —</option>';
+      utilisables.forEach(function(m){
+        html += '<option value=\"' + esc(m.id) + '\">' + esc('Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (m.cp ? ' ('+m.cp+')' : '')) + '</option>';
+      });
+      sel.innerHTML = html;
+      if(courant && courant.id) sel.value = courant.id;
+    }
+    window.NautilusMagasin.chargerListe().then(remplir).catch(function(){
+      sel.innerHTML = '<option value=\"\">Liste indisponible — recharge la page</option>';
+    });
+    sel.addEventListener('change', function(){
+      var id = sel.value; if(!id) return;
+      window.NautilusMagasin.chargerListe().then(function(r){
+        var m = (r.magasins||[]).find(function(x){return x.id===id;});
+        if(m) window.NautilusMagasin.memoriser(m, 'ecoutille');
+      });
+    });
+    var btn = document.getElementById('ecStart');
+    if(btn) btn.addEventListener('click', function(){
+      var id = sel.value; if(!id) return;
+      window.NautilusMagasin.chargerListe().then(function(r){
+        var m = (r.magasins||[]).find(function(x){return x.id===id;});
+        if(m) window.NautilusMagasin.memoriser(m, 'ecoutille-start');
+      });
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initEcMagasin);
+  else initEcMagasin();
 })();
 </script>
 <!-- Onglet ADMIN « Artefact » : s'injecte dans le panneau admin existant. -->
