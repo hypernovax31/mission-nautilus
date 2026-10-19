@@ -2699,6 +2699,38 @@ img, video, svg, canvas, iframe{max-width:100%; height:auto; display:block;}
   .card{border-radius:20px !important;}
 }
 /* Cercle garanti — aucun breakpoint ne peut l'écraser */
-#ecoutille .ec-hublot{aspect-ratio:1/1 !important; border-radius:50% !important; overflow:visible !important;}
-#ecoutille .ec-fenetre, #ecoutille .ec-mer, #ecoutille .ec-verre, #ecoutille .ec-cercle, #ecoutille .ec-reflet{border-radius:50% !important;}
+#ecoutille .ec-hublot{aspect-ratio:1/1 !important; border-radius:50% !important; overflow:visible !important; width:clamp(100px, min(38vh, 68vw), 500px) !important; height:clamp(100px, min(38vh, 68vw), 500px) !important; flex:0 0 auto !important; max-width:88vw !important; max-height:58vh !important; margin:0 auto !important;}
+#ecoutille .ec-fenetre, #ecoutille .ec-mer, #ecoutille .ec-verre, #ecoutille .ec-cercle, #ecoutille .ec-reflet{border-radius:50% !important; overflow:hidden !important;}
 #ecoutille .ec-enseigne, #ecoutille .ec-pied, #ecoutille .ec-start{max-width:100%; min-width:0; flex-shrink:0;}
+#ecoutille .ec-scene{overflow:hidden !important; min-height:0 !important; justify-content:space-between !important; align-items:center !important; gap:var(--gutter, 14px) !important; padding:max(var(--space-md,14px), env(safe-area-inset-top)) max(var(--space-md,14px), env(safe-area-inset-right)) max(var(--space-sm,10px), env(safe-area-inset-bottom)) max(var(--space-md,14px), env(safe-area-inset-left)) !important;}
+/* Écoutille responsive — laisse texte + START toujours visibles */
+@media (max-width:360px){
+  #ecoutille .ec-hublot{width:clamp(88px, min(32vh, 78vw), 240px) !important; height:clamp(88px, min(32vh, 78vw), 240px) !important;}
+  #ecoutille .ec-titre{font-size:clamp(15px, 5vw, 22px) !important;}
+  #ecoutille .ec-sous-titre-h4{font-size:clamp(7px, 2.4vw, 10px) !important;}
+}
+@media (max-height:520px){
+  #ecoutille .ec-hublot{width:clamp(78px, min(30vh, 46vw), 200px) !important; height:clamp(78px, min(30vh, 46vw), 200px) !important;}
+  #ecoutille .ec-enseigne{gap:4px !important;}
+  #ecoutille .ec-pied{gap:4px !important;}
+}
+@media (min-width:768px) and (max-width:1024px) and (orientation:portrait){
+  #ecoutille .ec-hublot{width:clamp(120px, min(32vh, 56vw), 380px) !important; height:clamp(120px, min(32vh, 56vw), 380px) !important;}
+}
+/* Radar ÉQUIPAGES EN PLONGÉE — cercle parfait jamais déformé */
+#equipagesEnMer .radar-stage{display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:var(--gutter) !important; width:100% !important; box-sizing:border-box !important;}
+#equipagesEnMer .radar-screen-big, .radar-screen-big, .radar-screen, .sonar-screen{aspect-ratio:1/1 !important; border-radius:50% !important; overflow:hidden !important; flex:0 0 auto !important; min-width:0 !important; min-height:0 !important; width:clamp(130px, min(42vw, 260px), 280px) !important; height:clamp(130px, min(42vw, 260px), 280px) !important; max-width:90vw !important; max-height:90vw !important; margin:0 auto !important; display:block !important; position:relative !important;}
+#equipagesEnMer .radar-grid, #equipagesEnMer .radar-rings, #equipagesEnMer .radar-sweep-big, #equipagesEnMer .radar-center{border-radius:50% !important;}
+/* Responsive radar : s'adapte sans se déformer */
+@media (max-width:640px){
+  #equipagesEnMer .radar-screen-big, .radar-screen-big, .sonar-screen{width:clamp(120px, min(48vw, 220px), 240px) !important; height:clamp(120px, min(48vw, 220px), 240px) !important;}
+}
+@media (orientation:landscape) and (max-height:620px){
+  #equipagesEnMer .radar-screen-big, .radar-screen-big, .sonar-screen{width:clamp(100px, min(38vh, 200px), 220px) !important; height:clamp(100px, min(38vh, 200px), 220px) !important;}
+}
+@media (min-width:1100px){
+  #equipagesEnMer .radar-screen-big{width:clamp(140px, 18vw, 260px) !important; height:clamp(140px, 18vw, 260px) !important;}
+}
+@media (min-width:1920px){
+  #equipagesEnMer .radar-screen-big{width:280px !important; height:280px !important;}
+}
