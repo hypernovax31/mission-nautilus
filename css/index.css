@@ -2831,3 +2831,49 @@ body > header{
   body.ec-bloque, body.ec-bloque html{overflow:hidden !important;}
   body:not(.ec-bloque){overflow-y:auto !important;}
 }
+/* =====================================================================
+   PAYSAGE MOBILE/TABLETTE — exploite toute la largeur comme PC
+   Hublots, boutons et embarquement réorganisés pour être esthétiques
+   et confortables, jamais entassés en 1 colonne
+   ===================================================================== */
+@media (orientation:landscape) and (min-width:480px) and (max-height:800px){
+  body > header{padding:var(--space-sm) var(--space-lg) calc(var(--space-sm) + 6px) !important; text-align:left !important; min-height:auto !important;}
+  body > header .hero-meta{flex-direction:row !important; justify-content:space-between !important; align-items:center !important; gap:var(--space-sm) !important; flex-wrap:wrap !important;}
+  body > header .hero-meta .brand{font-size:13px !important; flex:0 0 auto !important;}
+  body > header .hero-meta .hero-kicker{font-size:10px !important; padding:4px 8px !important; flex:0 1 auto !important; max-width:52% !important;}
+  body > header .hero-title{font-size:clamp(26px, 4vw, 38px) !important; text-align:left !important; margin:var(--space-xs) 0 0 !important; width:100% !important; max-width:100% !important; line-height:.98 !important;}
+  body > header .hero-line{font-size:clamp(13px, 1.8vw, 17px) !important; text-align:left !important; margin:var(--space-xs) 0 0 !important; max-width:100% !important;}
+  body > header .hero-actions{flex-direction:row !important; flex-wrap:wrap !important; justify-content:flex-start !important; align-items:center !important; gap:var(--space-sm) !important; margin-top:var(--space-sm) !important;}
+  body > header .hero-actions .hero-cta{flex:0 1 auto !important; min-width:132px !important; width:auto !important; max-width:220px !important; padding:8px 14px !important; font-size:11px !important; min-height:34px !important; justify-content:center !important;}
+  main{display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--gutter) !important; max-width:1200px !important; padding:var(--gutter) !important; margin:0 auto !important; align-items:start !important;}
+  main .intro-card, main #oxygenPanel, main #equipagesEnMer, main #gameCard, main #bottomAlertMessage{grid-column:1 / -1 !important;}
+  main #embarquementMatelot{grid-column:1 !important;}
+  main #retrouverEquipage{grid-column:2 !important;}
+  .card{border-radius:16px !important;}
+  .card h2{padding:var(--space-sm) var(--gutter-inner) !important; font-size:12px !important; letter-spacing:.05em !important;}
+  .card .body{padding:var(--gutter-inner) !important;}
+  .intro-card .intro-text{font-size:13px !important; line-height:1.5 !important; padding:var(--space-sm) var(--gutter-inner) !important;}
+  .intro-card .rule-invite{margin:var(--space-sm) 0 0 !important; padding:var(--space-sm) var(--gutter-inner) !important; gap:var(--space-xs) !important;}
+  .card .rule-invite-eyebrow{font-size:11px !important;}
+  .rule-invite-main{font-size:12px !important;}
+  .intro-card .mission-steps{display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:var(--space-sm) !important; margin:var(--space-sm) 0 0 !important;}
+  .rule-detail{margin-top:var(--space-sm) !important; padding:var(--gutter-inner) !important;}
+  .rule-detail h3{font-size:13px !important;}
+  .rule-detail p, .rule-detail li{font-size:12px !important; line-height:1.45 !important;}
+  .boarding-grid{display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:var(--space-sm) !important; align-items:end !important;}
+  .grid{display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--space-sm) !important;}
+  label{font-size:11px !important; margin:0 0 4px !important;}
+  input, select{min-height:36px !important; height:36px !important; padding:6px 10px !important; font-size:12px !important; border-radius:10px !important;}
+  button{min-height:34px !important; padding:7px 12px !important; font-size:11px !important;}
+  .oxygen-meter{padding:var(--gutter-inner) !important;}
+  #oxygenPanel .oxygen-meter-top strong{font-size:22px !important;}
+  #oxygenPanel .countdown{font-size:16px !important;}
+  #equipagesEnMer .radar-stage{padding:var(--space-sm) var(--gutter-inner) !important; min-height:180px !important; margin:0 0 var(--space-sm) !important;}
+  #equipagesEnMer #teamsBox{padding:var(--gutter-inner) !important; gap:var(--space-sm) !important; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)) !important;}
+  #gameCard .cockpit{padding:var(--gutter-inner) !important;}
+  #gameCard .ck-gauges{grid-template-columns:repeat(4,1fr) !important; gap:var(--space-sm) !important; margin-bottom:var(--space-sm) !important;}
+  #gameCard .ck-dial{width:58px !important; height:58px !important;}
+  #gameCard .ck-dial-value{font-size:14px !important;}
+  .site-footer{flex-direction:row !important; justify-content:space-between !important; padding:var(--space-sm) var(--gutter) !important; margin:var(--space-sm) auto 0 !important; max-width:1200px !important;}
+  #adminPanel{max-width:900px !important;}
+}
