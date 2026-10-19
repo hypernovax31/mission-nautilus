@@ -516,8 +516,8 @@
       position:absolute; inset:0;
       display:flex; flex-direction:column; align-items:center;
       justify-content:space-between;
-      gap:clamp(8px, 2.2vmin, 28px);
-      padding:clamp(14px, 3.6vmin, 34px) clamp(16px, 4.4vmin, 56px);
+      gap:var(--gutter, clamp(14px, 2vmin, 20px));
+      padding:var(--space-md, clamp(14px, 2vmin, 20px)) var(--space-lg, clamp(16px, 3vmin, 28px));
       text-align:center;
       transition:transform 1.15s cubic-bezier(.2,.72,.2,1), opacity .45s ease;
       /* Prend toute la hauteur visible */
@@ -532,10 +532,7 @@
     /* La commande : le bouton rouge d'alarme, puis sa consigne. */
     #ecoutille .ec-pied{
       display:flex; flex-direction:column; align-items:center;
-      /* Le bouton s'entoure d'un halo qui déborde de sa boîte : la consigne
-         reste donc à bonne distance. 12 px au minimum, mesurés entre le bas
-         du texte et le haut du halo — le texte ne peut pas le toucher. */
-      gap:clamp(12px, 2.4vmin, 22px);
+      gap:var(--gutter, clamp(12px, 2vmin, 18px));
     }
     #ecoutille .ec-consigne{
       margin:0; max-width:min(620px, 92vw);
@@ -623,15 +620,18 @@
       overflow:hidden; border:0; white-space:nowrap;
     }
 
-    /* ── 8. TÉLÉPHONE COUCHÉ : on gagne de la place en hauteur ───────────── */
+    /* ── 8. PANORAMIQUE : espaces équidistants conservés ──────────────── */
     @media (orientation:landscape) and (max-height:600px){
-      #ecoutille .ec-titre{font-size:clamp(26px, 7.4vmin, 58px)}
-      #ecoutille .ec-regle{width:min(360px, 62%)}
-      #ecoutille .ec-sous-titre{font-size:clamp(10px, 2vmin, 15px)}
-      #ecoutille .ec-hud{font-size:clamp(7px, 1.4vmin, 9px)}
-      #ecoutille .ec-consigne{display:none}
-      #ecoutille .ec-start{width:clamp(84px, 20vmin, 132px)}
-      #ecoutille .ec-start-label{font-size:clamp(13px, 3.2vmin, 22px)}
+      #ecoutille{--gutter:var(--space-sm, clamp(8px,1.6vw,14px)); --space-md:var(--space-sm, clamp(8px,1.6vw,14px));}
+      #ecoutille .ec-scene{gap:var(--space-sm, clamp(6px,1.4vmin,12px)); padding:var(--space-sm, clamp(8px,1.6vw,14px)) var(--space-md, clamp(10px,2vmin,16px));}
+      #ecoutille .ec-titre{font-size:clamp(22px, 6vmin, 46px)}
+      #ecoutille .ec-sous-titre-h3,#ecoutille .ec-sous-titre-h4{font-size:clamp(9px,1.8vmin,13px)}
+      #ecoutille .ec-hud{font-size:clamp(7px, 1.3vmin, 9px)}
+      #ecoutille .ec-pied{gap:var(--space-sm, clamp(6px,1.2vmin,10px))}
+      #ecoutille .ec-consigne{font-size:clamp(8px,1.6vmin,11px)}
+      #ecoutille .ec-hublot{width:min(34vh, 62vw) !important; height:min(34vh, 62vw) !important;}
+      #ecoutille .ec-start{width:clamp(72px, 18vmin, 112px)}
+      #ecoutille .ec-start-label{font-size:clamp(12px, 2.8vmin, 18px)}
     }
     /* ── 9. MOINS D'ANIMATION : le décor se pose, tout reste lisible ─────── */
     @media (prefers-reduced-motion: reduce){
@@ -719,7 +719,7 @@
     }catch(e){}
   })();
   </script>
-  <link rel="stylesheet" href="css/index.css?v=61">
+  <link rel="stylesheet" href="css/index.css?v=62">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Sélecteur de magasin (accueil) + onglet admin de l'artefact (Palier 3). -->
   <link rel="stylesheet" href="css/artefact.css?v=1">

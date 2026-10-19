@@ -25,6 +25,14 @@
       --dangerb:#efb2ac;        /*  et son contour */
       --successbg:#effff7;      /* fond de reussite */
       --successb:#aee5ca;       /*  et son contour */
+      /* Échelle d'espaces équidistants — tout le site respire sur la même grille */
+      --space-xs: clamp(6px, 1vw, 10px);
+      --space-sm: clamp(10px, 1.6vw, 14px);
+      --space-md: clamp(14px, 2vw, 20px);
+      --space-lg: clamp(18px, 2.6vw, 26px);
+      --space-xl: clamp(24px, 3.2vw, 32px);
+      --gutter: var(--space-md);
+      --gutter-inner: var(--space-md);
     }
     *{box-sizing:border-box}
     /* PROTECTION-COPIE (desactivee) : selection de texte libre.
@@ -249,10 +257,10 @@
     }
     header{
       position:relative;
-      min-height:400px;
+      min-height:auto;
       color:#fff;
-      padding:34px clamp(20px,4vw,52px) 64px;
-      border-bottom:10px solid var(--fnac);
+      padding:var(--space-md) var(--space-lg);
+      border-bottom:4px solid var(--fnac);
       background:
         linear-gradient(135deg,rgba(0,0,0,.72),rgba(3,17,31,.74)),
         radial-gradient(circle at 75% 35%,rgba(142,231,255,.18),transparent 28%);
@@ -554,25 +562,20 @@
       z-index:2;
       width:100%;
       max-width:none;
-      margin:0 auto 24px;
-      padding:28px clamp(14px,2.4vw,44px) 0;
+      margin:0 auto var(--space-md);
+      padding:var(--gutter) var(--gutter) 0;
       display:grid;
-      gap:24px;
+      gap:var(--gutter);
     }
     .card{
       background:rgba(255,255,255,.97);
-      /* Liseré d'or UNIQUE pour tous les blocs du site : celui du bloc
-         ORDRE DE MISSION (.intro-card). L'ancien filet blanc translucide,
-         le cyan de la jauge et le rouge des abysses sont remplacés par
-         cette même ligne ambrée rgba(245,176,39,.28). */
       border:1px solid rgba(245,176,39,.28);
-      border-radius:28px;
-      box-shadow:0 22px 48px rgba(0,0,0,.24);
+      border-radius:20px;
+      box-shadow:0 12px 28px rgba(0,0,0,.18);
       overflow:hidden;
     }
     .card h2{
       margin:0;
-      /* Bronze ambré poli : reflet diagonal + patine + métal brossé, texte argent */
       background:
         linear-gradient(115deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,0) 32%, rgba(255,255,255,.06) 72%),
         radial-gradient(130% 90% at 8% 12%, rgba(48,22,2,.52), transparent 48%),
@@ -580,23 +583,15 @@
         repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, rgba(0,0,0,.09) 1px 3px),
         linear-gradient(180deg, #b57318 0%, #8f4f0a 30%, #663606 58%, #452404 82%, #7c4808 100%);
       color:#f2f6f9;
-      padding:18px clamp(18px,3vw,26px);
-      font-size:clamp(20px,2.6vw,24px);
+      padding:var(--space-sm) var(--gutter-inner);
+      font-size:clamp(18px,2.4vw,22px);
       font-weight:700;
       letter-spacing:.06em;
       line-height:1.18;
-      /* Argent métallique : lueur au-dessus, ombre portée dessous (relief + contraste) */
-      text-shadow:
-        0 1px 2px rgba(0,0,0,.65),
-        0 -1px 0 rgba(255,255,255,.22);
-      /* Arête claire en haut, tranche sombre en bas */
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.28),
-        inset 0 -3px 0 rgba(30,14,0,.65),
-        inset 0 0 18px rgba(0,0,0,.2),
-        0 2px 5px rgba(0,0,0,.35);
+      text-shadow:0 1px 2px rgba(0,0,0,.65), 0 -1px 0 rgba(255,255,255,.22);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -3px 0 rgba(30,14,0,.65), inset 0 0 18px rgba(0,0,0,.2), 0 2px 5px rgba(0,0,0,.35);
     }
-    .body{padding:clamp(18px,3vw,28px)}
+    .body{padding:var(--gutter-inner)}
 
     /* ===== JOURNAL DE BORD DU COCKPIT =====
        Le titre etait un simple texte de 11 px en majuscules, plus petit
@@ -844,7 +839,7 @@
 
     @media(max-width:900px){.boarding-grid{grid-template-columns:1fr 180px}.boarding-action{grid-column:1/-1}header{min-height:auto;padding-bottom:42px}header:before,header:after{opacity:.12}.oxygen-bottom{align-items:flex-start}.countdown{white-space:normal}.countdown-block{align-items:flex-start;margin-left:0}.countdown-label{text-align:left}}
     @media(max-width:520px){.sonar-loader{text-align:center;padding-left:8px;padding-right:8px}.sonar-screen{width:145px;height:145px;min-width:145px;flex-basis:145px}.sonar-text{font-size:clamp(12px,3.4vw,14px);letter-spacing:.015em}}
-    @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:26px 14px 36px}.hero-title{font-size:clamp(44px,13vw,72px);line-height:1.04;-webkit-text-stroke:2px #050505}.hero-line{margin-top:18px;font-size:clamp(20px,6vw,30px);line-height:1.22}.hero-kicker{font-size:var(--fs-tiny);line-height:1.25;align-items:flex-start}main{padding:18px 10px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}button{width:100%;margin-right:0}.team{padding:14px}}
+    @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:var(--gutter) var(--gutter-inner)}.hero-title{font-size:clamp(38px,11vw,64px);line-height:1.04;-webkit-text-stroke:1.5px #050505}.hero-line{margin-top:var(--space-sm);font-size:clamp(18px,5vw,26px);line-height:1.22}.hero-kicker{font-size:var(--fs-tiny);line-height:1.25;align-items:flex-start}main{padding:var(--gutter) var(--gutter) 0;gap:var(--gutter)}.card{border-radius:18px}.body{padding:var(--gutter-inner)}.grid{grid-template-columns:1fr;gap:var(--gutter)}.grid>div{min-height:auto}button{width:100%;margin-right:0}.team{padding:var(--gutter-inner)}}
 
     /* ===== Correctifs responsive : anti-chevauchement ===== */
     /* Le texte des hublots ne déborde jamais de son cercle */
@@ -1095,24 +1090,30 @@
       .oxygen-meter-top strong{font-size:clamp(20px,7vw,32px)}
       .countdown{font-size:clamp(22px,8vw,34px)}
     }
+    /* Panoramique — espaces strictement équidistants (même grille partout) */
     @media (orientation:landscape) and (max-height:620px){
-      header{min-height:auto;padding:18px 22px 26px}
-      .brand{font-size:18px;margin-bottom:8px}
-      .hero-kicker{font-size:var(--fs-tiny);padding:6px 10px}
-      .hero-title{margin-top:10px;font-size:clamp(38px,8vh,72px);line-height:.9;max-width:100vw}
-      .hero-line{margin-top:10px;font-size:clamp(18px,4.4vh,30px);line-height:1.1}
-      .hero-actions{margin-top:22px;gap:14px}
-      .hero-cta{padding:11px 16px;min-height:42px;font-size:13px}
-      main{padding-top:14px;gap:14px;margin-bottom:60px}
-      .card{border-radius:18px}.card h2{padding:12px 16px;font-size:18px}.body{padding:14px}
-      .intro-text{font-size:14px;line-height:1.45;padding:12px}
-      .oxygen-meter{padding:14px}.oxygen-tube{height:28px}.oxygen-meter-top strong{font-size:clamp(18px,6.5vw,26px)}.countdown{font-size:30px}
-      .sonar-screen{width:120px;height:120px;min-width:120px;flex-basis:120px}.sonar-loader{padding:18px 12px}
+      :root{--gutter:var(--space-sm); --gutter-inner:var(--space-sm);}
+      header{padding:var(--gutter) var(--gutter) !important; min-height:auto !important}
+      .brand{font-size:17px; margin-bottom:var(--space-xs)}
+      .hero-kicker{font-size:var(--fs-tiny); padding:var(--space-xs) var(--space-sm)}
+      .hero-title{margin-top:var(--space-xs); font-size:clamp(32px,7vh,62px); line-height:.92; max-width:100vw}
+      .hero-line{margin-top:var(--space-xs); font-size:clamp(16px,3.8vh,26px); line-height:1.15}
+      .hero-actions{margin-top:var(--space-sm); gap:var(--space-sm)}
+      .hero-cta{padding:var(--space-xs) var(--space-sm); min-height:38px; font-size:13px}
+      main{padding:var(--gutter) var(--gutter) 0 !important; gap:var(--gutter) !important; margin-bottom:var(--gutter)}
+      .card{border-radius:16px} .card h2{padding:var(--space-sm) var(--gutter-inner); font-size:17px} .body{padding:var(--gutter-inner)}
+      .intro-text{font-size:14px; line-height:1.45; padding:var(--space-sm)}
+      .oxygen-meter{padding:var(--gutter-inner)} .oxygen-tube{height:28px} .oxygen-meter-top strong{font-size:clamp(18px,6vw,26px)} .countdown{font-size:28px}
+      .sonar-screen{width:110px; height:110px; min-width:110px; flex-basis:110px} .sonar-loader{padding:var(--gutter-inner)}
     }
     @media (orientation:landscape) and (max-height:430px){
-      .hero-title{font-size:clamp(34px,10vh,56px)}
-      .hero-line{font-size:clamp(16px,5vh,24px)}
-      .sonar-screen{width:96px;height:96px;min-width:96px;flex-basis:96px}
+      :root{--gutter:var(--space-xs); --gutter-inner:var(--space-xs);}
+      .hero-title{font-size:clamp(28px,9vh,48px)}
+      .hero-line{font-size:clamp(14px,4.5vh,20px)}
+      .sonar-screen{width:90px; height:90px; min-width:90px; flex-basis:90px}
+      main{gap:var(--gutter) !important; padding:var(--gutter) !important}
+      .card h2{padding:var(--space-xs) var(--gutter-inner)}
+      .body{padding:var(--gutter-inner)}
     }
 
     /* Correction hublots : cercles parfaitement ronds + contenu centré */
@@ -2432,9 +2433,9 @@ body{overflow-wrap:break-word;}
   }
   header, main, .site-footer { position:relative; z-index:1; }
 
-  /* Header : aéré mais pas géant */
+  /* Header : espacements strictement équidistants */
   body > header {
-    padding:48px 24px 18px !important;
+    padding:var(--space-md) var(--space-lg) !important;
     text-align:center !important;
     display:block !important;
     background:linear-gradient(135deg, rgba(2,14,26,.92), rgba(6,30,50,.82)) !important;
@@ -2456,13 +2457,13 @@ body{overflow-wrap:break-word;}
   }
   .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle { height:32px !important; padding:0 14px !important; font-size:11px !important; flex:0 0 auto !important; max-width:none !important; }
 
-  /* Grille PC : grands blocs solo (1 colonne), petits blocs sur 2 colonnes */
+  /* Grille PC : même gouttière partout — dehors = dedans */
   main {
     max-width:1260px !important; width:100% !important; margin:0 auto !important;
-    padding:16px 14px 20px !important;
+    padding:var(--gutter) !important;
     display:grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap:16px !important;
+    gap:var(--gutter) !important;
     align-items:start !important;
     box-sizing:border-box !important;
   }
@@ -2476,58 +2477,58 @@ body{overflow-wrap:break-word;}
   main #embarquementMatelot { grid-column:1 !important; }
   main #retrouverEquipage { grid-column:2 !important; }
 
-  /* Cartes : aérées, pas de hauteur forcée */
+  /* Cartes : marges internes = marges externes (équidistance) */
   .card { border-radius:16px !important; overflow:hidden !important; display:block !important; }
-  .card h2 { padding:10px 14px !important; font-size:12px !important; letter-spacing:.06em !important; }
-  .card .body { padding:14px !important; }
+  .card h2 { padding:var(--space-sm) var(--gutter-inner) !important; font-size:13px !important; letter-spacing:.06em !important; }
+  .card .body { padding:var(--gutter-inner) !important; }
 
-  /* Intro */
-  .intro-card .intro-text { font-size:13px !important; line-height:1.5 !important; padding:10px 12px !important; }
-  .intro-card .rule-invite { margin:8px 0 6px !important; padding:8px 12px !important; gap:6px !important; }
-  .card .rule-invite-eyebrow { font-size:11px !important; }
-  .rule-invite-main { font-size:12px !important; }
-  .intro-card .mission-steps { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:10px !important; margin:8px 0 0 !important; }
-  .rule-detail { margin-top:8px !important; padding:10px 12px !important; }
+  /* Intro — même grille partout */
+  .intro-card .intro-text { font-size:13px !important; line-height:1.5 !important; padding:var(--space-sm) var(--gutter-inner) !important; }
+  .intro-card .rule-invite { margin:var(--gutter) 0 0 !important; padding:var(--space-sm) var(--gutter-inner) !important; gap:var(--space-sm) !important; }
+  .card .rule-invite-eyebrow { font-size:12px !important; }
+  .rule-invite-main { font-size:13px !important; }
+  .intro-card .mission-steps { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:var(--gutter) !important; margin:var(--gutter) 0 0 !important; }
+  .rule-detail { margin-top:var(--gutter) !important; padding:var(--gutter-inner) !important; }
   .rule-detail h3 { font-size:13px !important; }
   .rule-detail p, .rule-detail li { font-size:12px !important; line-height:1.45 !important; }
   #ruleProgress { gap:6px !important; } #ruleProgress i { width:22px !important; height:5px !important; }
 
-  /* Formulaires */
-  .boarding-grid { display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:10px !important; }
-  .grid { display:grid !important; grid-template-columns:1fr 1fr !important; gap:10px !important; }
+  /* Formulaires — gouttière unique */
+  .boarding-grid { display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:var(--gutter) !important; }
+  .grid { display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--gutter) !important; }
   label { font-size:12px !important; margin:0 0 5px !important; }
   input, select { min-height:38px !important; height:38px !important; padding:8px 10px !important; font-size:13px !important; border-radius:10px !important; }
   button { min-height:38px !important; padding:8px 14px !important; font-size:13px !important; }
   #registerMsg, #joinMsg { font-size:12px !important; }
 
-  /* O2 */
-  #oxygenPanel .oxygen-meter { padding:12px !important; border-radius:14px !important; }
-  #oxygenPanel .oxygen-meter-top .oxygen-level-title { font-size:12px !important; }
-  #oxygenPanel .oxygen-meter-top strong { font-size:26px !important; }
-  #oxygenPanel .oxygen-status { font-size:12px !important; margin:0 0 8px !important; }
-  #oxygenPanel .oxygen-tube { height:26px !important; }
-  #oxygenPanel .oxygen-bottom { display:flex !important; flex-direction:row !important; gap:10px !important; margin-top:8px !important; }
-  #oxygenPanel .countdown { font-size:18px !important; }
-  #oxygenPanel .countdown-kicker { font-size:10px !important; }
+  /* O2 — même grille que partout */
+  #oxygenPanel .oxygen-meter { padding:var(--gutter-inner) !important; border-radius:14px !important; }
+  #oxygenPanel .oxygen-meter-top .oxygen-level-title { font-size:13px !important; }
+  #oxygenPanel .oxygen-meter-top strong { font-size:28px !important; }
+  #oxygenPanel .oxygen-status { font-size:13px !important; margin:0 0 var(--space-sm) !important; }
+  #oxygenPanel .oxygen-tube { height:28px !important; }
+  #oxygenPanel .oxygen-bottom { display:flex !important; flex-direction:row !important; gap:var(--gutter) !important; margin-top:var(--space-sm) !important; }
+  #oxygenPanel .countdown { font-size:20px !important; }
+  #oxygenPanel .countdown-kicker { font-size:11px !important; }
 
-  /* Equipages */
+  /* Equipages — même pas d'un pixel de différence */
   #equipagesEnMer #equipagesBody { display:block !important; padding:0 !important; }
-  #equipagesEnMer .radar-stage { padding:12px !important; margin:0 0 12px !important; }
-  #equipagesEnMer .radar-screen-big { width:140px !important; height:140px !important; }
-  #equipagesEnMer #teamsBox { padding:10px !important; gap:10px !important; display:grid !important; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)) !important; }
+  #equipagesEnMer .radar-stage { padding:var(--gutter-inner) !important; margin:0 0 var(--gutter) !important; }
+  #equipagesEnMer .radar-screen-big { width:150px !important; height:150px !important; }
+  #equipagesEnMer #teamsBox { padding:var(--gutter-inner) !important; gap:var(--gutter) !important; display:grid !important; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)) !important; }
 
-  /* Cockpit */
-  #gameCard .cockpit { padding:12px !important; }
-  #gameCard .ck-gauges { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:8px !important; margin-bottom:8px !important; }
-  #gameCard .ck-dial { width:62px !important; height:62px !important; }
-  #gameCard .ck-dial-value { font-size:15px !important; }
+  /* Cockpit — grille identique */
+  #gameCard .cockpit { padding:var(--gutter-inner) !important; }
+  #gameCard .ck-gauges { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:var(--gutter) !important; margin-bottom:var(--gutter) !important; }
+  #gameCard .ck-dial { width:68px !important; height:68px !important; }
+  #gameCard .ck-dial-value { font-size:16px !important; }
 
-  /* Abysses */
-  #bottomAlertMessage .body { padding:12px 14px !important; }
-  #bottomAlertMessage.card h2 { font-size:15px !important; }
-  #bottomAlertMessage .abyss-bottom { font-size:12px !important; }
+  /* Abysses — même respiration */
+  #bottomAlertMessage .body { padding:var(--gutter-inner) !important; }
+  #bottomAlertMessage.card h2 { font-size:16px !important; }
+  #bottomAlertMessage .abyss-bottom { font-size:13px !important; }
 
-  .site-footer { max-width:1260px !important; margin:12px auto 0 !important; padding:12px 14px 18px !important; display:flex !important; flex-direction:row !important; align-items:center !important; justify-content:space-between !important; background:transparent !important; border-top:none !important; }
+  .site-footer { max-width:1260px !important; margin:var(--gutter) auto 0 !important; padding:var(--gutter) var(--space-lg) !important; display:flex !important; flex-direction:row !important; align-items:center !important; justify-content:space-between !important; background:transparent !important; border-top:none !important; }
 }
 /* =====================================================================
    ÉCOUTILLES PC — tout visible à l'écran (PC)
@@ -2546,29 +2547,29 @@ body{overflow-wrap:break-word;}
     height: 100dvh !important;
     min-height: 100dvh !important;
     max-height: 100dvh !important;
-    padding: clamp(10px, 1.5vh, 18px) clamp(16px, 2vw, 32px) clamp(10px, 1.2vh, 16px) !important;
-    gap: clamp(6px, 1vh, 12px) !important;
-    justify-content: space-evenly !important;
+    padding:var(--gutter) var(--space-lg) !important;
+    gap:var(--gutter) !important;
+    justify-content: space-between !important;
     box-sizing: border-box !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
   }
-  #ecoutille .ec-enseigne { gap: 6px !important; flex-shrink: 0; }
+  #ecoutille .ec-enseigne { gap:var(--space-sm) !important; flex-shrink: 0; }
   #ecoutille .ec-verne { font-size: 11px !important; letter-spacing:.38em !important; }
   #ecoutille .ec-titre { font-size: clamp(28px, 3.2vw, 52px) !important; line-height:.92 !important; }
-  #ecoutille .ec-regle { margin: 4px 0 !important; }
-  #ecoutille .ec-sous-titre { font-size: 13px !important; }
-  #ecoutille .ec-hud { font-size: 9px !important; padding: 0 !important; }
+  #ecoutille .ec-regle { margin:var(--space-xs) 0 !important; }
+  #ecoutille .ec-sous-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4 { font-size: 13px !important; }
+  #ecoutille .ec-hud { font-size: 9px !important; padding: 0 !important; gap:var(--space-sm) !important; }
   /* Hublot calibré pour PC : tient entre enseigne et pied sans pousser */
   #ecoutille .ec-hublot {
-    width: min(42vh, 520px) !important;
-    height: min(42vh, 520px) !important;
-    max-width: 520px !important; max-height: 520px !important;
-    margin: 6px 0 !important;
+    width: min(38vh, 480px) !important;
+    height: min(38vh, 480px) !important;
+    max-width: 480px !important; max-height: 480px !important;
+    margin:0 !important;
     flex: 0 0 auto !important;
   }
-  #ecoutille .ec-pied { gap: 10px !important; flex-shrink: 0 !important; padding-bottom: max(6px, 1vh) !important; min-height: fit-content !important; }
+  #ecoutille .ec-pied { gap:var(--space-sm) !important; flex-shrink: 0 !important; padding-bottom:var(--space-xs) !important; min-height: fit-content !important; }
   #ecoutille .ec-consigne { font-size: 11px !important; display:block !important; }
   #ecoutille .ec-start {
     width: clamp(110px, 11vw, 148px) !important;
@@ -2582,13 +2583,15 @@ body{overflow-wrap:break-word;}
   #ecoutille .ec-version { font-size: 9px !important; opacity:.7; }
 }
 @media (min-width: 1100px) and (max-height: 820px) {
+  #ecoutille .ec-scene{padding:var(--space-sm) var(--space-md) !important; gap:var(--space-sm) !important;}
   #ecoutille .ec-hublot { width: min(36vh, 440px) !important; height: min(36vh, 440px) !important; }
-  #ecoutille .ec-titre { font-size: clamp(26px, 3vw, 44px) !important; }
-  #ecoutille .ec-pied { gap: 8px !important; }
+  #ecoutille .ec-titre { font-size: clamp(24px, 3vw, 40px) !important; }
+  #ecoutille .ec-pied { gap:var(--space-sm) !important; }
 }
 @media (min-width: 1100px) and (max-height: 720px) {
-  #ecoutille .ec-sous-titre { display:none !important; }
-  #ecoutille .ec-hublot { width: min(32vh, 380px) !important; height: min(32vh, 380px) !important; }
+  #ecoutille .ec-scene{padding:var(--space-xs) var(--space-sm) !important; gap:var(--space-xs) !important;}
+  #ecoutille .ec-sous-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4 { font-size:10px !important; opacity:.9 }
+  #ecoutille .ec-hublot { width: min(30vh, 360px) !important; height: min(30vh, 360px) !important; }
 }
 /* =====================================================================
    1 SEULE COLONNE — TABLETTE (641–1099px) : même pile que PC
@@ -2604,24 +2607,25 @@ body{overflow-wrap:break-word;}
   header, main, .site-footer { position:relative; z-index:1; }
   body > header {
     min-height:auto !important;
-    padding: 32px 20px 36px !important;
+    padding:var(--space-md) var(--space-lg) !important;
     text-align:center !important;
     display:block !important;
     background: linear-gradient(135deg, rgba(2,14,26,.88), rgba(4,28,48,.72)) !important;
     border-bottom:1px solid rgba(245,176,39,.22) !important;
   }
   body > header::before, body > header::after { display:none !important; }
-  body > header .hero-meta { justify-content:center !important; }
-  body > header .hero-title { text-align:center !important; margin:10px auto 0 !important; }
-  body > header .hero-line { margin:12px auto 0 !important; text-align:center !important; max-width:40ch !important; }
-  body > header .hero-actions { justify-content:center !important; flex-direction:column !important; align-items:center !important; gap:12px !important; margin-top:22px !important; }
+  body > header .hero-meta { justify-content:center !important; gap:var(--space-sm) !important; }
+  body > header .hero-title { text-align:center !important; margin:var(--space-sm) auto 0 !important; }
+  body > header .hero-line { margin:var(--space-sm) auto 0 !important; text-align:center !important; max-width:40ch !important; }
+  body > header .hero-actions { justify-content:center !important; flex-direction:column !important; align-items:center !important; gap:var(--gutter) !important; margin-top:var(--gutter) !important; }
   body > header .hero-actions .hero-cta { width:100% !important; max-width:420px !important; justify-content:center !important; }
-  main { max-width:760px !important; margin:0 auto !important; padding:20px 16px 0 !important; display:flex !important; flex-direction:column !important; gap:20px !important; }
-  .grid, .boarding-grid, .matelot-reveal, .teamlist, .ck-gauges, .admin-form-grid, .admin-form-grid-6, .admin-o2-form { display:flex !important; flex-direction:column !important; gap:14px !important; grid-template-columns:1fr !important; }
-  .intro-card .mission-steps { display:flex !important; flex-direction:column !important; gap:14px !important; }
-  .oxygen-bottom { flex-direction:column !important; align-items:stretch !important; }
+  main { max-width:760px !important; margin:0 auto !important; padding:var(--gutter) var(--gutter) 0 !important; display:flex !important; flex-direction:column !important; gap:var(--gutter) !important; }
+  .grid, .boarding-grid, .matelot-reveal, .teamlist, .ck-gauges, .admin-form-grid, .admin-form-grid-6, .admin-o2-form { display:flex !important; flex-direction:column !important; gap:var(--gutter) !important; grid-template-columns:1fr !important; }
+  .intro-card .mission-steps { display:flex !important; flex-direction:column !important; gap:var(--gutter) !important; }
+  .oxygen-bottom { flex-direction:column !important; align-items:stretch !important; gap:var(--gutter) !important; }
   .countdown-block { align-items:flex-start !important; margin-left:0 !important; text-align:left !important; }
-  .site-footer { max-width:760px; margin:14px auto 0 !important; padding:14px 16px 20px !important; flex-direction:column !important; align-items:center !important; }
+  .card h2{padding:var(--space-sm) var(--gutter-inner) !important} .body, .oxygen-meter, .cockpit{padding:var(--gutter-inner) !important}
+  .site-footer { max-width:760px; margin:var(--gutter) auto 0 !important; padding:var(--gutter) var(--space-lg) !important; flex-direction:column !important; align-items:center !important; gap:var(--space-sm) !important; }
   #adminPanel { max-width:760px !important; margin:14px auto 0 !important; }
 }
 /* =====================================================================
@@ -2634,31 +2638,31 @@ body{overflow-wrap:break-word;}
   #ecoutille .ec-scene {
     height:100dvh !important; min-height:100dvh !important;
     display:flex !important; flex-direction:column !important;
-    justify-content:space-evenly !important;
+    justify-content:space-between !important;
     align-items:center !important;
-    gap:6px !important;
-    padding:10px 12px 8px !important;
+    gap:var(--gutter, clamp(8px,1.8vmin,14px)) !important;
+    padding:var(--space-md, clamp(10px,2.2vmin,16px)) var(--space-md, clamp(10px,2.2vmin,16px)) !important;
     box-sizing:border-box !important;
   }
   #ecoutille .ec-enseigne {
     flex:0 0 auto !important; width:100% !important;
     display:flex !important; flex-direction:column !important; align-items:center !important;
-    gap:4px !important; padding:0 !important;
+    gap:var(--space-sm) !important; padding:0 !important;
   }
   #ecoutille .ec-verne { font-size:9px !important; }
   #ecoutille .ec-titre { font-size:clamp(22px, 6.5vw, 30px) !important; line-height:1 !important; }
-  #ecoutille .ec-sous-titre { font-size:11px !important; }
-  #ecoutille .ec-hud { font-size:8px !important; gap:6px !important; }
+  #ecoutille .ec-sous-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4 { font-size:11px !important; }
+  #ecoutille .ec-hud { font-size:8px !important; gap:var(--space-sm) !important; }
   #ecoutille .ec-hublot {
-    flex:0 0 auto !important;
-    width:min(46vh, 78vw) !important; height:min(46vh, 78vw) !important;
+    flex:1 1 auto !important;
+    width:min(44vh, 74vw) !important; height:min(44vh, 74vw) !important;
     margin:0 !important;
   }
   #ecoutille .ec-pied {
     flex:0 0 auto !important; width:100% !important;
-    gap:8px !important; padding:0 !important;
+    gap:var(--space-sm) !important; padding:0 !important;
   }
   #ecoutille .ec-consigne { font-size:10px !important; line-height:1.3 !important; }
-  #ecoutille .ec-start { width:92px !important; height:92px !important; }
-  #ecoutille .ec-start-label { font-size:14px !important; }
+  #ecoutille .ec-start { width:88px !important; height:88px !important; }
+  #ecoutille .ec-start-label { font-size:13px !important; }
 }
