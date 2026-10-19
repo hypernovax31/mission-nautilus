@@ -2452,3 +2452,56 @@ body{overflow-wrap:break-word;}
   .site-footer { max-width:1120px; margin:18px auto 0 !important; padding:18px 20px 28px !important; }
   #adminPanel { max-width:980px !important; margin:18px auto 0 !important; }
 }
+/* =====================================================================
+   ÉCOUTILLES PC — tout visible à l'écran (PC)
+   Sur PC, l'écoutille doit tenir en 100dvh sans scroll, boutons compris.
+   ===================================================================== */
+@media (min-width: 1100px) {
+  #ecoutille {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+  #ecoutille .ec-scene {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding: clamp(10px, 1.5vh, 18px) clamp(16px, 2vw, 32px) clamp(10px, 1.2vh, 16px) !important;
+    gap: clamp(6px, 1vh, 12px) !important;
+    justify-content: space-evenly !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+  #ecoutille .ec-enseigne { gap: 6px !important; flex-shrink: 0; }
+  #ecoutille .ec-verne { font-size: 11px !important; letter-spacing:.38em !important; }
+  #ecoutille .ec-titre { font-size: clamp(28px, 3.2vw, 52px) !important; line-height:.92 !important; }
+  #ecoutille .ec-regle { margin: 4px 0 !important; }
+  #ecoutille .ec-sous-titre { font-size: 13px !important; }
+  #ecoutille .ec-hud { font-size: 9px !important; padding: 0 !important; }
+  /* Hublot calibré pour PC : tient entre enseigne et pied sans pousser */
+  #ecoutille .ec-hublot {
+    width: min(42vh, 520px) !important;
+    height: min(42vh, 520px) !important;
+    max-width: 520px !important; max-height: 520px !important;
+    margin: 6px 0 !important;
+    flex: 0 1 auto !important;
+  }
+  #ecoutille .ec-pied { gap: 10px !important; flex-shrink: 0; padding-bottom: 4px; }
+  #ecoutille .ec-consigne { font-size: 11px !important; display:block !important; }
+  #ecoutille .ec-start {
+    width: clamp(110px, 11vw, 148px) !important;
+    flex-shrink: 0;
+  }
+  #ecoutille .ec-start-label { font-size: 18px !important; }
+  #ecoutille .ec-version { font-size: 9px !important; opacity:.7; }
+}
+@media (min-width: 1100px) and (max-height: 820px) {
+  #ecoutille .ec-hublot { width: min(36vh, 440px) !important; height: min(36vh, 440px) !important; }
+  #ecoutille .ec-titre { font-size: clamp(26px, 3vw, 44px) !important; }
+  #ecoutille .ec-pied { gap: 8px !important; }
+}
+@media (min-width: 1100px) and (max-height: 720px) {
+  #ecoutille .ec-sous-titre { display:none !important; }
+  #ecoutille .ec-hublot { width: min(32vh, 380px) !important; height: min(32vh, 380px) !important; }
+}
