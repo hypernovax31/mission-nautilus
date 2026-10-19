@@ -2473,6 +2473,8 @@ body{overflow-wrap:break-word;}
 /* =====================================================================
    ÉCOUTILLES PC — tout visible à l'écran (PC)
    Sur PC, l'écoutille doit tenir en 100dvh sans scroll, boutons compris.
+   FIX START invisible : on garde 100dvh mais on autorise le scroll interne
+   si le viewport est trop court — START reste atteignable.
    ===================================================================== */
 @media (min-width: 1100px) {
   #ecoutille {
@@ -2489,7 +2491,9 @@ body{overflow-wrap:break-word;}
     gap: clamp(6px, 1vh, 12px) !important;
     justify-content: space-evenly !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   #ecoutille .ec-enseigne { gap: 6px !important; flex-shrink: 0; }
   #ecoutille .ec-verne { font-size: 11px !important; letter-spacing:.38em !important; }
@@ -2503,13 +2507,17 @@ body{overflow-wrap:break-word;}
     height: min(42vh, 520px) !important;
     max-width: 520px !important; max-height: 520px !important;
     margin: 6px 0 !important;
-    flex: 0 1 auto !important;
+    flex: 0 0 auto !important;
   }
-  #ecoutille .ec-pied { gap: 10px !important; flex-shrink: 0; padding-bottom: 4px; }
+  #ecoutille .ec-pied { gap: 10px !important; flex-shrink: 0 !important; padding-bottom: max(6px, 1vh) !important; min-height: fit-content !important; }
   #ecoutille .ec-consigne { font-size: 11px !important; display:block !important; }
   #ecoutille .ec-start {
     width: clamp(110px, 11vw, 148px) !important;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    position: relative !important;
+    z-index: 2 !important;
   }
   #ecoutille .ec-start-label { font-size: 18px !important; }
   #ecoutille .ec-version { font-size: 9px !important; opacity:.7; }
