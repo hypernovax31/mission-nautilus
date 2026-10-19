@@ -591,6 +591,12 @@
     #ecoutille .ec-start:focus-visible{outline:3px solid #a6ecff; outline-offset:7px}
     #ecoutille.ec-presse .ec-dome{transform:translateY(3px) scale(.965); filter:brightness(.9)}
     #ecoutille.ec-presse .ec-start::after{animation:none; opacity:0}
+    /* OPEN — bouton START plus visible (anneau blanc + halo renforcé + label agrandi) */
+    #ecoutille .ec-start--open{width:clamp(110px, 22vmin, 190px) !important; filter:drop-shadow(0 0 18px rgba(255,80,64,.85)) drop-shadow(0 0 32px rgba(255,80,64,.45)) drop-shadow(0 4px 18px rgba(0,0,0,.65)) !important;}
+    #ecoutille .ec-start--open::before{box-shadow:0 2.4vmin 4.4vmin rgba(0,0,0,.66), inset 0 0 0 2px rgba(0,0,0,.5), inset 0 .3vmin 0 rgba(255,255,255,.35), 0 0 0 3px rgba(255,255,255,.96), 0 0 24px rgba(255,255,255,.65) !important;}
+    #ecoutille .ec-start--open::after{background:radial-gradient(circle, rgba(255,80,64,.60) 30%, rgba(255,80,64,.20) 56%, rgba(255,80,64,0) 74%) !important; opacity:.95 !important; animation-duration:1.85s !important;}
+    #ecoutille .ec-start--open .ec-dome{inset:13% !important; background:radial-gradient(circle at 34% 26%, #ffcec6 0 5%, #ff6b5a 18%, #e82a1e 42%, #b0120a 68%, #5a0602 100%) !important;}
+    #ecoutille .ec-start--open .ec-start-label{font-size:clamp(19px, 4.7vmin, 38px) !important; letter-spacing:.13em !important; font-weight:1000 !important; text-shadow:0 2px 0 rgba(0,0,0,.75), 0 4px 12px rgba(0,0,0,.65), 0 0 22px rgba(255,255,255,.92), 0 0 34px rgba(255,80,64,.70) !important;}
     /* Repère de version : discret, il dit quelle page de garde est chargée. */
     #ecoutille .ec-version{
       position:absolute; right:clamp(10px, 2.4vmin, 28px); bottom:clamp(8px, 2vmin, 22px);
@@ -893,9 +899,9 @@
       </div>
     </div>
     <footer class="ec-pied">
-      <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir le sas du Nautilus et lancer l'aventure">
+      <button id="ecStart" class="ec-start ec-start--open" type="button" aria-label="OPEN — ouvrir le sas du Nautilus et lancer l'aventure">
         <span class="ec-dome" aria-hidden="true"></span>
-        <span class="ec-start-label">START</span>
+        <span class="ec-start-label">OPEN</span>
       </button>
       <span class="ec-version">garde v16</span>
     </footer>

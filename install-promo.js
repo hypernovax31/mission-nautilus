@@ -113,10 +113,10 @@
     + '.ip-overlay{position:fixed;inset:0;z-index:99970;display:flex;align-items:center;justify-content:center;'
     + 'padding:18px;box-sizing:border-box;width:100vw;height:100vh;margin:0;'
     + 'background:radial-gradient(ellipse at 50% 20%,rgba(6,22,38,.55),rgba(2,6,14,.9));'
-    + 'opacity:0;transition:opacity .45s ease;}'
-    + '.ip-overlay.ip-in{opacity:1}'
-    + '.ip-overlay.ip-out{opacity:0}'
-    + '.ip-card{display:flex;flex-direction:column;align-items:center;'
+    + 'opacity:0;transition:opacity .45s ease;pointer-events:auto;}'
+    + '.ip-overlay.ip-in{opacity:1;pointer-events:auto}'
+    + '.ip-overlay.ip-out{opacity:0;pointer-events:none}'
+    + '.ip-card{display:flex;flex-direction:column;align-items:center;pointer-events:auto;'
     + 'width:min(94vw,430px);max-width:100%;box-sizing:border-box;text-align:center;'
     + 'border-radius:20px;padding:20px 20px 14px;'
     + 'background:linear-gradient(160deg,rgba(8,26,44,.97),rgba(4,12,24,.97));'
@@ -170,10 +170,10 @@
     + '.ip-titre{margin:2px auto 6px;width:100%;max-width:360px;text-align:center;color:#fff;font-size:clamp(18px,5vw,23px);line-height:1.15}'
     + '.ip-intro{margin:0 auto 14px;width:100%;max-width:330px;text-align:center;color:#bfe0ee;font-size:13.5px;line-height:1.5}'
     + '.ip-intro b{color:#ffe2a0}'
-    + '.ip-cta{display:block;width:100%;box-sizing:border-box;padding:13px 14px;border:0;border-radius:13px;cursor:pointer;text-align:center;'
+    + '.ip-cta{display:block;width:100%;box-sizing:border-box;padding:13px 14px;border:0;border-radius:13px;cursor:pointer;text-align:center;pointer-events:auto;position:relative;z-index:2;'
     + 'background:linear-gradient(135deg,#f5b027,#d89020);color:#111;font-size:15px;font-weight:1000;letter-spacing:.01em;'
     + 'box-shadow:0 8px 22px rgba(245,176,39,.35);animation:ipCta 1.8s ease-in-out infinite}'
-    + '.ip-later{display:block;margin:10px auto 0;padding:4px 8px;border:0;background:none;cursor:pointer;text-align:center;'
+    + '.ip-later{display:block;margin:10px auto 0;padding:4px 8px;border:0;background:none;cursor:pointer;text-align:center;pointer-events:auto;position:relative;z-index:2;'
     + 'color:#8fb6c8;font-size:12.5px;font-weight:700;text-decoration:underline dotted}'
     + '.ip-later:hover{color:#cfe8f4}'
 
@@ -244,6 +244,14 @@
     var later = overlay.querySelector('.ip-later');
     if (cta) cta.addEventListener('click', installer);
     if (later) later.addEventListener('click', function () { ecrireSnooze(); fermer(); });
+    // filet de sécurité : délégation si les écouteurs directs sont bloqués par un recouvrement
+    overlay.addEventListener('click', function(e){
+      var t = e.target;
+      if(t.closest && t.closest('.ip-cta')){ e.preventDefault(); e.stopPropagation(); installer(); }
+      else if(t.closest && t.closest('.ip-later')){ e.preventDefault(); e.stopPropagation(); ecrireSnooze(); fermer(); }
+    });
+    // clic sur le fond assombri ferme aussi (UX standard des modales)
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) fermer(); });
     /* Apparition douce (la transition CSS a besoin d'un temps de pose) */
     setTimeout(function () { if (overlay) overlay.classList.add('ip-in'); }, 30);
   }
