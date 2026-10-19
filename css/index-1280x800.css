@@ -1,0 +1,65 @@
+/* Mission Nautilus — accueil PC compact pour 1280 × 800
+   Surcharge dédiée : ne modifie pas le CSS existant et laisse le mobile inchangé.
+*/
+
+@media (min-width: 761px) and (max-width: 1400px) and (max-height: 850px) {
+  html, body { overflow-x: hidden; }
+
+  header {
+    min-height: 0;
+    padding: clamp(18px, 3.4vh, 30px) clamp(24px, 4vw, 56px) clamp(22px, 4vh, 34px);
+  }
+
+  header .hero-title {
+    font-size: clamp(56px, 8.8vw, 108px);
+    line-height: .94;
+    margin-top: clamp(10px, 2vh, 18px);
+  }
+
+  header .hero-line {
+    margin-top: clamp(10px, 1.8vh, 18px);
+    font-size: clamp(20px, 2.8vw, 32px);
+    line-height: 1.08;
+  }
+
+  header .hero-actions {
+    gap: 12px;
+    margin-top: clamp(16px, 2.8vh, 26px);
+  }
+
+  header .hero-cta {
+    min-width: 190px;
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+
+  main {
+    padding-top: clamp(14px, 2.4vh, 22px);
+    gap: clamp(14px, 2.4vh, 22px);
+  }
+
+  .mission-steps {
+    gap: clamp(10px, 1.5vw, 18px);
+    margin-top: clamp(14px, 2vh, 20px);
+  }
+
+  button.mission-step { max-width: min(16vw, 170px); }
+  .card { padding: clamp(16px, 2.2vh, 22px); }
+  .body { padding: clamp(14px, 2vh, 20px); }
+}
+
+@media (min-width: 761px) and (max-height: 800px) {
+  header { padding-top: 16px; padding-bottom: 22px; }
+  header .hero-kicker { font-size: 11px; line-height: 1.1; }
+  header .hero-title { font-size: clamp(52px, 8vw, 94px); }
+  header .hero-line { font-size: clamp(18px, 2.5vw, 28px); }
+  header .hero-actions { margin-top: 16px; }
+  main { padding-top: 12px; gap: 16px; }
+  .mission-steps { margin-top: 12px; }
+  button.mission-step { max-width: min(15vw, 156px); }
+}
+
+@media (min-width: 761px) {
+  header, main, footer { max-width: 100%; min-width: 0; }
+  .hero-line, .hero-kicker { overflow-wrap: anywhere; }
+}
