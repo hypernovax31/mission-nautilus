@@ -5814,6 +5814,7 @@ function qrDataUri(text, opts){
      comme si le buffer manquait — l'alerte reste purement visuelle. */
   function jouerAlarmeFinWebAudio(dureeMs){
     if(!isSoundEnabled()) return false;
+    if(typeof _gesteRecu !== 'undefined' && !_gesteRecu) return false;
     if(!_alarmeFinBuffer) return false;
     const ctx = sfxContext();
     if(!ctx) return false;
@@ -5936,8 +5937,12 @@ function qrDataUri(text, opts){
        Repli <audio> pour les ordinateurs si le buffer n'est pas prêt.
        Si le joueur a coupé le sonar, AUCUN des deux chemins ne joue :
        l'écran rouge et son decompte restent, en silence. */
-    if(!jouerAlarmeFinWebAudio(5000)){
+    // Seul l'animation rouge est automatique ; le son attend un geste (aligné mobile)
+    const _allowAlarmSound = (typeof _gesteRecu === 'undefined' || _gesteRecu) && isSoundEnabled();
+    if(_allowAlarmSound && !jouerAlarmeFinWebAudio(5000)){
       playSubmarineAlarm(5000);
+    } else if(!_allowAlarmSound){
+      // sonar coupé ou pas encore de geste : silence, on laisse l'overlay visuel seul
     }
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
@@ -6217,6 +6222,11 @@ function qrDataUri(text, opts){
        rouge vit seule. Plus aucun paramètre « force » n'existe : la
        porte dérobée a été supprimée, pas seulement fermée. */
     if(!isSoundEnabled()) return;
+    /* Alignement PC/mobile : l'alarme ne part qu'après un vrai geste
+       (clic/toucher/scroll/mousemove). Sans cela, le PC jouait l'alarme
+       dès le chargement via Web Audio débloqué par l'écoutille, alors
+       que le mobile restait silencieux (contexte encore verrouillé). */
+    if(typeof _gesteRecu !== 'undefined' && !_gesteRecu) return;
 
     /* PRIORITÉ AU CHEMIN WEB AUDIO (bug corrigé).
        Cette alarme part d'un MINUTEUR (alerte reçue passivement, fin de
