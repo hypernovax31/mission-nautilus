@@ -1,3 +1,11 @@
+/* DÉPRÉCIÉ — n'est plus chargé par aucune page (depuis le Palier 3
+   « l'artefact du Nautilus », qui le remplace : artefact-moteur.js,
+   artefact-service.js, magasin-fnac.js, artefact-palier3.js).
+
+   L'ancien jeu (puzzle photo du lieu) est conservé ici à titre d'archive :
+   il ne figure plus ni dans 1831411720.html, ni dans le precache de sw.js.
+   À supprimer sans regret. Voir docs/PALIER3-ARTEFACT.md. */
+
 /* =============================================================
    PUZZLE PHOTO DU LIEU — moteur de l'épreuve du Palier 3
    (puzzle-palier3.js)

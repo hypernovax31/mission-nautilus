@@ -1,0 +1,6 @@
+node_modules/
+# Copie du moteur faite au prédeploy (firebase.json) : une seule source de
+# vérité, artefact-moteur.js à la racine du dépôt.
+artefact-moteur.js
+*.log
+.env

@@ -6,3 +6,11 @@ __pycache__/
 
 # Journal des requetes du serveur d'apercu (outil de developpement)
 .nautilus-requetes.log
+
+# Palier 3 — dépendances de test (jsdom) et fichiers de travail
+# La suite principale (tools/tests-*.mjs) tourne SANS rien installer ;
+# tools/.deps ne sert qu'aux tests d'interface.
+tools/.deps/
+# Liste des magasins conservée par l'outil de synchronisation : l'historique
+# git suffit, pas besoin de la version précédente dans le dépôt.
+data/magasins-fnac.previous.json
