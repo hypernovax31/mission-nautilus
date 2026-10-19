@@ -904,7 +904,7 @@
   <div class="ec-flash" aria-hidden="true"></div>
 
   <!-- Ce que lisent les lecteurs d'écran (le décor ci-dessus est muet). -->
-  <p class="ec-lu">Expédition dans le Nautilus — grand jeu interne de la Fnac Labège, d'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de Labège 2, le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et recevoir l'ordre de mission.</p>
+  <p class="ec-lu" id="ecLuText">Expédition dans le Nautilus — grand jeu interne de la Fnac Labège, d'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de Labège 2, le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et recevoir l'ordre de mission.</p>
 </div>
 
 <!-- ═══════════ SOCLE — LE CLIC ═══════════
@@ -1105,11 +1105,11 @@
 <div class="ocean-wallpaper" aria-hidden="true"></div>
 <header>
   <div class="hero-meta">
-    <div class="brand">FNAC LABÈGE</div>
+    <div class="brand" id="brandMagasin">FNAC LABÈGE</div>
     <div class="hero-kicker">Grand jeu interne · Mission confidentielle</div>
   </div>
   <h1 class="hero-title">Mission Nautilus</h1>
-  <h2 class="hero-line">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</h2>
+  <h2 class="hero-line" id="heroMagasin">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</h2>
   <div class="hero-actions"><button class="hero-cta pulse-engage btn-pulse" id="launchMissionBtn">⚓ Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la plongée</button><button class="hero-cta ghost" id="reserveMissionBtn" type="button">Consulter la réserve O₂</button></div>
 </header>
 <main>
@@ -8807,6 +8807,74 @@ window.PWAInstall = {
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initEcMagasin);
   else initEcMagasin();
+})();
+</script>
+<script>
+// FNAC LABÈGE dynamique — remplace par le magasin sélectionné au démarrage
+(function(){
+  function nomMagasin(m){
+    if(!m || !m.nom) return 'Labège';
+    return m.nom;
+  }
+  function brandText(m){ return 'FNAC ' + nomMagasin(m).toUpperCase(); }
+  function heroText(m){ return 'Plongez dans les <span>20 000 lieues</span> de la Fnac ' + nomMagasin(m); }
+  function missionText(m){
+    return 'En 1870, le Nautilus disparaît au large des îles Lofoten. 156 ans plus tard, son signal réapparaît sous les rayons de la Fnac ' + nomMagasin(m) + '. Le premier équipage à le remonter en surface entrera dans la légende du magasin. Sonar allumé, matelot. À vous de jouer !';
+  }
+  function ecLuText(m){
+    var nom = nomMagasin(m);
+    return 'Expédition dans le Nautilus — grand jeu interne de la Fnac ' + nom + ', d\'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de ' + nom + ', le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d\'oxygène indique la réserve d\'air du bord. Appuie sur START pour ouvrir le sas et recevoir l\'ordre de mission.';
+  }
+  function appliquer(m){
+    var mag = m || (window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant()) || null;
+    var brand = document.getElementById('brandMagasin');
+    if(brand) brand.textContent = brandText(mag);
+    var hero = document.getElementById('heroMagasin');
+    if(hero) hero.innerHTML = heroText(mag);
+    var mission = document.getElementById('missionOrderText');
+    if(mission){
+      var txt = missionText(mag);
+      mission.setAttribute('data-text', txt);
+      var typing = document.getElementById('missionOrderTyping');
+      if(typing && typing.textContent && typing.textContent.length > 20){
+        if(!typing.classList.contains('typewriter-live')){
+          // déjà tapé : remplace le texte affiché
+          typing.textContent = txt;
+        }
+      }
+    }
+    var ecLu = document.getElementById('ecLuText');
+    if(ecLu) ecLu.textContent = ecLuText(mag);
+    // générique : remplace tout autre "Fnac Labège" restant dans le DOM (header/footer)
+    try{
+      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+      var toReplace = [];
+      var node;
+      while(node = walker.nextNode()){
+        if(node.nodeValue && node.nodeValue.indexOf('Fnac Labège') !== -1){
+          // évite les zones déjà gérées (brand/hero/mission/ecLu/select)
+          var p = node.parentElement;
+          if(p && (p.id==='brandMagasin' || p.id==='heroMagasin' || p.id==='missionOrderText' || p.id==='ecLuText' || p.closest && p.closest('.ec-magasin-case'))) continue;
+          toReplace.push(node);
+        }
+      }
+      toReplace.forEach(function(n){
+        n.nodeValue = n.nodeValue.replace(/Fnac Labège/g, 'Fnac ' + nomMagasin(mag));
+      });
+    }catch(e){}
+  }
+  function init(){
+    if(!window.NautilusMagasin){ setTimeout(init, 120); return; }
+    appliquer();
+    window.addEventListener('nautilus:magasin-change', function(e){ appliquer(e.detail); });
+    window.addEventListener('storage', function(e){
+      if(e.key==='nautilusMagasin' || e.key==='nautilusMagasinId') appliquer();
+    });
+    // aussi après l'ouverture de l'écoutille (le main devient visible)
+    window.addEventListener('nautilus:ecoutille-ouverte', function(){ appliquer(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 <!-- Onglet ADMIN « Artefact » : s'injecte dans le panneau admin existant. -->
