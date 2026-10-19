@@ -2734,3 +2734,85 @@ img, video, svg, canvas, iframe{max-width:100%; height:auto; display:block;}
 @media (min-width:1920px){
   #equipagesEnMer .radar-screen-big{width:280px !important; height:280px !important;}
 }
+/* =====================================================================
+   TOP-BAR — toujours en haut à droite, jamais sur les textes/titres
+   PC + mobile : même position, même taille compacte, header dégagé
+   ===================================================================== */
+.top-bar{
+  position:fixed !important;
+  top:max(8px, env(safe-area-inset-top)) !important;
+  right:max(8px, env(safe-area-inset-right)) !important;
+  left:auto !important;
+  transform:none !important;
+  width:auto !important;
+  max-width:min(92vw, 380px) !important;
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+  gap:6px !important;
+  background:rgba(6,22,38,.78) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border:1px solid rgba(142,231,255,.22) !important;
+  border-radius:999px !important;
+  padding:4px !important;
+  box-sizing:border-box !important;
+  z-index:10000 !important;
+  pointer-events:none !important;
+}
+.top-bar > *{pointer-events:auto !important;}
+.top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{
+  flex:0 0 auto !important;
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:30px !important;
+  min-height:30px !important;
+  padding:0 12px !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  letter-spacing:.02em !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  border-radius:999px !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+}
+/* Header dégagé : réserve la hauteur de la top-bar */
+body > header{
+  padding-top:calc(var(--space-md,16px) + 38px + env(safe-area-inset-top)) !important;
+}
+@media (max-width:640px){
+  .top-bar{
+    top:max(6px, env(safe-area-inset-top)) !important;
+    right:max(6px, env(safe-area-inset-right)) !important;
+    gap:5px !important;
+    padding:3px !important;
+    max-width:min(96vw, 340px) !important;
+  }
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{
+    height:28px !important;
+    min-height:28px !important;
+    padding:0 10px !important;
+    font-size:10px !important;
+    gap:3px !important;
+  }
+  body > header{padding-top:calc(var(--gutter,14px) + 34px + env(safe-area-inset-top)) !important;}
+}
+@media (max-width:360px){
+  .top-bar{max-width:98vw !important; gap:4px !important;}
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{height:26px !important; min-height:26px !important; padding:0 8px !important; font-size:9.5px !important;}
+  body > header{padding-top:calc(var(--space-sm,10px) + 30px + env(safe-area-inset-top)) !important;}
+}
+@media (min-width:1100px){
+  .top-bar{
+    top:max(10px, env(safe-area-inset-top)) !important;
+    right:max(14px, env(safe-area-inset-right)) !important;
+    gap:6px !important;
+    padding:4px !important;
+  }
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{height:32px !important; min-height:32px !important; padding:0 14px !important; font-size:11px !important;}
+  body > header{padding-top:calc(var(--space-md,16px) + 42px + env(safe-area-inset-top)) !important;}
+}
