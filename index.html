@@ -691,6 +691,8 @@
   </script>
   <link rel="stylesheet" href="css/index.css?v=54">
   <link rel="stylesheet" href="css/hublots.css?v=15">
+  <!-- Sélecteur de magasin (accueil) + onglet admin de l'artefact (Palier 3). -->
+  <link rel="stylesheet" href="css/artefact.css?v=1">
   <!-- Page de garde « ÉCOUTILLE » : son style est écrit DANS la page (voir
        le socle dans le <head>) — rien à charger, rien qui puisse manquer. -->
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
@@ -1066,6 +1068,19 @@
     </div>
   </section>
 
+  <!-- MAGASIN DE LA MISSION — choisi une seule fois, mémorisé sur cet
+       appareil. Le Palier 3 (« l'artefact du Nautilus ») adapte ses règles
+       au magasin sélectionné : c'est là que l'ouvrage sera cherché.
+       AUCUNE coordonnée GPS n'est enregistrée ni transmise : la position ne
+       sert qu'à proposer le magasin le plus proche, à la demande. -->
+  <section class="card" id="magasinPanel">
+    <h2>MAGASIN DE LA MISSION</h2>
+    <div class="body">
+      <div id="magasinHost"></div>
+      <p class="small" id="magasinEtat">Chargement de la liste officielle des magasins…</p>
+    </div>
+  </section>
+
   <section class="card" id="retrouverEquipage">
     <h2>REPRENDRE LA MISSION</h2>
     <div class="body">
@@ -1345,7 +1360,7 @@
   const STEPS = {
     start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le signal du Nautilus réapparaît enfin. Votre équipage attend le feu vert pour appareiller vers le Palier 1."},
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
-    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Le sonar a fragmenté la photo de la prochaine zone. Reconstruisez l’image pour trouver le chemin."},
+    son:{label:"Palier 3",next:"zone51",time:300,errors:3,description:"Le Nautilus a dissimulé un artefact dans les rayons de votre magasin. Retrouvez l’ouvrage, présentez-le au sceau et ouvrez la chambre forte."},
     zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
     papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
@@ -4153,7 +4168,7 @@ function qrDataUri(text, opts){
       const href = pageParPalier[id] || null;
       const note = id === 'start' ? 'épreuve — compte de test'
         : id === 'livres' ? 'mots croisés'
-        : id === 'son' ? 'puzzle photo du lieu'
+        : id === 'son' ? 'artefact du Nautilus (chasse à l’ouvrage en magasin)'
         : 'en construction';
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
         href ? ((id === 'livres' || id === 'son')
@@ -8598,7 +8613,56 @@ window.PWAInstall = {
   aUnPrompt: () => Boolean(pwaDeferredPrompt)
 };
 </script>
-<script src="admin-button.js?v=26" type="module"></script>
+<!-- ============ PALIER 3 — L'ARTEFACT DU NAUTILUS (accueil) ============
+     Sur l'accueil, seuls le moteur et le module magasin sont utiles : ils
+     animent la carte « MAGASIN DE LA MISSION ». artefact-service.js est
+     chargé pour l'onglet admin (admin-artefact.js), qui s'injecte dans le
+     panneau admin en ligne de cette page comme dans celui des pages palier.
+     Aucun de ces fichiers ne contient de titre d'ouvrage, d'EAN ni de SKU. -->
+<script src="artefact-moteur.js?v=2"></script>
+<script src="artefact-service.js?v=2"></script>
+<script src="magasin-fnac.js?v=1"></script>
+<script>
+/* Carte « MAGASIN DE LA MISSION » : liste officielle + recherche + géoloc
+   à la demande. Le choix est mémorisé localement (nautilusMagasin) et repris
+   par le Palier 3. La suggestion automatique de position est DÉSACTIVÉE :
+   une demande d'autorisation au chargement surprendrait l'équipage — le
+   bouton « Me géolocaliser » reste à un geste de distance. */
+(function(){
+  function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function monter(){
+    var hote = document.getElementById('magasinHost');
+    var etat = document.getElementById('magasinEtat');
+    if(!hote || !window.NautilusMagasin) return;
+    function rafraichirEtat(fiche){
+      if(!etat) return;
+      etat.innerHTML = fiche
+        ? '✅ Magasin de la mission : <b>' + esc(fiche.nom) + '</b>'
+          + (fiche.ville ? ' — ' + esc(fiche.ville) : '') + (fiche.cp ? ' (' + esc(fiche.cp) + ')' : '')
+          + '. Choisi le ' + esc(new Date(fiche.choisiLe).toLocaleDateString('fr-FR'))
+          + ' · repris automatiquement par le Palier 3.'
+        : 'Aucun magasin confirmé : le Palier 3 te le demandera avant de chercher un ouvrage.';
+    }
+    window.NautilusMagasin.monterSelecteur(hote, {
+      titre: '📍 Ton magasin Fnac',
+      intro: 'Le signal du Nautilus a été relevé à Labège, mais l’artefact du Palier 3 t’attend dans TON magasin. '
+        + 'Choisis-le ici : les ouvrages proposés et les indices dépendent de ce choix.',
+      suggereGeo: false,
+      onConfirme: function(fiche){ rafraichirEtat(fiche); }
+    });
+    rafraichirEtat(window.NautilusMagasin.courant());
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', monter);
+  else monter();
+})();
+</script>
+<!-- Onglet ADMIN « Artefact » : s'injecte dans le panneau admin existant. -->
+<!-- Lecteur des fiches publiques fnac.com : hors ligne, jamais appele par le jeu.
+     L’onglet admin de l’accueil en a besoin comme celui du Palier 3. -->
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="admin-artefact.js?v=2" defer></script>
+<script src="admin-button.js?v=27" type="module"></script>
 </body>
 </html>
 

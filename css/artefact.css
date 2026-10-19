@@ -1,0 +1,363 @@
+/* =====================================================================
+   css/artefact.css — Palier 3 « l'artefact du Nautilus »
+   + sélecteur de magasin (magasin-fnac.js)
+
+   Deux familles de classes :
+     .af-*      le jeu de l'ouvrage (artefact-palier3.js)
+     .magasin-* le sélecteur de magasin (magasin-fnac.js)
+   Les variables de couleur suivent la charte du cockpit (amber #f0b429,
+   cyan #4fd1ff, danger #ff5f56) pour que le palier 3 reste dans la
+   même salle des machines que les autres.
+   ===================================================================== */
+
+:root {
+  --af-fond: #080d14;
+  --af-carte: #0d1622;
+  --af-carte-2: #111d2b;
+  --af-bord: #1d2f42;
+  --af-or: #f0b429;
+  --af-cyan: #4fd1ff;
+  --af-texte: #dce8f3;
+  --af-texte-doux: #96abc0;
+  --af-danger: #ff5f56;
+  --af-ok: #57d9a3;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cartes et titres                                                    */
+/* ------------------------------------------------------------------ */
+.af-carte {
+  background: linear-gradient(180deg, var(--af-carte-2), var(--af-carte));
+  border: 1px solid var(--af-bord);
+  border-radius: 16px;
+  padding: 20px 18px;
+  color: var(--af-texte);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  position: relative;
+  overflow: hidden;
+}
+.af-carte::before {
+  content: "";
+  position: absolute; inset: 0 0 auto 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--af-or), transparent);
+  opacity: .7;
+}
+.af-carte--scellee { border-color: #3a2a1c; }
+.af-carte--scellee::before { background: linear-gradient(90deg, transparent, var(--af-danger), transparent); }
+.af-carte--sacrifice { border-color: #3b2c3a; }
+
+.af-kicker {
+  margin: 0 0 6px;
+  font: 600 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--af-texte-doux);
+}
+.af-titre {
+  margin: 0 0 12px;
+  font-size: clamp(19px, 4.4vw, 26px);
+  line-height: 1.28;
+  font-weight: 700;
+  color: #fff;
+}
+.af-msg { margin: 0 0 12px; color: var(--af-texte-doux); font-size: 14.5px; line-height: 1.6; }
+.af-msg--petit { font-size: 13px; }
+.af-msg.warn { color: #ffd479; }
+.af-msg.danger { color: var(--af-danger); }
+
+.af-enigme {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--af-or);
+  background: rgba(240, 180, 41, .07);
+  border-radius: 0 10px 10px 0;
+  font-size: 16px;
+  line-height: 1.72;
+  color: #f6fbff;
+  font-style: italic;
+}
+
+.af-indice-transmis {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px dashed var(--af-cyan);
+  background: rgba(79, 209, 255, .07);
+  color: #eaf7ff;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+/* ------------------------------------------------------------------ */
+/* Boutons                                                             */
+/* ------------------------------------------------------------------ */
+.af-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 4px; }
+.af-btn {
+  appearance: none;
+  border: 1px solid var(--af-bord);
+  background: #16232f;
+  color: var(--af-texte);
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+  line-height: 1.3;
+}
+.af-btn:hover:not(:disabled) { border-color: var(--af-or); transform: translateY(-1px); }
+.af-btn:disabled { opacity: .5; cursor: not-allowed; }
+.af-btn--or { background: linear-gradient(180deg, #f7c948, #d99a12); color: #1b1403; border-color: #f0b429; }
+.af-btn--ghost { background: transparent; }
+.af-btn--danger { background: linear-gradient(180deg, #ff7a70, #d8433a); color: #2a0806; border-color: #ff5f56; }
+.af-btn--indice {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  background: rgba(79, 209, 255, .06); border-color: #264055;
+}
+.af-btn--indice span { font-size: 11.5px; font-weight: 500; color: var(--af-texte-doux); }
+
+/* ------------------------------------------------------------------ */
+/* Pupitre : jauge de tentatives + actions                             */
+/* ------------------------------------------------------------------ */
+.af-pupitre {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--af-bord);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.af-jauge { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.af-jauge-label {
+  font: 600 11px/1.4 ui-monospace, Menlo, monospace;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--af-texte-doux);
+}
+.af-jauge-points { display: inline-flex; gap: 6px; }
+.af-jauge-pt {
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--af-ok);
+  box-shadow: 0 0 8px rgba(87, 217, 163, .55);
+}
+.af-jauge-pt.is-grille { background: #3d2a2a; box-shadow: none; opacity: .75; }
+
+.af-indices summary {
+  cursor: pointer; font-size: 14px; font-weight: 600; color: var(--af-cyan);
+  list-style: none; padding: 4px 0;
+}
+.af-indices summary::-webkit-details-marker { display: none; }
+.af-indices-note { font-weight: 400; font-size: 12px; color: var(--af-texte-doux); }
+.af-indices-liste { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 2px; }
+
+/* ------------------------------------------------------------------ */
+/* Sceau : lecture du code-barres                                      */
+/* ------------------------------------------------------------------ */
+.af-scanbox {
+  position: relative;
+  margin: 6px 0 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--af-bord);
+  background: #05090e;
+  aspect-ratio: 4 / 3;
+}
+.af-cam { width: 100%; height: 100%; object-fit: cover; display: block; }
+.af-cam[hidden] { display: none; }
+.af-cam-placeholder {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; text-align: center; padding: 18px;
+  color: var(--af-texte-doux); font-size: 13.5px; line-height: 1.55;
+}
+.af-cam-placeholder[hidden] { display: none; }
+.af-cam-placeholder span { font-size: 34px; opacity: .8; }
+.af-cam-placeholder b { color: var(--af-texte); font-size: 14.5px; }
+.af-scan-ligne {
+  position: absolute; left: 8%; right: 8%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--af-or), transparent);
+  box-shadow: 0 0 12px rgba(240, 180, 41, .8);
+  animation: af-scan 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes af-scan {
+  0%   { top: 22%; opacity: .35; }
+  50%  { top: 74%; opacity: 1; }
+  100% { top: 22%; opacity: .35; }
+}
+@media (prefers-reduced-motion: reduce) { .af-scan-ligne { animation: none; top: 48%; } }
+
+.af-manuel { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.af-manuel label {
+  font: 600 11px/1.4 ui-monospace, Menlo, monospace;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--af-texte-doux);
+}
+
+.af-saisie { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.af-saisie label {
+  font: 600 11px/1.4 ui-monospace, Menlo, monospace;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--af-texte-doux);
+}
+.af-saisie input, .af-manuel input {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--af-bord);
+  background: #07111a;
+  color: #fff;
+  font: 600 17px/1.3 ui-monospace, Menlo, monospace;
+  letter-spacing: .06em;
+}
+.af-saisie input:focus, .af-manuel input:focus {
+  outline: none; border-color: var(--af-or);
+  box-shadow: 0 0 0 3px rgba(240, 180, 41, .16);
+}
+
+.af-grille {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #24384c;
+  background: rgba(79, 209, 255, .05);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--af-texte-doux);
+}
+.af-grille b { display: block; color: var(--af-cyan); letter-spacing: .1em; text-transform: uppercase; font-size: 11px; margin-bottom: 4px; }
+.af-grille span { display: block; font-family: ui-monospace, Menlo, monospace; }
+
+.af-reponse {
+  margin-top: 12px; padding: 0; border-radius: 10px;
+  font-size: 14.5px; line-height: 1.65; color: var(--af-texte);
+}
+.af-reponse.is-ok { padding: 12px 14px; border: 1px solid rgba(87, 217, 163, .45); background: rgba(87, 217, 163, .1); }
+.af-reponse.is-warn { padding: 12px 14px; border: 1px solid rgba(240, 180, 41, .45); background: rgba(240, 180, 41, .08); }
+.af-reponse.is-danger { padding: 12px 14px; border: 1px solid rgba(255, 95, 86, .5); background: rgba(255, 95, 86, .09); }
+
+/* ------------------------------------------------------------------ */
+/* Sélecteur de magasin                                                */
+/* ------------------------------------------------------------------ */
+.magasin-selec { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.magasin-titre {
+  font-size: 15px; font-weight: 700; color: #fff; margin: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.magasin-intro { margin: 0; font-size: 13px; line-height: 1.6; color: var(--af-texte-doux); }
+.magasin-ligne { display: flex; gap: 10px; flex-wrap: wrap; }
+.magasin-ligne input[type="search"] {
+  flex: 1 1 220px; min-width: 0;
+  padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--af-bord); background: #07111a; color: #fff;
+  font-size: 15px;
+}
+.magasin-ligne input[type="search"]:focus {
+  outline: none; border-color: var(--af-cyan); box-shadow: 0 0 0 3px rgba(79, 209, 255, .16);
+}
+.magasin-ligne select {
+  flex: 1 1 260px; min-width: 0;
+  padding: 12px 12px; border-radius: 10px;
+  border: 1px solid var(--af-bord); background: #0d1a26; color: #fff;
+  font-size: 15px; font-weight: 600;
+}
+.magasin-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.magasin-btn {
+  appearance: none; cursor: pointer;
+  border: 1px solid var(--af-bord); background: #16232f; color: var(--af-texte);
+  padding: 11px 15px; border-radius: 10px; font-size: 14px; font-weight: 600;
+}
+.magasin-btn:disabled { opacity: .55; cursor: not-allowed; }
+.magasin-btn--or { background: linear-gradient(180deg, #f7c948, #d99a12); color: #1b1403; border-color: #f0b429; }
+.magasin-btn--ghost { background: transparent; }
+.magasin-msg { margin: 0; min-height: 18px; font-size: 13.5px; line-height: 1.55; color: var(--af-texte-doux); }
+.magasin-msg.is-ok { color: var(--af-ok); }
+.magasin-msg.is-warn { color: #ffd479; }
+.magasin-msg.is-danger { color: var(--af-danger); }
+.magasin-suggests { display: flex; flex-direction: column; gap: 6px; }
+.magasin-suggest {
+  text-align: left; cursor: pointer;
+  border: 1px solid #24384c; background: rgba(79, 209, 255, .05);
+  color: var(--af-texte); padding: 9px 12px; border-radius: 10px; font-size: 13.5px;
+}
+.magasin-suggest b { color: #fff; }
+.magasin-ou { font-size: 12px; color: var(--af-texte-doux); letter-spacing: .08em; text-transform: uppercase; }
+.magasin-rgpd { margin: 4px 0 0; font-size: 11.5px; line-height: 1.5; color: #7b8ea1; }
+
+/* ------------------------------------------------------------------ */
+/* Panneau admin de l'artefact                                         */
+/* Le panneau admin (admin.css) est CLAIR : on suit sa charte, pas celle */
+/* du jeu. Ces règles ne s'appliquent qu'à l'onglet « Artefact ».        */
+/* ------------------------------------------------------------------ */
+#adminPanel .adm-af-sec {
+  border: 1px solid #dfe8ee;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 0 0 12px;
+  background: #fff;
+  color: #13202b;
+}
+#adminPanel .adm-af-sec > h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #163f58;
+}
+#adminPanel .adm-af-ligne {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 8px;
+}
+#adminPanel .adm-af-note {
+  margin: 6px 0 0; font-size: 12px; line-height: 1.55; color: #6e7a84;
+}
+#adminPanel .adm-af-note code { background: #eef3f7; padding: 1px 5px; border-radius: 4px; color: #13202b; }
+#adminPanel .adm-af-msg { margin: 6px 0 0; font-size: 12.5px; line-height: 1.5; }
+#adminPanel .adm-af-input,
+#adminPanel .adm-af-select,
+#adminPanel .adm-af-textarea { flex: 1 1 200px; min-width: 0; }
+#adminPanel .adm-af-textarea {
+  width: 100%; min-height: 92px;
+  font-family: Consolas, "Courier New", monospace; font-size: 12px;
+}
+#adminPanel .adm-af-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; }
+#adminPanel .adm-af-table th,
+#adminPanel .adm-af-table td {
+  text-align: left; padding: 6px 8px;
+  border-bottom: 1px solid #e8eef2; vertical-align: top;
+}
+#adminPanel .adm-af-table th {
+  color: #6e7a84; font-weight: 900; font-size: 11px;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+#adminPanel .adm-af-table code { font-family: Consolas, monospace; color: #13202b; }
+#adminPanel .adm-af-mini { font-size: 11.5px; padding: 5px 8px; border-radius: 6px; }
+#adminPanel .adm-af-badge {
+  display: inline-block; padding: 2px 7px; border-radius: 999px;
+  font-size: 11px; font-weight: 900; letter-spacing: .02em;
+}
+#adminPanel .adm-af-badge--ok { background: #effff7; color: #075c39; border: 1px solid #aee5ca; }
+#adminPanel .adm-af-badge--warn { background: #fff4d8; color: #8a5b00; border: 1px solid #e8c05f; }
+#adminPanel .adm-af-badge--danger { background: #ffe7e3; color: #8f1b14; border: 1px solid #efb2ac; }
+#adminPanel .adm-af-hist { margin: 6px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.7; color: #4a5a68; }
+
+/* ------------------------------------------------------------------ */
+/* Lien de retour à l'accueil (même rôle que .puzzle-home avant)         */
+/* ------------------------------------------------------------------ */
+.af-retour {
+  display: inline-block; margin-top: 8px;
+  background: rgba(255, 255, 255, .08); color: #fff;
+  border: 1px solid rgba(240, 180, 41, .5); border-radius: 12px;
+  padding: 11px 20px; font-weight: 900; font-size: 13px; text-decoration: none;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.af-retour:hover { background: rgba(240, 180, 41, .85); color: #111; }
+
+/* ------------------------------------------------------------------ */
+/* ACCESSIBILITÉ — police système agrandie + zoom navigateur            */
+/* (règles reprises de css/palier3.css, qui ne sert plus au Palier 3)   */
+/* ------------------------------------------------------------------ */
+html { font-size: 100%; }
+h1, h2, h3, h4, h5, h6, p, li, span, a, label, summary, b, em, i, strong {
+  overflow-wrap: break-word; word-break: break-word;
+}
+img, video, svg, canvas, iframe { max-width: 100%; height: auto; }
+button, input, select, textarea { max-width: 100%; box-sizing: border-box; }
+.af-carte :focus-visible, .magasin-selec :focus-visible, .adm-af-sec :focus-visible {
+  outline: 2px solid var(--af-cyan); outline-offset: 2px;
+}

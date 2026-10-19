@@ -1,0 +1,124 @@
+# =====================================================================
+# Synchronisation hebdomadaire de la liste des magasins Fnac
+#
+#   node tools/sync-magasins-fnac.mjs
+#
+# Le localiseur officiel Fnac est lu ICI (GitHub Actions), jamais depuis
+# le navigateur d'un joueur. L'outil refuse de publier une liste
+# suspecte (source injoignable, format changé, moins de 100 magasins,
+# perte de plus de 20 % de la liste précédente, identifiants manquants
+# ou dupliqués) : dans ce cas le dépôt n'est PAS modifié et l'exécution
+# se termine par un avertissement.
+#
+# Aucune authentification, aucun CAPTCHA, aucun anti-bot n'est
+# contourné : une seule requête GET honnête par exécution, avec un
+# User-Agent identifiable. Si le site refuse, on s'arrête là.
+#
+# Résultat : une PULL REQUEST (jamais un commit direct sur la branche
+# principale) — la liste publiée sert au jeu en production, elle mérite
+# une relecture humaine.
+# =====================================================================
+name: Sync magasins Fnac
+
+on:
+  schedule:
+    # Dimanche 03:00 UTC — avant l'ouverture des magasins.
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Exécuter sans publier (dry-run)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-magasins-fnac
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Contrôle de la liste actuelle
+        run: node tools/sync-magasins-fnac.mjs --check --quiet || true
+
+      - name: Synchronisation depuis le localiseur officiel
+        id: sync
+        continue-on-error: true
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            node tools/sync-magasins-fnac.mjs --dry-run | tee rapport-sync.json
+          else
+            node tools/sync-magasins-fnac.mjs | tee rapport-sync.json
+          fi
+
+      - name: Rapport
+        if: always()
+        run: |
+          echo "### Synchronisation des magasins Fnac" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          sed -n '/^{/,$p' rapport-sync.json 2>/dev/null | head -60 >> "$GITHUB_STEP_SUMMARY" || echo "aucun rapport" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Artefact de rapport
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-sync-magasins
+          path: rapport-sync.json
+          if-no-files-found: ignore
+
+      - name: Pull request si la liste a changé
+        if: steps.sync.outcome == 'success' && inputs.dry_run != 'true'
+        run: |
+          if git diff --quiet -- data/magasins-fnac.json; then
+            echo "Aucun changement : la liste est à jour (ou la synchronisation a été refusée)."
+            exit 0
+          fi
+          branche="sync/magasins-fnac-$(date -u +%Y%m%d)"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branche"
+          git add data/magasins-fnac.json
+          git commit -m "Synchroniser la liste des magasins Fnac ($(date -u +%Y-%m-%d))"
+          git push --force-with-lease origin "$branche"
+          gh pr create \
+            --base "${GITHUB_REF_NAME}" \
+            --head "$branche" \
+            --title "📍 Liste des magasins Fnac — synchronisation $(date -u +%Y-%m-%d)" \
+            --body "$(cat <<'EOF'
+          Synchronisation hebdomadaire du localiseur officiel Fnac.
+
+          **À vérifier avant de fusionner :**
+          - [ ] le nombre de magasins est cohérent (rapport ci-joint) ;
+          - [ ] les nouveaux magasins (`precision: "inconnue"`) ont reçu des
+                coordonnées : centroïde de la commune, vérifié à la main
+                (l'outil n'invente jamais de latitude/longitude) ;
+          - [ ] aucun magasin connu n'a disparu sans raison.
+
+          Après fusion, republier la liste dans Firestore depuis le panneau
+          admin (onglet « 📖 Artefact » → « Publier la liste ») pour que les
+          joueurs la reçoivent sans attendre la prochaine version du site.
+          EOF
+          )"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
