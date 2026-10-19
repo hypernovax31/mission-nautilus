@@ -677,7 +677,8 @@
     }
     /* ── 8ter. BOUTON À 100PX DU CADRE, CENTRE ENTRE HUBLOT ET BOUTON ─────── */
     #ecoutille .ec-scene{padding-bottom:calc(clamp(7px, 2.2vmin, 24px) + 100px + env(safe-area-inset-bottom)) !important; justify-content:space-between !important;}
-    #ecoutille .ec-centre{flex:1 1 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:10px !important; width:100% !important; max-width:min(620px, 92vw) !important; margin:0 auto !important; padding:clamp(4px, 1vmin, 8px) 0 !important; min-height:clamp(40px, 6vh, 80px) !important;}
+    #ecoutille .ec-consigne--sous-hublot{flex:0 0 auto !important; margin:12px auto 0 !important; padding:0 !important; text-align:center !important; width:100% !important; max-width:min(620px, 92vw) !important;}
+    #ecoutille .ec-magasin-wrap{flex:1 1 auto !important; display:flex !important; align-items:center !important; justify-content:center !important; width:100% !important; max-width:min(620px, 92vw) !important; margin:0 auto !important; padding:clamp(4px, 1vmin, 8px) 0 !important; min-height:clamp(60px, 10vh, 90px) !important;}
     #ecoutille .ec-consigne{margin:0 !important; padding:0 !important; text-align:center !important; width:100% !important; max-width:100% !important;}
     #ecoutille .ec-pied{flex:0 0 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:flex-end !important; gap:0 !important; padding:0 !important; margin:0 !important; width:100% !important;}
     #ecoutille .ec-start{margin:0 auto !important; flex-shrink:0 !important;}
@@ -888,8 +889,8 @@
       <div class="ec-cercle"></div>
     </div>
 
-    <div class="ec-centre">
-      <p class="ec-consigne">Huit paliers. <b>Une seule légende.</b></p>
+    <p class="ec-consigne ec-consigne--sous-hublot">Huit paliers. <b>Une seule légende.</b></p>
+    <div class="ec-magasin-wrap">
       <div class="ec-magasin-case">
         <label for="ecMagasinSelect" class="ec-magasin-label">choisis ton magasin de jeu</label>
         <select id="ecMagasinSelect" class="ec-magasin-select"><option value="">Chargement des magasins…</option></select>
