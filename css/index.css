@@ -2440,17 +2440,26 @@ body{overflow-wrap:break-word;}
   body > header .hero-meta { justify-content:center !important; }
   body > header .hero-title { font-size: clamp(56px,6vw,110px) !important; margin:12px auto 0 !important; text-align:center !important; width:auto !important; }
   body > header .hero-line { margin:14px auto 0 !important; text-align:center !important; max-width:42ch !important; }
-  body > header .hero-actions { justify-content:center !important; display:flex !important; visibility:visible !important; opacity:1 !important; gap:14px !important; margin-top:28px !important; flex-wrap:wrap !important; }
-  body > header .hero-actions .hero-cta { display:inline-flex !important; visibility:visible !important; opacity:1 !important; width:auto !important; min-width:210px !important; padding:16px 26px !important; font-size:14px !important; border-radius:999px !important; }
+  body > header .hero-actions { justify-content:center !important; display:flex !important; visibility:visible !important; opacity:1 !important; gap:14px !important; margin-top:28px !important; flex-wrap:wrap !important; flex-direction:column !important; align-items:center !important; }
+  body > header .hero-actions .hero-cta { display:inline-flex !important; visibility:visible !important; opacity:1 !important; width:100% !important; max-width:420px !important; min-width:0 !important; padding:16px 26px !important; font-size:14px !important; border-radius:999px !important; justify-content:center !important; }
   .top-bar { top:18px !important; right:50% !important; left:auto !important; transform:translateX(50%); width:auto !important; max-width:none !important; gap:10px !important; justify-content:center !important; background:rgba(6,22,38,.62); backdrop-filter:blur(12px); border:1px solid rgba(142,231,255,.22); border-radius:999px; padding:6px; }
   .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle { height:38px !important; padding:0 18px !important; font-size:12px !important; flex:0 0 auto !important; max-width:none !important; }
-  main { max-width:1120px !important; margin:0 auto !important; padding:28px 20px 0 !important; display:grid !important; gap:28px !important; grid-template-columns:1fr !important; }
+  main { max-width:760px !important; margin:0 auto !important; padding:28px 20px 0 !important; display:flex !important; flex-direction:column !important; gap:28px !important; }
   .card { border-radius:24px !important; }
   #embarquementMatelot, #retrouverEquipage, #magasinPanel, #oxygenPanel, #equipagesEnMer, #gameCard, #bottomAlertMessage, .intro-card { grid-column:auto !important; display:block !important; opacity:1 !important; visibility:visible !important; }
   .intro-card .body { display:block !important; }
-  .intro-card .mission-steps { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:14px !important; }
-  .site-footer { max-width:1120px; margin:18px auto 0 !important; padding:18px 20px 28px !important; }
-  #adminPanel { max-width:980px !important; margin:18px auto 0 !important; }
+  .intro-card .mission-steps { display:flex !important; flex-direction:column !important; gap:14px !important; }
+  /* 1 seule colonne : toutes les grilles internes passent en pile verticale */
+  .grid, .boarding-grid, .matelot-reveal, .teamlist, .ck-gauges, .admin-form-grid, .admin-form-grid-6, .admin-o2-form, .oxygen-bottom, .member-edit-row, .team-edit-row, .me-sub { display:flex !important; flex-direction:column !important; gap:14px !important; grid-template-columns:1fr !important; }
+  .grid > div, .boarding-grid > div { width:100% !important; min-width:0 !important; }
+  .boarding-grid input, .boarding-grid select, .boarding-action, .boarding-action button { width:100% !important; min-width:0 !important; }
+  .boarding-action { grid-column:auto !important; }
+  .teamlist .team, .grid .card, .countdown-card, .sonar-loader { width:100% !important; max-width:100% !important; }
+  .oxygen-meter-top { flex-direction:column !important; align-items:flex-start !important; }
+  .oxygen-bottom { align-items:stretch !important; }
+  .countdown-block { align-items:flex-start !important; margin-left:0 !important; text-align:left !important; }
+  .site-footer { max-width:760px; margin:18px auto 0 !important; padding:18px 20px 28px !important; flex-direction:column !important; align-items:center !important; gap:10px !important; }
+  #adminPanel { max-width:760px !important; margin:18px auto 0 !important; }
 }
 /* =====================================================================
    ÉCOUTILLES PC — tout visible à l'écran (PC)
@@ -2504,4 +2513,38 @@ body{overflow-wrap:break-word;}
 @media (min-width: 1100px) and (max-height: 720px) {
   #ecoutille .ec-sous-titre { display:none !important; }
   #ecoutille .ec-hublot { width: min(32vh, 380px) !important; height: min(32vh, 380px) !important; }
+}
+/* =====================================================================
+   1 SEULE COLONNE — TABLETTE (641–1099px) : même pile que PC
+   La page d'accueil et de démarrage est pensée mobile-first :
+   dès 641px on garde la pile verticale (pas de 2 colonnes).
+   ===================================================================== */
+@media (min-width: 641px) and (max-width: 1099px) {
+  html { background:#020b14; }
+  .ocean-wallpaper {
+    position: fixed !important; inset:0; z-index:0 !important; opacity:1 !important;
+    background: linear-gradient(180deg, rgba(3,18,33,.72) 0%, rgba(3,18,33,.45) 22%, rgba(3,18,33,.86) 100%), url('../assets/fond-nautilus.jpg') center 18% / cover no-repeat;
+  }
+  header, main, .site-footer { position:relative; z-index:1; }
+  body > header {
+    min-height:auto !important;
+    padding: 32px 20px 36px !important;
+    text-align:center !important;
+    display:block !important;
+    background: linear-gradient(135deg, rgba(2,14,26,.88), rgba(4,28,48,.72)) !important;
+    border-bottom:1px solid rgba(245,176,39,.22) !important;
+  }
+  body > header::before, body > header::after { display:none !important; }
+  body > header .hero-meta { justify-content:center !important; }
+  body > header .hero-title { text-align:center !important; margin:10px auto 0 !important; }
+  body > header .hero-line { margin:12px auto 0 !important; text-align:center !important; max-width:40ch !important; }
+  body > header .hero-actions { justify-content:center !important; flex-direction:column !important; align-items:center !important; gap:12px !important; margin-top:22px !important; }
+  body > header .hero-actions .hero-cta { width:100% !important; max-width:420px !important; justify-content:center !important; }
+  main { max-width:760px !important; margin:0 auto !important; padding:20px 16px 0 !important; display:flex !important; flex-direction:column !important; gap:20px !important; }
+  .grid, .boarding-grid, .matelot-reveal, .teamlist, .ck-gauges, .admin-form-grid, .admin-form-grid-6, .admin-o2-form { display:flex !important; flex-direction:column !important; gap:14px !important; grid-template-columns:1fr !important; }
+  .intro-card .mission-steps { display:flex !important; flex-direction:column !important; gap:14px !important; }
+  .oxygen-bottom { flex-direction:column !important; align-items:stretch !important; }
+  .countdown-block { align-items:flex-start !important; margin-left:0 !important; text-align:left !important; }
+  .site-footer { max-width:760px; margin:14px auto 0 !important; padding:14px 16px 20px !important; flex-direction:column !important; align-items:center !important; }
+  #adminPanel { max-width:760px !important; margin:14px auto 0 !important; }
 }
