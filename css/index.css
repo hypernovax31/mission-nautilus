@@ -2917,6 +2917,11 @@ main{ align-items:stretch !important; }
 }
 @media (orientation:landscape) and (min-width:480px) and (max-height:800px){
   #embarquementMatelot, #retrouverEquipage{min-height:140px !important;}
-  #embarquementMatelot .boarding-grid{grid-template-columns:1fr auto minmax(120px, auto) !important;}
+  /* En paysage : nom + service utilisent toute la largeur du bloc */
+  #embarquementMatelot .boarding-grid{grid-template-columns:1fr 1fr !important; gap:var(--space-sm) !important;}
+  #embarquementMatelot .boarding-grid > div:nth-child(1),
+  #embarquementMatelot .boarding-grid > div:nth-child(2){min-width:0 !important;}
+  #embarquementMatelot .boarding-grid .boarding-action{grid-column:1 / -1 !important;}
+  #embarquementMatelot input, #embarquementMatelot select{width:100% !important; min-width:0 !important; max-width:none !important;}
   #retrouverEquipage .grid{grid-template-columns:1fr minmax(130px, auto) !important;}
 }

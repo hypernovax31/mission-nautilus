@@ -682,6 +682,7 @@
     #ecoutille .ec-magasin-label{font-size:clamp(10px, 1.8vmin, 12px) !important; font-weight:900 !important; letter-spacing:.08em !important; text-transform:uppercase !important; color:#a9cfe0 !important; text-shadow:0 1px 4px rgba(0,0,0,.6) !important; text-align:center !important; margin:0 !important;}
     #ecoutille .ec-magasin-select{width:100% !important; height:38px !important; min-height:38px !important; max-height:38px !important; padding:0 10px !important; line-height:38px !important; font-size:14px !important; font-family:'Exo 2',Arial,Helvetica,sans-serif !important; font-weight:600 !important; border:2px solid #d8e0e6 !important; border-radius:10px !important; background:#fff !important; color:#111 !important; text-align:center !important; text-align-last:center !important; box-sizing:border-box !important; appearance:auto !important; -webkit-appearance:auto !important;}
     #ecoutille .ec-magasin-select:focus{outline:none !important; border-color:#f5b027 !important; box-shadow:0 0 0 4px rgba(245,176,39,.22) !important;}
+    #ecoutille .ec-magasin-geo{font-size:10px !important; line-height:1.3 !important; color:#a9cfe0 !important; text-align:center !important; margin:2px 0 0 !important; min-height:12px !important; text-shadow:0 1px 3px rgba(0,0,0,.6) !important;}
     /* ── 9. MOINS D'ANIMATION : le décor se pose, tout reste lisible ─────── */
     @media (prefers-reduced-motion: reduce){
       #ecoutille .m-rayons{animation:none; opacity:.45}
@@ -768,7 +769,7 @@
     }catch(e){}
   })();
   </script>
-  <link rel="stylesheet" href="css/index.css?v=71">
+  <link rel="stylesheet" href="css/index.css?v=72">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Sélecteur de magasin (accueil) + onglet admin de l'artefact (Palier 3). -->
   <link rel="stylesheet" href="css/artefact.css?v=1">
@@ -888,6 +889,7 @@
       <div class="ec-magasin-case">
         <label for="ecMagasinSelect" class="ec-magasin-label">choisis ton magasin de jeu</label>
         <select id="ecMagasinSelect" class="ec-magasin-select"><option value="">Chargement des magasins…</option></select>
+        <div id="ecMagasinGeoMsg" class="ec-magasin-geo" aria-live="polite"></div>
       </div>
     </div>
     <footer class="ec-pied">
@@ -8746,11 +8748,13 @@ window.PWAInstall = {
 </script>
 <script>
 // Sélecteur magasin sur la page de démarrage — sous l'écoutille, mémorisé pour appareil + matelot
+// Géoloc : propose les 3 plus proches en tête, puis alphabétique
 (function(){
   function initEcMagasin(){
     var sel = document.getElementById('ecMagasinSelect');
     var btn = document.getElementById('ecStart');
     var caisse = document.querySelector('.ec-magasin-case');
+    var geoMsg = document.getElementById('ecMagasinGeoMsg');
     if(!sel || !window.NautilusMagasin || !btn || !caisse) return;
     var courant = window.NautilusMagasin.courant();
     function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c];}); }
@@ -8761,19 +8765,51 @@ window.PWAInstall = {
       if(va<vb) return -1; if(va>vb) return 1;
       return 0;
     }
-    function remplir(r){
-      var liste = r.magasins || [];
+    function remplir(liste, suggestions){
       var utilisables = liste.filter(function(m){return m && m.id && m.actif!==false;}).sort(triAlpha);
       var html = '<option value="">— choisis ton magasin —</option>';
+      var prochesIds = {};
+      if(suggestions && suggestions.length){
+        suggestions.forEach(function(s, i){
+          var m = s.magasin;
+          if(!m || prochesIds[m.id]) return;
+          prochesIds[m.id]=true;
+          var dist = (typeof s.distanceKm==='number') ? s.distanceKm.toFixed(1) + ' km' : '';
+          var prefix = i===0 ? '📍 Le plus proche — ' : '📍 ';
+          html += '<option value="' + esc(m.id) + '">' + esc(prefix + 'Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (dist ? ' ('+dist+')' : '')) + '</option>';
+        });
+        html += '<option disabled>──────────────</option>';
+        if(geoMsg){ geoMsg.textContent = '📍 3 magasins les plus proches — en tête de liste, puis alphabétique'; }
+      } else {
+        if(geoMsg){ geoMsg.textContent = ''; }
+      }
       utilisables.forEach(function(m){
+        if(prochesIds[m.id]) return;
         html += '<option value="' + esc(m.id) + '">' + esc('Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (m.cp ? ' ('+m.cp+')' : '')) + '</option>';
       });
       sel.innerHTML = html;
       if(courant && courant.id) sel.value = courant.id;
     }
-    window.NautilusMagasin.chargerListe().then(remplir).catch(function(){
-      sel.innerHTML = '<option value="">Liste indisponible — recharge la page</option>';
-    });
+    function chargerEtAfficher(){
+      window.NautilusMagasin.chargerListe().then(function(r){
+        var geoP = null;
+        // tente géoloc seulement si pas déjà un choix mémorisé — mais affiche quand même pour découverte
+        try{ geoP = window.NautilusMagasin.suggerer({nombre:3, delaiMs:6000}); }catch(e){ geoP=null; }
+        if(geoP && geoP.then){
+          geoP.then(function(g){
+            var sugs = (g && g.suggestions && g.suggestions.length) ? g.suggestions.slice(0,3) : null;
+            // si la géoloc a échoué ou refusée, sugs est vide → on affiche alphabétique seul
+            remplir(r.magasins||[], sugs);
+          }).catch(function(){ remplir(r.magasins||[], null); });
+        } else {
+          remplir(r.magasins||[], null);
+        }
+      }).catch(function(){
+        sel.innerHTML = '<option value="">Liste indisponible — recharge la page</option>';
+        if(geoMsg) geoMsg.textContent = '';
+      });
+    }
+    chargerEtAfficher();
     sel.addEventListener('change', function(){
       var id = sel.value; if(!id) return;
       window.NautilusMagasin.chargerListe().then(function(r){
