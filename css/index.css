@@ -2480,7 +2480,8 @@ body{overflow-wrap:break-word;}
     flex: 0 0 auto !important;
   }
 
-  header {
+  /* SEUL le header principal (body>header), PAS l'écoutille .ec-enseigne */
+  body > header {
     min-height: 640px !important;
     max-height: none !important;
     display: grid !important;
@@ -2491,13 +2492,13 @@ body{overflow-wrap:break-word;}
     border-bottom: none !important;
     background:
       linear-gradient(115deg, rgba(2,14,26,.86) 0%, rgba(4,28,48,.74) 42%, rgba(6,38,64,.42) 100%) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     border-bottom: 1px solid rgba(245,176,39,.22) !important;
     box-shadow: inset 0 -1px 0 rgba(142,231,255,.14), 0 22px 60px rgba(0,0,0,.45);
   }
-  header::before, header::after { display:none !important; }
+  body > header::before, body > header::after { display:none !important; }
 
-  header .hero-meta, header .hero-title, header .hero-line, header .hero-actions {
+  body > header .hero-meta, body > header .hero-title, body > header .hero-line, body > header .hero-actions {
     grid-column: 1;
     text-align: left !important;
     margin-left: 0 !important;
@@ -2505,11 +2506,11 @@ body{overflow-wrap:break-word;}
     width: 100% !important;
     max-width: none !important;
   }
-  header .hero-meta {
+  body > header .hero-meta {
     justify-content: flex-start !important;
     margin-bottom: 10px !important;
   }
-  header .hero-meta .brand {
+  body > header .hero-meta .brand {
     font-size: 13px !important;
     letter-spacing: .18em !important;
     color: #f5b027 !important;
@@ -2518,7 +2519,7 @@ body{overflow-wrap:break-word;}
     padding: 6px 12px;
     border-radius: 999px;
   }
-  header .hero-meta .hero-kicker {
+  body > header .hero-meta .hero-kicker {
     background: rgba(142,231,255,.10) !important;
     border-color: rgba(142,231,255,.28) !important;
     color: #cfefff !important;
@@ -2526,7 +2527,7 @@ body{overflow-wrap:break-word;}
     letter-spacing: .07em !important;
     padding: 7px 12px !important;
   }
-  header .hero-title {
+  body > header .hero-title {
     margin: 10px 0 0 !important;
     width: 100% !important;
     padding: 0 !important;
@@ -2543,8 +2544,8 @@ body{overflow-wrap:break-word;}
       0 0 22px rgba(142,231,255,.14) !important;
     filter: none !important;
   }
-  header .hero-title::after { display:none !important; }
-  header .hero-line {
+  body > header .hero-title::after { display:none !important; }
+  body > header .hero-line {
     margin-top: 16px !important;
     font-size: clamp(16px, 1.55vw, 23px) !important;
     line-height: 1.5 !important;
@@ -2552,18 +2553,26 @@ body{overflow-wrap:break-word;}
     font-weight: 600 !important;
     max-width: 38ch !important;
   }
-  header .hero-line span {
+  body > header .hero-line span {
     color: #f5b027;
     font-weight: 900;
     text-shadow: 0 0 12px rgba(245,176,39,.32);
   }
-  header .hero-actions {
+  body > header .hero-actions {
     margin-top: 32px !important;
     justify-content: flex-start !important;
     gap: 14px !important;
     flex-wrap: wrap !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
-  header .hero-actions .hero-cta {
+  /* BOUTONS START — TOUJOURS VISIBLES, jamais écrasés par un width */
+  body > header .hero-actions .hero-cta {
+    display: inline-flex !important;
+    align-items: center; justify-content: center;
+    visibility: visible !important;
+    opacity: 1 !important;
     min-width: 0 !important;
     width: auto !important;
     padding: 16px 26px !important;
@@ -2573,23 +2582,24 @@ body{overflow-wrap:break-word;}
     box-shadow: 0 12px 28px rgba(245,176,39,.28), inset 0 1px 0 rgba(255,255,255,.18) !important;
     transition: transform .18s ease, box-shadow .18s ease, filter .18s ease !important;
   }
-  header .hero-actions .hero-cta:hover {
+  body > header .hero-actions .hero-cta:hover {
     transform: translateY(-2px);
     filter: brightness(1.06);
     box-shadow: 0 16px 34px rgba(245,176,39,.32), inset 0 1px 0 rgba(255,255,255,.22) !important;
   }
-  header .hero-actions .hero-cta.ghost {
+  body > header .hero-actions .hero-cta.ghost {
     background: rgba(255,255,255,.08) !important;
     backdrop-filter: blur(8px);
     border-color: rgba(142,231,255,.32) !important;
     color: #eaf6ff !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 8px 22px rgba(0,0,0,.22) !important;
   }
-  header .hero-actions .hero-cta.ghost:hover {
+  body > header .hero-actions .hero-cta.ghost:hover {
     background: rgba(255,255,255,.13) !important;
     border-color: rgba(245,176,39,.42) !important;
   }
-  header::after {
+  /* HUBLOT de droite — on le pose en enfant décoratif, pas en pseudo qui casse la grille */
+  body > header::after {
     display: block !important;
     content:"";
     grid-column: 2;
@@ -2611,8 +2621,9 @@ body{overflow-wrap:break-word;}
       inset 0 0 0 10px rgba(8,28,48,.55),
       inset 0 0 40px rgba(0,0,0,.45);
     overflow: hidden;
+    pointer-events: none;
   }
-  header::before {
+  body > header::before {
     display: block !important;
     content:"";
     grid-column: 2;
@@ -2867,17 +2878,20 @@ body{overflow-wrap:break-word;}
     color: #cfefff !important;
     backdrop-filter: blur(6px);
   }
-  @keyframes pcFadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:none; } }
-  main > .card { animation: pcFadeUp .5s ease both; }
-  main > .card:nth-child(1) { animation-delay: .02s; }
-  main > .card:nth-child(2) { animation-delay: .06s; }
-  main > .card:nth-child(3) { animation-delay: .10s; }
-  main > .card:nth-child(4) { animation-delay: .14s; }
-  main > .card:nth-child(5) { animation-delay: .18s; }
-  main > .card:nth-child(6) { animation-delay: .22s; }
-  main > .card:nth-child(7) { animation-delay: .26s; }
-  main > .card:nth-child(8) { animation-delay: .30s; }
-  @media (prefers-reduced-motion: reduce) { main > .card { animation: none !important; } }
+  /* Tous les éléments VISIBLES par défaut — l'anim est un bonus, pas un masque */
+  main > .card { opacity: 1 !important; visibility: visible !important; transform: none !important; }
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes pcFadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:none; } }
+    main > .card { animation: pcFadeUp .5s ease both; }
+    main > .card:nth-child(1) { animation-delay: .02s; }
+    main > .card:nth-child(2) { animation-delay: .06s; }
+    main > .card:nth-child(3) { animation-delay: .10s; }
+    main > .card:nth-child(4) { animation-delay: .14s; }
+    main > .card:nth-child(5) { animation-delay: .18s; }
+    main > .card:nth-child(6) { animation-delay: .22s; }
+    main > .card:nth-child(7) { animation-delay: .26s; }
+    main > .card:nth-child(8) { animation-delay: .30s; }
+  }
   #adminPanel { max-width: 980px !important; margin: 18px auto 0 !important; border-radius: 22px !important; }
   .hr { opacity: .6; }
   label { font-size: 11px !important; letter-spacing: .06em !important; text-transform: uppercase; opacity: .9; }
@@ -2885,15 +2899,15 @@ body{overflow-wrap:break-word;}
 }
 @media (min-width: 1600px) {
   main { max-width: 1480px !important; gap: 32px !important; padding-top: 36px !important; }
-  header {
+  body > header {
     min-height: 680px !important;
     padding-left: 72px !important;
     padding-right: 72px !important;
     gap: 64px !important;
   }
-  header .hero-title { font-size: 128px !important; }
-  header .hero-line { font-size: 24px !important; max-width: 42ch !important; }
-  header::after, header::before { height: 600px !important; }
+  body > header .hero-title { font-size: 128px !important; }
+  body > header .hero-line { font-size: 24px !important; max-width: 42ch !important; }
+  body > header::after, body > header::before { height: 600px !important; }
   .card { border-radius: 28px !important; }
   .card h2 { padding: 18px 26px !important; font-size: 14px !important; }
   .card .body { padding: 26px 28px 28px !important; }
@@ -2901,6 +2915,6 @@ body{overflow-wrap:break-word;}
   .intro-card .body { padding: 30px 32px 32px !important; gap: 32px !important; }
 }
 @media (min-width: 1100px) and (max-width: 1180px) {
-  header { grid-template-columns: 1fr; min-height: auto !important; }
-  header::before, header::after { display: none !important; }
+  body > header { grid-template-columns: 1fr; min-height: auto !important; }
+  body > header::before, body > header::after { display: none !important; }
 }
