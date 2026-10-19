@@ -671,8 +671,8 @@
     @media (min-height:1000px) and (orientation:portrait){
       #ecoutille .ec-hublot{width:min(30vh, 66vw) !important; height:min(30vh, 66vw) !important}
     }
-    /* ── 8ter. BOUTON À 10PX DU CADRE, CENTRE ENTRE HUBLOT ET BOUTON ─────── */
-    #ecoutille .ec-scene{padding-bottom:calc(clamp(7px, 2.2vmin, 24px) + 10px + env(safe-area-inset-bottom)) !important; justify-content:space-between !important;}
+    /* ── 8ter. BOUTON À 50PX DU CADRE, CENTRE ENTRE HUBLOT ET BOUTON ─────── */
+    #ecoutille .ec-scene{padding-bottom:calc(clamp(7px, 2.2vmin, 24px) + 50px + env(safe-area-inset-bottom)) !important; justify-content:space-between !important;}
     #ecoutille .ec-centre{flex:1 1 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:10px !important; width:100% !important; max-width:min(620px, 92vw) !important; margin:0 auto !important; padding:clamp(4px, 1vmin, 8px) 0 !important; min-height:clamp(40px, 6vh, 80px) !important;}
     #ecoutille .ec-consigne{margin:0 !important; padding:0 !important; text-align:center !important; width:100% !important; max-width:100% !important;}
     #ecoutille .ec-pied{flex:0 0 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:flex-end !important; gap:0 !important; padding:0 !important; margin:0 !important; width:100% !important;}
@@ -1242,7 +1242,7 @@
     <div class="body abyss-warning">
       <p class="abyss-top">Attention équipages</p>
       <h2>LES ABYSSES NE PARDONNENT PAS.</h2>
-      <p class="abyss-bottom">La course est lancée.</p>
+      <p class="abyss-bottom" id="abyssPhase">La course est lancée.</p>
     </div>
   </section>
 
@@ -8947,3 +8947,77 @@ window.PWAInstall = {
   onScroll();
 })();
 </script>
+<script>
+// LES ABYSSES — 3 phases dynamiques
+(function(){
+  var PHRASES = {
+    preparation: "Préparation des équipements — vérifiez vos masques, le Nautilus s'apprête à plonger.",
+    course: "La course est lancée.",
+    urgence: "🚨 Un équipage frôle la surface — le Nautilus va remonter ! Plus que deux paliers, matelots, chaque seconde compte !"
+  };
+  var el = null;
+  function getEl(){ if(!el) el = document.getElementById('abyssPhase'); return el; }
+  function getMissionCfg(){
+    try{
+      var brut = localStorage.getItem('nautilusMissionConfig');
+      if(brut) return JSON.parse(brut);
+    }catch(e){}
+    return null;
+  }
+  function getPhase(){
+    var cfg = getMissionCfg();
+    if(!cfg || !cfg.missionStartedAt) return 'preparation';
+    var started = new Date(cfg.missionStartedAt).getTime();
+    if(isNaN(started) || Date.now() < started) return 'preparation';
+    var dur = (cfg && cfg.missionDurationMs) ? Number(cfg.missionDurationMs) : 7*24*60*60*1000;
+    var remaining = started + dur - Date.now();
+    if(remaining > 0 && remaining < 2*60*60*1000) return 'urgence';
+    var pctEl = document.getElementById('oxygenPercent');
+    if(pctEl){
+      var pct = parseInt((pctEl.textContent||'').replace(/[^0-9]/g,''),10);
+      if(!isNaN(pct) && pct > 0 && pct < 15) return 'urgence';
+    }
+    var statusEl = document.getElementById('oxygenStatus');
+    if(statusEl){
+      var txt = (statusEl.textContent||'').toLowerCase();
+      if(txt.indexOf('épuis') !== -1 || txt.indexOf('remont') !== -1) return 'urgence';
+      if(txt.indexOf('attente') !== -1 || txt.indexOf('préparation') !== -1) return 'preparation';
+    }
+    return 'course';
+  }
+  function appliquer(phase){
+    var target = getEl(); if(!target) return;
+    var ph = phase || getPhase();
+    var txt = PHRASES[ph] || PHRASES.course;
+    if(target.textContent !== txt){
+      target.textContent = txt;
+      target.style.transition = 'opacity .3s';
+      target.style.opacity = '0.3';
+      setTimeout(function(){ target.style.opacity = '1'; }, 220);
+    }
+    target.dataset.phase = ph;
+    var card = document.getElementById('bottomAlertMessage');
+    if(card){ card.dataset.phase = ph; }
+  }
+  function init(){
+    window.setAbyssPhase = function(p){ if(PHRASES[p]) appliquer(p); };
+    window.getAbyssPhase = getPhase;
+    appliquer();
+    setInterval(appliquer, 5000);
+    window.addEventListener('storage', function(e){
+      if(e.key==='nautilusMissionConfig' || e.key==='nautilusOxygen') appliquer();
+    });
+    window.addEventListener('nautilus:ecoutille-ouverte', function(){ setTimeout(appliquer, 400); });
+    var obsTarget = document.getElementById('oxygenStatus') || document.getElementById('oxygenPercent');
+    if(obsTarget && window.MutationObserver){
+      var mo = new MutationObserver(function(){ appliquer(); });
+      try{ mo.observe(obsTarget, {childList:true, characterData:true, subtree:true}); }catch(e){}
+      var pct = document.getElementById('oxygenPercent');
+      if(pct && pct!==obsTarget) try{ mo.observe(pct, {childList:true, characterData:true, subtree:true}); }catch(e){}
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+
