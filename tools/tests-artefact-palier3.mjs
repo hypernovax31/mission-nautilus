@@ -790,11 +790,51 @@ ok('service worker : les nouveaux modules sont préchargés',
   ['artefact-moteur.js', 'artefact-service.js', 'magasin-fnac.js', 'artefact-palier3.js',
    'fnac-lecteur.js', 'admin-artefact.js', 'css/artefact.css', 'data/magasins-fnac.json']
     .every((f) => sw.indexOf(f) >= 0));
+/* Le service worker sert les ASSETS en cache-first : un module dont la
+   version ?v= n'est pas bumpée reste périmée indéfiniment dans le
+   navigateur d'un équipage. Et une même version doit être la même
+   PARTOUT, sinon deux pages chargent deux copies différentes. */
+const pagesArtefact = ['index.html', '1831411720.html'];
+const modulesPartages = ['artefact-moteur.js', 'artefact-service.js', 'magasin-fnac.js',
+  'artefact-palier3.js', 'fnac-lecteur.js', 'admin-artefact.js'];
+const versionsParModule = {};
+pagesArtefact.forEach((pg) => {
+  const src = lire(pg);
+  modulesPartages.forEach((mod) => {
+    const m = src.match(new RegExp('src="' + mod.replace('.', '\\.') + '\\?v=(\\d+)'));
+    if (m) (versionsParModule[mod] = versionsParModule[mod] || []).push({ pg, v: m[1] });
+  });
+});
+ok('un module partagé porte la MÊME version ?v= sur toutes les pages',
+  Object.keys(versionsParModule).every((mod) => {
+    const vs = versionsParModule[mod].map((x) => x.v);
+    return vs.every((v) => v === vs[0]);
+  }));
+/* On compare les BALISES <script src>, pas les commentaires qui citent
+   les noms de fichiers (l'accueil en parle avant de les charger). */
+const balise = (src, mod) => src.indexOf('src="' + mod);
+ok('toute page qui charge le panneau admin charge AUSSI le lecteur de fiches, avant',
+  pagesArtefact.filter((pg) => balise(lire(pg), 'admin-artefact.js') >= 0)
+    .every((pg) => {
+      const src = lire(pg);
+      return balise(src, 'fnac-lecteur.js') >= 0
+        && balise(src, 'fnac-lecteur.js') < balise(src, 'admin-artefact.js');
+    }));
+ok('le moteur est chargé en v2 (vocabulaire de disponibilité réel)',
+  (versionsParModule['artefact-moteur.js'] || []).every((x) => Number(x.v) >= 2));
+
+/* L'accueil doit bien porter la carte du sélecteur de magasin. */
+ok('accueil : la carte « MAGASIN DE LA MISSION » et son hôte existent',
+  /id="magasinPanel"/.test(accueil) && /id="magasinHost"/.test(accueil)
+  && /id="magasinEtat"/.test(accueil));
+ok('accueil : le sélecteur est monté sans demande de position automatique',
+  /monterSelecteur\(/.test(accueil) && /suggereGeo: false/.test(accueil));
+
 ok('Palier 3 : fnac-lecteur.js est chargé, et AVANT le panneau admin',
-  page3.indexOf('fnac-lecteur.js') >= 0
-  && page3.indexOf('fnac-lecteur.js') < page3.indexOf('admin-artefact.js'));
+  balise(page3, 'fnac-lecteur.js') >= 0
+  && balise(page3, 'fnac-lecteur.js') < balise(page3, 'admin-artefact.js'));
 ok('Palier 3 : le moteur est bien chargé avant le lecteur de fiches',
-  page3.indexOf('artefact-moteur.js') < page3.indexOf('fnac-lecteur.js'));
+  balise(page3, 'artefact-moteur.js') < balise(page3, 'fnac-lecteur.js'));
 ok('service worker : l’ancien puzzle et sa photo ne sont plus préchargés',
   sw.indexOf('puzzle-palier3.js') < 0 && sw.indexOf('palier3-lieu.jpg') < 0 && sw.indexOf('css/palier3.css') < 0);
 

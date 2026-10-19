@@ -486,6 +486,71 @@ ok('la zone du joueur ne contient AUCUNE donnée de la fiche lue par l’admin',
   && !/EXEMPLE-1005/.test(zoneJeu) && !/Éditions Imaginaires/.test(zoneJeu));
 
 /* ===================================================================== */
+titre('8. Accueil — la carte « MAGASIN DE LA MISSION » se monte pour de vrai');
+/* ===================================================================== */
+/* Régression : un équipage a signalé l'absence du sélecteur sur la page de
+   démarrage. On rejoue ici le bootstrap EXACT d'index.html (extrait du
+   fichier, pas recopié) sur la carte réelle, avec la liste servie depuis le
+   dépôt — et on vérifie que le sélecteur apparaît et se laisse confirmer. */
+const accueilSrc = lire('index.html');
+const blocs = Array.from(accueilSrc.matchAll(/<script>([\s\S]*?)<\/script>/g)).map((m) => m[1]);
+const bootstrap = blocs.find((b) => b.includes('monterSelecteur'));
+ok('index.html contient bien le bootstrap du sélecteur', !!bootstrap);
+
+/* Le sélecteur de la section 6 est retiré : deux #magasinListe fausseraient
+   les sélections par identifiant. */
+const hote6 = $('#magasin');
+if (hote6 && hote6.parentNode) hote6.parentNode.removeChild(hote6);
+
+win.document.body.insertAdjacentHTML('beforeend',
+  '<section class="card" id="magasinPanel"><h2>MAGASIN DE LA MISSION</h2><div class="body">'
+  + '<div id="magasinHost"></div>'
+  + '<p class="small" id="magasinEtat">Chargement de la liste officielle des magasins…</p>'
+  + '</div></section>');
+win.eval(bootstrap);
+await attendre(250);
+
+const accueilHote = win.document.getElementById('magasinHost');
+ok('la carte n’est plus vide : le sélecteur est monté', accueilHote.innerHTML.trim().length > 200);
+ok('le titre du sélecteur est affiché', /Ton magasin Fnac/.test(accueilHote.textContent));
+ok('l’intro explique que le Palier 3 dépend de ce choix',
+  /Palier 3/.test(accueilHote.textContent) && /TON magasin/i.test(accueilHote.textContent));
+const listeAccueil = win.document.getElementById('magasinListe');
+ok('le champ de recherche est présent', !!win.document.getElementById('magasinRecherche'));
+ok('la liste déroulante est présente', !!listeAccueil);
+ok('la liste officielle est chargée et peuplée (> 100 magasins)',
+  listeAccueil.options.length > 100);
+ok('Labège (cl57) est bien proposée', Array.from(listeAccueil.options).some((o) => o.value === 'cl57'));
+ok('le bouton de géolocalisation existe mais n’est pas déclenché au chargement',
+  !!win.document.getElementById('magasinGeo') && !requetes.some((u) => /geoloc|position/i.test(u)));
+ok('la notice RGPD est affichée', /ni enregistrée, ni transmise/i.test(accueilHote.textContent));
+ok('aucun magasin n’est confirmé d’office', win.document.getElementById('magasinEtat').textContent
+  .indexOf('Aucun magasin confirmé') >= 0);
+
+/* Recherche → sélection → confirmation, comme le ferait un équipage. */
+const champRech = win.document.getElementById('magasinRecherche');
+champRech.value = 'Labège';
+champRech.dispatchEvent(new win.Event('input', { bubbles: true }));
+await attendre(80);
+ok('la recherche filtre la liste', listeAccueil.options.length > 1 && listeAccueil.options.length < 40);
+listeAccueil.value = 'cl57';
+listeAccueil.dispatchEvent(new win.Event('change', { bubbles: true }));
+await clic('#magasinOk');
+await attendre(80);
+ok('le choix est confirmé et mémorisé', MG.courant() && MG.courant().id === 'cl57');
+ok('la carte affiche le magasin choisi', /Labège/.test(win.document.getElementById('magasinEtat').textContent));
+ok('le magasin mémorisé ne contient AUCUNE coordonnée GPS',
+  !('lat' in MG.courant()) && !('lon' in MG.courant()));
+ok('le choix est repris au prochain chargement (localStorage)',
+  win.localStorage.getItem('nautilusMagasin') !== null);
+
+/* Le sélecteur de l'accueil ne doit rien révéler du Palier 3. */
+ok('la carte de l’accueil ne révèle aucun ouvrage', (() => {
+  const t = accueilHote.textContent + win.document.getElementById('magasinEtat').textContent;
+  return SECRET_INTERDIT.every((s) => t.indexOf(s) < 0) && !/\b\d{13}\b/.test(t);
+})());
+
+/* ===================================================================== */
 console.log('\n' + '─'.repeat(60));
 console.log(reussis + ' test(s) d’interface réussi(s), ' + echoues + ' échec(s).');
 console.log('RESULTAT_HEX=' + Buffer.from(reussis + '/' + echoues).toString('hex'));

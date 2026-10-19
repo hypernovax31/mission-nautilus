@@ -8619,8 +8619,8 @@ window.PWAInstall = {
      chargé pour l'onglet admin (admin-artefact.js), qui s'injecte dans le
      panneau admin en ligne de cette page comme dans celui des pages palier.
      Aucun de ces fichiers ne contient de titre d'ouvrage, d'EAN ni de SKU. -->
-<script src="artefact-moteur.js?v=1"></script>
-<script src="artefact-service.js?v=1"></script>
+<script src="artefact-moteur.js?v=2"></script>
+<script src="artefact-service.js?v=2"></script>
 <script src="magasin-fnac.js?v=1"></script>
 <script>
 /* Carte « MAGASIN DE LA MISSION » : liste officielle + recherche + géoloc
@@ -8658,7 +8658,10 @@ window.PWAInstall = {
 })();
 </script>
 <!-- Onglet ADMIN « Artefact » : s'injecte dans le panneau admin existant. -->
-<script src="admin-artefact.js?v=1" defer></script>
+<!-- Lecteur des fiches publiques fnac.com : hors ligne, jamais appele par le jeu.
+     L’onglet admin de l’accueil en a besoin comme celui du Palier 3. -->
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="admin-artefact.js?v=2" defer></script>
 <script src="admin-button.js?v=27" type="module"></script>
 </body>
 </html>
