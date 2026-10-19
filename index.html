@@ -592,11 +592,9 @@
     #ecoutille.ec-presse .ec-dome{transform:translateY(3px) scale(.965); filter:brightness(.9)}
     #ecoutille.ec-presse .ec-start::after{animation:none; opacity:0}
     /* OPEN — bouton START plus visible (anneau blanc + halo renforcé + label agrandi) */
-    #ecoutille .ec-start--open{width:clamp(110px, 22vmin, 190px) !important; filter:drop-shadow(0 0 18px rgba(255,80,64,.85)) drop-shadow(0 0 32px rgba(255,80,64,.45)) drop-shadow(0 4px 18px rgba(0,0,0,.65)) !important;}
-    #ecoutille .ec-start--open::before{box-shadow:0 2.4vmin 4.4vmin rgba(0,0,0,.66), inset 0 0 0 2px rgba(0,0,0,.5), inset 0 .3vmin 0 rgba(255,255,255,.35), 0 0 0 3px rgba(255,255,255,.96), 0 0 24px rgba(255,255,255,.65) !important;}
-    #ecoutille .ec-start--open::after{background:radial-gradient(circle, rgba(255,80,64,.60) 30%, rgba(255,80,64,.20) 56%, rgba(255,80,64,0) 74%) !important; opacity:.95 !important; animation-duration:1.85s !important;}
-    #ecoutille .ec-start--open .ec-dome{inset:13% !important; background:radial-gradient(circle at 34% 26%, #ffcec6 0 5%, #ff6b5a 18%, #e82a1e 42%, #b0120a 68%, #5a0602 100%) !important;}
-    #ecoutille .ec-start--open .ec-start-label{font-size:clamp(19px, 4.7vmin, 38px) !important; letter-spacing:.13em !important; font-weight:1000 !important; text-shadow:0 2px 0 rgba(0,0,0,.75), 0 4px 12px rgba(0,0,0,.65), 0 0 22px rgba(255,255,255,.92), 0 0 34px rgba(255,80,64,.70) !important;}
+    /* OPEN — pro minimaliste, design sous-marin d'origine conservé */
+    #ecoutille .ec-start--open{width:clamp(96px, 20vmin, 170px) !important;}
+    #ecoutille .ec-start--open .ec-start-label{font-size:clamp(17px, 4.2vmin, 30px) !important; letter-spacing:.16em !important;}
     /* Repère de version : discret, il dit quelle page de garde est chargée. */
     #ecoutille .ec-version{
       position:absolute; right:clamp(10px, 2.4vmin, 28px); bottom:clamp(8px, 2vmin, 22px);
@@ -677,8 +675,8 @@
     @media (min-height:1000px) and (orientation:portrait){
       #ecoutille .ec-hublot{width:min(30vh, 66vw) !important; height:min(30vh, 66vw) !important}
     }
-    /* ── 8ter. BOUTON À 50PX DU CADRE, CENTRE ENTRE HUBLOT ET BOUTON ─────── */
-    #ecoutille .ec-scene{padding-bottom:calc(clamp(7px, 2.2vmin, 24px) + 50px + env(safe-area-inset-bottom)) !important; justify-content:space-between !important;}
+    /* ── 8ter. BOUTON À 100PX DU CADRE, CENTRE ENTRE HUBLOT ET BOUTON ─────── */
+    #ecoutille .ec-scene{padding-bottom:calc(clamp(7px, 2.2vmin, 24px) + 100px + env(safe-area-inset-bottom)) !important; justify-content:space-between !important;}
     #ecoutille .ec-centre{flex:1 1 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:10px !important; width:100% !important; max-width:min(620px, 92vw) !important; margin:0 auto !important; padding:clamp(4px, 1vmin, 8px) 0 !important; min-height:clamp(40px, 6vh, 80px) !important;}
     #ecoutille .ec-consigne{margin:0 !important; padding:0 !important; text-align:center !important; width:100% !important; max-width:100% !important;}
     #ecoutille .ec-pied{flex:0 0 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:flex-end !important; gap:0 !important; padding:0 !important; margin:0 !important; width:100% !important;}
@@ -8754,13 +8752,12 @@ window.PWAInstall = {
 </script>
 <script>
 // Sélecteur magasin sur la page de démarrage — sous l'écoutille, mémorisé pour appareil + matelot
-// Géoloc : propose les 3 plus proches en tête, puis alphabétique
+// Géoloc : sélection auto si dans un magasin, sinon 3 plus proches en tête puis alphabétique
 (function(){
   function initEcMagasin(){
     var sel = document.getElementById('ecMagasinSelect');
     var btn = document.getElementById('ecStart');
     var caisse = document.querySelector('.ec-magasin-case');
-    var geoMsg = document.getElementById('ecMagasinGeoMsg');
     if(!sel || !window.NautilusMagasin || !btn || !caisse) return;
     var courant = window.NautilusMagasin.courant();
     function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c];}); }
@@ -8785,9 +8782,6 @@ window.PWAInstall = {
           html += '<option value="' + esc(m.id) + '">' + esc(prefix + 'Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (dist ? ' ('+dist+')' : '')) + '</option>';
         });
         html += '<option disabled>──────────────</option>';
-        if(geoMsg){ geoMsg.textContent = '📍 3 magasins les plus proches — en tête de liste, puis alphabétique'; }
-      } else {
-        if(geoMsg){ geoMsg.textContent = ''; }
       }
       utilisables.forEach(function(m){
         if(prochesIds[m.id]) return;
@@ -8799,20 +8793,29 @@ window.PWAInstall = {
     function chargerEtAfficher(){
       window.NautilusMagasin.chargerListe().then(function(r){
         var geoP = null;
-        // tente géoloc seulement si pas déjà un choix mémorisé — mais affiche quand même pour découverte
         try{ geoP = window.NautilusMagasin.suggerer({nombre:3, delaiMs:6000}); }catch(e){ geoP=null; }
         if(geoP && geoP.then){
           geoP.then(function(g){
             var sugs = (g && g.suggestions && g.suggestions.length) ? g.suggestions.slice(0,3) : null;
-            // si la géoloc a échoué ou refusée, sugs est vide → on affiche alphabétique seul
+            // auto-sélection si le joueur est DANS un magasin (< 150m)
+            var autoSel = null;
+            if(sugs && sugs.length && typeof sugs[0].distanceKm==='number' && sugs[0].distanceKm < 0.15){
+              autoSel = sugs[0].magasin;
+            }
             remplir(r.magasins||[], sugs);
-          }).catch(function(){ remplir(r.magasins||[], null); });
+            if(autoSel && !courant){
+              sel.value = autoSel.id;
+              courant = window.NautilusMagasin.memoriser(autoSel, 'ecoutille-geoloc');
+            } else if(courant && courant.id){
+              sel.value = courant.id;
+            }
+          }).catch(function(){ remplir(r.magasins||[], null); if(courant && courant.id) sel.value=courant.id; });
         } else {
           remplir(r.magasins||[], null);
+          if(courant && courant.id) sel.value = courant.id;
         }
       }).catch(function(){
         sel.innerHTML = '<option value="">Liste indisponible — recharge la page</option>';
-        if(geoMsg) geoMsg.textContent = '';
       });
     }
     chargerEtAfficher();
