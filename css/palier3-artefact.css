@@ -1,0 +1,7 @@
+/* Styles isolés du palier 3. Aucun sélecteur global afin de limiter l’impact. */
+#palier3Artefact { --p3-ink:#dff6ff; --p3-gold:#f5b027; color:var(--p3-ink); background:linear-gradient(145deg,#061524,#0b3048); border:1px solid rgba(245,176,39,.35); border-radius:18px; padding:clamp(16px,3vw,28px); }
+#palier3Artefact [data-p3-grid] { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+#palier3Artefact [data-p3-panel] { background:rgba(0,0,0,.24); border:1px solid rgba(142,231,255,.2); border-radius:12px; padding:14px; }
+#palier3Artefact [data-p3-action] { background:var(--p3-gold); color:#111; border:0; border-radius:10px; padding:10px 14px; font-weight:900; cursor:pointer; }
+#palier3Artefact [data-p3-error] { color:#ffd0cd; background:rgba(255,75,62,.14); border:1px solid rgba(255,75,62,.45); padding:10px; border-radius:10px; }
+@media (max-width:640px){#palier3Artefact{padding:14px}#palier3Artefact [data-p3-grid]{grid-template-columns:1fr}}
