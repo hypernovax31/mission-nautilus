@@ -397,16 +397,17 @@
         filter:drop-shadow(0 .5vmin 1.6vmin rgba(0,0,0,.72));
       }
     }
-    /* Bloc titre resserré et ajusté au contenu : H1 + H3 centrés */
+    /* Bloc titre resserré et ajusté au contenu : H1 + H4 centrés, marges internes responsives */
     #ecoutille .ec-titre-bloc{
       display:flex; flex-direction:column; align-items:center; justify-content:center;
-      gap:clamp(4px,.9vmin,9px);
+      gap:clamp(3px,.7vmin,8px);
       width:fit-content; max-width:100%; margin:0 auto;
-      padding:clamp(2px,.6vmin,8px) clamp(10px,2vmin,18px);
+      padding:clamp(2px,.5vmin,6px) clamp(8px,1.6vmin,16px);
       text-align:center;
     }
     #ecoutille .ec-titre{ text-align:center }
-    #ecoutille .ec-sous-titre-h3{
+    #ecoutille .ec-sous-titre-h3,
+    #ecoutille .ec-sous-titre-h4{
       margin:0; font-family:Georgia,"Times New Roman",serif; font-style:normal;
       font-size:clamp(10px, 2vmin, 17px); line-height:1.25; letter-spacing:.18em;
       text-transform:uppercase; color:#bfe8f7; text-align:center;
@@ -802,8 +803,8 @@
         </span>
       </div>
       <div class="ec-titre-bloc">
-        <h1 class="ec-titre">Expedition du nautilus</h1>
-        <h3 class="ec-sous-titre-h3">Dans les haute-mers des rayons Fnac</h3>
+        <h1 class="ec-titre">Expedition Fnac à bord du Nautilus</h1>
+        <h4 class="ec-sous-titre-h4">Montée des eaux entre les rayons</h4>
       </div>
     </header>
 
