@@ -89,12 +89,10 @@
       var origDepart = cfg.onDepart;
       var departAvecCinematic = function(ev){
         if(window.NautilusCinematic && window.NautilusCinematic.playCountdown){
-          // obscurcit le fond puis lance 3,2,1,GO avant d'armer la partie
-          window.NautilusCinematic.playCountdown().then(function(){
+          window.NautilusCinematic.playCountdown(function(){
             try{ origDepart(ev); }catch(e){}
-            // le chronomètre du mini-jeu démarre : les bords clignoteront à <10s
             if(window.NautilusCinematic.autoWatchFromDom){
-              setTimeout(function(){ try{ window.NautilusCinematic.autoWatchFromDom(); }catch(e){} }, 600);
+              setTimeout(function(){ try{ window.NautilusCinematic.autoWatchFromDom(); }catch(e){} }, 650);
             }
           });
         } else {
@@ -110,7 +108,7 @@
         if (btn.disabled) return;
         btn.disabled = true;
         try { departAvecCinematic(ev); } finally {
-          setTimeout(function () { btn.disabled = false; }, 3400);
+          setTimeout(function () { btn.disabled = false; }, 4200);
         }
       });
     }
