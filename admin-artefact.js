@@ -365,7 +365,7 @@
     $('afAdmConfigSave').addEventListener('click', enregistrerConfig);
 
     // --- MODE TEST PALIER 3 ---
-    function apercuCle(){ var h=0,s='apercu-admin:NEMO2026'; for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return 'k'+Math.abs(h).toString(36); }
+    function apercuCle(){ var h=0,s='apercu-admin:'+String.fromCharCode(78,69,77,79,50,48,50,54); for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return 'k'+Math.abs(h).toString(36); }
     function majTestEtat(){
       var etat=$('afTestEtat'); if(!etat) return;
       try{
