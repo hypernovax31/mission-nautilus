@@ -1191,7 +1191,7 @@
           <div class="oxygen-state" id="oxygenState">PRESSION STABLE</div>
             <div class="countdown-block">
             <div class="countdown-label">
-              <span class="countdown-kicker" id="oxygenInitialDuration">COMPTE À REBOURS — Durée initiale : 7 jours</span>
+              <span class="countdown-kicker" id="oxygenInitialDuration">Durée initiale : 7 jours</span>
             </div>
             <div class="countdown" id="oxygenCountdown">7J 00h00m00s</div>
           </div>
@@ -5758,7 +5758,7 @@ function qrDataUri(text, opts){
   function updateInitialDurationLabel(){
     const el = $('oxygenInitialDuration');
     if(!el) return;
-    el.textContent = 'COMPTE À REBOURS — Durée initiale : ' + formatInitialDuration(getMissionDurationMs());
+    el.textContent = 'Durée initiale : ' + formatInitialDuration(getMissionDurationMs());
   }
 
   /* Format « XJ XXhXXmXXs » d'une durée (état « en attente du top départ »,
