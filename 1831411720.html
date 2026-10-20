@@ -682,8 +682,11 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     catch (e) { try { window.scrollTo(0, 0); } catch (_) {} }
   }
 
-  /* Démarrage : choix de la VUE (identique au Palier 2). */
-  if (apercuAdminAutorise()) {
+  /* Démarrage : choix de la VUE (identique au Palier 2).
+     Mode test ZZZZ-0000 bypass le sas comme l'aperçu organisateur :
+     l'organisateur qui active le test sur 1831411720.html doit voir
+     directement le briefing, pas la page scellée. */
+  if (apercuAdminAutorise() || enModeTest()) {
     var banniereModeTest = function () {
       if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
     };
@@ -727,7 +730,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   <script src="palier-cinematic.js?v=3"></script>
 <!-- Onglet ADMIN de l'artefact : s'injecte dans le panneau admin existant
      (admin-button.js) sans modifier son HTML dupliqué. -->
-<script src="admin-artefact.js?v=2" defer></script>
+<script src="admin-artefact.js?v=3" defer></script>
 <script src="admin-button.js?v=27" type="module"></script>
 </body>
 </html>

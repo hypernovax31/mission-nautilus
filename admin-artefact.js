@@ -378,8 +378,20 @@
     if(btnAct) btnAct.addEventListener('click', function(){
       try{ localStorage.setItem('nautilusMatelotCode','ZZZZ-0000'); localStorage.setItem('nautilusCurrentTeam','NEMO'); }catch(e){}
       majTestEtat();
-      dire('afTestEtat','✅ Mode test activé — ouvre le Palier 3 en test.','ok');
-      setTimeout(majTestEtat, 1200);
+      // Si on est déjà sur le Palier 3 scellé, bascule immédiatement en aperçu (même onglet)
+      try{
+        if(/1831411720\.html/.test(location.pathname) || /1831411720/.test(location.href)){
+          var kk=apercuCle();
+          // si pas déjà en aperçu, navigue vers l'épreuve
+          if(!/[?&]apercu=jeu/.test(location.search)){
+            dire('afTestEtat','✅ Mode test activé — bascule vers l’épreuve…','ok');
+            setTimeout(function(){ location.href='1831411720.html?apercu=jeu&k='+kk+'&m=ZZZZ-0000'; }, 600);
+            return;
+          }
+        }
+      }catch(e){}
+      dire('afTestEtat','✅ Mode test activé — clique « Ouvrir le Palier 3 » (ou recharge la page du Palier 3).','ok');
+      setTimeout(majTestEtat, 2200);
     });
     if(btnDes) btnDes.addEventListener('click', function(){
       try{ localStorage.removeItem('nautilusMatelotCode'); }catch(e){}
@@ -389,6 +401,13 @@
     if(btnOuv) btnOuv.addEventListener('click', function(){
       var k=apercuCle();
       var url='1831411720.html?apercu=jeu&k='+k+'&m=ZZZZ-0000';
+      // Si on est déjà sur 1831411720, navigue dans le même onglet (évite popup bloqué)
+      try{
+        if(/1831411720\.html/.test(location.pathname)){
+          location.href=url;
+          return;
+        }
+      }catch(e){}
       window.open(url,'_blank');
     });
     // état initial
