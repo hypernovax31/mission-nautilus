@@ -216,7 +216,12 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
   function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
   function enModeTest() {
-    try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
+    try {
+      if ((localStorage.getItem('nautilusMatelotCode') || '').toUpperCase() === 'ZZZZ-0000') return true;
+      // fallback URL direct (première visite, storage pas encore posé par palier-sas.js)
+      if (/[?&]m=ZZZZ-0000(?:&|$)/i.test(location.search)) return true;
+      return false;
+    } catch (e) { return /[?&]m=ZZZZ-0000(?:&|$)/i.test(location.search); }
   }
   function blocageAnonymeJusqua() {
     try { return Number(localStorage.getItem(CLE_BLOCAGE_ANONYME) || 0); } catch (e) { return 0; }
