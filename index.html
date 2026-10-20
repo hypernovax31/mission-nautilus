@@ -678,10 +678,11 @@
     /* ── 8ter. BOUTON À 100PX DU CADRE, CENTRE ENTRE HUBLOT ET BOUTON ─────── */
     #ecoutille .ec-scene{padding-bottom:calc(clamp(7px, 2.2vmin, 24px) + 100px + env(safe-area-inset-bottom)) !important; justify-content:space-between !important;}
     #ecoutille .ec-consigne--sous-hublot{flex:0 0 auto !important; margin:12px auto 0 !important; padding:0 !important; text-align:center !important; width:100% !important; max-width:min(620px, 92vw) !important;}
-    #ecoutille .ec-magasin-wrap{flex:1 1 auto !important; display:flex !important; align-items:center !important; justify-content:center !important; width:100% !important; max-width:min(620px, 92vw) !important; margin:0 auto !important; padding:clamp(4px, 1vmin, 8px) 0 !important; min-height:clamp(60px, 10vh, 90px) !important;}
+    #ecoutille .ec-magasin-wrap{flex:1 1 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:clamp(14px, 2.5vmin, 22px) !important; width:100% !important; max-width:min(620px, 92vw) !important; margin:0 auto !important; padding:clamp(12px, 2vmin, 20px) 0 !important; min-height:clamp(140px, 18vh, 180px) !important;}
     #ecoutille .ec-consigne{margin:0 !important; padding:0 !important; text-align:center !important; width:100% !important; max-width:100% !important;}
     #ecoutille .ec-pied{flex:0 0 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:flex-end !important; gap:0 !important; padding:0 !important; margin:0 !important; width:100% !important;}
     #ecoutille .ec-start{margin:0 auto !important; flex-shrink:0 !important;}
+    #ecoutille .ec-magasin-wrap .ec-start{margin-top:2px !important;}
     /* ── 8quater. SÉLECTEUR MAGASIN SUR PAGE DÉMARRAGE — reprend CSS jeu ─────── */
     #ecoutille .ec-magasin-case{display:flex !important; flex-direction:column !important; align-items:center !important; gap:6px !important; width:min(92vw, 380px) !important; margin:0 auto !important; padding:0 !important; flex:0 0 auto !important;}
     #ecoutille .ec-magasin-label{font-size:clamp(10px, 1.8vmin, 12px) !important; font-weight:900 !important; letter-spacing:.08em !important; text-transform:uppercase !important; color:#a9cfe0 !important; text-shadow:0 1px 4px rgba(0,0,0,.6) !important; text-align:center !important; margin:0 !important;}
@@ -896,12 +897,12 @@
         <select id="ecMagasinSelect" class="ec-magasin-select"><option value="">Chargement des magasins…</option></select>
         <div id="ecMagasinGeoMsg" class="ec-magasin-geo" aria-live="polite"></div>
       </div>
-    </div>
-    <footer class="ec-pied">
       <button id="ecStart" class="ec-start ec-start--open" type="button" aria-label="OPEN — ouvrir le sas du Nautilus et lancer l'aventure">
         <span class="ec-dome" aria-hidden="true"></span>
         <span class="ec-start-label">OPEN</span>
       </button>
+    </div>
+    <footer class="ec-pied">
       <span class="ec-version">garde v16</span>
     </footer>
   </div>
@@ -8997,7 +8998,7 @@ window.PWAInstall = {
 // LES ABYSSES — 3 phases dynamiques
 (function(){
   var PHRASES = {
-    preparation: "Préparation des équipements — vérifiez vos masques, le Nautilus s'apprête à plonger.",
+    preparation: "Préparation des équipements — Le Nautilus s'apprête à plonger.",
     course: "La course est lancée.",
     urgence: "🚨 Un équipage frôle la surface — le Nautilus va remonter ! Plus que deux paliers, matelots, chaque seconde compte !"
   };
