@@ -707,6 +707,40 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   }
   window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
 
+  /* DEBUG MODE TEST — si le scellé reste affiché alors que l'URL porte les marques du test,
+     on l'explique et on propose de forcer le briefing (évite un cache HTML périmé). */
+  (function(){
+    try {
+      var estScelle = !document.getElementById('briefCard') || !document.getElementById('briefCard').hidden===false;
+      // on vérifie après le choix de vue (100ms)
+      setTimeout(function(){
+        var hero = document.getElementById('gateHero');
+        var brief = document.getElementById('briefCard');
+        var enScelle = hero && !hero.hidden && hero.style.display!=='none';
+        // alternative: brief hidden means still scellé
+        var briefVisible = brief && !brief.hidden && brief.style.display!=='none';
+        if (enScelle && !briefVisible) {
+          var hasTest = false; try { hasTest = (localStorage.getItem('nautilusMatelotCode')||'').toUpperCase()==='ZZZZ-0000'; } catch(e){}
+          var hasApercu = /[?&]apercu=jeu/.test(location.search);
+          var kParam = (location.search.match(/[?&]k=([a-z0-9]+)/)||[])[1]||'';
+          var h=0, s='apercu-admin:'+String.fromCharCode(78,69,77,79,50,48,50,54); for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;} var kAtt='k'+Math.abs(h).toString(36);
+          if (hasTest || hasApercu) {
+            var msg = document.getElementById('gateMsg');
+            if (msg) {
+              msg.innerHTML = '<div style="background:#fffbe6;border:1px solid #f0d78a;border-radius:8px;padding:8px 10px;margin-top:8px">'
+                + '<b>🧪 Mode test détecté mais scellé resté affiché</b><br>'
+                + '<span style="font-size:11px">URL: <code>'+location.search+'</code><br>localStorage ZZZZ: '+hasTest+' · k reçu: <code>'+kParam+'</code> · k attendu: <code>'+kAtt+'</code></span><br>'
+                + '<button type="button" id="forceBriefBtn" style="margin-top:6px;background:var(--fnac);color:#111;border-radius:7px;padding:6px 10px;font-weight:900">➡️ Forcer le briefing (mode test)</button>'
+                + '</div>';
+              var b=document.getElementById('forceBriefBtn');
+              if(b) b.addEventListener('click', function(){ afficherVueBriefing(); window.scrollTo({top:0,behavior:'smooth'}); });
+            }
+          }
+        }
+      }, 250);
+    } catch(e){}
+  })();
+
   /* --- Indication de la zone de recherche : dépliable SUR PLACE --- */
   var _btnIndication = $('sasIndicationBtn');
   var _panelIndication = $('sasIndicationPanel');
