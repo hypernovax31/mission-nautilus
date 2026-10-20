@@ -22,9 +22,9 @@
     radial-gradient(90% 70% at 50% 100%, rgba(245,176,39,.07), transparent 60%);
   backdrop-filter:blur(3px);
   opacity:0;transition:opacity .32s ease;
-  pointer-events:auto;overflow:hidden;
+  pointer-events:none;overflow:hidden;
 }
-.nautilus-cinematic-overlay.show{opacity:1}
+.nautilus-cinematic-overlay.show{opacity:1;pointer-events:auto}
 .nautilus-cinematic-overlay.show-out{opacity:0;pointer-events:none;transition:opacity .38s ease}
 /* Vignette sombre */
 .nautilus-cinematic-overlay::after{
