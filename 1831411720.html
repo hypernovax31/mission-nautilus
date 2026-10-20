@@ -573,6 +573,11 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     /* Le magasin choisi à l'accueil est repris ; sinon le jeu propose le
        sélecteur (avec géolocalisation) avant toute recherche d'ouvrage. */
     var magasin = (window.NautilusMagasin && window.NautilusMagasin.courant()) || null;
+    // MODE TEST : sans magasin choisi, on force Labège 2 (cl57) pour la démo — évite l'écran vide
+    if (!magasin && (apercuAdminAutorise() || enModeTest())) {
+      magasin = { id: 'cl57', nom: 'Labège 2', ville: 'Labège', cp: '31670' };
+      try { if (window.NautilusMagasin && window.NautilusMagasin.memoriser) window.NautilusMagasin.memoriser(magasin, 'test-auto'); } catch(e){}
+    }
     var identJeu = await monIdentite();
     var amorcage = await amorcerService(magasin ? magasin.id : '');
 
