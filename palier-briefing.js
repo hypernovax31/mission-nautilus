@@ -86,6 +86,21 @@
       + '</div>';
     var btn = document.getElementById(ctaId);
     if (btn && typeof cfg.onDepart === 'function') {
+      var origDepart = cfg.onDepart;
+      var departAvecCinematic = function(ev){
+        if(window.NautilusCinematic && window.NautilusCinematic.playCountdown){
+          // obscurcit le fond puis lance 3,2,1,GO avant d'armer la partie
+          window.NautilusCinematic.playCountdown().then(function(){
+            try{ origDepart(ev); }catch(e){}
+            // le chronomètre du mini-jeu démarre : les bords clignoteront à <10s
+            if(window.NautilusCinematic.autoWatchFromDom){
+              setTimeout(function(){ try{ window.NautilusCinematic.autoWatchFromDom(); }catch(e){} }, 600);
+            }
+          });
+        } else {
+          try{ origDepart(ev); }catch(e){}
+        }
+      };
       btn.addEventListener('click', function (ev) {
         /* Clics répétés d'un joueur impatient : le départ ne peut pas
            partir deux fois (même réflexe que le « PRENDRE LES
@@ -94,8 +109,8 @@
            il resterait mort. */
         if (btn.disabled) return;
         btn.disabled = true;
-        try { cfg.onDepart(ev); } finally {
-          setTimeout(function () { btn.disabled = false; }, 3000);
+        try { departAvecCinematic(ev); } finally {
+          setTimeout(function () { btn.disabled = false; }, 3400);
         }
       });
     }
