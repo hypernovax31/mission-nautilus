@@ -263,11 +263,69 @@
 
   function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 
+  // ---- SONORISATION LÉGÈRE DU DÉCOMPTE (4 tops : 3,2,1,GO) ----
+  var _cinCtx = null;
+  function _cinSonActif(){
+    try{ if(localStorage.getItem('nautilusSoundOn')==='0') return false; }catch(e){}
+    if(typeof document!=='undefined' && document.visibilityState!=='visible') return false;
+    return true;
+  }
+  function _cinCtxGet(){
+    if(_cinCtx && _cinCtx.state!=='closed') return _cinCtx;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    try{ _cinCtx = new AC(); }catch(e){ return null; }
+    if(window.NautilusSon) window.NautilusSon.registerContexte(_cinCtx);
+    return _cinCtx;
+  }
+  function _cinBeep(freq, vol, dur, type){
+    if(!_cinSonActif()) return;
+    var ctx = _cinCtxGet();
+    if(!ctx) return;
+    if(ctx.state==='suspended'){ try{ ctx.resume(); }catch(e){} }
+    try{
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      var f = ctx.createBiquadFilter();
+      f.type = 'lowpass'; f.frequency.value = 3200;
+      o.type = type || 'sine';
+      o.frequency.value = freq;
+      g.gain.value = 0;
+      o.connect(f); f.connect(g); g.connect(ctx.destination);
+      var t0 = ctx.currentTime;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(vol, t0+0.015);
+      g.gain.setValueAtTime(vol*0.95, t0+0.08);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+      o.start(t0);
+      o.stop(t0+dur+0.02);
+    }catch(e){}
+  }
+  function _cinTick(n){
+    // 3,2,1 : léger, pas agressif — sinus doux, 660→780→880
+    var table = { '3': 523.25, '2': 659.25, '1': 783.99 };
+    var f = table[String(n)] || 659.25;
+    _cinBeep(f, 0.18, 0.28, 'sine');
+    // seconde harmonique très douce pour la rondeur
+    setTimeout(function(){ _cinBeep(f*2, 0.05, 0.18, 'triangle'); }, 18);
+  }
+  function _cinGo(){
+    // GO : top départ léger — C6 doux + E6 en écho, pas agressif
+    _cinBeep(1046.50, 0.22, 0.55, 'sine');
+    setTimeout(function(){ _cinBeep(1318.51, 0.09, 0.42, 'sine'); }, 70);
+    setTimeout(function(){ _cinBeep(659.25, 0.06, 0.35, 'triangle'); }, 110);
+  }
+
   // Lance le jeu PENDANT que GO est à l'écran → zéro délai perçu
   async function playCountdown(launchFn){
     var ov = ensureOverlay();
     var numEl = document.getElementById('nautilusCinematicNumber');
     var subEl = document.getElementById('nautilusCinematicSub');
+    // Pré-arma l'audio DANS le geste utilisateur (iOS) — pas agressif
+    if(_cinSonActif()){
+      var _c = _cinCtxGet();
+      if(_c && _c.state==='suspended'){ try{ _c.resume(); }catch(e){} }
+    }
     // Réinitialise l'état
     ov.classList.remove('show-out','go','counting');
     void ov.offsetWidth;
@@ -294,6 +352,7 @@
       numEl.className = 'nautilus-cinematic-number ' + s.cls;
       void numEl.offsetWidth;
       numEl.classList.add('in');
+      try{ if(isGo) _cinGo(); else _cinTick(s.txt); }catch(e){}
       // Si GO : déclenche le mini-jeu 260ms après l'apparition (au pic de l'anim)
       if(isGo && typeof launchFn==='function'){
         await sleep(260);
