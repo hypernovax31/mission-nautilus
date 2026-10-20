@@ -91,6 +91,16 @@
     + '<div id="afLightBanner" class="adm-af-note" style="background:#eef4ff;border:1px solid #c5d6f0;border-radius:8px;padding:8px 10px;margin-bottom:10px">'
     + '💡 <b>Mode simple</b> : le magasin + la dispo + les pistes suffisent. Le coffre s’ouvre avec la phrase d’administration — elle n’est jamais enregistrée.'
     + '</div>'
+    + '<div class="adm-af-sec" style="background:#fffbe6;border-color:#f0d78a">'
+    +   '<h4>🧪 Mode test — Palier 3</h4>'
+    +   '<p class="adm-af-note">Joue l’épreuve sur <b>cet appareil</b> sans QR ni blocage : catalogue d’exemple, pistes fictives, aucune écriture réelle. Idéal pour vérifier le parcours avant la mission.</p>'
+    +   '<div class="adm-af-ligne">'
+    +     '<button id="afTestActiver" class="primary" type="button">🧪 Activer le mode test</button>'
+    +     '<button id="afTestOuvrir" class="primary" type="button">▶️ Ouvrir le Palier 3 en test</button>'
+    +     '<button id="afTestDesactiver" class="secondary" type="button">⏹ Désactiver</button>'
+    +   '</div>'
+    +   '<p class="adm-af-note" id="afTestEtat"></p>'
+    + '</div>'
 
     /* --- phrase d'administration --- */
     + '<div class="adm-af-sec">'
@@ -300,6 +310,8 @@
     });
     if (!_charge) { _charge = true; rafraichirTout(); }
     else { rafraichirSessions(); rafraichirCartouches(); }
+    // maj état test si présent
+    try{ var etat=document.getElementById('afTestEtat'); if(etat){ var c=(localStorage.getItem('nautilusMatelotCode')||'').toUpperCase(); etat.textContent=(c==='ZZZZ-0000')?'✅ Mode test actif sur cet appareil (ZZZZ-0000) — aucune progression réelle ne sera enregistrée.':'Mode test inactif. Active-le pour tester sans QR ni blocage.'; } }catch(e){}
   }
 
   function brancher() {
@@ -351,6 +363,36 @@
     $('afAdmCartouchesReload').addEventListener('click', rafraichirCartouches);
     $('afAdmSessionsReload').addEventListener('click', rafraichirSessions);
     $('afAdmConfigSave').addEventListener('click', enregistrerConfig);
+
+    // --- MODE TEST PALIER 3 ---
+    function apercuCle(){ var h=0,s='apercu-admin:NEMO2026'; for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return 'k'+Math.abs(h).toString(36); }
+    function majTestEtat(){
+      var etat=$('afTestEtat'); if(!etat) return;
+      try{
+        var code=(localStorage.getItem('nautilusMatelotCode')||'').toUpperCase();
+        if(code==='ZZZZ-0000') etat.textContent='✅ Mode test actif sur cet appareil (ZZZZ-0000) — aucune progression réelle ne sera enregistrée.';
+        else etat.textContent='Mode test inactif. Active-le pour tester sans QR ni blocage.';
+      }catch(e){}
+    }
+    var btnAct=$('afTestActiver'), btnOuv=$('afTestOuvrir'), btnDes=$('afTestDesactiver');
+    if(btnAct) btnAct.addEventListener('click', function(){
+      try{ localStorage.setItem('nautilusMatelotCode','ZZZZ-0000'); localStorage.setItem('nautilusCurrentTeam','NEMO'); }catch(e){}
+      majTestEtat();
+      dire('afTestEtat','✅ Mode test activé — ouvre le Palier 3 en test.','ok');
+      setTimeout(majTestEtat, 1200);
+    });
+    if(btnDes) btnDes.addEventListener('click', function(){
+      try{ localStorage.removeItem('nautilusMatelotCode'); }catch(e){}
+      majTestEtat();
+      dire('afTestEtat','⏹ Mode test désactivé.','warn');
+    });
+    if(btnOuv) btnOuv.addEventListener('click', function(){
+      var k=apercuCle();
+      var url='1831411720.html?apercu=jeu&k='+k+'&m=ZZZZ-0000';
+      window.open(url,'_blank');
+    });
+    // état initial
+    try{ setTimeout(majTestEtat, 400); }catch(e){}
 
     /* La phrase ne doit jamais survivre à la page. */
     window.addEventListener('beforeunload', function () { _phrase = ''; _catalogue = null; });
