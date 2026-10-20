@@ -2900,7 +2900,7 @@ main{ align-items:stretch !important; }
 #embarquementMatelot input, #embarquementMatelot select, #retrouverEquipage input{
   width:100% !important; min-width:0 !important;
   height:38px !important; min-height:38px !important; max-height:38px !important;
-  padding:0 10px !important; line-height:38px !important; font-size:14px !important;
+  padding:0 10px !important; line-height:38px !important; font-size:16px !important;
   box-sizing:border-box !important; display:block !important; border-radius:10px !important;
 }
 #embarquementMatelot select{width:auto !important; min-width:84px !important; max-width:100% !important; padding-right:24px !important; text-align:center !important; text-align-last:center !important;}
