@@ -2497,7 +2497,7 @@ body{overflow-wrap:break-word;}
   .boarding-grid { display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:var(--gutter) !important; }
   .grid { display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--gutter) !important; }
   label { font-size:12px !important; margin:0 0 5px !important; }
-  input, select { min-height:38px !important; height:38px !important; padding:8px 10px !important; font-size:13px !important; border-radius:10px !important; }
+  input, select { min-height:38px !important; height:38px !important; padding:8px 10px !important; font-size:16px !important; border-radius:10px !important; }
   button { min-height:38px !important; padding:8px 14px !important; font-size:13px !important; }
   #registerMsg, #joinMsg { font-size:12px !important; }
 
@@ -2863,7 +2863,7 @@ body > header{
   .boarding-grid{display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:var(--space-sm) !important; align-items:end !important;}
   .grid{display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--space-sm) !important;}
   label{font-size:11px !important; margin:0 0 4px !important;}
-  input, select{min-height:36px !important; height:36px !important; padding:6px 10px !important; font-size:12px !important; border-radius:10px !important;}
+  input, select{min-height:36px !important; height:36px !important; padding:6px 10px !important; font-size:16px !important; border-radius:10px !important;}
   button{min-height:34px !important; padding:7px 12px !important; font-size:11px !important;}
   .oxygen-meter{padding:var(--gutter-inner) !important;}
   #oxygenPanel .oxygen-meter-top strong{font-size:22px !important;}
