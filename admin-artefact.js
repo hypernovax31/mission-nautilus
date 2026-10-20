@@ -83,10 +83,14 @@
   /* ==================================================================
      1. INJECTION DE L'ONGLET
      ================================================================== */
+  var _modeExpert = false;
   function HTML_PANE() {
     return ''
-    + '<p class="small" style="margin-bottom:10px">Palier 3 — <b>l’artefact du Nautilus</b> : le magasin de référence, '
-    + 'la disponibilité confirmée, le catalogue chiffré, les pistes anonymisées et les sessions des équipages.</p>'
+    + '<p class="small" style="margin-bottom:10px">Palier 3 — <b>l’artefact</b> : choisissez le magasin, confirmez le stock, générez les pistes.' 
+    + ' <a href="#" id="afToggleExpert" style="font-size:11px;color:#5a7bd5;text-decoration:underline">mode expert</a></p>'
+    + '<div id="afLightBanner" class="adm-af-note" style="background:#eef4ff;border:1px solid #c5d6f0;border-radius:8px;padding:8px 10px;margin-bottom:10px">'
+    + '💡 <b>Mode simple</b> : le magasin + la dispo + les pistes suffisent. Le coffre s’ouvre avec la phrase d’administration — elle n’est jamais enregistrée.'
+    + '</div>'
 
     /* --- phrase d'administration --- */
     + '<div class="adm-af-sec">'
@@ -133,7 +137,8 @@
     +   '<p class="adm-af-note" id="afAdmDispoMsg"></p>'
     + '</div>'
 
-    /* --- catalogue --- */
+    + '<div id="afExpertGroup" style="display:none">'
+    /* --- catalogue (expert) --- */
     + '<div class="adm-af-sec">'
     +   '<h4>📚 Catalogue des ouvrages</h4>'
     +   '<p class="adm-af-note">Le catalogue est <b>chiffré</b> avant d’être écrit : ni ce dépôt, ni Firestore, ni le '
@@ -197,7 +202,8 @@
     +   '</details>'
     + '</div>'
 
-    /* --- pistes (cartouches) --- */
+    + '</div>' /* fin expert */
+    /* --- pistes (cartouches) - toujours visible --- */
     + '<div class="adm-af-sec">'
     +   '<h4>🎯 Pistes anonymisées (cartouches)</h4>'
     +   '<p class="adm-af-note">Une piste = un ouvrage disponible + une énigme complète, <b>sans aucune donnée '
@@ -226,7 +232,8 @@
     +   '<div id="afAdmSessionsTable"></div>'
     + '</div>'
 
-    /* --- configuration --- */
+    + '<div id="afExpertGroup2" style="display:none">'
+    /* --- configuration (expert) --- */
     + '<div class="adm-af-sec">'
     +   '<h4>⚙️ Configuration du service</h4>'
     +   '<div class="adm-af-ligne">'
@@ -298,6 +305,15 @@
   function brancher() {
     var bouton = document.querySelector('.admin-tab[data-tab="' + ONGLET + '"]');
     if (bouton) bouton.addEventListener('click', activerOnglet);
+    var tog = $('afToggleExpert');
+    if(tog) tog.addEventListener('click', function(e){
+      e.preventDefault();
+      _modeExpert = !_modeExpert;
+      var g = $('afExpertGroup'); if(g) g.style.display = _modeExpert ? '' : 'none';
+      var g2 = $('afExpertGroup2'); if(g2) g2.style.display = _modeExpert ? '' : 'none';
+      var b = $('afLightBanner'); if(b) b.style.display = _modeExpert ? 'none' : '';
+      tog.textContent = _modeExpert ? 'mode simple' : 'mode expert';
+    });
 
     $('afAdmOuvrir').addEventListener('click', ouvrirCoffre);
     $('afAdmPhrase').addEventListener('keydown', function (e) { if (e.key === 'Enter') ouvrirCoffre(); });
