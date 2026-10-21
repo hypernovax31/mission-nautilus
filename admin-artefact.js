@@ -109,6 +109,7 @@
   function HTML_REP() {
     return ''
     + '<p class="small" style="margin-bottom:10px">Affiche les <b>bonnes réponses attendues</b> pour les mini-jeux du Palier 3 (4 étapes : hublot/EAN, couverture/premier mot, signature, chambre forte). Accès réservé — phrase d’administration requise. Les réponses ne sont jamais stockées en clair.</p>'
+    + '<!-- Affiche les **bonnes réponses attendues** pour les mini-jeux -->'
     + '<div class="adm-af-sec">'
     +   '<h4>🔑 Déverrouiller les réponses</h4>'
     +   '<div class="adm-af-ligne">'
@@ -120,6 +121,8 @@
     +   '<p class="adm-af-note" style="margin-top:4px">La phrase n’est jamais écrite dans localStorage ; elle est effacée en quittant la page.</p>'
     + '</div>'
     + '<div class="adm-af-sec">'
+    +   '<h4>🔑 Réponses — marquer et voir</h4>'
+    +   '<p class="small">Marquer et voir les 🔑 Réponses</p>'
     +   '<h4>📜 Sessions en cours — réponses attendues</h4>'
     +   '<div class="adm-af-ligne">'
     +     '<button id="afRepRefresh" class="secondary" type="button">↻ Lister les équipages</button>'
