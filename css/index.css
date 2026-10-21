@@ -2999,3 +2999,58 @@ body > header .hero-actions .hero-cta {
   body > header .hero-actions { flex-direction: column !important; align-items: center !important; gap: var(--gutter) !important; margin-top: var(--gutter) !important; width: 100% !important; max-width: 420px !important; }
   body > header .hero-actions .hero-cta { width: 100% !important; max-width: 420px !important; min-width: 0 !important; font-size: 12px !important; padding: 10px 18px !important; min-height: 36px !important; }
 }
+
+/* =====================================================================
+   PANNEAU ADMIN — RECENTRÉ AU MILIEU EN VERSION PC
+   L'overlay était désaxé par les surcharges tablet/paysage
+   (max-width:760px / 900px + margin) qui cassaient le centrage flex.
+   Ici on restaure le centrage parfait : plein écran + flex center.
+   ===================================================================== */
+@media (min-width: 1100px) {
+  #adminPanel {
+    position: fixed !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100dvh !important;
+    padding: clamp(14px, 2vw, 28px) !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: column !important;
+    background: rgba(2,8,18,.82) !important;
+    backdrop-filter: blur(7px) !important;
+    -webkit-backdrop-filter: blur(7px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+    z-index: 12000 !important;
+    overflow: hidden !important;
+  }
+  #adminPanel.open {
+    display: flex !important;
+  }
+  #adminPanel > h2,
+  #adminPanel h2 {
+    width: 100% !important;
+    max-width: 920px !important;
+    margin: 0 auto !important;
+    align-self: center !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+  #adminPanel > div.body,
+  #adminPanel .body {
+    width: 100% !important;
+    max-width: 920px !important;
+    margin: 0 auto !important;
+    align-self: center !important;
+    max-height: calc(100dvh - 150px) !important;
+  }
+}
