@@ -8,7 +8,7 @@ STAMP=$(TZ="Europe/Paris" date +"%H%M%S")
 if grep -q 'class="ec-version"' index.html; then
   perl -i -pe "s|<span class=\"ec-version\">.*?</span>|<span class=\"ec-version\">COMMIT $STAMP</span>|g" index.html
 fi
-# Commentaires (optionnel, pour traçabilité)
-perl -i -pe "s|« garde v[0-9]+ »|« COMMIT $STAMP »|g; s|garde v[0-9]+|COMMIT $STAMP|gi" index.html || true
-perl -i -pe "s|« garde v[0-9]+ »|« COMMIT $STAMP »|g; s|garde v[0-9]+|COMMIT $STAMP|gi" ecoutille.js || true
+# Commentaires (optionnel, pour traçabilité) — maj COMMIT + ancien garde
+perl -i -pe "s|« COMMIT [0-9]+ »|« COMMIT $STAMP »|g; s|« garde v[0-9]+ »|« COMMIT $STAMP »|g; s|COMMIT [0-9]{6}|COMMIT $STAMP|g; s|garde v[0-9]+|COMMIT $STAMP|gi" index.html || true
+perl -i -pe "s|« COMMIT [0-9]+ »|« COMMIT $STAMP »|g; s|« garde v[0-9]+ »|« COMMIT $STAMP »|g; s|COMMIT [0-9]{6}|COMMIT $STAMP|g; s|garde v[0-9]+|COMMIT $STAMP|gi" ecoutille.js || true
 echo "→ stamp COMMIT $STAMP"
