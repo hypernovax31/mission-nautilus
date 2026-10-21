@@ -761,7 +761,7 @@ ok('le briefing annonce « Livre introuvable » sans erreur',
 ok('la page annonce le relais d’un coéquipier pendant la remontée',
   page3.indexOf('MESSAGES.relais') >= 0);
 
-ok('l’accueil propose la carte « MAGASIN DE LA MISSION »', accueil.indexOf('id="magasinPanel"') >= 0);
+ok('l’accueil propose le sélecteur « MAGASIN DE LA MISSION » sur la page de démarrage (écoutille)', accueil.indexOf('id="ecMagasinSelect"') >= 0 && accueil.indexOf('MAGASIN DE LA MISSION') >= 0);
 ok('l’accueil monte le sélecteur sans géolocalisation automatique',
   accueil.indexOf('monterSelecteur') >= 0 && accueil.indexOf('suggereGeo: false') >= 0);
 ok('l’accueil charge le moteur, le service et le module magasin',
@@ -820,10 +820,9 @@ ok('toute page qui charge le panneau admin charge AUSSI le lecteur de fiches, av
 ok('le moteur est chargé en v2 (vocabulaire de disponibilité réel)',
   (versionsParModule['artefact-moteur.js'] || []).every((x) => Number(x.v) >= 2));
 
-/* L'accueil doit bien porter la carte du sélecteur de magasin. */
-ok('accueil : la carte « MAGASIN DE LA MISSION » et son hôte existent',
-  /id="magasinPanel"/.test(accueil) && /id="magasinHost"/.test(accueil)
-  && /id="magasinEtat"/.test(accueil));
+/* L'accueil ne porte plus la carte d'accueil ; le sélecteur est sur l'écoutille. */
+ok('accueil : le bloc « MAGASIN DE LA MISSION » a été supprimé de l’accueil (sélecteur sur l’écoutille uniquement)',
+  accueil.indexOf('id="magasinPanel"') < 0 && /id="ecMagasinSelect"/.test(accueil) && /MAGASIN DE LA MISSION/.test(accueil));
 ok('accueil : le sélecteur est monté sans demande de position automatique',
   /monterSelecteur\(/.test(accueil) && /suggereGeo: false/.test(accueil));
 
