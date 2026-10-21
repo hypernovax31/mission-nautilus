@@ -3000,8 +3000,10 @@ body > header .hero-actions .hero-cta {
   body > header .hero-meta .hero-kicker { font-size: 10px !important; padding: 4px 10px !important; text-align: center !important; max-width: 100% !important; flex: 0 0 auto !important; margin: 0 !important; }
   body > header .hero-title { font-size: clamp(26px, 9vw, 38px) !important; margin-top: 8px !important; -webkit-text-stroke: 1px #050505 !important; }
   body > header .hero-line { font-size: clamp(14px, 4vw, 20px) !important; margin-top: var(--space-sm) !important; max-width: 40ch !important; }
-  body > header .hero-actions { flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; align-content: center !important; gap: 8px !important; margin-top: 14px !important; width: 100% !important; max-width: 100% !important; }
-  body > header .hero-actions .hero-cta { flex: 0 1 auto !important; width: auto !important; max-width: none !important; min-width: 0 !important; font-size: 10px !important; line-height: 1.1 !important; padding: 8px 11px !important; min-height: 32px !important; letter-spacing: .03em !important; white-space: nowrap !important; }
+  /* Supprime CONSULTER LA RÉSERVE O₂ sur mobile et étend les 2 restants sur toute la largeur */
+  body > header #reserveMissionBtn { display: none !important; }
+  body > header .hero-actions { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; margin-top: 14px !important; width: 100% !important; max-width: 100% !important; justify-content: stretch !important; align-items: stretch !important; }
+  body > header .hero-actions .hero-cta { flex: initial !important; width: 100% !important; max-width: none !important; min-width: 0 !important; font-size: 11px !important; line-height: 1.15 !important; padding: 12px 10px !important; min-height: 44px !important; letter-spacing: .04em !important; white-space: normal !important; text-align: center !important; justify-content: center !important; display: flex !important; align-items: center !important; }
 }
 
 /* =====================================================================
