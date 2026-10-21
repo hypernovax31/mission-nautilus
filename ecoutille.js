@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v16 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 005328 »
 
    Ce que fait ce fichier
    ----------------------
