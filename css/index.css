@@ -2998,7 +2998,8 @@ body > header .hero-actions .hero-cta {
   body > header .hero-meta { flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px !important; margin: 0 auto !important; width: 100% !important; text-align: center !important; }
   body > header .hero-meta .brand { font-size: clamp(14px, 4vw, 16px) !important; text-align: center !important; margin: 0 !important; flex: 0 0 auto !important; }
   body > header .hero-meta .hero-kicker { font-size: 10px !important; padding: 4px 10px !important; text-align: center !important; max-width: 100% !important; flex: 0 0 auto !important; margin: 0 !important; }
-  body > header .hero-title { font-size: clamp(26px, 9vw, 38px) !important; margin-top: 8px !important; -webkit-text-stroke: 1px #050505 !important; }
+  /* MISSION NAUTILUS : utilise toute la largeur mobile */
+  body > header .hero-title { font-size: clamp(34px, 11.5vw, 54px) !important; width: 100% !important; max-width: 100% !important; letter-spacing: -0.015em !important; line-height: 0.95 !important; text-align: center !important; padding: 0 2px !important; margin: 8px auto 0 !important; -webkit-text-stroke: 1.2px #050505 !important; }
   body > header .hero-line { font-size: clamp(14px, 4vw, 20px) !important; margin-top: var(--space-sm) !important; max-width: 40ch !important; }
   /* Supprime CONSULTER LA RÉSERVE O₂ sur mobile et étend les 2 restants sur toute la largeur */
   body > header #reserveMissionBtn { display: none !important; }
