@@ -2991,11 +2991,11 @@ body > header .hero-actions .hero-cta {
   body > header .hero-actions { gap: 14px !important; margin-top: 22px !important; }
   body > header .hero-actions .hero-cta { min-width: 220px !important; font-size: 14px !important; padding: 14px 24px !important; min-height: 48px !important; }
 }
-/* Mobile */
+/* Mobile — rétabli aux dimensions d'avant c4d717b (plus compact) */
 @media (max-width: 640px) {
   body > header { padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; }
-  body > header .hero-title { font-size: clamp(36px, 9vw, 52px) !important; margin-top: 14px !important; }
-  body > header .hero-line { font-size: clamp(16px, 4.5vw, 22px) !important; margin-top: 10px !important; max-width: 92vw !important; }
-  body > header .hero-actions { flex-direction: column !important; gap: 12px !important; margin-top: 20px !important; width: 100% !important; max-width: 380px !important; }
-  body > header .hero-actions .hero-cta { width: 100% !important; max-width: 380px !important; min-width: 0 !important; font-size: 14px !important; padding: 15px 20px !important; min-height: 48px !important; }
+  body > header .hero-title { font-size: clamp(26px, 9vw, 38px) !important; margin-top: 8px !important; -webkit-text-stroke: 1px #050505 !important; }
+  body > header .hero-line { font-size: clamp(14px, 4vw, 20px) !important; margin-top: var(--space-sm) !important; max-width: 40ch !important; }
+  body > header .hero-actions { flex-direction: column !important; align-items: center !important; gap: var(--gutter) !important; margin-top: var(--gutter) !important; width: 100% !important; max-width: 420px !important; }
+  body > header .hero-actions .hero-cta { width: 100% !important; max-width: 420px !important; min-width: 0 !important; font-size: 12px !important; padding: 10px 18px !important; min-height: 36px !important; }
 }
