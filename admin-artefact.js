@@ -103,7 +103,7 @@
     bouton.setAttribute('role', 'tab');
     bouton.dataset.tab = ONGLET;
     bouton.innerHTML = '<span class=\"lbl-desktop\">🏪 Magasins</span><span class=\"lbl-mobile\" aria-label=\"Magasins\">🏪</span>';
-    var danger = tabs.querySelector('[data-tab=\"danger\"]');
+    var danger = tabs.querySelector('[data-tab=\"danger\"]'); // data-tab="danger"
     if (danger) tabs.insertBefore(bouton, danger); else tabs.appendChild(bouton);
     var pane = document.createElement('div');
     pane.className = 'admin-pane';

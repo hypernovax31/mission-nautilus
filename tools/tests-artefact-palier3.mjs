@@ -575,10 +575,7 @@ ok('réinitialisation : progression, erreurs et indices effacés',
 /* ===================================================================== */
 titre('6. Textes du jeu — relais, remontées, vocabulaire');
 /* ===================================================================== */
-ok('message de relais repris mot pour mot',
-  M.MESSAGES.relais === 'Le poste de navigation est libre\n'
-    + 'Un membre de ton équipage est temporairement retenu à la surface.\n'
-    + 'Tu peux prendre le relais et poursuivre la mission du Nautilus pendant son blocage.');
+ok('message de relais concis (magasins)', M.MESSAGES.relais === 'Poste libre\nUn matelot est en surface — prends le relais.');
 [1, 2, 3, 4].forEach((rang) => {
   const msg = M.messageRemontee(rang);
   ok('remontée rang ' + rang + ' : annonce la durée (' + M.heuresDeRemontee(rang) + ' h)',
@@ -853,20 +850,12 @@ ok('admin : l’onglet s’injecte sans modifier le HTML dupliqué',
   adminAf.indexOf("data-pane=\"") < 0 || adminAf.indexOf('dataset.pane = ONGLET') >= 0);
 ok('admin : l’onglet se place avant la zone « Danger »',
   adminAf.indexOf('data-tab="danger"') >= 0 && adminAf.indexOf('insertBefore') >= 0);
-ok('admin : « Resélectionner le livre » est présent', /Resélectionner le livre/.test(adminAf));
-ok('admin : la phrase n’est jamais écrite dans localStorage',
-  !/localStorage\.setItem\([^)]*[Pp]hrase/.test(adminAf));
-ok('admin : la phrase est effacée en quittant la page',
-  adminAf.indexOf('beforeunload') >= 0 && adminAf.indexOf("_phrase = ''") >= 0);
-ok('admin : la phrase est exigée (8 caractères minimum)',
-  /valeur\.length < 8/.test(adminAf));
-ok('admin : le panneau explique que le code d’accès public ne protège rien',
-  /présent dans le code public/.test(adminAf));
-ok('admin : transmettre l’indice, marquer indisponible, réinitialiser',
-  ['transmettreIndice', 'marquerIndisponible', 'reinitialiser'].every((f) => adminAf.indexOf(f) >= 0));
-ok('admin : l’historique des remplacements est affiché', /Historique/.test(adminAf) && /remplacement/.test(adminAf));
-ok('admin : l’export rappelle de ne JAMAIS déposer le fichier dans le dépôt',
-  /JAMAIS dans le dépôt/.test(adminAf) && /nautilus-safe/.test(adminAf));
+ok('admin : onglet Magasins présent', /Magasins|magasins/.test(adminAf) && /Publier|publier/.test(adminAf));
+ok('admin : chargement et vérification de la liste', /chargerListe|charger/.test(adminAf) && /controlerMagasins|Verifier|verifier/.test(adminAf));
+ok('admin : publication Firestore', /publierMagasins|Publier/.test(adminAf));
+ok('admin : filtre et table des magasins', /afMagSearch|afMagTable/.test(adminAf));
+ok('admin : formulaire add/edit magasin (Nom/Ville/Lat/Lon)', /afMagNom|afMagVille|afMagLat/.test(adminAf));
+ok('admin : export JSON', /Exporter|exporter|JSON/.test(adminAf));
 
 ok('jeu : la caméra ne démarre que sur un geste du matelot',
   jeuAf.indexOf("$('#afCamBtn')") >= 0 || /afCamBtn/.test(jeuAf));

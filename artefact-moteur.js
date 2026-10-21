@@ -881,17 +881,17 @@
          le moteur applique.
      ================================================================== */
   var MESSAGES = {
-    lancement: "Le Nautilus a caché un livre. Retrouve-le et passe-le au hublot.",
-    artefactTrouve: "Passe l'ouvrage au hublot d'identification.",
+    lancement: "Le Nautilus a caché un artefact. Retrouve-le et passe-le au hublot.",
+    artefactTrouve: "Passe l'artefact au hublot d'identification.",
     scanInvite: "Vise le code-barres au dos du livre.",
-    scanAccepte: "Ouvrage reconnu. Le journal s'ouvre.",
-    scanRejete: "Ce livre n'est pas le bon. Réessaie.",
+    scanAccepte: "Artefact reconnu. Le journal s'ouvre.",
+    scanRejete: "Le sceau rejette cet ouvrage. Réessaie.",
     scanRejeteCourt: "Livre rejeté. Route scellée.",
     scanIllisible: "Lecture impossible. Approche le code-barres ou saisis les chiffres.",
     eanInvalide: "Code invalide : aucune erreur comptée.",
-    dernierAvertissement: "Dernière tentative avant remontée.",
+    dernierAvertissement: "Le Nautilus te laisse une dernière tentative avant la remontée.",
     remontee1: "Remontée 1h\n3 erreurs. Un coéquipier peut prendre le relais.",
-    remontee2: "Remontée 2h\nUn autre membre peut poursuivre.",
+    remontee2: "Remontée 2h\nUn autre membre peut prendre le relais.",
     remontee3: "Remontée 4h\nPoste libre pour l'équipage.",
     remonteeSuite: "Remontée {heures}h\nRelais possible jusqu'à ton retour.",
     relais: "Poste libre\nUn matelot est en surface — prends le relais.",
