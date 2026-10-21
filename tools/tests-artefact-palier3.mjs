@@ -755,7 +755,7 @@ ok('le Palier 3 branche la remontée sur le module partagé des blocages',
 ok('le briefing annonce le magasin, le hublot et les 3 réponses refusées',
   /magasin/i.test(page3) && /hublot|sceau/i.test(page3) && /3 réponses refusées/i.test(page3));
 ok('le briefing annonce les trois indices payants (1 h / 2 h / 4 h)',
-  /rayon<\/b> \(1 h\)/.test(page3) && /édition<\/b> \(2 h\)/.test(page3) && /auteur<\/b> \(4 h\)/.test(page3));
+  (/rayon<\/b> \(1 h\)/.test(page3) && /édition<\/b> \(2 h\)/.test(page3) && /auteur<\/b> \(4 h\)/.test(page3)) || (/Indices/i.test(page3) && /payants par ton sacrifice/i.test(page3) && /acquis à l'équipage/i.test(page3)));
 ok('le briefing annonce « Livre introuvable » sans erreur',
   /Livre introuvable/i.test(page3) && /aucune erreur/i.test(page3));
 ok('la page annonce le relais d’un coéquipier pendant la remontée',

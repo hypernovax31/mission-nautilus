@@ -665,15 +665,13 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
      Explication immersive du thème SANS dévoiler l'ouvrage : on raconte
      la chasse, jamais le titre, ni le rayon, ni l'éditeur. */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Le <b>Nautilus</b> a caché un livre dans ton magasin. Personne ne connaît son titre. Retrouve-le, prouve-le au hublot, ouvre la chambre forte.",
+    intro: "Le <b>Nautilus</b> a caché un ouvrage dans ton magasin. Personne ne connaît son titre. Retrouve-le, montre-le au hublot et ouvre la chambre forte.",
     consignes: [
-      { ico: '📍', html: "<b>Magasin</b> : confirme ton Fnac (géoloc en aide)." },
-      { ico: '🧭', html: "<b>Énigme</b> : elle pointe le rayon sans le nommer. Cherche, ne l'ouvre pas." },
-      { ico: '🔏', html: "<b>Hublot</b> : scanne le code-barres au dos (ou saisis les 13 chiffres)." },
+      { ico: '🧭', html: "<b>Énigme</b> : elle pointe la zone de recherche sans la nommer." },
+      { ico: '🔏', html: "<b>Hublot</b> : scanne le code-barres au dos (ou saisis les 13 chiffres EAN)." },
       { ico: '📜', html: "<b>3 épreuves</b> de la couverture : mot, signature, code final." },
       { warn: true, ico: '❌', html: "<b>3 erreurs = remontée</b> (1h → 2h → 4h…). Un coéquipier peut reprendre." },
-      { ico: '🕯️', html: "<b>Indices</b> : <b>rayon</b> (1 h), <b>édition</b> (2 h), <b>auteur</b> (4 h) — payants, acquis à l'équipage." },
-      { ico: '📵', html: "<b>Introuvable ?</b> Signale-le : 0 erreur, une autre piste arrive." }
+      { ico: '🕯️', html: "<b>Indices</b> : payants par ton sacrifice, acquis à l'équipage." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
