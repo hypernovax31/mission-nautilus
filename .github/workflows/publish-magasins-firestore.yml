@@ -1,0 +1,49 @@
+name: Publish magasins → Firestore
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/magasins-fnac.json'
+  workflow_dispatch:
+
+# Lecture du dépôt + écriture Firestore (via secret), pas de PR
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install firebase-admin
+        run: |
+          # Le dépôt n'a pas de package.json à la racine ; on installe l'outil seul
+          # (functions/ a déjà firebase-admin 12.6.0, on réutilise cette version)
+          npm i --no-save firebase-admin@12.6.0
+
+      - name: Contrôle du fichier
+        run: node tools/sync-magasins-fnac.mjs --check
+
+      - name: Publier vers Firestore
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node tools/publish-magasins-firestore.mjs
+
+      - name: Résumé
+        if: always()
+        run: |
+          echo "### 📦 Magasins → Firestore" >> $GITHUB_STEP_SUMMARY
+          echo "- Fichier : \`data/magasins-fnac.json\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Version : \`$(jq -r .version data/magasins-fnac.json)\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Count : \`$(jq -r .count data/magasins-fnac.json)\` magasins" >> $GITHUB_STEP_SUMMARY
+

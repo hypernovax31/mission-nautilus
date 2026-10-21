@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="anti-zoom.js?v=1"></script>
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
   <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil) : SVG
@@ -23,6 +24,7 @@
   <!-- Records de résolution des paliers (écran de victoire) : écriture
        et lecture Firestore communes à tous les paliers. -->
   <script src="records-palier.js?v=2" defer></script>
+  <script src="palier-cinematic.js?v=3"></script>
 
 </head>
 <body>
@@ -1946,6 +1948,8 @@ window.Nautilus = {
   }
 
   function renderGameArea() {
+    // Si hors jeu, couper les bords clignotants
+    try{ if(window.NautilusCinematic && (!state.session || state.session.state !== 'playing')) window.NautilusCinematic.stopEdgeFlash(); }catch(e){}
     const body = $('gameBody');
     if (!body) return;
     const t = state.team;
@@ -2177,10 +2181,20 @@ window.Nautilus = {
 
   function bindIdleEvents() {
     $('takeLeadBtn')?.addEventListener('click', () => {
-      glisserVersEpreuve();
-      startNewSession();
-      setTimeout(glisserVersEpreuve, 350);
-      setTimeout(glisserVersEpreuve, 900);
+      var go = function(){
+        glisserVersEpreuve();
+        startNewSession();
+        setTimeout(glisserVersEpreuve, 350);
+        setTimeout(glisserVersEpreuve, 900);
+        if(window.NautilusCinematic && window.NautilusCinematic.autoWatchFromDom){
+          setTimeout(function(){ try{ window.NautilusCinematic.autoWatchFromDom(); }catch(e){} }, 650);
+        }
+      };
+      if(window.NautilusCinematic && window.NautilusCinematic.playCountdown){
+        window.NautilusCinematic.playCountdown(go);
+      } else {
+        go();
+      }
     });
   }
 
@@ -2440,13 +2454,14 @@ window.Nautilus = {
   }
 
   function bindPlayerEvents() {
-    /* Timer live */
+    /* Timer live — bords qui clignotent à <10s via NautilusCinematic */
     if (state.timerHandle) clearInterval(state.timerHandle);
     state.timerHandle = setInterval(() => {
       if (!state.session) return;
       const rem = computeRemaining(state.session);
       majChronoTitre(rem, 'Temps restant');
-      if (rem <= 0) onTimeOut();
+      if(window.NautilusCinematic) try{ window.NautilusCinematic.updateEdgeFlash(rem); }catch(e){}
+      if (rem <= 0){ if(window.NautilusCinematic) try{ window.NautilusCinematic.stopEdgeFlash(); }catch(e){}; onTimeOut(); }
     }, 500);
 
     /* Listen button */
@@ -3154,7 +3169,9 @@ window.Nautilus = {
     if (state.timerHandle) clearInterval(state.timerHandle);
     state.timerHandle = setInterval(() => {
       if (!state.session) return;
-      majChronoTitre(computeRemaining(state.session), 'Temps restant');
+      var _rem = computeRemaining(state.session);
+      majChronoTitre(_rem, 'Temps restant');
+      if(window.NautilusCinematic) try{ window.NautilusCinematic.updateEdgeFlash(_rem); }catch(e){}
     }, 500);
     /* sendSpectatorHint() a ete SUPPRIMEE : un spectateur ne peut plus
        envoyer d'indice. Seul le matelot aux commandes en demande, pour

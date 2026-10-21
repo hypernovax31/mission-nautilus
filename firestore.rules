@@ -46,9 +46,82 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // ===== PALIER 3 — L'ARTEFACT DU NAUTILUS (collection « artefacts ») =====
+    // Trois niveaux de sensibilité, traités séparément :
+    //
+    //  1) config / magasins : rien de sensible (mode de vérification, fenêtre
+    //     de fraîcheur, liste publique des magasins Fnac) → lecture ouverte.
+    //  2) cartouches / sessions : ce que lit le jeu. Une cartouche ne contient
+    //     QUE des empreintes salées (SHA-256 itéré) des réponses attendues,
+    //     plus les textes d'énigme. Une session contient la progression de
+    //     l'équipage et une copie de sa cartouche. Ni titre, ni EAN, ni SKU,
+    //     ni solution → lecture ouverte, écriture authentifiée.
+    //  3) catalogue / coffres : les DONNÉES RÉELLES (titres, EAN, SKU) et les
+    //     réponses en clair, chiffrées en AES-GCM (clé PBKDF2-SHA256 dérivée
+    //     de la phrase d'administration). Lecture restreinte aux sessions
+    //     authentifiées : le panneau admin doit pouvoir les relire pour
+    //     afficher l'ouvrage d'un équipage et transmettre un indice exact.
+    //     ⚠️ La confidentialité réelle repose sur la PHRASE, pas sur ces
+    //     règles : un joueur peut télécharger le ciphertext, il ne peut pas
+    //     le déchiffrer. D'où l'exigence d'une phrase longue (jamais le code
+    //     d'ouverture du panneau, qui est présent dans le bundle public).
+
+    match /artefacts/config {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /artefacts/magasins {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /artefacts/cartouches/{cartoucheId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /artefacts/sessions/{equipe} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /artefacts/catalogue {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    match /artefacts/coffres/{coffreId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
     // Tout le reste est refusé.
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
+
+// =====================================================================
+// RÈGLES STRICTES — à activer UNIQUEMENT quand la Cloud Function
+// « artefact » est déployée (mode « fonction » du panneau admin).
+//
+// Dans ce mode, c'est le serveur qui choisit l'ouvrage et qui vérifie les
+// réponses : le navigateur ne doit plus pouvoir écrire une session, sinon
+// la vérification côté serveur ne protège rien. Le SDK admin de la fonction
+// ignore ces règles, il continue d'écrire normalement.
+//
+// Activation : remplacer le bloc `match /artefacts/sessions/{equipe}`
+// ci-dessus par celui-ci, puis `firebase deploy --only firestore:rules`.
+//
+//    match /artefacts/sessions/{equipe} {
+//      allow read: if true;
+//      allow write: if false;   // écriture réservée à la Cloud Function
+//    }
+//
+// Vérifier avant d'activer :
+//   · le mode « fonction » est bien enregistré dans artefacts/config ;
+//   · l'endpoint répond (GET /sante) ;
+//   · un équipage a déroulé une partie complète en mode fonction.
+// =====================================================================

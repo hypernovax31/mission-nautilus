@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mission Nautilus — Palier 3</title>
-  <meta name="description" content="Accès scellé du Palier 3 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
+  <script src="anti-zoom.js?v=1"></script>
+  <title>Mission Nautilus — Palier 3 · L'artefact du Nautilus</title>
+  <meta name="description" content="Palier 3 de la Mission Nautilus : retrouve l'artefact du Nautilus dans les rayons du magasin, passe-le au hublot d'identification et ouvre la chambre forte." />
   <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil). -->
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -12,10 +13,13 @@
   <link rel="stylesheet" href="css/palier1.css?v=50">
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
-  <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier3.css?v=2">
-  <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
-       connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
+  <link rel="stylesheet" href="css/palier2.css?v=27">
+  <!-- artefact.css remplace palier3.css (l'ancien puzzle photo) : styles du
+       jeu de l'ouvrage (.af-*), du sélecteur de magasin (.magasin-*) et de
+       l'onglet admin de l'artefact (.adm-af-*). -->
+  <link rel="stylesheet" href="css/artefact.css?v=2">
+  <!-- Lecteur QR du SAS (caméra + import photo). Le code-barres de l'ouvrage,
+       lui, est lu par artefact-palier3.js (BarcodeDetector / ZXing / saisie). -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 </head>
 <body>
@@ -119,13 +123,13 @@
     </div>
   </section>
 
-  <!-- ÉPREUVE : PUZZLE PHOTO DU LIEU. -->
+  <!-- ÉPREUVE : L'ARTEFACT DU NAUTILUS (chasse à l'ouvrage en magasin). -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 3</h2>
+    <h2 id="sasUnlockedTitle">PALIER 3 — L'ARTEFACT DU NAUTILUS</h2>
     <div class="body">
-      <div id="puzzleStatut" class="status-banner info">⏳ <b>Préparation de la photo…</b></div>
-      <div id="puzzleHost"></div>
-      <a class="puzzle-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <div id="artefactStatut" class="status-banner info">⏳ <b>Le Nautilus cherche un ouvrage…</b></div>
+      <div id="artefactHost"></div>
+      <a class="af-retour" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
 </main>
@@ -145,63 +149,89 @@
 <!-- Équipage actif en plongée, commun à tous les paliers. -->
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<!-- Moteur de l'épreuve PUZZLE PHOTO (Palier 3). -->
-<script src="puzzle-palier3.js?v=1"></script>
+<!-- ================= PALIER 3 — L'ARTEFACT DU NAUTILUS =================
+     Quatre modules, dans cet ordre (chacun dépend du précédent) :
+       artefact-moteur.js  les règles pures : empreintes, épreuves, messages
+       artefact-service.js les données : catalogue chiffré, cartouches, sessions
+       magasin-fnac.js     le magasin du joueur : liste, recherche, géoloc
+       artefact-palier3.js le jeu : indice, hublot (scan EAN), signature, coffre
+     AUCUN de ces fichiers ne contient de titre d'ouvrage, d'EAN, de SKU,
+     de catégorie Fnac ou de réponse : les vérifications portent sur des
+     empreintes salées calculées à la volée. -->
+<script src="artefact-moteur.js?v=3"></script>
+<!-- Lecteur des fiches publiques fnac.com : strictement hors ligne, jamais
+     appelé depuis le jeu. Sert au panneau admin (onglet 📖 Artefact) pour lire
+     une fiche enregistrée par l’organisateur, et à l’outil Node de collecte. -->
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="artefact-service.js?v=2"></script>
+<script src="magasin-fnac.js?v=1"></script>
+<script src="artefact-palier3.js?v=1"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
 <script src="victoire-palier.js?v=12"></script>
 <script src="records-palier.js?v=2"></script>
 
 <!-- ================= RÉGLAGES ADMIN (Palier 3) =================
-     PUZZLE_IMAGE  : la photo du lieu où se cache le QR du Palier 4.
-                     Place ta photo dans assets/ (même nom de fichier,
-                     même format .jpg) ou change ce chemin.
-     PUZZLE_COLS / ROWS : nombre d'éclats (plus on monte, plus la photo
-                     est difficile à visualiser).
-     LIEU_DESCRIPTION : le lieu affiché à l'écran de victoire, une fois
-                     la photo reconstituée (et l'indication du sas). -->
+     Ces trois textes concernent le PALIER 4 (où trouver son QR Code) ;
+     ils n'ont aucun lien avec l'ouvrage recherché ici, qui est choisi
+     automatiquement et n'apparaît nulle part en clair.
+     LIEU_DESCRIPTION    : affiché à l'écran de victoire du Palier 3.
+     ZONE_RECHERCHE_HINT : affiché dans le sas scellé (indication).
+     QR_LOCATION_HINT    : indication complémentaire du lieu du QR. -->
 <script>
-const PUZZLE_IMAGE = 'assets/palier3-lieu.jpg';
-const PUZZLE_COLS = 6;
-const PUZZLE_ROWS = 6;
 const LIEU_DESCRIPTION = "…… (en attente d’indication par l’admin)";
 const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
 const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 </script>
 
 <script>
-/* ================= ÉPREUVE DU PALIER 3 — « PUZZLE PHOTO DU LIEU » =================
-   Le sonar a fragmenté la photo de la prochaine zone : reconstituer l'image
-   pour découvrir OÙ chercher le QR Code. La photo est découpée en 36 éclats
-   mélangés — impossible de la lire d'un coup d'œil tant qu'elle n'est pas
-   remontée. Une pièce bien posée se verrouille ; une pièce mal posée
-   revient (sans pénalité). « 🔎 Révéler une pièce » coûte 1 erreur :
-   3 erreurs = remontée PERSONNELLE (matelot-blocages.js, règle globale).
-   Joueur SANS Code Matelot : repli local anonyme. La victoire inscrit
-   « son » dans completedSteps et lève les blocages personnels actifs. */
+/* ================= ÉPREUVE DU PALIER 3 — « L'ARTEFACT DU NAUTILUS » =================
+   Le Nautilus désigne UN OUVRAGE réellement présent dans le magasin où joue
+   l'équipage (retrait sous 1 h confirmé par le capitaine). Le matelot :
+     1. déduit le rayon grâce à une énigme,
+     2. retrouve l'ouvrage,
+     3. le présente au SCEAU (scan du code-barres),
+     4. répond à trois épreuves tirées de la couverture et de la fiche.
+   Le titre, l'EAN et le SKU ne sont JAMAIS affichés : la page ne connaît que
+   des empreintes salées. 3 réponses refusées → remontée forcée en surface
+   (barème global 1 h / 2 h / 4 h / 8 h / 12 h / 24 h) et relais possible d'un
+   autre membre de l'équipage. Trois indices payants (rayon 1 h, édition 2 h,
+   auteur 4 h) exigent un sacrifice volontaire. « Livre introuvable » ne coûte
+   AUCUNE erreur : il suspend la mission et prévient le capitaine.
+   La victoire inscrit « son » dans completedSteps et lève les blocages actifs. */
 (function () {
   'use strict';
 
   var CLE_BLOCAGE_ANONYME = 'nautilusEpreuve3BloqueJusqua';
   var BLOCAGE_MS  = 60 * 60 * 1000;          /* repli anonyme : 1 h */
   var _blocageSession = 0;                   /* mode test : volatil */
+  var CATALOGUE_EXEMPLE = 'data/catalogue-artefacts.example.json';
 
   var t0Partie = null;
   var nbErreurs = 0;
+  var nbIndices = 0;
+  var jeu = null;
+  var _secretsApercu = {};                   /* aperçu organisateur seulement */
 
   var $ = function (id) { return document.getElementById(id); };
   function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
   function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
   function enModeTest() {
-    try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
+    try {
+      if ((localStorage.getItem('nautilusMatelotCode') || '').toUpperCase() === 'ZZZZ-0000') return true;
+      // fallback URL direct (première visite, storage pas encore posé par palier-sas.js)
+      if (/[?&]m=ZZZZ-0000(?:&|$)/i.test(location.search)) return true;
+      return false;
+    } catch (e) { return /[?&]m=ZZZZ-0000(?:&|$)/i.test(location.search); }
   }
   function blocageAnonymeJusqua() {
     try { return Number(localStorage.getItem(CLE_BLOCAGE_ANONYME) || 0); } catch (e) { return 0; }
   }
   function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    return String(s == null ? '' : s).replace(/[&<>\"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c];
     });
   }
+  function lignes(s) { return esc(s).replace(/\n/g, '<br>'); }
   function heureLisible(v) {
     var d = new Date(typeof v === 'number' ? v : String(v));
     return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -231,7 +261,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   }
 
   function statut(html, kind) {
-    var el = $('puzzleStatut');
+    var el = $('artefactStatut');
     if (!el) return;
     el.innerHTML = html;
     el.className = 'status-banner ' + (kind || 'info');
@@ -276,28 +306,77 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     if (carte) carte.classList.toggle('epreuve-focus', !visible);
   }
 
-  function afficherBlocage(jusqua, nom) {
+  /* ================= REMONTÉE EN SURFACE =================
+     Même mécanique que les autres paliers : blocage PERSONNEL du matelot
+     identifié (matelot-blocages.js), repli local sinon, aucun blocage en
+     mode test ni en aperçu organisateur. Le barème est GLOBAL : le cran se
+     compte en remontées (échecs + indices confondus), 1 h / 2 h / 4 h / 8 h
+     / 12 h puis 24 h. */
+  function afficherBlocage(jusqua, nom, rang, motif, aide, texteIndice) {
+    var M = window.NautilusArtefactMoteur;
     afficherVueEpreuve();
     afficherJournalDeBord(true);
-    statut(nom
-      ? "🔒 <b>3 révélations demandées — remontée forcée !</b> " + esc(nom) + " regagne la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
-        + "avec son Code Matelot — <b>chacun ses erreurs</b>."
-      : "🔒 <b>3 révélations demandées — remontée forcée !</b> Tu regagnes la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
-        + "pour que tes erreurs restent les tiennes.", 'danger');
-    var host = $('puzzleHost');
+    var texte = M && M.messageRemontee ? M.messageRemontee(rang) : '';
+    if (texte) texte = texte.replace('{heures}', String(rang || 1));
+    var relais = M && M.MESSAGES ? M.MESSAGES.relais : '';
+    statut('🔒 <b>Remontée forcée en surface.</b>'
+      + (nom ? ' ' + esc(nom) + ' regagne la surface ; reprise possible à <b>' + heureLisible(jusqua) + '</b>.' : '')
+      + '<br>' + lignes(texte)
+      + '<br><b>Retour à bord : ' + heureLisible(jusqua) + '.</b>'
+      + '<br>' + lignes(relais)
+      + (motif === 'indice'
+        ? '<br>Un indice n’est pas une faute : il reste acquis à <b>tout l’équipage</b>.'
+        : '')
+      + (aide || texteIndice
+        ? '<div class="af-indice-transmis"><b>🕯️ Ton indice</b>'
+          + (aide ? '<br>' + lignes(aide) : '')
+          + (texteIndice ? '<br>📯 ' + lignes(texteIndice) : '') + '</div>'
+        : '')
+      + '<br><span style="opacity:.85">Un coéquipier peut reprendre la barre <b>dès maintenant</b> avec son Code Matelot — '
+      + '<b>chacun ses remontées</b>.</span>', 'danger');
+    var host = $('artefactHost');
     if (host) host.innerHTML = '';
   }
 
-  function onErreur(n, max) {
-    nbErreurs = n;
-    if (n >= max) {
-      declencherBlocage();
-    } else {
-      statut('🔎 <b>Le sonar a révélé une pièce.</b> ' + (max - n) + ' aide(s) restante(s) avant la remontée en surface.', 'warning');
-      acte('demande une pièce au sonar (' + n + '/' + max + ')', 'warning');
+  /* Pose le blocage et affiche la remontée. Retourne la fiche de blocage
+     (heures, lockedUntil, surfaceCount) pour que l'appelant puisse annoncer
+     la durée RÉELLE — jamais une promesse approximative. */
+  function poserRemontee(motif, aide) {
+    if (apercuAdminAutorise()) {
+      journal('ℹ️ Aperçu organisateur : aucune remontée n’est enregistrée.', 'info');
+      statut('🧪 <b>Aperçu organisateur.</b> La remontée n’est pas enregistrée : tu peux continuer à tester.', 'warning');
+      return Promise.resolve({ heures: 1, lockedUntil: Date.now() + BLOCAGE_MS, surfaceCount: 1, apercu: true });
     }
+    return monIdentite().then(function (ident) {
+      if (ident && ident.isTest) {
+        statut('🧪 <b>Mode concepteur.</b> Aucun blocage en test — la mission reste jouable, rien n’est enregistré.', 'warning');
+        journal('🧪 Mode concepteur : remontée ignorée, aucune écriture.', 'info');
+        return { heures: 1, lockedUntil: Date.now() + BLOCAGE_MS, surfaceCount: 1, test: true };
+      }
+      jouerSonDefaite();
+      if (ident) {
+        return window.NautilusBlocages.poserBlocage(ident, motif === 'indice' ? 'indice_demande' : 'artefact_trois_erreurs')
+          .then(function (r) {
+            afficherBlocage(r.lockedUntil, ident.name, r.surfaceCount, motif, aide);
+            acte(motif === 'indice'
+              ? 'sacrifie ' + r.hours + ' h pour un indice — remonte en surface'
+              : '3 réponses refusées — remonte en surface (' + r.hours + ' h)',
+              'danger', ident.name);
+            return r;
+          })
+          .catch(function () {
+            _blocageSession = Date.now() + BLOCAGE_MS;
+            afficherBlocage(_blocageSession, ident.name, 1, motif, aide);
+            journal('⚠️ Remontée non inscrite (connexion ?) — elle vaut pour cette session seulement.', 'warning');
+            return { heures: 1, lockedUntil: _blocageSession, surfaceCount: 1 };
+          });
+      }
+      var jusqua = Date.now() + BLOCAGE_MS;
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
+      afficherBlocage(jusqua, null, 1, motif, aide);
+      acte('remonte en surface (1 h)', 'danger');
+      return { heures: 1, lockedUntil: jusqua, surfaceCount: 1 };
+    });
   }
 
   /* Son de défaite (module partagé), JAMAIS si le sonar est éteint. */
@@ -309,40 +388,10 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     } catch (e) {}
   }
 
-  /* 3 révélations demandées : blocage PERSONNEL (identifié) ou repli local. */
-  function declencherBlocage() {
-    if (apercuAdminAutorise()) {
-      journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
-      return;
-    }
-    monIdentite().then(function (ident) {
-      if (ident && ident.isTest) {
-        statut('🧪 <b>Mode concepteur : 3 révélations demandées.</b> Aucun blocage en test — le puzzle reste jouable, rien n’est enregistré.', 'warning');
-        journal('🧪 Mode concepteur : 3 révélations au puzzle — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
-        return;
-      }
-      jouerSonDefaite();
-      if (ident) {
-        window.NautilusBlocages.poserBlocage(ident, 'puzzle_too_many_reveals')
-          .then(function (r) {
-            afficherBlocage(r.lockedUntil, ident.name);
-            acte('3 révélations — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
-          })
-          .catch(function () {
-            _blocageSession = Date.now() + BLOCAGE_MS;
-            afficherBlocage(_blocageSession, ident.name);
-            journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
-          });
-        return;
-      }
-      var jusqua = Date.now() + BLOCAGE_MS;
-      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
-      afficherBlocage(jusqua, null);
-      acte('3 révélations — remonte en surface (1 h)', 'danger');
-    });
-  }
-
-  /* Inscription Firestore : mêmes champs que les paliers précédents. */
+  /* ================= INSCRIPTION DE LA VICTOIRE =================
+     Mêmes champs que les paliers précédents : step id « son » (inchangé,
+     pour ne casser ni les fiches d'équipage ni les records), étape
+     suivante « zone51 ». */
   async function propagerVictoire() {
     var ident = await monIdentite();
     var equipage = (ident && !ident.isTest) ? ident.teamCode : null;
@@ -381,9 +430,10 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   }
 
   /* ÉCRAN DE VICTOIRE FAÇON PALIER 1/2 — commun à tous les paliers.
-     La destination affichée est le LIEU révélé par la photo. */
+     La destination affichée est le LIEU du QR Code du Palier 4 : la
+     victoire de l'ouvrage ne révèle JAMAIS quel livre c'était. */
   async function afficherEcranVictoire() {
-    var host = $('puzzleHost');
+    var host = $('artefactHost');
     if (!host || !window.NautilusVictoire) return;
     var ident = await monIdentite();
     var duree = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
@@ -392,13 +442,14 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
     window.NautilusVictoire.afficher(host, {
       palier: 3,
-      mission: 'Le Puzzle du Sonar',
+      mission: "L'artefact du Nautilus",
       equipe: equipe,
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [
         { valeur: mm + ':' + ss, label: 'Temps utilisé' },
-        { valeur: PUZZLE_COLS * PUZZLE_ROWS + '/' + PUZZLE_COLS * PUZZLE_ROWS, label: 'Pièces placées' },
-        { valeur: String(nbErreurs), label: nbErreurs > 1 ? 'Révélations' : 'Révélation' }
+        { valeur: '4/4', label: 'Étapes scellées' },
+        { valeur: String(nbErreurs), label: nbErreurs > 1 ? 'Réponses refusées' : 'Réponse refusée' },
+        { valeur: String(nbIndices), label: nbIndices > 1 ? 'Indices obtenus' : 'Indice obtenu' }
       ],
       indication: LIEU_DESCRIPTION,
       labelSuivant: 'Palier 4',
@@ -417,14 +468,71 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     });
   }
 
-  function onVictoire() {
+  function onVictoire(donnees) {
     afficherJournalDeBord(false);
-    statut('🏆 <b>Palier 3 franchi !</b> La photo est reconstituée — le lieu est identifié.', 'success');
-    acte('reconstitue la photo', 'success');
+    nbErreurs = (donnees && donnees.erreurs) || nbErreurs;
+    nbIndices = (donnees && donnees.indices && donnees.indices.length) || nbIndices;
+    statut('🏆 <b>Palier 3 franchi !</b> L’artefact est reconnu, la signature est complète.', 'success');
+    acte('ouvre la chambre forte de l’artefact', 'success');
     propagerVictoire();
     afficherEcranVictoire();
   }
 
+  /* ================= AMORÇAGE DU SERVICE =================
+     Mode normal  : Firestore (partagé entre tous les appareils).
+     Aperçu/test  : stockage en mémoire + catalogue d'EXEMPLE (données
+     fictives, EAN de la plage interne 200-299). L'aperçu fonctionne donc
+     hors ligne et sans WebCrypto : aucune donnée réelle n'est embarquée. */
+  function amorcerService(magasinId) {
+    var A = window.NautilusArtefact;
+    if (!(apercuAdminAutorise() || enModeTest())) {
+      A.initialiser({});
+      return Promise.resolve({ demo: false });
+    }
+    A.initialiser({ stockage: A.stockageMemoire() });
+    /* Sans magasin confirmé, rien à préparer : le jeu propose d'abord le
+       sélecteur, puis on repasse ici avec le magasin choisi. */
+    if (!magasinId) return Promise.resolve({ demo: true, faites: 0 });
+    return A.ecrireConfig({ mode: 'operateur', fenetreMinutes: 15 })
+      .then(function () { return fetch(CATALOGUE_EXEMPLE).then(function (r) { return r.json(); }); })
+      .then(function (ex) {
+        var maintenant = Date.now();
+        /* L'exemple ne contient aucune disponibilité : on l'injecte pour le
+           magasin choisi, comme le ferait une confirmation du capitaine. */
+        var livres = (ex.livres || []).map(function (l) {
+          l.disponibilite = {};
+          l.disponibilite[magasinId] = { statut: 'disponible', delai: 'Retrait gratuit sous 1H',
+                                         checkedAt: new Date(maintenant).toISOString(), vendeur: 'fnac',
+                                         magasin: magasinId };
+          return l;
+        });
+        return A.genererCartouchesPour(magasinId, { livres: livres, sansCoffre: true, secrets: _secretsApercu });
+      })
+      .then(function (r) {
+        journal('🧪 <b>Aperçu organisateur.</b> ' + r.faites.length + ' piste(s) d’exemple préparée(s) pour ce magasin.', 'info');
+        return { demo: true, faites: r.faites.length };
+      })
+      .catch(function (e) {
+        journal('⚠️ Aperçu indisponible : ' + esc(String(e && e.message || e)), 'warning');
+        return { demo: false, erreur: String(e && e.message || e) };
+      });
+  }
+
+  /* En aperçu organisateur, les réponses attendues sont affichées dans le
+     journal de bord : c'est le seul endroit du site où elles existent, et
+     il n'est accessible qu'avec la clé d'aperçu. */
+  function publierSolutionsApercu(cartoucheId) {
+    var secret = _secretsApercu[cartoucheId];
+    if (!secret || !apercuAdminAutorise()) return;
+    var r = secret.reponses || {};
+    journal('🧪 <b>Solutions (aperçu organisateur)</b> — EAN : <code>' + esc(r.ean) + '</code>'
+      + ' · couverture : <code>' + esc(r.premierMot) + '</code>'
+      + ' · signature : <code>' + esc(r.signature) + '</code>'
+      + ' · chambre forte : <code>' + esc(r.codeFinal) + '</code>'
+      + ' · règle : ' + esc(secret.regle && secret.regle.id || '?'), 'info');
+  }
+
+  /* ================= DÉMARRAGE ================= */
   var lance = false;
   function lancer() {
     if (lance) return;
@@ -432,46 +540,140 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     demarrer();
   }
 
-  /* Démarrage protégé : blocage personnel du matelot identifié, sinon
-     repli local anonyme. Le moindre doute réseau laisse JOUER. */
+  /* Démarrage protégé : remontée active du matelot identifié, sinon repli
+     local anonyme. Le moindre doute réseau laisse JOUER (fail-open). */
   async function demarrer() {
     if (!apercuAdminAutorise()) {
       var ident = await monIdentite();
       if (ident && !ident.isTest) {
         var bloc = await window.NautilusBlocages.blocageActif(ident);
         if (bloc) {
-          afficherBlocage(bloc.lockedUntil, ident.name);
+          var rang = window.NautilusBlocages.remonteesDe ? window.NautilusBlocages.remonteesDe(bloc) : (bloc.surfaceCount || 1);
+          afficherBlocage(bloc.lockedUntil, ident.name, rang, bloc.reason === 'indice_demande' ? 'indice' : 'echec');
           journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
             + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
+          /* Le relais : un autre membre de l'équipage peut jouer PENDANT ce
+             blocage — la mission est commune, seule la place à bord est
+             personnelle. On le dit explicitement, dans l'univers. */
+          statut('🔒 <b>Le poste de navigation est libre.</b> '
+            + lignes(window.NautilusArtefactMoteur.MESSAGES.relais)
+            + '<br>Retenu à la surface jusqu’à <b>' + heureLisible(bloc.lockedUntil) + '</b> : '
+            + esc(ident.name) + '. Un autre membre de l’équipage peut reprendre la mission '
+            + '<b>dès maintenant</b> avec son Code Matelot.', 'warning');
           return;
         }
       } else if (!ident) {
         var jusqua = blocageAnonymeJusqua();
-        if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
+        if (jusqua > Date.now()) { afficherBlocage(jusqua, null, 1, 'echec'); return; }
       }
     }
     afficherVueEpreuve();
     t0Partie = Date.now();
-    statut('🧩 <b>Reconstitue la photo.</b> Glisse chaque éclat à sa place sur la grille. <b>3 révélations demandées</b> et tu remontes en surface.', 'info');
-    window.NautilusPuzzle.init($('puzzleHost'), {
-      image: PUZZLE_IMAGE,
-      cols: PUZZLE_COLS,
-      rows: PUZZLE_ROWS,
-      maxErreurs: 3,
-      onErreur: onErreur,
+
+    /* Le magasin choisi à l'accueil est repris ; sinon le jeu propose le
+       sélecteur (avec géolocalisation) avant toute recherche d'ouvrage. */
+    var magasin = (window.NautilusMagasin && window.NautilusMagasin.courant()) || null;
+    // MODE TEST : sans magasin choisi, on force Labège 2 (cl57) pour la démo — évite l'écran vide
+    if (!magasin && (apercuAdminAutorise() || enModeTest())) {
+      magasin = { id: 'cl57', nom: 'Labège 2', ville: 'Labège', cp: '31670' };
+      try { if (window.NautilusMagasin && window.NautilusMagasin.memoriser) window.NautilusMagasin.memoriser(magasin, 'test-auto'); } catch(e){}
+    }
+    var identJeu = await monIdentite();
+    var amorcage = await amorcerService(magasin ? magasin.id : '');
+
+    if (amorcage.demo && !magasin) {
+      /* En aperçu, on ne force pas la géolocalisation : le sélecteur du jeu
+         suffit, et l'amorçage sera rejoué une fois le magasin choisi. */
+      journal('🧪 Aperçu : choisis un magasin pour préparer les pistes d’exemple.', 'info');
+    }
+
+    statut('📖 <b>Épreuve : l’artefact du Nautilus.</b> Retrouve l’ouvrage désigné, passe-le au hublot d\'identification, '
+      + 'puis ouvre la chambre forte. <b>3 réponses refusées</b> = remontée en surface.'
+      + (magasin ? '<br>📍 Magasin : <b>' + esc(magasin.nom || magasin.id) + '</b>.' : ''), 'info');
+
+    jeu = window.NautilusArtefactJeu.init($('artefactHost'), {
+      equipe: monEquipage(),
+      matelot: identJeu,
+      magasin: magasin,
+      service: window.NautilusArtefact,
+      magasins: window.NautilusMagasin,
+      journal: journal,
+      signalerCapitaine: function (texte) { acte(texte, 'warning'); },
+      onErreurComptee: function (n, max) {
+        nbErreurs = n;
+        statut('🔎 <b>Réponse refusée.</b> ' + (max - n) + ' tentative(s) restante(s) avant la remontée en surface.', 'warning');
+      },
+      /* Le sacrifice est INSCRIT par le jeu (artefact-service.js) ; c'est la
+         page qui connaît l'identité du matelot et le barème : c'est donc elle
+         qui pose le blocage, puis annonce la remontée — avec l'indice obtenu,
+         car la remontée remplace l'écran du jeu. */
+      onSacrifice: function (indice, aide) {
+        nbIndices++;
+        return poserRemontee('indice', aide);
+      },
+      onRemontee: function (info) {
+        if (info && info.motif === 'indice') return;   /* déjà affichée par onSacrifice */
+        poserRemontee('echec');
+      },
+      /* Aperçu organisateur : préparer des pistes d'exemple pour le magasin
+         qui vient d'être choisi (aucune donnée réelle, aucun réseau). */
+      onMagasinChoisi: function (fiche) {
+        return amorcerService(fiche && fiche.id).then(function () {
+          if (apercuAdminAutorise()) publierSolutionsApercu(null);
+        });
+      },
       onVictoire: onVictoire
+    });
+
+    return jeu.charger().then(function () {
+      var etat = jeu.etat();
+      if (etat.session && apercuAdminAutorise()) publierSolutionsApercu(etat.session.cartoucheId);
+      if (etat.session && etat.session.magasinId && window.NautilusMagasin && window.NautilusMagasin.trouver) {
+        return window.NautilusMagasin.trouver(etat.session.magasinId).then(function (r) {
+          var fiche = r && r.magasin;
+          if (fiche) statut('📖 <b>Épreuve : l’artefact du Nautilus.</b> 3 réponses refusées = remontée en surface.'
+            + '<br>📍 Magasin : <b>' + esc(fiche.nom) + '</b> · ' + esc(fiche.ville) + ' (' + esc(fiche.cp) + ')', 'info');
+        });
+      }
     });
   }
 
+  /* Quel équipage joue sur cet appareil ? Ordre de confiance :
+     1. le Code Matelot saisi (identité vérifiée dans Firestore) ;
+     2. l'équipage mémorisé par les autres paliers ;
+     3. à défaut, un identifiant D'APPAREIL — jamais une clé partagée, pour
+        que deux visiteurs anonymes ne se retrouvent pas dans la même
+        session ni sur la même piste. */
+  function monEquipage() {
+    if (apercuAdminAutorise() || enModeTest()) return 'APERCU';
+    if (_ident && !_ident.isTest && _ident.teamCode) return _ident.teamCode;
+    try {
+      var code = localStorage.getItem('nautilusCurrentTeam');
+      if (code) return code;
+    } catch (e) {}
+    try {
+      var local = localStorage.getItem('nautilusArtefactEquipage');
+      if (!local) {
+        local = 'ANON-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+        localStorage.setItem('nautilusArtefactEquipage', local);
+      }
+      return local;
+    } catch (e) { return 'ANON'; }
+  }
+
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
-     Explication immersive du thème SANS dévoiler le lieu : on raconte
-     la photo fragmentée, jamais ce qu'elle montre. */
+     Explication immersive du thème SANS dévoiler l'ouvrage : on raconte
+     la chasse, jamais le titre, ni le rayon, ni l'éditeur. */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue à bord, matelot. Le <b>sonar du Nautilus</b> a capturé la zone où se cache le QR Code du prochain palier… mais l'onde est revenue <b>fragmentée</b> : la photo s'est brisée en éclats éparpillés. Remonte l'image, éclat après éclat, et elle te montrera <b>où chercher</b> dans le magasin.",
+    intro: "Le <b>Nautilus</b> a caché un livre dans ton magasin. Personne ne connaît son titre. Retrouve-le, prouve-le au hublot, ouvre la chambre forte.",
     consignes: [
-      { ico: '🧩', html: "La photo est coupée en <b>" + (PUZZLE_COLS * PUZZLE_ROWS) + " éclats</b> mélangés : impossible de la lire avant de l'avoir remontée." },
-      { ico: '🎯', html: "Glisse chaque éclat sur la grille. <b>Au bon endroit, il se verrouille</b> ; au mauvais, il revient — essaie librement." },
-      { ico: '🔎', warn: true, html: "Le sonar peut <b>révéler une pièce</b> à ta place, mais chaque aide compte pour <b>1 erreur</b> : <b>3 erreurs</b> = remontée en surface." }
+      { ico: '📍', html: "<b>Magasin</b> : confirme ton Fnac (géoloc en aide)." },
+      { ico: '🧭', html: "<b>Énigme</b> : elle pointe le rayon sans le nommer. Cherche, ne l'ouvre pas." },
+      { ico: '🔏', html: "<b>Hublot</b> : scanne le code-barres au dos (ou saisis les 13 chiffres)." },
+      { ico: '📜', html: "<b>3 épreuves</b> de la couverture : mot, signature, code final." },
+      { warn: true, ico: '❌', html: "<b>3 erreurs = remontée</b> (1h → 2h → 4h…). Un coéquipier peut reprendre." },
+      { ico: '🕯️', html: "<b>Indices</b> : <b>rayon</b> (1 h), <b>édition</b> (2 h), <b>auteur</b> (4 h) — payants, acquis à l'équipage." },
+      { ico: '📵', html: "<b>Introuvable ?</b> Signale-le : 0 erreur, une autre piste arrive." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
@@ -487,8 +689,11 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     catch (e) { try { window.scrollTo(0, 0); } catch (_) {} }
   }
 
-  /* Démarrage : choix de la VUE (identique au Palier 2). */
-  if (apercuAdminAutorise()) {
+  /* Démarrage : choix de la VUE (identique au Palier 2).
+     Mode test ZZZZ-0000 bypass le sas comme l'aperçu organisateur :
+     l'organisateur qui active le test sur 1831411720.html doit voir
+     directement le briefing, pas la page scellée. */
+  if (apercuAdminAutorise() || enModeTest()) {
     var banniereModeTest = function () {
       if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
     };
@@ -508,6 +713,40 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     }
   }
   window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
+
+  /* DEBUG MODE TEST — si le scellé reste affiché alors que l'URL porte les marques du test,
+     on l'explique et on propose de forcer le briefing (évite un cache HTML périmé). */
+  (function(){
+    try {
+      var estScelle = !document.getElementById('briefCard') || !document.getElementById('briefCard').hidden===false;
+      // on vérifie après le choix de vue (100ms)
+      setTimeout(function(){
+        var hero = document.getElementById('gateHero');
+        var brief = document.getElementById('briefCard');
+        var enScelle = hero && !hero.hidden && hero.style.display!=='none';
+        // alternative: brief hidden means still scellé
+        var briefVisible = brief && !brief.hidden && brief.style.display!=='none';
+        if (enScelle && !briefVisible) {
+          var hasTest = false; try { hasTest = (localStorage.getItem('nautilusMatelotCode')||'').toUpperCase()==='ZZZZ-0000'; } catch(e){}
+          var hasApercu = /[?&]apercu=jeu/.test(location.search);
+          var kParam = (location.search.match(/[?&]k=([a-z0-9]+)/)||[])[1]||'';
+          var h=0, s='apercu-admin:'+String.fromCharCode(78,69,77,79,50,48,50,54); for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;} var kAtt='k'+Math.abs(h).toString(36);
+          if (hasTest || hasApercu) {
+            var msg = document.getElementById('gateMsg');
+            if (msg) {
+              msg.innerHTML = '<div style="background:#fffbe6;border:1px solid #f0d78a;border-radius:8px;padding:8px 10px;margin-top:8px">'
+                + '<b>🧪 Mode test détecté mais scellé resté affiché</b><br>'
+                + '<span style="font-size:11px">URL: <code>'+location.search+'</code><br>localStorage ZZZZ: '+hasTest+' · k reçu: <code>'+kParam+'</code> · k attendu: <code>'+kAtt+'</code></span><br>'
+                + '<button type="button" id="forceBriefBtn" style="margin-top:6px;background:var(--fnac);color:#111;border-radius:7px;padding:6px 10px;font-weight:900">➡️ Forcer le briefing (mode test)</button>'
+                + '</div>';
+              var b=document.getElementById('forceBriefBtn');
+              if(b) b.addEventListener('click', function(){ afficherVueBriefing(); window.scrollTo({top:0,behavior:'smooth'}); });
+            }
+          }
+        }
+      }, 250);
+    } catch(e){}
+  })();
 
   /* --- Indication de la zone de recherche : dépliable SUR PLACE --- */
   var _btnIndication = $('sasIndicationBtn');
@@ -529,6 +768,10 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 <!-- Bouton d'ambiance sonore, commun à toutes les pages du jeu. -->
 <script src="sonar-button.js?v=4" defer></script>
 <script src="palier-annonces.js?v=3" defer></script>
-<script src="admin-button.js?v=26" type="module"></script>
+  <script src="palier-cinematic.js?v=3"></script>
+<!-- Onglet ADMIN de l'artefact : s'injecte dans le panneau admin existant
+     (admin-button.js) sans modifier son HTML dupliqué. -->
+<script src="admin-artefact.js?v=5" defer></script>
+<script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>
