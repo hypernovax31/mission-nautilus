@@ -2994,6 +2994,10 @@ body > header .hero-actions .hero-cta {
 /* Mobile — 3 boutons sur un axe horizontal, compacts */
 @media (max-width: 640px) {
   body > header { padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; }
+  /* GRAND JEU INTERNE · MISSION CONFIDENTIELLE juste sous FNAC LABÈGE — mobile uniquement */
+  body > header .hero-meta { flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px !important; margin: 0 auto !important; width: 100% !important; text-align: center !important; }
+  body > header .hero-meta .brand { font-size: clamp(14px, 4vw, 16px) !important; text-align: center !important; margin: 0 !important; flex: 0 0 auto !important; }
+  body > header .hero-meta .hero-kicker { font-size: 10px !important; padding: 4px 10px !important; text-align: center !important; max-width: 100% !important; flex: 0 0 auto !important; margin: 0 !important; }
   body > header .hero-title { font-size: clamp(26px, 9vw, 38px) !important; margin-top: 8px !important; -webkit-text-stroke: 1px #050505 !important; }
   body > header .hero-line { font-size: clamp(14px, 4vw, 20px) !important; margin-top: var(--space-sm) !important; max-width: 40ch !important; }
   body > header .hero-actions { flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; align-content: center !important; gap: 8px !important; margin-top: 14px !important; width: 100% !important; max-width: 100% !important; }
