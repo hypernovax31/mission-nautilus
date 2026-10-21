@@ -2925,3 +2925,77 @@ main{ align-items:stretch !important; }
   #embarquementMatelot input, #embarquementMatelot select{width:100% !important; min-width:0 !important; max-width:none !important;}
   #retrouverEquipage .grid{grid-template-columns:1fr minmax(130px, auto) !important;}
 }
+
+/* =====================================================================
+   TITRE + BOUTONS ACCUEIL — plus gros et centré horizontalement
+   Demande utilisateur : MISSION NAUTILUS + Plongez dans les 20 000
+   lieues + 3 CTA bien visibles et parfaitement centrés
+   ===================================================================== */
+body > header {
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+body > header .hero-title {
+  font-size: clamp(48px, 6vw, 82px) !important;
+  line-height: 0.95 !important;
+  text-align: center !important;
+  margin: 18px auto 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  -webkit-text-stroke: 1.8px #050505 !important;
+}
+body > header .hero-line {
+  font-size: clamp(20px, 2.8vw, 30px) !important;
+  line-height: 1.25 !important;
+  text-align: center !important;
+  margin: 14px auto 0 !important;
+  max-width: 780px !important;
+  width: 100% !important;
+  display: block !important;
+}
+body > header .hero-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  align-content: center !important;
+  gap: 16px 18px !important;
+  margin: 28px auto 0 !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  text-align: center !important;
+}
+body > header .hero-actions .hero-cta {
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  letter-spacing: .06em !important;
+  padding: 16px 28px !important;
+  min-width: 240px !important;
+  min-height: 52px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 1.1 !important;
+  border-radius: 999px !important;
+}
+/* Tablette */
+@media (max-width: 1099px) and (min-width: 641px) {
+  body > header .hero-title { font-size: clamp(44px, 7vw, 68px) !important; }
+  body > header .hero-line { font-size: clamp(18px, 3.2vw, 26px) !important; max-width: 640px !important; }
+  body > header .hero-actions { gap: 14px !important; margin-top: 22px !important; }
+  body > header .hero-actions .hero-cta { min-width: 220px !important; font-size: 14px !important; padding: 14px 24px !important; min-height: 48px !important; }
+}
+/* Mobile */
+@media (max-width: 640px) {
+  body > header { padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; }
+  body > header .hero-title { font-size: clamp(36px, 9vw, 52px) !important; margin-top: 14px !important; }
+  body > header .hero-line { font-size: clamp(16px, 4.5vw, 22px) !important; margin-top: 10px !important; max-width: 92vw !important; }
+  body > header .hero-actions { flex-direction: column !important; gap: 12px !important; margin-top: 20px !important; width: 100% !important; max-width: 380px !important; }
+  body > header .hero-actions .hero-cta { width: 100% !important; max-width: 380px !important; min-width: 0 !important; font-size: 14px !important; padding: 15px 20px !important; min-height: 48px !important; }
+}
