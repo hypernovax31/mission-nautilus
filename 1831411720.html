@@ -158,7 +158,7 @@
      AUCUN de ces fichiers ne contient de titre d'ouvrage, d'EAN, de SKU,
      de catégorie Fnac ou de réponse : les vérifications portent sur des
      empreintes salées calculées à la volée. -->
-<script src="artefact-moteur.js?v=2"></script>
+<script src="artefact-moteur.js?v=3"></script>
 <!-- Lecteur des fiches publiques fnac.com : strictement hors ligne, jamais
      appelé depuis le jeu. Sert au panneau admin (onglet 📖 Artefact) pour lire
      une fiche enregistrée par l’organisateur, et à l’outil Node de collecte. -->
@@ -665,18 +665,15 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
      Explication immersive du thème SANS dévoiler l'ouvrage : on raconte
      la chasse, jamais le titre, ni le rayon, ni l'éditeur. */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue à bord, matelot. Le <b>Nautilus</b> a dissimulé un <b>artefact</b> quelque part dans les rayons "
-      + "de ton magasin : un ouvrage réel, disponible, compatible avec la mission. Personne ne connaît son titre à "
-      + "l'avance — pas même le capitaine, qui ne voit que des <b>empreintes scellées</b>. Suis l'indice, retrouve "
-      + "l'artefact, passe-le au <b>hublot d'identification</b> : c'est le code-barres qui prouvera que tu tiens le bon.",
+    intro: "Le <b>Nautilus</b> a caché un livre dans ton magasin. Personne ne connaît son titre. Retrouve-le, prouve-le au hublot, ouvre la chambre forte.",
     consignes: [
-      { ico: '📍', html: "Choisis le <b>magasin</b> où tu joues (ou laisse la géolocalisation te proposer le plus proche). Les règles s'adaptent à ce magasin." },
-      { ico: '🧭', html: "Une <b>énigme</b> te désigne le rayon, sans jamais le nommer. Chaque mot compte, et rien ne s'ouvre : la couverture et la fiche suffisent." },
-      { ico: '🔏', html: "Trouvé ? <b>Scanne le code-barres</b> au dos de l'ouvrage (ou saisis ses 13 chiffres). Le hublot accepte ou rejette — sans jamais te dire pourquoi." },
-      { ico: '📜', html: "Trois épreuves suivent, tirées de la couverture : un mot, une <b>signature</b> chiffrée, puis le <b>code de la chambre forte</b>." },
-      { warn: true, ico: '❌', html: "<b>3 réponses refusées</b> = remontée forcée en surface (1 h, puis 2 h, puis 4 h…) et un coéquipier prend le relais. Un code-barres <b>illisible</b> ne compte pas." },
-      { warn: true, ico: '🕯️', html: "Trois indices payants : le <b>rayon</b> (1 h), l'<b>édition</b> (2 h), l'<b>auteur</b> (4 h). Chacun exige un sacrifice volontaire — mais il reste acquis à <b>tout l'équipage</b>." },
-      { ico: '📵', html: "L'ouvrage a disparu du rayon ? <b>« Livre introuvable »</b> prévient le capitaine : aucune erreur comptée, et une autre piste peut t'être affectée." }
+      { ico: '📍', html: "<b>Magasin</b> : confirme ton Fnac (géoloc en aide)." },
+      { ico: '🧭', html: "<b>Énigme</b> : elle pointe le rayon sans le nommer. Cherche, ne l'ouvre pas." },
+      { ico: '🔏', html: "<b>Hublot</b> : scanne le code-barres au dos (ou saisis les 13 chiffres)." },
+      { ico: '📜', html: "<b>3 épreuves</b> de la couverture : mot, signature, code final." },
+      { warn: true, ico: '❌', html: "<b>3 erreurs = remontée</b> (1h → 2h → 4h…). Un coéquipier peut reprendre." },
+      { ico: '🕯️', html: "<b>Indices</b> : rayon (1h), édition (2h), auteur (4h). Payants, acquis à l'équipage." },
+      { ico: '📵', html: "<b>Introuvable ?</b> Signale-le : 0 erreur, une autre piste arrive." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
@@ -774,7 +771,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   <script src="palier-cinematic.js?v=3"></script>
 <!-- Onglet ADMIN de l'artefact : s'injecte dans le panneau admin existant
      (admin-button.js) sans modifier son HTML dupliqué. -->
-<script src="admin-artefact.js?v=3" defer></script>
+<script src="admin-artefact.js?v=4" defer></script>
 <script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>

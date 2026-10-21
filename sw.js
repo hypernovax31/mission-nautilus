@@ -29,12 +29,12 @@ const PRECACHE = [
   /* Palier 3 — « l'artefact du Nautilus » (remplace l'ancien puzzle photo).
      Les deux fichiers de données sont préchargés : le sélecteur de magasin
      et l'aperçu organisateur doivent fonctionner même hors ligne. */
-  './artefact-moteur.js?v=2',
+  './artefact-moteur.js?v=3',
   './artefact-service.js?v=2',
   './magasin-fnac.js?v=1',
   './artefact-palier3.js?v=1',
   './fnac-lecteur.js?v=1',
-  './admin-artefact.js?v=2',
+  './admin-artefact.js?v=4',
   './data/magasins-fnac.json',
   './data/catalogue-artefacts.example.json',
   './victoire-palier.js?v=12',

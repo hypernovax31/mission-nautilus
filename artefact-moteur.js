@@ -881,63 +881,36 @@
          le moteur applique.
      ================================================================== */
   var MESSAGES = {
-    lancement: "Le Nautilus prépare une nouvelle expédition.\n"
-             + "Son équipage recherche un ouvrage dissimulé parmi les rayons compatibles avec la mission.\n"
-             + "Suis les indices, retrouve l'artefact et passe-le au hublot d'identification du Nautilus.",
-    artefactTrouve: "Lorsque tu penses tenir l'ouvrage, passe-le au hublot d'identification du Nautilus.",
-    scanInvite: "Passe l'ouvrage au hublot : vise le code-barres imprimé au dos de l'ouvrage.",
-    scanAccepte: "Le hublot d'identification reconnaît l'artefact du Nautilus.\n"
-               + "L'ouvrage recherché vient d'être identifié. Le journal de bord peut s'ouvrir.",
-    scanRejete: "Le hublot du Nautilus rejette cet ouvrage.\n"
-              + "Ce livre n'appartient pas à la route que tu poursuis. Les profondeurs gardent leur secret.",
-    scanRejeteCourt: "Le hublot du Nautilus rejette cet ouvrage. La route reste scellée.",
-    scanIllisible: "Le hublot n'a rien pu lire. Approche le code-barres, ou saisis les chiffres imprimés sous les barres.",
-    eanInvalide: "Ce code n'est pas un code-barres de livre valide : le hublot ne l'a même pas examiné (aucune erreur comptée).",
-    dernierAvertissement: "Le Nautilus te laisse une dernière tentative avant la remontée.",
-    remontee1: "Remontée forcée à la surface\n"
-             + "Trois erreurs ont mis ta mission en péril. Le Nautilus interrompt ta plongée et te ramène à la surface pendant 1 heure.\n"
-             + "Durant ce délai, un autre membre de l'équipage peut prendre le relais et poursuivre la mission. Tu retrouveras ta place lorsque le compte à rebours sera écoulé.",
-    remontee2: "Le Nautilus t'ordonne une nouvelle remontée\n"
-             + "Tes erreurs ont de nouveau compromis la mission. Tu dois rester à la surface pendant 2 heures.\n"
-             + "En attendant ton retour, un autre équipier peut prendre les commandes et continuer l'expédition. Ta mission reprendra à la fin du compte à rebours.",
-    remontee3: "Les profondeurs te refusent le passage\n"
-             + "Le Nautilus suspend ta mission pendant 4 heures.\n"
-             + "Un autre matelot peut désormais assurer le relais et poursuivre l'expédition jusqu'à ton retour.",
-    remonteeSuite: "Les profondeurs se referment sur ta route\n"
-                 + "Le Nautilus suspend ta mission pendant {heures} heures.\n"
-                 + "Un autre membre de ton équipage peut assurer le relais jusqu'à ton retour.",
-    relais: "Le poste de navigation est libre\n"
-          + "Un membre de ton équipage est temporairement retenu à la surface.\n"
-          + "Tu peux prendre le relais et poursuivre la mission du Nautilus pendant son blocage.",
-    retour: "Retour à bord\n"
-          + "Ton temps de surface est écoulé. Le Nautilus te rend ta place au sein de l'équipage.\n"
-          + "La mission reprend là où elle s'était arrêtée.",
-    sacrificePropose: "Cet indice peut guider ta route, mais il exige un sacrifice.\n"
-                    + "Tu seras retenu à la surface pendant {duree}.\n"
-                    + "Un autre membre de ton équipage pourra assurer le relais pendant ton blocage.",
-    sacrificeAccepte: "Le Nautilus accepte ton sacrifice.\nL'indice est transmis à ton équipage.",
-    sacrificeRefuse: "Tu restes dans les profondeurs. Aucun indice n'est transmis.",
-    indiceTransmis: "Le Nautilus accepte ton sacrifice. L'indice est transmis à ton équipage.",
-    indiceCapitaine: "Ton sacrifice est enregistré. Le capitaine transmet l'indice exact à ton équipage.",
-    introuvable: "Le Nautilus ne retrouve plus la trace de cet ouvrage.\n"
-               + "Le livre a peut-être quitté son rayon ou n'est plus disponible.\n"
-               + "Préviens le capitaine afin qu'il vérifie la situation.",
-    introuvableEnregistre: "Signalement transmis au capitaine.\n"
-                         + "Aucune erreur n'est comptée contre ton équipage : la piste est en cours de vérification.",
-    remplacement: "L'ouvrage désigné n'est momentanément plus disponible.\n"
-                + "Le capitaine prépare une nouvelle piste.\n"
-                + "La progression de ton équipage est conservée.",
-    remplacementSilencieux: "La piste du Nautilus vient de changer.\nAucune erreur n'est comptée contre ton équipage.",
-    aucunOuvrage: "Aucun ouvrage compatible n'est actuellement disponible.\n"
-                + "La mission est temporairement suspendue, mais la progression de ton équipage est conservée.\n"
-                + "Préviens le capitaine pour relancer la recherche.",
-    aucunOuvrageMagasin: "Aucun ouvrage compatible n'est actuellement disponible dans ce magasin.\n"
-                       + "Choisis un autre magasin ou préviens le capitaine.",
-    magasinRequis: "Sélectionne le magasin Fnac dans lequel tu participes à la mission.",
-    victoire: "La signature est complète.\nLe Nautilus reconnaît ton équipage et déverrouille l'escale suivante.",
-    chambreForte: "Assemble les quatre fragments dans l'ordre du voyage.\n"
-                + "Le Nautilus n'a pas suivi la route la plus courte : l'ordre est annoncé ci-dessous.",
-    etapeValidee: "Fragment enregistré. Le journal de bord poursuit sa lecture."
+    lancement: "Le Nautilus a caché un livre. Retrouve-le et passe-le au hublot.",
+    artefactTrouve: "Passe l'ouvrage au hublot d'identification.",
+    scanInvite: "Vise le code-barres au dos du livre.",
+    scanAccepte: "Ouvrage reconnu. Le journal s'ouvre.",
+    scanRejete: "Ce livre n'est pas le bon. Réessaie.",
+    scanRejeteCourt: "Livre rejeté. Route scellée.",
+    scanIllisible: "Lecture impossible. Approche le code-barres ou saisis les chiffres.",
+    eanInvalide: "Code invalide : aucune erreur comptée.",
+    dernierAvertissement: "Dernière tentative avant remontée.",
+    remontee1: "Remontée 1h\n3 erreurs. Un coéquipier peut prendre le relais.",
+    remontee2: "Remontée 2h\nUn autre membre peut poursuivre.",
+    remontee3: "Remontée 4h\nPoste libre pour l'équipage.",
+    remonteeSuite: "Remontée {heures}h\nRelais possible jusqu'à ton retour.",
+    relais: "Poste libre\nUn matelot est en surface — prends le relais.",
+    retour: "Retour à bord\nLe temps est écoulé. Tu reprends ta place.",
+    sacrificePropose: "Cet indice coûte {duree} en surface. Un autre peut prendre le relais.",
+    sacrificeAccepte: "Sacrifice accepté. Indice transmis.",
+    sacrificeRefuse: "Aucun indice transmis.",
+    indiceTransmis: "Indice transmis à l'équipage.",
+    indiceCapitaine: "Sacrifice enregistré. Le capitaine transmet l'indice.",
+    introuvable: "Ouvrage introuvable.\nPeut-être plus en rayon. Préviens le capitaine.",
+    introuvableEnregistre: "Signalé au capitaine.\nAucune erreur comptée.",
+    remplacement: "Ouvrage indisponible.\nNouvelle piste en préparation. Progression conservée.",
+    remplacementSilencieux: "Piste changée. Aucune erreur comptée.",
+    aucunOuvrage: "Aucun ouvrage dispo.\nMission suspendue. Progression conservée. Préviens le capitaine.",
+    aucunOuvrageMagasin: "Aucun ouvrage ici.\nChange de magasin ou préviens le capitaine.",
+    magasinRequis: "Choisis ton magasin Fnac.",
+    victoire: "Signature complète. Escale suivante déverrouillée.",
+    chambreForte: "Assemble les 4 fragments dans l'ordre indiqué.",
+    etapeValidee: "Fragment enregistré."
   };
 
   /* Les trois indices payants : le sacrifice est une remontée en surface

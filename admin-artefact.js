@@ -1,63 +1,33 @@
 /* =====================================================================
-   admin-artefact.js — ONGLET ADMIN « 📖 Artefact » du Palier 3
+   admin-artefact.js — ONGLET ADMIN « 🏪 Magasins » (remplace l'artefact)
 
-   Ce module s'INJECTE dans le panneau admin existant (admin-button.js
-   sur les pages palier, copie en ligne dans index.html) sans modifier
-   son HTML dupliqué : il attend #adminWorkspace, ajoute un onglet
-   data-tab="artefact" et son volet data-pane="artefact", puis se
-   branche sur le même mécanisme d'onglets.
+   Injection légère dans le panneau admin existant (admin-button.js /
+   index.html). Affiche et permet de mettre à jour la liste des magasins
+   Fnac utilisée par le Palier 3.
 
-   ---------------------------------------------------------------------
-   LE CODE D'ACCÈS ADMIN N'EST PAS UN SECRET
-   ---------------------------------------------------------------------
-   Le code qui ouvre le panneau est présent dans le bundle public
-   (admin-button.js). Il ne protège donc rien de sensible. Ce qui protège
-   le catalogue (titres, EAN, SKU) et les réponses des épreuves, c'est la
-   PHRASE D'ADMINISTRATION saisie ici :
-     · elle sert de clé à PBKDF2-SHA256 (200 000 itérations) puis AES-GCM ;
-     · elle n'est écrite NULLE PART (ni localStorage, ni Firestore, ni
-       l'URL) et disparaît au rechargement de la page ;
-     · sans elle, le panneau affiche des cartouches et des sessions, mais
-       jamais un titre, jamais un EAN, jamais une réponse.
-
-   ---------------------------------------------------------------------
-   CE QUE L'ORGANISATEUR FAIT ICI
-   ---------------------------------------------------------------------
-   1. Choisir le MAGASIN de référence (liste synchronisée depuis fnac.com).
-   2. CONFIRMER la disponibilité « retrait sous 1 h » de ce magasin
-      (vérification faite à la main sur fnac.com : aucun appel réseau
-      depuis le navigateur, aucun contournement d'anti-bot).
-   3. Saisir / importer le CATALOGUE des ouvrages compatibles.
-   4. GÉNÉRER les pistes anonymisées (cartouches) du magasin.
-   5. Suivre les SESSIONS : étape, erreurs, indices demandés, ouvrages
-      introuvables — et RESÉLECTIONNER un ouvrage en un clic.
-
-   Tout ce qui est écrit ici passe par artefact-service.js : ce fichier
-   ne contient aucune règle de jeu et aucune donnée d'ouvrage.
+   - Charge data/magasins-fnac.json (ou Firestore si plus récent)
+   - Vérifie / publie la liste
+   - Recherche, ajout, édition, suppression locale
+   - Export JSON pour commit
    ===================================================================== */
 (function () {
   'use strict';
   if (window.NautilusAdminArtefact) return;
 
-  var ONGLET = 'artefact';
-  var CLE_MAGASIN_ADMIN = 'nautilusAdminMagasin';
-
-  var _phrase = '';            /* mémoire volatile uniquement */
+  var ONGLET = 'magasins';
   var _monte = false;
-  var _magasinId = '';
-  var _liste = null;           /* liste des magasins chargée */
-  var _catalogue = null;       /* copie de travail déchiffrée */
-  var _charge = false;
+  var _liste = null;
+  var _filtre = '';
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>\"]/g, function (c) {
+    return String(s == null ? '' : s).replace(/[&<>\"\"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c];
     });
   }
-  function M() { return window.NautilusArtefactMoteur; }
   function S() { return window.NautilusArtefact; }
   function MG() { return window.NautilusMagasin; }
+  function M() { return window.NautilusArtefactMoteur; }
 
   function dire(id, texte, kind) {
     var el = $(id);
@@ -65,10 +35,6 @@
     el.innerHTML = texte;
     el.className = 'adm-af-msg ' + (kind || '');
     el.style.color = kind === 'ok' ? '#075c39' : kind === 'danger' ? '#9b1111' : kind === 'warn' ? '#8a5b00' : '';
-  }
-  function date(iso) {
-    if (!iso) return '—';
-    try { return new Date(iso).toLocaleString('fr-FR'); } catch (e) { return String(iso); }
   }
   function age(iso) {
     if (!iso) return '—';
@@ -80,189 +46,46 @@
     return 'il y a ' + Math.round(min / 1440) + ' j';
   }
 
-  /* ==================================================================
-     1. INJECTION DE L'ONGLET
-     ================================================================== */
-  var _modeExpert = false;
   function HTML_PANE() {
     return ''
-    + '<p class="small" style="margin-bottom:10px">Palier 3 — <b>l’artefact</b> : choisissez le magasin, confirmez le stock, générez les pistes.' 
-    + ' <a href="#" id="afToggleExpert" style="font-size:11px;color:#5a7bd5;text-decoration:underline">mode expert</a></p>'
-    + '<div id="afLightBanner" class="adm-af-note" style="background:#eef4ff;border:1px solid #c5d6f0;border-radius:8px;padding:8px 10px;margin-bottom:10px">'
-    + '💡 <b>Mode simple</b> : le magasin + la dispo + les pistes suffisent. Le coffre s’ouvre avec la phrase d’administration — elle n’est jamais enregistrée.'
+    + '<p class=\"small\" style=\"margin-bottom:10px\">Liste des <b>magasins Fnac</b> pour le Palier 3. Elle détermine où l’ouvrage peut être cherché. Source : <code>data/magasins-fnac.json</code> (ou Firestore si publiée plus récemment).</p>'
+    + '<div class=\"adm-af-sec\">'
+    +   '<h4>📍 Magasins — mise à jour</h4>'
+    +   '<div class=\"adm-af-ligne\">'
+    +     '<button id=\"afMagReload\" class=\"secondary\" type=\"button\">↻ Recharger</button>'
+    +     '<button id=\"afMagVerifier\" class=\"secondary\" type=\"button\">🧪 Vérifier</button>'
+    +     '<button id=\"afMagPublier\" class=\"primary\" type=\"button\">📤 Publier (Firestore)</button>'
+    +     '<button id=\"afMagExporter\" class=\"secondary\" type=\"button\">⬇️ Exporter JSON</button>'
+    +   '</div>'
+    +   '<p class=\"adm-af-note\" id=\"afMagEtat\">Chargement…</p>'
+    +   '<p class=\"adm-af-note\" id=\"afMagMsg\"></p>'
+    +   '<div class=\"adm-af-ligne\" style=\"margin-top:8px\">'
+    +     '<input id=\"afMagSearch\" class=\"adm-af-input\" placeholder=\"🔍 Filtrer (nom, ville, CP, id)\" style=\"flex:1\">'
+    +     '<span class=\"small\" id=\"afMagCount\"></span>'
+    +   '</div>'
+    +   '<div id=\"afMagTable\" style=\"margin-top:8px;max-height:360px;overflow:auto;border:1px solid #dfe8ee;border-radius:8px\"></div>'
     + '</div>'
-    + '<div class="adm-af-sec" style="background:#fffbe6;border-color:#f0d78a">'
-    +   '<h4>🧪 Mode test — Palier 3</h4>'
-    +   '<p class="adm-af-note">Joue l’épreuve sur <b>cet appareil</b> sans QR ni blocage : catalogue d’exemple, pistes fictives, aucune écriture réelle. Idéal pour vérifier le parcours avant la mission.</p>'
-    +   '<div class="adm-af-ligne">'
-    +     '<button id="afTestActiver" class="primary" type="button">🧪 Activer le mode test</button>'
-    +     '<button id="afTestOuvrir" class="primary" type="button">▶️ Ouvrir le Palier 3 en test</button>'
-    +     '<button id="afTestDesactiver" class="secondary" type="button">⏹ Désactiver</button>'
+    + '<div class=\"adm-af-sec\">'
+    +   '<h4>➕ Ajouter / éditer un magasin</h4>'
+    +   '<p class=\"adm-af-note\">Renseigne au minimum <b>id</b> (ex. cl999) et <b>nom</b>. La publication rend la liste active pour les joueurs ; l’export JSON sert à committer le fichier.</p>'
+    +   '<div class=\"adm-af-ligne\">'
+    +     '<input id=\"afMagId\" class=\"adm-af-input\" placeholder=\"id — ex. cl999\" style=\"max-width:120px\">'
+    +     '<input id=\"afMagNom\" class=\"adm-af-input\" placeholder=\"Nom — ex. Labège\" style=\"flex:1\">'
+    +     '<input id=\"afMagVille\" class=\"adm-af-input\" placeholder=\"Ville\" style=\"flex:1\">'
+    +     '<input id=\"afMagCp\" class=\"adm-af-input\" placeholder=\"CP\" style=\"max-width:100px\">'
     +   '</div>'
-    +   '<p class="adm-af-note" id="afTestEtat"></p>'
+    +   '<div class=\"adm-af-ligne\">'
+    +     '<input id=\"afMagLat\" class=\"adm-af-input\" type=\"number\" step=\"any\" placeholder=\"lat\" style=\"max-width:120px\">'
+    +     '<input id=\"afMagLon\" class=\"adm-af-input\" type=\"number\" step=\"any\" placeholder=\"lon\" style=\"max-width:120px\">'
+    +     '<input id=\"afMagSlug\" class=\"adm-af-input\" placeholder=\"slug — ex. Labege/Fnac-Labege\" style=\"flex:1\">'
+    +   '</div>'
+    +   '<div class=\"adm-af-ligne\">'
+    +     '<button id=\"afMagAjouter\" class=\"primary\" type=\"button\">➕ Ajouter / Mettre à jour</button>'
+    +     '<button id=\"afMagVider\" class=\"secondary\" type=\"button\">🧹 Vider le formulaire</button>'
+    +     '<span class=\"small\" id=\"afMagFormMsg\"></span>'
+    +   '</div>'
     + '</div>'
-
-    /* --- phrase d'administration --- */
-    + '<div class="adm-af-sec">'
-    +   '<h4>🔑 Phrase d’administration</h4>'
-    +   '<div class="adm-af-ligne">'
-    +     '<input id="afAdmPhrase" class="adm-af-input" type="password" autocomplete="off" '
-    +       'placeholder="Phrase de déchiffrement du catalogue">'
-    +     '<button id="afAdmOuvrir" class="primary" type="button">🔓 Ouvrir le coffre</button>'
-    +     '<button id="afAdmFermer" class="secondary" type="button">🔒 Verrouiller</button>'
-    +   '</div>'
-    +   '<p class="adm-af-note" id="afAdmPhraseEtat">Coffre verrouillé : aucun titre, aucun EAN, aucune réponse ne s’affiche.</p>'
-    +   '<p class="adm-af-note">⚠️ Le code d’ouverture du panneau admin est présent dans le code public du site : il ne '
-    +   'protège rien. La <b>phrase</b> ci-dessus est la seule clé du catalogue (AES-GCM, PBKDF2 200 000 itérations). '
-    +   'Elle n’est enregistrée nulle part et s’efface en fermant la page.</p>'
-    + '</div>'
-
-    /* --- magasin de référence --- */
-    + '<div class="adm-af-sec">'
-    +   '<h4>📍 Magasin de référence</h4>'
-    +   '<div class="adm-af-ligne">'
-    +     '<select id="afAdmMagasin" class="adm-af-select"><option value="">— Choisir un magasin —</option></select>'
-    +     '<button id="afAdmMagasinReload" class="secondary" type="button">↻ Recharger la liste</button>'
-    +   '</div>'
-    +   '<p class="adm-af-note" id="afAdmListeEtat">Liste non chargée.</p>'
-    +   '<div class="adm-af-ligne">'
-    +     '<button id="afAdmVerifierListe" class="secondary" type="button">🧪 Contrôler la liste</button>'
-    +     '<button id="afAdmPublierListe" class="primary" type="button">📤 Publier la liste (Firestore)</button>'
-    +     '<span class="small" id="afAdmListePubliee"></span>'
-    +   '</div>'
-    +   '<p class="adm-af-note" id="afAdmListeMsg"></p>'
-    + '</div>'
-
-    /* --- disponibilité --- */
-    + '<div class="adm-af-sec">'
-    +   '<h4>⏱️ Disponibilité confirmée (retrait sous 1 h)</h4>'
-    +   '<p class="adm-af-note">Vérifie <b>à la main</b> sur fnac.com que les ouvrages du catalogue sont bien '
-    +   '« retrait sous 1 h » dans ce magasin, puis confirme ici. La confirmation n’est valable que '
-    +   '<b>15 minutes au lancement</b> d’une mission : c’est la seule fenêtre de fraîcheur du jeu, elle ne '
-    +   'chronomètre jamais un matelot.</p>'
-    +   '<div class="adm-af-ligne">'
-    +     '<input id="afAdmDelai" class="adm-af-input" type="text" value="Retrait gratuit sous 1H">'
-    +     '<button id="afAdmReconfirmer" class="primary" type="button">✅ Reconfirmer toutes les pistes du magasin</button>'
-    +   '</div>'
-    +   '<p class="adm-af-note" id="afAdmDispoMsg"></p>'
-    + '</div>'
-
-    + '<div id="afExpertGroup" style="display:none">'
-    /* --- catalogue (expert) --- */
-    + '<div class="adm-af-sec">'
-    +   '<h4>📚 Catalogue des ouvrages</h4>'
-    +   '<p class="adm-af-note">Le catalogue est <b>chiffré</b> avant d’être écrit : ni ce dépôt, ni Firestore, ni le '
-    +   'réseau ne contiennent un titre ou un EAN en clair. Ajoute les ouvrages un par un, ou importe un JSON '
-    +   '(structure : <code>data/catalogue-artefacts.example.json</code>).</p>'
-    +   '<div class="adm-af-ligne">'
-    +     '<button id="afAdmCatCharger" class="secondary" type="button">↻ Lire le catalogue</button>'
-    +     '<button id="afAdmCatExporter" class="secondary" type="button">⬇️ Exporter (JSON local)</button>'
-    +     '<label class="secondary" style="cursor:pointer;padding:8px 10px;border:1px solid #cfd8e3;border-radius:8px">'
-    +       '📥 Importer un JSON<input id="afAdmCatFichier" type="file" accept="application/json" hidden></label>'
-    +     '<button id="afAdmCatPublier" class="primary" type="button">🔐 Publier le catalogue chiffré</button>'
-    +   '</div>'
-    +   '<p class="adm-af-note" id="afAdmCatEtat">Catalogue non lu.</p>'
-    +   '<div id="afAdmCatTable"></div>'
-    +   '<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">➕ Ajouter un ouvrage</summary>'
-    +     '<div class="adm-af-ligne" style="margin-top:8px">'
-    +       '<input id="afCatTitre" class="adm-af-input" placeholder="Titre (tel qu’imprimé sur la couverture)">'
-    +       '<input id="afCatAuteur" class="adm-af-input" placeholder="Auteur (ou Collectif)">'
-    +       '<select id="afCatAuteurType" class="adm-af-select"><option value="unique">une personne</option>'
-    +         '<option value="collectif">collectif</option></select>'
-    +     '</div>'
-    +     '<div class="adm-af-ligne">'
-    +       '<input id="afCatEditeur" class="adm-af-input" placeholder="Éditeur">'
-    +       '<input id="afCatEdition" class="adm-af-input" placeholder="Mention d’édition (ex. 7e édition)">'
-    +       '<input id="afCatEditionNumero" class="adm-af-input" type="number" min="0" placeholder="N° d’édition">'
-    +       '<input id="afCatAnnee" class="adm-af-input" type="number" placeholder="Année">'
-    +     '</div>'
-    +     '<div class="adm-af-ligne">'
-    +       '<input id="afCatEan" class="adm-af-input" placeholder="EAN (13 chiffres)">'
-    +       '<input id="afCatSku" class="adm-af-input" placeholder="SKU Fnac">'
-    +       '<input id="afCatCategorie" class="adm-af-input" placeholder="Libellé déroulant Fnac (ex. Atlas / carte)">'
-    +     '</div>'
-    +     '<div class="adm-af-ligne">'
-    +       '<input id="afCatRayon" class="adm-af-input" placeholder="Rayon (ex. Géographie)">'
-    +       '<select id="afCatType" class="adm-af-select"></select>'
-    +       '<select id="afCatVendeur" class="adm-af-select"><option value="fnac">vendu par Fnac</option>'
-    +         '<option value="partenaire">vendu par un partenaire</option></select>'
-    +       '<button id="afCatAjouter" class="primary" type="button">➕ Ajouter au catalogue</button>'
-    +     '</div>'
-    +     '<p class="adm-af-note" id="afAdmCatMsg"></p>'
-    +   '</details>'
-
-    /* --- lire une fiche fnac.com collée ici (hors ligne) --- */
-    +   '<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">📋 Lire une fiche fnac.com (collée ici)</summary>'
-    +     '<p class="adm-af-note">Ouvre la fiche sur <code>fnac.com</code> avec <b>ton magasin sélectionné</b> '
-    +       '(« Choisir un autre magasin »), enregistre la page (Ctrl+S) ou copie son contenu, puis colle-le '
-    +       'ci-dessous. <b>Aucune requête n’est envoyée à fnac.com depuis ce poste</b> : la lecture est locale. '
-    +       'Le lecteur recopie ce que la page AFFIRME — il ne devine ni le magasin, ni le délai, ni le stock.</p>'
-    +     '<div class="adm-af-ligne">'
-    +       '<input id="afCatFicheUrl" class="adm-af-input" placeholder="URL de la fiche (facultatif) — sert à l’identifiant produit">'
-    +     '</div>'
-    +     '<textarea id="afCatFicheHtml" class="adm-af-input" rows="6" style="width:100%;font-family:monospace;font-size:11px" '
-    +       'placeholder="Colle ici le HTML enregistré ou le texte copié de la fiche…"></textarea>'
-    +     '<div class="adm-af-ligne" style="margin-top:8px">'
-    +       '<button id="afCatFicheLire" class="secondary" type="button">🔎 Lire la fiche</button>'
-    +       '<button id="afCatFicheAjouter" class="primary" type="button" disabled>➕ Ajouter au catalogue</button>'
-    +       '<button id="afCatFicheVider" class="secondary" type="button">🧹 Vider</button>'
-    +     '</div>'
-    +     '<div id="afCatFicheResultat"></div>'
-    +     '<p class="adm-af-note" id="afCatFicheMsg"></p>'
-    +   '</details>'
-    + '</div>'
-
-    + '</div>' /* fin expert */
-    /* --- pistes (cartouches) - toujours visible --- */
-    + '<div class="adm-af-sec">'
-    +   '<h4>🎯 Pistes anonymisées (cartouches)</h4>'
-    +   '<p class="adm-af-note">Une piste = un ouvrage disponible + une énigme complète, <b>sans aucune donnée '
-    +   'lisible</b>. Le jeu en choisit une au lancement de chaque Palier 3. Régénérer après chaque confirmation '
-    +   'de disponibilité.</p>'
-    +   '<div class="adm-af-ligne">'
-    +     '<button id="afAdmGenerer" class="primary" type="button">⚙️ Générer les pistes du magasin</button>'
-    +     '<button id="afAdmCartouchesReload" class="secondary" type="button">↻ Recharger</button>'
-    +     '<span class="small" id="afAdmCartouchesEtat"></span>'
-    +   '</div>'
-    +   '<div id="afAdmCartouchesTable"></div>'
-    +   '<p class="adm-af-note" id="afAdmCartouchesMsg"></p>'
-    + '</div>'
-
-    /* --- sessions --- */
-    + '<div class="adm-af-sec">'
-    +   '<h4>🚢 Sessions des équipages</h4>'
-    +   '<p class="adm-af-note">Suivi en direct : étape, réponses refusées, indices demandés, ouvrages introuvables. '
-    +   '<b>Resélectionner le livre</b> affecte une autre piste sans compter d’erreur et conserve la progression '
-    +   'compatible.</p>'
-    +   '<div class="adm-af-ligne">'
-    +     '<button id="afAdmSessionsReload" class="secondary" type="button">↻ Recharger les sessions</button>'
-    +     '<span class="small" id="afAdmSessionsEtat"></span>'
-    +   '</div>'
-    +   '<p class="adm-af-note" id="afAdmSessionsMsg"></p>'
-    +   '<div id="afAdmSessionsTable"></div>'
-    + '</div>'
-
-    + '<div id="afExpertGroup2" style="display:none">'
-    /* --- configuration (expert) --- */
-    + '<div class="adm-af-sec">'
-    +   '<h4>⚙️ Configuration du service</h4>'
-    +   '<div class="adm-af-ligne">'
-    +     '<select id="afAdmMode" class="adm-af-select">'
-    +       '<option value="operateur">operateur — disponibilité confirmée à la main (hébergement statique)</option>'
-    +       '<option value="fonction">fonction — vérification par une Cloud Function HTTPS</option>'
-    +     '</select>'
-    +     '<input id="afAdmEndpoint" class="adm-af-input" placeholder="https://…/selectionner (mode fonction)">'
-    +     '<input id="afAdmFenetre" class="adm-af-input" type="number" min="1" max="1440" placeholder="Fenêtre (min)" style="max-width:130px">'
-    +   '</div>'
-    +   '<div class="adm-af-ligne">'
-    +     '<select id="afAdmMagasinDefaut" class="adm-af-select"><option value="">— Magasin par défaut (aucun) —</option></select>'
-    +     '<button id="afAdmConfigSave" class="primary" type="button">💾 Enregistrer</button>'
-    +     '<span class="small" id="afAdmConfigEtat"></span>'
-    +   '</div>'
-    +   '<p class="adm-af-note">Le mode <code>fonction</code> déplace la sélection côté serveur '
-    +   '(<code>functions/index.js</code>, à déployer sur un plan Blaze). Sans déploiement, garde '
-    +   '<code>operateur</code> : le jeu fonctionne sur un simple hébergement statique.</p>'
-    + '</div>';
+    + '<p class=\"adm-af-note\" style=\"margin-top:8px\">💡 Sync hebdo : <code>tools/sync-magasins-fnac.mjs</code> + GitHub Actions régénère <code>data/magasins-fnac.json</code>. Les modifs manuelles ici sont prioritaires si publiées dans Firestore.</p>';
   }
 
   function injecter() {
@@ -270,37 +93,28 @@
     var workspace = $('adminWorkspace');
     if (!workspace) return;
     var tabs = workspace.querySelector('.admin-tabs');
-    if (!tabs || workspace.querySelector('[data-pane="' + ONGLET + '"]')) {
-      if (workspace.querySelector('[data-pane="' + ONGLET + '"]')) { _monte = true; brancher(); }
+    if (!tabs || workspace.querySelector('[data-pane=\"' + ONGLET + '\"]')) {
+      if (workspace.querySelector('[data-pane=\"' + ONGLET + '\"]')) { _monte = true; brancher(); }
       return;
     }
-
-    /* L'onglet se place AVANT « Danger » : la zone destructive reste la
-       dernière, comme dans le panneau d'origine. */
     var bouton = document.createElement('button');
     bouton.className = 'admin-tab';
     bouton.type = 'button';
     bouton.setAttribute('role', 'tab');
     bouton.dataset.tab = ONGLET;
-    bouton.innerHTML = '<span class="lbl-desktop">📖 Artefact</span>'
-      + '<span class="lbl-mobile" aria-label="Artefact">📖</span>';
-    var danger = tabs.querySelector('[data-tab="danger"]');
+    bouton.innerHTML = '<span class=\"lbl-desktop\">🏪 Magasins</span><span class=\"lbl-mobile\" aria-label=\"Magasins\">🏪</span>';
+    var danger = tabs.querySelector('[data-tab=\"danger\"]');
     if (danger) tabs.insertBefore(bouton, danger); else tabs.appendChild(bouton);
-
     var pane = document.createElement('div');
     pane.className = 'admin-pane';
     pane.dataset.pane = ONGLET;
     pane.style.display = 'none';
     pane.innerHTML = HTML_PANE();
     workspace.appendChild(pane);
-
     _monte = true;
     brancher();
   }
 
-  /* Le panneau existant n'écoute que les onglets présents au montage :
-     on reproduit ici exactement son basculement (mêmes classes, mêmes
-     data-*), pour que les autres onglets continuent de masquer celui-ci. */
   function activerOnglet() {
     document.querySelectorAll('.admin-tab').forEach(function (b) {
       b.classList.toggle('active', b.dataset.tab === ONGLET);
@@ -308,871 +122,157 @@
     document.querySelectorAll('.admin-pane').forEach(function (p) {
       p.style.display = (p.dataset.pane === ONGLET ? '' : 'none');
     });
-    if (!_charge) { _charge = true; rafraichirTout(); }
-    else { rafraichirSessions(); rafraichirCartouches(); }
-    // maj état test si présent
-    try{ var etat=document.getElementById('afTestEtat'); if(etat){ var c=(localStorage.getItem('nautilusMatelotCode')||'').toUpperCase(); etat.textContent=(c==='ZZZZ-0000')?'✅ Mode test actif sur cet appareil (ZZZZ-0000) — aucune progression réelle ne sera enregistrée.':'Mode test inactif. Active-le pour tester sans QR ni blocage.'; } }catch(e){}
+    charger(false);
   }
 
   function brancher() {
-    var bouton = document.querySelector('.admin-tab[data-tab="' + ONGLET + '"]');
+    var bouton = document.querySelector('.admin-tab[data-tab=\"' + ONGLET + '\"]');
     if (bouton) bouton.addEventListener('click', activerOnglet);
-    var tog = $('afToggleExpert');
-    if(tog) tog.addEventListener('click', function(e){
-      e.preventDefault();
-      _modeExpert = !_modeExpert;
-      var g = $('afExpertGroup'); if(g) g.style.display = _modeExpert ? '' : 'none';
-      var g2 = $('afExpertGroup2'); if(g2) g2.style.display = _modeExpert ? '' : 'none';
-      var b = $('afLightBanner'); if(b) b.style.display = _modeExpert ? 'none' : '';
-      tog.textContent = _modeExpert ? 'mode simple' : 'mode expert';
-    });
-
-    $('afAdmOuvrir').addEventListener('click', ouvrirCoffre);
-    $('afAdmPhrase').addEventListener('keydown', function (e) { if (e.key === 'Enter') ouvrirCoffre(); });
-    $('afAdmFermer').addEventListener('click', function () {
-      _phrase = '';
-      _catalogue = null;
-      $('afAdmPhrase').value = '';
-      dire('afAdmPhraseEtat', 'Coffre verrouillé.', '');
-      rendreCatalogue();
-      rendreSessions([]);
-    });
-
-    $('afAdmMagasin').addEventListener('change', function () {
-      _magasinId = this.value;
-      try { localStorage.setItem(CLE_MAGASIN_ADMIN, _magasinId); } catch (e) {}
-      rafraichirCartouches();
-      rafraichirSessions();
-    });
-    $('afAdmMagasinReload').addEventListener('click', function () { chargerMagasins(true); });
-    $('afAdmVerifierListe').addEventListener('click', verifierListe);
-    $('afAdmPublierListe').addEventListener('click', publierListe);
-
-    $('afAdmReconfirmer').addEventListener('click', reconfirmer);
-
-    $('afAdmCatCharger').addEventListener('click', lireCatalogue);
-    $('afAdmCatPublier').addEventListener('click', publierCatalogue);
-    $('afAdmCatExporter').addEventListener('click', exporterCatalogue);
-    $('afAdmCatFichier').addEventListener('change', importerFichier);
-    $('afCatAjouter').addEventListener('click', ajouterOuvrage);
-    $('afCatFicheLire').addEventListener('click', lireFicheCollee);
-    $('afCatFicheAjouter').addEventListener('click', ajouterFicheCollee);
-    $('afCatFicheVider').addEventListener('click', viderFicheCollee);
-
-    $('afAdmGenerer').addEventListener('click', genererPistes);
-    $('afAdmCartouchesReload').addEventListener('click', rafraichirCartouches);
-    $('afAdmSessionsReload').addEventListener('click', rafraichirSessions);
-    $('afAdmConfigSave').addEventListener('click', enregistrerConfig);
-
-    // --- MODE TEST PALIER 3 ---
-    function apercuCle(){ var h=0,s='apercu-admin:'+String.fromCharCode(78,69,77,79,50,48,50,54); for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return 'k'+Math.abs(h).toString(36); }
-    function majTestEtat(){
-      var etat=$('afTestEtat'); if(!etat) return;
-      try{
-        var code=(localStorage.getItem('nautilusMatelotCode')||'').toUpperCase();
-        if(code==='ZZZZ-0000') etat.textContent='✅ Mode test actif sur cet appareil (ZZZZ-0000) — aucune progression réelle ne sera enregistrée.';
-        else etat.textContent='Mode test inactif. Active-le pour tester sans QR ni blocage.';
-      }catch(e){}
-    }
-    var btnAct=$('afTestActiver'), btnOuv=$('afTestOuvrir'), btnDes=$('afTestDesactiver');
-    if(btnAct) btnAct.addEventListener('click', function(){
-      try{ localStorage.setItem('nautilusMatelotCode','ZZZZ-0000'); localStorage.setItem('nautilusCurrentTeam','NEMO'); }catch(e){}
-      majTestEtat();
-      // Si on est déjà sur le Palier 3 scellé, bascule immédiatement en aperçu (même onglet)
-      try{
-        if(/1831411720\.html/.test(location.pathname) || /1831411720/.test(location.href)){
-          var kk=apercuCle();
-          // si pas déjà en aperçu, navigue vers l'épreuve
-          if(!/[?&]apercu=jeu/.test(location.search)){
-            dire('afTestEtat','✅ Mode test activé — bascule vers l’épreuve…','ok');
-            setTimeout(function(){ location.href='1831411720.html?apercu=jeu&k='+kk+'&m=ZZZZ-0000'; }, 600);
-            return;
-          }
-        }
-      }catch(e){}
-      dire('afTestEtat','✅ Mode test activé — clique « Ouvrir le Palier 3 » (ou recharge la page du Palier 3).','ok');
-      setTimeout(majTestEtat, 2200);
-    });
-    if(btnDes) btnDes.addEventListener('click', function(){
-      try{ localStorage.removeItem('nautilusMatelotCode'); }catch(e){}
-      majTestEtat();
-      dire('afTestEtat','⏹ Mode test désactivé.','warn');
-    });
-    if(btnOuv) btnOuv.addEventListener('click', function(){
-      var k=apercuCle();
-      var url='1831411720.html?apercu=jeu&k='+k+'&m=ZZZZ-0000';
-      // Si on est déjà sur 1831411720, navigue dans le même onglet (évite popup bloqué)
-      try{
-        if(/1831411720\.html/.test(location.pathname)){
-          location.href=url;
-          return;
-        }
-      }catch(e){}
-      window.open(url,'_blank');
-    });
-    // état initial
-    try{ setTimeout(majTestEtat, 400); }catch(e){}
-
-    /* La phrase ne doit jamais survivre à la page. */
-    window.addEventListener('beforeunload', function () { _phrase = ''; _catalogue = null; });
+    var r = $('afMagReload'); if (r) r.addEventListener('click', function(){ charger(true); });
+    var v = $('afMagVerifier'); if (v) v.addEventListener('click', verifier);
+    var p = $('afMagPublier'); if (p) p.addEventListener('click', publier);
+    var e = $('afMagExporter'); if (e) e.addEventListener('click', exporter);
+    var s = $('afMagSearch'); if (s) s.addEventListener('input', function(){ _filtre = (s.value||'').toLowerCase().trim(); rendre(); });
+    var a = $('afMagAjouter'); if (a) a.addEventListener('click', ajouterOuMaj);
+    var cl = $('afMagVider'); if (cl) cl.addEventListener('click', viderForm);
   }
 
-  /* ==================================================================
-     2. PHRASE / COFFRE
-     ================================================================== */
-  function ouvrirCoffre() {
-    var valeur = ($('afAdmPhrase').value || '').trim();
-    if (valeur.length < 8) {
-      dire('afAdmPhraseEtat', '❌ Phrase trop courte : 8 caractères minimum.', 'danger');
-      return;
-    }
-    _phrase = valeur;
-    $('afAdmPhrase').value = '';            /* jamais conservée dans le champ */
-    dire('afAdmPhraseEtat', '⏳ Vérification de la phrase…', '');
-    S().catalogueLire(_phrase).then(function (cat) {
-      if (!cat.livres.length && !cat.version) {
-        dire('afAdmPhraseEtat', '🔓 Phrase acceptée — aucun catalogue publié pour l’instant.', 'warn');
-        _catalogue = [];
-        rendreCatalogue();
-        return;
-      }
-      _catalogue = cat.livres;
-      dire('afAdmPhraseEtat', '🔓 Coffre ouvert : <b>' + cat.livres.length + '</b> ouvrage(s), version '
-        + esc(cat.version || '?') + ' (' + esc(age(cat.majAt)) + ').', 'ok');
-      rendreCatalogue();
-      rafraichirSessions();
-    }).catch(function (e) {
-      _phrase = '';
-      _catalogue = null;
-      dire('afAdmPhraseEtat', '❌ ' + esc(e && e.message || e), 'danger');
-    });
-  }
-
-  /* ==================================================================
-     3. MAGASINS
-     ================================================================== */
-  function chargerMagasins(forcer) {
-    if (!MG()) {
-      dire('afAdmListeEtat', '❌ magasin-fnac.js n’est pas chargé sur cette page.', 'danger');
-      return Promise.resolve(null);
-    }
-    return MG().chargerListe({ forcer: !!forcer }).then(function (liste) {
+  function charger(forcer) {
+    if (!MG()) { dire('afMagEtat','❌ magasin-fnac.js non chargé.','danger'); return Promise.resolve(null); }
+    dire('afMagEtat','⏳ Chargement…','');
+    return MG().chargerListe({ forcer: !!forcer }).then(function(liste){
       _liste = liste;
-      remplirSelecteurs(liste.magasins);
-      try { _magasinId = _magasinId || localStorage.getItem(CLE_MAGASIN_ADMIN) || ''; } catch (e) {}
-      var sel = $('afAdmMagasin');
-      if (sel && _magasinId) sel.value = _magasinId;
-      dire('afAdmListeEtat', 'Liste <b>' + esc(liste.version || '?') + '</b> — <b>' + liste.magasins.length
-        + '</b> magasins (' + esc(liste.source || '?') + ', ' + esc(age(liste.syncedAt)) + '). '
-        + 'Précision : ' + esc(liste.precision || 'commune') + '.', 'ok');
-      rafraichirCartouches();
-      rafraichirSessions();
+      dire('afMagEtat','<b>' + esc(liste.version||'?') + '</b> — <b>' + liste.magasins.length + '</b> magasins (' + esc(liste.source||'?') + ', ' + esc(age(liste.syncedAt)) + ')','ok');
+      rendre();
       return liste;
-    }).catch(function (e) {
-      dire('afAdmListeEtat', '❌ Liste indisponible : ' + esc(e && e.message || e)
-        + ' — vérifie <code>data/magasins-fnac.json</code>.', 'danger');
+    }).catch(function(e){
+      dire('afMagEtat','❌ ' + esc(e && e.message || e),'danger');
       return null;
     });
   }
 
-  function remplirSelecteurs(magasins) {
-    var options = ['<option value="">— Choisir un magasin —</option>'];
-    magasins.forEach(function (m) {
-      options.push('<option value="' + esc(m.id) + '">'
-        + esc('Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (m.cp ? ' (' + m.cp + ')' : '')) + '</option>');
-    });
-    $('afAdmMagasin').innerHTML = options.join('');
-    $('afAdmMagasinDefaut').innerHTML = '<option value="">— Magasin par défaut (aucun) —</option>'
-      + options.slice(1).join('');
+  function verifier() {
+    if (!_liste) { dire('afMagMsg','Charge d’abord la liste.','warn'); return; }
+    var prob = M() && M().controlerMagasins ? M().controlerMagasins(_liste.magasins, []) : [];
+    var actifs = M() && M().magasinsUtilisables ? M().magasinsUtilisables(_liste.magasins).length : _liste.magasins.length;
+    if (prob.length) dire('afMagMsg','❌ ' + prob.length + ' problème(s) : ' + esc(prob.slice(0,4).join(' ; ')),'danger');
+    else dire('afMagMsg','✅ ' + actifs + ' actif(s), 0 doublon.','ok');
+  }
 
-    var types = ['<option value="">— Type d’ouvrage —</option>'];
-    var vus = {};
-    (M().FAMILLES || []).forEach(function (f) {
-      (f.types || []).forEach(function (t) {
-        if (vus[t]) return;
-        vus[t] = 1;
-        types.push('<option value="' + esc(t) + '">' + esc(t) + ' — ' + esc(f.id) + '</option>');
+  function publier() {
+    if (!_liste) { dire('afMagMsg','Rien à publier.','warn'); return; }
+    if (!S() || !S().publierMagasins) { dire('afMagMsg','Publication Firestore indisponible sur cette page.','warn'); return; }
+    dire('afMagMsg','⏳ Publication…','');
+    S().publierMagasins(_liste).then(function(doc){
+      dire('afMagMsg','📤 Publiée : <b>' + esc(doc.version) + '</b> (' + doc.count + ' magasins). Active immédiatement pour les joueurs.','ok');
+    }).catch(function(e){ dire('afMagMsg','❌ ' + esc(e && e.message||e),'danger'); });
+  }
+
+  function exporter() {
+    if (!_liste || !_liste.magasins || !_liste.magasins.length) { dire('afMagMsg','Rien à exporter.','warn'); return; }
+    var doc = { version: _liste.version, source: _liste.source, sourceType: _liste.sourceType||'admin-manuel', syncedAt: new Date().toISOString(), count: _liste.magasins.length, magasins: _liste.magasins };
+    var blob = new Blob([JSON.stringify(doc,null,2)], {type:'application/json'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'magasins-fnac-' + doc.version + '.json';
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1200);
+    dire('afMagMsg','⬇️ Export téléchargé — commit le fichier dans <code>data/magasins-fnac.json</code>.','ok');
+  }
+
+  function filtreListe() {
+    if (!_liste || !_liste.magasins) return [];
+    if (!_filtre) return _liste.magasins;
+    return _liste.magasins.filter(function(m){
+      var hay = (m.id+' '+m.nom+' '+m.ville+' '+m.cp).toLowerCase();
+      return hay.indexOf(_filtre) >= 0;
+    });
+  }
+
+  function rendre() {
+    var hote = $('afMagTable'); var count = $('afMagCount');
+    if (!hote || !_liste) return;
+    var arr = filtreListe();
+    if (count) count.textContent = arr.length + ' / ' + _liste.magasins.length;
+    if (!arr.length) { hote.innerHTML = '<p class=\"adm-af-note\" style=\"padding:10px\">Aucun magasin.</p>'; return; }
+    var html = '<table class=\"adm-af-table\" style=\"width:100%\"><thead><tr><th>id</th><th>Nom — ville (CP)</th><th>lat/lon</th><th></th></tr></thead><tbody>'
+      + arr.map(function(m){
+        return '<tr>'
+          + '<td><code>' + esc(m.id||'—') + '</code>' + (m.actif===false?'<br><span class=\"adm-af-badge adm-af-badge--warn\">inactif</span>':'') + '</td>'
+          + '<td><b>' + esc(m.nom||'?') + '</b><br><span class=\"small\">' + esc(m.ville||'—') + ' ' + esc(m.cp||'') + '</span><br><span class=\"small\">' + esc(m.slug||'') + '</span></td>'
+          + '<td class=\"small\">' + esc(m.lat!=null?String(m.lat):'—') + '<br>' + esc(m.lon!=null?String(m.lon):'—') + '</td>'
+          + '<td style=\"white-space:nowrap\"><button class=\"secondary adm-af-mini\" data-mag-edit=\"' + esc(m.id) + '\" type=\"button\">✏️</button> <button class=\"danger adm-af-mini\" data-mag-del=\"' + esc(m.id) + '\" type=\"button\">🗑️</button></td>'
+          + '</tr>';
+      }).join('') + '</tbody></table>';
+    hote.innerHTML = html;
+    hote.querySelectorAll('[data-mag-edit]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var id = b.dataset.magEdit;
+        var m = _liste.magasins.filter(function(x){ return x.id===id; })[0];
+        if (!m) return;
+        $('afMagId').value = m.id||'';
+        $('afMagNom').value = m.nom||'';
+        $('afMagVille').value = m.ville||'';
+        $('afMagCp').value = m.cp||'';
+        $('afMagLat').value = m.lat!=null? m.lat : '';
+        $('afMagLon').value = m.lon!=null? m.lon : '';
+        $('afMagSlug').value = m.slug||'';
+        dire('afMagFormMsg','✏️ Édition : '+esc(m.nom),'');
+        $('afMagId').scrollIntoView({behavior:'smooth', block:'center'});
       });
     });
-    $('afCatType').innerHTML = types.join('');
-  }
-
-  function verifierListe() {
-    if (!_liste) { dire('afAdmListeMsg', 'Liste non chargée.', 'warn'); return; }
-    var problemes = M().controlerMagasins(_liste.magasins, []);
-    var actifs = M().magasinsUtilisables ? M().magasinsUtilisables(_liste.magasins).length : _liste.magasins.length;
-    if (problemes.length) {
-      dire('afAdmListeMsg', '❌ ' + problemes.length + ' problème(s) : '
-        + esc(problemes.slice(0, 4).join(' ; ')), 'danger');
-    } else {
-      dire('afAdmListeMsg', '✅ Liste cohérente : ' + actifs
-        + ' magasin(s) actif(s), 0 doublon, 0 identifiant manquant.', 'ok');
-    }
-  }
-
-  function publierListe() {
-    if (!_liste) { dire('afAdmListeMsg', 'Liste non chargée.', 'warn'); return; }
-    S().publierMagasins(_liste).then(function (doc) {
-      dire('afAdmListeMsg', '📤 Liste publiée dans Firestore : version <b>' + esc(doc.version) + '</b>, '
-        + doc.count + ' magasins. Les joueurs la liront en priorité si elle est plus récente que le fichier.', 'ok');
-      $('afAdmListePubliee').textContent = 'Publiée : ' + doc.version;
-    }).catch(function (e) {
-      dire('afAdmListeMsg', '❌ Publication refusée : ' + esc(e && e.message || e), 'danger');
-    });
-  }
-
-  /* ==================================================================
-     4. DISPONIBILITÉ
-     ================================================================== */
-  function reconfirmer() {
-    if (!_magasinId) { dire('afAdmDispoMsg', '❌ Choisis d’abord un magasin.', 'danger'); return; }
-    var delai = ($('afAdmDelai').value || '').trim();
-    dire('afAdmDispoMsg', '⏳ Confirmation en cours…', '');
-    S().reconfirmerDisponibilite(_magasinId, { delai: delai, phrase: _phrase || undefined })
-      .then(function (r) {
-        dire('afAdmDispoMsg', '✅ <b>' + r.maj + '</b> piste(s) reconfirmée(s) — délai « ' + esc(r.delai)
-          + ' », horodaté ' + esc(date(r.checkedAt)) + '.'
-          + (_phrase ? ' Le catalogue a suivi : les prochaines pistes générées partiront fraîches.'
-                     : ' <b>Coffre verrouillé</b> : le catalogue n’a pas été mis à jour (les pistes existantes, si).'), 'ok');
-        rafraichirCartouches();
-      })
-      .catch(function (e) {
-        dire('afAdmDispoMsg', '❌ ' + esc(e && e.message || e), 'danger');
-      });
-  }
-
-  /* ==================================================================
-     5. CATALOGUE
-     ================================================================== */
-  function lireCatalogue() {
-    if (!_phrase) { dire('afAdmCatEtat', '🔒 Ouvre d’abord le coffre (phrase d’administration).', 'warn'); return; }
-    dire('afAdmCatEtat', '⏳ Lecture…', '');
-    S().catalogueLire(_phrase).then(function (cat) {
-      _catalogue = cat.livres;
-      dire('afAdmCatEtat', '✅ ' + cat.livres.length + ' ouvrage(s) — version ' + esc(cat.version || '?')
-        + ' (' + esc(age(cat.majAt)) + ').', 'ok');
-      rendreCatalogue();
-    }).catch(function (e) {
-      dire('afAdmCatEtat', '❌ ' + esc(e && e.message || e), 'danger');
-    });
-  }
-
-  function rendreCatalogue() {
-    var hote = $('afAdmCatTable');
-    if (!hote) return;
-    if (!_catalogue) { hote.innerHTML = ''; return; }
-    if (!_catalogue.length) {
-      hote.innerHTML = '<p class="adm-af-note">Catalogue vide. Ajoute au moins un ouvrage compatible, '
-        + 'puis publie-le.</p>';
-      return;
-    }
-    var lignes = _catalogue.map(function (l, i) {
-      var dispo = (l.disponibilite || {})[_magasinId];
-      var frais = dispo ? M().disponibiliteValide(dispo, _magasinId, {}) : { ok: false, motif: 'aucune disponibilité' };
-      return '<tr>'
-        + '<td>' + esc(l.titre) + '<br><span class="small">' + esc(l.auteur || '?') + ' · '
-        +   esc(l.editeur || '?') + ' · ' + esc(l.edition || 'édition ?') + '</span></td>'
-        + '<td><code>' + esc(l.ean) + '</code><br><span class="small">SKU ' + esc(l.sku || '—') + '</span></td>'
-        + '<td>' + esc(l.type || '?') + '<br><span class="small">' + esc(l.categorieFnac || '') + '</span></td>'
-        + '<td>' + (l.vendeur === 'partenaire'
-            ? '<span class="adm-af-badge adm-af-badge--warn">partenaire</span>'
-            : '<span class="adm-af-badge adm-af-badge--ok">Fnac</span>')
-        +   '<br><span class="small">' + esc(l.rayon || '—') + '</span></td>'
-        + '<td>' + (frais.ok
-            ? '<span class="adm-af-badge adm-af-badge--ok">frais</span>'
-            : '<span class="adm-af-badge adm-af-badge--warn">' + esc(frais.motif) + '</span>')
-        +   '<br><span class="small">' + esc(dispo && dispo.delai || '—') + '</span></td>'
-        + '<td><button class="secondary adm-af-mini" data-cat-sup="' + i + '" type="button">🗑️ Retirer</button></td>'
-        + '</tr>';
-    }).join('');
-    hote.innerHTML = '<table class="adm-af-table"><thead><tr><th>Ouvrage</th><th>EAN / SKU</th>'
-      + '<th>Type</th><th>Vendeur</th><th>Dispo ' + esc(_magasinId || '?') + '</th><th></th></tr></thead>'
-      + '<tbody>' + lignes + '</tbody></table>';
-    hote.querySelectorAll('[data-cat-sup]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var i = Number(b.dataset.catSup);
-        if (!window.confirm('Retirer « ' + _catalogue[i].titre + ' » du catalogue ?\n'
-          + 'La publication est nécessaire pour que ce soit effectif.')) return;
-        _catalogue.splice(i, 1);
-        rendreCatalogue();
-        dire('afAdmCatMsg', 'Ouvrage retiré de la copie de travail — publie pour enregistrer.', 'warn');
+    hote.querySelectorAll('[data-mag-del]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var id = b.dataset.magDel;
+        if (!confirm('Supprimer le magasin ' + id + ' ?')) return;
+        _liste.magasins = _liste.magasins.filter(function(x){ return x.id!==id; });
+        _liste.count = _liste.magasins.length;
+        dire('afMagFormMsg','🗑️ Supprimé : '+esc(id)+' — pense à publier/exporter.','warn');
+        rendre();
       });
     });
   }
 
-  function ajouterOuvrage() {
-    if (!_catalogue) _catalogue = [];
-    var brut = {
-      titre: $('afCatTitre').value,
-      auteur: $('afCatAuteur').value,
-      auteurType: $('afCatAuteurType').value,
-      editeur: $('afCatEditeur').value,
-      edition: $('afCatEdition').value,
-      editionNumero: Number($('afCatEditionNumero').value || 0),
-      annee: Number($('afCatAnnee').value || 0),
-      ean: $('afCatEan').value,
-      sku: $('afCatSku').value,
-      categorieFnac: $('afCatCategorie').value,
-      rayon: $('afCatRayon').value,
-      type: $('afCatType').value,
-      vendeur: $('afCatVendeur').value
-    };
-    var v = M().validerLivre(brut);
-    if (!v.livre) {
-      dire('afAdmCatMsg', '❌ Ouvrage refusé : ' + esc(v.erreurs.join(' ; ')), 'danger');
-      return;
+  function viderForm(){
+    ['afMagId','afMagNom','afMagVille','afMagCp','afMagLat','afMagLon','afMagSlug'].forEach(function(i){ var el=$(i); if(el) el.value=''; });
+    dire('afMagFormMsg','','');
+  }
+  function ajouterOuMaj(){
+    var id = ($('afMagId').value||'').trim();
+    var nom = ($('afMagNom').value||'').trim();
+    if (!id || !nom) { dire('afMagFormMsg','❌ id et nom obligatoires.','danger'); return; }
+    if (!/^cl[0-9A-Za-z_-]+$/.test(id) && !/^cl[0-9]+$/.test(id)) {
+      // tolère tout id non vide, mais signale
     }
-    var livre = v.livre;
-    livre.id = M().normaliser(livre.titre + ' ' + (livre.editionNumero || livre.annee || '')).replace(/[^a-z0-9]+/g, '-').slice(0, 48);
-    /* La disponibilité du magasin de travail est reprise telle quelle :
-       l'organisateur vient de la vérifier. */
-    if (_magasinId) {
-      livre.disponibilite = livre.disponibilite || {};
-      livre.disponibilite[_magasinId] = Object.assign({}, (livre.disponibilite || {})[_magasinId], {
-        statut: 'disponible', delai: ($('afAdmDelai').value || 'Retrait gratuit sous 1H'),
-        checkedAt: new Date().toISOString(), vendeur: livre.vendeur || 'fnac', magasin: _magasinId
-      });
+    var ville = ($('afMagVille').value||'').trim();
+    var cp = ($('afMagCp').value||'').trim().replace(/[^0-9]/g,'');
+    var latS = ($('afMagLat').value||'').trim(); var lat = latS? Number(latS): undefined;
+    var lonS = ($('afMagLon').value||'').trim(); var lon = lonS? Number(lonS): undefined;
+    var slug = ($('afMagSlug').value||'').trim();
+    var fiche = { id:id, nom:nom, ville:ville, cp:cp, slug:slug };
+    if (lat!=null && isFinite(lat)) fiche.lat = lat;
+    if (lon!=null && isFinite(lon)) fiche.lon = lon;
+    // via normaliser si dispo
+    if (MG() && MG().normaliserMagasin) {
+      var n = MG().normaliserMagasin(fiche);
+      if (!n) { dire('afMagFormMsg','❌ Fiche invalide.','danger'); return; }
+      fiche = n;
     }
-    _catalogue.push(livre);
-    ['afCatTitre', 'afCatAuteur', 'afCatEditeur', 'afCatEdition', 'afCatEditionNumero', 'afCatAnnee',
-     'afCatEan', 'afCatSku', 'afCatCategorie', 'afCatRayon'].forEach(function (id) { $(id).value = ''; });
-    rendreCatalogue();
-    dire('afAdmCatMsg', '✅ « ' + esc(livre.titre) + ' » ajouté à la copie de travail (' + _catalogue.length
-      + ' ouvrage(s)). Publie le catalogue pour l’enregistrer chiffré.', 'ok');
+    if (!_liste) { dire('afMagFormMsg','Charge d’abord la liste.','warn'); return; }
+    var idx = -1; for(var i=0;i<_liste.magasins.length;i++) if(_liste.magasins[i].id===id) idx=i;
+    if (idx>=0) { _liste.magasins[idx] = Object.assign({}, _liste.magasins[idx], fiche); dire('afMagFormMsg','✅ Mis à jour : '+esc(nom),'ok'); }
+    else { _liste.magasins.push(fiche); _liste.count = _liste.magasins.length; dire('afMagFormMsg','✅ Ajouté : '+esc(nom),'ok'); }
+    rendre();
   }
 
-  /* ------------------------------------------------------------------
-     LECTURE D'UNE FICHE fnac.com COLLÉE — strictement locale.
-
-     Pourquoi coller plutôt que récupérer ? Parce que le navigateur du
-     joueur (et celui de l'organisateur depuis le site) ne doit JAMAIS
-     interroger fnac.com : CORS bloquant, empreinte réseau au nom d'un
-     tiers, et surtout respect des conditions du site. L'organisateur
-     visite fnac.com comme n'importe quel visiteur, choisit son magasin,
-     enregistre la page — et c'est cette page qui est lue ici, hors ligne,
-     par fnac-lecteur.js (le même lecteur que l'outil Node et la fonction
-     serveur : une seule source de règles).
-     ------------------------------------------------------------------ */
-  var _ficheLue = null;
-
-  function lecteurFnac() { return window.NautilusFnacLecteur; }
-
-  function magasinsConnus() {
-    if (!_liste) return [];
-    return Array.isArray(_liste) ? _liste : (_liste.magasins || []);
-  }
-
-  function majBoutonFiche() {
-    var b = $('afCatFicheAjouter');
-    if (b) b.disabled = !(_ficheLue && _ficheLue.livre && _ficheLue.livre.ean);
-  }
-
-  function lireFicheCollee() {
-    var LF = lecteurFnac();
-    if (!LF) {
-      dire('afCatFicheMsg', '❌ <code>fnac-lecteur.js</code> n’est pas chargé sur cette page.', 'danger');
-      return;
-    }
-    var contenu = $('afCatFicheHtml').value || '';
-    if (contenu.trim().length < 40) {
-      _ficheLue = null; majBoutonFiche();
-      dire('afCatFicheMsg', '❌ Colle le contenu d’une fiche fnac.com (page enregistrée ou texte copié).', 'danger');
-      return;
-    }
-    var r;
-    try {
-      r = LF.lireFiche(contenu, {
-        url: ($('afCatFicheUrl').value || '').trim(),
-        magasinId: _magasinId,
-        magasins: magasinsConnus(),
-        maintenant: Date.now()
-      });
-    } catch (e) {
-      _ficheLue = null; majBoutonFiche();
-      dire('afCatFicheMsg', '❌ Lecture impossible : ' + esc(e && e.message || e), 'danger');
-      return;
-    }
-    _ficheLue = r;
-    majBoutonFiche();
-
-    if (!r.livre || !r.livre.ean) {
-      dire('afCatFicheMsg', '❌ Aucun EAN à 13 chiffres valide trouvé : cette page n’est pas une fiche ouvrage '
-        + 'lisible (mur anti-bot, page de recherche, ou copie partielle).', 'danger');
-      $('afCatFicheResultat').innerHTML = '';
-      return;
-    }
-    var l = r.livre;
-    var res = r.resolution || {};
-    var lignes = ''
-      + '<div class="adm-af-note" style="border:1px solid #cfd8e3;border-radius:8px;padding:8px;margin-top:8px">'
-      + '<b>📖 ' + esc(l.titre) + '</b>' + (l.edition ? ' — ' + esc(l.edition) : '') + '<br>'
-      + 'EAN <code>' + esc(l.ean) + '</code> · SKU <code>' + esc(l.sku || '—') + '</code> · '
-      + 'Éditeur ' + esc(l.editeur || '—') + ' · Collection ' + esc(l.collection || '—') + '<br>'
-      + 'Parution ' + esc(String(l.annee || '—')) + ' · ' + esc(String(l.pages || '—')) + ' p. · '
-      + 'Format ' + esc(l.format || '—') + ' · Libellé Fnac « ' + esc(l.categorieFnac || l.etiquetteFnac || '—') + ' »<br>'
-      + 'Auteur(s) ' + esc(l.auteur || '—') + (l.auteurType ? ' (' + esc(l.auteurType) + ')' : '') + '<br>'
-      + 'Type retenu : <code>' + esc(l.type || 'aucun') + '</code>'
-      + (l.type ? '' : ' — <b>aucun lien thématique exploitable</b>, le moteur l’écartera') + '<br>'
-      + '<b>Magasin annoncé par la page</b> : ' + (r.magasinAnnonce ? '« ' + esc(r.magasinAnnonce) + ' »' : '<i>aucun</i>')
-      + (res.id ? ' → <code>' + esc(res.id) + '</code> (' + esc(res.nom) + ')'
-                : (res.motif ? ' → ' + esc(res.motif) : '')) + '<br>'
-      + '<b>Disponibilité</b> : ' + esc(r.etat) + (r.delai ? ' · délai « ' + esc(r.delai) + ' »' : ' · délai non précisé')
-      + ' → ' + (r.exploitable
-          ? '✅ <b>exploitable</b> : ' + esc(r.motif)
-          : '⛔ non exploitable : ' + esc(r.motif)) + '<br>'
-      + (r.vendeursPartenaires && r.vendeursPartenaires.length
-          ? 'Offres partenaires constatées (hors offre Fnac) : ' + esc(r.vendeursPartenaires.join(', ')) + '<br>' : '')
-      + (r.alertes.length ? '⚠️ ' + r.alertes.map(function (a) {
-          return (a.bloquant ? '<b>' : '') + esc(a.code) + (a.bloquant ? '</b>' : '') + ' : ' + esc(a.message);
-        }).join('<br>⚠️ ') : '')
-      + '</div>';
-    $('afCatFicheResultat').innerHTML = lignes;
-
-    if (r.exploitable && _magasinId && r.magasinId === _magasinId) {
-      dire('afCatFicheMsg', '✅ Retrait sous 1 h confirmé pour <b>' + esc(_magasinId) + '</b>. '
-        + 'Ajoute l’ouvrage, puis publie le catalogue et régénère les pistes.', 'ok');
-    } else if (!_magasinId) {
-      dire('afCatFicheMsg', 'ℹ️ Choisis d’abord le <b>magasin de référence</b> ci-dessus : sans lui, aucune '
-        + 'disponibilité ne peut être attribuée (l’ouvrage sera ajouté SANS disponibilité exploitable).', 'warn');
-    } else {
-      dire('afCatFicheMsg', '⚠️ L’ouvrage sera ajouté, mais <b>sans disponibilité exploitable</b> pour '
-        + esc(_magasinId) + ' : le moteur l’écartera de la sélection automatique tant que tu ne l’auras pas '
-        + 'confirmée à la main.', 'warn');
-    }
-  }
-
-  function ajouterFicheCollee() {
-    if (!_ficheLue || !_ficheLue.livre || !_ficheLue.livre.ean) {
-      dire('afCatFicheMsg', '❌ Lis d’abord une fiche valide.', 'danger');
-      return;
-    }
-    if (!_catalogue) _catalogue = [];
-    var v = M().validerLivre(_ficheLue.livre);
-    if (!v.livre) {
-      dire('afCatFicheMsg', '❌ Ouvrage refusé par le moteur : ' + esc(v.erreurs.join(' ; ')), 'danger');
-      return;
-    }
-    var livre = v.livre;
-    if (!livre.id) livre.id = 'fnac-' + livre.ean;
-    /* Une disponibilité n'est reprise QUE si la page annonçait bien le
-       magasin de travail avec un retrait sous 1 h. Sinon la clé reste
-       absente : mieux vaut un ouvrage écarté qu'un ouvrage introuvable. */
-    var confirme = !!(_ficheLue.exploitable && _magasinId && _ficheLue.magasinId === _magasinId);
-    if (!confirme) livre.disponibilite = {};
-    var deja = _catalogue.filter(function (l) { return l.id === livre.id || (l.ean && l.ean === livre.ean); });
-    if (deja.length) {
-      dire('afCatFicheMsg', 'ℹ️ Cet ouvrage (EAN ' + esc(livre.ean) + ') est déjà dans la copie de travail : '
-        + 'sa disponibilité a été mise à jour.', 'warn');
-      deja[0].disponibilite = Object.assign({}, deja[0].disponibilite || {}, livre.disponibilite || {});
-      rendreCatalogue();
-      return;
-    }
-    _catalogue.push(livre);
-    rendreCatalogue();
-    dire('afCatFicheMsg', (confirme ? '✅ « ' : '➕ « ') + esc(livre.titre) + ' » ajouté ('
-      + (confirme ? 'disponible sous 1 h à ' + esc(_magasinId) : 'sans disponibilité exploitable')
-      + '). Publie le catalogue pour le chiffrer.', confirme ? 'ok' : 'warn');
-    _ficheLue = null;
-    $('afCatFicheHtml').value = '';
-    $('afCatFicheUrl').value = '';
-    $('afCatFicheResultat').innerHTML = '';
-    majBoutonFiche();
-  }
-
-  function viderFicheCollee() {
-    _ficheLue = null;
-    $('afCatFicheHtml').value = '';
-    $('afCatFicheUrl').value = '';
-    $('afCatFicheResultat').innerHTML = '';
-    dire('afCatFicheMsg', '', '');
-    majBoutonFiche();
-  }
-
-  function publierCatalogue() {
-    if (!_phrase) { dire('afAdmCatMsg', '🔒 Ouvre d’abord le coffre.', 'warn'); return; }
-    if (!_catalogue) { dire('afAdmCatMsg', '❌ Rien à publier : lis ou importe d’abord un catalogue.', 'danger'); return; }
-    if (!_catalogue.length) {
-      if (!window.confirm('Publier un catalogue VIDE ? Aucune piste ne pourra plus être générée.')) return;
-    }
-    dire('afAdmCatMsg', '⏳ Chiffrement et publication…', '');
-    S().catalogueEcrire(_catalogue, _phrase).then(function (r) {
-      dire('afAdmCatMsg', '🔐 Catalogue publié : <b>' + r.count + '</b> ouvrage(s), version ' + esc(r.version)
-        + (r.problemes.length ? '. ⚠️ ' + r.problemes.length + ' fiche(s) écartée(s) : '
-          + esc(r.problemes.slice(0, 3).map(function (p) { return p.id + ' (' + p.erreurs.join(', ') + ')'; }).join(' ; '))
-          : '') + '.', r.problemes.length ? 'warn' : 'ok');
-      lireCatalogue();
-    }).catch(function (e) {
-      dire('afAdmCatMsg', '❌ ' + esc(e && e.message || e), 'danger');
-    });
-  }
-
-  function exporterCatalogue() {
-    if (!_catalogue || !_catalogue.length) { dire('afAdmCatMsg', 'Rien à exporter.', 'warn'); return; }
-    /* Export LOCAL (téléchargement) : ne jamais déposer ce fichier dans le
-       dépôt — GitHub Pages le servirait publiquement. */
-    var blob = new Blob([JSON.stringify({ version: 'export-admin', count: _catalogue.length, livres: _catalogue }, null, 2)],
-      { type: 'application/json' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'catalogue-artefacts-' + new Date().toISOString().slice(0, 10) + '.json';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-    dire('afAdmCatMsg', '⬇️ Export téléchargé. ⚠️ Ce fichier contient les solutions : ne le mets JAMAIS dans le dépôt '
-      + '(range-le dans <code>.nautilus-safe/</code>, déjà ignoré par git).', 'warn');
-  }
-
-  function importerFichier(e) {
-    var fichier = e.target.files && e.target.files[0];
-    if (!fichier) return;
-    var lecteur = new FileReader();
-    lecteur.onload = function () {
-      try {
-        var doc = JSON.parse(String(lecteur.result));
-        var livres = Array.isArray(doc) ? doc : (doc.livres || []);
-        if (!livres.length) throw new Error('aucun ouvrage dans ce fichier');
-        var ok = 0, ko = [];
-        livres.forEach(function (brut) {
-          var v = M().validerLivre(brut);
-          if (!v.livre) { ko.push((brut.titre || brut.id || '?') + ' : ' + v.erreurs.join(', ')); return; }
-          var l = v.livre;
-          if (!l.id) l.id = M().normaliser(l.titre).replace(/[^a-z0-9]+/g, '-').slice(0, 48);
-          if (_magasinId && !(l.disponibilite || {})[_magasinId]) {
-            l.disponibilite = l.disponibilite || {};
-            l.disponibilite[_magasinId] = { statut: 'disponible',
-              delai: ($('afAdmDelai').value || 'Retrait gratuit sous 1H'),
-              checkedAt: new Date().toISOString(), vendeur: l.vendeur || 'fnac', magasin: _magasinId };
-          }
-          _catalogue = _catalogue || [];
-          var existant = _catalogue.filter(function (c) { return c.ean === l.ean; })[0];
-          if (existant) Object.assign(existant, l); else _catalogue.push(l);
-          ok++;
-        });
-        rendreCatalogue();
-        dire('afAdmCatMsg', '📥 ' + ok + ' ouvrage(s) importé(s)' + (ko.length
-          ? ', ' + ko.length + ' refusé(s) : ' + esc(ko.slice(0, 3).join(' ; ')) : '')
-          + '. Publie pour enregistrer chiffré.', ko.length ? 'warn' : 'ok');
-      } catch (err) {
-        dire('afAdmCatMsg', '❌ Import impossible : ' + esc(err && err.message || err), 'danger');
-      }
-      e.target.value = '';
-    };
-    lecteur.readAsText(fichier);
-  }
-
-  /* ==================================================================
-     6. PISTES (CARTOUCHES)
-     ================================================================== */
-  function genererPistes() {
-    if (!_magasinId) { dire('afAdmCartouchesMsg', '❌ Choisis d’abord un magasin.', 'danger'); return; }
-    if (!_phrase) { dire('afAdmCartouchesMsg', '🔒 Ouvre le coffre : les réponses sont stockées chiffrées.', 'warn'); return; }
-    dire('afAdmCartouchesMsg', '⏳ Génération (une empreinte d’EAN coûte ~0,6 s par piste)…', '');
-    S().genererCartouchesPour(_magasinId, { phrase: _phrase })
-      .then(function (r) {
-        dire('afAdmCartouchesMsg', '⚙️ <b>' + r.faites.length + '</b> piste(s) générée(s)'
-          + (r.erreurs.length ? ', ' + r.erreurs.length + ' échec(s) : '
-            + esc(r.erreurs.slice(0, 3).map(function (e) { return e.livre + ' — ' + e.erreur; }).join(' ; ')) : '')
-          + (r.ecartes.length ? '. Écartés de la sélection : ' + esc(r.ecartes.slice(0, 4).map(function (e) {
-              return e.id + ' (' + e.motif + ')'; }).join(' ; ')) : '') + '.',
-          r.faites.length ? 'ok' : 'warn');
-        rafraichirCartouches();
-      })
-      .catch(function (e) {
-        dire('afAdmCartouchesMsg', '❌ ' + esc(e && e.message || e), 'danger');
-      });
-  }
-
-  function rafraichirCartouches() {
-    var etat = $('afAdmCartouchesEtat');
-    if (!S() || !etat) return Promise.resolve();
-    return S().listerCartouches(_magasinId || undefined).then(function (docs) {
-      etat.textContent = docs.length + ' piste(s)' + (_magasinId ? ' pour ' + _magasinId : ' (tous magasins)');
-      var hote = $('afAdmCartouchesTable');
-      if (!docs.length) {
-        hote.innerHTML = '<p class="adm-af-note">Aucune piste. Confirme la disponibilité puis génère.</p>';
-        return;
-      }
-      hote.innerHTML = '<table class="adm-af-table"><thead><tr><th>Piste</th><th>Énigme</th>'
-        + '<th>Magasin</th><th>Disponibilité</th><th></th></tr></thead><tbody>'
-        + docs.map(function (c) {
-            var frais = M().disponibiliteValide(c.disponibilite, c.magasinId, {});
-            return '<tr>'
-              + '<td><code>' + esc(c._id || c.id) + '</code><br><span class="small">'
-              +   esc(c.famille || '?') + ' · ' + esc(c.etapes ? c.etapes.length : 0) + ' étapes</span></td>'
-              + '<td><span class="small">' + esc(String(c.indice || '').split('\n')[0]) + '…</span></td>'
-              + '<td>' + esc(c.magasinId || '—') + '</td>'
-              + '<td>' + (frais.ok
-                  ? '<span class="adm-af-badge adm-af-badge--ok">fraîche</span>'
-                  : '<span class="adm-af-badge adm-af-badge--warn">' + esc(frais.motif) + '</span>')
-              +   '<br><span class="small">' + esc(age(c.disponibilite && c.disponibilite.checkedAt)) + '</span></td>'
-              + '<td><button class="danger adm-af-mini" data-cart-sup="' + esc(c._id || c.id)
-              +   '" type="button">🗑️</button></td>'
-              + '</tr>';
-          }).join('')
-        + '</tbody></table>';
-      hote.querySelectorAll('[data-cart-sup]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          var id = b.dataset.cartSup;
-          if (!window.confirm('Supprimer la piste ' + id + ' ?\nUne session en cours qui l’utilise devra être resélectionnée.')) return;
-          S().supprimerCartouche(id).then(function () { rafraichirCartouches(); });
-        });
-      });
-    }).catch(function (e) {
-      etat.textContent = 'lecture impossible : ' + (e && e.message || e);
-    });
-  }
-
-  /* ==================================================================
-     7. SESSIONS
-     ================================================================== */
-  function rafraichirSessions() {
-    if (!S()) return Promise.resolve();
-    var etat = $('afAdmSessionsEtat');
-    if (!etat) return Promise.resolve();
-    etat.textContent = 'chargement…';
-    return S().stockage().lister(S().CHEMINS.sessions).then(function (docs) {
-      if (!docs.length) {
-        etat.textContent = '0 session';
-        $('afAdmSessionsTable').innerHTML = '<p class="adm-af-note">Aucune session. Un équipage doit lancer le Palier 3.</p>';
-        return;
-      }
-      var sessions = docs.filter(function (s) { return !_magasinId || !s.magasinId || s.magasinId === _magasinId; });
-      etat.textContent = sessions.length + ' session(s)' + (_magasinId ? ' pour ' + _magasinId : '');
-      return Promise.all(sessions.map(function (s) {
-        return (_phrase && s.cartoucheId)
-          ? S().lireCoffre(s.cartoucheId, _phrase).catch(function () { return null; })
-          : Promise.resolve(null);
-      })).then(function (coffres) {
-        rendreSessions(sessions.map(function (s, i) { return { session: s, coffre: coffres[i] }; }));
-      });
-    }).catch(function (e) {
-      etat.textContent = 'lecture impossible : ' + (e && e.message || e);
-    });
-  }
-
-  function texteIndiceExact(coffre, rang) {
-    if (!coffre || !coffre.livre) return '';
-    var l = coffre.livre;
-    if (Number(rang) === 1) {
-      return 'Le premier refuge se trouve au rayon « ' + (l.rayon || '?') + ' »'
-        + (l.categorieFnac ? ' (fiche : ' + l.categorieFnac + ')' : '') + '.';
-    }
-    if (Number(rang) === 2) {
-      return 'L’édition recherchée est « ' + (l.edition || '?') + ' »'
-        + (l.editionNumero ? ' — numéro ' + l.editionNumero : '') + '.';
-    }
-    return 'L’ouvrage est signé : « ' + (l.auteur || '?') + ' ».';
-  }
-
-  function rendreSessions(lignes) {
-    var hote = $('afAdmSessionsTable');
-    if (!hote) return;
-    if (!lignes || !lignes.length) {
-      hote.innerHTML = '<p class="adm-af-note">' + (_phrase
-        ? 'Aucune session pour ce magasin.' : 'Ouvre le coffre pour voir les ouvrages affectés.') + '</p>';
-      return;
-    }
-    hote.innerHTML = lignes.map(function (l) {
-      var s = l.session, c = l.coffre;
-      var etapes = (s.cartouche && s.cartouche.etapes) || [];
-      var validees = s.etapesValidees || [];
-      var etapeNom = etapes.length ? (etapes[Math.min(s.etape || 0, etapes.length - 1)] || {}).libelle || '?' : '?';
-      var badge = s.statut === 'terminee' ? 'ok' : s.statut === 'suspendue' ? 'danger' : 'warn';
-      var demande = s.demandeIndice;
-      return '<div class="adm-af-sec" style="margin-bottom:10px">'
-        + '<h4>🚢 ' + esc(s.equipe || s._id) + ' — <span class="adm-af-badge adm-af-badge--' + badge + '">'
-        +   esc(s.statut || '?') + '</span></h4>'
-        + '<p class="adm-af-note">Magasin <b>' + esc(s.magasinId || '?') + '</b> · piste <code>'
-        +   esc(s.cartoucheId || '—') + '</code> · étape <b>' + esc(etapeNom) + '</b> ('
-        +   validees.length + '/' + etapes.length + ') · réponses refusées <b>' + Number(s.erreurs || 0) + '</b>'
-        +   ' · indices <b>' + ((s.indicesUtilises || []).length) + '</b>'
-        +   (s.selectionneLe ? ' · affectée ' + esc(age(s.selectionneLe)) : '') + '</p>'
-        + (c && c.livre
-          ? '<p class="adm-af-note">📖 <b>' + esc(c.livre.titre) + '</b> — ' + esc(c.livre.auteur || '?')
-            + ', ' + esc(c.livre.editeur || '?') + ', ' + esc(c.livre.edition || 'éd. ?')
-            + ' · EAN <code>' + esc(c.livre.ean) + '</code> · SKU <code>' + esc(c.livre.sku || '—') + '</code>'
-            + ' · règle ' + esc(c.regle) + ' · ordre ' + esc(c.ordre) + '</p>'
-          : '<p class="adm-af-note">🔒 Ouvrage masqué (coffre verrouillé).</p>')
-        + (s.introuvable
-          ? '<p class="adm-af-note"><b>📵 Signalé introuvable</b> le ' + esc(date(s.introuvable.signaleLe))
-            + ' par ' + esc(s.introuvable.par || 'un matelot') + '.</p>' : '')
-        + (s.remplacement
-          ? '<p class="adm-af-note"><b>🔁 Piste remplacée</b> : ' + esc(s.remplacement.ancienCartoucheId)
-            + ' → ' + esc(s.remplacement.nouveauCartoucheId) + ' (' + esc(s.remplacement.raison) + ', '
-            + esc(s.remplacement.par) + ', ' + esc(date(s.remplacement.le)) + ').</p>' : '')
-        + (demande
-          ? '<div class="adm-af-ligne" style="margin-top:8px">'
-          +   '<span class="adm-af-badge adm-af-badge--warn">🕯️ indice « ' + esc(demande.cle) + ' » demandé ('
-          +     esc(demande.heures) + ' h)</span>'
-          +   '<input class="adm-af-input" id="afAdmIndice_' + esc(s.equipe) + '" value="'
-          +     esc(texteIndiceExact(c, demande.rang)) + '" placeholder="Texte à transmettre">'
-          +   '<button class="primary" type="button" data-ind-trans="' + esc(s.equipe) + '" data-ind-rang="'
-          +     esc(demande.rang) + '">📯 Transmettre l’indice</button>'
-          + '</div>'
-          + (c ? '' : '<p class="adm-af-note">⚠️ Ouvre le coffre pour pré-remplir la valeur exacte.</p>')
-          : '')
-        + '<div class="adm-af-ligne" style="margin-top:8px">'
-        +   '<button class="primary" type="button" data-resel="' + esc(s.equipe) + '">🔁 Resélectionner le livre</button>'
-        +   '<button class="danger" type="button" data-indisp="' + esc(s.equipe) + '">🚫 Marquer l’ouvrage indisponible</button>'
-        +   '<button class="secondary" type="button" data-reinit="' + esc(s.equipe) + '">♻️ Réinitialiser la session</button>'
-        + '</div>'
-        + '<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">📜 Historique ('
-        +   ((s.historique || []).length) + ')</summary><ul class="adm-af-hist">'
-        +   (s.historique || []).slice().reverse().map(function (h) {
-              return '<li>' + esc(date(h.le)) + ' — <b>' + esc(h.type) + '</b> : ' + esc(h.texte) + '</li>';
-            }).join('')
-        + '</ul></details>'
-        + '</div>';
-    }).join('');
-
-    hote.querySelectorAll('[data-ind-trans]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var equipe = b.dataset.indTrans, rang = Number(b.dataset.indRang);
-        var texte = ($('afAdmIndice_' + equipe) || {}).value || '';
-        S().transmettreIndice(equipe, rang, texte).then(function (r) {
-          dire('afAdmSessionsMsg', '📯 Indice « ' + esc(b.dataset.indRang === '1' ? 'rayon' : b.dataset.indRang === '2' ? 'édition' : 'auteur') + ' » transmis à ' + esc(equipe) + '.', 'ok');
-          rafraichirSessions();
-        }).catch(function (e) {
-          dire('afAdmSessionsMsg', '❌ ' + esc(e && e.message || e), 'danger');
-        });
-      });
-    });
-
-    hote.querySelectorAll('[data-resel]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var equipe = b.dataset.resel;
-        var raison = window.prompt('Resélectionner un autre ouvrage pour ' + equipe + ' ?\n'
-          + 'Motif (facultatif) :', 'ouvrage-indisponible');
-        if (raison === null) return;
-        b.disabled = true;
-        S().reselectionner(equipe, { raison: raison, par: 'capitaine', introuvable: /introuvable/.test(raison) })
-          .then(function (r) {
-            if (!r.ok) {
-              window.alert('⚠️ ' + (r.message || r.motif)
-                + '\n\nProgression conservée. Confirme d’abord la disponibilité d’autres ouvrages, puis régénère les pistes.');
-            } else {
-              window.alert('✅ Nouvelle piste affectée : ' + r.cartoucheId
-                + (r.sceauReinitialise
-                  ? '\nLe sceau avait déjà reconnu l’ancien ouvrage : la séquence liée à l’ouvrage repart de zéro (aucune erreur ajoutée).'
-                  : '\nProgression conservée, aucune erreur ajoutée.'));
-            }
-            rafraichirSessions();
-          })
-          .catch(function (e) {
-            window.alert('❌ ' + (e && e.message || e));
-            b.disabled = false;
-            rafraichirSessions();
-          });
-      });
-    });
-
-    hote.querySelectorAll('[data-indisp]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var equipe = b.dataset.indisp;
-        var ligne = lignes.filter(function (l) { return (l.session.equipe || l.session._id) === equipe; })[0];
-        var cartoucheId = ligne && ligne.session.cartoucheId;
-        if (!cartoucheId) { window.alert('Aucune piste affectée à cet équipage.'); return; }
-        if (!window.confirm('Marquer la piste ' + cartoucheId + ' indisponible, puis resélectionner pour ' + equipe + ' ?')) return;
-        S().marquerIndisponible(cartoucheId, 'signalé par le capitaine')
-          .then(function () { return S().reselectionner(equipe, { raison: 'ouvrage-indisponible', par: 'capitaine' }); })
-          .then(function (r) {
-            window.alert(r.ok ? '✅ Piste marquée indisponible et remplacée : ' + r.cartoucheId
-              : '⚠️ Piste marquée indisponible, mais ' + (r.message || r.motif));
-            rafraichirCartouches();
-            rafraichirSessions();
-          })
-          .catch(function (e) { window.alert('❌ ' + (e && e.message || e)); rafraichirSessions(); });
-      });
-    });
-
-    hote.querySelectorAll('[data-reinit]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var equipe = b.dataset.reinit;
-        if (!window.confirm('Réinitialiser complètement la session de ' + equipe + ' ?\n'
-          + 'Progression, erreurs et indices seront effacés.')) return;
-        S().reinitialiser(equipe, { par: 'capitaine' }).then(function () {
-          dire('afAdmSessionsMsg', '♻️ Session de ' + esc(equipe) + ' réinitialisée.', 'ok');
-          rafraichirSessions();
-        }).catch(function (e) {
-          dire('afAdmSessionsMsg', '❌ ' + esc(e && e.message || e), 'danger');
-        });
-      });
-    });
-  }
-
-  /* ==================================================================
-     8. CONFIGURATION
-     ================================================================== */
-  function rafraichirConfig() {
-    return S().config({ forcer: true }).then(function (cfg) {
-      $('afAdmMode').value = cfg.mode || 'operateur';
-      $('afAdmEndpoint').value = cfg.endpoint || '';
-      $('afAdmFenetre').value = cfg.fenetreMinutes || 15;
-      if (cfg.magasinDefaut && $('afAdmMagasinDefaut')) $('afAdmMagasinDefaut').value = cfg.magasinDefaut;
-      $('afAdmConfigEtat').textContent = 'Catalogue ' + (cfg.catalogueVersion || '—')
-        + ' · liste ' + (cfg.magasinsVersion || '—');
-      return cfg;
-    }).catch(function () {});
-  }
-
-  function enregistrerConfig() {
-    var champs = {
-      mode: $('afAdmMode').value,
-      endpoint: ($('afAdmEndpoint').value || '').trim(),
-      fenetreMinutes: Math.max(1, Number($('afAdmFenetre').value) || 15),
-      magasinDefaut: $('afAdmMagasinDefaut').value || ''
-    };
-    if (champs.mode === 'fonction' && !/^https:\/\/.+/.test(champs.endpoint)) {
-      dire('afAdmConfigEtat', '❌ Le mode « fonction » exige une URL HTTPS.', 'danger');
-      return;
-    }
-    S().ecrireConfig(champs).then(function (cfg) {
-      dire('afAdmConfigEtat', '💾 Configuration enregistrée : mode <b>' + esc(cfg.mode) + '</b>, fenêtre '
-        + cfg.fenetreMinutes + ' min' + (cfg.magasinDefaut ? ', magasin par défaut ' + esc(cfg.magasinDefaut) : '') + '.', 'ok');
-    }).catch(function (e) {
-      dire('afAdmConfigEtat', '❌ ' + esc(e && e.message || e), 'danger');
-    });
-  }
-
-  /* ==================================================================
-     9. RAFRAÎCHISSEMENT GLOBAL + MONTAGE
-     ================================================================== */
-  function rafraichirTout() {
-    rafraichirConfig();
-    chargerMagasins(false);
-    rafraichirCartouches();
-    rafraichirSessions();
-  }
-
-  function observer() {
+  function observer(){
     if ($('adminWorkspace')) { injecter(); return; }
-    var mo = new MutationObserver(function () {
-      if ($('adminWorkspace')) {
-        injecter();
-        /* Le panneau peut être monté APRÈS l'injection (admin-button.js est
-           un module) : on réessaie tant que l'onglet n'est pas en place. */
-        if (!_monte) return;
-        mo.disconnect();
-      }
-    });
-    mo.observe(document.body || document.documentElement, { childList: true, subtree: true });
-    setTimeout(function () { injecter(); }, 1200);
-    setTimeout(function () { injecter(); }, 3500);
+    var mo = new MutationObserver(function(){ if($('adminWorkspace')){ injecter(); if(_monte) mo.disconnect(); }});
+    mo.observe(document.body||document.documentElement,{childList:true,subtree:true});
+    setTimeout(injecter,1200); setTimeout(injecter,3500);
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', observer);
-  } else {
-    observer();
-  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', observer); else observer();
 
   window.NautilusAdminArtefact = {
-    ONGLET: ONGLET,
-    injecter: injecter,
-    activerOnglet: activerOnglet,
-    rafraichirTout: rafraichirTout,
-    texteIndiceExact: texteIndiceExact,
-    estMonte: function () { return _monte; },
-    phraseActive: function () { return !!_phrase; }
+    ONGLET: ONGLET, injecter: injecter, activerOnglet: activerOnglet,
+    estMonte: function(){ return _monte; }
   };
 })();
