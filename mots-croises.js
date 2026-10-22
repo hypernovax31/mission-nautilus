@@ -355,11 +355,66 @@
     hote.appendChild(grille);
     hote.appendChild(defs);
 
+    /* ---------- API de restauration / synchro équipe ---------- */
+    function normaliserMot(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
+    function marquerMots(liste){
+      if (!Array.isArray(liste) || !liste.length) return 0;
+      var ajoutes = 0;
+      liste.forEach(function(txt){
+        var norm = normaliserMot(txt);
+        var m = mots.find(function(mm){ return normaliserMot(mm.reponse) === norm; });
+        if (!m) return;
+        var cle = m.dir + m.num;
+        if (motsJustes[cle]) return;
+        motsJustes[cle] = true;
+        ajoutes++;
+        var cases = caseDuMot(m);
+        cases.forEach(function(k, i){
+          var lettre = m.solution[i];
+          saisie[k] = lettre;
+          verrouille[k] = true;
+          var el = hote.querySelector('[data-k="' + k + '"]');
+          if (el){
+            el.classList.remove('mc-faux');
+            el.classList.add('mc-juste');
+            var input = el.querySelector('.mc-input');
+            if (input){ input.value = lettre; input.readOnly = true; }
+          }
+        });
+        var def = hote.querySelector('.mc-def[data-num="' + m.num + '"][data-dir="' + m.dir + '"]');
+        if (def) def.classList.add('mc-def-ok');
+      });
+      if (ajoutes){
+        if (!fini && mots.every(function(m){ return motsJustes[m.dir + m.num]; })){
+          fini = true;
+          hote.classList.add('mc-termine');
+          if (typeof opts.onVictoire === 'function') opts.onVictoire();
+        }
+      }
+      return ajoutes;
+    }
+    function importerEtat(etat){
+      if (!etat) return 0;
+      var liste = null;
+      if (Array.isArray(etat)) liste = etat;
+      else if (Array.isArray(etat.motsJustes)) liste = etat.motsJustes;
+      else if (etat.motsJustes && typeof etat.motsJustes === 'object') liste = Object.keys(etat.motsJustes).filter(function(k){ return etat.motsJustes[k]; });
+      if (Array.isArray(liste)) return marquerMots(liste);
+      return 0;
+    }
+    // Restauration initiale si fournie via opts
+    try{
+      if (opts.motsJustes) importerEtat(opts.motsJustes);
+      if (typeof opts.erreursInitial === 'number') erreurs = Math.max(0, opts.erreursInitial|0);
+    }catch(e){}
+
     return {
       /* Exports utiles aux tests et au pilotage page. */
       detruire: function () { hote.innerHTML = ''; hote.classList.remove('mc', 'mc-termine'); },
       etat: function () { return { erreurs: erreurs, fini: fini, motsJustes: Object.assign({}, motsJustes) }; },
-      _internes: { cellules: cellules, caseDuMot: caseDuMot, selectionner: selectionner, validerMot: validerMot, mots: mots, saisie: saisie }
+      marquerMots: marquerMots,
+      importerEtat: importerEtat,
+      _internes: { cellules: cellules, caseDuMot: caseDuMot, selectionner: selectionner, validerMot: validerMot, mots: mots, saisie: saisie, motsJustes: motsJustes }
     };
   }
 

@@ -151,18 +151,63 @@
     }catch(e){}
     return Promise.resolve(null);
   }
+  function normaliserP2(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
+  function majP2Chips(equipe, mots){
+    var set = {};
+    (mots||[]).forEach(function(w){ if(w) set[normaliserP2(w)] = true; });
+    REF_P2.forEach(function(w){
+      var el = $('afP2-'+equipe+'-'+w);
+      if (!el) return;
+      var ok = !!set[normaliserP2(w)];
+      el.classList.toggle('adm-af-chip--hl', ok);
+      el.title = ok ? 'Découvert par l\'équipage' : '';
+    });
+    // compteur dans le wrap title ? on peut ajouter nb verts dans pill ?
+    var wrap = $('afP2wrap-'+equipe);
+    if (wrap){
+      var nb = (mots||[]).length;
+      wrap.title = nb + '/' + REF_P2.length + ' mots découverts';
+    }
+  }
+  var _unsubP2 = null;
+  function ecouterP2Live(){
+    if (_unsubP2) return;
+    var getDb = null;
+    try{
+      if (window.NautilusBlocages && window.NautilusBlocages.db) getDb = window.NautilusBlocages.db;
+      else if (S() && S().stockage && S().stockage()._base) return; // memoire, pas de live
+    }catch(e){}
+    if (!getDb) return;
+    getDb().then(function(x){
+      var refCol = x.fs.collection(x.db, 'teams');
+      _unsubP2 = x.fs.onSnapshot(refCol, function(snap){
+        snap.forEach(function(d){
+          var data = d.data()||{};
+          var equipe = d.id;
+          if (EQUIPES.indexOf(equipe) < 0) return;
+          var mc = data.motsCroises || data.palier2 || data.grilleMotsCroises || null;
+          var liste = null;
+          if (mc && Array.isArray(mc.motsJustes)) liste = mc.motsJustes;
+          else if (mc && mc.motsJustes && typeof mc.motsJustes === 'object' && !Array.isArray(mc.motsJustes)) liste = Object.keys(mc.motsJustes).filter(function(k){ return mc.motsJustes[k]; });
+          else if (Array.isArray(data.motsJustes)) liste = data.motsJustes;
+          if (liste) majP2Chips(equipe, liste);
+        });
+      }, function(){ /* lecture indisponible */ });
+    }).catch(function(){});
+  }
+
   function htmlToutesReponses(){
-    var p2chips = REF_P2.map(function(w){ return '<span class="adm-af-chip">'+esc(w)+'</span>'; }).join('');
     return ''
     + '<div class="adm-af-sec" id="afEquipesSec">'
     +   '<h4 style="margin:0 0 6px;font-size:13px">Bonnes réponses — par équipe</h4>'
     +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Cartes empilées verticalement · P1 1 mot/équipe · P2 11 mots · P3 livre+EAN automatique par équipe.</p>'
     +   '<div id="afTeamCards" class="adm-af-cards">'
     +     EQUIPES.map(function(eq){
+            var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'">'+esc(w)+'</span>'; }).join('');
             return '<div class="adm-af-teamcard" data-team="'+eq+'">'
               + '<div class="adm-af-teamhead"><span>'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#6e7a84">…</span></div>'
               + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eq+'">—</span><span class="small" style="color:#6e7a84">morse</span></div>'
-              + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips">'+p2chips+'</div></div>'
+              + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+eq+'">'+p2+'</div></div>'
               + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>'
               + '</div>';
           }).join('')
@@ -173,7 +218,7 @@
     EQUIPES.forEach(function(eq){
       lireTeamDoc(eq).then(function(doc){
         var pill=$('afTeamPill-'+eq); var p1=$('afP1-'+eq);
-        if(!doc){ if(pill) pill.textContent='—'; if(p1) p1.textContent='—'; return; }
+        if(!doc){ if(pill) pill.textContent='—'; if(p1) p1.textContent='—'; majP2Chips(eq, []); return; }
         var d=doc.data? doc.data() : doc;
         var payload = d || doc;
         var h = payload.morseWordHash!=null ? payload.morseWordHash : (payload.data && payload.data.morseWordHash);
@@ -184,9 +229,19 @@
           var members = payload.members ? payload.members.length : (payload.data && payload.data.members ? payload.data.members.length : 0);
           pill.textContent = members ? members+' matelots' : 'vide';
         }
-      }).catch(function(){});
+        try{
+          var mc = payload.motsCroises || payload.palier2 || payload.grilleMotsCroises || null;
+          var liste = null;
+          if (mc && Array.isArray(mc.motsJustes)) liste = mc.motsJustes;
+          else if (mc && mc.motsJustes && typeof mc.motsJustes === 'object' && !Array.isArray(mc.motsJustes)) liste = Object.keys(mc.motsJustes).filter(function(k){ return mc.motsJustes[k]; });
+          else if (Array.isArray(payload.motsJustes)) liste = payload.motsJustes;
+          else if (payload.motsCroises && Array.isArray(payload.motsCroises)) liste = payload.motsCroises;
+          if (liste) majP2Chips(eq, liste); else majP2Chips(eq, []);
+        }catch(e){}
+      }).catch(function(){ try{ majP2Chips(eq, []); }catch(e){} });
       majCarteP3Auto(eq);
     });
+    try{ ecouterP2Live(); }catch(e){}
   }
   function majCarteP3Auto(equipe){
     var el=$('afP3-'+equipe);

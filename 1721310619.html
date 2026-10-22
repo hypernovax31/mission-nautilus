@@ -192,7 +192,7 @@
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
 <!-- Moteur de mots croisés (générique) + données : 11 mots « rétro-futuristes » -->
-<script src="mots-croises.js?v=9"></script>
+<script src="mots-croises.js?v=10"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers (même page de victoire
      que le Palier 1) : badge, stats, panneau pliable « DIRECTION VERS
      LA ZONE DE RECHERCHE ». -->
@@ -586,6 +586,128 @@
     afficherEcranVictoire();
   }
 
+  /* ============ MÉMOIRE DE GRILLE PARTAGÉE (équipage) ============
+     La grille des mots croisés se souvient pour TOUT l'équipage :
+     chaque mot découvert est enregistré dans Firestore teams/{code}
+     (champ motsCroises.motsJustes via arrayUnion) + repli localStorage.
+     Au retour d'un équipier (ou du même matelot sur un autre appareil),
+     la grille se restaure — y compris en live via onSnapshot. */
+  var _grilleInstance = null;
+  var _grilleUnsub = null;
+  function grilleTeamCodeSync(){
+    try{
+      var c = (localStorage.getItem('nautilusCurrentTeam')||'').trim().toUpperCase();
+      if (c) return c;
+    }catch(e){}
+    try{
+      var m = location.search.match(/[?&]code=([^&]+)/);
+      if (m) return decodeURIComponent(m[1]).trim().toUpperCase();
+    }catch(e){}
+    return '';
+  }
+  function grilleClesLocales(team){
+    return 'nautilusGrilleMotsCroises:' + (team||'ANON');
+  }
+  function chargerGrilleLocal(team){
+    try{
+      var raw = localStorage.getItem(grilleClesLocales(team));
+      if (!raw) return [];
+      var a = JSON.parse(raw);
+      return Array.isArray(a) ? a : [];
+    }catch(e){ return []; }
+  }
+  function sauverGrilleLocal(team, mots){
+    try{ localStorage.setItem(grilleClesLocales(team), JSON.stringify(mots)); }catch(e){}
+  }
+  async function chargerGrilleEquipe(){
+    var team = grilleTeamCodeSync();
+    // Firestore d'abord, sinon local
+    try{
+      if (window.NautilusBlocages && window.NautilusBlocages.db){
+        var x = await window.NautilusBlocages.db();
+        var snap = await x.fs.getDoc(x.fs.doc(x.db, 'teams', team));
+        if (snap && snap.exists()){
+          var d = snap.data()||{};
+          var mc = d.motsCroises || d.palier2 || d.grilleMotsCroises || null;
+          if (mc && Array.isArray(mc.motsJustes) && mc.motsJustes.length) return mc.motsJustes;
+          if (mc && mc.motsJustes && typeof mc.motsJustes === 'object' && !Array.isArray(mc.motsJustes)){
+            // map {STEELBOOK:true}
+            return Object.keys(mc.motsJustes).filter(function(k){ return mc.motsJustes[k]; });
+          }
+          if (Array.isArray(d.motsJustes)) return d.motsJustes;
+        }
+      }
+    }catch(e){}
+    return chargerGrilleLocal(team);
+  }
+  async function notifierGrilleMot(mot){
+    if (!mot || !mot.reponse) return;
+    var team = grilleTeamCodeSync();
+    var motTxt = String(mot.reponse).toUpperCase();
+    // local d'abord (instantané)
+    try{
+      var cur = chargerGrilleLocal(team);
+      if (cur.indexOf(motTxt) < 0){ cur.push(motTxt); sauverGrilleLocal(team, cur); }
+    }catch(e){}
+    // Firestore arrayUnion
+    try{
+      if (!team || !window.NautilusBlocages || !window.NautilusBlocages.db) return;
+      var x = await window.NautilusBlocages.db();
+      var ident = null;
+      try{ ident = await window.NautilusBlocages.identiteCourante(); }catch(e){}
+      var patch = {};
+      patch['motsCroises.motsJustes'] = x.fs.arrayUnion(motTxt);
+      patch['motsCroises.updatedAt'] = new Date().toISOString();
+      patch['motsCroises.updatedBy'] = (ident && ident.name) ? ident.name : 'Un matelot';
+      if (typeof x.fs.increment === 'function'){ /* pas de compteur ici */ }
+      await x.fs.updateDoc(x.fs.doc(x.db, 'teams', team), patch);
+    }catch(e){ /* hors ligne : local suffit */ }
+  }
+  async function notifierGrilleErreur(){
+    var team = grilleTeamCodeSync();
+    try{
+      if (!team || !window.NautilusBlocages || !window.NautilusBlocages.db) return;
+      var x = await window.NautilusBlocages.db();
+      var patch = {};
+      patch['motsCroises.erreurs'] = (typeof x.fs.increment === 'function') ? x.fs.increment(1) : ((nbErreurs||0)+1);
+      patch['motsCroises.updatedAt'] = new Date().toISOString();
+      await x.fs.updateDoc(x.fs.doc(x.db, 'teams', team), patch);
+    }catch(e){}
+  }
+  function ecouterGrilleEquipe(){
+    var team = grilleTeamCodeSync();
+    if (!team || _grilleUnsub) return;
+    try{
+      if (!window.NautilusBlocages || !window.NautilusBlocages.db) return;
+      window.NautilusBlocages.db().then(function(x){
+        var ref = x.fs.doc(x.db, 'teams', team);
+        _grilleUnsub = x.fs.onSnapshot(ref, function(snap){
+          if (!snap || !snap.exists()) return;
+          var d = snap.data()||{};
+          var mc = d.motsCroises || d.palier2 || d.grilleMotsCroises || null;
+          var liste = null;
+          if (mc && Array.isArray(mc.motsJustes)) liste = mc.motsJustes;
+          else if (mc && mc.motsJustes && typeof mc.motsJustes === 'object' && !Array.isArray(mc.motsJustes)) liste = Object.keys(mc.motsJustes).filter(function(k){ return mc.motsJustes[k]; });
+          else if (Array.isArray(d.motsJustes)) liste = d.motsJustes;
+          if (!liste || !liste.length) return;
+          try{
+            if (_grilleInstance && _grilleInstance.marquerMots){
+              var avant = _grilleInstance.etat ? _grilleInstance.etat().motsJustes : {};
+              var nbAvant = avant ? Object.keys(avant).length : 0;
+              var ajoutes = _grilleInstance.marquerMots(liste);
+              if (ajoutes){
+                // synchro locale
+                var cur = chargerGrilleLocal(team);
+                liste.forEach(function(w){ if (cur.indexOf(w)<0) cur.push(w); });
+                sauverGrilleLocal(team, cur);
+              }
+            }
+          }catch(e){}
+        }, function(){/* lecture indisponible */});
+      }).catch(function(){ });
+    }catch(e){}
+  }
+
   var lance = false;
   function lancer() {
     if (lance) return;
@@ -617,14 +739,21 @@
     }
     afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas, ni briefing) */
     t0Partie = Date.now(); /* chrono du bilan de l'écran de victoire */
-    statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — lis une définition, écris la réponse dans la grille. <b>3 erreurs</b> et tu remontes en surface.");
-    window.NautilusMotsCroises.init($('mcHost'), {
+    var motsInitiaux = await chargerGrilleEquipe();
+    if (motsInitiaux && motsInitiaux.length){
+      statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — " + motsInitiaux.length + " déjà trouvés par l'équipage — <b>3 erreurs</b> et tu remontes en surface.");
+    } else {
+      statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — lis une définition, écris la réponse dans la grille. <b>3 erreurs</b> et tu remontes en surface.");
+    }
+    _grilleInstance = window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
       maxErreurs: 3,
-      onErreur: onErreur,
-      onMotValide: function (m) { acte('valide une réponse', 'success'); },
+      motsJustes: motsInitiaux,
+      onErreur: function(n, max){ onErreur(n, max); notifierGrilleErreur(); },
+      onMotValide: function (m) { acte('valide une réponse', 'success'); notifierGrilleMot(m); },
       onVictoire: onVictoire
     });
+    ecouterGrilleEquipe();
   }
 
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
@@ -744,7 +873,7 @@
 <script src="palier-annonces.js?v=3" defer></script>
   <script src="palier-cinematic.js?v=3"></script>
 <script src="fnac-lecteur.js?v=1" defer></script>
-<script src="admin-artefact.js?v=15" defer></script>
+<script src="admin-artefact.js?v=16" defer></script>
 <script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>
