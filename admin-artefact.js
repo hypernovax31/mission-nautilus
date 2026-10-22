@@ -20,7 +20,6 @@
   var _monte = false;
   var _liste = null;
   var _filtre = '';
-  var _dernierLivre = null; // dernier livre parsé depuis Fnac
   function ensureTabsCss(){
     if(document.getElementById('nautilusAdminTabsFix')) return;
     var st=document.createElement('style');
@@ -120,41 +119,9 @@
     +     '<span class="small" id="afMagFormMsg"></span>'
     +   '</div>'
     + '</div>'
-    + HTML_CATALOGUE()
-    + '<p class="adm-af-note" style="margin-top:8px">💡 Lecture directe : aucune donnée stockée — la piste est créée depuis la fiche Fnac collée (EAN). La piste reste active indéfiniment (plus de fenêtre 15min).</p>';
+    + '<p class="adm-af-note" style="margin-top:8px">💡 Sélection automatique : le matelot choisit son magasin — le système interroge <code>fnac.com</code> (<b>En stock</b> + <b>Retrait sous 1h</b>) et génère la piste sans que l’admin ait à donner le livre ou le rayon. La piste reste active indéfiniment (fenêtre 15min désactivée).</p>';
   }
 
-
-  function HTML_CATALOGUE(){
-    return ''
-    + '<div class="adm-af-sec" id="afCatSec">'
-    +   '<h4>📚 Ajouter un ouvrage — EAN / Fnac</h4>'
-    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">1. Ouvre la fiche Fnac <b>avec ton magasin choisi</b> (Fnac → <i>Choisir un autre magasin</i>). 2. Copie la page entière (<code>Ctrl+A</code> → <code>Ctrl+C</code>). 3. Colle ci-dessous → <b>Lire la fiche</b>. L’EAN remplit tout seul titre/auteur/éditeur/édition.</p>'
-    +   '<div class="adm-af-ligne" style="margin-bottom:6px">'
-    +     '<select id="afCatMagasin" class="adm-af-select" style="min-width:160px"><option value="">— magasin —</option></select>'
-    +     '<input id="afCatEan" class="adm-af-input" placeholder="EAN 13 chiffres (auto)" style="max-width:150px" inputmode="numeric">'
-    +   '</div>'
-    +   '<textarea id="afCatPaste" class="adm-af-input" rows="4" style="width:100%" placeholder="Colle ici la page Fnac (HTML ou texte)…"></textarea>'
-    +   '<div class="adm-af-ligne" style="margin-top:6px">'
-    +     '<button id="afCatLire" class="secondary" type="button">📋 Lire la fiche</button>'
-    +     '<button id="afCatGenerer" class="primary" type="button" disabled>⚓ Générer la piste</button>'
-    +     '<span class="small" id="afCatMsg" style="color:#6e7a84"></span>'
-    +   '</div>'
-    +   '<div id="afCatPreview" style="margin-top:8px"></div>'
-    +   '<details style="margin-top:6px"><summary class="small" style="cursor:pointer">✏️ Saisie manuelle (si pas de fiche Fnac)</summary>'
-    +     '<div class="adm-af-ligne" style="margin-top:6px">'
-    +       '<input id="afCatTitre" class="adm-af-input" placeholder="Titre" style="flex:2">'
-    +       '<input id="afCatAuteur" class="adm-af-input" placeholder="Auteur (ou Collectif)" style="flex:1">'
-    +     '</div>'
-    +     '<div class="adm-af-ligne">'
-    +       '<input id="afCatEditeur" class="adm-af-input" placeholder="Éditeur" style="flex:1">'
-    +       '<input id="afCatEdition" class="adm-af-input" placeholder="Édition ex. 2e édition" style="flex:1">'
-    +       '<input id="afCatAnnee" class="adm-af-input" type="number" placeholder="Année" style="max-width:90px">'
-    +     '</div>'
-    +     '<div class="adm-af-ligne"><button id="afCatManuel" class="secondary" type="button">➕ Créer depuis ces champs</button></div>'
-    +   '</details>'
-    + '</div>'; 
-  }
 
   // ── Référentiel minimal — 40 mots P1 + 11 mots P2
   var REF_P1 = [
@@ -339,12 +306,6 @@
     var rf = $('afRepRefresh'); if (rf) rf.addEventListener('click', refreshEquipes);
     var vr = $('afRepVoir'); if (vr) vr.addEventListener('click', voirReponses);
     var lc = $('afRepCartouches'); if (lc) lc.addEventListener('click', listerCartouches);
-    // --- Catalogue Fnac direct
-    var clCat = $('afCatLire'); if (clCat) clCat.addEventListener('click', lireFicheFnac);
-    var cg = $('afCatGenerer'); if (cg) cg.addEventListener('click', genererPisteFnac);
-    var cm = $('afCatManuel'); if (cm) cm.addEventListener('click', genererPisteManuel);
-    var paste = $('afCatPaste'); if (paste) paste.addEventListener('input', function(){ var b=$('afCatGenerer'); if(b) b.disabled=true; }); 
-    var selCat = $('afCatMagasin'); if (selCat) selCat.addEventListener('change', function(){ majPreviewMagasin(); });
     // --- Notes mots recherches
     var nc = $('afNotesCharger'); if (nc) nc.addEventListener('click', notesCharger);
     var ns = $('afNotesSauver'); if (ns) ns.addEventListener('click', notesSauver);
@@ -682,116 +643,6 @@
       });
     }).catch(function(e){ box.innerHTML='<p class="adm-af-note" style="color:#9b1111">❌ '+esc(e.message||e)+'</p>'; });
   }
-
-  // ===================== CATALOGUE — lecture directe Fnac (EAN) =====================
-  function majSelectMagasinsCat(){
-    var sel = $('afCatMagasin'); if(!sel) return;
-    // garde la sélection
-    var prev = sel.value;
-    var opts = '<option value="">— magasin —</option>';
-    if(_liste && _liste.magasins){
-      _liste.magasins.filter(function(m){ return m.actif!==false; }).forEach(function(m){
-        opts += '<option value="'+esc(m.id)+'">'+esc(m.nom)+' — '+esc(m.ville||'')+' ('+esc(m.id)+')</option>';
-      });
-    }
-    sel.innerHTML = opts;
-    if(prev) sel.value = prev;
-  }
-  function majPreviewMagasin(){
-    var mid = ($('afCatMagasin').value||'').trim();
-    var msg=$('afCatMsg'); if(msg && mid) msg.textContent='Magasin : '+mid;
-  }
-  function rendrePreviewLivre(livre, dispo){
-    var el=$('afCatPreview'); if(!el) return;
-    if(!livre){ el.innerHTML=''; return; }
-    var ean = livre.ean || '';
-    var dispoHtml = dispo ? '<span class="adm-af-badge '+(dispo.exploitable?'adm-af-badge--ok':'adm-af-badge--warn')+'">'+esc(dispo.etat||dispo.delai||'')+'</span> ' : '';
-    el.innerHTML = '<div style="border:1px solid #dfe8ee;border-radius:8px;padding:10px;background:#fbfdff">'
-      + '<div style="font-weight:800">'+esc(livre.titre||'—')+'</div>'
-      + '<div class="small" style="color:#33414d;margin:2px 0">Auteur: <b>'+esc(livre.auteur||'—')+'</b> · Éditeur: '+esc(livre.editeur||'—')+' · Édition: '+esc(livre.edition||'')+' '+(livre.editionNumero? '('+livre.editionNumero+')':'')+'</div>'
-      + '<div style="margin:6px 0"><span class="adm-af-ean">'+esc(ean||'EAN manquant')+'</span> '+dispoHtml+' <span class="small">SKU '+esc(livre.sku||'—')+' · '+esc(livre.annee||'')+'</span></div>'
-      + (livre.categorieFnac? '<div class="small">Rayon Fnac: '+esc(livre.categorieFnac)+' · Famille: <b>'+esc(livre.famille||'')+'</b></div>' : '')
-      + '</div>';
-  }
-  function lireFicheFnac(){
-    var raw = ($('afCatPaste').value||'');
-    var mid = ($('afCatMagasin').value||'').trim();
-    var eanInput = ($('afCatEan').value||'').trim();
-    if(!raw && !eanInput){ dire('afCatMsg','Colle la page Fnac ou saisis un EAN.','warn'); return; }
-    if(!mid){ dire('afCatMsg','Choisis d’abord le magasin (pour valider la dispo).','warn'); return; }
-    var FL = window.NautilusFnacLecteur;
-    if(!FL || !FL.lireFiche){ dire('afCatMsg','❌ fnac-lecteur.js non chargé sur cette page (ajoute <script src=\"fnac-lecteur.js\">).','danger'); return; }
-    // Si seul EAN fourni, on peut quand même tenter (utilise ean comme brut minimal)
-    var brut = raw || eanInput;
-    try{
-      var res = FL.lireFiche(brut, { magasinId: mid, magasins: (_liste && _liste.magasins) || [] });
-      if(!res || !res.livre){ dire('afCatMsg','❌ Lecture impossible.','danger'); return; }
-      // EAN auto-rempli
-      var eL=$('afCatEan'); if(eL) eL.value = res.livre.ean || eanInput || '';
-      // Pré-remplit champs manuels
-      var t=$('afCatTitre'); if(t) t.value = res.livre.titre || '';
-      var a=$('afCatAuteur'); if(a) a.value = res.livre.auteur || '';
-      var ed=$('afCatEditeur'); if(ed) ed.value = res.livre.editeur || '';
-      var edi=$('afCatEdition'); if(edi) edi.value = res.livre.edition || '';
-      var an=$('afCatAnnee'); if(an) an.value = res.livre.annee || '';
-      // dispo
-      var exploitable = res.exploitable;
-      dire('afCatMsg', exploitable ? '✅ Fiche lue — <b>'+esc(res.livre.titre)+'</b> · EAN '+esc(res.livre.ean||'') : '⚠️ Fiche lue mais dispo non exploitable : '+esc(res.motif||'à vérifier'), exploitable?'ok':'warn');
-      rendrePreviewLivre(res.livre, res);
-      _dernierLivre = res.livre;
-      // Active génération si EAN présent
-      var bg=$('afCatGenerer'); if(bg) bg.disabled = !res.livre.ean;
-      if(!res.livre.ean) dire('afCatMsg','❌ EAN manquant — impossible de générer la piste.','danger');
-    }catch(e){
-      dire('afCatMsg','❌ '+esc(e.message||e),'danger');
-    }
-  }
-  function genererPisteFnac(){
-    if(!_dernierLivre || !_dernierLivre.ean){ dire('afCatMsg','❌ Lis d’abord une fiche avec EAN.','warn'); return; }
-    var mid = ($('afCatMagasin').value||'').trim();
-    if(!mid){ dire('afCatMsg','Choisis le magasin.','warn'); return; }
-    if(!S() || !S().genererCartouche){ dire('afCatMsg','Service non chargé.','danger'); return; }
-    dire('afCatMsg','⏳ Génération de la piste…','');
-    S().genererCartouche(_dernierLivre, mid, { phrase: null }).then(function(r){
-      dire('afCatMsg','✅ Piste créée : <code>'+esc(r.cartouche.id)+'</code> — <b>'+esc(_dernierLivre.titre)+'</b> (EAN '+esc(_dernierLivre.ean)+')','ok');
-      rendrePreviewLivre(_dernierLivre, {etat:'piste créée'});
-      // Met à jour la liste cartouches si ouverte
-      var magInput=$('afRepMagasin'); if(magInput) magInput.value=mid;
-    }).catch(function(e){ dire('afCatMsg','❌ '+esc(e.message||e),'danger'); });
-  }
-  function genererPisteManuel(){
-    var mid = ($('afCatMagasin').value||'').trim();
-    if(!mid){ dire('afCatMsg','Choisis le magasin.','warn'); return; }
-    var ean = ($('afCatEan').value||'').trim().replace(/[^0-9]/g,'');
-    if(!ean || ean.length!==13){ dire('afCatMsg','EAN 13 chiffres requis.','warn'); return; }
-    var livre = {
-      id: 'manuel-'+ean,
-      titre: ($('afCatTitre').value||'').trim() || 'Ouvrage '+ean,
-      auteur: ($('afCatAuteur').value||'').trim(),
-      auteurType: ($('afCatAuteur').value||'').toLowerCase().indexOf('collectif')>=0 ? 'collectif' : 'unique',
-      editeur: ($('afCatEditeur').value||'').trim(),
-      edition: ($('afCatEdition').value||'').trim(),
-      editionNumero: parseInt(($('afCatEdition').value||'').replace(/[^0-9]/g,''),10)||0,
-      annee: parseInt(($('afCatAnnee').value||'').trim(),10)||0,
-      ean: ean,
-      sku: '',
-      categorieFnac: '',
-      liens: [],
-      disponibilite: {}
-    };
-    livre.disponibilite[mid] = { statut:'disponible', delai:'Retrait gratuit sous 1H', checkedAt: new Date().toISOString(), vendeur:'fnac', magasin: mid };
-    _dernierLivre = livre;
-    rendrePreviewLivre(livre, {etat:'saisie manuelle'});
-    var bg=$('afCatGenerer'); if(bg) bg.disabled=false;
-    dire('afCatMsg','✏️ Livre manuel prêt — clique <b>Générer la piste</b>.','ok');
-  }
-
-  // Après chargement liste magasins, remplit aussi le select catalogue
-  var _oldRendreMag = rendreMag;
-  rendreMag = function(){
-    _oldRendreMag();
-    try{ majSelectMagasinsCat(); }catch(e){}
-  };
 
   function observer(){
     ensureTabsCss();
