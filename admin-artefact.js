@@ -24,8 +24,8 @@
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>\"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c];
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
   function S() { return window.NautilusArtefact; }
@@ -106,10 +106,58 @@
     + '<p class="adm-af-note" style="margin-top:8px">💡 Sync hebdo : <code>tools/sync-magasins-fnac.mjs</code> + GitHub Actions régénère <code>data/magasins-fnac.json</code>. Les modifs manuelles ici sont prioritaires si publiées dans Firestore.</p>';
   }
 
+  // ── Référentiel statique des réponses — tous paliers ──
+  // Source de vérité : palier1.html:MORSE_WORDS (40 mots) + 1721310619.html:MOTS (11 mots)
+  var REF_P1 = [
+    {w:'NAUTILE',h:'Animal marin à coquille spiralée'},{w:'ABYSSES',h:'Profondeurs inexplorées de l\'océan'},{w:'EPAVES',h:'Épave = navire échoué au fond'},{w:'EQUATEUR',h:'Ligne imaginaire autour de la Terre'},{w:'OCEANES',h:'Vastes mers salées'},{w:'RECIFAL',h:'Qualifie un récif corallien'},{w:'SOUSMARIN',h:'Bateau qui plonge sous l\'eau'},{w:'BARQUES',h:'Petits bateaux de pêche'},{w:'PHOQUES',h:'Mammifères marins à nageoires'},{w:'CETACES',h:'Famille des baleines et dauphins'},{w:'CORAIL',h:'Animal qui forme les récifs'},{w:'MEDUSES',h:'Animaux gélatineux urticants'},{w:'OURSINS',h:'Petits animaux à piquants'},{w:'CRUSTACE',h:'Famille du crabe et de la crevette'},{w:'BALEINES',h:'Plus grands animaux marins'},{w:'DAUPHINS',h:'Cétacés intelligents et joueurs'},{w:'REQUINS',h:'Prédateurs au sourire de dents'},{w:'ANCHOIS',h:'Petits poissons bleus en banc'},{w:'SARDINES',h:'Petits poissons pêchés en boîte'},{w:'MOULES',h:'Mollusques des rochers'},{w:'HUITRES',h:'Mollusques précieux pour leurs perles'},{w:'CREVETTES',h:'Petits crustacés roses'},{w:'LANGOUSTE',h:'Grand crustacé à longues antennes'},{w:'MAREEES',h:'Mouvement quotidien de la mer'},{w:'COURANTS',h:'Flux d\'eau continus dans l\'océan'},{w:'VAGUES',h:'Elles roulent vers le rivage'},{w:'ECUMES',h:'Mousse blanche sur les crêtes'},{w:'ALGUES',h:'Végétaux marins'},{w:'MANGROVE',h:'Forêt des zones côtières tropicales'},{w:'PROMENADE',h:'Chemin le long de la côte'},{w:'PHARE',h:'Tour qui guide les navires'},{w:'MARINIER',h:'Qui concerne les marins'},{w:'PIRATES',h:'Ecumeurs des mers du temps de la voile'},{w:'FLIBUSTIER',h:'Pirate des Antilles'},{w:'EQUIPAGES',h:'Équipes à bord d\'un navire'},{w:'MATELOTS',h:'Marins d\'équipage'},{w:'CAPITAINE',h:'Commandant d\'un navire'},{w:'AMIRAUTE',h:'Commandement supérieur de la marine'},{w:'CHALUTIER',h:'Bateau de pêche au filet'},{w:'SOUSMARINE',h:'Autre orthographe du sous-marin'}
+  ];
+  var REF_P2 = [
+    {reponse:'STEELBOOK',definition:'Coffret plat à deux volets, trempé contre l\'oubli, dont la surface polie renvoie au possesseur son propre visage avant de lui concéder l\'accès à la fiction qu\'il abrite.',secteur:'rayon'},
+    {reponse:'ECOTAXE',definition:'Obole de compensation opérée à l\'instant de l\'acquisition, destinée à provisionner la cérémonie ultérieure de démantèlement et la restauration des équilibres que l\'objet aura fatigués par sa seule circulation.',secteur:'caisse'},
+    {reponse:'PICKING',definition:'Protocole chrono-opérationnel de matérialisation sélective, piloté par une matrice d\'allocation omnicanale, qui convertit une intention transactionnelle en micro-séquences de navigation tactile au sein d\'un environnement indexé, jusqu\'à stabilisation de l\'unité désignée dans son vecteur de circulation.',secteur:'stock'},
+    {reponse:'ANTISKATING',definition:'Procédé métaphysique chargé de stabiliser la dérive latérale d\'un vecteur acoustico-mental en injectant, dans la trajectoire d\'un sillon cognitif, une contre-résonance spectrale destinée à empêcher la pensée non formulée de glisser vers son propre centre.',secteur:'rayon'},
+    {reponse:'NEURONAL',definition:'Accélérateur matériel pour opérations de réduction dimensionnelle sur espaces vectoriels de grande dimension, avec pipeline dédié aux produits scalaires massivement parallèles.',secteur:'rayon'},
+    {reponse:'RAYTRACING',definition:'Opération de cartographie négative où l\'on ne décrit pas ce qui est, mais ce qu\'un parcours hypothétique aurait dû rencontrer pour que l\'apparence finale puisse justifier sa propre présence.',secteur:'rayon'},
+    {reponse:'REASSORT',definition:'Cycle régénératif à cadence différée qui restaure l\'équilibre densitaire d\'un ensemble ordonné, en réinjectant depuis une réserve latente les unités manquantes d\'une trame consommée, jusqu\'à rétablissement de la continuité perceptive de l\'alignement.',secteur:'stock'},
+    {reponse:'REPRISE',definition:'Clause de filiation inversée consentie à tout bien vieillissant : l\'opérateur d\'origine l\'absorbe à nouveau, en négocie la déchéance selon un barème d\'érosion, puis lui désigne un successeur qui ignorera tout de l\'aîné.',secteur:'sav'},
+    {reponse:'PLEIADE',definition:'Fratrie lumineuse issue d\'un unique embrasement, dont le nombre consacré dépasse d\'une unité le témoignage du regard — matrice de toutes les confréries d\'éclat, jusqu\'à cette bibliothèque de peau fine où l\'on inhume les œuvres qu\'on estime achevées.',secteur:'rayon'},
+    {reponse:'DEFROISSEUR',definition:'Dispositif moderne qui ajuste les fréquences internes d\'une matière pour apaiser les tensions invisibles entre ses états, sans jamais intervenir physiquement.',secteur:'rayon'},
+    {reponse:'DIAPHRAGME',definition:'Module orbiculaire à rétraction polyphasique, saturé d\'un bruit électro-spectral, qui contracte un interstice d\'éclat pour dériver la densité du visible comme un mécanisme optico-analogique en dérive temporelle.',secteur:'rayon'}
+  ];
+  function htmlToutesReponses() {
+    var p1Rows = REF_P1.map(function(m,i){ return '<tr><td class=\"small\">'+(i+1)+'</td><td><b>'+esc(m.w)+'</b></td><td class=\"small\">'+esc(m.h)+'</td></tr>'; }).join('');
+    var p2Rows = REF_P2.map(function(m,i){ return '<tr><td class=\"small\">'+(i+1)+'</td><td><b>'+esc(m.reponse)+'</b></td><td class=\"small\">'+esc(m.secteur)+'</td><td class=\"small\">'+esc(m.definition)+'</td></tr>'; }).join('');
+    return ''
+    + '<div class=\"adm-af-sec\" id=\"afToutesReponses\">'
+    +   '<h4>📚 Tous les mini-jeux — bonnes réponses attendues</h4>'
+    +   '<p class=\"small\">Référentiel <b>statique</b> (ne dépend pas d’une session) — visible dès que la phrase est déverrouillée. Complète la section Palier 3 ci-dessous qui, elle, dépend de la cartouche attribuée.</p>'
+    +   '<details open style=\"margin:8px 0;padding:8px;border:1px solid #dfe8ee;border-radius:8px;background:#fbfdff\">'
+    +     '<summary style=\"cursor:pointer;font-weight:800\">Palier 1 — Signal morse · 40 mots possibles (1 par équipage, tiré via <code>morseWordHash</code>)</summary>'
+    +     '<p class=\"small\" style=\"margin:6px 0\">Chaque équipage a <b>son</b> mot fixe (assigné une seule fois, conservé en <code>teams/{code}.morseWordHash</code>). L’indice nº2 donne le nombre de lettres, le nº3 la première lettre.</p>'
+    +     '<div style=\"max-height:220px;overflow:auto;border:1px solid #eef3f7;border-radius:6px\">'
+    +       '<table class=\"adm-af-table\" style=\"width:100%\"><thead><tr><th>#</th><th>Réponse attendue</th><th>Indice thématique</th></tr></thead><tbody>'+p1Rows+'</tbody></table>'
+    +     '</div>'
+    +     '<p class=\"small\" style=\"margin-top:6px\">🔍 Mot de l’équipage sélectionné : <span id=\"afP1MotEquipe\" class=\"small\" style=\"font-weight:700\">— choisir un équipage ci-dessous puis « Voir les réponses » (Palier 3) pour voir le hash résolu —</span></p>'
+    +   '</details>'
+    +   '<details open style=\"margin:8px 0;padding:8px;border:1px solid #dfe8ee;border-radius:8px;background:#fbfdff\">'
+    +     '<summary style=\"cursor:pointer;font-weight:800\">Palier 2 — Mots croisés · 11 mots (grille commune)</summary>'
+    +     '<p class=\"small\" style=\"margin:6px 0\">Grille unique (<code>1721310619.html</code>) — tous les équipages cherchent les mêmes 11 mots. Secteur = rayon/caisse/stock/sav.</p>'
+    +     '<div style=\"max-height:260px;overflow:auto;border:1px solid #eef3f7;border-radius:6px\">'
+    +       '<table class=\"adm-af-table\" style=\"width:100%\"><thead><tr><th>#</th><th>Réponse attendue</th><th>Secteur</th><th>Définition affichée aux matelots</th></tr></thead><tbody>'+p2Rows+'</tbody></table>'
+    +     '</div>'
+    +   '</details>'
+    +   '<details style=\"margin:8px 0;padding:8px;border:1px solid #dfe8ee;border-radius:8px;background:#fbfdff\">'
+    +     '<summary style=\"cursor:pointer;font-weight:800\">Palier 3 — Artefact (4 étapes) — réponses par cartouche</summary>'
+    +     '<p class=\"small\" style=\"margin:6px 0\">4 étapes : hublot/EAN, couverture/premier mot, signature, chambre forte. La cartouche est tirée au sort parmi le catalogue du <b>magasin</b> choisi — voir « Sessions en cours » et « Cartouches » ci-dessous.</p>'
+    +   '</details>'
+    + '</div>';
+  }
+
   function HTML_REP() {
     return ''
     + '<p class="small" style="margin-bottom:10px">Affiche les <b>bonnes réponses attendues</b> pour les mini-jeux du Palier 3 (4 étapes : hublot/EAN, couverture/premier mot, signature, chambre forte). Accès réservé — phrase d’administration requise. Les réponses ne sont jamais stockées en clair.</p>'
     + '<!-- Affiche les **bonnes réponses attendues** pour les mini-jeux -->'
+    + htmlToutesReponses()
     + '<div class="adm-af-sec">'
     +   '<h4>🔑 Déverrouiller les réponses</h4>'
     +   '<div class="adm-af-ligne">'
