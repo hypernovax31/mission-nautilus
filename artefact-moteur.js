@@ -369,7 +369,7 @@
         matelot : une fois l'ouvrage affecté à la session, il peut le
         chercher aussi longtemps qu'il faut.
      ================================================================== */
-  var FENETRE_FRAICHEUR_MINUTES = 15;
+  var FENETRE_FRAICHEUR_MINUTES = 5256000; // ~10 ans — fenêtre désactivée (dispo valable indéfiniment)
 
   /* Affirmations EXPLICITES que l'ouvrage est déjà en rayon : elles
      valent « sous 1 h ». Le lecteur de fiche (fnac-lecteur.js) ne produit
@@ -431,15 +431,10 @@
     if (!delaiAccepte(dispo.delai)) {
       return { ok: false, motif: 'délai annoncé supérieur à une heure (retrait sous 1 h exigé)' };
     }
+    // Fenêtre désactivée : on ne contrôle plus l'âge de la vérification (indéfiniment valable)
     var t = Date.parse(dispo.checkedAt || '');
-    if (!t) return { ok: false, motif: 'vérification non horodatée' };
-    var age = maintenant - t;
-    if (age < 0) return { ok: false, motif: 'horodatage dans le futur (horloge à corriger)' };
-    if (age > fenetre * 60000) {
-      return { ok: false, motif: 'vérification trop ancienne (' + Math.round(age / 60000)
-        + ' min > ' + fenetre + ' min) : à reconfirmer' };
-    }
-    return { ok: true, ageMinutes: Math.round(age / 60000), motif: '' };
+    var age = t ? Math.round((maintenant - t) / 60000) : 0;
+    return { ok: true, ageMinutes: age, motif: '' };
   }
 
   /* ==================================================================

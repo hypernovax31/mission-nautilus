@@ -368,13 +368,18 @@
       var cartouche = g.cartouche;
       cartouche.mode = cfg.mode;
       delete cartouche._id;                       // artéfact du stockage, pas du jeu
-      /* o.sansCoffre : aperçu organisateur hors ligne (pas de WebCrypto sur
-         file:// ou HTTP simple). La cartouche publique reste la même ; seul
-         le coffre chiffré n'est pas écrit, et le secret n'existe alors que
-         dans la mémoire de la page d'aperçu — jamais sur le réseau. */
-      if (o.sansCoffre || !o.phrase) {
+      /* Direct Fnac (sans catalogue chiffré) : si pas de phrase, on stocke
+         le secret en clair pour que l'admin puisse voir les réponses sans
+         déchiffrement. o.sansCoffre = aperçu hors ligne (aucune écriture coffre). */
+      if (o.sansCoffre) {
         return stockage().poser(CHEMINS.cartouches + '/' + cartouche.id, cartouche)
           .then(function () { return { cartouche: cartouche, secret: g.secret, sansCoffre: true }; });
+      }
+      if (!o.phrase) {
+        return Promise.all([
+          stockage().poser(CHEMINS.cartouches + '/' + cartouche.id, cartouche),
+          stockage().poser(CHEMINS.coffres + '/' + cartouche.id, { secret: g.secret, cartoucheId: cartouche.id, enClair: true })
+        ]).then(function () { return { cartouche: cartouche, secret: g.secret }; });
       }
       return chiffrer(g.secret, o.phrase).then(function (coffre) {
         return Promise.all([
@@ -435,7 +440,13 @@
 
   function lireCoffre(id, phrase) {
     return stockage().lire(CHEMINS.coffres + '/' + M.nettoyerTexte(id, 40).replace(/[^A-Za-z0-9-]/g, ''))
-      .then(function (doc) { return doc && doc.coffre ? dechiffrer(doc.coffre, phrase) : null; });
+      .then(function (doc) {
+        if (!doc) return null;
+        if (doc.secret && doc.enClair) return doc.secret; // direct Fnac — en clair (plus de phrase)
+        if (doc.secret && !doc.coffre) return doc.secret;
+        if (doc.coffre) return dechiffrer(doc.coffre, phrase);
+        return null;
+      });
   }
 
   function supprimerCartouche(id) {
