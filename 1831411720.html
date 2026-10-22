@@ -163,7 +163,7 @@
      appelé depuis le jeu. Sert au panneau admin (onglet 📖 Artefact) pour lire
      une fiche enregistrée par l’organisateur, et à l’outil Node de collecte. -->
 <script src="fnac-lecteur.js?v=1"></script>
-<script src="artefact-service.js?v=2"></script>
+<script src="artefact-service.js?v=3"></script>
 <script src="magasin-fnac.js?v=1"></script>
 <script src="artefact-palier3.js?v=1"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
@@ -709,18 +709,15 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
      Le magasin est celui choisi sur la page de démarrage (écoutille). */
   var magB = null;
   try{ magB = (window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant()) || null; }catch(e){}
-  var introMag = "Le <b>Nautilus</b> a caché un ouvrage dans ton magasin. Personne ne connaît son titre. Retrouve-le, montre-le au hublot et ouvre la chambre forte.";
+  var introMag = "Le <b>Capitaine</b> a caché un ouvrage dans ton magasin …. Personne ne sait où il se situe. Retrouve-le, scan-le et ouvre la chambre forte grâce à un code secret.";
   if(magB && magB.nom){
-    introMag = "Le <b>Nautilus</b> a caché un ouvrage dans ton magasin <b>Fnac " + esc(magB.nom) + "</b>. Personne ne connaît son titre. Retrouve-le, montre-le au hublot et ouvre la chambre forte.";
+    introMag = "Le <b>Capitaine</b> a caché un ouvrage dans ton magasin <b>Fnac " + esc(magB.nom) + "</b> …. Personne ne sait où il se situe. Retrouve-le, scan-le et ouvre la chambre forte grâce à un code secret.";
   }
   window.NautilusBriefing.afficher($('briefHost'), {
     intro: introMag,
     consignes: [
-      { ico: '🧭', html: "<b>Énigme</b> : elle pointe la zone de recherche sans la nommer." },
-      { ico: '🔏', html: "<b>Hublot</b> : scanne le code-barres au dos (ou saisis les 13 chiffres EAN)." },
-      { ico: '📜', html: "<b>3 épreuves</b> de la couverture : mot, signature, code final." },
-      { warn: true, ico: '❌', html: "<b>3 erreurs = remontée</b> (1h → 2h → 4h…). Un coéquipier peut reprendre." },
-      { ico: '🕯️', html: "<b>Indices</b> : payants par ton sacrifice, acquis à l'équipage." }
+      { ico: '📜', html: "<b>Découvre le code secret</b> qui se trouve sur la <b>couverture</b>" },
+      { warn: true, ico: '❌', html: "<b>3 erreurs = remontée</b>. Un coéquipier peut reprendre la piste" }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {

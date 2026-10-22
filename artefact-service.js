@@ -68,9 +68,9 @@
   var CHEMINS = {
     config: 'artefacts/config',
     catalogue: 'artefacts/catalogue',
-    cartouches: 'artefacts/cartouches',     // + /{id}   (public : empreintes)
-    coffres: 'artefacts/coffres',           // + /{id}   (chiffré : réponses)
-    sessions: 'artefacts/sessions',         // + /{EQUIPE}
+    cartouches: 'cartouches',               // + /{id}   (public : empreintes) — collection racine (évite 3 segments invalides)
+    coffres: 'coffres',                     // + /{id}   (chiffré : réponses)
+    sessions: 'sessions',                   // + /{EQUIPE}
     magasins: 'artefacts/magasins'
   };
 

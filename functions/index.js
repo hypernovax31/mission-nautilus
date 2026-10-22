@@ -71,8 +71,8 @@ const politiqueCors = cors({
 
 const CHEMINS = {
   config: 'artefacts/config',
-  cartouches: 'artefacts/cartouches',
-  sessions: 'artefacts/sessions'
+  cartouches: 'cartouches',
+  sessions: 'sessions'
 };
 const CONFIG_DEFAUT = {
   mode: 'fonction', endpoint: '', fenetreMinutes: MOTEUR.FENETRE_FRAICHEUR_MINUTES,
