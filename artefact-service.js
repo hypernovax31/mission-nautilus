@@ -522,6 +522,9 @@
   }
 
   /* Ouverture (ou reprise) de la session d'un équipage.
+     Le catalogue est alimenté en live par le sync GitHub (tools/sync-catalogue-artefacts.mjs) :
+     En stock + Retrait sous 1h pour le magasin choisi. À l'ouverture du palier 3,
+     ouvrirSession() tire automatiquement parmi les cartouches utilisables du magasin.
      RÈGLE : un ouvrage déjà affecté ne change JAMAIS en cours de partie,
      même si le stock évolue. Une session « suspendue » (ouvrage
      signalé introuvable ou devenu indisponible) attend l'admin. */

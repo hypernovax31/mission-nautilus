@@ -185,8 +185,9 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
 <script>
 /* ================= ÉPREUVE DU PALIER 3 — « L'ARTEFACT DU NAUTILUS » =================
-   Le Nautilus désigne UN OUVRAGE réellement présent dans le magasin où joue
-   l'équipage (retrait sous 1 h confirmé par le capitaine). Le matelot :
+   Le catalogue est alimenté en live par le sync GitHub Fnac (En stock + Retrait 1h).
+   À l'ouverture du palier 3, le Nautilus désigne automatiquement UN OUVRAGE parmi
+   les disponibles pour le magasin choisi par le matelot. Le matelot :
      1. déduit le rayon grâce à une énigme,
      2. retrouve l'ouvrage,
      3. le présente au SCEAU (scan du code-barres),
@@ -817,7 +818,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   <script src="palier-cinematic.js?v=3"></script>
 <!-- Onglet ADMIN de l'artefact : s'injecte dans le panneau admin existant
      (admin-button.js) sans modifier son HTML dupliqué. -->
-<script src="admin-artefact.js?v=12" defer></script>
+<script src="admin-artefact.js?v=13" defer></script>
 <script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>

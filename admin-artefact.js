@@ -119,7 +119,7 @@
     +     '<span class="small" id="afMagFormMsg"></span>'
     +   '</div>'
     + '</div>'
-    + '<p class="adm-af-note" style="margin-top:8px">💡 Sélection automatique : le matelot choisit son magasin — le système interroge <code>fnac.com</code> (<b>En stock</b> + <b>Retrait sous 1h</b>) et génère la piste sans que l’admin ait à donner le livre ou le rayon. La piste reste active indéfiniment (fenêtre 15min désactivée).</p>';
+    + '<p class="adm-af-note" style="margin-top:8px">💡 Sélection automatique à l’ouverture du Palier 3 : le sync GitHub alimente le catalogue en live depuis <code>fnac.com</code> (<b>En stock</b> + <b>Retrait sous 1h</b> pour le magasin choisi par le matelot) — la piste est tirée automatiquement, pas à la main.</p>';
   }
 
 
