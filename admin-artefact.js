@@ -25,7 +25,17 @@
     if(document.getElementById('nautilusAdminTabsFix')) return;
     var st=document.createElement('style');
     st.id='nautilusAdminTabsFix';
-    st.textContent='.admin-tabs{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}.admin-tabs::-webkit-scrollbar{display:none}.admin-tab{flex:0 0 auto;white-space:nowrap;min-width:36px;justify-content:center}.admin-pane{min-width:0;overflow-wrap:anywhere;max-width:100%}#adminPanel .body{overflow-x:hidden}';
+    st.textContent='.admin-tabs{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}.admin-tabs::-webkit-scrollbar{display:none}.admin-tab{flex:0 0 auto;white-space:nowrap;min-width:36px;justify-content:center}.admin-pane{min-width:0;overflow-wrap:anywhere;max-width:100%}#adminPanel .body{overflow-x:hidden}'
+      + '.adm-af-cards{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;padding:6px 2px 8px;scrollbar-width:none}.adm-af-cards::-webkit-scrollbar{display:none}'
+      + '.adm-af-teamcard{flex:0 0 86vw;max-width:340px;min-width:260px;scroll-snap-align:start;background:#fff;border:1px solid #dfe8ee;border-radius:12px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}'
+      + '.adm-af-teamhead{font-weight:900;font-size:13px;letter-spacing:.04em;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}'
+      + '.adm-af-row{display:flex;align-items:center;gap:6px;margin:6px 0;min-width:0}'
+      + '.adm-af-lbl{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:#eef2f6;color:#33414d;border-radius:999px;padding:3px 8px;flex:0 0 auto}'
+      + '.adm-af-chip{font-size:12px;font-weight:700;background:#f7fafc;border:1px solid #dfe8ee;border-radius:999px;padding:4px 8px;white-space:nowrap;flex:0 0 auto}'
+      + '.adm-af-chip--hl{background:linear-gradient(135deg,#e8fff4,#f0faf6);border-color:#bfe7d2;color:#0b4a3a}'
+      + '.adm-af-chips{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;padding-bottom:2px}.adm-af-chips::-webkit-scrollbar{display:none}'
+      + '.adm-af-ean{font-family:Consolas,monospace;font-size:12px;background:#0b1a2e;color:#c8f0d8;border-radius:6px;padding:3px 6px;letter-spacing:.02em}'
+      + '@media(min-width:720px){.adm-af-teamcard{flex:0 0 320px}.adm-af-cards{flex-wrap:wrap;overflow:visible;scroll-snap-type:none}}';
     (document.head||document.documentElement).appendChild(st);
   }
 
@@ -113,99 +123,108 @@
     + '<p class="adm-af-note" style="margin-top:8px">💡 Sync hebdo : <code>tools/sync-magasins-fnac.mjs</code> + GitHub Actions régénère <code>data/magasins-fnac.json</code>. Les modifs manuelles ici sont prioritaires si publiées dans Firestore.</p>';
   }
 
-  // ── Référentiel statique des réponses — tous paliers ──
-  // Source de vérité : palier1.html:MORSE_WORDS (40 mots) + 1721310619.html:MOTS (11 mots)
+  // ── Référentiel minimal — 40 mots P1 + 11 mots P2
   var REF_P1 = [
-    {w:'NAUTILE',h:'Animal marin à coquille spiralée'},{w:'ABYSSES',h:'Profondeurs inexplorées de l\'océan'},{w:'EPAVES',h:'Épave = navire échoué au fond'},{w:'EQUATEUR',h:'Ligne imaginaire autour de la Terre'},{w:'OCEANES',h:'Vastes mers salées'},{w:'RECIFAL',h:'Qualifie un récif corallien'},{w:'SOUSMARIN',h:'Bateau qui plonge sous l\'eau'},{w:'BARQUES',h:'Petits bateaux de pêche'},{w:'PHOQUES',h:'Mammifères marins à nageoires'},{w:'CETACES',h:'Famille des baleines et dauphins'},{w:'CORAIL',h:'Animal qui forme les récifs'},{w:'MEDUSES',h:'Animaux gélatineux urticants'},{w:'OURSINS',h:'Petits animaux à piquants'},{w:'CRUSTACE',h:'Famille du crabe et de la crevette'},{w:'BALEINES',h:'Plus grands animaux marins'},{w:'DAUPHINS',h:'Cétacés intelligents et joueurs'},{w:'REQUINS',h:'Prédateurs au sourire de dents'},{w:'ANCHOIS',h:'Petits poissons bleus en banc'},{w:'SARDINES',h:'Petits poissons pêchés en boîte'},{w:'MOULES',h:'Mollusques des rochers'},{w:'HUITRES',h:'Mollusques précieux pour leurs perles'},{w:'CREVETTES',h:'Petits crustacés roses'},{w:'LANGOUSTE',h:'Grand crustacé à longues antennes'},{w:'MAREEES',h:'Mouvement quotidien de la mer'},{w:'COURANTS',h:'Flux d\'eau continus dans l\'océan'},{w:'VAGUES',h:'Elles roulent vers le rivage'},{w:'ECUMES',h:'Mousse blanche sur les crêtes'},{w:'ALGUES',h:'Végétaux marins'},{w:'MANGROVE',h:'Forêt des zones côtières tropicales'},{w:'PROMENADE',h:'Chemin le long de la côte'},{w:'PHARE',h:'Tour qui guide les navires'},{w:'MARINIER',h:'Qui concerne les marins'},{w:'PIRATES',h:'Ecumeurs des mers du temps de la voile'},{w:'FLIBUSTIER',h:'Pirate des Antilles'},{w:'EQUIPAGES',h:'Équipes à bord d\'un navire'},{w:'MATELOTS',h:'Marins d\'équipage'},{w:'CAPITAINE',h:'Commandant d\'un navire'},{w:'AMIRAUTE',h:'Commandement supérieur de la marine'},{w:'CHALUTIER',h:'Bateau de pêche au filet'},{w:'SOUSMARINE',h:'Autre orthographe du sous-marin'}
+    {w:'NAUTILE'},{w:'ABYSSES'},{w:'EPAVES'},{w:'EQUATEUR'},{w:'OCEANES'},{w:'RECIFAL'},{w:'SOUSMARIN'},{w:'BARQUES'},{w:'PHOQUES'},{w:'CETACES'},{w:'CORAIL'},{w:'MEDUSES'},{w:'OURSINS'},{w:'CRUSTACE'},{w:'BALEINES'},{w:'DAUPHINS'},{w:'REQUINS'},{w:'ANCHOIS'},{w:'SARDINES'},{w:'MOULES'},{w:'HUITRES'},{w:'CREVETTES'},{w:'LANGOUSTE'},{w:'MAREEES'},{w:'COURANTS'},{w:'VAGUES'},{w:'ECUMES'},{w:'ALGUES'},{w:'MANGROVE'},{w:'PROMENADE'},{w:'PHARE'},{w:'MARINIER'},{w:'PIRATES'},{w:'FLIBUSTIER'},{w:'EQUIPAGES'},{w:'MATELOTS'},{w:'CAPITAINE'},{w:'AMIRAUTE'},{w:'CHALUTIER'},{w:'SOUSMARINE'}
   ];
-  var REF_P2 = [
-    {reponse:'STEELBOOK',definition:'Coffret plat à deux volets, trempé contre l\'oubli, dont la surface polie renvoie au possesseur son propre visage avant de lui concéder l\'accès à la fiction qu\'il abrite.',secteur:'rayon'},
-    {reponse:'ECOTAXE',definition:'Obole de compensation opérée à l\'instant de l\'acquisition, destinée à provisionner la cérémonie ultérieure de démantèlement et la restauration des équilibres que l\'objet aura fatigués par sa seule circulation.',secteur:'caisse'},
-    {reponse:'PICKING',definition:'Protocole chrono-opérationnel de matérialisation sélective, piloté par une matrice d\'allocation omnicanale, qui convertit une intention transactionnelle en micro-séquences de navigation tactile au sein d\'un environnement indexé, jusqu\'à stabilisation de l\'unité désignée dans son vecteur de circulation.',secteur:'stock'},
-    {reponse:'ANTISKATING',definition:'Procédé métaphysique chargé de stabiliser la dérive latérale d\'un vecteur acoustico-mental en injectant, dans la trajectoire d\'un sillon cognitif, une contre-résonance spectrale destinée à empêcher la pensée non formulée de glisser vers son propre centre.',secteur:'rayon'},
-    {reponse:'NEURONAL',definition:'Accélérateur matériel pour opérations de réduction dimensionnelle sur espaces vectoriels de grande dimension, avec pipeline dédié aux produits scalaires massivement parallèles.',secteur:'rayon'},
-    {reponse:'RAYTRACING',definition:'Opération de cartographie négative où l\'on ne décrit pas ce qui est, mais ce qu\'un parcours hypothétique aurait dû rencontrer pour que l\'apparence finale puisse justifier sa propre présence.',secteur:'rayon'},
-    {reponse:'REASSORT',definition:'Cycle régénératif à cadence différée qui restaure l\'équilibre densitaire d\'un ensemble ordonné, en réinjectant depuis une réserve latente les unités manquantes d\'une trame consommée, jusqu\'à rétablissement de la continuité perceptive de l\'alignement.',secteur:'stock'},
-    {reponse:'REPRISE',definition:'Clause de filiation inversée consentie à tout bien vieillissant : l\'opérateur d\'origine l\'absorbe à nouveau, en négocie la déchéance selon un barème d\'érosion, puis lui désigne un successeur qui ignorera tout de l\'aîné.',secteur:'sav'},
-    {reponse:'PLEIADE',definition:'Fratrie lumineuse issue d\'un unique embrasement, dont le nombre consacré dépasse d\'une unité le témoignage du regard — matrice de toutes les confréries d\'éclat, jusqu\'à cette bibliothèque de peau fine où l\'on inhume les œuvres qu\'on estime achevées.',secteur:'rayon'},
-    {reponse:'DEFROISSEUR',definition:'Dispositif moderne qui ajuste les fréquences internes d\'une matière pour apaiser les tensions invisibles entre ses états, sans jamais intervenir physiquement.',secteur:'rayon'},
-    {reponse:'DIAPHRAGME',definition:'Module orbiculaire à rétraction polyphasique, saturé d\'un bruit électro-spectral, qui contracte un interstice d\'éclat pour dériver la densité du visible comme un mécanisme optico-analogique en dérive temporelle.',secteur:'rayon'}
-  ];
-  function htmlToutesReponses() {
-    var p1Rows = REF_P1.map(function(m,i){ return '<tr><td class=\"small\">'+(i+1)+'</td><td><b>'+esc(m.w)+'</b></td><td class=\"small\">'+esc(m.h)+'</td></tr>'; }).join('');
-    var p2Rows = REF_P2.map(function(m,i){ return '<tr><td class=\"small\">'+(i+1)+'</td><td><b>'+esc(m.reponse)+'</b></td><td class=\"small\">'+esc(m.secteur)+'</td><td class=\"small\">'+esc(m.definition)+'</td></tr>'; }).join('');
+  var REF_P2 = ['STEELBOOK','ECOTAXE','PICKING','ANTISKATING','NEURONAL','RAYTRACING','REASSORT','REPRISE','PLEIADE','DEFROISSEUR','DIAPHRAGME'];
+  var EQUIPES = ['NEMO','NAUTILUS','ARONNAX','NEDLAND'];
+  function hashString(s){ var h=0; for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
+  function motDeHash(h){ if(typeof h!=='number') return null; for(var i=0;i<REF_P1.length;i++){ if(hashString(REF_P1[i].w)===h) return REF_P1[i].w; } return null; }
+  function lireTeamDoc(code){
+    try{
+      if(S() && S().stockage) return S().stockage().lire('teams/'+code);
+      if(window.Nautilus && window.Nautilus.getTeam) return window.Nautilus.getTeam(code);
+    }catch(e){}
+    return Promise.resolve(null);
+  }
+  function htmlToutesReponses(){
+    var p2chips = REF_P2.map(function(w){ return '<span class="adm-af-chip">'+esc(w)+'</span>'; }).join('');
     return ''
-    + '<div class=\"adm-af-sec\" id=\"afToutesReponses\">'
-    +   '<h4>📚 Tous les mini-jeux — bonnes réponses attendues</h4>'
-    +   '<p class=\"small\">Référentiel <b>statique</b> (ne dépend pas d’une session) — visible dès que la phrase est déverrouillée. Complète la section Palier 3 ci-dessous qui, elle, dépend de la cartouche attribuée.</p>'
-    +   '<details open style=\"margin:8px 0;padding:8px;border:1px solid #dfe8ee;border-radius:8px;background:#fbfdff\">'
-    +     '<summary style=\"cursor:pointer;font-weight:800\">Palier 1 — Signal morse · 40 mots possibles (1 par équipage, tiré via <code>morseWordHash</code>)</summary>'
-    +     '<p class=\"small\" style=\"margin:6px 0\">Chaque équipage a <b>son</b> mot fixe (assigné une seule fois, conservé en <code>teams/{code}.morseWordHash</code>). L’indice nº2 donne le nombre de lettres, le nº3 la première lettre.</p>'
-    +     '<div style=\"max-height:220px;overflow:auto;border:1px solid #eef3f7;border-radius:6px\">'
-    +       '<table class=\"adm-af-table\" style=\"width:100%\"><thead><tr><th>#</th><th>Réponse attendue</th><th>Indice thématique</th></tr></thead><tbody>'+p1Rows+'</tbody></table>'
-    +     '</div>'
-    +     '<p class=\"small\" style=\"margin-top:6px\">🔍 Mot de l’équipage sélectionné : <span id=\"afP1MotEquipe\" class=\"small\" style=\"font-weight:700\">— choisir un équipage ci-dessous puis « Voir les réponses » (Palier 3) pour voir le hash résolu —</span></p>'
-    +   '</details>'
-    +   '<details open style=\"margin:8px 0;padding:8px;border:1px solid #dfe8ee;border-radius:8px;background:#fbfdff\">'
-    +     '<summary style=\"cursor:pointer;font-weight:800\">Palier 2 — Mots croisés · 11 mots (grille commune)</summary>'
-    +     '<p class=\"small\" style=\"margin:6px 0\">Grille unique (<code>1721310619.html</code>) — tous les équipages cherchent les mêmes 11 mots. Secteur = rayon/caisse/stock/sav.</p>'
-    +     '<div style=\"max-height:260px;overflow:auto;border:1px solid #eef3f7;border-radius:6px\">'
-    +       '<table class=\"adm-af-table\" style=\"width:100%\"><thead><tr><th>#</th><th>Réponse attendue</th><th>Secteur</th><th>Définition affichée aux matelots</th></tr></thead><tbody>'+p2Rows+'</tbody></table>'
-    +     '</div>'
-    +   '</details>'
-    +   '<details style=\"margin:8px 0;padding:8px;border:1px solid #dfe8ee;border-radius:8px;background:#fbfdff\">'
-    +     '<summary style=\"cursor:pointer;font-weight:800\">Palier 3 — Artefact (4 étapes) — réponses par cartouche</summary>'
-    +     '<p class=\"small\" style=\"margin:6px 0\">4 étapes : hublot/EAN, couverture/premier mot, signature, chambre forte. La cartouche est tirée au sort parmi le catalogue du <b>magasin</b> choisi — voir « Sessions en cours » et « Cartouches » ci-dessous.</p>'
-    +   '</details>'
+    + '<div class="adm-af-sec" id="afEquipesSec">'
+    +   '<h4 style="margin:0 0 6px;font-size:13px">Bonnes réponses — par équipe</h4>'
+    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Glisser horizontalement sur mobile · P1 1 mot/équipe · P2 11 mots · P3 livre+EAN (après déverrouillage).</p>'
+    +   '<div id="afTeamCards" class="adm-af-cards">'
+    +     EQUIPES.map(function(eq){
+            return '<div class="adm-af-teamcard" data-team="'+eq+'">'
+              + '<div class="adm-af-teamhead"><span>'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#6e7a84">…</span></div>'
+              + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eq+'">—</span><span class="small" style="color:#6e7a84">morse</span></div>'
+              + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips">'+p2chips+'</div></div>'
+              + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">— choisir équipe ci-dessous</span></div>'
+              + '</div>';
+          }).join('')
+    +   '</div>'
     + '</div>';
+  }
+  function majCartesEquipes(){
+    EQUIPES.forEach(function(eq){
+      lireTeamDoc(eq).then(function(doc){
+        var pill=$('afTeamPill-'+eq); var p1=$('afP1-'+eq);
+        if(!doc){ if(pill) pill.textContent='—'; if(p1) p1.textContent='—'; return; }
+        var d=doc.data? doc.data() : doc;
+        // Firestore via S().stockage returns { _id, ...fields } or direct fields
+        var payload = d || doc;
+        var h = payload.morseWordHash!=null ? payload.morseWordHash : (payload.data && payload.data.morseWordHash);
+        // fallback: payload may be directly the doc data
+        if(h==null && payload.morseWordHash!=null) h=payload.morseWordHash;
+        var mot = motDeHash(h) || (payload.morseWord || '');
+        if(p1) p1.textContent = mot || '—';
+        if(pill){
+          var members = payload.members ? payload.members.length : (payload.data && payload.data.members ? payload.data.members.length : 0);
+          pill.textContent = members ? members+' matelots' : 'vide';
+        }
+      }).catch(function(){});
+    });
+    // P3: si session déverrouillée, majCartesP3 sera appelée depuis voirReponses
+  }
+  function majCarteP3(equipe, secret){
+    var el=$('afP3-'+equipe);
+    if(!el) return;
+    if(!secret || !secret.reponses){ el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>'; return; }
+    var r=secret.reponses; var lv=secret.livre||{};
+    el.innerHTML='<span class="adm-af-lbl">P3</span><span class="adm-af-chip adm-af-chip--hl" title="'+esc(lv.titre||'')+'">'+esc(lv.titre||'?')+'</span> <span class="adm-af-ean">'+esc(r.ean||'')+'</span>';
   }
 
   function HTML_REP() {
     return ''
-    + '<p class="small" style="margin-bottom:10px">Affiche les <b>bonnes réponses attendues</b> pour les mini-jeux du Palier 3 (4 étapes : hublot/EAN, couverture/premier mot, signature, chambre forte). Accès réservé — phrase d’administration requise. Les réponses ne sont jamais stockées en clair.</p>'
-    + '<!-- Affiche les **bonnes réponses attendues** pour les mini-jeux -->'
+    + '<p class="small" style="margin-bottom:8px;color:#6e7a84">Bonnes réponses · P1/P2/P3 — accès réservé, phrase admin requise.</p>'
     + htmlToutesReponses()
     + '<div class="adm-af-sec">'
-    +   '<h4>🔑 Déverrouiller les réponses</h4>'
+    +   '<h4>🔑 Phrase d’administration</h4>'
     +   '<div class="adm-af-ligne">'
-    +     '<input id="afRepPhrase" class="adm-af-input" type="password" placeholder="Phrase d’administration (8+ caractères)" style="flex:1;min-width:220px" autocomplete="off">'
-    +     '<button id="afRepUnlock" class="primary" type="button">🔓 Déverrouiller</button>'
-    +     '<button id="afRepLock" class="secondary" type="button">🔒 Verrouiller</button>'
+    +     '<input id="afRepPhrase" class="adm-af-input" type="password" placeholder="Phrase (8+ caractères)" style="flex:1;min-width:180px" autocomplete="off">'
+    +     '<button id="afRepUnlock" class="primary" type="button">🔓</button>'
+    +     '<button id="afRepLock" class="secondary" type="button">🔒</button>'
     +   '</div>'
     +   '<p class="adm-af-note" id="afRepPhraseMsg"></p>'
-    +   '<p class="adm-af-note" style="margin-top:4px">La phrase n’est jamais écrite dans localStorage ; elle est effacée en quittant la page.</p>'
     + '</div>'
     + '<div class="adm-af-sec">'
-    +   '<h4>🔑 Réponses — marquer et voir</h4>'
-    +   '<p class="small">Marquer et voir les 🔑 Réponses</p>'
-    +   '<h4>📜 Sessions en cours — réponses attendues</h4>'
+    +   '<h4>📜 Session — réponses P3</h4>'
     +   '<div class="adm-af-ligne">'
-    +     '<button id="afRepRefresh" class="secondary" type="button">↻ Lister les équipages</button>'
-    +     '<select id="afRepEquipe" class="adm-af-select" style="flex:1;min-width:180px"><option value="">— choisir un équipage —</option></select>'
-    +     '<button id="afRepVoir" class="primary" type="button">👁️ Voir les réponses</button>'
+    +     '<button id="afRepRefresh" class="secondary" type="button">↻</button>'
+    +     '<select id="afRepEquipe" class="adm-af-select" style="flex:1;min-width:160px"><option value="">— équipage —</option></select>'
+    +     '<button id="afRepVoir" class="primary" type="button">👁️ Voir</button>'
     +   '</div>'
-    +   '<p class="adm-af-note" id="afRepEtat">Verrouille d’abord avec la phrase d’administration.</p>'
+    +   '<p class="adm-af-note" id="afRepEtat"></p>'
     +   '<div id="afRepBox" style="margin-top:8px"></div>'
     + '</div>'
     + '<div class="adm-af-sec">'
-    +   '<h4>📦 Cartouches — aperçu hors session</h4>'
-    +   '<p class="adm-af-note">Liste les cartouches générées pour un magasin (publiques : empreintes ; réponses en clair uniquement via coffre déchiffré).</p>'
+    +   '<h4>📦 Cartouches (hors session)</h4>'
     +   '<div class="adm-af-ligne">'
-    +     '<input id="afRepMagasin" class="adm-af-input" placeholder="magasinId — ex. cl57" style="max-width:140px">'
-    +     '<button id="afRepCartouches" class="secondary" type="button">📋 Lister les cartouches</button>'
+    +     '<input id="afRepMagasin" class="adm-af-input" placeholder="magasinId ex. cl57" style="max-width:120px">'
+    +     '<button id="afRepCartouches" class="secondary" type="button">📋 Lister</button>'
     +   '</div>'
     +   '<div id="afRepCartBox" style="margin-top:8px"></div>'
     + '</div>'
     + '<div class="adm-af-sec" id="afNotesSec">'
-    +   '<h4>Notes Mots recherches - par equipage</h4>'
-    +   '<p class="small">Notes manuelles du capitaine pour suivre ce que chaque equipage <b>cherche en rayon</b> (sauvegardees sur cet appareil).</p>'
+    +   '<h4>Notes — mots recherchés</h4>'
     +   '<div class="adm-af-ligne">'
-    +     '<select id="afNotesEquipe" class="adm-af-select" style="min-width:140px"><option value="">- equipe -</option><option value="NEMO">NEMO</option><option value="NAUTILUS">NAUTILUS</option><option value="ARONNAX">ARONNAX</option><option value="NEDLAND">NEDLAND</option></select>'
+    +     '<select id="afNotesEquipe" class="adm-af-select" style="min-width:120px"><option value="">- équipe -</option><option value="NEMO">NEMO</option><option value="NAUTILUS">NAUTILUS</option><option value="ARONNAX">ARONNAX</option><option value="NEDLAND">NEDLAND</option></select>'
     +     '<button id="afNotesCharger" class="secondary" type="button">Charger</button>'
     +     '<button id="afNotesSauver" class="primary" type="button">Enregistrer</button>'
-    +     '<button id="afNotesExporter" class="secondary" type="button">Exporter JSON</button>'
+    +     '<button id="afNotesExporter" class="secondary" type="button">JSON</button>'
     +   '</div>'
-    +   '<textarea id="afNotesTexte" class="adm-af-input" rows="4" style="width:100%;margin-top:8px" placeholder="Ex. P1=BALEINES P2=STEELBOOK P3 Atlas EAN"></textarea>'
+    +   '<textarea id="afNotesTexte" class="adm-af-input" rows="3" style="width:100%;margin-top:8px" placeholder="Ex. P3 Atlas EAN"></textarea>'
     +   '<p class="small" id="afNotesMsg" style="margin-top:4px"></p>'
     +   '<div id="afNotesListe" style="margin-top:8px"></div>'
     + '</div>';
@@ -274,7 +293,7 @@
       p.style.display = (p.dataset.pane === target ? '' : 'none');
     });
     if (target === ONGLET_MAG) charger(false);
-    if (target === ONGLET_REP) refreshEquipes();
+    if (target === ONGLET_REP) { try{ majCartesEquipes(); }catch(e){} refreshEquipes(); }
   }
 
   function brancher() {
@@ -576,56 +595,38 @@
 
   function rendreReponses(box, equipe, sess, cart, secret, errDec){
     var eta = cart.etapes || [];
-    var hist = (sess.historique||[]).slice(-10).map(function(h){ var t=esc(h.texte||h.type||''); if(h.essai) t+=' <code style="background:#fff3cd;padding:1px 4px;border-radius:4px">'+esc(h.essai)+'</code>'; return '<li><span class="small" style="color:#6e7a84">'+esc((h.le||'').slice(11,16)||'')+'</span> — '+t+' <span class="small" style="color:#888">['+esc(h.type||'')+']</span></li>'; }).join('');
     var html = ''
-    + '<div style="border:1px solid #dfe8ee;border-radius:8px;padding:10px;background:#fbfdff;margin-bottom:8px">'
-    +   '<b>Équipage '+esc(equipe)+'</b> — magasin <code>'+esc(sess.magasinId||'?')+'</code> — session <b>'+esc(sess.statut||'?')+'</b><br>'
-    +   '<span class="small">Cartouche <code>'+esc(cart.id||'')+'</code> · famille <code>'+esc(cart.famille||'')+'</code> · générée le '+esc(cart.genereLe||'')+'</span><br>'
-    +   '<span class="small">Progression : '+(sess.etapesValidees||[]).length+'/'+eta.length+' validées · erreurs '+esc(String(sess.erreurs||0))+'</span>'
+    + '<div style="border:1px solid #dfe8ee;border-radius:8px;padding:8px;background:#fbfdff;margin-bottom:8px">'
+    +   '<b>'+esc(equipe)+'</b> <span class="small">'+esc(sess.magasinId||'?')+' · '+esc(sess.statut||'?')+' · '+(sess.etapesValidees||[]).length+'/'+eta.length+' · '+esc(String(sess.erreurs||0))+' err</span>'
+    +   '<br><span class="small">'+esc(cart.id||'')+' · '+esc(cart.famille||'')+'</span>'
     + '</div>';
-
     if (secret && secret.reponses) {
-      var r = secret.reponses;
-      var livre = secret.livre || {};
-      // En-tête livre ultra-visible : nom + EAN demandés par le capitaine
-      html += '<div style="border:2px solid #0b6b4a;border-radius:10px;padding:12px;background:#eefaf4;margin-bottom:10px">'
-        +   '<div style="font-weight:900;font-size:14px;color:#0b4a3a;letter-spacing:.02em">📖 Livre du Palier 3 — nom & EAN à chercher en rayon</div>'
-        +   '<div style="font-size:16px;margin:8px 0 6px 0"><b>'+esc(livre.titre||'?')+'</b> — '+esc(livre.auteur||'—')+' <span class="small">('+esc(livre.editeur||'')+')</span></div>'
-        +   '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">'
-        +     '<span style="font-family:monospace;font-size:15px;background:#fff;border:1px solid #bfe7d2;border-radius:6px;padding:6px 10px">EAN : <b>'+esc(r.ean||'?')+'</b></span>'
-        +     '<button type="button" class="secondary adm-af-mini" data-copy-ean="'+esc(r.ean||'')+'" style="padding:6px 10px">📋 Copier l’EAN</button>'
-        +     '<span class="small" style="align-self:center">SKU '+esc(livre.sku||'—')+' · '+(livre.edition? esc(livre.edition)+' · ' : '')+esc(livre.annee||'')+'</span>'
+      var r = secret.reponses; var livre = secret.livre || {};
+      try{ majCarteP3(equipe, secret); }catch(e){}
+      html += '<div style="border:1px solid #bfe7d2;border-radius:8px;padding:8px;background:#eefaf4;margin-bottom:8px">'
+        +   '<div style="font-weight:800;font-size:13px;color:#0b4a3a">📖 '+esc(livre.titre||'?')+' <span class="small" style="font-weight:400">— '+esc(livre.auteur||'')+'</span></div>'
+        +   '<div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap">'
+        +     '<span class="adm-af-ean">'+esc(r.ean||'?')+'</span>'
+        +     '<button type="button" class="secondary adm-af-mini" data-copy-ean="'+esc(r.ean||'')+'" style="padding:4px 8px">📋</button>'
+        +     '<span class="small">'+esc(livre.editeur||'')+'</span>'
         +   '</div>'
-        +   '<p class="small" style="margin:6px 0 0 0;color:#2a6b4a">À dicter aux équipages : titre exact + EAN 13 chiffres. Le code-barres doit être scanné au hublot.</p>'
         + '</div>';
-      html += '<table class="adm-af-table"><thead><tr><th>Étape</th><th>Bonne réponse attendue</th></tr></thead><tbody>'
-        + '<tr><td><b>1. Hublot</b><br><span class="small">scan EAN</span></td><td><code>'+esc(r.ean||'?')+'</code><br><span class="small">'+esc((secret.livre&&secret.livre.titre)||'')+'</span></td></tr>'
-        + '<tr><td><b>2. Couverture</b><br><span class="small">premier mot significatif</span></td><td><b>'+esc(r.premierMot||'?')+'</b></td></tr>'
-        + '<tr><td><b>3. Signature</b><br><span class="small">règle '+esc(secret.regle||'')+' — '+esc((secret.regle && M() && M().regleParId? (M().regleParId(secret.regle)||{}).nom : '')||'')+'</span></td><td><code>'+esc(r.signature||'?')+'</code></td></tr>'
-        + '<tr><td><b>4. Chambre forte</b><br><span class="small">ordre '+esc(secret.ordre||'')+'</span></td><td><code>'+esc(r.codeFinal||'?')+'</code></td></tr>'
-        + '</tbody></table>'
-        + '<p class="adm-af-note" style="color:#9b1111">⚠️ Ne JAMAIS déposer ce fichier dans le dépôt (<code>data/*.local.json</code> est ignoré). Exporter uniquement via <code>nautilus-safe/</code>.</p>';
+      html += '<table class="adm-af-table"><thead><tr><th>#</th><th>Réponse</th></tr></thead><tbody>'
+        + '<tr><td class="small">1 Hublot</td><td><span class="adm-af-ean">'+esc(r.ean||'?')+'</span></td></tr>'
+        + '<tr><td class="small">2 Couv.</td><td><b>'+esc(r.premierMot||'?')+'</b></td></tr>'
+        + '<tr><td class="small">3 Sign.</td><td><code>'+esc(r.signature||'?')+'</code></td></tr>'
+        + '<tr><td class="small">4 Fort</td><td><code>'+esc(r.codeFinal||'?')+'</code></td></tr>'
+        + '</tbody></table>';
     } else {
-      html += '<p class="adm-af-note" style="color:#9b1111">🔒 Coffre non déchiffré'+(errDec? ' : '+esc(errDec):'')+' — vérifie la phrase d’administration.</p>'
-        + '<p class="adm-af-note">Indices publics de la cartouche :</p>'
-        + '<p class="adm-af-note" style="white-space:pre-wrap;background:#fff;border:1px solid #eef3f7;border-radius:6px;padding:8px">'+esc(cart.indice||'')+'</p>';
-      if (eta.length) {
-        html += '<table class="adm-af-table"><thead><tr><th>Étape</th><th>Consigne / empreintes (hachées)</th></tr></thead><tbody>'
-          + eta.map(function(e){ return '<tr><td><b>'+esc(e.id)+'</b><br><span class="small">'+esc(e.libelle||'')+'</span></td><td><span class="small" style="word-break:break-all">'+esc((e.empreintes||[]).slice(0,1).join('').slice(0,18)+'…')+'</span></td></tr>'; }).join('')
-          + '</tbody></table>';
-      }
+      html += '<p class="adm-af-note" style="color:#9b1111">🔒 '+esc(errDec||'coffre verrouillé')+'</p>';
+      if(cart.indice) html+='<p class="small" style="white-space:pre-wrap;word-break:break-word">'+esc(cart.indice)+'</p>';
     }
-    if (hist) html += '<p class="adm-af-note"><b>Historique</b> (remplacements, indices) :</p><ul class="adm-af-hist">'+hist+'</ul>';
-    // Actions admin rapides
-    html += '<div class="adm-af-ligne" style="margin-top:10px">'
-      + '<button class="secondary adm-af-mini" id="afRepTransmettre" type="button">📤 Transmettre indice en attente</button>'
-      + '<button class="secondary adm-af-mini" id="afRepIndispo" type="button">🚫 Marquer cartouche indisponible</button>'
-      + '<button class="danger adm-af-mini" id="afRepReset" type="button">🔄 Réinitialiser la session</button>'
+    html += '<div class="adm-af-ligne" style="margin-top:8px">'
+      + '<button class="secondary adm-af-mini" id="afRepTransmettre" type="button">📤 Indice</button>'
+      + '<button class="secondary adm-af-mini" id="afRepIndispo" type="button">🚫 Indispo.</button>'
+      + '<button class="danger adm-af-mini" id="afRepReset" type="button">🔄 Reset</button>'
       + '</div><p class="adm-af-note" id="afRepActionMsg"></p>';
-
     box.innerHTML = html;
-
-    // branche les actions
     var bT = $('afRepTransmettre'); if(bT) bT.addEventListener('click', function(){ transmettreIndice(equipe, sess); });
     var bI = $('afRepIndispo'); if(bI) bI.addEventListener('click', function(){ marquerIndisponible(equipe, sess); });
     var bR = $('afRepReset'); if(bR) bR.addEventListener('click', function(){ resetSession(equipe); });
