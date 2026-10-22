@@ -21,6 +21,13 @@
   var _liste = null;
   var _filtre = '';
   var _phrase = '';
+  function ensureTabsCss(){
+    if(document.getElementById('nautilusAdminTabsFix')) return;
+    var st=document.createElement('style');
+    st.id='nautilusAdminTabsFix';
+    st.textContent='.admin-tabs{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}.admin-tabs::-webkit-scrollbar{display:none}.admin-tab{flex:0 0 auto;white-space:nowrap;min-width:36px;justify-content:center}.admin-pane{min-width:0;overflow-wrap:anywhere;max-width:100%}#adminPanel .body{overflow-x:hidden}';
+    (document.head||document.documentElement).appendChild(st);
+  }
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -205,6 +212,7 @@
   }
 
   function injecter() {
+    ensureTabsCss();
     if (_monte) return;
     var workspace = $('adminWorkspace');
     if (!workspace) return;
@@ -667,10 +675,14 @@
   }
 
   function observer(){
+    ensureTabsCss();
     if ($('adminWorkspace')) { injecter(); return; }
     var mo = new MutationObserver(function(){ if($('adminWorkspace')){ injecter(); if(_monte) mo.disconnect(); }});
-    mo.observe(document.body||document.documentElement,{childList:true,subtree:true});
-    setTimeout(injecter,1200); setTimeout(injecter,3500);
+    try{ mo.observe(document.body||document.documentElement,{childList:true,subtree:true}); }catch(e){}
+    // Polling fallback for iOS Safari where MutationObserver may miss injected admin panel
+    var tries=0; var iv=setInterval(function(){ tries++; if($('adminWorkspace')){ injecter(); clearInterval(iv); } if(tries>15) clearInterval(iv); },800);
+    setTimeout(injecter,800); setTimeout(injecter,2000); setTimeout(injecter,3500);
+    window.addEventListener('load', function(){ setTimeout(injecter,300); });
   }
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', observer); else observer();
 
