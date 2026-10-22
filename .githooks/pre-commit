@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+# On se place à la racine du dépôt quel que soit le cwd
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "$(dirname "$0")/../..")"
+cd "$REPO_ROOT"
+if [ -x tools/stamp-commit.sh ]; then
+  bash tools/stamp-commit.sh
+  git add index.html ecoutille.js 2>/dev/null || true
+else
+  STAMP=$(TZ="Europe/Paris" date +"%H%M%S")
+  if grep -q 'class="ec-version"' index.html; then
+    perl -i -pe "s|<span class=\"ec-version\">.*?</span>|<span class=\"ec-version\">COMMIT $STAMP</span>|g" index.html
+  fi
+  perl -i -pe "s|« COMMIT [0-9]+ »|« COMMIT $STAMP »|g; s|« garde v[0-9]+ »|« COMMIT $STAMP »|g; s|COMMIT [0-9]{6}|COMMIT $STAMP|g; s|garde v[0-9]+|COMMIT $STAMP|gi" index.html || true
+  perl -i -pe "s|« COMMIT [0-9]+ »|« COMMIT $STAMP »|g; s|« garde v[0-9]+ »|« COMMIT $STAMP »|g; s|COMMIT [0-9]{6}|COMMIT $STAMP|g; s|garde v[0-9]+|COMMIT $STAMP|gi" ecoutille.js || true
+  git add index.html ecoutille.js 2>/dev/null || true
+fi
