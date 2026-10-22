@@ -25,8 +25,8 @@
     var st=document.createElement('style');
     st.id='nautilusAdminTabsFix';
     st.textContent='.admin-tabs{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}.admin-tabs::-webkit-scrollbar{display:none}.admin-tab{flex:0 0 auto;white-space:nowrap;min-width:36px;justify-content:center}.admin-pane{min-width:0;overflow-wrap:anywhere;max-width:100%}#adminPanel .body{overflow-x:hidden}'
-      + '.adm-af-cards{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;padding:6px 2px 8px;scrollbar-width:none}.adm-af-cards::-webkit-scrollbar{display:none}'
-      + '.adm-af-teamcard{flex:0 0 86vw;max-width:340px;min-width:260px;scroll-snap-align:start;background:#fff;border:1px solid #dfe8ee;border-radius:12px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}'
+      + '.adm-af-cards{display:flex;flex-direction:column;gap:12px;padding:6px 2px 8px;overflow:visible}'
+      + '.adm-af-teamcard{flex:0 0 auto;width:100%;max-width:none;min-width:0;background:#fff;border:1px solid #dfe8ee;border-radius:12px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}'
       + '.adm-af-teamhead{font-weight:900;font-size:13px;letter-spacing:.04em;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}'
       + '.adm-af-row{display:flex;align-items:center;gap:6px;margin:6px 0;min-width:0}'
       + '.adm-af-lbl{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:#eef2f6;color:#33414d;border-radius:999px;padding:3px 8px;flex:0 0 auto}'
@@ -34,7 +34,7 @@
       + '.adm-af-chip--hl{background:linear-gradient(135deg,#e8fff4,#f0faf6);border-color:#bfe7d2;color:#0b4a3a}'
       + '.adm-af-chips{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;padding-bottom:2px}.adm-af-chips::-webkit-scrollbar{display:none}'
       + '.adm-af-ean{font-family:Consolas,monospace;font-size:12px;background:#0b1a2e;color:#c8f0d8;border-radius:6px;padding:3px 6px;letter-spacing:.02em}'
-      + '@media(min-width:720px){.adm-af-teamcard{flex:0 0 320px}.adm-af-cards{flex-wrap:wrap;overflow:visible;scroll-snap-type:none}}';
+      + '@media(min-width:720px){.adm-af-cards{gap:14px}.adm-af-teamcard{padding:12px}}';
     (document.head||document.documentElement).appendChild(st);
   }
 
@@ -143,14 +143,14 @@
     return ''
     + '<div class="adm-af-sec" id="afEquipesSec">'
     +   '<h4 style="margin:0 0 6px;font-size:13px">Bonnes réponses — par équipe</h4>'
-    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Glisser horizontalement sur mobile · P1 1 mot/équipe · P2 11 mots · P3 livre+EAN (après déverrouillage).</p>'
+    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Cartes empilées verticalement · P1 1 mot/équipe · P2 11 mots · P3 livre+EAN automatique par équipe.</p>'
     +   '<div id="afTeamCards" class="adm-af-cards">'
     +     EQUIPES.map(function(eq){
             return '<div class="adm-af-teamcard" data-team="'+eq+'">'
               + '<div class="adm-af-teamhead"><span>'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#6e7a84">…</span></div>'
               + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eq+'">—</span><span class="small" style="color:#6e7a84">morse</span></div>'
               + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips">'+p2chips+'</div></div>'
-              + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">— choisir équipe ci-dessous</span></div>'
+              + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>'
               + '</div>';
           }).join('')
     +   '</div>'
@@ -162,10 +162,8 @@
         var pill=$('afTeamPill-'+eq); var p1=$('afP1-'+eq);
         if(!doc){ if(pill) pill.textContent='—'; if(p1) p1.textContent='—'; return; }
         var d=doc.data? doc.data() : doc;
-        // Firestore via S().stockage returns { _id, ...fields } or direct fields
         var payload = d || doc;
         var h = payload.morseWordHash!=null ? payload.morseWordHash : (payload.data && payload.data.morseWordHash);
-        // fallback: payload may be directly the doc data
         if(h==null && payload.morseWordHash!=null) h=payload.morseWordHash;
         var mot = motDeHash(h) || (payload.morseWord || '');
         if(p1) p1.textContent = mot || '—';
@@ -174,51 +172,49 @@
           pill.textContent = members ? members+' matelots' : 'vide';
         }
       }).catch(function(){});
+      majCarteP3Auto(eq);
     });
-    // P3: si session déverrouillée, majCartesP3 sera appelée depuis voirReponses
+  }
+  function majCarteP3Auto(equipe){
+    var el=$('afP3-'+equipe);
+    if(!el) return;
+    el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span>';
+    if(!S() || !S().lireSession || !S().lireCoffre){
+      el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>';
+      return;
+    }
+    S().lireSession(equipe).then(function(sess){
+      if(!sess || !sess.cartoucheId){
+        el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">— pas de session</span>';
+        return;
+      }
+      var cid = sess.cartoucheId;
+      return S().lireCoffre(cid, null).then(function(secret){
+        majCarteP3(equipe, secret);
+      }).catch(function(){
+        var cart = sess.cartouche;
+        if(cart && cart.id){
+          el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cart.id).slice(0,10))+'… (coffre indisponible)</span>';
+        }else{
+          el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>';
+        }
+      });
+    }).catch(function(){
+      el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>';
+    });
   }
   function majCarteP3(equipe, secret){
     var el=$('afP3-'+equipe);
     if(!el) return;
     if(!secret || !secret.reponses){ el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>'; return; }
     var r=secret.reponses; var lv=secret.livre||{};
-    el.innerHTML='<span class="adm-af-lbl">P3</span><span class="adm-af-chip adm-af-chip--hl" title="'+esc(lv.titre||'')+'">'+esc(lv.titre||'?')+'</span> <span class="adm-af-ean">'+esc(r.ean||'')+'</span>';
+    el.innerHTML='<span class="adm-af-lbl">P3</span><span class="adm-af-chip adm-af-chip--hl" title="'+esc(lv.titre||'')+'">'+esc(lv.titre||'?')+'</span> <span class="adm-af-ean">'+esc(r.ean||'')+'</span> <span class="small" style="color:#6e7a84">'+esc(lv.auteur||'')+'</span>';
   }
 
   function HTML_REP() {
     return ''
-    + '<p class="small" style="margin-bottom:8px;color:#6e7a84">Bonnes réponses · P1/P2/P3 — lecture directe Fnac.</p>'
-    + htmlToutesReponses()
-    + '<div class="adm-af-sec">'
-    +   '<h4>📜 Session — réponses P3</h4>'
-    +   '<div class="adm-af-ligne">'
-    +     '<button id="afRepRefresh" class="secondary" type="button">↻</button>'
-    +     '<select id="afRepEquipe" class="adm-af-select" style="flex:1;min-width:160px"><option value="">— équipage —</option></select>'
-    +     '<button id="afRepVoir" class="primary" type="button">👁️ Voir</button>'
-    +   '</div>'
-    +   '<p class="adm-af-note" id="afRepEtat"></p>'
-    +   '<div id="afRepBox" style="margin-top:8px"></div>'
-    + '</div>'
-    + '<div class="adm-af-sec">'
-    +   '<h4>📦 Cartouches (hors session)</h4>'
-    +   '<div class="adm-af-ligne">'
-    +     '<input id="afRepMagasin" class="adm-af-input" placeholder="magasinId ex. cl57" style="max-width:120px">'
-    +     '<button id="afRepCartouches" class="secondary" type="button">📋 Lister</button>'
-    +   '</div>'
-    +   '<div id="afRepCartBox" style="margin-top:8px"></div>'
-    + '</div>'
-    + '<div class="adm-af-sec" id="afNotesSec">'
-    +   '<h4>Notes — mots recherchés</h4>'
-    +   '<div class="adm-af-ligne">'
-    +     '<select id="afNotesEquipe" class="adm-af-select" style="min-width:120px"><option value="">- équipe -</option><option value="NEMO">NEMO</option><option value="NAUTILUS">NAUTILUS</option><option value="ARONNAX">ARONNAX</option><option value="NEDLAND">NEDLAND</option></select>'
-    +     '<button id="afNotesCharger" class="secondary" type="button">Charger</button>'
-    +     '<button id="afNotesSauver" class="primary" type="button">Enregistrer</button>'
-    +     '<button id="afNotesExporter" class="secondary" type="button">JSON</button>'
-    +   '</div>'
-    +   '<textarea id="afNotesTexte" class="adm-af-input" rows="3" style="width:100%;margin-top:8px" placeholder="Ex. P3 Atlas EAN"></textarea>'
-    +   '<p class="small" id="afNotesMsg" style="margin-top:4px"></p>'
-    +   '<div id="afNotesListe" style="margin-top:8px"></div>'
-    + '</div>';
+    + '<p class="small" style="margin-bottom:8px;color:#6e7a84">Bonnes réponses · P1/P2/P3 — lecture directe Fnac. Le livre du palier 3 est celui tiré automatiquement à l’ouverture du palier pour chaque équipe.</p>'
+    + htmlToutesReponses();
   }
 
   function injecter() {
@@ -284,7 +280,7 @@
       p.style.display = (p.dataset.pane === target ? '' : 'none');
     });
     if (target === ONGLET_MAG) charger(false);
-    if (target === ONGLET_REP) { try{ majCartesEquipes(); }catch(e){} refreshEquipes(); }
+    if (target === ONGLET_REP) { try{ majCartesEquipes(); }catch(e){} }
   }
 
   function brancher() {
@@ -302,72 +298,8 @@
     var a = $('afMagAjouter'); if (a) a.addEventListener('click', ajouterOuMaj);
     var cl = $('afMagVider'); if (cl) cl.addEventListener('click', viderForm);
 
-    // --- Réponses (sans phrase — lecture directe)
-    var rf = $('afRepRefresh'); if (rf) rf.addEventListener('click', refreshEquipes);
-    var vr = $('afRepVoir'); if (vr) vr.addEventListener('click', voirReponses);
-    var lc = $('afRepCartouches'); if (lc) lc.addEventListener('click', listerCartouches);
-    // --- Notes mots recherches
-    var nc = $('afNotesCharger'); if (nc) nc.addEventListener('click', notesCharger);
-    var ns = $('afNotesSauver'); if (ns) ns.addEventListener('click', notesSauver);
-    var ne = $('afNotesExporter'); if (ne) ne.addEventListener('click', notesExporter);
-    // copie EAN deleguee (bouton dans renduReponses)
-    document.addEventListener('click', function(ev){
-      var t=ev.target;
-      if(t && t.getAttribute && t.getAttribute('data-copy-ean')){
-        var v=t.getAttribute('data-copy-ean');
-        if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function(){ dire('afRepEtat','EAN copie : '+v,'ok'); }).catch(function(){ prompt('EAN a copier :', v); });
-        else prompt('EAN a copier :', v);
-      }
-    });
-    // init liste notes
-    try{ notesRendreListe(); }catch(e){}
-  }
-
-  // ===================== NOTES Mots recherches =====================
-  var NOTES_CLE = 'nautilusNotesMotsRecherches';
-  function notesLireTout(){
-    try{ var j=JSON.parse(localStorage.getItem(NOTES_CLE)||'{}'); return (j && typeof j==='object')? j : {}; }catch(e){ return {}; }
-  }
-  function notesEcrireTout(o){
-    try{ localStorage.setItem(NOTES_CLE, JSON.stringify(o)); return true; }catch(e){ return false; }
-  }
-  function notesCharger(){
-    var eq=($('afNotesEquipe').value||'').trim();
-    if(!eq){ dire('afNotesMsg','Choisis une equipe.','warn'); return; }
-    var tout=notesLireTout();
-    var txt=tout[eq]||'';
-    var ta=$('afNotesTexte'); if(ta) ta.value=txt;
-    dire('afNotesMsg', txt? 'Charge : '+eq : 'Aucune note pour '+eq+'.','');
-    notesRendreListe();
-  }
-  function notesSauver(){
-    var eq=($('afNotesEquipe').value||'').trim();
-    if(!eq){ dire('afNotesMsg','Choisis une equipe.','warn'); return; }
-    var txt=($('afNotesTexte').value||'');
-    var tout=notesLireTout();
-    if(txt) tout[eq]=txt; else delete tout[eq];
-    notesEcrireTout(tout);
-    dire('afNotesMsg','Enregistre pour '+eq+'.','ok');
-    notesRendreListe();
-  }
-  function notesExporter(){
-    var tout=notesLireTout();
-    if(!Object.keys(tout).length){ dire('afNotesMsg','Aucune note a exporter.','warn'); return; }
-    var blob=new Blob([JSON.stringify(tout,null,2)],{type:'application/json'});
-    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download='mots-recherches-notes-'+new Date().toISOString().slice(0,10)+'.json';
-    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1200);
-    dire('afNotesMsg','Export telecharge.','ok');
-  }
-  function notesRendreListe(){
-    var el=$('afNotesListe'); if(!el) return;
-    var tout=notesLireTout();
-    var keys=Object.keys(tout);
-    if(!keys.length){ el.innerHTML='<p class="small" style="color:#6e7a84">Aucune note enregistree sur cet appareil.</p>'; return; }
-    var html='<table class="adm-af-table" style="width:100%"><thead><tr><th>Equipe</th><th>Note</th></tr></thead><tbody>'
-      + keys.sort().map(function(k){ return '<tr><td><b>'+esc(k)+'</b></td><td class="small" style="white-space:pre-wrap">'+esc(tout[k])+'</td></tr>'; }).join('')
-      + '</tbody></table>';
-    el.innerHTML=html;
+    // --- Réponses : cartes auto (aucun bouton manuel) — le livre est lu depuis la session de chaque équipe
+    // Pas de copie EAN manuelle : l’EAN est visible dans la carte P3 de chaque équipe
   }
 
   // ===================== MAGASINS =====================
@@ -506,143 +438,6 @@
     majLast(); rendreMag();
   }
 
-  // ===================== RÉPONSES (sans phrase) =====================
-  // Phrase supprimée — lecture directe (voir fnac-lecteur.js côté admin)
-
-  function refreshEquipes(){
-    var sel = $('afRepEquipe');
-    if (!sel) return;
-    if (!S() || !S().stockage) { dire('afRepEtat','Service artefact non chargé.','warn'); return; }
-    dire('afRepEtat','⏳ Chargement des équipages…','');
-    // On liste via Firestore si dispo, sinon via Teams connus
-    var equipesConnues = ['NEMO','NAUTILUS','ARONNAX','NEDLAND'];
-    try {
-      var raw = localStorage.getItem('nautilusTeamsList');
-      if (raw) { var j=JSON.parse(raw); if(Array.isArray(j) && j.length) equipesConnues=j; }
-    } catch(e){}
-    // Essaie de lire les sessions directement
-    var p = S().stockage().lister(S().CHEMINS.sessions).then(function(docs){
-      var codes = docs.map(function(d){ return d._id || d.equipe; }).filter(Boolean);
-      if (!codes.length) codes = equipesConnues;
-      sel.innerHTML = '<option value="">— choisir —</option>' + codes.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
-      dire('afRepEtat','✅ ' + codes.length + ' session(s) trouvée(s). Choisis un équipage puis « Voir les réponses ».','ok');
-    }).catch(function(e){
-      // fallback : propose les 4 équipes par défaut
-      sel.innerHTML = '<option value="">— choisir —</option>' + equipesConnues.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
-      dire('afRepEtat','ℹ️ Liste des sessions non lisible ('+esc(e.message||e)+') — sélection manuelle proposée.','warn');
-    });
-    return p;
-  }
-
-  function voirReponses(){
-    var eq = ($('afRepEquipe').value||'').trim();
-    if (!eq) { dire('afRepEtat','Choisis un équipage.','warn'); return; }
-    dire('afRepEtat','⏳ Lecture de la session ' + esc(eq) + '…','');
-    var box = $('afRepBox'); if (!box) return;
-    box.innerHTML = '<p class="adm-af-note">Chargement…</p>';
-
-    S().lireSession(eq).then(function(sess){
-      if (!sess || !sess.cartouche) {
-        box.innerHTML = '<p class="adm-af-note" style="color:#9b1111">Aucune session active pour <b>'+esc(eq)+'</b> (statut: '+esc(sess? sess.statut : 'introuvable')+').</p>';
-        dire('afRepEtat','Aucune mission en cours pour '+esc(eq)+'.','warn');
-        return;
-      }
-      var cart = sess.cartouche;
-      var cid = sess.cartoucheId || cart.id;
-      // Essaie de déchiffrer le coffre pour obtenir les réponses en clair
-      S().lireCoffre(cid, null).then(function(secret){
-        rendreReponses(box, eq, sess, cart, secret);
-        dire('afRepEtat','✅ Réponses pour <b>'+esc(eq)+'</b> — cartouche <code>'+esc(cid)+'</code>','ok');
-      }).catch(function(e){
-        // Coffre absent (aperçu sans phrase) : on affiche au moins les empreintes / indices publics
-        rendreReponses(box, eq, sess, cart, null, e && e.message);
-      });
-    }).catch(function(e){
-      box.innerHTML = '<p class="adm-af-note" style="color:#9b1111">❌ '+esc(e.message||e)+'</p>';
-      dire('afRepEtat','❌ Lecture impossible.','danger');
-    });
-  }
-
-  function rendreReponses(box, equipe, sess, cart, secret, errDec){
-    var eta = cart.etapes || [];
-    var html = ''
-    + '<div style="border:1px solid #dfe8ee;border-radius:8px;padding:8px;background:#fbfdff;margin-bottom:8px">'
-    +   '<b>'+esc(equipe)+'</b> <span class="small">'+esc(sess.magasinId||'?')+' · '+esc(sess.statut||'?')+' · '+(sess.etapesValidees||[]).length+'/'+eta.length+' · '+esc(String(sess.erreurs||0))+' err</span>'
-    +   '<br><span class="small">'+esc(cart.id||'')+' · '+esc(cart.famille||'')+'</span>'
-    + '</div>';
-    if (secret && secret.reponses) {
-      var r = secret.reponses; var livre = secret.livre || {};
-      try{ majCarteP3(equipe, secret); }catch(e){}
-      html += '<div style="border:1px solid #bfe7d2;border-radius:8px;padding:8px;background:#eefaf4;margin-bottom:8px">'
-        +   '<div style="font-weight:800;font-size:13px;color:#0b4a3a">📖 '+esc(livre.titre||'?')+' <span class="small" style="font-weight:400">— '+esc(livre.auteur||'')+'</span></div>'
-        +   '<div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap">'
-        +     '<span class="adm-af-ean">'+esc(r.ean||'?')+'</span>'
-        +     '<button type="button" class="secondary adm-af-mini" data-copy-ean="'+esc(r.ean||'')+'" style="padding:4px 8px">📋</button>'
-        +     '<span class="small">'+esc(livre.editeur||'')+'</span>'
-        +   '</div>'
-        + '</div>';
-      html += '<table class="adm-af-table"><thead><tr><th>#</th><th>Réponse</th></tr></thead><tbody>'
-        + '<tr><td class="small">1 Hublot</td><td><span class="adm-af-ean">'+esc(r.ean||'?')+'</span></td></tr>'
-        + '<tr><td class="small">2 Couv.</td><td><b>'+esc(r.premierMot||'?')+'</b></td></tr>'
-        + '<tr><td class="small">3 Sign.</td><td><code>'+esc(r.signature||'?')+'</code></td></tr>'
-        + '<tr><td class="small">4 Fort</td><td><code>'+esc(r.codeFinal||'?')+'</code></td></tr>'
-        + '</tbody></table>';
-    } else {
-      html += '<p class="adm-af-note" style="color:#9b1111">🔒 '+esc(errDec||'coffre verrouillé')+'</p>';
-      if(cart.indice) html+='<p class="small" style="white-space:pre-wrap;word-break:break-word">'+esc(cart.indice)+'</p>';
-    }
-    html += '<div class="adm-af-ligne" style="margin-top:8px">'
-      + '<button class="secondary adm-af-mini" id="afRepTransmettre" type="button">📤 Indice</button>'
-      + '<button class="secondary adm-af-mini" id="afRepIndispo" type="button">🚫 Indispo.</button>'
-      + '<button class="danger adm-af-mini" id="afRepReset" type="button">🔄 Reset</button>'
-      + '</div><p class="adm-af-note" id="afRepActionMsg"></p>';
-    box.innerHTML = html;
-    var bT = $('afRepTransmettre'); if(bT) bT.addEventListener('click', function(){ transmettreIndice(equipe, sess); });
-    var bI = $('afRepIndispo'); if(bI) bI.addEventListener('click', function(){ marquerIndisponible(equipe, sess); });
-    var bR = $('afRepReset'); if(bR) bR.addEventListener('click', function(){ resetSession(equipe); });
-  }
-
-  function transmettreIndice(equipe, sess){
-    var rang = sess && sess.demandeIndice && sess.demandeIndice.rang;
-    if (!rang) { dire('afRepActionMsg','Aucune demande d’indice en attente.','warn'); return; }
-    var texte = prompt('Texte exact de l’indice à transmettre (rang '+rang+') :');
-    if (!texte) return;
-    S().transmettreIndice(equipe, rang, texte).then(function(){ dire('afRepActionMsg','✅ Indice transmis (rang '+rang+').','ok'); voirReponses(); })
-      .catch(function(e){ dire('afRepActionMsg','❌ '+esc(e.message||e),'danger'); });
-  }
-  function marquerIndisponible(equipe, sess){
-    var cid = sess && (sess.cartoucheId || (sess.cartouche&&sess.cartouche.id));
-    if (!cid) { dire('afRepActionMsg','Cartouche inconnue.','warn'); return; }
-    if (!confirm('Marquer la cartouche '+cid+' comme indisponible ? Elle ne sera plus proposée.')) return;
-    S().marquerIndisponible(cid, 'signalé depuis panneau admin — réponses').then(function(){ dire('afRepActionMsg','🚫 Cartouche marquée indisponible.','ok'); })
-      .catch(function(e){ dire('afRepActionMsg','❌ '+esc(e.message||e),'danger'); });
-  }
-  function resetSession(equipe){
-    if (!confirm('Réinitialiser la session de '+equipe+' ? Progression, erreurs et indices effacés.')) return;
-    S().reinitialiser(equipe, {par:'admin-reponses'}).then(function(){ dire('afRepActionMsg','🔄 Session réinitialisée.','ok'); voirReponses(); })
-      .catch(function(e){ dire('afRepActionMsg','❌ '+esc(e.message||e),'danger'); });
-  }
-
-  function listerCartouches(){
-    var mid = ($('afRepMagasin').value||'').trim();
-    if (!mid) { $('afRepCartBox').innerHTML='<p class="adm-af-note" style="color:#9b1111">Renseigne un magasinId.</p>'; return; }
-    var box=$('afRepCartBox'); box.innerHTML='<p class="adm-af-note">Chargement…</p>';
-    S().listerCartouches(mid).then(function(docs){
-      if (!docs.length) { box.innerHTML='<p class="adm-af-note">Aucune cartouche pour '+esc(mid)+'.</p>'; return; }
-      box.innerHTML = '<p class="adm-af-note">'+docs.length+' cartouche(s) pour <code>'+esc(mid)+'</code> (empreintes publiques — réponses via session ci-dessus).</p>'
-        + '<table class="adm-af-table"><thead><tr><th>Cartouche</th><th>Famille</th><th>Générée le</th><th>Actions</th></tr></thead><tbody>'
-        + docs.map(function(c){ return '<tr><td><code>'+esc(c.id||c._id)+'</code></td><td>'+esc(c.famille||'')+'</td><td class="small">'+esc(c.genereLe||'')+'</td><td><button class="secondary adm-af-mini" data-cart-voir="'+esc(c.id||c._id)+'" type="button">👁️ Réponses</button></td></tr>'; }).join('')
-        + '</tbody></table>';
-      box.querySelectorAll('[data-cart-voir]').forEach(function(b){
-        b.addEventListener('click', function(){
-          var cid=b.dataset.cartVoir;
-          S().lireCoffre(cid, null).then(function(sec){
-            alert('Cartouche '+cid+'\n\nRéponses :\nEAN: '+(sec.reponses.ean||'')+'\nPremier mot: '+(sec.reponses.premierMot||'')+'\nSignature: '+(sec.reponses.signature||'')+'\nChambre forte: '+(sec.reponses.codeFinal||'')+'\n\nLivre: '+(sec.livre.titre||'')+' — '+(sec.livre.auteur||''));
-          }).catch(function(e){ alert('❌ '+ (e.message||e)); });
-        });
-      });
-    }).catch(function(e){ box.innerHTML='<p class="adm-af-note" style="color:#9b1111">❌ '+esc(e.message||e)+'</p>'; });
-  }
 
   function observer(){
     ensureTabsCss();

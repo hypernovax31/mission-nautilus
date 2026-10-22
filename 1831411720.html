@@ -129,7 +129,7 @@
     <div class="body">
       <div id="artefactStatut" class="status-banner info">⏳ <b>Le Nautilus cherche un ouvrage…</b></div>
       <div id="artefactHost"></div>
-      <a class="af-retour" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <a class="af-retour" href="index.html?ecoutille=0" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
 </main>
@@ -610,12 +610,12 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
             var b = document.createElement('div');
             b.id = 'briefMagasinBadge';
             b.className = 'brief-magasin';
-            b.innerHTML = '📍 Magasin de la mission : <b>'+esc(magasin.nom)+(magasin.ville?' — '+esc(magasin.ville):'')+'</b> <span style="opacity:.7">(choisi sur la page de démarrage)</span> <a href="index.html" style="margin-left:8px;text-decoration:underline">Changer</a>';
+            b.innerHTML = '📍 Magasin de la mission : <b>'+esc(magasin.nom)+(magasin.ville?' — '+esc(magasin.ville):'')+'</b> <span style="opacity:.7">(choisi sur la page de démarrage)</span> <a href="index.html?ecoutille=0" style="margin-left:8px;text-decoration:underline">Changer</a>';
             b.style.cssText = 'margin:8px 0 10px;padding:8px 10px;border-radius:8px;background:#0a2a44;color:#bfe0ff;border:1px solid #1a4a7a;font-size:13px;';
             if(briefEl.firstChild) briefEl.insertBefore(b, briefEl.firstChild);
             else briefEl.appendChild(b);
           } else {
-            badge.innerHTML = '📍 Magasin de la mission : <b>'+esc(magasin.nom)+(magasin.ville?' — '+esc(magasin.ville):'')+'</b> <span style="opacity:.7">(choisi sur la page de démarrage)</span> <a href="index.html" style="margin-left:8px;text-decoration:underline">Changer</a>';
+            badge.innerHTML = '📍 Magasin de la mission : <b>'+esc(magasin.nom)+(magasin.ville?' — '+esc(magasin.ville):'')+'</b> <span style="opacity:.7">(choisi sur la page de démarrage)</span> <a href="index.html?ecoutille=0" style="margin-left:8px;text-decoration:underline">Changer</a>';
           }
         }
       }
@@ -818,7 +818,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   <script src="palier-cinematic.js?v=3"></script>
 <!-- Onglet ADMIN de l'artefact : s'injecte dans le panneau admin existant
      (admin-button.js) sans modifier son HTML dupliqué. -->
-<script src="admin-artefact.js?v=13" defer></script>
+<script src="admin-artefact.js?v=14" defer></script>
 <script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>

@@ -78,7 +78,7 @@
         </div>
         <div id="identifyMsg" class="direct-resume-message" aria-live="polite"></div>
       </div>
-      <p class="direct-resume-new">Nouveau matelot ? <a href="index.html">Retourne à l'accueil pour embarquer et recevoir ton Code Matelot.</a></p>
+      <p class="direct-resume-new">Nouveau matelot ? <a href="index.html?ecoutille=0">Retourne à l'accueil pour embarquer et recevoir ton Code Matelot.</a></p>
     </div>
   </section>
 
@@ -3316,7 +3316,7 @@ window.Nautilus = {
           <p class="won-direction-line">Sur place, repérez le <b>QR Code</b> : il ouvre le sas.</p>
         </div>
         <p><a class="won-next-btn" href="${esc(url)}">⏭️ ALLER AU SAS DU ${esc(nextLabel.toUpperCase())}</a></p>
-        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
+        <a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a>
       </div>
     `;
   }
@@ -3372,7 +3372,7 @@ window.Nautilus = {
         <p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la plongée.</p>
         <div class="lock-attempt"><span aria-hidden="true">◌</span>${esc(attemptLabel)}</div>
         <div class="lock-lignes">${lignes}</div>
-        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
+        <a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a>
       </section>
     `;
   }
@@ -3501,7 +3501,7 @@ window.Nautilus = {
         <p class="lock-lead">${lead}</p>
         ${parIndice && l.lockedUntil ? lockResumeCard(l, 'Prochaine prise de commande possible') : ''}
         <div class="lock-lignes">${lignesBlocageHtml(t, l, parIndice ? 'indice' : 'echec')}</div>
-        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
+        <a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a>
       </section>
     `;
   }
@@ -3589,7 +3589,7 @@ window.Nautilus = {
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=4" defer></script>
 <script src="fnac-lecteur.js?v=1" defer></script>
-<script src="admin-artefact.js?v=13" defer></script>
+<script src="admin-artefact.js?v=14" defer></script>
 <script src="admin-button.js?v=26" type="module"></script>
 </body>
 </html>
