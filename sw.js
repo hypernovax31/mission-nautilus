@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v325';
+const CACHE_NAME = 'nautilus-v326';
 const PRECACHE = [
   './',
   './index.html',
@@ -34,13 +34,26 @@ const PRECACHE = [
   './magasin-fnac.js?v=1',
   './artefact-palier3.js?v=1',
   './fnac-lecteur.js?v=1',
-  './admin-artefact.js?v=14',
+  './admin-artefact.js?v=15',
   './data/magasins-fnac.json',
   './data/catalogue-artefacts.example.json',
   './victoire-palier.js?v=12',
   './records-palier.js?v=2',
   './install-promo.js?v=7',
   './ecoutille.js?v=16',
+  './assets/qr/QR-palier-2_noir-sur-blanc.png',
+  './assets/qr/QR-palier-2_jaune-sur-noir.png',
+  './assets/qr/QR-palier-3_noir-sur-blanc.png',
+  './assets/qr/QR-palier-3_jaune-sur-noir.png',
+  './assets/qr/QR-palier-4_noir-sur-blanc.png',
+  './assets/qr/QR-palier-4_jaune-sur-noir.png',
+  './assets/qr/QR-palier-5_noir-sur-blanc.png',
+  './assets/qr/QR-palier-5_jaune-sur-noir.png',
+  './assets/qr/QR-palier-6_noir-sur-blanc.png',
+  './assets/qr/QR-palier-6_jaune-sur-noir.png',
+  './assets/qr/QR-palier-7_noir-sur-blanc.png',
+  './assets/qr/QR-palier-7_jaune-sur-noir.png',
+  './assets/qr/planche-qr.png',
   './assets/fond-nautilus.jpg',
   './assets/ambiance-sonar.mp3',
   './assets/Victoire.mp3',

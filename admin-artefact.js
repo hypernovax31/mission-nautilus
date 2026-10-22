@@ -1,5 +1,5 @@
 /* =====================================================================
-   admin-artefact.js — ONGLETS ADMIN « 🏪 Magasins » + « 🔑 Réponses »
+   admin-artefact.js — ONGLETS ADMIN « 🏪 Magasins » + « 🔑 Réponses » + « 📷 QR Codes »
    Remplace l'ancien onglet « Artefact » :
 
    1) 🏪 Magasins — mise à jour manuelle de la liste Fnac si l'automatisation
@@ -7,7 +7,10 @@
       permet recharger / vérifier / publier / exporter.
 
    2) 🔑 Réponses — voir les bonnes réponses attendues des mini-jeux
-      (4 étapes) pour chaque équipage. Nécessite la phrase d'administration.
+      (4 étapes) pour chaque équipage.
+
+   3) 📷 QR Codes — QR de déverrouillage des paliers 2→7 avec logo
+      Nautilus au centre + téléchargement direct (noir/blanc + jaune/noir + planche).
 
    Injection légère dans le panneau admin existant (admin-button.js)
    ===================================================================== */
@@ -17,6 +20,7 @@
 
   var ONGLET_MAG = 'magasins';
   var ONGLET_REP = 'reponses';
+  var ONGLET_QR  = 'qr';
   var _monte = false;
   var _liste = null;
   var _filtre = '';
@@ -34,7 +38,17 @@
       + '.adm-af-chip--hl{background:linear-gradient(135deg,#e8fff4,#f0faf6);border-color:#bfe7d2;color:#0b4a3a}'
       + '.adm-af-chips{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;padding-bottom:2px}.adm-af-chips::-webkit-scrollbar{display:none}'
       + '.adm-af-ean{font-family:Consolas,monospace;font-size:12px;background:#0b1a2e;color:#c8f0d8;border-radius:6px;padding:3px 6px;letter-spacing:.02em}'
-      + '@media(min-width:720px){.adm-af-cards{gap:14px}.adm-af-teamcard{padding:12px}}';
+      + '@media(min-width:720px){.adm-af-cards{gap:14px}.adm-af-teamcard{padding:12px}}'
+      + '.adm-qr-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:10px}'
+      + '.adm-qr-card{background:#fff;border:1px solid #dfe8ee;border-radius:12px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}'
+      + '.adm-qr-card h5{margin:0 0 6px;font-size:13px;font-weight:900}'
+      + '.adm-qr-imgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}'
+      + '.adm-qr-imgbox{background:#f6f8fb;border:1px solid #dfe8ee;border-radius:8px;padding:6px;text-align:center}'
+      + '.adm-qr-imgbox img{width:100%;height:auto;display:block;border-radius:6px}'
+      + '.adm-qr-dl{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}'
+      + '.adm-qr-dl a{flex:1;min-width:110px;text-align:center;background:#0b1a2e;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;text-decoration:none}'
+      + '.adm-qr-dl a:nth-child(2){background:#f5b027;color:#0b1a2e}'
+      + '@media(min-width:720px){.adm-qr-grid{grid-template-columns:1fr 1fr}}';
     (document.head||document.documentElement).appendChild(st);
   }
 
@@ -81,7 +95,7 @@
 
   function HTML_MAG() {
     return ''
-    + '<p class="small" style="margin-bottom:10px">Liste des <b>magasins Fnac</b> pour le Palier 3. Elle détermine où l’ouvrage peut être cherché. Source : <code>data/magasins-fnac.json</code> (ou Firestore si publiée plus récemment).</p>'
+    + '<p class="small" style="margin-bottom:10px">Liste des <b>magasins Fnac</b>. Source : <code>data/magasins-fnac.json</code> (ou Firestore si publiée plus récemment).</p>'
     + '<div class="adm-af-sec">'
     +   '<h4>📍 Magasins — mise à jour</h4>'
     +   '<div id="afMagLast" class="adm-af-note" style="background:#f6f8fb;border:1px solid #dfe8ee;border-radius:8px;padding:8px 10px;margin-bottom:8px">Chargement…</div>'
@@ -118,8 +132,7 @@
     +     '<button id="afMagVider" class="secondary" type="button">🧹 Vider le formulaire</button>'
     +     '<span class="small" id="afMagFormMsg"></span>'
     +   '</div>'
-    + '</div>'
-    + '<p class="adm-af-note" style="margin-top:8px">💡 Sélection automatique à l’ouverture du Palier 3 : le sync GitHub alimente le catalogue en live depuis <code>fnac.com</code> (<b>En stock</b> + <b>Retrait sous 1h</b> pour le magasin choisi par le matelot) — la piste est tirée automatiquement, pas à la main.</p>';
+    + '</div>';
   }
 
 
@@ -217,6 +230,48 @@
     + htmlToutesReponses();
   }
 
+  // ── QR Codes paliers 2→7 (déverrouillage Zone Scellée) ──
+  var QR_PALIERS = [
+    { n: 2, code: '1721310619',  page: '1721310619.html' },
+    { n: 3, code: '1831411720',  page: '1831411720.html' },
+    { n: 4, code: '1941512821',  page: '1941512821.html' },
+    { n: 5, code: '2051613922',  page: '2051613922.html' },
+    { n: 6, code: '21617141023', page: '21617141023.html' },
+    { n: 7, code: '22718151124', page: '22718151124.html' }
+  ];
+  function HTML_QR(){
+    var planche = 'assets/qr/planche-qr.png';
+    var html = ''
+    + '<p class="small" style="margin-bottom:10px">QR Codes de déverrouillage des <b>Zones Scellées</b> (paliers 2 → 7). Chaque code encode le <b>numéro du palier</b> (ex. <code>1721310619</code>) — le logo <b>Nautilus</b> est intégré au centre. Imprime la variante <b>noir sur blanc</b> pour une compatibilité maximale, ou <b>jaune sur noir</b> pour l’ambiance Nautilus. Tous les QR sont scannables avec la caméra ou l’import photo du sas.</p>'
+    + '<div class="adm-af-sec">'
+    +   '<h4>📋 Planche complète — 6 paliers × 2 variantes</h4>'
+    +   '<p class="small" style="margin-bottom:8px"><a href="'+planche+'" download="planche-qr-nautilus.png" style="background:#0b1a2e;color:#fff;border-radius:999px;padding:6px 14px;text-decoration:none;font-weight:700;display:inline-block">⬇️ Télécharger la planche (2020×6600 px)</a> <span style="margin-left:8px;color:#6e7a84">12 QR étiquetés</span></p>'
+    +   '<a href="'+planche+'" download="planche-qr-nautilus.png" style="display:block;max-width:720px;border:1px solid #dfe8ee;border-radius:10px;overflow:hidden"><img src="'+planche+'" alt="Planche QR Nautilus" style="width:100%;height:auto;display:block" loading="lazy"></a>'
+    + '</div>'
+    + '<div class="adm-qr-grid">';
+    QR_PALIERS.forEach(function(p){
+      var noir = 'assets/qr/QR-palier-'+p.n+'_noir-sur-blanc.png';
+      var jaune = 'assets/qr/QR-palier-'+p.n+'_jaune-sur-noir.png';
+      html += ''
+      + '<div class="adm-qr-card">'
+      +   '<h5>Palier '+p.n+' — <code>'+esc(p.code)+'</code> <span style="font-weight:400;color:#6e7a84">→ '+esc(p.page)+'</span></h5>'
+      +   '<div class="adm-qr-imgs">'
+      +     '<div class="adm-qr-imgbox"><div class="small" style="font-weight:700;margin-bottom:4px">Noir sur blanc</div><img src="'+noir+'" alt="QR palier '+p.n+' noir" loading="lazy"><div class="small" style="color:#6e7a84;margin-top:4px">Impression standard</div></div>'
+      +     '<div class="adm-qr-imgbox" style="background:#020812;border-color:#1a2a3a"><div class="small" style="font-weight:700;margin-bottom:4px;color:#f5b027">Jaune sur noir</div><img src="'+jaune+'" alt="QR palier '+p.n+' jaune" loading="lazy"><div class="small" style="color:#8ee7ff;margin-top:4px">Ambiance Nautilus</div></div>'
+      +   '</div>'
+      +   '<div class="adm-qr-dl">'
+      +     '<a href="'+noir+'" download="QR-palier-'+p.n+'_noir-sur-blanc.png">⬇️ Noir / blanc</a>'
+      +     '<a href="'+jaune+'" download="QR-palier-'+p.n+'_jaune-sur-noir.png">⬇️ Jaune / noir</a>'
+      +   '</div>'
+      +   '<p class="small" style="color:#6e7a84;margin-top:6px">Logo Nautilus au centre · correction H (30 %) · testé jsQR</p>'
+      + '</div>';
+    });
+    html += '</div>'
+    + '<p class="small" style="margin-top:12px;color:#6e7a84">Taille conseillée ≥ 6×6 cm, ne pas rogner la zone de silence. La variante jaune est un QR inversé — testée avec l’app (jsQR <code>inversionAttempts:both</code>). En cas de doute, imprime la variante noire. Régénération : <code>python3 tools/generate_qr.py</code>.</p>';
+    return html;
+  }
+
+
   function injecter() {
     ensureTabsCss();
     if (_monte) return;
@@ -225,7 +280,7 @@
     var tabs = workspace.querySelector('.admin-tabs');
     if (!tabs) return;
     // évite double injection
-    if (workspace.querySelector('[data-pane="' + ONGLET_MAG + '"]') || workspace.querySelector('[data-pane="' + ONGLET_REP + '"]')) {
+    if (workspace.querySelector('[data-pane="' + ONGLET_MAG + '"]') || workspace.querySelector('[data-pane="' + ONGLET_REP + '"]') || workspace.querySelector('[data-pane="' + ONGLET_QR + '"]')) {
       if (workspace.querySelector('[data-pane="' + ONGLET_MAG + '"]')) { _monte = true; brancher(); }
       return;
     }
@@ -243,14 +298,23 @@
     btnRep.setAttribute('role', 'tab');
     btnRep.dataset.tab = ONGLET_REP;
     btnRep.innerHTML = '<span class="lbl-desktop">🔑 Réponses</span><span class="lbl-mobile" aria-label="Réponses">🔑</span>';
+    // --- bouton QR Codes
+    var btnQR = document.createElement('button');
+    btnQR.className = 'admin-tab';
+    btnQR.type = 'button';
+    btnQR.setAttribute('role', 'tab');
+    btnQR.dataset.tab = ONGLET_QR;
+    btnQR.innerHTML = '<span class="lbl-desktop">📷 QR Codes</span><span class="lbl-mobile" aria-label="QR Codes">📷</span>';
 
     var danger = tabs.querySelector('[data-tab="danger"]'); // data-tab="danger"
     if (danger) {
+      tabs.insertBefore(btnQR, danger);
       tabs.insertBefore(btnRep, danger);
       tabs.insertBefore(btnMag, btnRep);
     } else {
       tabs.appendChild(btnMag);
       tabs.appendChild(btnRep);
+      tabs.appendChild(btnQR);
     }
 
     var paneMag = document.createElement('div');
@@ -266,6 +330,13 @@
     paneRep.style.display = 'none';
     paneRep.innerHTML = HTML_REP();
     workspace.appendChild(paneRep);
+
+    var paneQR = document.createElement('div');
+    paneQR.className = 'admin-pane';
+    paneQR.dataset.pane = ONGLET_QR;
+    paneQR.style.display = 'none';
+    paneQR.innerHTML = HTML_QR();
+    workspace.appendChild(paneQR);
 
     _monte = true;
     brancher();
@@ -288,6 +359,8 @@
     if (bMag) bMag.addEventListener('click', function(){ activerOnglet(ONGLET_MAG); });
     var bRep = document.querySelector('.admin-tab[data-tab="' + ONGLET_REP + '"]');
     if (bRep) bRep.addEventListener('click', function(){ activerOnglet(ONGLET_REP); });
+    var bQR = document.querySelector('.admin-tab[data-tab="' + ONGLET_QR + '"]');
+    if (bQR) bQR.addEventListener('click', function(){ activerOnglet(ONGLET_QR); });
 
     // --- Magasins
     var r = $('afMagReload'); if (r) r.addEventListener('click', function(){ charger(true); });
@@ -372,12 +445,11 @@
     var arr = filtreListe();
     if (count) count.textContent = arr.length + ' / ' + _liste.magasins.length;
     if (!arr.length) { hote.innerHTML = '<p class="adm-af-note" style="padding:10px">Aucun magasin.</p>'; return; }
-    var html = '<table class="adm-af-table" style="width:100%"><thead><tr><th>id</th><th>Nom — ville (CP)</th><th>lat/lon</th><th></th></tr></thead><tbody>'
+    var html = '<table class="adm-af-table" style="width:100%"><thead><tr><th>id</th><th>Nom — ville (CP)</th><th></th></tr></thead><tbody>'
       + arr.map(function(m){
         return '<tr>'
           + '<td><code>' + esc(m.id||'—') + '</code>' + (m.actif===false?'<br><span class="adm-af-badge adm-af-badge--warn">inactif</span>':'') + '</td>'
           + '<td><b>' + esc(m.nom||'?') + '</b><br><span class="small">' + esc(m.ville||'—') + ' ' + esc(m.cp||'') + '</span><br><span class="small">' + esc(m.slug||'') + '</span></td>'
-          + '<td class="small">' + esc(m.lat!=null?String(m.lat):'—') + '<br>' + esc(m.lon!=null?String(m.lon):'—') + '</td>'
           + '<td style="white-space:nowrap"><button class="secondary adm-af-mini" data-mag-edit="' + esc(m.id) + '" type="button">✏️</button> <button class="danger adm-af-mini" data-mag-del="' + esc(m.id) + '" type="button">🗑️</button></td>'
           + '</tr>';
       }).join('') + '</tbody></table>';
@@ -452,7 +524,7 @@
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', observer); else observer();
 
   window.NautilusAdminArtefact = {
-    ONGLET_MAG: ONGLET_MAG, ONGLET_REP: ONGLET_REP, injecter: injecter, activerOnglet: activerOnglet,
+    ONGLET_MAG: ONGLET_MAG, ONGLET_REP: ONGLET_REP, ONGLET_QR: ONGLET_QR, injecter: injecter, activerOnglet: activerOnglet,
     estMonte: function(){ return _monte; }
   };
 })();
