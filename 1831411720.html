@@ -571,13 +571,54 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     t0Partie = Date.now();
 
     /* Le magasin choisi à l'accueil est repris ; sinon le jeu propose le
-       sélecteur (avec géolocalisation) avant toute recherche d'ouvrage. */
+       sélecteur (avec géolocalisation) avant toute recherche d'ouvrage.
+       Lien direct : la page de démarrage écrit nautilusMagasin (localStorage)
+       et palier-3 le relit — aucun re-choix nécessaire. ?magasin=ID force aussi. */
+    function magasinDepuisURL(){
+      try{
+        var m = (location.search.match(/[?&]magasin=([^&]+)/)||[])[1];
+        if(m) return decodeURIComponent(m);
+        var m2 = (location.search.match(/[?&]magasinId=([^&]+)/)||[])[1];
+        if(m2) return decodeURIComponent(m2);
+      }catch(e){}
+      return null;
+    }
     var magasin = (window.NautilusMagasin && window.NautilusMagasin.courant()) || null;
+    var forceId = magasinDepuisURL();
+    if(forceId && (!magasin || magasin.id !== forceId)){
+      try{
+        if(window.NautilusMagasin && window.NautilusMagasin.trouver){
+          magasin = { id: forceId, nom: forceId };
+        } else {
+          magasin = { id: forceId, nom: forceId };
+        }
+      }catch(e){ magasin = { id: forceId, nom: forceId }; }
+    }
     // MODE TEST : sans magasin choisi, on force Labège 2 (cl57) pour la démo — évite l'écran vide
     if (!magasin && (apercuAdminAutorise() || enModeTest())) {
       magasin = { id: 'cl57', nom: 'Labège 2', ville: 'Labège', cp: '31670' };
       try { if (window.NautilusMagasin && window.NautilusMagasin.memoriser) window.NautilusMagasin.memoriser(magasin, 'test-auto'); } catch(e){}
     }
+    // Affiche le magasin lié dans le briefing dès qu'il est connu
+    try{
+      if(magasin && magasin.nom){
+        var briefEl = document.getElementById('briefHost');
+        if(briefEl){
+          var badge = document.getElementById('briefMagasinBadge');
+          if(!badge){
+            var b = document.createElement('div');
+            b.id = 'briefMagasinBadge';
+            b.className = 'brief-magasin';
+            b.innerHTML = '📍 Magasin de la mission : <b>'+esc(magasin.nom)+(magasin.ville?' — '+esc(magasin.ville):'')+'</b> <span style="opacity:.7">(choisi sur la page de démarrage)</span> <a href="index.html" style="margin-left:8px;text-decoration:underline">Changer</a>';
+            b.style.cssText = 'margin:8px 0 10px;padding:8px 10px;border-radius:8px;background:#0a2a44;color:#bfe0ff;border:1px solid #1a4a7a;font-size:13px;';
+            if(briefEl.firstChild) briefEl.insertBefore(b, briefEl.firstChild);
+            else briefEl.appendChild(b);
+          } else {
+            badge.innerHTML = '📍 Magasin de la mission : <b>'+esc(magasin.nom)+(magasin.ville?' — '+esc(magasin.ville):'')+'</b> <span style="opacity:.7">(choisi sur la page de démarrage)</span> <a href="index.html" style="margin-left:8px;text-decoration:underline">Changer</a>';
+          }
+        }
+      }
+    }catch(e){}
     var identJeu = await monIdentite();
     var amorcage = await amorcerService(magasin ? magasin.id : '');
 
@@ -663,9 +704,16 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
      Explication immersive du thème SANS dévoiler l'ouvrage : on raconte
-     la chasse, jamais le titre, ni le rayon, ni l'éditeur. */
+     la chasse, jamais le titre, ni le rayon, ni l'éditeur.
+     Le magasin est celui choisi sur la page de démarrage (écoutille). */
+  var magB = null;
+  try{ magB = (window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant()) || null; }catch(e){}
+  var introMag = "Le <b>Nautilus</b> a caché un ouvrage dans ton magasin. Personne ne connaît son titre. Retrouve-le, montre-le au hublot et ouvre la chambre forte.";
+  if(magB && magB.nom){
+    introMag = "Le <b>Nautilus</b> a caché un ouvrage dans ton magasin <b>Fnac " + esc(magB.nom) + "</b>. Personne ne connaît son titre. Retrouve-le, montre-le au hublot et ouvre la chambre forte.";
+  }
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Le <b>Nautilus</b> a caché un ouvrage dans ton magasin. Personne ne connaît son titre. Retrouve-le, montre-le au hublot et ouvre la chambre forte.",
+    intro: introMag,
     consignes: [
       { ico: '🧭', html: "<b>Énigme</b> : elle pointe la zone de recherche sans la nommer." },
       { ico: '🔏', html: "<b>Hublot</b> : scanne le code-barres au dos (ou saisis les 13 chiffres EAN)." },

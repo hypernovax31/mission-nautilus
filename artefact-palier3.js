@@ -150,11 +150,46 @@
     var onMagasinChoisi = o.onMagasinChoisi || null;
     var signalerCapitaine = o.signalerCapitaine || function () {};
 
+    // Magasin lié à la page de démarrage : localStorage + ?magasin=ID en fallback
+    function magasinDepuisURL(){
+      try{
+        var m=(location.search.match(/[?&]magasin=([^&]+)/)||[])[1];
+        if(m) return decodeURIComponent(m);
+        var m2=(location.search.match(/[?&]magasinId=([^&]+)/)||[])[1];
+        if(m2) return decodeURIComponent(m2);
+      }catch(e){}
+      return null;
+    }
+    var magURL = magasinDepuisURL();
+    var magCourant = (magasins && magasins.courant && magasins.courant()) || null;
+    if(!magCourant && magURL) magCourant = { id: magURL, nom: magURL };
     var etat = {
-      session: null, magasin: o.magasin || (magasins && magasins.courant()) || null,
+      session: null, magasin: o.magasin || magCourant || null,
       t0: Date.now(), erreurs: 0, indices: [], vue: 'chargement', lecteur: null,
       detruit: false
     };
+    // Délégation robuste : tous les boutons du mini-jeu passent par hote (survit aux rendre())
+    if(hote && !hote._nautilusDelegue){
+      hote._nautilusDelegue = true;
+      hote.addEventListener('click', function(e){
+        var t = e.target;
+        while(t && t !== hote){
+          if(t.id === 'afIntrouvable'){ e.preventDefault(); vueIntrouvable(); return; }
+          if(t.id === 'afTrouve'){ e.preventDefault(); vueSceau(); return; }
+          if(t.id === 'afMagasinOk'){
+            e.preventDefault();
+            var deja = etat.magasin || (magasins && magasins.courant && magasins.courant()) || null;
+            if(deja && deja.id){
+              journal('📍 Magasin confirmé pour cette plongée : <b>' + echapper(deja.nom||deja.id) + '</b>.', 'info');
+              Promise.resolve(onMagasinChoisi ? onMagasinChoisi(deja) : null).catch(function(){}).then(function(){ charger(); });
+            }
+            return;
+          }
+          if(t.dataset && t.dataset.indice){ e.preventDefault(); proposerSacrifice(Number(t.dataset.indice)); return; }
+          t = t.parentElement;
+        }
+      });
+    }
 
     function echapper(s) { return M.echapper(s); }
     function lignes(s) { return echapper(s).replace(/\n/g, '<br>'); }
@@ -237,10 +272,10 @@
         rendre('<div class="af-carte">'
           + '<p class="af-kicker">Magasin de la mission</p>'
           + '<h3 class="af-titre">📍 Fnac ' + echapper(nomMag) + echapper(villeMag) + echapper(cpMag) + '</h3>'
-          + '<p class="af-msg">Ce magasin a été choisi sur la page de démarrage et vaut <b>pour tout le site</b> (c’est ta géolocalisation de mission).<br>Tu peux le garder ou le changer.</p>'
+          + '<p class="af-msg">Ce magasin a été choisi sur la <b>page de démarrage</b> et vaut <b>pour tout le site</b> (c’est ta géolocalisation de mission). L’ouvrage du Nautilus sera cherché <b>uniquement</b> dans ce magasin.<br>Tu peux le garder ou le changer.</p>'
           + '<div class="af-actions">'
           +   '<button type="button" class="af-btn af-btn--or" id="afMagasinOk">✔️ Confirmer et plonger</button>'
-          +   '<a href="index.html#magasinPanel" class="af-btn af-btn--ghost">📍 Changer de magasin</a>'
+          +   '<a href="index.html" class="af-btn af-btn--ghost">📍 Changer de magasin</a>'
           + '</div>'
           + '</div>');
         var btn = hote.querySelector('#afMagasinOk');
