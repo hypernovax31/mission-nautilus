@@ -640,10 +640,12 @@
       if (!r.erreur) return { ok: false, motif: r.motif, erreur: false, erreurs: session.erreurs || 0 };
       var erreurs = Number(session.erreurs || 0) + 1;
       var maxErreurs = Number(session.cartouche.maxErreurs) || M.MAX_ERREURS;
+      var essaiBrut = M.nettoyerTexte(valeur, 40);
+      var essaiLog = essaiBrut ? ' — essai : « ' + essaiBrut + ' »' : '';
       var champs2 = {
         erreurs: erreurs,
         derniereErreurLe: new Date().toISOString(),
-        historique: ajouterHistorique(session, { type: 'erreur', texte: 'Réponse refusée à l’étape « ' + etapeId + ' » (' + erreurs + '/' + maxErreurs + ')' })
+        historique: ajouterHistorique(session, { type: 'erreur', texte: 'Réponse refusée à l’étape « ' + etapeId + ' »' + essaiLog + ' (' + erreurs + '/' + maxErreurs + ')', essai: essaiBrut, etapeId: etapeId })
       };
       return ecrireSession(cle, champs2).then(function () {
         return {

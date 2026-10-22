@@ -188,6 +188,19 @@
     +     '<button id="afRepCartouches" class="secondary" type="button">📋 Lister les cartouches</button>'
     +   '</div>'
     +   '<div id="afRepCartBox" style="margin-top:8px"></div>'
+    + '</div>'
+    + '<div class="adm-af-sec" id="afNotesSec">'
+    +   '<h4>Notes Mots recherches - par equipage</h4>'
+    +   '<p class="small">Notes manuelles du capitaine pour suivre ce que chaque equipage <b>cherche en rayon</b> (sauvegardees sur cet appareil).</p>'
+    +   '<div class="adm-af-ligne">'
+    +     '<select id="afNotesEquipe" class="adm-af-select" style="min-width:140px"><option value="">- equipe -</option><option value="NEMO">NEMO</option><option value="NAUTILUS">NAUTILUS</option><option value="ARONNAX">ARONNAX</option><option value="NEDLAND">NEDLAND</option></select>'
+    +     '<button id="afNotesCharger" class="secondary" type="button">Charger</button>'
+    +     '<button id="afNotesSauver" class="primary" type="button">Enregistrer</button>'
+    +     '<button id="afNotesExporter" class="secondary" type="button">Exporter JSON</button>'
+    +   '</div>'
+    +   '<textarea id="afNotesTexte" class="adm-af-input" rows="4" style="width:100%;margin-top:8px" placeholder="Ex. P1=BALEINES P2=STEELBOOK P3 Atlas EAN"></textarea>'
+    +   '<p class="small" id="afNotesMsg" style="margin-top:4px"></p>'
+    +   '<div id="afNotesListe" style="margin-top:8px"></div>'
     + '</div>';
   }
 
@@ -278,7 +291,69 @@
     var rf = $('afRepRefresh'); if (rf) rf.addEventListener('click', refreshEquipes);
     var vr = $('afRepVoir'); if (vr) vr.addEventListener('click', voirReponses);
     var lc = $('afRepCartouches'); if (lc) lc.addEventListener('click', listerCartouches);
+    // --- Notes mots recherches
+    var nc = $('afNotesCharger'); if (nc) nc.addEventListener('click', notesCharger);
+    var ns = $('afNotesSauver'); if (ns) ns.addEventListener('click', notesSauver);
+    var ne = $('afNotesExporter'); if (ne) ne.addEventListener('click', notesExporter);
+    // copie EAN deleguee (bouton dans renduReponses)
+    document.addEventListener('click', function(ev){
+      var t=ev.target;
+      if(t && t.getAttribute && t.getAttribute('data-copy-ean')){
+        var v=t.getAttribute('data-copy-ean');
+        if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function(){ dire('afRepEtat','EAN copie : '+v,'ok'); }).catch(function(){ prompt('EAN a copier :', v); });
+        else prompt('EAN a copier :', v);
+      }
+    });
+    // init liste notes
+    try{ notesRendreListe(); }catch(e){}
     window.addEventListener('beforeunload', function(){ _phrase = ''; var el=$('afRepPhrase'); if(el) el.value=''; });
+  }
+
+  // ===================== NOTES Mots recherches =====================
+  var NOTES_CLE = 'nautilusNotesMotsRecherches';
+  function notesLireTout(){
+    try{ var j=JSON.parse(localStorage.getItem(NOTES_CLE)||'{}'); return (j && typeof j==='object')? j : {}; }catch(e){ return {}; }
+  }
+  function notesEcrireTout(o){
+    try{ localStorage.setItem(NOTES_CLE, JSON.stringify(o)); return true; }catch(e){ return false; }
+  }
+  function notesCharger(){
+    var eq=($('afNotesEquipe').value||'').trim();
+    if(!eq){ dire('afNotesMsg','Choisis une equipe.','warn'); return; }
+    var tout=notesLireTout();
+    var txt=tout[eq]||'';
+    var ta=$('afNotesTexte'); if(ta) ta.value=txt;
+    dire('afNotesMsg', txt? 'Charge : '+eq : 'Aucune note pour '+eq+'.','');
+    notesRendreListe();
+  }
+  function notesSauver(){
+    var eq=($('afNotesEquipe').value||'').trim();
+    if(!eq){ dire('afNotesMsg','Choisis une equipe.','warn'); return; }
+    var txt=($('afNotesTexte').value||'');
+    var tout=notesLireTout();
+    if(txt) tout[eq]=txt; else delete tout[eq];
+    notesEcrireTout(tout);
+    dire('afNotesMsg','Enregistre pour '+eq+'.','ok');
+    notesRendreListe();
+  }
+  function notesExporter(){
+    var tout=notesLireTout();
+    if(!Object.keys(tout).length){ dire('afNotesMsg','Aucune note a exporter.','warn'); return; }
+    var blob=new Blob([JSON.stringify(tout,null,2)],{type:'application/json'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='mots-recherches-notes-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1200);
+    dire('afNotesMsg','Export telecharge.','ok');
+  }
+  function notesRendreListe(){
+    var el=$('afNotesListe'); if(!el) return;
+    var tout=notesLireTout();
+    var keys=Object.keys(tout);
+    if(!keys.length){ el.innerHTML='<p class="small" style="color:#6e7a84">Aucune note enregistree sur cet appareil.</p>'; return; }
+    var html='<table class="adm-af-table" style="width:100%"><thead><tr><th>Equipe</th><th>Note</th></tr></thead><tbody>'
+      + keys.sort().map(function(k){ return '<tr><td><b>'+esc(k)+'</b></td><td class="small" style="white-space:pre-wrap">'+esc(tout[k])+'</td></tr>'; }).join('')
+      + '</tbody></table>';
+    el.innerHTML=html;
   }
 
   // ===================== MAGASINS =====================
@@ -493,7 +568,7 @@
 
   function rendreReponses(box, equipe, sess, cart, secret, errDec){
     var eta = cart.etapes || [];
-    var hist = (sess.historique||[]).slice(-6).map(function(h){ return '<li>'+esc(h.le||'')+' — '+esc(h.texte||h.type||'')+'</li>'; }).join('');
+    var hist = (sess.historique||[]).slice(-10).map(function(h){ var t=esc(h.texte||h.type||''); if(h.essai) t+=' <code style="background:#fff3cd;padding:1px 4px;border-radius:4px">'+esc(h.essai)+'</code>'; return '<li><span class="small" style="color:#6e7a84">'+esc((h.le||'').slice(11,16)||'')+'</span> — '+t+' <span class="small" style="color:#888">['+esc(h.type||'')+']</span></li>'; }).join('');
     var html = ''
     + '<div style="border:1px solid #dfe8ee;border-radius:8px;padding:10px;background:#fbfdff;margin-bottom:8px">'
     +   '<b>Équipage '+esc(equipe)+'</b> — magasin <code>'+esc(sess.magasinId||'?')+'</code> — session <b>'+esc(sess.statut||'?')+'</b><br>'
@@ -503,13 +578,24 @@
 
     if (secret && secret.reponses) {
       var r = secret.reponses;
+      var livre = secret.livre || {};
+      // En-tête livre ultra-visible : nom + EAN demandés par le capitaine
+      html += '<div style="border:2px solid #0b6b4a;border-radius:10px;padding:12px;background:#eefaf4;margin-bottom:10px">'
+        +   '<div style="font-weight:900;font-size:14px;color:#0b4a3a;letter-spacing:.02em">📖 Livre du Palier 3 — nom & EAN à chercher en rayon</div>'
+        +   '<div style="font-size:16px;margin:8px 0 6px 0"><b>'+esc(livre.titre||'?')+'</b> — '+esc(livre.auteur||'—')+' <span class="small">('+esc(livre.editeur||'')+')</span></div>'
+        +   '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">'
+        +     '<span style="font-family:monospace;font-size:15px;background:#fff;border:1px solid #bfe7d2;border-radius:6px;padding:6px 10px">EAN : <b>'+esc(r.ean||'?')+'</b></span>'
+        +     '<button type="button" class="secondary adm-af-mini" data-copy-ean="'+esc(r.ean||'')+'" style="padding:6px 10px">📋 Copier l’EAN</button>'
+        +     '<span class="small" style="align-self:center">SKU '+esc(livre.sku||'—')+' · '+(livre.edition? esc(livre.edition)+' · ' : '')+esc(livre.annee||'')+'</span>'
+        +   '</div>'
+        +   '<p class="small" style="margin:6px 0 0 0;color:#2a6b4a">À dicter aux équipages : titre exact + EAN 13 chiffres. Le code-barres doit être scanné au hublot.</p>'
+        + '</div>';
       html += '<table class="adm-af-table"><thead><tr><th>Étape</th><th>Bonne réponse attendue</th></tr></thead><tbody>'
         + '<tr><td><b>1. Hublot</b><br><span class="small">scan EAN</span></td><td><code>'+esc(r.ean||'?')+'</code><br><span class="small">'+esc((secret.livre&&secret.livre.titre)||'')+'</span></td></tr>'
         + '<tr><td><b>2. Couverture</b><br><span class="small">premier mot significatif</span></td><td><b>'+esc(r.premierMot||'?')+'</b></td></tr>'
         + '<tr><td><b>3. Signature</b><br><span class="small">règle '+esc(secret.regle||'')+' — '+esc((secret.regle && M() && M().regleParId? (M().regleParId(secret.regle)||{}).nom : '')||'')+'</span></td><td><code>'+esc(r.signature||'?')+'</code></td></tr>'
         + '<tr><td><b>4. Chambre forte</b><br><span class="small">ordre '+esc(secret.ordre||'')+'</span></td><td><code>'+esc(r.codeFinal||'?')+'</code></td></tr>'
         + '</tbody></table>'
-        + '<p class="adm-af-note"><b>Livre :</b> '+esc((secret.livre&&secret.livre.titre)||'?')+' — '+esc((secret.livre&&secret.livre.auteur)||'')+' ('+esc((secret.livre&&secret.livre.editeur)||'')+')</p>'
         + '<p class="adm-af-note" style="color:#9b1111">⚠️ Ne JAMAIS déposer ce fichier dans le dépôt (<code>data/*.local.json</code> est ignoré). Exporter uniquement via <code>nautilus-safe/</code>.</p>';
     } else {
       html += '<p class="adm-af-note" style="color:#9b1111">🔒 Coffre non déchiffré'+(errDec? ' : '+esc(errDec):'')+' — vérifie la phrase d’administration.</p>'
