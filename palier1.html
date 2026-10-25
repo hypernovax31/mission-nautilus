@@ -12,7 +12,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier1.css?v=51">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=2" defer></script>
@@ -24,7 +24,7 @@
   <!-- Records de résolution des paliers (écran de victoire) : écriture
        et lecture Firestore communes à tous les paliers. -->
   <script src="records-palier.js?v=2" defer></script>
-  <script src="palier-cinematic.js?v=3"></script>
+  <script src="palier-cinematic.js?v=4"></script>
 
 </head>
 <body>
@@ -2183,7 +2183,12 @@ window.Nautilus = {
     $('takeLeadBtn')?.addEventListener('click', () => {
       var go = function(){
         glisserVersEpreuve();
-        startNewSession();
+        Promise.resolve().then(function(){ return startNewSession(); }).catch(function(e){
+          console.error('startNewSession échoué', e);
+          try{ N.showToast('Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 6500); }catch(_e){}
+          var b = $('takeLeadBtn');
+          if(b){ b.disabled = false; b.textContent = '⚓ PRENDRE LES COMMANDES'; }
+        });
         setTimeout(glisserVersEpreuve, 350);
         setTimeout(glisserVersEpreuve, 900);
         if(window.NautilusCinematic && window.NautilusCinematic.autoWatchFromDom){
@@ -2199,7 +2204,7 @@ window.Nautilus = {
   }
 
   async function startNewSession() {
-    if (!state.me || !state.team) return;
+    if (!state.me || !state.team){ try{ N.showToast('Équipage non chargé : recharge la page.', 'warning', 6000); }catch(_e){} return; }
     /* Garde-fou : un matelot bloque ne peut pas reprendre les commandes,
        meme en cliquant vite depuis un ecran affiche avant son blocage. */
     if (N.isMatelotLocked(state.team, state.me.memberKey)) {
@@ -2234,6 +2239,7 @@ window.Nautilus = {
       renderGameArea();
     };
 
+    try{
     if (state.session && state.session.state === 'playing') {
       rendreLaMain(`${state.session.startedByName || 'Un autre matelot'} est déjà aux commandes.`);
       return;
@@ -2308,26 +2314,64 @@ window.Nautilus = {
       return;
     }
 
-    await N.createSession(state.teamCode, {
-      startedBy: state.me.clientId,
-      startedByName: state.me.name,
-      startedByMemberKey: state.me.memberKey,
-      /* Signe la session avec le Code Matelot de celui qui l'a lancee.
-         Sert de garde-fou : une session du compte fantome devient ainsi
-         reconnaissable et sera ignoree par les vrais joueurs. */
-      startedByMatelot: N.getCurrentMatelotCode() || '',
-      wordLength: entry.w.length,
-      wordHash: N.hashString(entry.w),
-      listensLeft: 3,
-      attempts: 0,
-      errors: 0,
-      maxErrors: 3,
-      timeLimit: 210,        /* 3 min 30 */
-      hintsRevealed: indicesAcquis,
-      startedWordHint: entry.h,
-      lastEvent: 'session_started'
-    });
-    N.addActe('prend les commandes', 'info', state.me.name);
+    try{
+      await N.createSession(state.teamCode, {
+        startedBy: state.me.clientId,
+        startedByName: state.me.name,
+        startedByMemberKey: state.me.memberKey,
+        startedByMatelot: N.getCurrentMatelotCode() || '',
+        wordLength: entry.w.length,
+        wordHash: N.hashString(entry.w),
+        listensLeft: 3,
+        attempts: 0,
+        errors: 0,
+        maxErrors: 3,
+        timeLimit: 210,
+        hintsRevealed: indicesAcquis,
+        startedWordHint: entry.h,
+        lastEvent: 'session_started'
+      });
+      N.addActe('prend les commandes', 'info', state.me.name);
+      // Rendu optimiste : on n'attend pas l'aller-retour Firestore temps réel — l'écran apparaît immédiatement.
+      // La session temps réel viendra écraser cet état local dès qu'elle arrive, sans scintillement.
+      try{
+        state.session = {
+          teamCode: state.teamCode,
+          state: 'playing',
+          startedAt: new Date().toISOString(),
+          startedBy: state.me.clientId,
+          startedByName: state.me.name,
+          startedByMemberKey: state.me.memberKey,
+          startedByMatelot: N.getCurrentMatelotCode() || '',
+          wordLength: entry.w.length,
+          wordHash: N.hashString(entry.w),
+          listensLeft: 3,
+          attempts: 0,
+          errors: 0,
+          maxErrors: 3,
+          timeLimit: 210,
+          hintsRevealed: indicesAcquis,
+          startedWordHint: entry.h,
+          lastEvent: 'session_started'
+        };
+        renderGameArea();
+      }catch(_e){}
+    }catch(e){
+      console.error('createSession échoué', e);
+      // Le bouton était resté en "Prise de commandes…" — on le rend et on explique.
+      var _btn = $('takeLeadBtn');
+      if(_btn){ _btn.disabled = false; _btn.textContent = '⚓ PRENDRE LES COMMANDES'; }
+      try{ N.showToast('Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 7000); }catch(_e2){}
+      throw e;
+    }
+    }catch(e){
+      console.error('startNewSession outer', e);
+      var _b2 = $('takeLeadBtn');
+      if(_b2){ _b2.disabled = false; _b2.textContent = '⚓ PRENDRE LES COMMANDES'; }
+      try{ N.showToast('Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 7000); }catch(_e3){}
+      // On laisse aussi la vue se rafraîchir pour ne pas rester bloqué
+      try{ renderGameArea(); }catch(_e4){}
+    }
   }
 
   /* === ÉCRAN : joueur actif === */

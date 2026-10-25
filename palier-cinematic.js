@@ -356,7 +356,7 @@
       // Si GO : déclenche le mini-jeu 260ms après l'apparition (au pic de l'anim)
       if(isGo && typeof launchFn==='function'){
         await sleep(260);
-        try{ launchFn(); }catch(e){ console.error(e); }
+        try{ var _r = launchFn(); if(_r && typeof _r.then==='function') _r.catch(function(e){ console.error('launchFn promise', e); }); }catch(e){ console.error(e); }
         // GO reste visible le temps de révéler la page dessous
         await sleep(s.hold - 260);
       } else {
