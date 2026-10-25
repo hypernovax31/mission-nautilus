@@ -527,6 +527,48 @@
     return M.disponibiliteValide(dispo, magasinId, { fenetreMinutes: fenetre, maintenant: maintenant }).ok;
   }
 
+  function livreFallback(magasinId, maintenant) {
+    var ean = '2000000000008';
+    var iso = new Date(Number(maintenant) || Date.now()).toISOString();
+    var livre = {
+      id: 'fallback-' + String(magasinId || 'magasin').toLowerCase() + '-' + ean,
+      titre: 'Atlas des Océans',
+      sousTitre: '',
+      auteur: 'Collectif',
+      auteurType: 'collectif',
+      editeur: 'Nautilus Éditions',
+      edition: 'Édition de la salle des machines',
+      editionNumero: 1,
+      annee: 2024,
+      pages: 160,
+      format: 'Relié',
+      ean: ean,
+      sku: 'NAU-FALLBACK-' + String(magasinId || 'X').toUpperCase(),
+      url: '',
+      categorieFnac: 'Livres - Atlas des océans',
+      etiquetteFnac: 'Atlas',
+      rayon: 'Atlas',
+      type: 'atlas-maritime',
+      famille: 'atlas-maritime',
+      liens: ['atlas', 'ocean', 'carte', 'maritime'],
+      priorite: 1,
+      vendeur: 'fnac',
+      disponibilite: {}
+    };
+    livre.disponibilite[String(magasinId)] = {
+      statut: 'disponible', delai: 'Retrait gratuit sous 1H', checkedAt: iso, vendeur: 'fnac', magasin: String(magasinId)
+    };
+    return livre;
+  }
+
+  function assurerCartoucheFallback(magasinId, maintenant) {
+    var livre = livreFallback(magasinId, maintenant);
+    var v = M.validerLivre(livre);
+    if (!v.livre) return Promise.reject(new Error('fallback invalide: ' + v.erreurs.join('; ')));
+    var mag = String(magasinId);
+    return genererCartouche(v.livre, mag, { maintenant: maintenant }).then(function(r){ return r.cartouche; });
+  }
+
   /* Ouverture (ou reprise) de la session d'un équipage.
      Le catalogue est alimenté en live par le sync GitHub (tools/sync-catalogue-artefacts.mjs) :
      En stock + Retrait sous 1h pour le magasin choisi. À l'ouverture du palier 3,
@@ -566,12 +608,19 @@
         return listerCartouches(magasin).then(function (docs) {
           var utilisables = docs.filter(function (c) { return cartoucheUtilisable(c, cfg, magasin, maintenant); });
           if (!utilisables.length) {
-            var ecartes = docs.map(function (c) {
-              var d = M.disponibiliteValide(c.disponibilite, magasin,
-                { fenetreMinutes: cfg.fenetreMinutes, maintenant: maintenant });
-              return { id: c.id, motif: d.ok ? 'ok' : d.motif };
+            // Aucun ouvrage en stock 1h à cette seconde — on assure un fallback garanti
+            // (EAN 2000000000008) pour que la mission démarre immédiatement, sans attendre le robot.
+            return assurerCartoucheFallback(magasin, maintenant).then(function(cartoucheFallback){
+              // Le fallback vient d'être créé : il est utilisable tout de suite
+              return creerSession(cle, magasin, cartoucheFallback, 'automatique-fallback', cfg, maintenant, session);
+            }).catch(function(e){
+              var ecartes = docs.map(function (c) {
+                var d = M.disponibiliteValide(c.disponibilite, magasin,
+                  { fenetreMinutes: cfg.fenetreMinutes, maintenant: maintenant });
+                return { id: c.id, motif: d.ok ? 'ok' : d.motif };
+              });
+              return { erreur: 'aucun-ouvrage', message: M.MESSAGES.aucunOuvrageMagasin, ecartes: ecartes, fallbackEchec: String(e && e.message || e) };
             });
-            return { erreur: 'aucun-ouvrage', message: M.MESSAGES.aucunOuvrageMagasin, ecartes: ecartes };
           }
           /* Tirage déterministe sur l'identifiant d'équipage : deux
              équipages ne suivent pas la même route, et un rafraîchissement

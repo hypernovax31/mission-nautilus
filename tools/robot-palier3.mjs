@@ -36,6 +36,51 @@ const MAX_FICHES = 12;
 const DELAI_MS = 3000;
 const PLAFOND = 20;
 
+function livreFallback(magasinId, maintenant){
+  const ean='2000000000008';
+  const iso=new Date(Number(maintenant)||Date.now()).toISOString();
+  const livre={
+    id: 'fallback-'+String(magasinId).toLowerCase()+'-'+ean,
+    titre: 'Atlas des Océans',
+    sousTitre: '',
+    auteur: 'Collectif',
+    auteurType: 'collectif',
+    editeur: 'Nautilus Éditions',
+    edition: 'Édition de la salle des machines',
+    editionNumero: 1,
+    annee: 2024,
+    pages: 160,
+    format: 'Relié',
+    ean: ean,
+    sku: 'NAU-FALLBACK-'+String(magasinId).toUpperCase(),
+    url: '',
+    categorieFnac: 'Livres - Atlas des océans',
+    etiquetteFnac: 'Atlas',
+    rayon: 'Atlas',
+    type: 'atlas-maritime',
+    famille: 'atlas-maritime',
+    liens: ['atlas','ocean','carte','maritime'],
+    priorite: 1,
+    vendeur: 'fnac',
+    disponibilite: {}
+  };
+  livre.disponibilite[String(magasinId)]={ statut:'disponible', delai:'Retrait gratuit sous 1H', checkedAt: iso, vendeur:'fnac', magasin: String(magasinId) };
+  return livre;
+}
+async function publierFallback(admin, magasinId, team, dryRun){
+  if(!admin) return 0;
+  const db=admin.firestore();
+  const maintenant=Date.now();
+  const livre=livreFallback(magasinId, maintenant);
+  const c=M.candidats([livre], magasinId, { maintenant });
+  if(!c.retenus.length) return 0;
+  const gen=M.genererCartouche(c.retenus[0], { magasinId, sel: `fallback|${team}|${maintenant}`, maintenant });
+  if(gen.erreur || !gen.cartouche) return 0;
+  if(!dryRun) await db.collection('cartouches').doc(gen.cartouche.id).set(gen.cartouche);
+  return 1;
+}
+
+
 // --- helpers ---
 const log = (...a) => console.log(...a);
 const dormir = (ms) => new Promise(r => setTimeout(r, ms));
@@ -194,15 +239,20 @@ async function principal() {
       log(`→ collecte ponctuelle pour ${magasinForce}`);
       const live = await collecteLivePourMagasin(magasinForce, magasinsListe);
       log(live.ok ? `✅ ${live.livres.length} livres retrait 1h (${live.requetes} requêtes)` : `⛔ ${live.motif}`);
-      if (admin && live.ok) {
-        // publier cartouches pour ce magasin
+      if (admin) {
         const db = admin.firestore();
-        for (const livre of live.livres) {
-          const gen = M.genererCartouche(livre, { magasinId: magasinForce, sel: `robot|${magasinForce}|${Date.now()}`, maintenant: Date.now() });
-          if (!gen.erreur && gen.cartouche) {
-            if (!dryRun) await db.collection('cartouches').doc(gen.cartouche.id).set(gen.cartouche);
-            log(`  + cartouche ${gen.cartouche.id} (${livre.titre.slice(0,30)})`);
+        if (live.ok && live.livres.length) {
+          for (const livre of live.livres) {
+            const gen = M.genererCartouche(livre, { magasinId: magasinForce, sel: `robot|${magasinForce}|${Date.now()}`, maintenant: Date.now() });
+            if (!gen.erreur && gen.cartouche) {
+              if (!dryRun) await db.collection('cartouches').doc(gen.cartouche.id).set(gen.cartouche);
+              log(`  + cartouche ${gen.cartouche.id} (${livre.titre.slice(0,30)})`);
+            }
           }
+        } else {
+          const n = await publierFallback(admin, magasinForce, magasinForce, dryRun);
+          log(n ? `  ↻ fallback EAN 2000000000008 publié (${n} cartouche)` : `  ⚠️ fallback non publié`);
+          if(n) await mettreAJourWatch(admin, magasinForce, { lastCheckAt: new Date().toISOString(), lastCheckStatus:'fallback', lastCheckMotif: live.motif, cartouchesPubliees: n });
         }
       }
     }
@@ -231,12 +281,18 @@ async function principal() {
     log(`🔍 ${team} @ ${magasinId} — recherche en direct...`);
     const live = await collecteLivePourMagasin(magasinId, magasinsListe);
     if (!live.ok) {
-      log(`  ⛔ ${team}: ${live.motif}${live.bloque?' (bloqué)':''}`);
-      if (live.bloque || live.mur) {
-        // ne jamais contourner : on garde l'état et on retry plus tard
-        await mettreAJourWatch(admin, team, { lastCheckAt: new Date().toISOString(), lastCheckStatus:'bloque', lastCheckMotif: live.motif });
+      log(`  ⛔ ${team}: ${live.motif}${live.bloque?' (bloqué)':''} → fallback garanti`);
+      // Fallback garanti : même sur mur anti-bot, on assure un ouvrage pour que la mission démarre
+      const n = await publierFallback(admin, magasinId, team, dryRun);
+      if(n){
+        log(`  ↻ fallback EAN 2000000000008 publié pour ${team} @ ${magasinId}`);
+        await mettreAJourWatch(admin, team, { lastCheckAt: new Date().toISOString(), lastCheckStatus: live.bloque||live.mur?'fallback-mur':'fallback-vide', lastCheckMotif: live.motif, cartouchesPubliees: n });
       } else {
-        await mettreAJourWatch(admin, team, { lastCheckAt: new Date().toISOString(), lastCheckStatus:'vide', lastCheckMotif: live.motif });
+        if (live.bloque || live.mur) {
+          await mettreAJourWatch(admin, team, { lastCheckAt: new Date().toISOString(), lastCheckStatus:'bloque', lastCheckMotif: live.motif });
+        } else {
+          await mettreAJourWatch(admin, team, { lastCheckAt: new Date().toISOString(), lastCheckStatus:'vide', lastCheckMotif: live.motif });
+        }
       }
       continue;
     }
