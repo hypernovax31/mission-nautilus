@@ -165,7 +165,8 @@
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="artefact-service.js?v=7"></script>
 <script src="magasin-fnac.js?v=1"></script>
-<script src="artefact-palier3.js?v=4"></script>
+<script src="magasin-guard.js?v=1"></script>
+<script src="artefact-palier3.js?v=5"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
 <script src="victoire-palier.js?v=12"></script>
 <script src="records-palier.js?v=2"></script>
@@ -580,9 +581,40 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     demarrer();
   }
 
+  /* Garde magasin d'origine : hors zone = pas d'accès au palier */
+  function afficherHorsMagasin(info){
+    afficherVueEpreuve();
+    afficherJournalDeBord(true);
+    var host=$('artefactHost');
+    if(!host) return;
+    var G=window.NautilusMagasinGuard;
+    host.innerHTML = G ? G.messageHTML(info) : '<div class="af-carte af-carte--scellee"><p class="af-kicker">Magasin d’origine requis</p><h3 class="af-titre">⛔ Hors magasin d’origine</h3><p class="af-msg">Tu n’es plus dans le magasin d’origine. Rapproche-toi à moins de 500 m pour reprendre la mission.<br><span style="opacity:.9">Un coéquipier sur place peut prendre le relais immédiatement.</span></p><div class="af-actions"><a href="index.html?ecoutille=0" class="af-btn af-btn--ghost">🏠 Accueil</a></div></div>';
+    statut('📍 <b>Accès réservé au magasin d’origine.</b> Rapproche-toi à moins de 500 m pour continuer.', 'danger');
+    // bouton retry
+    var btn=host.querySelector('#afGuardRetry');
+    if(btn) btn.addEventListener('click', function(){
+      btn.disabled=true; btn.textContent='📍 Vérification…';
+      // relance demarrer (re-vérifie geoloc)
+      setTimeout(function(){ lance=false; demarrer(); }, 400);
+    });
+  }
+
   /* Démarrage protégé : remontée active du matelot identifié, sinon repli
      local anonyme. Le moindre doute réseau laisse JOUER (fail-open). */
   async function demarrer() {
+    // 1) Garde magasin : si partie globale commencée et hors magasin -> blocage, sauf aperçu/test
+    if(!apercuAdminAutorise() && !enModeTest()){
+      try{
+        if(window.NautilusMagasinGuard){
+          var _gc = await window.NautilusMagasinGuard.verifierAcces();
+          if(!_gc.autorise){
+            afficherHorsMagasin(_gc);
+            journal('⛔ Accès palier refusé : hors magasin d’origine ('+( _gc.motif||'hors-zone')+').', 'warning');
+            return;
+          }
+        }
+      }catch(e){}
+    }
     if (!apercuAdminAutorise()) {
       var ident = await monIdentite();
       if (ident && !ident.isTest) {

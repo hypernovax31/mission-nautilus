@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 000203 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 001938 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 000203 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 001938 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -807,7 +807,7 @@
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 000203 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 001938 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -904,7 +904,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 000203</span>
+      <span class="ec-version">COMMIT 001938</span>
     </footer>
   </div>
 
@@ -6294,9 +6294,35 @@ function qrDataUri(text, opts){
         updatedAt: new Date().toISOString()
       }, {merge:true});
       missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt };
+      // Fige le magasin d'origine (global) au premier démarrage : il servira de garde 500 m pour tous les paliers
+      try{
+        const snapOri = await getDoc(doc(db,'game','config'));
+        const cfgOri = snapOri.exists() ? snapOri.data() : {};
+        if(!cfgOri.magasinOrigine && !cfgOri.magasinOrigineId){
+          let cur=null; try{ cur=window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant(); }catch(e){}
+          if(cur && cur.id){
+            let full=null; try{ if(window.NautilusMagasin && window.NautilusMagasin.trouver){ const r=await window.NautilusMagasin.trouver(cur.id); full=r.magasin; } }catch(e){}
+            const orig={ id:String(cur.id), nom:String((full&&full.nom)||cur.nom||cur.id), ville:String((full&&full.ville)||cur.ville||''), cp:String((full&&full.cp)||cur.cp||''), setAt: startedAt, setBy: currentTeam?.teamCode||null };
+            if(full && typeof full.lat==='number') orig.lat=full.lat;
+            if(full && typeof full.lon==='number') orig.lon=full.lon;
+            await setDoc(doc(db,'game','config'), { magasinOrigine: orig, updatedAt: new Date().toISOString() }, {merge:true});
+            try{ localStorage.setItem('nautilusMagasinOrigine', JSON.stringify(orig)); }catch(e){}
+          }
+        }
+      }catch(e){}
       updateCountdown();
     }else{
       updateCountdown();
+      // Si la partie a déjà commencé mais l'origine n'a jamais été figée (déploiement rétro-compatible), on la fige maintenant
+      try{
+        const snapOri2 = await getDoc(doc(db,'game','config'));
+        const cfgOri2 = snapOri2.exists() ? snapOri2.data() : {};
+        if(cfgOri2 && cfgOri2.missionStartedAt && !cfgOri2.magasinOrigine && !cfgOri2.magasinOrigineId){
+          if(window.NautilusMagasinGuard && window.NautilusMagasinGuard.assurerOrigineDepuisCourant){
+            window.NautilusMagasinGuard.assurerOrigineDepuisCourant().catch(function(){});
+          }
+        }
+      }catch(e){}
     }
   }
 
@@ -8716,6 +8742,7 @@ window.PWAInstall = {
 <script src="artefact-moteur.js?v=6"></script>
 <script src="artefact-service.js?v=7"></script>
 <script src="magasin-fnac.js?v=1"></script>
+<script src="magasin-guard.js?v=1"></script>
 <script>
 /* Carte « MAGASIN DE LA MISSION » : liste officielle + recherche + géoloc
    à la demande. Le choix est mémorisé localement (nautilusMagasin) et repris
@@ -8822,16 +8849,42 @@ window.PWAInstall = {
     chargerEtAfficher();
     sel.addEventListener('change', function(){
       var id = sel.value; if(!id) return;
-      window.NautilusMagasin.chargerListe().then(function(r){
+      window.NautilusMagasin.chargerListe().then(async function(r){
         var m = (r.magasins||[]).find(function(x){return x.id===id;});
-        if(m){ window.NautilusMagasin.memoriser(m, 'ecoutille'); courant = window.NautilusMagasin.courant(); sel.style.borderColor='#d8e0e6'; sel.style.boxShadow=''; }
+        if(!m) return;
+        // Garde : si partie globale démarrée, changement de magasin = refusé
+        try{
+          if(window.NautilusMagasinGuard){
+            var gc = await window.NautilusMagasinGuard.verifierAcces({ magasin: m });
+            if(!gc.autorise && gc.motif==='changement-magasin'){
+              // revert visuel vers origine
+              if(gc.origine && gc.origine.id) sel.value = gc.origine.id;
+              var msg='⛔ Magasin d’origine figé : Fnac '+(gc.origine&&gc.origine.nom?gc.origine.nom:gc.origine.id)+' — changement impossible après le départ.';
+              try{ if(window.Nautilus && window.Nautilus.showToast) window.Nautilus.showToast(msg,'warning',6000); else alert(msg); }catch(e){}
+              return;
+            }
+          }
+        }catch(e){}
+        window.NautilusMagasin.memoriser(m, 'ecoutille'); courant = window.NautilusMagasin.courant(); sel.style.borderColor='#d8e0e6'; sel.style.boxShadow='';
       });
     });
     btn.addEventListener('click', function(){
       var id = sel.value; if(!id) return;
-      window.NautilusMagasin.chargerListe().then(function(r){
+      window.NautilusMagasin.chargerListe().then(async function(r){
         var m = (r.magasins||[]).find(function(x){return x.id===id;});
-        if(m) window.NautilusMagasin.memoriser(m, 'ecoutille-start');
+        if(!m) return;
+        try{
+          if(window.NautilusMagasinGuard){
+            var gc = await window.NautilusMagasinGuard.verifierAcces({ magasin: m });
+            if(!gc.autorise && gc.motif==='changement-magasin'){
+              if(gc.origine && gc.origine.id) sel.value = gc.origine.id;
+              var msg2='⛔ Magasin d’origine figé : Fnac '+(gc.origine&&gc.origine.nom?gc.origine.nom:gc.origine.id)+' — changement impossible après le départ.';
+              try{ if(window.Nautilus && window.Nautilus.showToast) window.Nautilus.showToast(msg2,'warning',6000); }catch(e){}
+              return;
+            }
+          }
+        }catch(e){}
+        window.NautilusMagasin.memoriser(m, 'ecoutille-start');
       });
     });
     // validation AVANT ouverture : exige un magasin (capture avant ecoutille.js)
