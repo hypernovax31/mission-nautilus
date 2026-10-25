@@ -352,6 +352,22 @@
 /* ACCESSIBILITÉ — police système agrandie + zoom navigateur            */
 /* (règles reprises de css/palier3.css, qui ne sert plus au Palier 3)   */
 /* ------------------------------------------------------------------ */
+.palier-epreuve-titre{
+  font: 600 12px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #bfe0ff;
+  opacity: .95;
+  margin-left: auto;
+  border-left: 1px solid #24405e;
+  padding-left: 12px;
+  white-space: nowrap;
+}
+#sasUnlockedTitle{
+  display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+}
+@media (max-width:600px){ .palier-epreuve-titre{ margin-left:0; border-left:none; padding-left:0; font-size:11px; } }
+
 html { font-size: 100%; }
 h1, h2, h3, h4, h5, h6, p, li, span, a, label, summary, b, em, i, strong {
   overflow-wrap: break-word; word-break: break-word;

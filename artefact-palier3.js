@@ -236,18 +236,16 @@
           + '<span>' + (fait ? 'obtenu' : ind.heures + ' h de surface') + '</span></button>';
       }).join('');
 
+      var sceauFait = etat.session && Array.isArray(etat.session.etapesValidees) && etat.session.etapesValidees.indexOf('sceau') >= 0;
+      var blocIntrouvable = sceauFait ? '' : '<div class="af-actions"><button type="button" class="af-btn af-btn--ghost" id="afIntrouvable">📵 Livre introuvable</button></div>';
+      var blocIndices = sceauFait ? '' : '<details class="af-indices" id="afIndices"><summary>🕯️ Demander un indice <span class="af-indices-note">(chaque indice coûte une remontée)</span></summary><div class="af-indices-liste">' + boutonsIndices + '</div></details>';
       return '<div class="af-pupitre">'
         + '<div class="af-jauge" role="status" aria-label="Tentatives restantes">'
         +   '<span class="af-jauge-label">Tentatives avant remontée</span>'
         +   '<span class="af-jauge-points">' + points + '</span>'
         + '</div>'
-        + '<div class="af-actions">'
-        +   '<button type="button" class="af-btn af-btn--ghost" id="afIntrouvable">📵 Livre introuvable</button>'
-        + '</div>'
-        + '<details class="af-indices" id="afIndices">'
-        +   '<summary>🕯️ Demander un indice <span class="af-indices-note">(chaque indice coûte une remontée)</span></summary>'
-        +   '<div class="af-indices-liste">' + boutonsIndices + '</div>'
-        + '</details>'
+        + blocIntrouvable
+        + blocIndices
         + (blocTransmis ? '<div class="af-indices-obtenus">' + blocTransmis + '</div>' : '')
         + '</div>';
     }
@@ -471,10 +469,10 @@
     function vueEtape(etape) {
       etat.vue = etape.id;
       var grille = etape.type === 'code'
-        ? '<div class="af-grille"><b>Table du Nautilus</b>'
+        ? '<div class="af-grille"><b>Table du Nautilus — pour coder les lettres en nombres</b>'
           + '<span>A=01 B=02 C=03 D=04 E=05 F=06 G=07 H=08 I=09 J=10 K=11 L=12 M=13</span>'
           + '<span>N=14 O=15 P=16 Q=17 R=18 S=19 T=20 U=21 V=22 W=23 X=24 Y=25 Z=26</span>'
-          + '<span>Un nombre s’écrit sur DEUX chiffres : 6 → 06. Les fragments se séparent par un tiret.</span>'
+          + '<span>Ex : C → 03. Écris chaque nombre sur 2 chiffres (6 → 06) et sépare les fragments par un tiret.</span>'
           + '</div>'
         : '';
       rendre('<div class="af-carte">'

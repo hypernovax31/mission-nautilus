@@ -17,7 +17,7 @@
   <!-- artefact.css remplace palier3.css (l'ancien puzzle photo) : styles du
        jeu de l'ouvrage (.af-*), du sélecteur de magasin (.magasin-*) et de
        l'onglet admin de l'artefact (.adm-af-*). -->
-  <link rel="stylesheet" href="css/artefact.css?v=2">
+  <link rel="stylesheet" href="css/artefact.css?v=3">
   <!-- Lecteur QR du SAS (caméra + import photo). Le code-barres de l'ouvrage,
        lui, est lu par artefact-palier3.js (BarcodeDetector / ZXing / saisie). -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
@@ -125,7 +125,7 @@
 
   <!-- ÉPREUVE : L'ARTEFACT DU NAUTILUS (chasse à l'ouvrage en magasin). -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 3 — L'ARTEFACT DU NAUTILUS</h2>
+    <h2 id="sasUnlockedTitle">PALIER 3 — L'ARTEFACT DU NAUTILUS <span class="palier-epreuve-titre">Retrouve l’ouvrage du Nautilus</span></h2>
     <div class="body">
       <div id="artefactStatut" class="status-banner info">⏳ <b>Le Nautilus cherche un ouvrage…</b></div>
       <div id="artefactHost"></div>
@@ -158,14 +158,14 @@
      AUCUN de ces fichiers ne contient de titre d'ouvrage, d'EAN, de SKU,
      de catégorie Fnac ou de réponse : les vérifications portent sur des
      empreintes salées calculées à la volée. -->
-<script src="artefact-moteur.js?v=5"></script>
+<script src="artefact-moteur.js?v=6"></script>
 <!-- Lecteur des fiches publiques fnac.com : strictement hors ligne, jamais
      appelé depuis le jeu. Sert au panneau admin (onglet 📖 Artefact) pour lire
      une fiche enregistrée par l’organisateur, et à l’outil Node de collecte. -->
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="artefact-service.js?v=6"></script>
 <script src="magasin-fnac.js?v=1"></script>
-<script src="artefact-palier3.js?v=2"></script>
+<script src="artefact-palier3.js?v=3"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
 <script src="victoire-palier.js?v=12"></script>
 <script src="records-palier.js?v=2"></script>
@@ -668,9 +668,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       journal('🧪 Aperçu : choisis un magasin pour préparer les pistes d’exemple.', 'info');
     }
 
-    statut('📖 <b>Épreuve : l’artefact du Nautilus.</b> Retrouve l’ouvrage désigné, passe-le au hublot d\'identification, '
-      + 'puis ouvre la chambre forte. <b>3 réponses refusées</b> = remontée en surface.'
-      + (magasin ? '<br>📍 Magasin : <b>' + esc(magasin.nom || magasin.id) + '</b>.' : ''), 'info');
+    // (bandeau Épreuve/Magasin retiré — concision)
 
     jeu = window.NautilusArtefactJeu.init($('artefactHost'), {
       equipe: monEquipage(),
@@ -713,8 +711,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       if (etat.session && etat.session.magasinId && window.NautilusMagasin && window.NautilusMagasin.trouver) {
         return window.NautilusMagasin.trouver(etat.session.magasinId).then(function (r) {
           var fiche = r && r.magasin;
-          if (fiche) statut('📖 <b>Épreuve : l’artefact du Nautilus.</b> 3 réponses refusées = remontée en surface.'
-            + '<br>📍 Magasin : <b>' + esc(fiche.nom) + '</b> · ' + esc(fiche.ville) + ' (' + esc(fiche.cp) + ')', 'info');
+          if (fiche) { /* bandeau retiré */ }
         });
       }
     });

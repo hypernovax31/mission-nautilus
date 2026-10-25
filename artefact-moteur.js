@@ -745,11 +745,11 @@
   var REGLES = [
     {
       id: 'r1', nom: 'le premier mot, la signature, l’édition',
-      consigne: "Le Nautilus exige la signature de l'ouvrage.\n"
-              + "Prends le PREMIER MOT SIGNIFICATIF du titre (sans l'article initial) et compte ses lettres.\n"
-              + "Ajoute l'INITIALE du signataire : le nom de la personne, ou la mention qui en tient lieu.\n"
-              + "Termine par le NUMÉRO de l'édition, sur deux chiffres.\n"
-              + "Assemble les trois fragments avec des tirets : NOMBRE-LETTRE-ÉDITION.",
+      consigne: "Signature : NOMBRE-LETTRE-ÉDITION.\n"
+              + "1) Lettres du 1ᵉʳ mot du titre (sans Le/La/Les/Un/Une…).\n"
+              + "2) Initiale de l'auteur (C si Collectif).\n"
+              + "3) N° d'édition sur 2 chiffres.\n"
+              + "Sépare par des tirets. Ex : 05-S-02.",
       format: 'NN-L-NN',
       calcul: function (l) {
         var mot = premierMot(l.titre);
@@ -760,11 +760,11 @@
     },
     {
       id: 'r2', nom: 'le premier mot, la maison, l’édition',
-      consigne: "Le Nautilus exige la signature de l'ouvrage.\n"
-              + "Prends le PREMIER MOT SIGNIFICATIF du titre (sans l'article initial) et compte ses lettres.\n"
-              + "Ajoute la DERNIÈRE LETTRE du nom de la maison qui l'a imprimé.\n"
-              + "Termine par le NUMÉRO de l'édition, sur deux chiffres.\n"
-              + "Assemble les trois fragments avec des tirets : NOMBRE-LETTRE-ÉDITION.",
+      consigne: "Signature : NOMBRE-LETTRE-ÉDITION.\n"
+              + "1) Lettres du 1ᵉʳ mot du titre (sans article).\n"
+              + "2) Dernière lettre de la maison d'édition.\n"
+              + "3) N° d'édition sur 2 chiffres.\n"
+              + "Tirets entre chaque. Ex : 05-N-02.",
       format: 'NN-L-NN',
       calcul: function (l) {
         var mot = premierMot(l.titre);
@@ -775,11 +775,11 @@
     },
     {
       id: 'r3', nom: 'le titre entier, la signature, l’année',
-      consigne: "Le Nautilus exige la signature de l'ouvrage.\n"
-              + "Compte les MOTS du titre complet (les petits mots comptent, la ponctuation non).\n"
-              + "Ajoute l'INITIALE du signataire : le nom de la personne, ou la mention qui en tient lieu.\n"
-              + "Termine par les DEUX DERNIERS CHIFFRES de l'année imprimée.\n"
-              + "Assemble les trois fragments avec des tirets : NOMBRE-LETTRE-ANNÉE.",
+      consigne: "Signature : NOMBRE-LETTRE-ANNÉE.\n"
+              + "1) Nombre de mots du titre (tout compte).\n"
+              + "2) Initiale de l'auteur (C si Collectif).\n"
+              + "3) 2 derniers chiffres de l'année.\n"
+              + "Tirets entre chaque. Ex : 04-S-24.",
       format: 'NN-L-NN',
       calcul: function (l) {
         var mots = motsDuTitre(l.titre).length;
