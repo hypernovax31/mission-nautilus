@@ -566,7 +566,9 @@
     var v = M.validerLivre(livre);
     if (!v.livre) return Promise.reject(new Error('fallback invalide: ' + v.erreurs.join('; ')));
     var mag = String(magasinId);
-    return genererCartouche(v.livre, mag, { maintenant: maintenant }).then(function(r){ return r.cartouche; });
+    // sansCoffre: n'écrit que la cartouche (pas de coffre) pour éviter un second write qui
+    // échouerait si Firestore exige encore un auth sur /coffres. La cartouche suffit au jeu.
+    return genererCartouche(v.livre, mag, { maintenant: maintenant, sansCoffre: true }).then(function(r){ return r.cartouche; });
   }
 
   /* Ouverture (ou reprise) de la session d'un équipage.
@@ -596,12 +598,22 @@
         if (cfg.mode === 'fonction' && cfg.endpoint) {
           return appelerFonction('selectionner', { equipe: cle, magasinId: magasin })
             .then(function (r) {
-              if (!r || !r.cartouche) return { erreur: 'aucun-ouvrage', message: M.MESSAGES.aucunOuvrageMagasin };
-              return creerSession(cle, magasin, r.cartouche, 'automatique-serveur', cfg, maintenant, session);
+              if (r && r.cartouche) return creerSession(cle, magasin, r.cartouche, 'automatique-serveur', cfg, maintenant, session);
+              // Aucun ouvrage via fonction → fallback local garanti
+              return assurerCartoucheFallback(magasin, maintenant).then(function(fb){
+                return creerSession(cle, magasin, fb, 'automatique-fallback-fonction', cfg, maintenant, session);
+              }).catch(function(){
+                return { erreur: 'aucun-ouvrage', message: M.MESSAGES.aucunOuvrageMagasin };
+              });
             })
             .catch(function (e) {
-              return { erreur: 'service-indisponible', message: 'Service de sélection injoignable : '
-                + M.nettoyerTexte(e && e.message, 120) };
+              // Fonction injoignable → fallback local
+              return assurerCartoucheFallback(magasin, maintenant).then(function(fb){
+                return creerSession(cle, magasin, fb, 'automatique-fallback-fonction', cfg, maintenant, session);
+              }).catch(function(){
+                return { erreur: 'service-indisponible', message: 'Service de sélection injoignable : '
+                  + M.nettoyerTexte(e && e.message, 120) };
+              });
             });
         }
 

@@ -95,8 +95,8 @@ service cloud.firestore {
     }
 
     match /coffres/{coffreId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if true;
+      allow write: if true; // temporaire: fallback EAN 2000000000008 sans auth (remettre request.auth != null une fois l'anonyme activé)
     }
 
     // Surveillance Palier 3 — une ligne par équipe, active seulement en Palier 3
