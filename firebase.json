@@ -32,10 +32,14 @@
         "node_modules",
         ".git",
         "*.log",
-        "artefact-moteur.js"
+        "artefact-moteur.js",
+        "fnac-lecteur.js",
+        "magasins-fnac.json"
       ],
       "predeploy": [
-        "cp artefact-moteur.js functions/artefact-moteur.js"
+        "cp artefact-moteur.js functions/artefact-moteur.js",
+        "cp fnac-lecteur.js functions/fnac-lecteur.js",
+        "cp data/magasins-fnac.json functions/magasins-fnac.json"
       ]
     }
   ]

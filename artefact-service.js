@@ -29,9 +29,12 @@
      et n'est valable que 15 minutes AU MOMENT DE PRÉPARER la mission.
    · mode « fonction » (Cloud Functions déployées) : le service
      serveur vérifie lui-même la disponibilité et renvoie une réponse
-     sans aucune donnée d'ouvrage. Aucun appel à fnac.com n'est fait
-     depuis le navigateur (blocage CORS, exposition de la logique, et
-     respect des conditions d'utilisation du site).
+     sans aucune donnée d'ouvrage. En mode direct-live (liveDirect:true),
+     il tente d'abord une recherche EN DIRECT sur fnac.com pour le magasin
+     (rayon → fiches → retrait 1h) avec politesse stricte (robots.txt,
+     3s entre requêtes, plafond 20, arrêt immédiat au mur anti-bot) ;
+     si bloqué, il retombe sans jamais contourner sur un ouvrage de
+     secours toujours en retrait 1h.
 
    La fenêtre de 15 minutes NE CHRONOMÈTRE JAMAIS LE MATELOT : une fois
    l'ouvrage affecté à la session, il peut le chercher aussi longtemps
@@ -82,6 +85,9 @@
     iterationsTexte: M.ITERATIONS_DEFAUT,
     maxErreurs: M.MAX_ERREURS,
     magasinDefaut: '',
+    liveDirect: true,                       // direct live : recherche Fnac en direct à l'ouverture (avec fallback garanti 1h si mur anti-bot)
+    liveMaxFiches: 12,
+    liveDelaiMs: 3000,
     catalogueVersion: '',
     magasinsVersion: ''
   };
