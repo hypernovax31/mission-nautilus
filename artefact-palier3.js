@@ -444,7 +444,7 @@
           return;
         }
         dire('🔏 Le hublot examine l’ouvrage…', '');
-        service.verifierEtape(etat.session.equipe, 'sceau', normalise).then(function (r) {
+        service.verifierEtape(etat.session.equipe, 'sceau', normalise, { matelotKey: (o.matelot && o.matelot.memberKey) || '' }).then(function (r) {
           majSession(r);
           if (r.ok) {
             journal('🔏 <b>Le hublot reconnait l\'ouvrage.</b> L’artefact du Nautilus est authentifié.', 'success');
@@ -502,7 +502,7 @@
         if (!valeur.trim()) { dire('⚠️ Saisis une réponse avant de sceller.', 'warn'); return; }
         champ.disabled = true;
         dire('🔎 Le Nautilus vérifie…', '');
-        service.verifierEtape(etat.session.equipe, etape.id, valeur).then(function (r) {
+        service.verifierEtape(etat.session.equipe, etape.id, valeur, { matelotKey: (o.matelot && o.matelot.memberKey) || '' }).then(function (r) {
           majSession(r);
           champ.disabled = false;
           if (r.ok) {
@@ -539,7 +539,17 @@
         etat.session.etapesValidees = r.etapesValidees;
         etat.session.etape = r.etapesValidees.length;
       }
-      if (typeof r.erreurs === 'number') etat.session.erreurs = r.erreurs;
+      if (typeof r.erreurs === 'number') {
+        // si on a une carte perso, on la met à jour aussi (sinon l'affichage repasserait à 0 au prochain chargement)
+        var _mk2 = (o.matelot && o.matelot.memberKey) || '';
+        if (_mk2 && etat.session.erreursParMatelot) {
+          // le serveur a déjà resetté à 0 en cas de remontée, on reflète la valeur retournée
+          // sauf si remontée (r.remontee) : le serveur stocke 0 mais on affiche le max pour l'animation
+          if (r.remontee) etat.session.erreursParMatelot[_mk2] = 0;
+          else etat.session.erreursParMatelot[_mk2] = r.erreurs;
+        }
+        etat.session.erreurs = r.erreurs;
+      }
       if (r.fini) etat.session.statut = 'terminee';
     }
 
@@ -723,7 +733,11 @@
           return;
         }
         etat.session = r.session;
-        etat.erreurs = Number(r.session.erreurs || 0);
+        (function(){
+          var _mk = (o.matelot && o.matelot.memberKey) || '';
+          var _map = r.session.erreursParMatelot || {};
+          etat.erreurs = _mk && _map[_mk] != null ? Number(_map[_mk]||0) : Number(r.session.erreurs || 0);
+        })();
         etat.indices = r.session.indicesUtilises || [];
         if (r.session.statut === 'suspendue') { vueSuspendue(r.session); return; }
         if (r.session.statut === 'terminee') { terminer(); return; }

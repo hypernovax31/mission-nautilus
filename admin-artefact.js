@@ -247,13 +247,98 @@
     var el=$('afP3-'+equipe);
     if(!el) return;
     el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span>';
+    function afficherPasDeSession(msg){
+      // on tente un dernier recours : afficher la cartouche si elle existe déjà dans le DOM ou via lecture directe Firestore
+      el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">'+esc(msg || '— pas de session')+'</span>';
+    }
+    function lireSessionRobuste(eq){
+      // 1) via le service artefact (peut être en mémoire si page en aperçu)
+      var viaService = (S() && S().lireSession) ? S().lireSession(eq).catch(function(){ return null; }) : Promise.resolve(null);
+      return viaService.then(function(sess){
+        if(sess && sess.cartoucheId) return sess;
+        // 2) fallback Firestore direct (NautilusBlocages est toujours en Firestore, même en mode aperçu)
+        if(window.NautilusBlocages && window.NautilusBlocages.db){
+          return window.NautilusBlocages.db().then(function(x){
+            return x.fs.getDoc(x.fs.doc(x.db, 'sessions', eq)).then(function(snap){
+              if(snap.exists()){
+                var d = snap.data() || null;
+                if(d && d.cartoucheId) return d;
+                // certains anciens déploiements stockaient sous teams/{eq} artefactSession
+                if(d && d.cartouche && d.cartouche.id) return d;
+              }
+              return sess;
+            }).catch(function(){ return sess; });
+          }).catch(function(){ return sess; });
+        }
+        return sess;
+      });
+    }
     if(!S() || !S().lireSession || !S().lireCoffre){
-      el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>';
+      // même sans service, on tente le fallback Firestore
+      lireSessionRobuste(equipe).then(function(sess){
+        if(!sess || !sess.cartoucheId){
+          // on tente aussi via teams/{eq} si sessions/{eq} vide (compat)
+          if(window.NautilusBlocages && window.NautilusBlocages.db){
+            window.NautilusBlocages.db().then(function(x){
+              return x.fs.getDoc(x.fs.doc(x.db, 'teams', equipe)).then(function(snap){
+                if(snap.exists()){
+                  var td = snap.data()||{};
+                  // si le palier 3 a laissé une trace dans le team doc
+                  var cand = td.artefactSession || td.p3Session || td.sessionP3 || null;
+                  if(cand && cand.cartoucheId){
+                    var cid2=cand.cartoucheId;
+                    return (S() && S().lireCoffre ? S().lireCoffre(cid2,null) : Promise.reject()).then(function(secret){ majCarteP3(equipe, secret); }).catch(function(){
+                      el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid2).slice(0,10))+'… (coffre indisponible)</span>';
+                    });
+                  }
+                }
+                afficherPasDeSession('— pas de session');
+              });
+            }).catch(function(){ afficherPasDeSession('— pas de session'); });
+          } else {
+            afficherPasDeSession('— pas de session');
+          }
+          return;
+        }
+        var cid = sess.cartoucheId;
+        return S().lireCoffre(cid, null).then(function(secret){
+          majCarteP3(equipe, secret);
+        }).catch(function(){
+          var cart = sess.cartouche;
+          if(cart && cart.id){
+            el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cart.id).slice(0,10))+'… (coffre indisponible)</span>';
+          }else if(cid){
+            el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid).slice(0,10))+'…</span>';
+          }else{
+            el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>';
+          }
+        });
+      });
       return;
     }
-    S().lireSession(equipe).then(function(sess){
+    lireSessionRobuste(equipe).then(function(sess){
       if(!sess || !sess.cartoucheId){
-        el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">— pas de session</span>';
+        // idem : on vérifie teams/{eq} en dernier recours avant d'abandonner
+        if(window.NautilusBlocages && window.NautilusBlocages.db){
+          return window.NautilusBlocages.db().then(function(x){
+            return x.fs.getDoc(x.fs.doc(x.db, 'teams', equipe)).then(function(snap){
+              if(snap.exists()){
+                var td2=snap.data()||{};
+                var cand2=td2.artefactSession||td2.p3Session||null;
+                if(cand2 && cand2.cartoucheId) return cand2;
+              }
+              afficherPasDeSession('— pas de session');
+              return null;
+            });
+          }).then(function(cand){
+            if(!cand) return;
+            var cid2=cand.cartoucheId;
+            return (S() && S().lireCoffre ? S().lireCoffre(cid2,null) : Promise.reject()).then(function(secret){ majCarteP3(equipe, secret); }).catch(function(){
+              el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid2).slice(0,10))+'… (coffre indisponible)</span>';
+            });
+          });
+        }
+        afficherPasDeSession('— pas de session');
         return;
       }
       var cid = sess.cartoucheId;
@@ -263,12 +348,14 @@
         var cart = sess.cartouche;
         if(cart && cart.id){
           el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cart.id).slice(0,10))+'… (coffre indisponible)</span>';
+        }else if(cid){
+          el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid).slice(0,10))+'…</span>';
         }else{
           el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>';
         }
       });
     }).catch(function(){
-      el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>';
+      afficherPasDeSession('— pas de session');
     });
   }
   function majCarteP3(equipe, secret){

@@ -262,7 +262,7 @@ async function selectionner(req, res) {
             const nouvelle = {
               equipe, magasinId, statut: 'active',
               cartoucheId: cartouche.id, cartouche,
-              etape: 0, etapesValidees: [], erreurs: 0,
+              etape: 0, etapesValidees: [], erreurs: 0, erreursParMatelot: {},
               indicesUtilises: [], indicesTransmis: {}, demandeIndice: null,
               introuvable: null, remplacement: null,
               selectionMode: 'direct-live',
@@ -308,7 +308,7 @@ async function selectionner(req, res) {
       const nouvelle2 = {
         equipe, magasinId, statut: 'active',
         cartoucheId: cartouche.id, cartouche,
-        etape: 0, etapesValidees: [], erreurs: 0,
+        etape: 0, etapesValidees: [], erreurs: 0, erreursParMatelot: {},
         indicesUtilises: [], indicesTransmis: {}, demandeIndice: null,
         introuvable: null, remplacement: null,
         selectionMode: 'fallback-garanti-1h',
@@ -326,7 +326,7 @@ async function selectionner(req, res) {
   const nouvelle = {
     equipe, magasinId, statut: 'active',
     cartoucheId: choix.id, cartouche: choix,
-    etape: 0, etapesValidees: [], erreurs: 0,
+    etape: 0, etapesValidees: [], erreurs: 0, erreursParMatelot: {},
     indicesUtilises: [], indicesTransmis: {}, demandeIndice: null,
     introuvable: null, remplacement: null,
     selectionMode: 'automatique-serveur-cache',
@@ -373,11 +373,30 @@ async function verifier(req, res) {
     await ref.set(champs, {merge:true});
     return res.json({ ok:true, fini, etapesValidees:nouvelles, message: fini ? MOTEUR.MESSAGES.victoire : MOTEUR.MESSAGES.etapeValidee });
   }
-  if (!r.erreur) return res.json({ ok:false, erreur:false, motif:r.motif });
-  const erreurs = Number(session.erreurs||0)+1;
+  if (!r.erreur) {
+    const _mk0 = MOTEUR.nettoyerTexte((req.body && (req.body.matelotKey || req.body.memberKey || req.body.matelot)) || '',40).replace(/[^A-Z0-9]/g,'');
+    const _err0 = _mk0 ? Number((session.erreursParMatelot && session.erreursParMatelot[_mk0])||0) : Number(session.erreurs||0);
+    const _max0 = Number(cartouche.maxErreurs) || MOTEUR.MAX_ERREURS;
+    return res.json({ ok:false, erreur:false, motif:r.motif, erreurs:_err0, maxErreurs:_max0 });
+  }
+  const _matelotKey = MOTEUR.nettoyerTexte((req.body && (req.body.matelotKey || req.body.memberKey || req.body.matelot)) || '',40).replace(/[^A-Z0-9]/g,'');
+  const _isPerso = !!_matelotKey;
+  const _prevPerso = _isPerso ? Number((session.erreursParMatelot && session.erreursParMatelot[_matelotKey])||0) : Number(session.erreurs||0);
+  const erreurs = _prevPerso + 1;
   const maxErreurs = Number(cartouche.maxErreurs) || MOTEUR.MAX_ERREURS;
-  await ref.set({ erreurs, derniereErreurLe:new Date().toISOString(), historique:ajouterHistorique(session,{ type:'erreur', texte:'Réponse refusée « '+etapeId+' » ('+erreurs+'/'+maxErreurs+') — serveur'})}, {merge:true});
-  return res.json({ ok:false, erreur:true, erreurs, maxErreurs, remontee:erreurs>=maxErreurs, motif:r.motif, dernierAvertissement: erreurs===maxErreurs-1 ? MOTEUR.MESSAGES.dernierAvertissement : '' });
+  const remontee = erreurs >= maxErreurs;
+  let champs = { derniereErreurLe:new Date().toISOString(), historique:ajouterHistorique(session,{ type:'erreur', texte:'Réponse refusée « '+etapeId+' » ('+erreurs+'/'+maxErreurs+') — serveur'}) };
+  if (_isPerso) {
+    const _map = Object.assign({}, session.erreursParMatelot || {});
+    _map[_matelotKey] = remontee ? 0 : erreurs;
+    champs.erreursParMatelot = _map;
+    const _oldGlobal = Number(session.erreurs||0);
+    let _maxGlobal = 0; Object.keys(_map).forEach(k=>{ if (_map[k] > _maxGlobal) _maxGlobal=_map[k]; });
+    champs.erreurs = Math.max(_oldGlobal, erreurs, _maxGlobal);
+    if (remontee && _oldGlobal > _maxGlobal) champs.erreurs = Math.max(_oldGlobal, erreurs);
+  } else champs.erreurs = erreurs;
+  await ref.set(champs, {merge:true});
+  return res.json({ ok:false, erreur:true, erreurs, maxErreurs, remontee, motif:r.motif, dernierAvertissement: erreurs===maxErreurs-1 ? MOTEUR.MESSAGES.dernierAvertissement : '' });
 }
 
 /* ---------- GET /etat ---------- */

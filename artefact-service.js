@@ -656,6 +656,7 @@
       etape: 0,
       etapesValidees: [],
       erreurs: (ancienne && ancienne.statut === 'terminee') ? 0 : Number(ancienne && ancienne.erreurs || 0),
+      erreursParMatelot: (ancienne && ancienne.statut === 'terminee') ? {} : Object.assign({}, (ancienne && ancienne.erreursParMatelot) || {}),
       indicesUtilises: (ancienne && ancienne.indicesUtilises) || [],
       indicesTransmis: {},
       demandeIndice: null,
@@ -718,20 +719,43 @@
       /* Échec : une erreur de plus, sauf si la réponse n'était pas
          examinable (code-barres illisible, champ vide) — un scan raté
          par la caméra ne doit pas coûter une tentative au matelot. */
-      if (!r.erreur) return { ok: false, motif: r.motif, erreur: false, erreurs: session.erreurs || 0 };
-      var erreurs = Number(session.erreurs || 0) + 1;
+      if (!r.erreur) {
+        var _mk0 = M.nettoyerTexte(o.matelotKey || o.memberKey || o.matelot || '', 40).replace(/[^A-Z0-9]/g,'');
+        var _err0 = _mk0 ? Number((session.erreursParMatelot && session.erreursParMatelot[_mk0]) || 0) : Number(session.erreurs || 0);
+        return { ok: false, motif: r.motif, erreur: false, erreurs: _err0, maxErreurs: Number(session.cartouche.maxErreurs) || M.MAX_ERREURS };
+      }
+      var _matelotKey = M.nettoyerTexte(o.matelotKey || o.memberKey || o.matelot || '', 40).replace(/[^A-Z0-9]/g,'');
+      var _isPerso = !!_matelotKey;
+      var _prevPerso = _isPerso ? Number((session.erreursParMatelot && session.erreursParMatelot[_matelotKey]) || 0) : Number(session.erreurs || 0);
+      var erreurs = _prevPerso + 1;
       var maxErreurs = Number(session.cartouche.maxErreurs) || M.MAX_ERREURS;
       var essaiBrut = M.nettoyerTexte(valeur, 40);
       var essaiLog = essaiBrut ? ' — essai : « ' + essaiBrut + ' »' : '';
+      var remontee = erreurs >= maxErreurs;
       var champs2 = {
-        erreurs: erreurs,
         derniereErreurLe: new Date().toISOString(),
         historique: ajouterHistorique(session, { type: 'erreur', texte: 'Réponse refusée à l’étape « ' + etapeId + ' »' + essaiLog + ' (' + erreurs + '/' + maxErreurs + ')', essai: essaiBrut, etapeId: etapeId })
       };
+      if (_isPerso) {
+        var _map = Object.assign({}, session.erreursParMatelot || {});
+        // en cas de remontée on rend ses 3 chances au matelot (reset) — le blocage personnel le tiendra à distance
+        _map[_matelotKey] = remontee ? 0 : erreurs;
+        champs2.erreursParMatelot = _map;
+        // on garde aussi le compteur global pour stats (max des persos)
+        var _maxGlobal = 0;
+        Object.keys(_map).forEach(function(k){ if (_map[k] > _maxGlobal) _maxGlobal = _map[k]; });
+        // l'ancienne valeur globale peut être supérieure (historique) : on ne la fait jamais reculer
+        var _oldGlobal = Number(session.erreurs || 0);
+        champs2.erreurs = Math.max(_oldGlobal, erreurs, _maxGlobal);
+        // si ce matelot vient de remonter, on ne laisse pas son 0 écraser le global
+        if (remontee && _oldGlobal > _maxGlobal) champs2.erreurs = Math.max(_oldGlobal, erreurs);
+      } else {
+        champs2.erreurs = erreurs;
+      }
       return ecrireSession(cle, champs2).then(function () {
         return {
           ok: false, motif: r.motif, erreur: true, erreurs: erreurs, maxErreurs: maxErreurs,
-          remontee: erreurs >= maxErreurs,
+          remontee: remontee,
           dernierAvertissement: erreurs === maxErreurs - 1 ? M.MESSAGES.dernierAvertissement : ''
         };
       });
@@ -878,12 +902,17 @@
              erreur, et on garde la trace des sacrifices déjà payés. */
           var validees = sceauValide ? [] : (session.etapesValidees || []);
           var nouveauxIndice = sceauValide ? {} : (session.indicesTransmis || {});
+          // on conserve les erreurs perso : chaque matelot garde ses chances
+          // si le sceau était validé on repart de zéro pour tous (nouvel ouvrage)
+          var _prevErrPerso = session.erreursParMatelot || {};
           var champs2 = {
             statut: 'active',
             cartoucheId: choix.id,
             cartouche: choix,
             etapesValidees: validees,
             etape: Math.min(choix.etapes.length - 1, validees.length),
+            erreurs: sceauValide ? 0 : Number(session.erreurs || 0),
+            erreursParMatelot: sceauValide ? {} : Object.assign({}, _prevErrPerso),
             indicesTransmis: nouveauxIndice,
             demandeIndice: null,
             introuvable: null,
@@ -919,7 +948,7 @@
     return lireSession(cle).then(function (session) {
       return stockage().poser(cheminSession(cle), {
         equipe: cle, statut: 'attente', magasinId: (session && session.magasinId) || '',
-        cartoucheId: null, cartouche: null, etape: 0, etapesValidees: [], erreurs: 0,
+        cartoucheId: null, cartouche: null, etape: 0, etapesValidees: [], erreurs: 0, erreursParMatelot: {},
         indicesUtilises: [], indicesTransmis: {}, demandeIndice: null, introuvable: null,
         remplacement: null, reinitialiseeLe: new Date().toISOString(),
         historique: [{ le: new Date().toISOString(), type: 'reinitialisation',
