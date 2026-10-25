@@ -142,6 +142,7 @@
   ];
   var REF_P2 = ['STEELBOOK','ECOTAXE','PICKING','ANTISKATING','NEURONAL','RAYTRACING','REASSORT','REPRISE','PLEIADE','DEFROISSEUR','DIAPHRAGME'];
   var EQUIPES = ['NEMO','NAUTILUS','ARONNAX','NEDLAND'];
+  var EQUIPES_TEST = ['APERCU','TEST','ANON','ANON-TEST'];
   function hashString(s){ var h=0; for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
   function motDeHash(h){ if(typeof h!=='number') return null; for(var i=0;i<REF_P1.length;i++){ if(hashString(REF_P1[i].w)===h) return REF_P1[i].w; } return null; }
   function lireTeamDoc(code){
@@ -236,11 +237,55 @@
           else if (mc && mc.motsJustes && typeof mc.motsJustes === 'object' && !Array.isArray(mc.motsJustes)) liste = Object.keys(mc.motsJustes).filter(function(k){ return mc.motsJustes[k]; });
           else if (Array.isArray(payload.motsJustes)) liste = payload.motsJustes;
           else if (payload.motsCroises && Array.isArray(payload.motsCroises)) liste = payload.motsCroises;
+          if (!liste || !liste.length){
+            try{
+              var localKey='nautilusGrilleMotsCroises:'+eq;
+              var raw=localStorage.getItem(localKey);
+              if(raw){ var arr=JSON.parse(raw); if(Array.isArray(arr) && arr.length) liste=arr; }
+              if((!liste||!liste.length) && eq==='NEMO'){
+                // test mode APERCU sometimes writes under APERCU but corresponds to NEMO — check aussi
+                var raw2=localStorage.getItem('nautilusGrilleMotsCroises:APERCU');
+                if(raw2){ var arr2=JSON.parse(raw2); if(Array.isArray(arr2)&&arr2.length) liste=arr2; }
+                var raw3=localStorage.getItem('nautilusGrilleMotsCroises:TEST');
+                if(!liste||!liste.length){ if(raw3){ var arr3=JSON.parse(raw3); if(Array.isArray(arr3)&&arr3.length) liste=arr3; } }
+              }
+            }catch(e){}
+          }
           if (liste) majP2Chips(eq, liste); else majP2Chips(eq, []);
         }catch(e){}
       }).catch(function(){ try{ majP2Chips(eq, []); }catch(e){} });
       majCarteP3Auto(eq);
     });
+    // équipes de test (APERCU/TEST) — n'apparaissent que si une session locale existe (mode test/admin)
+    try{
+      EQUIPES_TEST.forEach(function(eq){
+        var has = false;
+        try{
+          if(localStorage.getItem('nautilusP3Session_'+eq)) has=true;
+          var agg = localStorage.getItem('nautilusP3SessionSecrets'); if(agg && JSON.parse(agg)[eq]) has=true;
+          var cur = localStorage.getItem('nautilusP3CurrentSession'); if(cur && JSON.parse(cur).equipe===eq) has=true;
+          var allKeys = []; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k && k.indexOf('nautilusP3Secret_')===0) allKeys.push(k); }
+          if(allKeys.length && !has){
+            // si des secrets apercu existent, on crée une carte TEST générique une seule fois
+            var testAgg = localStorage.getItem('nautilusP3ApercuSecrets') || localStorage.getItem('nautilusP3TestSecrets');
+            if(testAgg && Object.keys(JSON.parse(testAgg)).length) has = (eq==='APERCU');
+          }
+        }catch(e){}
+        if(!has) return;
+        var cards = $('afTeamCards');
+        if(!cards) return;
+        if($('[data-team=\"'+eq+'\"]')){ majCarteP3Auto(eq); return; }
+        var div = document.createElement('div');
+        div.className = 'adm-af-teamcard';
+        div.setAttribute('data-team', eq);
+        div.innerHTML = '<div class=\"adm-af-teamhead\"><span>'+esc(eq)+' <span class=\"small\" style=\"background:#fff4d8;border:1px solid #e8c05f;border-radius:999px;padding:1px 6px;font-size:10px\">TEST</span></span><span class=\"small\" id=\"afTeamPill-'+eq+'\" style=\"color:#6e7a84\">test/apercu</span></div>'
+          + '<div class=\"adm-af-row\"><span class=\"adm-af-lbl\">P1</span><span class=\"adm-af-chip adm-af-chip--hl\" id=\"afP1-'+eq+'\">—</span><span class=\"small\" style=\"color:#6e7a84\">morse</span></div>'
+          + '<div class=\"adm-af-row\"><span class=\"adm-af-lbl\">P2</span><div class=\"adm-af-chips\" id=\"afP2wrap-'+eq+'\">—</div></div>'
+          + '<div class=\"adm-af-row\" id=\"afP3-'+eq+'\"><span class=\"adm-af-lbl\">P3</span><span class=\"small\" style=\"color:#6e7a84\">chargement…</span></div>';
+        cards.appendChild(div);
+        majCarteP3Auto(eq);
+      });
+    }catch(e){}
     try{ ecouterP2Live(); }catch(e){}
   }
   function majCarteP3Auto(equipe){
@@ -251,11 +296,43 @@
       // on tente un dernier recours : afficher la cartouche si elle existe déjà dans le DOM ou via lecture directe Firestore
       el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">'+esc(msg || '— pas de session')+'</span>';
     }
+    function lireSecretLocalStorage(cid){
+      try{
+        var raw = localStorage.getItem('nautilusP3Secret_'+cid);
+        if(raw){ var j=JSON.parse(raw); if(j && j.reponses) return j; if(j && j.secret && j.secret.reponses) return j.secret; }
+      }catch(e){}
+      try{
+        var agg = localStorage.getItem('nautilusP3ApercuSecrets');
+        if(agg){ var m=JSON.parse(agg); if(m && m[cid] && m[cid].reponses) return m[cid]; if(m && m[cid] && m[cid].secret) return m[cid].secret || m[cid]; }
+      }catch(e){}
+      try{
+        var t2 = localStorage.getItem('nautilusP3TestSecrets');
+        if(t2){ var m2=JSON.parse(t2); if(m2 && m2[cid]) return m2[cid].reponses ? m2[cid] : m2[cid].secret || m2[cid]; }
+      }catch(e){}
+      try{
+        var all = localStorage.getItem('nautilusP3SessionSecrets');
+        if(all){ var mm=JSON.parse(all); for(var k in mm){ if(mm[k] && mm[k].cartoucheId===cid && mm[k].secret) return mm[k].secret; if(mm[k] && mm[k].secret && mm[k].secret.reponses) return mm[k].secret; } }
+      }catch(e){}
+      return null;
+    }
     function lireCoffreRobuste(cid){
-      var viaService = (S() && S().lireCoffre) ? S().lireCoffre(cid, null).catch(function(){ return null; }) : Promise.resolve(null);
-      return viaService.then(function(secret){
+      var local = lireSecretLocalStorage(cid);
+      if(local && local.reponses) return Promise.resolve(local);
+      var viaServicePhrases = [];
+      if(S() && S().lireCoffre){
+        viaServicePhrases.push(function(){ return S().lireCoffre(cid, null).catch(function(){ return null; }); });
+        viaServicePhrases.push(function(){ return S().lireCoffre(cid, 'NEMO2026').catch(function(){ return null; }); });
+        viaServicePhrases.push(function(){ return S().lireCoffre(cid, '').catch(function(){ return null; }); });
+      }
+      var chain = Promise.resolve(null);
+      viaServicePhrases.forEach(function(fn){
+        chain = chain.then(function(prev){ if(prev && prev.reponses) return prev; return fn().then(function(cur){ return cur || prev; }); });
+      });
+      if(!viaServicePhrases.length) chain = Promise.resolve(null);
+      return chain.then(function(secret){
         if(secret && secret.reponses) return secret;
-        // secours : lecture directe du doc coffres/{id} (enClair)
+        var fromLocal = lireSecretLocalStorage(cid);
+        if(fromLocal && fromLocal.reponses) return fromLocal;
         if(window.NautilusBlocages && window.NautilusBlocages.db){
           return window.NautilusBlocages.db().then(function(x){
             return x.fs.getDoc(x.fs.doc(x.db, 'coffres', cid)).then(function(snap){
@@ -263,19 +340,51 @@
                 var d=snap.data()||{};
                 if(d.secret && d.secret.reponses) return d.secret;
                 if(d.secret && d.enClair) return d.secret;
+                if(d.coffre){
+                  var phrases = [null,'NEMO2026',''];
+                  var pChain = Promise.resolve(null);
+                  phrases.forEach(function(ph){
+                    pChain = pChain.then(function(pr){ if(pr && pr.reponses) return pr; if(S() && S().dechiffrer) return S().dechiffrer(d.coffre, ph).then(function(dec){ return dec && dec.reponses ? dec : pr; }).catch(function(){ return pr; }); return pr; });
+                  });
+                  return pChain.then(function(decoded){ if(decoded && decoded.reponses) return decoded; return secret || fromLocal; });
+                }
               }
-              return secret;
-            }).catch(function(){ return secret; });
-          }).catch(function(){ return secret; });
+              return secret || fromLocal;
+            }).catch(function(){ return secret || fromLocal; });
+          }).catch(function(){ return secret || fromLocal; }).then(function(got){
+            if(got && got.reponses) return got;
+            var loc2 = lireSecretLocalStorage(cid);
+            return loc2 || got;
+          });
         }
-        return secret;
+        return secret || fromLocal;
       });
+    }
+    function lireSessionLocale(eq){
+      try{
+        var raw = localStorage.getItem('nautilusP3Session_'+eq);
+        if(raw){ var s=JSON.parse(raw); if(s && s.cartoucheId) return s; }
+        var agg = localStorage.getItem('nautilusP3SessionSecrets');
+        if(agg){ var m=JSON.parse(agg); if(m && m[eq] && m[eq].cartoucheId) return m[eq]; if(m && m[eq] && m[eq].session && m[eq].session.cartoucheId) return m[eq].session; }
+        var cur = localStorage.getItem('nautilusP3CurrentSession');
+        if(cur){ var c=JSON.parse(cur); if(c && c.equipe===eq && c.cartoucheId) return c; }
+        // dernier recours : chercher toute clé nautilusP3Secret_* avec équipe correspondante
+        for(var i=0;i<localStorage.length;i++){
+          var k=localStorage.key(i);
+          if(k && k.indexOf('nautilusP3Session')===0){
+            try{ var v=JSON.parse(localStorage.getItem(k)); if(v && v.equipe===eq && v.cartoucheId) return v; }catch(e){}
+          }
+        }
+      }catch(e){}
+      return null;
     }
     function lireSessionRobuste(eq){
       // 1) via le service artefact (peut être en mémoire si page en aperçu)
       var viaService = (S() && S().lireSession) ? S().lireSession(eq).catch(function(){ return null; }) : Promise.resolve(null);
       return viaService.then(function(sess){
         if(sess && sess.cartoucheId) return sess;
+        var loc = lireSessionLocale(eq);
+        if(loc && loc.cartoucheId) return loc;
         // 2) fallback Firestore direct (NautilusBlocages est toujours en Firestore, même en mode aperçu)
         if(window.NautilusBlocages && window.NautilusBlocages.db){
           return window.NautilusBlocages.db().then(function(x){
@@ -286,8 +395,10 @@
                 // certains anciens déploiements stockaient sous teams/{eq} artefactSession
                 if(d && d.cartouche && d.cartouche.id) return d;
               }
-              return sess;
-            }).catch(function(){ return sess; });
+              var loc2 = lireSessionLocale(eq);
+              if(loc2 && loc2.cartoucheId) return loc2;
+              return sess || loc2;
+            }).catch(function(){ var loc3=lireSessionLocale(eq); return loc3 || sess; });
           }).catch(function(){ return sess; });
         }
         return sess;

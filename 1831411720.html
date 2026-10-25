@@ -163,10 +163,10 @@
      appelé depuis le jeu. Sert au panneau admin (onglet 📖 Artefact) pour lire
      une fiche enregistrée par l’organisateur, et à l’outil Node de collecte. -->
 <script src="fnac-lecteur.js?v=1"></script>
-<script src="artefact-service.js?v=7"></script>
+<script src="artefact-service.js?v=9"></script>
 <script src="magasin-fnac.js?v=1"></script>
 <script src="magasin-guard.js?v=1"></script>
-<script src="artefact-palier3.js?v=5"></script>
+<script src="artefact-palier3.js?v=6"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
 <script src="victoire-palier.js?v=12"></script>
 <script src="records-palier.js?v=2"></script>
@@ -551,6 +551,26 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       })
       .then(function (r) {
         journal('🧪 <b>Aperçu organisateur.</b> ' + r.faites.length + ' piste(s) d’exemple préparée(s) pour ce magasin.', 'info');
+        try{
+          // miroir localStorage pour que l’onglet 🔑 Réponses (index.html) voie les solutions même en mode test/apercu (mémoire seule)
+          var agg = {}; try{ agg = JSON.parse(localStorage.getItem('nautilusP3ApercuSecrets')||'{}'); }catch(e){ agg={}; }
+          Object.keys(_secretsApercu||{}).forEach(function(cid){
+            var sec=_secretsApercu[cid];
+            agg[cid]=sec;
+            try{ localStorage.setItem('nautilusP3Secret_'+cid, JSON.stringify(sec)); }catch(e){}
+          });
+          localStorage.setItem('nautilusP3ApercuSecrets', JSON.stringify(agg));
+          // journal aussi pour APERCU (même hors admin code, utile pour test ZZZZ-0000)
+          if(enModeTest() && r.faites && r.faites[0]){
+            var first = r.faites[0];
+            var sec0 = _secretsApercu[first.id];
+            if(sec0){
+              var stash={}; try{ stash=JSON.parse(localStorage.getItem('nautilusP3TestSecrets')||'{}');}catch(e){}
+              stash[first.id]=sec0;
+              localStorage.setItem('nautilusP3TestSecrets', JSON.stringify(stash));
+            }
+          }
+        }catch(e){}
         return { demo: true, faites: r.faites.length };
       })
       .catch(function (e) {
@@ -739,7 +759,22 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
     return jeu.charger().then(function () {
       var etat = jeu.etat();
-      if (etat.session && apercuAdminAutorise()) publierSolutionsApercu(etat.session.cartoucheId);
+      if (etat.session && (apercuAdminAutorise() || enModeTest())){
+        publierSolutionsApercu(etat.session.cartoucheId);
+        try{
+          var cid=etat.session.cartoucheId; var sec=_secretsApercu[cid];
+          if(sec){
+            localStorage.setItem('nautilusP3Secret_'+cid, JSON.stringify(sec));
+            var agg={}; try{ agg=JSON.parse(localStorage.getItem('nautilusP3ApercuSecrets')||'{}');}catch(e){}
+            agg[cid]=sec; localStorage.setItem('nautilusP3ApercuSecrets', JSON.stringify(agg));
+            var sessAgg={}; try{ sessAgg=JSON.parse(localStorage.getItem('nautilusP3SessionSecrets')||'{}');}catch(e){}
+            sessAgg[etat.session.equipe||monEquipage()]={ cartoucheId:cid, secret:sec, session:etat.session };
+            localStorage.setItem('nautilusP3SessionSecrets', JSON.stringify(sessAgg));
+            localStorage.setItem('nautilusP3Session_'+(etat.session.equipe||monEquipage()), JSON.stringify(etat.session));
+            localStorage.setItem('nautilusP3CurrentSession', JSON.stringify({ equipe: etat.session.equipe||monEquipage(), cartoucheId:cid }));
+          }
+        }catch(e){}
+      }
       if (etat.session && etat.session.magasinId && window.NautilusMagasin && window.NautilusMagasin.trouver) {
         return window.NautilusMagasin.trouver(etat.session.magasinId).then(function (r) {
           var fiche = r && r.magasin;
@@ -756,7 +791,12 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
         que deux visiteurs anonymes ne se retrouvent pas dans la même
         session ni sur la même piste. */
   function monEquipage() {
-    if (apercuAdminAutorise() || enModeTest()) return 'APERCU';
+    if (apercuAdminAutorise()) return 'APERCU';
+    if (enModeTest()){
+      if (_ident && _ident.teamCode) return _ident.teamCode;
+      try{ var ct=localStorage.getItem('nautilusCurrentTeam'); if(ct) return ct; }catch(e){}
+      return 'APERCU';
+    }
     if (_ident && !_ident.isTest && _ident.teamCode) return _ident.teamCode;
     try {
       var code = localStorage.getItem('nautilusCurrentTeam');
@@ -884,7 +924,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   <script src="palier-cinematic.js?v=3"></script>
 <!-- Onglet ADMIN de l'artefact : s'injecte dans le panneau admin existant
      (admin-button.js) sans modifier son HTML dupliqué. -->
-<script src="admin-artefact.js?v=18" defer></script>
+<script src="admin-artefact.js?v=20" defer></script>
 <script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>

@@ -163,6 +163,28 @@
     </div>
   </section>
 </main>
+<div class="sacrifice-overlay" id="sacrificeModal" aria-hidden="true">
+  <div class="sacrifice-panel" role="alertdialog" aria-modal="true" aria-labelledby="sacrificeTitle" aria-describedby="sacrificeLead">
+    <div class="sacrifice-emblem" aria-hidden="true">🆘</div>
+    <p class="sacrifice-kicker">Demande d’indice</p>
+    <h2 class="sacrifice-title" id="sacrificeTitle">Veux-tu te sacrifier ?</h2>
+    <p class="sacrifice-lead" id="sacrificeLead">L’indice sera gagné par <b>tout l’équipage</b>… mais c’est <b>toi</b> qui remonteras en surface et laisseras les commandes à un coéquipier.</p>
+    <div class="sacrifice-steps">
+      <div class="sacrifice-step"><span class="sacrifice-step-num" aria-hidden="true">1</span><div class="sacrifice-step-body"><div class="sacrifice-step-title" id="sacrificeIndice">Indice nº1 sur 3 révélé aussitôt</div><p class="sacrifice-step-desc">Il s’affiche en clair chez tout le monde et reste acquis à l’équipage, même après ton départ.</p></div></div>
+      <div class="sacrifice-step"><span class="sacrifice-step-num" aria-hidden="true">2</span><div class="sacrifice-step-body"><div class="sacrifice-step-title">Toi, tu remontes en surface pendant 1 heure</div><p class="sacrifice-step-desc">Tu ne peux plus jouer ce palier pendant 1 h. Ton compteur d’échecs reste inchangé : demander de l’aide n’est pas un échec.</p></div></div>
+      <div class="sacrifice-step"><span class="sacrifice-step-num" aria-hidden="true">3</span><div class="sacrifice-step-body"><div class="sacrifice-step-title">Un autre matelot prend les commandes</div><p class="sacrifice-step-desc">L’épreuve s’arrête pour toi et repart aussitôt sur l’appareil d’un coéquipier, l’indice déjà sous les yeux.</p></div></div>
+    </div>
+    <p class="sacrifice-note" id="sacrificeReste"></p>
+    <p class="sacrifice-note" id="sacrificeEscalade"></p>
+    <p class="sacrifice-note sacrifice-note--essai" id="sacrificeTestNote" hidden>🧪 Partie d’essai : ton blocage expirera aussitôt, tu pourras enchaîner les tests.</p>
+    <div class="sacrifice-actions">
+      <button type="button" class="sacrifice-btn sacrifice-btn--non" id="sacrificeCancel">↩︎ Non, je garde les commandes</button>
+      <button type="button" class="sacrifice-btn sacrifice-btn--yes" id="sacrificeConfirm">🤿 Oui, je me sacrifie</button>
+    </div>
+    <p class="sacrifice-foot">Un seul matelot joue à la fois : la relève se fait sur l’appareil du coéquipier qui prend les commandes.</p>
+  </div>
+</div>
+
 
 <!-- Journal de bord « Activité en direct », code COMMUN à tous les
      paliers. Script classique SANS defer : l'ordre avec le sas est
@@ -750,6 +772,87 @@
       onVictoire: onVictoire
     });
     ecouterGrilleEquipe();
+    renderP2Hints();
+  }
+
+  // --- INDICES PALIER 2 — mise en page unifiée sur le modèle palier1 (morse-hint-target/grid/card) ---
+  var P2_HINTS = [
+    { label: 'Indice nº1', body: 'Les 11 mots suivent la <b>recommandation rétro-futuriste</b> — chaque définition cache un produit de vos rayons.' },
+    { label: 'Indice nº2', body: 'Le plus long mot contient <b>11 lettres</b> — <b>ANTISKATING</b> (11) et <b>DEFROISSEUR</b> (11).' },
+    { label: 'Indice nº3', body: 'La première lettre d’un des mots est <b>S</b> — <b>STEELBOOK</b> ouvre la grille.' }
+  ];
+  function p2HintsKey(){
+    try{
+      var eq = null;
+      if(_ident && _ident.teamCode) eq=_ident.teamCode;
+      else try{ eq=localStorage.getItem('nautilusCurrentTeam'); }catch(e){}
+      return 'nautilusP2Hints_'+(eq||'ANON');
+    }catch(e){ return 'nautilusP2Hints_ANON'; }
+  }
+  function getP2HintsRevealed(){
+    try{ var v=localStorage.getItem(p2HintsKey()); if(v) return JSON.parse(v); }catch(e){}
+    return [false,false,false];
+  }
+  function setP2HintsRevealed(arr){
+    try{ localStorage.setItem(p2HintsKey(), JSON.stringify(arr)); }catch(e){}
+  }
+  function renderP2Hints(){
+    var host=$('mcHost');
+    if(!host) return;
+    var old=document.getElementById('p2HintsBox');
+    if(old) old.remove();
+    var revealed=getP2HintsRevealed();
+    var all=revealed.every(Boolean);
+    var nextIdx=revealed.findIndex(function(v){ return !v; });
+    var box=document.createElement('div');
+    box.id='p2HintsBox';
+    box.style.marginTop='18px';
+    var cards=P2_HINTS.map(function(h,i){
+      var rev=revealed[i];
+      return '<div class="morse-hint-card '+(rev?'morse-hint-revealed':'')+'"><div class="morse-hint-card-label">'+h.label+' '+(rev?"✓":"🔒")+'</div><div>'+(rev?h.body:'— non révélé —')+'</div></div>';
+    }).join('');
+    box.innerHTML='<div class="morse-hint-target"><div class="morse-hint-target-info">🆘 <b>Besoin d\'aide ?</b> Un indice est gagné par <b>tout l\'équipage</b>, mais celui qui le demande remonte en surface <b>1 h</b> et laisse sa place.</div><button class="morse-hint-btn" id="p2HintBtn" '+(all?'disabled':'')+'>'+(all?'✅ Tous les indices révélés':'🆘 Demander un indice')+'</button></div><div class="morse-hints-grid">'+cards+'</div>';
+    host.parentNode.insertBefore(box, host.nextSibling);
+    var btn=document.getElementById('p2HintBtn');
+    if(btn && !all){
+      btn.addEventListener('click', function(){ requestP2Hint(nextIdx); });
+    }
+  }
+  async function requestP2Hint(idx){
+    if(idx==null||idx<0) return;
+    var revealed=getP2HintsRevealed();
+    if(revealed[idx]) return;
+    // ouverture du même overlay que palier1 si présent, sinon confirm natif
+    var doSacrifice=false;
+    var overlay=document.getElementById('sacrificeModal');
+    if(overlay){
+      // réutilise le modal palier1 s'il a été copié — sinon fallback confirm
+      if(window.NautilusP1Sacrifice && window.NautilusP1Sacrifice.ouvrir) { window.NautilusP1Sacrifice.ouvrir(idx); return; }
+      doSacrifice=confirm('🆘 Demander l\'indice nº'+(idx+1)+' ? Tu remonteras en surface 1 h et un coéquipier prendra le relais. L\'indice restera acquis à tout l\'équipage.');
+    } else {
+      doSacrifice=confirm('🆘 Demander l\'indice nº'+(idx+1)+' ? Tu remonteras en surface 1 h et un coéquipier prendra le relais. L\'indice restera acquis à tout l\'équipage.');
+    }
+    if(!doSacrifice) return;
+    revealed[idx]=true;
+    setP2HintsRevealed(revealed);
+    renderP2Hints();
+    journal('🆘 <b>Indice nº'+(idx+1)+' révélé</b> — il reste acquis à tout l\'équipage.', 'info');
+    // pose le blocage personnel (même barème que les erreurs, mais raison indice)
+    try{
+      if(apercuAdminAutorise()){ journal('🧪 Aperçu : aucun blocage posé.', 'info'); return; }
+      var ident=await monIdentite();
+      if(ident && ident.isTest){ journal('🧪 Mode test : indice révélé sans blocage.', 'info'); return; }
+      if(ident){
+        await window.NautilusBlocages.poserBlocage(ident, 'indice_demande');
+        journal('🔒 Remontée en surface 1 h pour <b>'+esc(ident.name)+'</b> — un coéquipier peut reprendre.', 'warning');
+        var r=await window.NautilusBlocages.blocageActif(ident);
+        if(r) afficherBlocage(r.lockedUntil, ident.name, 1, 'indice');
+      } else {
+        var jusqua=Date.now()+60*60*1000;
+        try{ localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); }catch(e){}
+        afficherBlocage(jusqua, null, 1, 'indice');
+      }
+    }catch(e){ console.warn('hint blocage', e); }
   }
 
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
@@ -869,7 +972,7 @@
 <script src="palier-annonces.js?v=3" defer></script>
   <script src="palier-cinematic.js?v=3"></script>
 <script src="fnac-lecteur.js?v=1" defer></script>
-<script src="admin-artefact.js?v=16" defer></script>
+<script src="admin-artefact.js?v=20" defer></script>
 <script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>

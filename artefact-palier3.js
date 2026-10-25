@@ -228,17 +228,32 @@
           + (aide ? '<br>' + lignes(aide) : '')
           + (texte ? '<br>📯 ' + lignes(texte) : '') + '</div>';
       });
-      var boutonsIndices = M.INDICES.map(function (ind) {
-        var fait = indicesFaits.indexOf(ind.cle) >= 0;
-        return '<button type="button" class="af-btn af-btn--indice" data-indice="' + ind.rang + '"'
-          + (fait ? ' disabled' : '') + '>'
-          + (fait ? '✔ ' : '🕯️ ') + echapper(ind.titre)
-          + '<span>' + (fait ? 'obtenu' : ind.heures + ' h de surface') + '</span></button>';
+      // --- mise en page unifiée palier1 : morse-hint-target + morse-hints-grid (3 cartes) ---
+      var cartes = M.INDICES.map(function(ind){
+        var paye = indicesFaits.indexOf(ind.cle) >= 0;
+        var texte = transmis[ind.cle] || '';
+        var aide = paye ? ((etat.session && etat.session.cartouche && etat.session.cartouche.aides) || {})[ind.aide] || '' : '';
+        var body = paye ? (aide ? lignes(aide) + (texte? '<br>📯 '+lignes(texte):'') : (texte? lignes(texte) : '— vu —')) : '— non révélé —';
+        if(paye && !body) body = '— vu —';
+        return '<div class="morse-hint-card '+(paye?'morse-hint-revealed':'')+'">'
+          + '<div class="morse-hint-card-label">Indice nº'+ind.rang+' — '+echapper(ind.titre)+' '+(paye?'✓':'🔒')+'</div>'
+          + '<div>'+body+'</div></div>';
       }).join('');
-
       var sceauFait = etat.session && Array.isArray(etat.session.etapesValidees) && etat.session.etapesValidees.indexOf('sceau') >= 0;
       var blocIntrouvable = sceauFait ? '' : '<div class="af-actions"><button type="button" class="af-btn af-btn--ghost" id="afIntrouvable">📵 Livre introuvable</button></div>';
-      var blocIndices = sceauFait ? '' : '<details class="af-indices" id="afIndices"><summary>🕯️ Demander un indice <span class="af-indices-note">(chaque indice coûte une remontée)</span></summary><div class="af-indices-liste">' + boutonsIndices + '</div></details>';
+      var allRevealed = indicesFaits.length >= M.INDICES.length;
+      var nextRang = null;
+      for(var k=0;k<M.INDICES.length;k++){ if(indicesFaits.indexOf(M.INDICES[k].cle)<0){ nextRang=M.INDICES[k].rang; break; } }
+      var heuresProchain = nextRang ? (M.INDICES.filter(function(x){return x.rang===nextRang;})[0]||{}).heures||1 : 1;
+      var blocIndices = '';
+      if(!sceauFait){
+        blocIndices = '<div class="morse-hint-target">'
+          + '<div class="morse-hint-target-info">🆘 <b>Besoin d\'aide ?</b> Un indice est gagné par <b>tout l\'équipage</b>, mais celui qui le demande remonte en surface <b>'+heuresProchain+' h</b> et laisse sa place.</div>'
+          + '<button class="morse-hint-btn" id="afHintBtn" '+(allRevealed?'disabled':'')+'>'+(allRevealed?'✅ Tous les indices révélés':'🆘 Demander un indice')+'</button>'
+          + '</div><div class="morse-hints-grid">'+cartes+'</div>';
+      } else {
+        blocIndices = '<div class="morse-hints-grid">'+cartes+'</div>';
+      }
       return '<div class="af-pupitre">'
         + '<div class="af-jauge" role="status" aria-label="Tentatives restantes">'
         +   '<span class="af-jauge-label">Tentatives avant remontée</span>'
@@ -246,7 +261,6 @@
         + '</div>'
         + blocIntrouvable
         + blocIndices
-        + (blocTransmis ? '<div class="af-indices-obtenus">' + blocTransmis + '</div>' : '')
         + '</div>';
     }
 
@@ -254,6 +268,14 @@
       if (!hote) return;
       var introuvable = hote.querySelector('#afIntrouvable');
       if (introuvable) introuvable.addEventListener('click', vueIntrouvable);
+      var hintBtn = hote.querySelector('#afHintBtn');
+      if(hintBtn){
+        hintBtn.addEventListener('click', function(){
+          var next=null;
+          for(var k=0;k<M.INDICES.length;k++){ if((etat.indices||[]).indexOf(M.INDICES[k].cle)<0){ next=M.INDICES[k].rang; break; } }
+          if(next) proposerSacrifice(next);
+        });
+      }
       Array.prototype.forEach.call(hote.querySelectorAll('[data-indice]'), function (b) {
         b.addEventListener('click', function () { proposerSacrifice(Number(b.dataset.indice)); });
       });
