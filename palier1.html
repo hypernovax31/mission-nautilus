@@ -218,7 +218,7 @@
    ============================================================= */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteField, onSnapshot, collection
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -339,11 +339,34 @@ const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
 /* ---------- INITIALISATION FIREBASE ---------- */
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-/* Authentification anonyme : elle ne change pas l'identité de jeu du
-   matelot, mais permet aux règles Firestore de refuser les écritures d'un
-   client totalement non authentifié. */
-signInAnonymously(auth).catch(e => console.warn('Firebase Auth anonyme indisponible:', e));
 const db = getFirestore(app);
+/* Authentification anonyme — le jeu attend qu'elle soit prête avant
+   d'écrire la session. Si Firebase refuse l'anonyme (provider désactivé
+   dans la console), le jeu reste jouable : les règles Firestore ci-jointes
+   autorisent temporairement les écritures sans auth (voir firestore.rules). */
+let _authReadyResolve = null;
+let _authReadyPromise = new Promise(function(r){ _authReadyResolve = r; });
+let _authDone = false;
+try{
+  onAuthStateChanged(auth, function(user){
+    if(user && !_authDone){ _authDone = true; if(_authReadyResolve){ _authReadyResolve(user); _authReadyResolve=null; } }
+    if(user) console.log('[Nautilus] Firebase auth prête:', user.uid);
+  });
+}catch(e){}
+function waitForAuth(timeoutMs){
+  timeoutMs = timeoutMs || 4500;
+  if(auth.currentUser) return Promise.resolve(auth.currentUser);
+  var fallback = new Promise(function(r){ setTimeout(function(){ r(auth.currentUser||null); }, timeoutMs); });
+  return Promise.race([_authReadyPromise, fallback]);
+}
+signInAnonymously(auth).then(function(cred){
+  if(!_authDone){ _authDone=true; if(_authReadyResolve){ _authReadyResolve(cred.user); _authReadyResolve=null; } }
+}).catch(function(e){
+  console.warn('Firebase Auth anonyme indisponible:', e && e.code, e && e.message);
+  // Si l'anonyme est désactivé (auth/admin-restricted-operation), on débloque quand même au bout de 2s
+  setTimeout(function(){ if(!_authDone){ _authDone=true; if(_authReadyResolve){ _authReadyResolve(auth.currentUser||null); _authReadyResolve=null; } } }, 1800);
+});
+setTimeout(function(){ if(!_authDone){ _authDone=true; if(_authReadyResolve) _authReadyResolve(auth.currentUser||null); } }, 5000);
 
 /* ---------- HELPERS GÉNÉRIQUES ---------- */
 const $ = (id) => document.getElementById(id);
@@ -2185,7 +2208,8 @@ window.Nautilus = {
         glisserVersEpreuve();
         Promise.resolve().then(function(){ return startNewSession(); }).catch(function(e){
           console.error('startNewSession échoué', e);
-          try{ N.showToast('Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 6500); }catch(_e){}
+          var _p = e && e.message && /Missing|insufficient|permission/i.test(e.message);
+          try{ N.showToast(_p ? "Permission Firestore refusée — publie firestore.rules ou active l'anonyme. Détail : " + e.message : 'Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 7500); }catch(_e){}
           var b = $('takeLeadBtn');
           if(b){ b.disabled = false; b.textContent = '⚓ PRENDRE LES COMMANDES'; }
         });
@@ -2205,6 +2229,11 @@ window.Nautilus = {
 
   async function startNewSession() {
     if (!state.me || !state.team){ try{ N.showToast('Équipage non chargé : recharge la page.', 'warning', 6000); }catch(_e){} return; }
+    // Attend l'auth anonyme (max 4,5s) — sinon Firestore renvoie Missing or insufficient permissions
+    try{ await waitForAuth(4500); }catch(_e){ console.warn('waitForAuth', _e); }
+    if(!auth.currentUser){
+      console.warn('[Nautilus] Aucun utilisateur Firebase — les règles doivent autoriser les écritures publiques (voir firestore.rules).');
+    }
     /* Garde-fou : un matelot bloque ne peut pas reprendre les commandes,
        meme en cliquant vite depuis un ecran affiche avant son blocage. */
     if (N.isMatelotLocked(state.team, state.me.memberKey)) {
@@ -2361,14 +2390,16 @@ window.Nautilus = {
       // Le bouton était resté en "Prise de commandes…" — on le rend et on explique.
       var _btn = $('takeLeadBtn');
       if(_btn){ _btn.disabled = false; _btn.textContent = '⚓ PRENDRE LES COMMANDES'; }
-      try{ N.showToast('Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 7000); }catch(_e2){}
+      var _isPerm = e && e.message && /Missing|insufficient|permission/i.test(e.message);
+      try{ N.showToast(_isPerm ? "Impossible de démarrer : permission Firestore refusée. Active l'anonyme dans Firebase Console > Authentication > Sign-in method, OU publie le firestore.rules du dépôt (Firestore > Règles > Publier). Détail : " + e.message : 'Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 8000); }catch(_e2){}
       throw e;
     }
     }catch(e){
       console.error('startNewSession outer', e);
       var _b2 = $('takeLeadBtn');
       if(_b2){ _b2.disabled = false; _b2.textContent = '⚓ PRENDRE LES COMMANDES'; }
-      try{ N.showToast('Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 7000); }catch(_e3){}
+      var _isPerm2 = e && e.message && /Missing|insufficient|permission/i.test(e.message);
+      try{ N.showToast(_isPerm2 ? "Impossible de démarrer : permission Firestore refusée. Active l'anonyme dans Firebase Console > Authentication, OU publie le firestore.rules du dépôt. Détail : " + e.message : 'Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 8000); }catch(_e3){}
       // On laisse aussi la vue se rafraîchir pour ne pas rester bloqué
       try{ renderGameArea(); }catch(_e4){}
     }
