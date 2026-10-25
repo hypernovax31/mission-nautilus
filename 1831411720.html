@@ -291,6 +291,45 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     montrerCarte('briefCard', true);
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+    // Robot GitHub : se déclenche à l'arrivée Palier 3, s'arrête au Palier 4 (par équipe)
+    try {
+      var _mag = null; try { _mag = (window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant()) || null; } catch(e) {}
+      if (_mag && _mag.id) activerSurveillancePalier3(_mag.id);
+    } catch(e) {}
+  }
+
+  /* ===== SURVEILLANCE FNAC PAR ÉQUIPE (robot GitHub) =====
+     Se déclenche à l'arrivée au Palier 3, s'arrête au Palier 4.
+     Une ligne par équipe dans Firestore `watches/{TEAM}` : active seulement en P3. */
+  async function activerSurveillancePalier3(magasinId) {
+    try {
+      if (apercuAdminAutorise() || enModeTest()) return;
+      var equipe = monEquipage();
+      if (!equipe || equipe.indexOf('ANON')===0) return;
+      var x = await window.NautilusBlocages.db();
+      await x.fs.setDoc(x.fs.doc(x.db, 'watches', equipe), {
+        teamCode: equipe,
+        magasinId: magasinId,
+        palier: 3,
+        active: true,
+        updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      }, { merge:true });
+      journal('🤖 Surveillance Fnac activée pour <b>'+esc(equipe)+'</b> — magasin '+esc(magasinId)+' (Palier 3).', 'info');
+    } catch(e) { /* discret */ }
+  }
+  async function desactiverSurveillancePalier3(motif) {
+    try {
+      var equipe = monEquipage();
+      if (!equipe || equipe.indexOf('ANON')===0) return;
+      var x = await window.NautilusBlocages.db();
+      await x.fs.setDoc(x.fs.doc(x.db, 'watches', equipe), {
+        active: false,
+        palier: 4,
+        desactiveLe: new Date().toISOString(),
+        desactiveRaison: motif || 'palier3 termine'
+      }, { merge:true });
+    } catch(e) {}
   }
   function afficherVueEpreuve() {
     montrerCarte('gateHero', false);
@@ -425,6 +464,8 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       var leves = await window.NautilusBlocages.leverBlocages(equipage, 'son');
       journal('📈 Victoire inscrite au tableau de bord — direction le Palier 4 !'
         + (leves > 0 ? ' ' + leves + ' matelot' + (leves > 1 ? 's' : '') + ' débloqué' + (leves > 1 ? 's' : '') + '.' : ''), 'success');
+      // Fin surveillance Palier 3 → passage Palier 4
+      try { await desactiverSurveillancePalier3('victoire palier 3'); } catch(e) {}
     } catch (e) {
       journal("⚠️ Victoire non inscrite (connexion ?). Préviens l'organisation.", 'warning');
     }
@@ -660,6 +701,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       /* Aperçu organisateur : préparer des pistes d'exemple pour le magasin
          qui vient d'être choisi (aucune donnée réelle, aucun réseau). */
       onMagasinChoisi: function (fiche) {
+        try { if (fiche && fiche.id) activerSurveillancePalier3(fiche.id); } catch(e) {}
         return amorcerService(fiche && fiche.id).then(function () {
           if (apercuAdminAutorise()) publierSolutionsApercu(null);
         });
