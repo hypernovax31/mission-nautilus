@@ -397,12 +397,8 @@
        sur cette tentative », « Remontée forcée ! » — message immersif
        demandé par l'organisation (remplace « tu passes la barre »). */
     statut(nom
-      ? "🔒 <b>3 erreurs sur cette tentative — remontée forcée !</b> " + esc(nom) + " regagne la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
-        + "avec son Code Matelot — <b>chacun ses erreurs</b>."
-      : "🔒 <b>3 erreurs sur cette tentative — remontée forcée !</b> Tu regagnes la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
-        + "pour que tes erreurs restent les tiennes.", 'danger');
+      ? "🔒 <b>Remontée — 3 erreurs.</b> " + esc(nom) + " — retour à <b>" + heureLisible(jusqua) + "</b>. Relais possible."
+      : "🔒 <b>Remontée — 3 erreurs.</b> Retour à <b>" + heureLisible(jusqua) + "</b>. Relais possible.", 'danger');
     var host = $('mcHost');
     if (host) host.innerHTML = '';
   }

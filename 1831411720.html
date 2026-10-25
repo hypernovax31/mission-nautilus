@@ -158,7 +158,7 @@
      AUCUN de ces fichiers ne contient de titre d'ouvrage, d'EAN, de SKU,
      de catégorie Fnac ou de réponse : les vérifications portent sur des
      empreintes salées calculées à la volée. -->
-<script src="artefact-moteur.js?v=4"></script>
+<script src="artefact-moteur.js?v=5"></script>
 <!-- Lecteur des fiches publiques fnac.com : strictement hors ligne, jamais
      appelé depuis le jeu. Sert au panneau admin (onglet 📖 Artefact) pour lire
      une fiche enregistrée par l’organisateur, et à l’outil Node de collecte. -->
@@ -359,21 +359,19 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var texte = M && M.messageRemontee ? M.messageRemontee(rang) : '';
     if (texte) texte = texte.replace('{heures}', String(rang || 1));
     var relais = M && M.MESSAGES ? M.MESSAGES.relais : '';
-    statut('🔒 <b>Remontée forcée en surface.</b>'
-      + (nom ? ' ' + esc(nom) + ' regagne la surface ; reprise possible à <b>' + heureLisible(jusqua) + '</b>.' : '')
+    statut('🔒 <b>Remontée en surface.</b>'
+      + (nom ? ' ' + esc(nom) + ' — retour à <b>' + heureLisible(jusqua) + '</b>.' : ' Retour à <b>' + heureLisible(jusqua) + '</b>.')
       + '<br>' + lignes(texte)
-      + '<br><b>Retour à bord : ' + heureLisible(jusqua) + '.</b>'
       + '<br>' + lignes(relais)
       + (motif === 'indice'
-        ? '<br>Un indice n’est pas une faute : il reste acquis à <b>tout l’équipage</b>.'
+        ? '<br>Indice acquis pour <b>tout l’équipage</b>.'
         : '')
       + (aide || texteIndice
         ? '<div class="af-indice-transmis"><b>🕯️ Ton indice</b>'
           + (aide ? '<br>' + lignes(aide) : '')
           + (texteIndice ? '<br>📯 ' + lignes(texteIndice) : '') + '</div>'
         : '')
-      + '<br><span style="opacity:.85">Un coéquipier peut reprendre la barre <b>dès maintenant</b> avec son Code Matelot — '
-      + '<b>chacun ses remontées</b>.</span>', 'danger');
+      + '<br><span style="opacity:.85">Relais immédiat — un coéquipier peut rejouer.</span>', 'danger');
     var host = $('artefactHost');
     if (host) host.innerHTML = '';
   }
