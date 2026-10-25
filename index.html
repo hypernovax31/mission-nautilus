@@ -26,15 +26,15 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 002703 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 003054 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
        lumière, caustiques réelles, neige marine, bulles. En haut, la JAUGE
        D'OXYGÈNE du bord (elle se vide pour de vrai) et le relèvement du signal ;
        au centre, le titre en lettres de bronze ; sous le hublot, le bouton
-       rouge. Et pour finir, le projecteur du Nautilus nous éblouit : l'accueil
-       apparaît dans la lumière.
+       rouge. Et pour finir, on plonge DANS le hublot : zoom hollywoodien,
+       flou progressif et voile abyssal — l'accueil se révèle dans les profondeurs.
 
        RIEN QUI PUISSE CASSER — c'est la leçon des deux versions précédentes :
          · aucun découpage, aucun masque, aucune image : ni clip-path, ni
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 002703 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 003054 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -602,27 +602,74 @@
       font-size:10px; letter-spacing:.1em; color:#5f8496; pointer-events:none;
     }
 
-    /* ── 6. LA SORTIE : LE PROJECTEUR NOUS ÉBLOUIT ────────────────────────
-       Une seule couche, opaque au centre : elle part d'un point (le
-       projecteur du bord) et s'ouvre jusqu'à remplir l'écran. Ensuite son
-       fondu découvre l'accueil du jeu. Transform et opacité, rien d'autre. */
+    /* ── 6. LA PLONGÉE CINÉMATOGRAPHIQUE ───────────────────────────────────
+       Plus de flash blanc : on s'enfonce DANS le hublot, comme une caméra
+       qui traverse le verre. Zoom progressif + flou d'abysses + obscurité.
+       Hollywood sous-marin : la paroi recule, le hublot grandit, la mer
+       se brouille et l'azur profond nous avale. */
+    #ecoutille .ec-hublot{
+      transition:transform 1.35s cubic-bezier(.16,.78,.22,1), filter .9s ease, opacity .6s ease;
+      will-change:transform;
+    }
+    #ecoutille .ec-ecran{
+      transition:transform 1.25s cubic-bezier(.2,.7,.2,1), opacity .7s ease, filter 1s ease;
+    }
+    #ecoutille .ec-scene{
+      will-change:transform, filter;
+    }
+    /* Voile abyssal : ce n'est plus un projecteur blanc, c'est l'océan
+       qui se referme. Dégradé d'azur profond qui s'étend depuis le hublot. */
     #ecoutille .ec-flood{
-      position:absolute; left:50%; top:60%; width:236vmax; height:236vmax;
-      margin:-118vmax 0 0 -118vmax;
-      opacity:0; pointer-events:none; transform:scale(.05);
-      background:radial-gradient(closest-side,
-        #ffffff 0 20%, #f4feff 32%, rgba(226,248,255,.98) 46%,
-        rgba(160,226,255,.96) 64%, rgba(80,168,228,.9) 80%, rgba(12,54,94,0) 100%);
-      transition:transform 1s cubic-bezier(.2,.82,.2,1), opacity .5s ease;
+      position:absolute; left:50%; top:50%; width:260vmax; height:260vmax;
+      margin:-130vmax 0 0 -130vmax;
+      opacity:0; pointer-events:none; transform:scale(.12);
+      background:
+        radial-gradient(closest-side at 50% 50%,
+          rgba(12,52,92,0) 0 22%,
+          rgba(8,42,78,.28) 36%,
+          rgba(5,28,52,.62) 56%,
+          rgba(2,16,32,.88) 76%,
+          rgba(1,8,20,.98) 88%,
+          #020a14 100%);
+      transition:transform 1.1s cubic-bezier(.22,.78,.18,1), opacity .75s ease;
     }
-    #ecoutille.ec-eclat .ec-flood{opacity:1; transform:scale(1)}
+    #ecoutille.ec-eclat .ec-flood{opacity:.72; transform:scale(.85)}
+    #ecoutille.ec-impact .ec-flood{opacity:.96; transform:scale(1.15)}
     #ecoutille.ec-sortie .ec-flood{opacity:0; transition:opacity .85s ease}
-    /* L'éclair de l'impact, juste au moment où le projecteur nous atteint. */
-    #ecoutille .ec-flash{position:absolute; inset:0; background:#ffffff; opacity:0; pointer-events:none}
-    #ecoutille.ec-impact .ec-flash{animation:ecFlash .6s ease-out}
-    @keyframes ecFlash{
-      0%{opacity:0} 16%{opacity:.9} 100%{opacity:0}
+    /* Étape 1 — l'entrée dans le hublot : léger zoom + premier voile */
+    #ecoutille.ec-eclat .ec-scene{transform:scale(1.08); filter:blur(1px) brightness(.94) saturate(.95)}
+    #ecoutille.ec-eclat .ec-hublot{transform:scale(1.28)}
+    #ecoutille.ec-eclat .ec-ecran{transform:scale(1.06); filter:brightness(.92)}
+    #ecoutille.ec-eclat .ec-paroi{filter:brightness(.92)}
+    /* Étape 2 — on s'enfonce : zoom massif dans le verre + flou progressif + assombrissement */
+    #ecoutille.ec-impact .ec-scene{transform:scale(2.85); filter:blur(14px) brightness(.42) saturate(.62); opacity:.88}
+    #ecoutille.ec-impact .ec-hublot{transform:scale(3.9); filter:blur(.8px)}
+    #ecoutille.ec-impact .ec-ecran{transform:scale(1.22); filter:blur(6px) brightness(.5) saturate(.55)}
+    #ecoutille.ec-impact .ec-paroi{filter:brightness(.45) blur(2px)}
+    #ecoutille.ec-impact .ec-titre,
+    #ecoutille.ec-impact .ec-sous-titre-h4,
+    #ecoutille.ec-impact .ec-consigne,
+    #ecoutille.ec-impact .ec-start{opacity:0; transition:opacity .32s ease}
+    /* Souffle lumineux abyssal : plus blanc, mais lueur azur diffuse qui traverse l'eau */
+    #ecoutille .ec-flash{position:absolute; inset:0; pointer-events:none; opacity:0;
+      background:radial-gradient(ellipse 110% 85% at 50% 48%,
+        rgba(110,220,255,.38) 0 18%,
+        rgba(60,170,230,.22) 34%,
+        rgba(18,90,145,.12) 58%,
+        rgba(2,18,38,0) 78%)}
+    #ecoutille.ec-impact .ec-flash{animation:ecBloom .9s cubic-bezier(.22,.6,.2,1)}
+    @keyframes ecBloom{
+      0%{opacity:0; transform:scale(.88)}
+      18%{opacity:.55; transform:scale(1)}
+      65%{opacity:.28; transform:scale(1.04)}
+      100%{opacity:0; transform:scale(1.08)}
     }
+    /* Letterbox cinéma : deux bandes noires qui resserrent l'image */
+    #ecoutille .ec-letterbox{position:absolute; left:0; right:0; height:0; background:#020a14; pointer-events:none; z-index:6; transition:height .7s cubic-bezier(.2,.7,.2,1)}
+    #ecoutille .ec-letterbox--top{top:0}
+    #ecoutille .ec-letterbox--bottom{bottom:0}
+    #ecoutille.ec-eclat .ec-letterbox{height:4.5vh}
+    #ecoutille.ec-impact .ec-letterbox{height:8.5vh}
 
     /* ── 7. LECTEURS D'ÉCRAN ───────────────────────────────────────────────
        Le récit est un décor : on le cache aux lecteurs d'écran et on leur
@@ -701,6 +748,12 @@
       #ecoutille .ec-fanaux i{animation:none; opacity:.22}
       #ecoutille .ec-start::after{animation:none; opacity:.55}
       #ecoutille .ec-flood{transition-duration:.4s}
+      #ecoutille .ec-letterbox{transition:none}
+      #ecoutille.ec-eclat .ec-scene, #ecoutille.ec-impact .ec-scene,
+      #ecoutille.ec-eclat .ec-hublot, #ecoutille.ec-impact .ec-hublot,
+      #ecoutille.ec-eclat .ec-ecran, #ecoutille.ec-impact .ec-ecran{transform:none !important; filter:none !important}
+      #ecoutille.ec-eclat .ec-letterbox, #ecoutille.ec-impact .ec-letterbox{height:0 !important}
+      #ecoutille .ec-flash{animation:none !important}
     }
   </style>
 
@@ -807,7 +860,7 @@
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 002703 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 003054 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -820,9 +873,7 @@
      animations de l'accueil. C'est aussi le seul élément interactif de
      toute la page : rien d'autre à cliquer, rien à lire d'inutile.
 
-     LA SORTIE, EN UNE PHRASE : le projecteur du Nautilus nous éblouit, la
-     lumière traverse le verre et s'ouvre jusqu'à remplir l'écran, puis son
-     fondu découvre l'accueil — qui s'anime pendant qu'elle se retire.
+     LA SORTIE, EN UNE PHRASE : on plonge DANS le hublot — zoom hollywoodien, flou progressif et voile abyssal — puis son fondu révèle l'accueil dans les profondeurs.
      Le style est écrit DANS cette page (voir le socle dans le <head>) ;
      ecoutille.js joue le récit et la sortie.
      ═══════════════════════════════════════════════════════════════════════════ -->
@@ -904,13 +955,15 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 002703</span>
+      <span class="ec-version">COMMIT 003054</span>
     </footer>
   </div>
 
-  <!-- LA SORTIE : le projecteur qui nous éblouit, puis l'éclair d'impact. -->
+  <!-- LA PLONGÉE : voile abyssal + lueur azur (remplace le flash blanc) -->
   <div class="ec-flood" aria-hidden="true"></div>
   <div class="ec-flash" aria-hidden="true"></div>
+  <div class="ec-letterbox ec-letterbox--top" aria-hidden="true"></div>
+  <div class="ec-letterbox ec-letterbox--bottom" aria-hidden="true"></div>
 
   <!-- Ce que lisent les lecteurs d'écran (le décor ci-dessus est muet). -->
   <p class="ec-lu" id="ecLuText">Expédition dans le Nautilus — grand jeu interne de la Fnac Labège, d'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de Labège 2, le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et recevoir l'ordre de mission.</p>
@@ -919,8 +972,8 @@
 <!-- ═══════════ SOCLE — LE CLIC ═══════════
      Ce mini-script est écrit DANS la page : le bouton rouge peut donc ouvrir
      la page de garde même si ecoutille.js n'arrive pas (réseau, cache,
-     fichier manquant). Il fait la même sortie que le moteur, en plus court :
-     le projecteur nous éblouit, la lumière s'ouvre, puis s'efface.
+     fichier manquant). Il fait la même plongée que le moteur, en plus court :
+     zoom dans le hublot, flou progressif et voile abyssal, puis révélation.
      Quand ecoutille.js se charge, il RETIRE ce gestionnaire et prend la main
      pour la sortie complète (récit, sons, révélation).
      Sans lui, un visiteur enfermé derrière le hublot ne pourrait plus rien
