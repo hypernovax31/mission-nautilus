@@ -5,14 +5,14 @@ name: Surveillance Palier 3 — par équipe (Fnac live)
 #
 # Déclencheurs :
 #   - repository_dispatch type "palier3-entree" (appelé depuis 1831411720.html via Firestore → ce workflow poll)
-#   - schedule toutes les 10 min : regarde qui est en Palier 3 et fait 1 check poli par équipe
+#   - schedule toutes les 1h : regarde qui est en Palier 3 et fait 1 check poli par équipe
 #   - manuel pour test
 
 on:
   repository_dispatch:
     types: [palier3-entree, palier3-surveillance]
   schedule:
-    - cron: '*/10 * * * *'  # toutes les 10 min — ne fait quelque chose que s'il y a une équipe en P3
+    - cron: '0 * * * *'  # toutes les 1h — ne fait quelque chose que s'il y a une équipe en P3
   workflow_dispatch:
     inputs:
       team:
