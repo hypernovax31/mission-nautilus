@@ -314,7 +314,7 @@
     function vueAucunOuvrage(message, detail) {
       etat.vue = 'aucun-ouvrage';
       rendre('<div class="af-carte af-carte--scellee">'
-        + '<p class="af-kicker">Salle des machines silencieuse</p>'
+        + '<p class="af-kicker">SALLE DES MACHINES SILENCIEUSE</p>'
         + '<h3 class="af-titre">⛔ ' + lignes(message || M.MESSAGES.aucunOuvrage) + '</h3>'
         + (detail ? '<p class="af-msg">' + lignes(detail) + '</p>' : '')
         + '<div class="af-actions">'
@@ -717,8 +717,7 @@
         if (r.erreur === 'magasin-requis') { vueMagasin(); return; }
         if (r.erreur === 'aucun-ouvrage') {
           journal('⛔ Aucun ouvrage compatible confirmé pour ce magasin.', 'warning');
-          vueAucunOuvrage(r.message, 'Le capitaine doit confirmer la disponibilité « retrait sous 1 h » '
-            + 'dans le panneau admin (la confirmation n’est valable que 15 minutes au lancement).');
+          vueAucunOuvrage('Aucun ouvrage ici. Préviens le capitaine.', '');
           return;
         }
         if (r.erreur) {

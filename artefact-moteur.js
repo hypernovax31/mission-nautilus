@@ -901,7 +901,7 @@
     remplacement: "Ouvrage indisponible.\nNouvelle piste en préparation. Progression conservée.",
     remplacementSilencieux: "Piste changée. Aucune erreur comptée.",
     aucunOuvrage: "Aucun ouvrage dispo.\nMission suspendue. Progression conservée. Préviens le capitaine.",
-    aucunOuvrageMagasin: "Aucun ouvrage ici.\nChange de magasin ou préviens le capitaine.",
+    aucunOuvrageMagasin: "Aucun ouvrage ici. Préviens le capitaine.",
     magasinRequis: "Choisis ton magasin Fnac.",
     victoire: "Signature complète. Escale suivante déverrouillée.",
     chambreForte: "Assemble les 4 fragments dans l'ordre indiqué.",
