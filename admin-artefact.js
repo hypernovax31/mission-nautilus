@@ -199,8 +199,8 @@
   function htmlToutesReponses(){
     return ''
     + '<div class="adm-af-sec" id="afEquipesSec">'
-    +   '<h4 style="margin:0 0 6px;font-size:13px">Bonnes réponses — par équipe</h4>'
-    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Cartes empilées verticalement · P1 1 mot/équipe · P2 11 mots · P3 livre + EAN + réponses complètes (sceau, couverture, signature, chambre forte).</p>'
+    +   '<h4 style="margin:0 0 6px;font-size:13px">BONNES RÉPONSES — PAR ÉQUIPE</h4>'
+    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">P1 1 mot/équipe · P2 11 mots · P3 livre + EAN + sceau, couverture, signature, chambre forte • P4….</p>'
     +   '<div id="afTeamCards" class="adm-af-cards">'
     +     EQUIPES.map(function(eq){
             var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'">'+esc(w)+'</span>'; }).join('');
@@ -251,6 +251,26 @@
       // on tente un dernier recours : afficher la cartouche si elle existe déjà dans le DOM ou via lecture directe Firestore
       el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">'+esc(msg || '— pas de session')+'</span>';
     }
+    function lireCoffreRobuste(cid){
+      var viaService = (S() && S().lireCoffre) ? S().lireCoffre(cid, null).catch(function(){ return null; }) : Promise.resolve(null);
+      return viaService.then(function(secret){
+        if(secret && secret.reponses) return secret;
+        // secours : lecture directe du doc coffres/{id} (enClair)
+        if(window.NautilusBlocages && window.NautilusBlocages.db){
+          return window.NautilusBlocages.db().then(function(x){
+            return x.fs.getDoc(x.fs.doc(x.db, 'coffres', cid)).then(function(snap){
+              if(snap.exists()){
+                var d=snap.data()||{};
+                if(d.secret && d.secret.reponses) return d.secret;
+                if(d.secret && d.enClair) return d.secret;
+              }
+              return secret;
+            }).catch(function(){ return secret; });
+          }).catch(function(){ return secret; });
+        }
+        return secret;
+      });
+    }
     function lireSessionRobuste(eq){
       // 1) via le service artefact (peut être en mémoire si page en aperçu)
       var viaService = (S() && S().lireSession) ? S().lireSession(eq).catch(function(){ return null; }) : Promise.resolve(null);
@@ -287,7 +307,10 @@
                   var cand = td.artefactSession || td.p3Session || td.sessionP3 || null;
                   if(cand && cand.cartoucheId){
                     var cid2=cand.cartoucheId;
-                    return (S() && S().lireCoffre ? S().lireCoffre(cid2,null) : Promise.reject()).then(function(secret){ majCarteP3(equipe, secret); }).catch(function(){
+                    return lireCoffreRobuste(cid2).then(function(secret){
+                      if(secret && secret.reponses) majCarteP3(equipe, secret);
+                      else el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid2).slice(0,10))+'… (coffre indisponible)</span>';
+                    }).catch(function(){
                       el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid2).slice(0,10))+'… (coffre indisponible)</span>';
                     });
                   }
@@ -301,8 +324,11 @@
           return;
         }
         var cid = sess.cartoucheId;
-        return S().lireCoffre(cid, null).then(function(secret){
-          majCarteP3(equipe, secret);
+        return lireCoffreRobuste(cid).then(function(secret){
+          if(secret && secret.reponses) majCarteP3(equipe, secret);
+          else if(sess.cartouche && sess.cartouche.id) el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(sess.cartouche.id).slice(0,10))+'… (coffre indisponible)</span>';
+          else if(cid) el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid).slice(0,10))+'…</span>';
+          else el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>';
         }).catch(function(){
           var cart = sess.cartouche;
           if(cart && cart.id){
@@ -333,7 +359,10 @@
           }).then(function(cand){
             if(!cand) return;
             var cid2=cand.cartoucheId;
-            return (S() && S().lireCoffre ? S().lireCoffre(cid2,null) : Promise.reject()).then(function(secret){ majCarteP3(equipe, secret); }).catch(function(){
+            return lireCoffreRobuste(cid2).then(function(secret){
+              if(secret && secret.reponses) majCarteP3(equipe, secret);
+              else el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid2).slice(0,10))+'… (coffre indisponible)</span>';
+            }).catch(function(){
               el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid2).slice(0,10))+'… (coffre indisponible)</span>';
             });
           });
@@ -342,8 +371,11 @@
         return;
       }
       var cid = sess.cartoucheId;
-      return S().lireCoffre(cid, null).then(function(secret){
-        majCarteP3(equipe, secret);
+      return lireCoffreRobuste(cid).then(function(secret){
+        if(secret && secret.reponses) majCarteP3(equipe, secret);
+        else if(sess.cartouche && sess.cartouche.id) el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(sess.cartouche.id).slice(0,10))+'… (coffre indisponible)</span>';
+        else if(cid) el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">cartouche '+esc(String(cid).slice(0,10))+'…</span>';
+        else el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>';
       }).catch(function(){
         var cart = sess.cartouche;
         if(cart && cart.id){
@@ -399,7 +431,7 @@
 
   function HTML_REP() {
     return ''
-    + '<p class="small" style="margin-bottom:8px;color:#6e7a84">Bonnes réponses · P1/P2/P3 — lecture directe Fnac. Le livre du palier 3 est celui tiré automatiquement à l’ouverture du palier pour chaque équipe.</p>'
+    + '<p class="small" style="margin-bottom:8px;color:#6e7a84">P1 1 mot/équipe · P2 11 mots · P3 livre + EAN + sceau, couverture, signature, chambre forte • P4….</p>'
     + htmlToutesReponses();
   }
 

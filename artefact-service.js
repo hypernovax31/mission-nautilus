@@ -566,9 +566,9 @@
     var v = M.validerLivre(livre);
     if (!v.livre) return Promise.reject(new Error('fallback invalide: ' + v.erreurs.join('; ')));
     var mag = String(magasinId);
-    // sansCoffre: n'écrit que la cartouche (pas de coffre) pour éviter un second write qui
-    // échouerait si Firestore exige encore un auth sur /coffres. La cartouche suffit au jeu.
-    return genererCartouche(v.livre, mag, { maintenant: maintenant, sansCoffre: true }).then(function(r){ return r.cartouche; });
+    // Le fallback écrit maintenant cartouche + coffre (enClair) pour que l'onglet Réponses
+    // affiche le livre + EAN + sceau/couverture/signature/chambre forte.
+    return genererCartouche(v.livre, mag, { maintenant: maintenant }).then(function(r){ return r.cartouche; });
   }
 
   /* Ouverture (ou reprise) de la session d'un équipage.
