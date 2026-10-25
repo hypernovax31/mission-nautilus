@@ -236,7 +236,44 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   function lignes(s) { return esc(s).replace(/\n/g, '<br>'); }
   function heureLisible(v) {
     var d = new Date(typeof v === 'number' ? v : String(v));
-    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });}
+  function formatRetourDate(iso){
+    if(!iso) return '—';
+    try{ var d=new Date(iso); return d.toLocaleDateString('fr-FR'); }catch(e){ return '—'; }
+  }
+  function formatRetourHeure(iso){
+    if(!iso) return '—';
+    try{ var d=new Date(iso); var hh=String(d.getHours()).padStart(2,'0'); var mm=String(d.getMinutes()).padStart(2,'0'); var ss=String(d.getSeconds()).padStart(2,'0'); return hh+'h'+mm+'m'+ss+'s'; }catch(e){ return '—'; }
+  }
+  function lockScreenNomenclature(hours, lockedUntil, nextHours){
+    var _h = Number(hours||1);
+    var _next = Number(nextHours|| (function(cur){ var arr=[1,2,4,8,12,24]; var i=arr.indexOf(cur); return i>=0&&i<arr.length-1?arr[i+1]:24; })(_h));
+    var _date = formatRetourDate(lockedUntil);
+    var _time = formatRetourHeure(lockedUntil);
+    return '<section class="lock-screen lock-screen--lost" aria-live="polite">'
+      + '<div class="lock-heading"><span class="lock-heading-icon" aria-hidden="true">↟</span><div><p class="lock-kicker">RETOUR EN SURFACE durant '+esc(String(_h))+' h — <strong>Remontée forcée !</strong></p><h2>Remontée forcée !</h2></div></div>'
+      + '<p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la plongée.</p>'
+      + '<div class="lock-attempt"><span aria-hidden="true">❌</span><strong>3 erreurs sur cette tentative</strong></div>'
+      + '<div class="lock-lignes">'
+      + '<div class="lock-ligne lock-ligne--pause"><span class="lock-ligne-ico" aria-hidden="true">⏱</span><span>Retour le « '+esc(_date)+' » à « '+esc(_time)+' ».</span></div>'
+      + '<div class="lock-ligne lock-ligne--relais"><span class="lock-ligne-ico" aria-hidden="true">⚓</span><span>La barre est libre : un autre matelot peut reprendre dès maintenant.</span></div>'
+      + '<div class="lock-ligne lock-ligne--next"><span class="lock-ligne-ico" aria-hidden="true">🔁</span><span>Prochain échec : « '+esc(String(_next))+' » h en surface.</span></div>'
+      + '</div><a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a></section>';
+  }
+  function lockScreenIndice(nom, lockedUntil, hours, aide, texteIndice){
+    var _h = Number(hours||1);
+    var _date = formatRetourDate(lockedUntil);
+    var _time = formatRetourHeure(lockedUntil);
+    var _next = (function(cur){ var arr=[1,2,4,8,12,24]; var i=arr.indexOf(cur); return i>=0&&i<arr.length-1?arr[i+1]:24; })(_h);
+    return '<section class="lock-screen lock-screen--active" aria-live="polite">'
+      + '<div class="lock-heading"><span class="lock-heading-icon" aria-hidden="true">🧭</span><div><p class="lock-kicker">INDICE TRANSMIS</p><h2>'+esc(String(nom||'Matelot'))+', ton indice a été transmis.</h2></div></div>'
+      + '<p class="lock-lead">Pendant ta pause, un autre matelot de ton équipage peut reprendre les commandes.</p>'
+      + '<section class="lock-resume-card"><span class="lock-resume-icon" aria-hidden="true">⏱</span><div><span class="lock-card-label">Prochaine prise de commande possible</span><strong class="lock-resume-date">'+esc(_date+' à '+_time)+'</strong><span class="lock-resume-duration">En surface · '+esc(String(_h))+' h</span></div></section>'
+      + '<div class="lock-lignes"><div class="lock-ligne"><span class="lock-ligne-ico" aria-hidden="true">✓</span><span>L'indice reste disponible pour <b>tout l'équipage</b>.</span></div>'
+      + '<div class="lock-ligne lock-ligne--next"><span class="lock-ligne-ico" aria-hidden="true">🔁</span><span>Prochain échec : « '+esc(String(_next))+' » h en surface.</span></div></div>'
+      + (aide||texteIndice?'<div class="af-indice-transmis"><b>🕯️ Ton indice</b>'+(aide?'<br>'+lignes(aide):'')+(texteIndice?'<br>📯 '+lignes(texteIndice):'')+'</div>':'')
+      + '<a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a></section>';
+  }
   }
 
   /* QUI joue sur cet appareil ? (mêmes conventions que les autres paliers). */
@@ -354,27 +391,19 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
      compte en remontées (échecs + indices confondus), 1 h / 2 h / 4 h / 8 h
      / 12 h puis 24 h. */
   function afficherBlocage(jusqua, nom, rang, motif, aide, texteIndice) {
-    var M = window.NautilusArtefactMoteur;
     afficherVueEpreuve();
     afficherJournalDeBord(true);
-    var heures = M && M.heuresDeRemontee ? M.heuresDeRemontee(rang) : (rang || 1);
-    // 1 Heure vs 2 Heures — spec demande capitalisation
-    var dureeTxt = heures + ' ' + (heures === 1 ? 'Heure' : 'Heures');
-    var retour = heureLisible(jusqua);
-    var nomAffiche = nom ? esc(String(nom).toUpperCase()) : '—';
-    var ligne1 = '🔒 ' + nomAffiche + ' remonte en surface ' + esc(dureeTxt) + ' — Retour possible à ' + esc(retour) + '.';
-    var ligne2 = 'Un coéquipier peut prendre le relais immédiatement.';
-    statut(ligne1 + '<br>' + ligne2
-      + (motif === 'indice'
-        ? '<br>Indice acquis pour <b>tout l’équipage</b>.'
-        : '')
-      + (aide || texteIndice
-        ? '<div class="af-indice-transmis"><b>🕯️ Ton indice</b>'
-          + (aide ? '<br>' + lignes(aide) : '')
-          + (texteIndice ? '<br>📯 ' + lignes(texteIndice) : '') + '</div>'
-        : ''), 'danger');
+    var M = window.NautilusArtefactMoteur;
+    var _heures = M && M.heuresDeRemontee ? M.heuresDeRemontee(rang) : (rang || 1);
+    var _next = M && M.heuresDeRemontee ? M.heuresDeRemontee((Number(rang)||1)+1) : (function(cur){ var arr=[1,2,4,8,12,24]; var i=arr.indexOf(Number(cur)||1); return i>=0&&i<arr.length-1?arr[i+1]:24; })(_heures);
     var host = $('artefactHost');
-    if (host) host.innerHTML = '';
+    if(motif === 'indice'){
+      if(host) host.innerHTML = lockScreenIndice(nom, jusqua, _heures, aide, texteIndice);
+      statut('🧭 <b>Indice transmis.</b> Retour le « '+esc(formatRetourDate(jusqua))+' » à « '+esc(formatRetourHeure(jusqua))+' ».','success');
+    } else {
+      if(host) host.innerHTML = lockScreenNomenclature(_heures, jusqua, _next);
+      statut('🔒 <b>Remontée forcée !</b> Retour le « '+esc(formatRetourDate(jusqua))+' » à « '+esc(formatRetourHeure(jusqua))+' ».', 'danger');
+    }
   }
 
   /* Pose le blocage et affiche la remontée. Retourne la fiche de blocage

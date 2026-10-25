@@ -302,6 +302,29 @@
     var d = new Date(typeof v === 'number' ? v : String(v));
     return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
+  function formatRetourDate(iso){
+    if(!iso) return '—';
+    try{ var d=new Date(iso); return d.toLocaleDateString('fr-FR'); }catch(e){ return '—'; }
+  }
+  function formatRetourHeure(iso){
+    if(!iso) return '—';
+    try{ var d=new Date(iso); var hh=String(d.getHours()).padStart(2,'0'); var mm=String(d.getMinutes()).padStart(2,'0'); var ss=String(d.getSeconds()).padStart(2,'0'); return hh+'h'+mm+'m'+ss+'s'; }catch(e){ return '—'; }
+  }
+  function lockScreenNomenclature(hours, lockedUntil, nextHours){
+    var _h = Number(hours||1);
+    var _next = Number(nextHours|| (function(cur){ var arr=[1,2,4,8,12,24]; var i=arr.indexOf(cur); return i>=0&&i<arr.length-1?arr[i+1]:24; })(_h));
+    var _date = formatRetourDate(lockedUntil);
+    var _time = formatRetourHeure(lockedUntil);
+    return '<section class="lock-screen lock-screen--lost" aria-live="polite">'
+      + '<div class="lock-heading"><span class="lock-heading-icon" aria-hidden="true">↟</span><div><p class="lock-kicker">RETOUR EN SURFACE durant '+esc(String(_h))+' h — <strong>Remontée forcée !</strong></p><h2>Remontée forcée !</h2></div></div>'
+      + '<p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la plongée.</p>'
+      + '<div class="lock-attempt"><span aria-hidden="true">❌</span><strong>3 erreurs sur cette tentative</strong></div>'
+      + '<div class="lock-lignes">'
+      + '<div class="lock-ligne lock-ligne--pause"><span class="lock-ligne-ico" aria-hidden="true">⏱</span><span>Retour le « '+esc(_date)+' » à « '+esc(_time)+' ».</span></div>'
+      + '<div class="lock-ligne lock-ligne--relais"><span class="lock-ligne-ico" aria-hidden="true">⚓</span><span>La barre est libre : un autre matelot peut reprendre dès maintenant.</span></div>'
+      + '<div class="lock-ligne lock-ligne--next"><span class="lock-ligne-ico" aria-hidden="true">🔁</span><span>Prochain échec : « '+esc(String(_next))+' » h en surface.</span></div>'
+      + '</div><a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a></section>';
+  }
 
   /* QUI joue sur cet appareil ? Résolution mémoïsée (param ?m=, à
      défaut localStorage nautilusMatelotCode). null = joueur anonyme
@@ -408,21 +431,24 @@
     if (carte) carte.classList.toggle('epreuve-focus', !visible);
   }
 
-  function afficherBlocage(jusqua, nom) {
-    /* Verdict lu DEPUIS le briefing (clic « PRENDRE LES COMMANDES »
-       d'un matelot encore en surface) : on entre d'abord dans la vue
-       épreuve, qui porte ce message — appel sans effet quand on y est
-       déjà (éjection en pleine partie). */
+  function afficherBlocage(jusqua, nom, rangOrHours) {
     afficherVueEpreuve();
-    afficherJournalDeBord(true);   /* plus personne ne joue : le journal revient */
-    /* Formules reprises du PALIER 1 (renderLostScreen) : « 3 erreurs
-       sur cette tentative », « Remontée forcée ! » — message immersif
-       demandé par l'organisation (remplace « tu passes la barre »). */
-    statut(nom
-      ? "🔒 <b>Remontée — 3 erreurs.</b> " + esc(nom) + " — retour à <b>" + heureLisible(jusqua) + "</b>. Relais possible."
-      : "🔒 <b>Remontée — 3 erreurs.</b> Retour à <b>" + heureLisible(jusqua) + "</b>. Relais possible.", 'danger');
+    afficherJournalDeBord(true);
+    var _hours = 1, _next = 2;
+    try{
+      if(typeof rangOrHours === 'number' && rangOrHours>0){
+        _hours = window.NautilusBlocages && window.NautilusBlocages.heuresBlocage ? window.NautilusBlocages.heuresBlocage(rangOrHours) : rangOrHours;
+        _next = window.NautilusBlocages && window.NautilusBlocages.heuresBlocage ? window.NautilusBlocages.heuresBlocage(rangOrHours+1) : (function(cur){ var arr=[1,2,4,8,12,24]; var i=arr.indexOf(cur); return i>=0&&i<arr.length-1?arr[i+1]:24; })(_hours);
+      } else if(rangOrHours && typeof rangOrHours === 'object'){
+        _hours = Number(rangOrHours.lastLockHours || rangOrHours.hours || 1);
+        _next = window.NautilusBlocages && rangOrHours.surfaceCount!=null ? window.NautilusBlocages.heuresBlocage(rangOrHours.surfaceCount+1) : (function(cur){ var arr=[1,2,4,8,12,24]; var i=arr.indexOf(cur); return i>=0&&i<arr.length-1?arr[i+1]:24; })(_hours);
+      } else if(jusqua){
+        try{ var _d=new Date(jusqua); var _now=Date.now(); var _diff=Math.round((_d.getTime()-_now)/3600000); if(_diff>=1 && _diff<=24) _hours=_diff; }catch(e){}
+      }
+    }catch(e){}
     var host = $('mcHost');
-    if (host) host.innerHTML = '';
+    if(host) host.innerHTML = lockScreenNomenclature(_hours, jusqua, _next);
+    statut("🔒 <b>Remontée forcée !</b> Retour le « "+esc(formatRetourDate(jusqua))+" » à « "+esc(formatRetourHeure(jusqua))+" ».", 'danger');
   }
 
   function onErreur(n, max) {
@@ -472,14 +498,14 @@
       if (ident) {
         window.NautilusBlocages.poserBlocage(ident, 'mots_croises_too_many_errors')
           .then(function (r) {
-            afficherBlocage(r.lockedUntil, ident.name);
+            afficherBlocage(r.lockedUntil, ident.name, r.surfaceCount || r.hours);
             acte('3 erreurs — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
           })
           .catch(function () {
             /* Réseau en rade : le blocage vaut pour CETTE session et rien
                n’est posé sur l’appareil — un collègue identifié reste libre. */
             _blocageSession = Date.now() + BLOCAGE_MS;
-            afficherBlocage(_blocageSession, ident.name);
+            afficherBlocage(_blocageSession, ident.name, 1);
             journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
           });
         return;
@@ -745,7 +771,7 @@
       if (ident && !ident.isTest) {
         var bloc = await window.NautilusBlocages.blocageActif(ident);
         if (bloc) {
-          afficherBlocage(bloc.lockedUntil, ident.name);
+          afficherBlocage(bloc.lockedUntil, ident.name, bloc);
           journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
             + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
           return;
