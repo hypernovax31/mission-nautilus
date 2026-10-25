@@ -200,7 +200,7 @@
     return ''
     + '<div class="adm-af-sec" id="afEquipesSec">'
     +   '<h4 style="margin:0 0 6px;font-size:13px">Bonnes réponses — par équipe</h4>'
-    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Cartes empilées verticalement · P1 1 mot/équipe · P2 11 mots · P3 livre+EAN automatique par équipe.</p>'
+    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Cartes empilées verticalement · P1 1 mot/équipe · P2 11 mots · P3 livre + EAN + réponses complètes (sceau, couverture, signature, chambre forte).</p>'
     +   '<div id="afTeamCards" class="adm-af-cards">'
     +     EQUIPES.map(function(eq){
             var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'">'+esc(w)+'</span>'; }).join('');
@@ -363,7 +363,38 @@
     if(!el) return;
     if(!secret || !secret.reponses){ el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>'; return; }
     var r=secret.reponses; var lv=secret.livre||{};
-    el.innerHTML='<span class="adm-af-lbl">P3</span><span class="adm-af-chip adm-af-chip--hl" title="'+esc(lv.titre||'')+'">'+esc(lv.titre||'?')+'</span> <span class="adm-af-ean">'+esc(r.ean||'')+'</span> <span class="small" style="color:#6e7a84">'+esc(lv.auteur||'')+'</span>';
+    // toutes les réponses attendues : titre + EAN + cartouche final (signature + chambre forte)
+    var premier = r.premierMot || '';
+    var signature = r.signature || '';
+    var codeFinal = r.codeFinal || '';
+    var fragments = secret.fragments || null;
+    var ordre = secret.ordre || '';
+    var regle = secret.regle || '';
+    var html = '<span class="adm-af-lbl">P3</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">';
+    html += '<span class="adm-af-chip adm-af-chip--hl" title="'+esc(lv.titre||'')+'">📖 '+esc(lv.titre||'?')+'</span>';
+    html += '<span class="adm-af-ean">'+esc(r.ean||'')+'</span>';
+    if(codeFinal) html += '<span class="adm-af-chip" style="background:#0b1a2e;color:#fff" title="Chambre forte — code final">🔐 '+esc(codeFinal)+'</span>';
+    html += '</div>';
+    // détails compacts des 4 étapes
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;line-height:1.3">';
+    if(premier) html += '<span style="background:#f0f7ff;border:1px solid #c8daf0;border-radius:6px;padding:3px 6px"><b style="color:#0b3a5e">Couverture:</b> '+esc(premier)+'</span>';
+    if(signature) html += '<span style="background:#fff7e6;border:1px solid #f0d0a0;border-radius:6px;padding:3px 6px"><b style="color:#6e3a0a">Signature:</b> '+esc(signature)+' <span style="opacity:.7">('+esc(regle||'')+')</span></span>';
+    if(lv.auteur) html += '<span style="background:#f6f8fb;border:1px solid #dfe8ee;border-radius:6px;padding:3px 6px"><b>Auteur:</b> '+esc(lv.auteur)+'</span>';
+    if(lv.editeur) html += '<span style="background:#f6f8fb;border:1px solid #dfe8ee;border-radius:6px;padding:3px 6px"><b>Éditeur:</b> '+esc(lv.editeur)+'</span>';
+    html += '</div>';
+    if(fragments){
+      var fragTxt = [];
+      if(fragments.lettresPremierMot) fragTxt.push('A:'+esc(fragments.lettresPremierMot));
+      if(fragments.initialeSignature) fragTxt.push('B:'+esc(fragments.initialeSignature));
+      if(fragments.editionNumero) fragTxt.push('C:'+esc(fragments.editionNumero));
+      if(fragments.derniereLettreEditeur) fragTxt.push('D:'+esc(fragments.derniereLettreEditeur));
+      if(fragTxt.length) html += '<div class="small" style="color:#6e7a84;margin-top:2px">Fragments '+fragTxt.join(' · ')+' · Ordre '+esc(ordre)+'</div>';
+    }
+    if(lv.id) html += '<div class="small" style="color:#9aa8b6;font-family:Consolas,monospace">'+esc(lv.id)+' · '+esc(secret.cartoucheId||'')+'</div>';
+    html += '</div>';
+    el.innerHTML = html;
+    el.style.alignItems = 'flex-start';
   }
 
   function HTML_REP() {
