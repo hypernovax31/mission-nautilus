@@ -1,0 +1,32 @@
+name: Deploy Firestore Rules
+
+on:
+  push:
+    paths:
+      - firestore.rules
+      - .github/workflows/deploy-firestore-rules.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install firebase-tools
+        run: npm i -g firebase-tools
+      - name: Deploy Firestore rules
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > /tmp/sa.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+          cat firestore.rules | head -n 8
+          firebase deploy --only firestore:rules --project mission-nautilus --non-interactive --force
+          rm -f /tmp/sa.json
