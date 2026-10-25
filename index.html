@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 003054 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 003950 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 003054 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 003950 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -860,7 +860,7 @@
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 003054 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 003950 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -955,7 +955,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 003054</span>
+      <span class="ec-version">COMMIT 003950</span>
     </footer>
   </div>
 
@@ -4886,6 +4886,31 @@ function qrDataUri(text, opts){
       + '</div>';
 
     $('cockpitMissionBtn')?.addEventListener('click', () => launchSelectedPalier());
+    // ── GARDE MAGASIN D'ORIGINE : à la reprise, remplace le bouton si hors zone ──
+    (function gardeMagasinCockpit(){
+      try{
+        const G = window.NautilusMagasinGuard;
+        const launchHost = document.querySelector('.ck-launch');
+        if(!G || !G.verifierAcces || !launchHost) return;
+        const boutonOrigine = launchHost.innerHTML;
+        launchHost.innerHTML = '<div class="small" style="color:var(--muted)">📍 Vérification du magasin…</div>';
+        G.verifierAcces().then(function(info){
+          if(info && !info.autorise){
+            launchHost.innerHTML = G.messageHTML(info);
+            const retry = document.getElementById('afGuardRetry');
+            if(retry) retry.addEventListener('click', function(){ renderGame(justUnlocked); });
+          } else {
+            launchHost.innerHTML = boutonOrigine;
+            const btn = document.getElementById('cockpitMissionBtn');
+            if(btn) btn.addEventListener('click', () => launchSelectedPalier());
+          }
+        }).catch(function(){
+          launchHost.innerHTML = boutonOrigine;
+          const btn = document.getElementById('cockpitMissionBtn');
+          if(btn) btn.addEventListener('click', () => launchSelectedPalier());
+        });
+      }catch(e){}
+    })();
   }
 
   const RULES = {
@@ -7127,6 +7152,23 @@ function qrDataUri(text, opts){
       renderGame();
       smartScroll(document.getElementById('gameCard'));
       return;
+    }
+    // ── Garde magasin d'origine : on bloque le lancement si hors zone et on affiche le message dans le cockpit
+    if(window.NautilusMagasinGuard && window.NautilusMagasinGuard.verifierAcces){
+      try{
+        const gInfo = await window.NautilusMagasinGuard.verifierAcces();
+        if(gInfo && !gInfo.autorise){
+          const box = document.getElementById('gameBox');
+          if(box){
+            const host = box.querySelector('.ck-launch');
+            if(host) host.innerHTML = window.NautilusMagasinGuard.messageHTML(gInfo);
+            const retry = document.getElementById('afGuardRetry');
+            if(retry) retry.addEventListener('click', () => renderGame());
+            if(host) host.scrollIntoView({behavior:'smooth', block:'center'});
+          }
+          return;
+        }
+      }catch(e){}
     }
     startOceanAudio();
 
