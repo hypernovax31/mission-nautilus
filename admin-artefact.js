@@ -618,7 +618,12 @@
     var el=$('afP3-'+equipe);
     if(!el) return;
     if(!secret || !secret.reponses){ el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>'; return; }
-    var r=secret.reponses; var lv=secret.livre||{};
+    var r=secret.reponses||{}; var lv=secret.livre||{};
+    // EAN de référence : secret.reponses.ean doit égaler secret.livre.ean ; si divergence (ancien cache), livre fait foi + alerte
+    var eanAffiche = r.ean || lv.ean || '';
+    var eanLivre = lv.ean || '';
+    var eanMismatch = eanAffiche && eanLivre && eanAffiche !== eanLivre;
+    if (!eanAffiche) eanAffiche = eanLivre;
     // toutes les réponses attendues : titre + EAN + cartouche final (signature + chambre forte)
     var premier = r.premierMot || '';
     var signature = r.signature || '';
@@ -629,7 +634,8 @@
     var html = '<span class="adm-af-lbl">P3</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">';
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">';
     html += '<span class="adm-af-chip adm-af-chip--hl" title="'+esc(lv.titre||'')+'">📖 '+esc(lv.titre||'?')+'</span>';
-    html += '<span class="adm-af-ean">'+esc(r.ean||'')+'</span>';
+    html += '<span class="adm-af-ean" title="'+(eanMismatch ? '⚠️ divergence ean livre vs réponse — livre affiché' : esc(eanAffiche))+'">'+esc(eanAffiche||'—')+'</span>';
+    if (eanMismatch) html += '<span class="small" style="color:#b45309">⚠️ EAN réponse '+esc(r.ean)+' ≠ livre '+esc(eanLivre)+'</span>';
     if(codeFinal) html += '<span class="adm-af-chip" style="background:#0b1a2e;color:#fff" title="Chambre forte — code final">🔐 '+esc(codeFinal)+'</span>';
     html += '</div>';
     // détails compacts des 4 étapes

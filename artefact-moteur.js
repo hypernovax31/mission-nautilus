@@ -912,9 +912,9 @@
   /* Les trois indices payants : le sacrifice est une remontée en surface
      (même barème que les échecs, même module matelot-blocages). */
   var INDICES = [
-    { rang: 1, cle: 'rayon', titre: 'Le rayon', aide: 'resserre', heures: 1 },
-    { rang: 2, cle: 'edition', titre: 'L’édition', aide: 'edition', heures: 2 },
-    { rang: 3, cle: 'auteur', titre: 'L’auteur', aide: 'auteur', heures: 4 }
+    { rang: 1, cle: 'rayon', titre: 'Le rayon', aide: 'resserre', heures: 2 },
+    { rang: 2, cle: 'edition', titre: 'L’édition', aide: 'edition', heures: 4 },
+    { rang: 3, cle: 'auteur', titre: 'L’auteur', aide: 'auteur', heures: 8 }
   ];
 
   var MAX_ERREURS = 3;                 // le 3ᵉ raté remonte en surface

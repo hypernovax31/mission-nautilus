@@ -144,33 +144,32 @@ async function telechargerPoli(url, etat, opts) {
   }
 }
 
-// Fallback livre toujours en 1h (si live bloqué) — fictif mais valide côté moteur
-function livreFallbackPourMagasin(magasinId) {
-  const maintenant = new Date().toISOString();
+// Fallback livre toujours en 1h (si live bloqué) — vrai ouvrage Fnac, EAN validé
+// Pool diversifié identique à artefact-service.js : 1 EAN différent par équipe/magasin
+var FALLBACK_POOL_FN = [
+  { ean:'9782070612758', titre:'Le Petit Prince', auteur:'Antoine de Saint-Exupéry', editeur:'Gallimard', edition:'Collection Folio', editionNumero:1, annee:2020, pages:96, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman','verne'] },
+  { ean:'9782070368228', titre:'1984', auteur:'George Orwell', editeur:'Gallimard', edition:'Collection Folio', editionNumero:12, annee:2018, pages:416, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] },
+  { ean:'9782070584628', titre:"Harry Potter à l'école des sorciers", auteur:'J. K. Rowling', editeur:'Gallimard', edition:'Collection Folio Junior', editionNumero:1, annee:2017, pages:320, format:'Poche', type:'litterature', famille:'jeunesse-aventure', liens:['jeunesse','aventure','roman'] },
+  { ean:'9782266284226', titre:'Le Seigneur des anneaux', auteur:'J. R. R. Tolkien', editeur:'Christian Bourgois', edition:'Poche', editionNumero:3, annee:2019, pages:700, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] },
+  { ean:'9782070412600', titre:'Vingt mille lieues sous les mers', auteur:'Jules Verne', editeur:'Gallimard', edition:'Collection Folio', editionNumero:7, annee:2015, pages:640, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman','verne'] },
+  { ean:'9782070365302', titre:'Le Vieil Homme et la Mer', auteur:'Ernest Hemingway', editeur:'Gallimard', edition:'Collection Folio', editionNumero:5, annee:2016, pages:160, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] }
+];
+function livreFallbackPourMagasin(magasinId, equipe) {
+  var maintenant = new Date().toISOString();
+  var sel = String(equipe||'') + '|' + String(magasinId||'') + '|fallback-v2';
+  var tirage = MOTEUR.aleatoireDeSel(sel);
+  var idx = Math.floor(tirage() * FALLBACK_POOL_FN.length) % FALLBACK_POOL_FN.length;
+  var modele = FALLBACK_POOL_FN[idx];
+  var ean = modele.ean;
   return {
-    id: 'fallback-'+String(magasinId).toLowerCase()+'-atlas-monde',
-    titre: 'Atlas du monde illustré',
-    sousTitre: 'Édition secours',
-    auteur: 'Collectif',
-    auteurType: 'collectif',
-    editeur: 'Éditions du Nautilus',
-    edition: '4e édition',
-    editionNumero: 4,
-    annee: 2024,
-    pages: 320,
-    format: 'broché',
-    ean: '2000000000008', // valide 200-299
-    sku: 'FALLBACK-0001',
-    url: 'https://www.fnac.com/a2000000000008',
-    categorieFnac: 'Atlas / carte (broché)',
-    rayon: 'Géographie',
-    type: 'atlas-mondial',
-    famille: 'atlas-mondial',
-    liens: ['monde','cartes','atlas'],
-    vendeur: 'fnac',
-    disponibilite: {
-      [magasinId]: { magasin: magasinId, statut:'disponible', delai:'sous 1H', checkedAt: maintenant, vendeur:'fnac' }
-    }
+    id: 'fallback-'+String(magasinId||'magasin').toLowerCase()+'-'+ean+'-'+String(equipe||'X').toLowerCase(),
+    titre: modele.titre, sousTitre: '', auteur: modele.auteur, auteurType: 'unique',
+    editeur: modele.editeur, edition: modele.edition, editionNumero: modele.editionNumero,
+    annee: modele.annee, pages: modele.pages, format: modele.format,
+    ean: ean, sku: 'NAU-FALLBACK-'+String(magasinId||'X').toUpperCase()+'-'+String(equipe||'').slice(0,4),
+    url: '', categorieFnac: 'Livres - Littérature', etiquetteFnac: 'Littérature', rayon: 'Littérature',
+    type: modele.type, famille: modele.famille, liens: modele.liens, priorite: 5, vendeur: 'fnac',
+    disponibilite: { [magasinId]: { magasin: String(magasinId), statut:'disponible', delai:'Retrait gratuit sous 1H', checkedAt: maintenant, vendeur:'fnac', magasin: String(magasinId) } }
   };
 }
 
@@ -300,8 +299,8 @@ async function selectionner(req, res) {
   // si toujours rien et qu'on était en live bloqué → on prend le fallback garanti 1h
   if (!candidates.length) {
     // on génère à la volée un ouvrage fallback toujours en 1h pour ce magasin
-    const fallbackLivre = livreFallbackPourMagasin(magasinId);
-    const gen2 = MOTEUR.genererCartouche(fallbackLivre, { magasinId, sel: equipe+'|'+magasinId+'|fallback', maintenant: now });
+    const fallbackLivre = livreFallbackPourMagasin(magasinId, equipe);
+    const gen2 = MOTEUR.genererCartouche(fallbackLivre, { magasinId, sel: equipe+'|'+magasinId+'|fallback-v2', maintenant: now });
     if (!gen2.erreur && gen2.cartouche) {
       const cartouche = gen2.cartouche;
       try { await db.collection(CHEMINS.cartouches).doc(cartouche.id).set(cartouche); } catch(e){}

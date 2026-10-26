@@ -524,7 +524,17 @@
     var dispo = c.disponibilite;
     if (!dispo) return false;
     var fenetre = Number(cfg.fenetreMinutes) || M.FENETRE_FRAICHEUR_MINUTES;
-    return M.disponibiliteValide(dispo, magasinId, { fenetreMinutes: fenetre, maintenant: maintenant }).ok;
+    var dispoOk = M.disponibiliteValide(dispo, magasinId, { fenetreMinutes: fenetre, maintenant: maintenant }).ok;
+    if (!dispoOk) return false;
+    // Exclure l'ancien fallback fictif 2000000000008 (Atlas du monde) : EAN valide checksum mais aucun rayon
+    try {
+      if (c.etapes[0] && c.etapes[0].id === 'sceau' && c.sel && c.iterations) {
+        var _eanAncien = '2000000000008';
+        var _empAncien = M.empreinte(M.eanNormalise(_eanAncien), c.sel, c.iterations.ean || c.etapes[0].iterations);
+        if (c.etapes[0].empreintes && c.etapes[0].empreintes.indexOf(_empAncien) >= 0) return false;
+      }
+    } catch(e){}
+    return true;
   }
 
   /* Fallback « livre réel » — sert uniquement quand aucune cartouche
