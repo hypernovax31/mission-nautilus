@@ -196,7 +196,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=19"></script>
+<script src="palier-sas.js?v=20"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2 :
      la vue d'explication immersive du thème (SANS dévoiler le
      contenu) entre la ZONE SCELLÉE et le mini-jeu — mise en page du
@@ -1003,7 +1003,7 @@
               var d = snap.data()||{};
               if(window.NautilusSas.teamHasPassedPalier(d, 2)){
                 afficherVueBriefing();
-              } else if(d.sasUnlocks && d.sasUnlocks[2]){
+              } else if(d.sasUnlocks && (d.sasUnlocks[2] || d.sasUnlocks[String(2)])){
                 afficherVueBriefing();
                 try{ localStorage.setItem('nautilusUnlock:palier:'+window.NautilusSas._codeAttendu(2),'ok'); }catch(e){}
               }

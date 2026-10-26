@@ -241,6 +241,35 @@
         return;
       }
       B.identiteCourante().then(function (ident) {
+        // Fallback si ident non résolu mais localStorage contient déjà l'équipe (cas reprise sans ?m= mais avec team mémorisé)
+        if (!ident || !ident.teamCode) {
+          try{
+            var fallbackTeam = (localStorage.getItem('nautilusCurrentTeam')||'').trim().toUpperCase();
+            if(fallbackTeam){
+              ident = { teamCode: fallbackTeam, isTest:false, code: (localStorage.getItem('nautilusMatelotCode')||'').trim().toUpperCase() };
+            } else {
+              // dernier recours : code matelot en URL/localStorage → lookup direct matelots/{code}
+              var fallbackCode = codeMatelot || (localStorage.getItem('nautilusMatelotCode')||'').trim().toUpperCase();
+              if(fallbackCode && fallbackCode !== 'ZZZZ-0000'){
+                // on tente une résolution directe sans passer par identiteCourante (évite boucle)
+                B.db().then(function(x){
+                  return x.fs.getDoc(x.fs.doc(x.db, 'matelots', fallbackCode));
+                }).then(function(snap){
+                  if(snap && snap.exists()){
+                    var f = snap.data()||{};
+                    var tc = (f.teamCode||'').trim().toUpperCase();
+                    if(tc){
+                      try{ localStorage.setItem('nautilusCurrentTeam', tc); }catch(e){}
+                      if($('topTeam')) $('topTeam').textContent = NOMS_EQUIPAGES[tc] || tc;
+                      // relance l'observation avec la bonne équipe
+                      setTimeout(observerDeverrouillageEquipe, 200);
+                    }
+                  }
+                }).catch(function(){});
+              }
+            }
+          }catch(e){}
+        }
         if (!ident || ident.isTest || !ident.teamCode) {
           // ident pas encore résolu (localStorage → Firestore) → retry court
           try{ setTimeout(observerDeverrouillageEquipe, 600); }catch(e){}
@@ -261,7 +290,7 @@
                 }
                 // si onSnapshot tarde, on peut déjà ouvrir si sasUnlocks présent
                 var o0 = d0.sasUnlocks||{};
-                if(o0[n]){ showUnlocked(false); return; }
+                if(o0[n] || o0[String(n)]){ showUnlocked(false); return; }
               }
             }catch(e){}
           }).catch(function(){});
@@ -272,7 +301,7 @@
               if(epreuveDejaLancee()) return;
               var data = snap.data() || {};
               var ouverts = data.sasUnlocks || {};
-              if (ouverts[n] || teamHasPassedPalier(data, n)) {
+              if (ouverts[n] || ouverts[String(n)] || teamHasPassedPalier(data, n)) {
                 termine = true;
                 try { if (unsub) unsub(); } catch (e) {}
                 showUnlocked(false);
