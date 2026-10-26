@@ -107,9 +107,14 @@
        chiffres : si la série attendue s'y trouve, le sas s'ouvre. */
     function payloadUnlocks(payload) {
       if (!payload) return false;
-      var chiffres = String(payload).replace(/\D+/g, '');
-      return chiffres.indexOf(CODE_CHIFFRES) !== -1;
+      var s = String(payload).trim();
+      var chiffres = s.replace(/\D+/g, '');
+      var ok = chiffres.indexOf(CODE_CHIFFRES) !== -1;
+      try{ console.log('[SAS] payload=', s, 'chiffres=', chiffres, 'attendu=', CODE_CHIFFRES, 'ok=', ok); }catch(e){}
+      return ok;
     }
+    // Exposé pour debug console : NautilusSas._debugPayload("1721310619")
+    function _debugPayload(p){ return { payload:p, chiffres:String(p).replace(/\D+/g,''), attendu:CODE_CHIFFRES, palier:n, ok: payloadUnlocks(p) }; }
 
     function isUnlocked() {
       try { return localStorage.getItem(UNLOCK_KEY) === 'ok'; } catch (e) { return false; }
@@ -128,15 +133,36 @@
     function showUnlocked(propager) {
       persistUnlock();
       stopCamera();
+      // Compat HTML : les pages actuelles utilisent #gateHero (pas #gateCard)
+      var hero = $('gateHero'); if (hero) { hero.hidden = true; try{ hero.style.display='none'; }catch(e){} }
       var carte = $('gateCard'); if (carte) carte.hidden = true;
-      var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
+      var ouvert = $('gateUnlocked'); if (ouvert) { ouvert.hidden = false; try{ ouvert.style.display=''; }catch(e){} }
       revelerContenuProtege();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      try{ window.scrollTo({ top: 0, behavior: 'smooth' }); }catch(e){}
       /* Signal unique pour TOUTES les pages de palier : la page fait
          alors entrer dans le BRIEFING DU CAPITAINE (écoute
          'nautilus:sas-ouvert') — l'épreuve ne s'arme qu'après le
          « ⚓ PRENDRE LES COMMANDES » du briefing, sur toute la mission. */
-      try { window.dispatchEvent(new Event('nautilus:sas-ouvert')); } catch (e) {}
+      var _fireBrief = function(){
+        try { window.dispatchEvent(new Event('nautilus:sas-ouvert')); } catch (e) {}
+        // Fallback si la page n'a pas encore branché son écouteur ou si le sas était déjà ouvert :
+        // on force l'affichage du briefing directement si #briefCard existe encore cachée.
+        try{
+          var _brief = document.getElementById('briefCard');
+          if(_brief && _brief.hidden){
+            _brief.hidden = false; _brief.style.display = '';
+            // Masquer le héros scellé si encore visible (double sécurité)
+            var _h2 = document.getElementById('gateHero');
+            if(_h2){ _h2.hidden = true; _h2.style.display='none'; }
+            var _t = document.getElementById('teamCard'); if(_t){ _t.hidden=false; _t.style.display=''; }
+            var _l = document.getElementById('logCard'); if(_l){ _l.hidden=false; _l.style.display=''; }
+            try{ if(window.JournalDeBord) window.JournalDeBord.addLogEntry('✅ Sas ouvert — briefing du capitaine affiché (fallback).','success'); }catch(e){}
+          }
+        }catch(e){}
+      };
+      _fireBrief();
+      // Re-tente à 600ms si la page branchait son écouteur en différé (cas init tardif)
+      try{ setTimeout(_fireBrief, 600); }catch(e){}
       /* DÉVERROUILLAGE PARTAGÉ AVEC L'ÉQUIPAGE : un seul matelot scanne
          le QR, tout son équipage voit le sas s'ouvrir en direct (état
          écrit dans Firestore, teams/{code}.sasUnlocks[n]).
@@ -200,19 +226,41 @@
       }).catch(function () {});
     }
 
-    function refuser() {
-      message('❌ Ce QR Code n’ouvre pas le sas du ' + LABEL + '. Recherche le bon !', 'danger');
+    function refuser(payload) {
+      var attendu = CODE_CHIFFRES;
+      var recu = String(payload||'').replace(/\D+/g,'').slice(0,30) || '(vide)';
+      message('❌ Ce QR Code n’ouvre pas le sas du ' + LABEL + ' (attendu '+attendu+' · reçu '+recu+'). Recherche le bon !', 'danger');
+      // Aide manuelle : si le scan échoue répétitivement, proposer la saisie du code (secours)
+      try{
+        var el = $('gateMsg');
+        if(el && !document.getElementById('sasManualBtn')){
+          var btn = document.createElement('button');
+          btn.id='sasManualBtn';
+          btn.type='button';
+          btn.textContent='⌨️ Saisir le code manuellement';
+          btn.style.cssText='margin-top:8px;padding:6px 10px;border-radius:8px;border:1px solid #6ea8ff;background:#e8f2ff;color:#0a2a44;font-weight:700;cursor:pointer;font-size:13px;';
+          btn.onclick = function(){
+            var v = prompt('Entre le code du sas pour '+LABEL+' (chiffres visibles sur le QR) :','');
+            if(v!=null) verifier(v,'saisie manuelle');
+          };
+          el.appendChild(document.createElement('br'));
+          el.appendChild(btn);
+        }
+      }catch(e){}
     }
 
     function verifier(payload, source) {
       var origine = source || 'QR Code';
+      var _att = CODE_CHIFFRES;
+      var _ch = String(payload||'').replace(/\D+/g,'');
+      try{ console.log('[SAS verifier] palier='+n+' attendu='+_att+' reçu chiffres='+_ch+' raw='+String(payload).slice(0,120)); }catch(e){}
       if (payloadUnlocks(payload)) {
-        message('✅ Code reconnu : ouverture du sas…', 'success');
-        journal('✅ <b>Code reconnu</b> (' + origine + ') : le sas du ' + LABEL + ' s’ouvre.', 'success');
+        message('✅ Code reconnu ('+_att+') : ouverture du sas…', 'success');
+        try{ journal('✅ <b>Code reconnu</b> (' + origine + ' : <code>'+String(payload).slice(0,40)+'</code>) : le sas du ' + LABEL + ' s’ouvre.', 'success'); }catch(e){ journal('✅ Code reconnu ('+origine+') : le sas du '+LABEL+' s’ouvre.','success'); }
         setTimeout(showUnlocked, 450);
       } else {
-        refuser();
-        journal('❌ Code refusé (' + origine + ') — le sas du ' + LABEL + ' reste scellé.', 'danger');
+        refuser(payload);
+        try{ journal('❌ Code refusé (' + origine + ' : <code>'+String(payload).slice(0,40)+'</code> → '+_ch+') — le sas du ' + LABEL + ' reste scellé (attendu '+_att+').', 'danger'); }catch(e){ journal('❌ Code refusé (' + origine + ') — le sas du ' + LABEL + ' reste scellé.', 'danger'); }
       }
     }
 
@@ -435,27 +483,34 @@
        est montré aussitôt — le script de la page fait alors entrer
        dans le BRIEFING DU CAPITAINE (héros et sas rangés), et le
        mini-jeu n'apparaît qu'après « ⚓ PRENDRE LES COMMANDES ». */
+    // Helpers locaux pour gérer les 2 IDs historiques (gateCard = ancien, gateHero = actuel)
+    function _showScelle(){
+      var _hero = $('gateHero'); if(_hero){ _hero.hidden=false; try{_hero.style.display='';}catch(e){} }
+      var _gc = $('gateCard'); if(_gc) _gc.hidden=false;
+      var _ou = $('gateUnlocked'); if(_ou){ _ou.hidden=true; try{_ou.style.display='none';}catch(e){} }
+      cacherContenuProtege();
+    }
+    function _showDejaOuvert(){
+      var _hero = $('gateHero'); if(_hero){ _hero.hidden=true; try{_hero.style.display='none';}catch(e){} }
+      var _gc = $('gateCard'); if(_gc) _gc.hidden=true;
+      var _ou = $('gateUnlocked'); if(_ou){ _ou.hidden=false; try{_ou.style.display='';}catch(e){} }
+      revelerContenuProtege();
+    }
     if (sasForceFerme()) {
       /* Concepteur : le portail se montre SCELLÉ même si le sas est déjà
          ouvert sur cet appareil — tout est en place pour viser le vrai
          QR Code (le scan lève alors le scellé normalement). */
-      var carteF = $('gateCard'); if (carteF) carteF.hidden = false;
-      var ouvertF = $('gateUnlocked'); if (ouvertF) ouvertF.hidden = true;
-      cacherContenuProtege();
+      _showScelle();
       journal('🧪 Mode concepteur : page scellée affichée pour tester le QR Code (le déverrouillage mémorisé est ignoré sur cette vue).', 'info');
     } else if (scanDemande()) {
       /* Matelot qui vient scanner le QR du palier suivant : le portail
          se montre SCELLÉ même si le sas est déjà ouvert sur cet appareil
          (cas du concepteur, ou d'un retour après coup) — le scan reste le
          geste attendu. */
-      var carteS = $('gateCard'); if (carteS) carteS.hidden = false;
-      var ouvertS = $('gateUnlocked'); if (ouvertS) ouvertS.hidden = true;
-      cacherContenuProtege();
+      _showScelle();
       journal('📷 ' + LABEL + ' : sas prêt à scanner le QR Code.', 'info');
     } else if (isUnlocked()) {
-      var carte = $('gateCard'); if (carte) carte.hidden = true;
-      var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
-      revelerContenuProtege();
+      _showDejaOuvert();
       journal('🔓 Sas déjà ouvert sur cet appareil : le briefing du capitaine s’affiche directement.', 'success');
     } else {
       cacherContenuProtege();
@@ -492,5 +547,14 @@
     try { return localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok'; } catch (e) { return false; }
   }
 
-  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme, scanDemande: scanDemande };
+  // Outil de secours console : NautilusSas.forceUnlock(2) ouvre le palier 2 sans QR (debug)
+  function forceUnlock(palier){
+    var n2 = Math.max(2, palier|0);
+    var code2 = BASE.map(function(x){ return String(x+(n2-1)); }).join('');
+    try{ localStorage.setItem('nautilusUnlock:palier:'+code2,'ok'); }catch(e){}
+    try{ console.log('[SAS] forceUnlock palier '+n2+' code '+code2); }catch(e){}
+    if(n2===n) showUnlocked();
+    else { try{ window.location.reload(); }catch(e){} }
+  }
+  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme, scanDemande: scanDemande, forceUnlock: forceUnlock, _debugPayload:_debugPayload, _codeAttendu: function(p){ var _n=Math.max(2,p|0); return BASE.map(function(x){return String(x+(_n-1));}).join(''); } };
 })();
