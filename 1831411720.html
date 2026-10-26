@@ -165,7 +165,7 @@
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="artefact-service.js?v=9"></script>
 <script src="magasin-fnac.js?v=1"></script>
-<script src="magasin-guard.js?v=3"></script>
+<script src="magasin-guard.js?v=4"></script>
 <script src="artefact-palier3.js?v=6"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
 <script src="victoire-palier.js?v=12"></script>
@@ -652,19 +652,21 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   /* Démarrage protégé : remontée active du matelot identifié, sinon repli
      local anonyme. Le moindre doute réseau laisse JOUER (fail-open). */
   async function demarrer() {
-    // 1) Garde magasin : si partie globale commencée et hors magasin -> blocage, sauf aperçu/test
-    if(!apercuAdminAutorise() && !enModeTest()){
-      try{
-        if(window.NautilusMagasinGuard){
-          var _gc = await window.NautilusMagasinGuard.verifierAcces();
-          if(!_gc.autorise){
-            afficherHorsMagasin(_gc);
-            journal('⛔ Accès palier refusé : hors magasin d’origine ('+( _gc.motif||'hors-zone')+').', 'warning');
-            return;
-          }
-        }
-      }catch(e){}
-    }
+    // 1) Garde magasin : DÉSACTIVÉE temporairement 2026-10-27 — laisse rentrer tous les joueurs hors magasin
+    // TODO réactiver : décommenter le bloc ci-dessous quand le jeu global sera terminé
+    // if(!apercuAdminAutorise() && !enModeTest()){
+    //   try{
+    //     if(window.NautilusMagasinGuard){
+    //       var _gc = await window.NautilusMagasinGuard.verifierAcces();
+    //       if(!_gc.autorise){
+    //         afficherHorsMagasin(_gc);
+    //         journal('⛔ Accès palier refusé : hors magasin d’origine ('+( _gc.motif||'hors-zone')+').', 'warning');
+    //         return;
+    //       }
+    //     }
+    //   }catch(e){}
+    // }
+    // garde désactivée → on passe direct
     if (!apercuAdminAutorise()) {
       var ident = await monIdentite();
       if (ident && !ident.isTest) {
