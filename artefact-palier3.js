@@ -185,6 +185,7 @@
             }
             return;
           }
+          if(t.id === 'afHintBtn'){ e.preventDefault(); var _next=null; for(var _k=0;_k<M.INDICES.length;_k++){ if((etat.indices||[]).indexOf(M.INDICES[_k].cle)<0){ _next=M.INDICES[_k].rang; break; } } if(_next) proposerSacrifice(_next); return; }
           if(t.dataset && t.dataset.indice){ e.preventDefault(); proposerSacrifice(Number(t.dataset.indice)); return; }
           t = t.parentElement;
         }
@@ -497,6 +498,7 @@
       hote.querySelector('#afEan').addEventListener('keydown', function (e) {
         if (e.key === 'Enter') proposer(this.value);
       });
+      brancherPupitre();
 
       function proposer(code) {
         var normalise = M.eanNormalise(code);
@@ -532,7 +534,7 @@
     /* --- écran : une étape de réponse saisie ----------------------- */
     function vueEtape(etape) {
       etat.vue = etape.id;
-      var grille = etape.type === 'code'
+      var grille = etape.id === 'signature'
         ? '<div class="af-grille"><b>Table du Nautilus — pour coder les lettres en nombres</b>'
           + '<span>A=01 B=02 C=03 D=04 E=05 F=06 G=07 H=08 I=09 J=10 K=11 L=12 M=13</span>'
           + '<span>N=14 O=15 P=16 Q=17 R=18 S=19 T=20 U=21 V=22 W=23 X=24 Y=25 Z=26</span>'
@@ -591,6 +593,7 @@
       }
       hote.querySelector('#afValider').addEventListener('click', valider);
       champ.addEventListener('keydown', function (e) { if (e.key === 'Enter') valider(); });
+      brancherPupitre();
     }
 
     /* Le service est la source de vérité : après chaque vérification, la
@@ -792,19 +795,19 @@
           }
           etat.vue = 'chargement';
           rendre('<div class="af-carte"><p class="af-kicker">Salle des machines</p>'
-            + '<h3 class="af-titre">🌊 Le Nautilus cherche un ouvrage…</h3>'
-            + '<p class="af-msg">Vérification de la disponibilité au magasin <b>'
+            + '<h3 class="af-titre">🌊 Préparation de ta mission…</h3>'
+            + '<p class="af-msg">Vérification en cours au magasin <b>'
             + echapper(etat.magasin.nom || etat.magasin.id) + '</b>.</p></div>');
           return service.ouvrirSession(o.equipe, etat.magasin.id).then(suiteCharger).catch(errCharger);
         }).catch(function(){ return lancerOuvrirSession(); });
         function suiteCharger(r){ if(etat.detruit) return; if(r.erreur === 'magasin-requis'){ vueMagasin(); return; } if(r.erreur === 'aucun-ouvrage'){ journal('⛔ Aucun ouvrage compatible confirmé pour ce magasin.', 'warning'); vueAucunOuvrage('Aucun ouvrage ici. Préviens le capitaine.', ''); return; } if(r.erreur){ vueAucunOuvrage(r.message || M.MESSAGES.aucunOuvrage, ''); return; } etat.session = r.session; (function(){ var _mk = (o.matelot && o.matelot.memberKey) || ''; var _map = r.session.erreursParMatelot || {}; etat.erreurs = _mk && _map[_mk] != null ? Number(_map[_mk]||0) : Number(r.session.erreurs || 0); })(); etat.indices = r.session.indicesUtilises || []; if(r.session.statut === 'suspendue'){ vueSuspendue(r.session); return; } if(r.session.statut === 'terminee'){ terminer(); return; } if(r.session.remplacement){ journal('🔁 Piste remplacée par le capitaine : ' + lignes(M.MESSAGES.replacement), 'info'); } if(r.reprise && (r.session.etapesValidees || []).length){ journal('⚓ Mission reprise là où l’équipage s’était arrêté.', 'info'); } var validees2 = r.session.etapesValidees || []; if(!validees2.length) vueIndice(); else etapeSuivante(); }
         function errCharger(e){ if(etat.detruit) return; vueAucunOuvrage('Le Nautilus ne parvient pas à joindre son journal de bord.', 'Vérifie la connexion, puis relance. (' + M.nettoyerTexte(e && e.message, 120) + ')'); }
-        function lancerOuvrirSession(){ etat.vue = 'chargement'; rendre('<div class="af-carte"><p class="af-kicker">Salle des machines</p><h3 class="af-titre">🌊 Le Nautilus cherche un ouvrage…</h3><p class="af-msg">Vérification de la disponibilité au magasin <b>'+echapper(etat.magasin.nom || etat.magasin.id)+'</b>.</p></div>'); return service.ouvrirSession(o.equipe, etat.magasin.id).then(suiteCharger).catch(errCharger); }
+        function lancerOuvrirSession(){ etat.vue = 'chargement'; rendre('<div class="af-carte"><p class="af-kicker">Salle des machines</p><h3 class="af-titre">🌊 Préparation de ta mission…</h3><p class="af-msg">Vérification en cours au magasin <b>'+echapper(etat.magasin.nom || etat.magasin.id)+'</b>.</p></div>'); return service.ouvrirSession(o.equipe, etat.magasin.id).then(suiteCharger).catch(errCharger); }
       }
       etat.vue = 'chargement';
       rendre('<div class="af-carte"><p class="af-kicker">Salle des machines</p>'
-        + '<h3 class="af-titre">🌊 Le Nautilus cherche un ouvrage…</h3>'
-        + '<p class="af-msg">Vérification de la disponibilité au magasin <b>'
+        + '<h3 class="af-titre">🌊 Préparation de ta mission…</h3>'
+        + '<p class="af-msg">Vérification en cours au magasin <b>'
         + echapper(etat.magasin.nom || etat.magasin.id) + '</b>.</p></div>');
 
       return service.ouvrirSession(o.equipe, etat.magasin.id).then(function (r) {

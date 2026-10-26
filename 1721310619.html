@@ -12,8 +12,8 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=52">
-  <link rel="stylesheet" href="css/palier2.css?v=28">
+  <link rel="stylesheet" href="css/palier1.css?v=53">
+  <link rel="stylesheet" href="css/palier2.css?v=29">
   <link rel="stylesheet" href="css/tentatives.css?v=1">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
@@ -327,18 +327,16 @@
     try{ var d=new Date(iso); var hh=String(d.getHours()).padStart(2,'0'); var mm=String(d.getMinutes()).padStart(2,'0'); var ss=String(d.getSeconds()).padStart(2,'0'); return hh+'h'+mm+'m'+ss+'s'; }catch(e){ return '—'; }
   }
   function lockScreenNomenclature(hours, lockedUntil, nextHours){
-    var _h = Math.max(1, Number(hours||1)); // durée barème verrouillée au moment de la remontée
+    var _h = Math.max(1, Number(hours||1));
     var _next = Number(nextHours|| (function(cur){ var arr=[1,2,4,8,12,24]; var i=arr.indexOf(cur); return i>=0&&i<arr.length-1?arr[i+1]:24; })(_h));
     var _date = formatRetourDate(lockedUntil);
     var _time = formatRetourHeure(lockedUntil);
     return '<section class="lock-screen lock-screen--lost" aria-live="polite">'
-      + '<div class="lock-heading"><span class="lock-heading-icon" aria-hidden="true">↟</span><div><p class="lock-kicker">RETOUR EN SURFACE — <strong>REMONTÉE FORCÉE durant '+esc(String(_h))+' h !</strong></p><h2>Remontée forcée !</h2></div></div>'
-      + '<p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la plongée.</p>'
-      + '<div class="lock-attempt"><span aria-hidden="true">❌</span><strong>3 erreurs sur cette tentative</strong></div>'
-      + '<div class="lock-lignes">'
-      + '<div class="lock-ligne lock-ligne--pause"><span class="lock-ligne-ico" aria-hidden="true">⏱</span><span>Retour le « '+esc(_date)+' » à « '+esc(_time)+' ».</span></div>'
-      + '<div class="lock-ligne lock-ligne--relais"><span class="lock-ligne-ico" aria-hidden="true">⚓</span><span>La barre est libre : un autre matelot peut reprendre dès maintenant.</span></div>'
-      + '<div class="lock-ligne lock-ligne--next"><span class="lock-ligne-ico" aria-hidden="true">🔁</span><span>Prochain échec : « '+esc(String(_next))+' » h en surface.</span></div>'
+      + '<div class="lock-header"><span class="lock-icon" aria-hidden="true">🔒</span><h2>Remontée forcée</h2><p class="lock-subtitle">3 erreurs — mission interrompue</p></div>'
+      + '<div class="lock-details">'
+      + '<div class="lock-row"><span class="lock-ico" aria-hidden="true">⏱</span><span>Retour le '+esc(_date)+' à '+esc(_time)+' — <b>'+esc(String(_h))+' h</b> en surface</span></div>'
+      + '<div class="lock-row"><span class="lock-ico" aria-hidden="true">⚓</span><span>Un coéquipier peut reprendre immédiatement</span></div>'
+      + '<div class="lock-row is-next"><span class="lock-ico" aria-hidden="true">🔁</span><span>Prochaine sanction : <b>'+esc(String(_next))+' h</b></span></div>'
       + '</div><a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l\'accueil</a></section>';
   }
 

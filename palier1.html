@@ -12,7 +12,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=52">
+  <link rel="stylesheet" href="css/palier1.css?v=53">
   <link rel="stylesheet" href="css/tentatives.css?v=1">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
@@ -3506,16 +3506,12 @@ window.Nautilus = {
     const lignes = lignesBlocageHtml(t, monLock, 'echec');
     return `
       <section class="lock-screen lock-screen--lost" aria-live="polite">
-        <div class="lock-heading">
-          <span class="lock-heading-icon" aria-hidden="true">↟</span>
-          <div>
-            <p class="lock-kicker">RETOUR EN SURFACE — <strong>REMONTÉE FORCÉE durant ${esc(String(_hoursKicker))} h !</strong></p>
-            <h2>Remontée forcée !</h2>
-          </div>
+        <div class="lock-header">
+          <span class="lock-icon" aria-hidden="true">🔒</span>
+          <h2>Remontée forcée</h2>
+          <p class="lock-subtitle">3 erreurs — mission interrompue</p>
         </div>
-        <p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la plongée.</p>
-        <div class="lock-attempt"><span aria-hidden="true">❌</span><strong>3 erreurs sur cette tentative</strong></div>
-        <div class="lock-lignes">${lignes}</div>
+        ${lignes}
         <a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a>
       </section>
     `;
@@ -3553,25 +3549,25 @@ window.Nautilus = {
       return `
         <div class="lock-ligne">
           <span class="lock-ligne-ico" aria-hidden="true">✓</span>
-          <span>L'indice reste disponible pour <b>tout l'équipage</b>.</span>
+          <span>Indice conservé pour l'équipage.</span>
         </div>
         <div class="lock-ligne lock-ligne--next">
           <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
-          <span>Prochaine remontée, échec ou indice : <b>${esc(String(suivanteAffichee))} h</b> en surface.</span>
+          <span>Prochaine sanction : <b>${esc(String(suivanteAffichee))} h</b></span>
         </div>`;
     }
     return `
-        <div class="lock-ligne lock-ligne--pause">
+        <div class="lock-ligne">
           <span class="lock-ligne-ico" aria-hidden="true">⏱</span>
-          <span>Retour le « ${esc(_dateRetour)} » à « ${esc(_heureRetour)} ».</span>
+          <span>Retour le ${esc(_dateRetour)} à ${esc(_heureRetour)} — <b>${esc(String(hours))} h</b> en surface</span>
         </div>
-        <div class="lock-ligne lock-ligne--relais">
+        <div class="lock-ligne">
           <span class="lock-ligne-ico" aria-hidden="true">⚓</span>
-          <span>La barre est libre : un autre matelot peut reprendre dès maintenant.</span>
+          <span>Un coéquipier peut reprendre immédiatement</span>
         </div>
         <div class="lock-ligne lock-ligne--next">
           <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
-          <span>Prochain échec : « ${esc(String(suivanteAffichee))} » h en surface.</span>
+          <span>Prochaine sanction : <b>${esc(String(suivanteAffichee))} h</b></span>
         </div>`;
   }
 

@@ -373,3 +373,5 @@ h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-wo
 img,video,svg,canvas,iframe{max-width:100%;height:auto;}
 button,input,select,textarea{max-width:100%;box-sizing:border-box;}
 body{overflow-wrap:break-word;}
+
+/* lock minimalism inherited from palier1.css */

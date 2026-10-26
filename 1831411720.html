@@ -10,14 +10,14 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=52">
+  <link rel="stylesheet" href="css/palier1.css?v=53">
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
-  <link rel="stylesheet" href="css/palier2.css?v=28">
+  <link rel="stylesheet" href="css/palier2.css?v=29">
   <!-- artefact.css remplace palier3.css (l'ancien puzzle photo) : styles du
        jeu de l'ouvrage (.af-*), du sélecteur de magasin (.magasin-*) et de
        l'onglet admin de l'artefact (.adm-af-*). -->
-  <link rel="stylesheet" href="css/artefact.css?v=4">
+  <link rel="stylesheet" href="css/artefact.css?v=5">
   <link rel="stylesheet" href="css/tentatives.css?v=1">
   <!-- Lecteur QR du SAS (caméra + import photo). Le code-barres de l'ouvrage,
        lui, est lu par artefact-palier3.js (BarcodeDetector / ZXing / saisie). -->
@@ -128,7 +128,7 @@
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
     <h2 id="sasUnlockedTitle">PALIER 3 — L'ARTEFACT DU NAUTILUS <span class="palier-epreuve-titre">Retrouve l’ouvrage du Nautilus</span></h2>
     <div class="body">
-      <div id="artefactStatut" class="status-banner info">⏳ <b>Le Nautilus cherche un ouvrage…</b></div>
+      <div id="artefactStatut" class="status-banner info">⏳ <b>Préparation de ta mission…</b></div>
       <div id="artefactHost"></div>
       <a class="af-retour" href="index.html?ecoutille=0" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
@@ -164,7 +164,7 @@
      appelé depuis le jeu. Sert au panneau admin (onglet 📖 Artefact) pour lire
      une fiche enregistrée par l’organisateur, et à l’outil Node de collecte. -->
 <script src="fnac-lecteur.js?v=1"></script>
-<script src="artefact-service.js?v=9"></script>
+<script src="artefact-service.js?v=11"></script>
 <script src="magasin-fnac.js?v=1"></script>
 <script src="magasin-guard.js?v=4"></script>
 <script src="artefact-palier3.js?v=6"></script>
