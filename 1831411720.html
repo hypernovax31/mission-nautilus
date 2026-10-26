@@ -128,7 +128,7 @@
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
     <h2 id="sasUnlockedTitle">PALIER 3 — L'ARTEFACT DU NAUTILUS <span class="palier-epreuve-titre">Retrouve l’ouvrage du Nautilus</span></h2>
     <div class="body">
-      <div id="artefactStatut" class="status-banner info">⏳ <b>Préparation de ta mission…</b></div>
+      <div id="artefactStatut" class="status-banner" hidden></div>
       <div id="artefactHost"></div>
       <a class="af-retour" href="index.html?ecoutille=0" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
@@ -302,6 +302,8 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   function statut(html, kind) {
     var el = $('artefactStatut');
     if (!el) return;
+    if (!html) { el.hidden = true; el.style.display = 'none'; el.innerHTML = ''; return; }
+    el.hidden = false; el.style.display = '';
     el.innerHTML = html;
     el.className = 'status-banner ' + (kind || 'info');
   }
