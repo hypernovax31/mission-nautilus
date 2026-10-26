@@ -73,15 +73,13 @@
   const CLE_SESSION = 'nautilusEcoutille';        // ouverte pendant cette session
   const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
-  /* Calendrier de la plongée — RYTHME FLUIDE (v360) :
-       lé ger + rapide, sans blur lourd ni letterbox. On garde le hublot
-       et la mer, on retire le cinéma 65mm. */
+  /* Calendrier minimaliste — 2 temps : léger zoom + fondu (v014057) */
   const T = {
-    plongee:   60,
-    eclat:    320,
-    impact:   700,
-    sortie:  1300,
-    retrait: 1900
+    plongee:   40,
+    eclat:    160,
+    impact:   320,
+    sortie:   600,
+    retrait:  900
   };
 
   /* Tous les navigateurs du parc savent le dire ; le test est protégé pour
