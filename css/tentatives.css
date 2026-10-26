@@ -124,46 +124,42 @@
   pointer-events: none !important;
 }
 
-/* État perdu (vert → rouge) — override complet avec opacity */
+/* État perdu : le voyant vert s'éteint — devient gris éteint (plus de croix rouge) */
 .tentatives-jauge-pt.is-lost,
 .tentatives-jauge-pt.is-grille,
 .af-jauge-pt.is-lost,
 .af-jauge-pt.is-grille {
-  background: radial-gradient(circle at 32% 28%, #ff9a95 0%, #e74c3c 38%, #c0392b 78%, #922b21 100%) !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
-  box-shadow: 0 0 14px rgba(231, 76, 60, 0.85), 0 2px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 3px rgba(0, 0, 0, 0.3) !important;
-  transform: scale(1.06) !important;
-  opacity: 1 !important;
+  background: radial-gradient(circle at 32% 28%, #4a4f56 0%, #2e333a 38%, #1a1e24 78%, #101418 100%) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  transform: scale(.96) !important;
+  opacity: .45 !important;
+  filter: saturate(0) brightness(.65) !important;
 }
 
-/* Croix blanche sur point perdu */
+/* Plus de croix : le voyant est simplement éteint */
 .tentatives-jauge-pt.is-lost::after,
 .af-jauge-pt.is-lost::after,
 .af-jauge-pt.is-grille::after {
-  content: "✕" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  font-size: 12px !important;
-  font-weight: 900 !important;
-  color: #fff !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
-  line-height: 1 !important;
+  content: none !important;
+}
+.tentatives-jauge-pt.is-lost::before,
+.af-jauge-pt.is-lost::before,
+.af-jauge-pt.is-grille::before {
+  opacity: 0 !important;
 }
 
-/* Animation de perte (shake + scale) */
+/* Animation d'extinction : le vert clignote puis s'éteint */
 .tentatives-jauge-pt.is-lost.is-just-lost,
 .af-jauge-pt.is-lost.is-just-lost,
 .af-jauge-pt.is-grille.is-just-lost {
-  animation: tentativesLost 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  animation: tentativesExtinct 0.62s ease-out both !important;
 }
-@keyframes tentativesLost {
-  0% { transform: scale(1.06); }
-  20% { transform: scale(1.35) rotate(-4deg); }
-  40% { transform: scale(1.15) rotate(4deg); }
-  60% { transform: scale(1.25) rotate(-2deg); }
-  100% { transform: scale(1.06) rotate(0); }
+@keyframes tentativesExtinct {
+  0% { transform: scale(1); filter: brightness(1.6) saturate(1); box-shadow: 0 0 14px rgba(46,204,113,.9); opacity:1; }
+  18% { transform: scale(1.08); filter: brightness(1.9); opacity: 1; }
+  38% { opacity: .85; filter: brightness(.9); }
+  100% { transform: scale(.96); filter: saturate(0) brightness(.65); opacity:.45; }
 }
 
 /* --- Compteur textuel complémentaire (optionnel, sous les points) --- */

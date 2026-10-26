@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 014058 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 014059 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 014058 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 014059 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -2060,89 +2060,139 @@
     #ecoutille.ec-presse .ec-dome{ transform: translateY(3px) scale(.965) !important; }
   </style>
 
-  <!-- ═══ MINIMALISME — 2026-10-28 (v014057) ═══
-       Apparition et sortie épurées : pas de grain, pas de scanline,
-       pas de letterbox/flood/flash, pas de blur lourd. Entrée instantanée,
-       sortie en 2 temps (léger zoom + fondu). -->
+  <!-- ═══ ZOOM INTENSE + EAU À TRAVERS L'ÉCOUTILLE — 2026-10-28 (v014059) ═══
+       Au clic OPEN : on plonge DANS le hublot — zoom massif à l'intérieur du verre,
+       flou progressif en sortie, et eau qui traverse l'écoutille.
+       Apparition reste instantanée (pas d'entrée étalée). -->
   <style id="ec-minimal">
-    /* Apparition : instantanée, sans entrée étalée */
-    #ecoutille .ec-start,
-    #ecoutille .ec-titre,
-    #ecoutille .ec-sous-titre-h4,
+    /* Apparition : instantanée — pas d'animation d'entrée, seulement la sortie bouge */
+    #ecoutille .ec-titre-bloc,
     #ecoutille .ec-hud,
     #ecoutille .ec-hublot,
-    #ecoutille .ec-consigne--sous-hublot,
-    #ecoutille .ec-magasin-wrap,
-    #ecoutille .ec-pied,
-    #ecoutille .ec-enseigne,
-    #ecoutille .ec-titre-bloc{
+    #ecoutille .ec-enseigne{
       animation: none !important;
-      transition: none !important;
       opacity: 1 !important;
-      transform: none !important;
-      filter: none !important;
-    }
-    #ecoutille .ec-start{ animation: none !important; }
-    #ecoutille .ec-start::before{ animation: none !important; }
-    #ecoutille .ec-start::after,
-    #ecoutille .ec-start--open,
-    #ecoutille .ec-dome,
-    #ecoutille .ec-start-label,
-    #ecoutille::after,
-    #ecoutille .ec-ecran::after{
-      animation: none !important;
-    }
-    #ecoutille .ec-paroi,
-    #ecoutille .ec-halo,
-    #ecoutille .ec-vignette,
-    #ecoutille .ec-cadre,
-    #ecoutille .m-rayons,
-    #ecoutille .m-caustique,
-    #ecoutille .m-neige,
-    #ecoutille .m-bulles{
-      animation: none !important;
-      transition: none !important;
-      filter: none !important;
     }
     #ecoutille::after{ display: none !important; }
     #ecoutille .ec-ecran::after{ display: none !important; }
-    #ecoutille .ec-fanaux,
-    #ecoutille .ec-etalo,
-    #ecoutille .ec-reflet,
-    #ecoutille .ec-flood,
-    #ecoutille .ec-flash,
-    #ecoutille .ec-letterbox{ display: none !important; height: 0 !important; opacity: 0 !important; }
-    /* Mer : visible mais figée, très discrète */
-    #ecoutille .m-rayons{ opacity: .18 !important; }
-    #ecoutille .m-caustique{ opacity: .22 !important; }
-    #ecoutille .m-caustique.b{ opacity: .12 !important; }
-    #ecoutille .m-neige{ opacity: .14 !important; }
-    #ecoutille .m-bulles{ opacity: .18 !important; }
-    #ecoutille .ec-film{ filter: none !important; opacity: 1 !important; }
-    #ecoutille .ec-fenetre{ box-shadow: inset 0 0 40px rgba(0,0,0,.45) !important; }
-    #ecoutille .ec-verre{ background: none !important; box-shadow: none !important; }
-    /* Bouton : statique, seule la couleur change au clic */
-    #ecoutille .ec-start{ filter: none !important; box-shadow: 0 6px 16px rgba(0,0,0,.38) !important; }
-    #ecoutille .ec-start:hover{ transform: none !important; }
-    #ecoutille .ec-start:hover .ec-dome{ filter: none !important; }
-    #ecoutille .ec-start::after{ opacity: .45 !important; }
-    #ecoutille.ec-ouvert .ec-dome,
-    #ecoutille.ec-plongee .ec-dome,
-    #ecoutille.ec-eclat .ec-dome,
-    #ecoutille.ec-impact .ec-dome{ animation: none !important; filter: none !important; }
-    /* Sortie : zoom infime + fondu, sans blur ni secousse */
-    #ecoutille.ec-plongee .ec-scene{ transform: scale(1.02) !important; }
-    #ecoutille.ec-eclat .ec-scene{ transform: scale(1.04) !important; }
-    #ecoutille.ec-eclat .ec-hublot{ transform: scale(1.06) !important; }
-    #ecoutille.ec-eclat .ec-titre{ opacity: 1 !important; }
-    #ecoutille.ec-impact .ec-scene{ transform: scale(1.06) !important; opacity: .92 !important; }
-    #ecoutille.ec-impact .ec-hublot{ transform: scale(1.08) !important; }
+    #ecoutille .ec-etalo{ display: none !important; }
+    #ecoutille .ec-letterbox{ display: none !important; height:0 !important; }
+
+    /* Mer de base : visible, vivante mais calme avant le clic */
+    #ecoutille .m-rayons{ opacity: .22 !important; filter: none !important; }
+    #ecoutille .m-caustique{ opacity: .26 !important; filter: none !important; }
+    #ecoutille .m-caustique.b{ opacity: .14 !important; }
+    #ecoutille .m-neige{ opacity: .16 !important; }
+    #ecoutille .m-bulles{ opacity: .20 !important; }
+    #ecoutille .ec-verre{ box-shadow: inset 0 0 44px rgba(0,0,0,.42) !important; }
+    #ecoutille .ec-fenetre{ box-shadow: inset 0 0 50px rgba(0,0,0,.5) !important; }
+
+    /* Bouton : rouge → vert au clic (déjà géré), pulse coupé pour rester sobre avant ouverture */
+    #ecoutille .ec-start::after{ opacity: .42 !important; animation: none !important; }
+    #ecoutille .ec-start--open{ animation: none !important; }
+    #ecoutille .ec-dome{ animation: none !important; }
+
+    /* ── PLONGÉE INTENSE : zoom à l'intérieur de l'écoutille + eau ── */
+    #ecoutille.ec-plongee .ec-scene{
+      transform: scale(1.22) !important;
+      filter: brightness(.96) !important;
+      transition: transform .45s cubic-bezier(.22,.72,.22,1), filter .45s ease !important;
+    }
+    #ecoutille.ec-plongee .ec-hublot{
+      transform: scale(1.45) !important;
+      transition: transform .45s cubic-bezier(.22,.72,.22,1) !important;
+    }
+    #ecoutille.ec-plongee .ec-fenetre::before{
+      content:""; position:absolute; inset:-8%; border-radius:50%; pointer-events:none; z-index:3;
+      background:
+        radial-gradient(ellipse 120% 80% at 50% 50%, rgba(90,205,245,.0) 0%, rgba(90,205,245,.14) 38%, rgba(20,120,180,.22) 62%, rgba(2,40,70,.45) 100%);
+      opacity: .55; animation: ecEauTraverse .55s ease-out both;
+    }
+    #ecoutille.ec-eclat .ec-scene{
+      transform: scale(1.85) !important;
+      filter: blur(1.8px) brightness(.82) saturate(.88) !important;
+      transition: transform .55s cubic-bezier(.16,.78,.22,1), filter .5s ease !important;
+    }
+    #ecoutille.ec-eclat .ec-hublot{
+      transform: scale(2.6) !important;
+      filter: brightness(.96) !important;
+      transition: transform .55s cubic-bezier(.16,.78,.22,1) !important;
+    }
+    #ecoutille.ec-eclat .ec-ecran{ transform: scale(1.08) !important; filter: brightness(.92) !important; }
+    #ecoutille.ec-eclat .m-rayons{ opacity: .42 !important; filter: blur(.6px) !important; animation-duration: 6s !important; }
+    #ecoutille.ec-eclat .m-caustique{ opacity: .62 !important; filter: contrast(1.15) brightness(1.08) !important; animation-duration: 7s !important; }
+    #ecoutille.ec-eclat .m-caustique.b{ opacity: .38 !important; }
+    #ecoutille.ec-eclat .m-bulles{ opacity: .45 !important; animation-duration: 9s !important; }
+    #ecoutille.ec-eclat .ec-fenetre::after{
+      content:""; position:absolute; inset:-12%; border-radius:50%; pointer-events:none; z-index:4;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.0) 0 6%, rgba(255,255,255,.08) 6% 7.5%, rgba(255,255,255,0) 7.5% 12%),
+        radial-gradient(ellipse at 50% 50%, rgba(120,220,255,.22) 0%, transparent 68%);
+      opacity: 1; animation: ecEauRideau .7s ease-out both;
+      mix-blend-mode: screen;
+    }
+    @keyframes ecEauTraverse{
+      0%{ opacity:0; transform: scale(.92); filter: blur(2px) }
+      100%{ opacity:.55; transform: scale(1.08); filter: blur(0) }
+    }
+    @keyframes ecEauRideau{
+      0%{ opacity:0; transform: translateX(-14%) scaleX(.85) }
+      100%{ opacity:.95; transform: translateX(0) scaleX(1) }
+    }
+
+    /* ── IMPACT : zoom massif DANS le verre + flou + eau qui submerge ── */
+    #ecoutille.ec-impact .ec-scene{
+      transform: scale(3.6) !important;
+      filter: blur(14px) brightness(.36) saturate(.55) !important;
+      opacity: .92 !important;
+      transition: transform 1s cubic-bezier(.16,.78,.22,1), filter .85s ease, opacity .6s ease !important;
+    }
+    #ecoutille.ec-impact .ec-hublot{
+      transform: scale(4.8) !important;
+      filter: blur(.8px) brightness(.88) !important;
+      transition: transform 1s cubic-bezier(.16,.78,.22,1), filter .85s ease !important;
+    }
+    #ecoutille.ec-impact .ec-ecran{
+      transform: scale(1.24) !important;
+      filter: blur(7px) brightness(.48) saturate(.5) !important;
+      transition: transform 1s cubic-bezier(.16,.78,.22,1), filter .85s ease !important;
+    }
+    #ecoutille.ec-impact .ec-paroi{ filter: brightness(.42) blur(2px) !important; }
     #ecoutille.ec-impact .ec-titre,
     #ecoutille.ec-impact .ec-sous-titre-h4,
     #ecoutille.ec-impact .ec-consigne,
-    #ecoutille.ec-impact .ec-start{ opacity: 0 !important; transform: none !important; transition: opacity .22s ease !important; }
-    #ecoutille.ec-impact{ animation: none !important; }
-    #ecoutille.ec-sortie{ opacity: 0 !important; transform: none !important; transition: opacity .32s ease !important; }
+    #ecoutille.ec-impact .ec-start{ opacity:0 !important; transform: scale(.94) !important; transition: opacity .28s ease, transform .28s ease !important; }
+    #ecoutille.ec-impact .m-caustique{ opacity:.82 !important; filter: blur(.8px) contrast(1.2) !important; }
+    #ecoutille.ec-impact .ec-flood{
+      display:block !important; height:auto !important;
+      position:absolute; left:50%; top:50%; width:220vmax; height:220vmax; margin:-110vmax 0 0 -110vmax;
+      opacity:1 !important; transform: scale(1.02) !important;
+      background: radial-gradient(closest-side at 50% 50%, rgba(10,60,110,.0) 0 26%, rgba(8,44,84,.52) 42%, rgba(4,28,58,.78) 58%, rgba(2,16,36,.96) 78%, #020a14 100%) !important;
+      transition: transform 1s ease, opacity .7s ease !important;
+      pointer-events:none;
+    }
+    #ecoutille.ec-impact .ec-flash{
+      display:block !important; opacity:0 !important;
+      position:absolute; inset:0; pointer-events:none;
+      background: radial-gradient(ellipse 110% 90% at 50% 50%, rgba(140,230,255,.42) 0 18%, rgba(60,170,230,.18) 36%, transparent 68%) !important;
+      animation: ecBloomIntense .95s cubic-bezier(.22,.6,.2,1) both !important;
+    }
+    @keyframes ecBloomIntense{
+      0%{ opacity:0; transform: scale(.86) }
+      16%{ opacity:.62; transform: scale(1) }
+      100%{ opacity:0; transform: scale(1.08) }
+    }
+
+    /* ── SORTIE : flou abyssal + fondu — l'écoutille disparaît dans l'eau ── */
+    #ecoutille.ec-sortie{
+      opacity:0 !important;
+      filter: blur(10px) brightness(.72) !important;
+      transform: scale(1.05) !important;
+      transition: opacity .85s ease, filter .85s ease, transform .85s ease !important;
+      pointer-events:none;
+    }
+    #ecoutille.ec-sortie .ec-scene{ opacity:1 !important; }
+    #ecoutille.ec-sortie .ec-flood{ opacity:0 !important; transition: opacity .55s ease !important; }
   </style>
 
 
@@ -2245,13 +2295,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=23" defer></script>
+  <script src="ecoutille.js?v=25" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 014058 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 014059 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -2346,7 +2396,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 014058</span>
+      <span class="ec-version">COMMIT 014059</span>
     </footer>
   </div>
 
@@ -2391,20 +2441,20 @@
     /* Le geste relance le film au besoin (lecture refusée, batterie faible) :
        c'est le même geste qui débloque tout le reste. Le film reste muet. */
     try{ if(film){ var relance = film.play(); if(relance && relance.catch) relance.catch(function(){}); } }catch(e){}
-    setTimeout(function(){ racine.classList.add('ec-plongee'); }, 80);
-    setTimeout(function(){ racine.classList.add('ec-eclat'); }, 200);
-    setTimeout(function(){ racine.classList.add('ec-impact'); }, 380);
+    setTimeout(function(){ racine.classList.add('ec-plongee'); }, 140);
+    setTimeout(function(){ racine.classList.add('ec-eclat'); }, 520);
+    setTimeout(function(){ racine.classList.add('ec-impact'); }, 900);
     setTimeout(function(){
       racine.classList.add('ec-sortie');
       document.documentElement.classList.remove('ec-bloque');
       document.documentElement.classList.add('ec-arrivee');
       try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
       try{ window.dispatchEvent(new CustomEvent('nautilus:ecoutille-ouverte')); }catch(e){}
-    }, 680);
+    }, 1600);
     setTimeout(function(){
       racine.classList.add('ec-passee');
       setTimeout(function(){ if(racine.parentNode) racine.parentNode.removeChild(racine); }, 80);
-    }, 1050);
+    }, 2500);
   }
 
   /* LE FILM DE FOND : muet, en boucle, sans aucune commande. On ne montre

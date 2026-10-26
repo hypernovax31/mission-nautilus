@@ -73,13 +73,13 @@
   const CLE_SESSION = 'nautilusEcoutille';        // ouverte pendant cette session
   const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
-  /* Calendrier minimaliste — 2 temps : léger zoom + fondu (v014057) */
+  /* Calendrier intense : zoom dans l'écoutille + flou + eau (v014059) */
   const T = {
-    plongee:   40,
-    eclat:    160,
-    impact:   320,
-    sortie:   600,
-    retrait:  900
+    plongee:   140,
+    eclat:     520,
+    impact:    900,
+    sortie:   1600,
+    retrait:  2500
   };
 
   /* Tous les navigateurs du parc savent le dire ; le test est protégé pour

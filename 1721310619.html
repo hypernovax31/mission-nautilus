@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=54">
   <link rel="stylesheet" href="css/palier2.css?v=30">
-  <link rel="stylesheet" href="css/tentatives.css?v=2">
+  <link rel="stylesheet" href="css/tentatives.css?v=3">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -268,6 +268,7 @@
      Palier 1) : chrono qui démarre avec la grille, compteur d'erreurs. */
   var t0Partie = null;
   var nbErreurs = 0;
+  var _prevErreursMC = 0;
   function majTentatives(){
     var el = document.getElementById('mcTentatives');
     if(!el) return;
@@ -278,9 +279,19 @@
     var points = el.querySelector('.tentatives-jauge-points');
     var count = el.querySelector('.tentatives-jauge-count');
     if(points){
-      points.innerHTML = Array.from({length:max}, function(_,i){ return '<span class="tentatives-jauge-pt'+(i < erreurs ? ' is-lost' : '')+'"></span>'; }).join('');
+      var html = '';
+      for(var i=0;i<max;i++){
+        var cls = (i < erreurs ? ' is-lost' : '');
+        if(i < erreurs && i >= _prevErreursMC) cls += ' is-just-lost';
+        html += '<span class="tentatives-jauge-pt'+cls+'"></span>';
+      }
+      points.innerHTML = html;
+      Array.prototype.forEach.call(points.querySelectorAll('.is-just-lost'), function(p){
+        setTimeout(function(){ p.classList.remove('is-just-lost'); }, 700);
+      });
     }
     if(count) count.textContent = (max - erreurs) + ' / ' + max;
+    _prevErreursMC = erreurs;
   }
 
   var MOTS = [
