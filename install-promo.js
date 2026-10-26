@@ -1,5 +1,5 @@
 /* =============================================================================
-   Mission Nautilus — ANIMATION D'INCITATION À L'INSTALLATION (PWA)
+   Mission Nautilus — ANIMATION D'INCITATION À L'INSTALLATION (PWA) — v8
    =============================================================================
 
    BUT
@@ -110,10 +110,10 @@
        overlay = flex centre, carte = colonne centree, et CHAQUE texte
        porte son propre text-align:center. (Correctif : le texte
        apparaissait decale quand la page hote imposait son alignement.) */
-    + '.ip-overlay{position:fixed;inset:0;z-index:99970;display:flex;align-items:center;justify-content:center;'
+    + '.ip-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;'
     + 'padding:18px;box-sizing:border-box;width:100vw;height:100vh;margin:0;'
     + 'background:radial-gradient(ellipse at 50% 20%,rgba(6,22,38,.55),rgba(2,6,14,.9));'
-    + 'opacity:0;transition:opacity .45s ease;pointer-events:auto;}'
+    + 'opacity:0;transition:opacity .45s ease;pointer-events:none;}'
     + '.ip-overlay.ip-in{opacity:1;pointer-events:auto}'
     + '.ip-overlay.ip-out{opacity:0;pointer-events:none}'
     + '.ip-card{display:flex;flex-direction:column;align-items:center;pointer-events:auto;'
@@ -170,10 +170,10 @@
     + '.ip-titre{margin:2px auto 6px;width:100%;max-width:360px;text-align:center;color:#fff;font-size:clamp(18px,5vw,23px);line-height:1.15}'
     + '.ip-intro{margin:0 auto 14px;width:100%;max-width:330px;text-align:center;color:#bfe0ee;font-size:13.5px;line-height:1.5}'
     + '.ip-intro b{color:#ffe2a0}'
-    + '.ip-cta{display:block;width:100%;box-sizing:border-box;padding:13px 14px;border:0;border-radius:13px;cursor:pointer;text-align:center;pointer-events:auto;position:relative;z-index:2;'
+    + '.ip-cta{display:block;width:100%;box-sizing:border-box;padding:13px 14px;border:0;border-radius:13px;cursor:pointer;text-align:center;pointer-events:auto;position:relative;z-index:5;touch-action:manipulation;'
     + 'background:linear-gradient(135deg,#f5b027,#d89020);color:#111;font-size:15px;font-weight:1000;letter-spacing:.01em;'
     + 'box-shadow:0 8px 22px rgba(245,176,39,.35);animation:ipCta 1.8s ease-in-out infinite}'
-    + '.ip-later{display:block;margin:10px auto 0;padding:4px 8px;border:0;background:none;cursor:pointer;text-align:center;pointer-events:auto;position:relative;z-index:2;'
+    + '.ip-later{display:block;margin:10px auto 0;padding:12px 8px;border:0;background:none;cursor:pointer;text-align:center;pointer-events:auto;position:relative;z-index:5;touch-action:manipulation;'
     + 'color:#8fb6c8;font-size:12.5px;font-weight:700;text-decoration:underline dotted}'
     + '.ip-later:hover{color:#cfe8f4}'
 
@@ -242,16 +242,30 @@
     document.body.appendChild(overlay);
     var cta = overlay.querySelector('.ip-cta');
     var later = overlay.querySelector('.ip-later');
-    if (cta) cta.addEventListener('click', installer);
-    if (later) later.addEventListener('click', function () { ecrireSnooze(); fermer(); });
-    // filet de sécurité : délégation si les écouteurs directs sont bloqués par un recouvrement
+    // 👉 fix clic non répondant : écouteurs directs + délégation + touch + capture, avec prevent du recouvrement ecoutille/cinematic
+    var _onCta = function(ev){ try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){} installer(); };
+    var _onLater = function(ev){ try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){} ecrireSnooze(); fermer(); };
+    if (cta) {
+      cta.addEventListener('click', _onCta);
+      cta.addEventListener('touchend', _onCta, {passive:false});
+      cta.addEventListener('pointerup', _onCta);
+      // secours inline pour CSP / delegation bloquée
+      cta.onclick = _onCta;
+    }
+    if (later) {
+      later.addEventListener('click', _onLater);
+      later.addEventListener('touchend', _onLater, {passive:false});
+      later.addEventListener('pointerup', _onLater);
+      later.onclick = _onLater;
+    }
+    // délégation sur l'overlay (capture pour passer avant un éventuel stopImmediatePropagation de la page)
     overlay.addEventListener('click', function(e){
       var t = e.target;
       if(t.closest && t.closest('.ip-cta')){ e.preventDefault(); e.stopPropagation(); installer(); }
       else if(t.closest && t.closest('.ip-later')){ e.preventDefault(); e.stopPropagation(); ecrireSnooze(); fermer(); }
-    });
-    // clic sur le fond assombri ferme aussi (UX standard des modales)
-    overlay.addEventListener('click', function(e){ if(e.target===overlay) fermer(); });
+    }, true);
+    // clic sur le fond assombri ferme aussi (mais jamais sur les boutons)
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) { e.preventDefault(); fermer(); } }, true);
     /* Apparition douce (la transition CSS a besoin d'un temps de pose) */
     setTimeout(function () { if (overlay) overlay.classList.add('ip-in'); }, 30);
   }
@@ -314,7 +328,9 @@
     if (autoFermerMs) setTimeout(fermer, autoFermerMs);
   }
 
+  // exposé pour debug console : NautilusInstallPromo._installer()
   async function installer() {
+    try{ console.log('[promo] clic Installer'); }catch(e){}
     /* 1) Prompt natif disponible (Android, Chrome/Edge PC & Mac) */
     var p = consommerPrompt();
     if (p && typeof p.prompt === 'function') {
@@ -378,7 +394,7 @@
 
   /* Export minimal : tests + pilotage manuel éventuel. */
   window.NautilusInstallPromo = {
-    ouvrir: ouvrir, fermer: fermer, doitAfficher: doitAfficher,
+    ouvrir: ouvrir, fermer: fermer, doitAfficher: doitAfficher, installer: installer, passerAuCalme: passerAuCalme,
     estInstallee: estInstallee, promptDisponible: promptDisponible,
     signalerFinTypewriter: signalerFinTypewriter,
     SNOOZE_MS: SNOOZE_MS, DELAI_AFFICHAGE_MS: DELAI_AFFICHAGE_MS,
