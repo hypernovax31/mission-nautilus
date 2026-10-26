@@ -6,7 +6,7 @@
   <script src="anti-zoom.js?v=1"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <title>Mission Nautilus — Embarquement</title>
   <!-- Manifeste PWA integre en data: URI (plus de manifest.json externe).
        Les chemins d'icones sont absolus car un data: URI n'a pas de base relative. -->
@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 014045 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 014046 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 014045 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 014046 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -1132,6 +1132,353 @@
        Problème : saccade à la sortie (zoom + 4 blurs + height en layout).
        Solution : GPU-only (transform/opacity), blur unique, animations
        parasites coupées, letterbox en scaleY, timings alignés. -->
+  <!-- ═══ NOLAN / VILLENEUVE — IMAX 65MM (2026-10-28) ═══
+       Plus rien d'enfantin : noir abyssal, Scope permanent, grain,
+       typographie monumentale, respiration lente. Le hublot EST le film. -->
+  <style id="ec-nolan-imax">
+    /* --- FOND : noir de salle, pas décor de parc --- */
+    #ecoutille{
+      background: #02060E !important;
+      background-color: #02060E !important;
+    }
+    #ecoutille .ec-paroi{
+      background:
+        radial-gradient(140% 115% at 50% 32%, #0F2233 0%, #0A1929 28%, #06101E 52%, #040A14 74%, #01050A 100%) !important;
+      animation: none !important;
+      filter: none !important;
+    }
+    #ecoutille .ec-halo{
+      opacity: .16 !important;
+      background: radial-gradient(closest-side at 50% 50%, rgba(120,185,210,.18) 0 36%, rgba(80,150,185,.06) 56%, transparent 78%) !important;
+      animation: none !important;
+      filter: blur(8px);
+    }
+    #ecoutille .ec-etalo{ opacity: .14 !important; mix-blend-mode: soft-light !important; }
+    #ecoutille .ec-fanaux{ display:none !important; }
+    #ecoutille .ec-vignette{
+      background:
+        radial-gradient(120% 88% at 50% 50%, transparent 40%, rgba(0,0,0,.42) 76%, rgba(0,0,0,.88) 100%),
+        linear-gradient(180deg, rgba(0,0,0,.62) 0, transparent 18% 72%, rgba(0,0,0,.82) 100%) !important;
+    }
+    #ecoutille .ec-cadre{
+      border: 1px solid rgba(255,255,255,.07) !important;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), inset 0 0 80px rgba(0,0,0,.55) !important;
+      background: none !important;
+    }
+    /* Scope permanent : dès la 1re image on est au cinéma */
+    #ecoutille .ec-letterbox{
+      display: block !important;
+      height: 7.5vh !important;
+      transform: scaleY(1) !important;
+      background: #01050A !important;
+      box-shadow: none !important;
+      transition: transform 1.4s cubic-bezier(.25,.46,.45,.94), height 1.4s cubic-bezier(.25,.46,.45,.94) !important;
+    }
+    #ecoutille.ec-eclat .ec-letterbox{ transform: scaleY(1) !important; height: 8.2vh !important; }
+    #ecoutille.ec-impact .ec-letterbox{ transform: scaleY(1) !important; height: 11vh !important; }
+
+    /* --- HUD : instrument réel, pas jeu vidéo --- */
+    #ecoutille .ec-hud{
+      background: none !important;
+      border: none !important;
+      border-bottom: 1px solid rgba(255,255,255,.07) !important;
+      backdrop-filter: none !important;
+      padding: 8px 0 10px !important;
+      margin: 0 0 6px !important;
+      animation: none !important;
+      opacity: .85;
+    }
+    #ecoutille .ec-o2-nom{ color: rgba(232,238,244,.72) !important; font-weight:600 !important; font-size: 9px !important; letter-spacing:.28em !important; }
+    #ecoutille .ec-o2-piste{
+      border-color: rgba(255,255,255,.14) !important;
+      background: rgba(255,255,255,.04) !important;
+      height: 3px !important;
+      width: clamp(52px, 8vmin, 96px) !important;
+      box-shadow: none !important;
+    }
+    #ecoutille .ec-o2-niveau{
+      background: #E8EEF4 !important;
+      box-shadow: none !important;
+      animation: none !important;
+      background-size: auto !important;
+    }
+    #ecoutille .ec-o2-valeur{ color: rgba(232,238,244,.88) !important; font-size: 9px !important; letter-spacing:.16em !important; }
+    #ecoutille .ec-signal{ color: rgba(232,238,244,.52) !important; font-size: 8.5px !important; letter-spacing:.22em !important; }
+
+    /* --- TYPOGRAPHIE : monumentale, froide, respirante --- */
+    #ecoutille .ec-enseigne{ animation: none !important; gap: 10px !important; }
+    #ecoutille .ec-enseigne::before{ display:none !important; }
+    #ecoutille .ec-titre-bloc{
+      gap: 14px !important;
+      padding: 10px 0 18px !important;
+      position: relative;
+    }
+    #ecoutille .ec-titre-bloc::before{ display:none !important; }
+    /* Trait fin à la Villeneuve sous le titre */
+    #ecoutille .ec-titre-bloc::after{
+      content:""; position:absolute; left:50%; bottom:0; width: 44px; height:1px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,.22);
+    }
+    #ecoutille .ec-titre{
+      font-family: 'Exo 2', system-ui, sans-serif !important;
+      font-weight: 600 !important;
+      font-size: clamp(28px, 7vw, 62px) !important;
+      line-height: .92 !important;
+      letter-spacing: .22em !important;
+      text-transform: uppercase !important;
+      color: #E8EEF4 !important;
+      background: none !important;
+      -webkit-background-clip: initial !important; background-clip: initial !important;
+      -webkit-text-fill-color: #E8EEF4 !important;
+      text-shadow: 0 1px 22px rgba(0,0,0,.55) !important;
+      filter: none !important;
+      animation: ecNolanTitre 1.9s cubic-bezier(.25,.46,.45,.94) .45s both !important;
+    }
+    @keyframes ecNolanTitre{
+      0%{ opacity:0; transform: translateY(18px); letter-spacing:.38em; filter: blur(8px) }
+      100%{ opacity:1; transform: translateY(0); letter-spacing:.22em; filter: blur(0) }
+    }
+    #ecoutille .ec-titre::after{ display:none !important; }
+    #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4{
+      font-family: 'Exo 2', system-ui, sans-serif !important;
+      font-weight: 400 !important;
+      font-size: clamp(10px, 1.9vmin, 13px) !important;
+      letter-spacing: .38em !important;
+      color: rgba(232,238,244,.62) !important;
+      text-shadow: none !important;
+      animation: ecNolanSub 1.6s cubic-bezier(.25,.46,.45,.94) .85s both !important;
+    }
+    @keyframes ecNolanSub{
+      from{ opacity:0; transform: translateY(10px); filter: blur(4px) }
+      to{ opacity:1; transform: translateY(0); filter: blur(0) }
+    }
+    #ecoutille .ec-verne{
+      display:block !important;
+      font-family: Georgia, serif !important;
+      font-style: italic !important;
+      font-size: 10px !important;
+      letter-spacing:.28em !important;
+      color: rgba(232,238,244,.38) !important;
+      text-shadow: none !important;
+    }
+
+    /* --- HUBLOT : 65mm — lent, lourd, réel --- */
+    #ecoutille .ec-hublot{
+      width: min(48vh, 80vw) !important;
+      height: min(48vh, 80vw) !important;
+      animation: ecNolanHublotEnter 2.2s cubic-bezier(.25,.46,.45,.94) .95s both !important;
+      filter: drop-shadow(0 24px 64px rgba(0,0,0,.78)) !important;
+    }
+    @keyframes ecNolanHublotEnter{
+      0%{ opacity:0; transform: scale(.96) translateY(14px); }
+      100%{ opacity:1; transform: scale(1) translateY(0); }
+    }
+    /* Très lente dérive : 28s, imperceptible, mais vivante */
+    #ecoutille .ec-fenetre{
+      box-shadow: inset 0 0 80px rgba(0,0,0,.72), inset 0 0 1px rgba(255,255,255,.08) !important;
+      background-color: #040A14 !important;
+    }
+    #ecoutille .ec-film{
+      transition: opacity 1.4s ease !important;
+      filter: saturate(.88) contrast(1.04) brightness(.96);
+      /* Ken Burns ultra-lent : le film respire */
+      animation: ecNolanFilm 28s linear infinite alternate !important;
+    }
+    @keyframes ecNolanFilm{
+      from{ transform: scale(1) translate3d(0,0,0) }
+      to{ transform: scale(1.06) translate3d(-1.2%, -0.8%, 0) }
+    }
+    /* Mer : désaturée, subtile — on voit le film, pas l'effet */
+    #ecoutille .m-rayons{ opacity:.28 !important; filter: blur(.6px) !important; animation-duration: 24s !important; }
+    #ecoutille .m-caustique{ opacity:.42 !important; filter: saturate(.7) contrast(.95) !important; }
+    #ecoutille .m-caustique.b{ opacity:.22 !important; }
+    #ecoutille .m-neige{ opacity:.22 !important; filter: blur(.4px) !important; }
+    #ecoutille .m-bulles{ opacity:.32 !important; }
+    #ecoutille .m-bulles.b{ opacity:.18 !important; }
+    #ecoutille .ec-reflet::before{ opacity:.55 !important; width: 34% !important; background: linear-gradient(90deg, transparent, rgba(255,255,255,.09), transparent) !important; }
+    #ecoutille .ec-verre{
+      box-shadow: inset 0 0 70px rgba(0,0,0,.62), inset 0 0 0 1px rgba(255,255,255,.06) !important;
+      background: radial-gradient(ellipse at 30% 18%, rgba(255,255,255,.07), transparent 42%) !important;
+    }
+    #ecoutille .ec-verre::after{ display:none !important; }
+    #ecoutille .ec-cercle{
+      border-width: clamp(6px, 1.2vmin, 14px) !important;
+      border-color: #0B121E !important;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.12), 0 20px 60px rgba(0,0,0,.72) !important;
+      background: none !important;
+    }
+    #ecoutille .ec-cercle::after{ opacity:.55 !important; filter: saturate(.6) brightness(.85); }
+
+    /* --- CONSIGNE & SÉLECTEUR : éditorial, silencieux --- */
+    #ecoutille .ec-consigne--sous-hublot{
+      font-family: 'Exo 2', system-ui, sans-serif !important;
+      font-weight: 400 !important;
+      font-size: 10px !important;
+      letter-spacing: .24em !important;
+      color: rgba(232,238,244,.58) !important;
+      text-shadow: none !important;
+      animation: ecNolanConsigne 1.4s cubic-bezier(.25,.46,.45,.94) 1.35s both !important;
+    }
+    @keyframes ecNolanConsigne{ from{ opacity:0; transform: translateY(8px)} to{ opacity:1; transform: translateY(0)} }
+    #ecoutille .ec-consigne b{ color: rgba(232,238,244,.92) !important; font-weight:600 !important; }
+    #ecoutille .ec-magasin-wrap{ animation: ecNolanMagasin 1.4s cubic-bezier(.25,.46,.45,.94) 1.5s both !important; gap: 16px !important; }
+    @keyframes ecNolanMagasin{ from{ opacity:0; transform: translateY(10px)} to{ opacity:1; transform: translateY(0)} }
+    #ecoutille .ec-magasin-case{ gap: 8px !important; }
+    #ecoutille .ec-magasin-label{
+      font-family: 'Exo 2', sans-serif !important;
+      font-weight: 600 !important;
+      font-size: 8px !important;
+      letter-spacing: .32em !important;
+      color: rgba(232,238,244,.48) !important;
+      text-shadow: none !important;
+    }
+    #ecoutille .ec-magasin-select{
+      background: rgba(255,255,255,.06) !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      color: #E8EEF4 !important;
+      border-radius: 2px !important;
+      font-family: 'Exo 2', sans-serif !important;
+      font-weight: 500 !important;
+      letter-spacing:.08em !important;
+      backdrop-filter: blur(12px);
+      box-shadow: none !important;
+      height: 40px !important;
+      transition: border-color .35s ease, background .35s ease !important;
+    }
+    #ecoutille .ec-magasin-select:hover{ background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.22) !important; transform: none !important; }
+    #ecoutille .ec-magasin-select:focus{ border-color: rgba(232,238,244,.42) !important; box-shadow: 0 0 0 3px rgba(232,238,244,.08) !important; }
+    #ecoutille .ec-magasin-geo{ color: rgba(232,238,244,.42) !important; text-shadow: none !important; font-size: 9px !important; letter-spacing:.06em !important; }
+
+    /* --- BOUTON : plus de jouet rouge — un sceau de salle des machines --- */
+    #ecoutille .ec-start{
+      width: 132px !important;
+      height: 132px !important;
+      border-radius: 50% !important;
+      display: grid !important; place-items: center !important;
+      background: transparent !important;
+      border: 1px solid rgba(232,238,244,.26) !important;
+      box-shadow: none !important;
+      animation: ecNolanStart 1.5s cubic-bezier(.25,.46,.45,.94) 1.85s both !important;
+      transition: background .55s cubic-bezier(.25,.46,.45,.94), border-color .55s ease, transform .45s cubic-bezier(.25,.46,.45,.94) !important;
+      filter: none !important;
+    }
+    @keyframes ecNolanStart{ from{ opacity:0; transform: scale(.92)} to{ opacity:1; transform: scale(1)} }
+    #ecoutille .ec-start::before{
+      display:none !important;
+      background: none !important;
+      animation: none !important;
+      box-shadow: none !important;
+    }
+    #ecoutille .ec-start::after{
+      inset: -18% !important;
+      background: radial-gradient(circle, rgba(232,238,244,.045) 32%, transparent 68%) !important;
+      animation: ecNolanHalo 4.2s ease-in-out infinite !important;
+      opacity: .85 !important;
+      filter: none !important;
+    }
+    @keyframes ecNolanHalo{
+      0%,100%{ opacity:.35; transform: scale(.96) }
+      50%{ opacity:.62; transform: scale(1.04) }
+    }
+    #ecoutille .ec-dome{
+      background: #E8EEF4 !important;
+      box-shadow: none !important;
+      inset: 1px !important;
+      border-radius: 50% !important;
+      opacity: 0 !important;
+      transform: scale(.82) !important;
+      transition: opacity .55s cubic-bezier(.25,.46,.45,.94), transform .55s cubic-bezier(.25,.46,.45,.94) !important;
+      animation: none !important;
+      filter: none !important;
+    }
+    #ecoutille .ec-start:hover{
+      background: #E8EEF4 !important;
+      border-color: #E8EEF4 !important;
+      transform: scale(1.02) !important;
+    }
+    #ecoutille .ec-start:hover .ec-dome{ opacity: 1 !important; transform: scale(1) !important; }
+    #ecoutille .ec-start:hover .ec-start-label{ color: #02060E !important; text-shadow: none !important; }
+    #ecoutille .ec-start:active{ transform: scale(.98) !important; }
+    #ecoutille .ec-start-label{
+      font-family: 'Exo 2', sans-serif !important;
+      font-weight: 700 !important;
+      font-size: 13px !important;
+      letter-spacing: .36em !important;
+      color: #E8EEF4 !important;
+      text-shadow: none !important;
+      animation: none !important;
+      transition: color .45s ease !important;
+      margin-left: .18em;
+    }
+    #ecoutille .ec-start--open{ box-shadow: none !important; animation: ecNolanStart 1.5s cubic-bezier(.25,.46,.45,.94) 1.85s both !important; }
+    /* Sous le bouton : mention discrète */
+    #ecoutille .ec-pied .ec-version{ color: rgba(232,238,244,.22) !important; font-size: 8px !important; letter-spacing:.18em !important; }
+
+    /* --- GRAIN 35mm + vignette cinéma --- */
+    #ecoutille::after{
+      content:"" !important;
+      position:absolute !important; inset:0 !important; pointer-events:none !important; z-index: 5 !important;
+      opacity: .38 !important;
+      mix-blend-mode: soft-light !important;
+      background:
+        radial-gradient(125% 92% at 50% 50%, transparent 62%, rgba(0,0,0,.48) 100%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E") !important;
+      background-size: auto, 220px 220px !important;
+      display: block !important;
+    }
+    #ecoutille .ec-ecran::after{ display:none !important; }
+
+    /* --- PLONGÉE NOLAN : lente, inexorable, silencieuse --- */
+    #ecoutille .ec-ecran, #ecoutille .ec-scene, #ecoutille .ec-hublot, #ecoutille .ec-flood, #ecoutille .ec-flash{
+      will-change: transform, opacity, filter !important;
+    }
+    /* Durées alignées sur JS Nolan (400/1200/2400/3600) */
+    #ecoutille .ec-ecran{ transition: transform 1.6s cubic-bezier(.25,.46,.45,.94), opacity .9s ease, filter 1.4s ease !important; }
+    #ecoutille .ec-scene{ transition: transform 1.6s cubic-bezier(.25,.46,.45,.94), opacity .7s ease, filter 1.4s ease !important; }
+    #ecoutille .ec-hublot{ transition: transform 1.8s cubic-bezier(.25,.46,.45,.94), filter 1.2s ease, opacity .7s ease !important; }
+    #ecoutille .ec-flood{
+      background: radial-gradient(closest-side at 50% 50%, rgba(4,16,28,0) 0 18%, rgba(4,16,28,.42) 32%, rgba(2,10,20,.88) 58%, #01050A 82%, #01050A 100%) !important;
+      transition: transform 1.8s cubic-bezier(.25,.46,.45,.94), opacity 1.2s ease !important;
+    }
+    #ecoutille .ec-flash{
+      background: radial-gradient(ellipse 122% 92% at 50% 50%, rgba(232,238,244,.12) 0 22%, rgba(120,160,185,.06) 42%, transparent 72%) !important;
+      filter: blur(.8px);
+    }
+    /* Éclat : on retient son souffle */
+    #ecoutille.ec-eclat .ec-ecran{ transform: scale(1.03) translateZ(0) !important; filter: brightness(.98) !important; }
+    #ecoutille.ec-eclat .ec-scene{ transform: scale(1.02) translateZ(0) !important; filter: none !important; }
+    #ecoutille.ec-eclat .ec-hublot{ transform: scale(1.14) translateZ(0) !important; }
+    #ecoutille.ec-eclat .ec-flood{ opacity:.52 !important; transform: scale(.92) translateZ(0) !important; }
+    /* Impact : on tombe — lent, massif */
+    #ecoutille.ec-impact .ec-ecran{ transform: scale(1.12) translateZ(0) !important; filter: brightness(.48) saturate(.72) !important; }
+    #ecoutille.ec-impact .ec-scene{ transform: scale(2.8) translateZ(0) !important; filter: blur(10px) brightness(.42) saturate(.55) !important; opacity:.88 !important; }
+    #ecoutille.ec-impact .ec-hublot{ transform: scale(3.2) translateZ(0) !important; filter: blur(1px) brightness(.88) !important; }
+    #ecoutille.ec-impact .ec-paroi{ filter: brightness(.42) !important; }
+    #ecoutille.ec-impact .ec-flood{ opacity:1 !important; transform: scale(1.18) translateZ(0) !important; }
+    #ecoutille.ec-impact .ec-titre, #ecoutille.ec-impact .ec-sous-titre-h4, #ecoutille.ec-impact .ec-consigne, #ecoutille.ec-impact .ec-start{
+      opacity:0 !important; transform: scale(.98) translateZ(0) !important; transition: opacity .35s ease !important;
+    }
+    #ecoutille.ec-impact .ec-flash{ animation: ecNolanBloom 1.6s cubic-bezier(.25,.46,.45,.94) !important; }
+    @keyframes ecNolanBloom{
+      0%{ opacity:0; transform: scale(.92) translateZ(0) }
+      22%{ opacity:.32; transform: scale(1) translateZ(0) }
+      100%{ opacity:0; transform: scale(1.06) translateZ(0) }
+    }
+    /* Responsive : garder la gravité en petit écran */
+    @media (max-width: 400px){
+      #ecoutille .ec-titre{ font-size: clamp(22px, 8vw, 34px) !important; letter-spacing:.16em !important; }
+      #ecoutille .ec-sous-titre-h4{ letter-spacing:.28em !important; }
+      #ecoutille .ec-hublot{ width: min(44vh, 84vw) !important; height: min(44vh, 84vw) !important; }
+      #ecoutille .ec-start{ width: 118px !important; height: 118px !important; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      #ecoutille .ec-film{ animation: none !important; }
+      #ecoutille .ec-titre, #ecoutille .ec-sous-titre-h4, #ecoutille .ec-hublot, #ecoutille .ec-start, #ecoutille .ec-magasin-wrap, #ecoutille .ec-consigne--sous-hublot{ animation: none !important; }
+      #ecoutille .ec-start::after, #ecoutille::after{ display:none !important; }
+    }
+  </style>
+
   <style id="ec-sortie-fluide">
     /* 0. PROMOTION GPU AVANT LA SORTIE — pas pendant */
     #ecoutille .ec-ecran,
@@ -1401,13 +1748,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=18" defer></script>
+  <script src="ecoutille.js?v=19" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 014045 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 014046 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -1502,7 +1849,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 014045</span>
+      <span class="ec-version">COMMIT 014046</span>
     </footer>
   </div>
 

@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 014041 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 014046 »
 
    Ce que fait ce fichier
    ----------------------
@@ -73,18 +73,18 @@
   const CLE_SESSION = 'nautilusEcoutille';        // ouverte pendant cette session
   const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
-  /* Calendrier de la plongée, en millisecondes après le clic. Cinq temps :
-       · 130 ms — la plongée s'engage : le décor avance, le souffle monte ;
-       · 540 ms — zoom dans le hublot + premier voile abyssal (flou léger) ;
-       · 1050 ms — on s'enfonce : flou progressif + letterbox + lueur azur ;
-       · 1500 ms — l'abyss se referme : fondu qui révèle l'accueil ;
-       · 2400 ms — la page de garde a fini sa vie, on la retire du DOM. */
+  /* Calendrier de la plongée — RYTHME NOLAN (lent, inexorable) :
+       · 120 ms — la coque cède : léger souffle, pas de pop ;
+       · 780 ms — on retient : zoom mesuré dans le hublot, premier voile ;
+       · 1680 ms — chute : le noir nous avale, letterbox Scope ;
+       · 3000 ms — révélation : l'abyss s'ouvre sur l'accueil ;
+       · 4200 ms — retrait : la garde s'efface, 60fps garanti. */
   const T = {
-    plongee:  130,   // léger avance — GPU déjà prêt
-    eclat:    540,   // voile abyssal
-    impact:  1080,   // +30 ms pour laisser l'éclat finir (560 ms transition)
-    sortie:  1650,   // +150 ms pour laisser l'impact (620 ms) respirer
-    retrait: 2650    // +250 ms pour le fondu global 480 ms
+    plongee:  120,
+    eclat:    780,
+    impact:  1680,
+    sortie:  3000,
+    retrait: 4200
   };
 
   /* Tous les navigateurs du parc savent le dire ; le test est protégé pour
