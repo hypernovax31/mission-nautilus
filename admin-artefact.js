@@ -269,10 +269,11 @@
       _unsubP3 = x.fs.onSnapshot(refSessions, function(snap){
         snap.forEach(function(d){
           var data=d.data()||{}; var equipe=d.id;
-          if(EQUIPES.indexOf(equipe)<0 && equipe!=='TEST' && equipe!=='APERCU' && equipe!=='ANON' && equipe!=='MODE_TEST') return;
-          var elDom=$('afP3-'+equipe); if(!elDom) return;
-          // si l'onglet Réponses n'est pas encore monté, majCarteP3Auto créera le DOM au prochain majCartesEquipes — on force quand même
+          // Toute équipe qui a une session est affichable — on crée la carte à la volée si elle n'existe pas
           var cid=data.cartoucheId; if(!cid) return;
+          var elDom=$('afP3-'+equipe);
+          if(!elDom){ try{ elDom = assurerCarteEquipeDynamique(equipe); }catch(e){} }
+          if(!elDom) return;
           lireCoffreRobuste(cid).then(function(secret){ if(secret && secret.reponses) majCarteP3(equipe, secret); }).catch(function(){});
         });
         // aussi rafraîchir le compteur global P1 (optionnel)
@@ -333,6 +334,39 @@
     +   '</div>'
     + '</div>';
   }
+  function assurerCarteEquipeDynamique(equipe){
+    if(!equipe) return null;
+    equipe = String(equipe).trim().toUpperCase().replace(/[^A-Z0-9-]/g,'');
+    if(!equipe) return null;
+    // déjà existante ?
+    if(document.getElementById('afP3-'+equipe)) return document.getElementById('afP3-'+equipe);
+    // Ne pas dupliquer les 4 fixes déjà créées
+    if(EQUIPES.indexOf(equipe)>=0 || equipe==='TEST') return document.getElementById('afP3-'+equipe);
+    var host = document.getElementById('afTeamCards');
+    var single = document.getElementById('afSingleCard');
+    var container = single ? single : host;
+    // fallback host
+    var targetHost = host || container;
+    if(!targetHost) return null;
+    // Construit une carte similaire aux fixes
+    var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+equipe+'-'+w+'">'+esc(w)+'</span>'; }).join('');
+    var card = document.createElement('div');
+    card.className = 'adm-af-teamcard';
+    card.dataset.team = equipe;
+    card.style.cssText = 'margin:10px 0 0;padding:10px 10px 8px;background:#f0faf6;border:1px solid #bfe7d2;border-radius:10px;box-shadow:none';
+    card.innerHTML = '<div class="adm-af-teamhead" style="font-size:12px"><span>'+esc(equipe)+' <span class="small" style="background:#e8fff4;border:1px solid #bfe7d2;border-radius:999px;padding:1px 6px;font-size:10px">SESSION LIVE</span></span><span class="small" id="afTeamPill-'+equipe+'" style="color:#6e7a84">auto</span></div>'
+      + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+equipe+'">—</span><span class="small" style="color:#6e7a84">morse</span></div>'
+      + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+equipe+'">'+p2+'</div></div>'
+      + '<div class="adm-af-row" id="afP3-'+equipe+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>';
+    // insère avant la carte TEST si elle existe, sinon à la fin
+    var testCard = targetHost.querySelector('[data-team="TEST"]');
+    if(testCard) targetHost.insertBefore(card, testCard);
+    else targetHost.appendChild(card);
+    // met à jour le compteur global
+    try{ var gp=document.getElementById('afGlobalPill'); if(gp) gp.textContent = (document.querySelectorAll('[data-team]').length-1)+' équipes détectées'; }catch(e){}
+    return document.getElementById('afP3-'+equipe);
+  }
+
   function majCartesEquipes(){
     EQUIPES.forEach(function(eq){
       lireTeamDoc(eq).then(function(doc){
@@ -411,6 +445,24 @@
         }catch(e){ try{ majCarteP3Auto(eq); }catch(e2){} }
       })();
     }catch(e){}
+    // Découverte des sessions live non listées dans EQUIPES (ex: ANON-xxxx, teams créés côté client) — crée une carte à la volée
+    try{
+      if(window.NautilusBlocages && window.NautilusBlocages.db){
+        window.NautilusBlocages.db().then(function(x){
+          x.fs.getDocs(x.fs.collection(x.db, 'sessions')).then(function(snap){
+            snap.forEach(function(d){
+              var equipe = d.id;
+              if(EQUIPES.indexOf(equipe)>=0 || equipe==='TEST') return;
+              // évite de créer des cartes pour des ids techniques trop longs ou invalides
+              if(!/^[A-Z0-9-]{2,24}$/.test(equipe)) return;
+              if(document.getElementById('afP3-'+equipe)) return;
+              assurerCarteEquipeDynamique(equipe);
+              majCarteP3Auto(equipe);
+            });
+          }).catch(function(){});
+        }).catch(function(){});
+      }
+    }catch(e){}
     // mise à jour du compteur global du card unique
     try{
       var gp=$('afGlobalPill');
@@ -423,6 +475,9 @@
         var p1test=$('afP1-TEST');
         var testDone = (p1test && p1test.textContent && p1test.textContent.trim()!=='—' && p1test.textContent.trim()!=='' ) ? 1 : 0;
         gp.textContent = done + '/' + EQUIPES.length + ' équipes' + (testDone ? ' + test zzzz-0000' : '') + ' renseignées';
+        // ajoute le nombre de sessions live dynamiques si présentes
+        var dyn = document.querySelectorAll('[data-team]:not([data-team="ALL"])').length - EQUIPES.length -1;
+        if(dyn>0) gp.textContent += ' (+'+dyn+' live)';
       }
     }catch(e){}
     try{ ecouterP2Live(); }catch(e){}
