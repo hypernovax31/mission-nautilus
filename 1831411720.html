@@ -137,18 +137,18 @@
 
 <!-- Journal de bord « Activité en direct », code COMMUN à tous les paliers. -->
 <script src="son-partage.js?v=2"></script>
-<script src="journal-bord.js?v=6"></script>
+<script src="journal-bord.js?v=7"></script>
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
-<script src="palier-sas.js?v=15"></script>
+<script src="palier-sas.js?v=17"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
-<script src="palier-briefing.js?v=3"></script>
+<script src="palier-briefing.js?v=5"></script>
 <script>window.NautilusSas.init(3);</script>
 <!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers. -->
 <script src="matelot-blocages.js?v=3"></script>
 <!-- Réserve d'oxygène (jauge du haut), commune à tous les paliers. -->
 <script src="reserve-o2.js?v=4"></script>
 <!-- Équipage actif en plongée, commun à tous les paliers. -->
-<script src="equipage-actif.js?v=10"></script>
+<script src="equipage-actif.js?v=11"></script>
 <script>window.EquipageActif.init();</script>
 <!-- ================= PALIER 3 — L'ARTEFACT DU NAUTILUS =================
      Quatre modules, dans cet ordre (chacun dépend du précédent) :
@@ -923,13 +923,44 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     afficherVueScellee();
   } else if (window.NautilusSas.estDeverrouille(3)) {
     afficherVueBriefing();
+    // briefing affiché d'entrée : on force un rafraîchissement immédiat de l'équipage et du journal (fix palier 3 qui restait vide au premier chargement)
+    try{ setTimeout(function(){ if(window.EquipageActif && window.EquipageActif.init) window.EquipageActif.init(); }, 200); }catch(e){}
+    try{ if(window.JournalDeBord && window.JournalDeBord.activerModeLive) window.JournalDeBord.activerModeLive(); else if(window.JournalDeBord) { /* fallback */ } }catch(e){}
   } else {
-    afficherVueScellee();
+    // anti-flash : on n'affiche pas directement la zone scellée ; on met un état de vérification et on laisse l'écoute d'équipe répondre
+    try{
+      var _hero = document.getElementById('gateHero');
+      if(_hero){
+        try{
+          var _lk = _hero.querySelector('.sas-lock-ico'); if(_lk) _lk.textContent='🔎';
+          var _ti = _hero.querySelector('.sas-titre'); if(_ti) _ti.textContent='Vérification du sas…';
+          var _ms = _hero.querySelector('.sas-msg'); if(_ms) _ms.innerHTML='On vérifie si ton équipage a déjà ouvert ce sas…';
+        }catch(e){}
+        _hero.hidden=false; _hero.style.display='';
+      }
+      // cache les blocs qui n'ont de sens qu'en briefing ouvert
+      try{ document.getElementById('teamCard').hidden=true; document.getElementById('logCard').hidden=true; document.getElementById('briefCard').hidden=true; document.getElementById('gateUnlocked').hidden=true; }catch(e){}
+    }catch(e){}
     if (window.NautilusSas.observerDeverrouillageEquipe) {
       window.NautilusSas.observerDeverrouillageEquipe();
     }
+    // filet : si après 1,2 s toujours scellé, on restaure la vraie scène scellée
+    try{
+      setTimeout(function(){
+        try{
+          var _h = document.getElementById('gateHero');
+          if(_h && _h.hidden) return;
+          if(window.NautilusSas && window.NautilusSas.estDeverrouille && window.NautilusSas.estDeverrouille(3)) return;
+          // restaure le visuel d'origine avant de passer en scellée
+          var _lk2=_h && _h.querySelector('.sas-lock-ico'); if(_lk2) _lk2.textContent='🔒';
+          var _ti2=_h && _h.querySelector('.sas-titre'); if(_ti2) _ti2.textContent='⛔ Ce palier est verrouillé.';
+          var _ms2=_h && _h.querySelector('.sas-msg'); if(_ms2) _ms2.innerHTML='Déverrouillez le palier suivant grâce au <b>QR Code de la zone de recherche</b>.';
+          afficherVueScellee();
+        }catch(e){}
+      }, 1200);
+    }catch(e){}
   }
-  window.addEventListener('nautilus:sas-ouvert', function(){ try{ if(window.__nautilusEpreuveDemarree) return; }catch(e){} var _gu=document.getElementById('gateUnlocked'); if(_gu && !_gu.hidden && _gu.style.display!=='none') return; afficherVueBriefing(); });
+  window.addEventListener('nautilus:sas-ouvert', function(){ try{ if(window.__nautilusEpreuveDemarree) return; }catch(e){} var _gu=document.getElementById('gateUnlocked'); if(_gu && !_gu.hidden && _gu.style.display!=='none') return; afficherVueBriefing(); try{ setTimeout(function(){ if(window.EquipageActif && window.EquipageActif.init) window.EquipageActif.init(); }, 200); }catch(e){} });
 
   /* DEBUG MODE TEST — si le scellé reste affiché alors que l'URL porte les marques du test,
      on l'explique et on propose de forcer le briefing (évite un cache HTML périmé). */

@@ -212,13 +212,22 @@
     }).catch(function () { /* présence non écrite : la liste locale continue */ });
   }
 
+  var _initAttempts = 0;
   function init() {
     var B = window.NautilusBlocages;
-    if (!B || !B.identiteCourante) return;
+    if (!B || !B.identiteCourante) {
+      // ordre des scripts : matelot-blocages pas encore évalué → retry (fix briefing palier 3 qui démarrait vide)
+      if(_initAttempts < 12){ _initAttempts++; try{ setTimeout(init, 400); }catch(e){} }
+      return;
+    }
     B.identiteCourante().then(function (ident) {
       /* Mode test / matelot non identifié : aucune équipe à afficher. */
       if (!ident || ident.isTest || !ident.teamCode) {
         renderCrew([]);
+        // si ident pas encore disponible (localStorage → Firestore asynchrone), on retente 600 ms plus tard
+        if(!ident || !ident.teamCode){
+          if(_initAttempts < 12){ _initAttempts++; try{ setTimeout(init, 600); }catch(e){} }
+        }
         return;
       }
       _meKey = ident.memberKey;

@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v382';
+const CACHE_NAME = 'nautilus-v383';
 const PRECACHE = [
   './',
   './index.html',
@@ -20,13 +20,13 @@ const PRECACHE = [
   './sonar-button.js?v=4',
   './admin-button.js?v=28',
   './palier-annonces.js?v=3',
-  './journal-bord.js?v=6',
-  './palier-sas.js?v=16',
+  './journal-bord.js?v=7',
+  './palier-sas.js?v=17',
   './palier-cinematic.js?v=4',
-  './palier-briefing.js?v=4',
+  './palier-briefing.js?v=5',
   './matelot-blocages.js?v=3',
   './reserve-o2.js?v=4',
-  './equipage-actif.js?v=10',
+  './equipage-actif.js?v=11',
   './mots-croises.js?v=10',
   /* Palier 3 — « l'artefact du Nautilus » (remplace l'ancien puzzle photo).
      Les deux fichiers de données sont préchargés : le sélecteur de magasin
@@ -43,7 +43,7 @@ const PRECACHE = [
   './victoire-palier.js?v=12',
   './records-palier.js?v=2',
   './install-promo.js?v=7',
-  './ecoutille.js?v=36',
+  './ecoutille.js?v=37',
   './assets/qr/QR-palier-2_noir-sur-blanc.png',
   './assets/qr/QR-palier-2_jaune-sur-noir.png',
   './assets/qr/QR-palier-3_noir-sur-blanc.png',

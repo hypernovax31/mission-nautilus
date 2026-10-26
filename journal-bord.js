@@ -276,11 +276,19 @@
   }
 
   /* ---------- écoute temps réel de l'équipage ---------- */
+  var _liveRetry = 0;
   function activerModeLive() {
-    if (_liveTentee) return;
+    if (_liveTentee && _unsub) return;
+    if (_liveTentee && !_unsub && _liveRetry >= 8) return;
     _liveTentee = true;
     resoudreEquipe().then(function (teamCode) {
-      if (!teamCode) { _mode = 'local'; render(); return; }
+      if (!teamCode) {
+        _mode = 'local'; render();
+        // équipe pas encore résolue (ident → Firestore asynchrone) → on retente peu après (fix briefing palier 3 vide au chargement)
+        if(_liveRetry < 10){ _liveRetry++; _liveTentee=false; try{ setTimeout(activerModeLive, 600); }catch(e){} }
+        return;
+      }
+      _liveRetry = 0;
       db().then(function (x) {
         _mode = 'live';
         var q = x.fs.query(
@@ -296,8 +304,8 @@
           _entries = liste;
           render();
         }, function () { /* lecture indisponible : on garde l'état précédent */ });
-      }).catch(function () { _mode = 'local'; render(); });
-    }).catch(function () { _mode = 'local'; render(); });
+      }).catch(function () { _mode = 'local'; render(); if(_liveRetry < 10){ _liveRetry++; _liveTentee=false; try{ setTimeout(activerModeLive, 700); }catch(e){} } });
+    }).catch(function () { _mode = 'local'; render(); if(_liveRetry < 10){ _liveRetry++; _liveTentee=false; try{ setTimeout(activerModeLive, 700); }catch(e){} } });
   }
 
   /* ---------- écriture locale (insertion triée du plus récent au plus ancien) ---------- */

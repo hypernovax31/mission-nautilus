@@ -218,9 +218,17 @@
        était ailleurs (localStorage encore vide). */
     function observerDeverrouillageEquipe() {
       var B = window.NautilusBlocages;
-      if (!B || !B.identiteCourante || !B.db) return;
+      if (!B || !B.identiteCourante || !B.db) {
+        // B pas encore chargé (ordre des scripts) → on réessaie 400 ms plus tard (cas briefing palier 3 qui restait vide)
+        try{ setTimeout(observerDeverrouillageEquipe, 400); }catch(e){}
+        return;
+      }
       B.identiteCourante().then(function (ident) {
-        if (!ident || ident.isTest || !ident.teamCode) return;
+        if (!ident || ident.isTest || !ident.teamCode) {
+          // ident pas encore résolu (localStorage → Firestore) → retry court
+          try{ setTimeout(observerDeverrouillageEquipe, 600); }catch(e){}
+          return;
+        }
         B.db().then(function (x) {
           var termine = false;
           var unsub = null;
