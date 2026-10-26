@@ -3453,6 +3453,7 @@ window.Nautilus = {
   }
 
   /* === ÉCRAN : retour en surface après une tentative ===
+     TEXTE D'ERREUR (tous paliers) : « RETOUR EN SURFACE — REMONTÉE FORCÉE durant X h ! » + « ⏱ Retour le « date » à « heure » » — date/heure = moment remontée + durée barème (calcul dynamique, jamais 26/10/2026 figé)
      REFONTE « page d'erreurs » : TOUTE la largeur du bloc, trois lignes
      pleines et courtes à la place des longs paragraphes et des deux
      cartes côte à côte (illisibles sur téléphone). À l'essentiel :
@@ -3468,14 +3469,14 @@ window.Nautilus = {
     /* Les lignes sont CONSTRUITES PAR LA MEME FONCTION que la page
        « Blocage personnel » : formulation identique, jamais de double
        maintenance (lignesBlocageHtml). */
-    const _hoursKicker = Number(monLock?.lastLockHours || 1);
+    const _hoursKicker = Math.max(1, Number(monLock?.lastLockHours || 1)); // durée barème au moment de la remontée
     const lignes = lignesBlocageHtml(t, monLock, 'echec');
     return `
       <section class="lock-screen lock-screen--lost" aria-live="polite">
         <div class="lock-heading">
           <span class="lock-heading-icon" aria-hidden="true">↟</span>
           <div>
-            <p class="lock-kicker">RETOUR EN SURFACE durant ${esc(String(_hoursKicker))} h — <strong>Remontée forcée !</strong></p>
+            <p class="lock-kicker">RETOUR EN SURFACE — <strong>REMONTÉE FORCÉE durant ${esc(String(_hoursKicker))} h !</strong></p>
             <h2>Remontée forcée !</h2>
           </div>
         </div>
@@ -3508,8 +3509,11 @@ window.Nautilus = {
        cas imprévu) divergeait, on préfère l'afficher telle qu'elle sera
        plutôt que de promettre une durée fausse. */
     const suivanteAffichee = Math.max(suivante, N.prochainePeineH(monLock));
-    const _dateRetour = N.formatRetourDate ? N.formatRetourDate(monLock.lockedUntil) : N.formatDate(monLock.lockedUntil);
-    const _heureRetour = N.formatRetourHeure ? N.formatRetourHeure(monLock.lockedUntil) : '';
+    // ⏱ Retour le « date » à « heure » — CALCUL DYNAMIQUE : lockedUntil = moment de la remontée (blockedAt) + durée barème (lastLockHours), pas date figée
+    // Si lockedUntil manquait, on le déduit de blockedAt + lastLockHours pour ne jamais afficher 0 h ni date statique
+    const _lockedUntilISO = monLock.lockedUntil || (monLock.blockedAt && monLock.lastLockHours ? new Date(new Date(monLock.blockedAt).getTime() + Number(monLock.lastLockHours)*3600e3).toISOString() : monLock.lockedUntil);
+    const _dateRetour = N.formatRetourDate ? N.formatRetourDate(_lockedUntilISO) : N.formatDate(_lockedUntilISO);
+    const _heureRetour = N.formatRetourHeure ? N.formatRetourHeure(_lockedUntilISO) : '';
     const _retourTxt = _heureRetour ? `Retour le « ${esc(_dateRetour)} » à « ${esc(_heureRetour)} ».` : `Retour <b>${esc(N.formatDate(monLock.lockedUntil))}</b>.`;
 
     if (variante === 'indice') {
