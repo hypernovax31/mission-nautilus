@@ -209,10 +209,12 @@
     function pupitre() {
       var max = (etat.session && etat.session.cartouche && etat.session.cartouche.maxErreurs) || M.MAX_ERREURS;
       var restantes = Math.max(0, max - etat.erreurs);
+      var perdues = Math.max(0, max - restantes);
       var points = '';
       for (var i = 0; i < max; i++) {
-        points += '<span class="af-jauge-pt' + (i < restantes ? '' : ' is-grille') + '" aria-hidden="true"></span>';
+        points += '<span class="af-jauge-pt' + (i < perdues ? ' is-lost is-grille' : '') + '" aria-hidden="true"></span>';
       }
+      var jaugeEtat = restantes === 0 ? ' is-critical' : (restantes === 1 ? ' is-warning' : '');
       var indicesFaits = etat.indices || [];
       var transmis = (etat.session && etat.session.indicesTransmis) || {};
       var blocTransmis = '';
@@ -255,9 +257,10 @@
         blocIndices = '<div class="morse-hints-grid">'+cartes+'</div>';
       }
       return '<div class="af-pupitre">'
-        + '<div class="af-jauge" role="status" aria-label="Tentatives restantes">'
+        + '<div class="af-jauge' + jaugeEtat + '" role="status" aria-label="Tentatives restantes">'
         +   '<span class="af-jauge-label">Tentatives avant remontée</span>'
         +   '<span class="af-jauge-points">' + points + '</span>'
+        +   '<span class="af-jauge-count" style="margin-left:8px;font:700 11px ui-monospace,Menlo,monospace;color:#cfe8ff;opacity:.9">' + restantes + ' / ' + max + '</span>'
         + '</div>'
         + blocIntrouvable
         + blocIndices

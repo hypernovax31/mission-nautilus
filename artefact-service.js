@@ -620,10 +620,7 @@
         return listerCartouches(magasin).then(function (docs) {
           var utilisables = docs.filter(function (c) { return cartoucheUtilisable(c, cfg, magasin, maintenant); });
           if (!utilisables.length) {
-            // Aucun ouvrage en stock 1h à cette seconde — on assure un fallback garanti
-            // (EAN 2000000000008) pour que la mission démarre immédiatement, sans attendre le robot.
             return assurerCartoucheFallback(magasin, maintenant).then(function(cartoucheFallback){
-              // Le fallback vient d'être créé : il est utilisable tout de suite
               return creerSession(cle, magasin, cartoucheFallback, 'automatique-fallback', cfg, maintenant, session);
             }).catch(function(e){
               var ecartes = docs.map(function (c) {
@@ -634,13 +631,28 @@
               return { erreur: 'aucun-ouvrage', message: M.MESSAGES.aucunOuvrageMagasin, ecartes: ecartes, fallbackEchec: String(e && e.message || e) };
             });
           }
-          /* Tirage déterministe sur l'identifiant d'équipage : deux
-             équipages ne suivent pas la même route, et un rafraîchissement
-             ne change pas l'ouvrage en cours. */
-          var tirage = M.aleatoireDeSel(cle + '|' + magasin);
-          var choix = utilisables.length === 1 ? utilisables[0]
-            : utilisables[Math.floor(tirage() * utilisables.length) % utilisables.length];
-          return creerSession(cle, magasin, choix, 'automatique', cfg, maintenant, session);
+          // Garantie simultanée : exclure les ouvrages déjà en cours pour ce magasin
+          return stockage().lister(CHEMINS.sessions).then(function (sessions) {
+            var enCoursIds = {};
+            (sessions||[]).forEach(function(ss){
+              if(ss.equipe !== cle && ss.magasinId === magasin && ss.statut === 'active' && ss.cartoucheId){
+                enCoursIds[ss.cartoucheId] = true;
+              }
+            });
+            var libres = utilisables.filter(function(c){ return !enCoursIds[c.id]; });
+            var pool = libres.length ? libres : utilisables;
+            // Si tout est pris simultanément, on garde le pool complet mais le tirage déterministe évite au max les collisions
+            var tirage = M.aleatoireDeSel(cle + '|' + magasin + '|' + (libres.length ? 'libre' : 'complet'));
+            var choix = pool.length === 1 ? pool[0]
+              : pool[Math.floor(tirage() * pool.length) % pool.length];
+            // Ultime vérif : si pool==utilisables et le choix est en cours, tenter un second tirage décalé
+            if (enCoursIds[choix.id] && libres.length === 0 && pool.length > 1) {
+              var altTirage = M.aleatoireDeSel(cle + '|' + magasin + '|' + choix.id);
+              var alt = pool[Math.floor(altTirage() * pool.length) % pool.length];
+              if (!enCoursIds[alt.id]) choix = alt;
+            }
+            return creerSession(cle, magasin, choix, libres.length ? 'automatique-simultanee' : 'automatique', cfg, maintenant, session);
+          });
         });
       });
     });

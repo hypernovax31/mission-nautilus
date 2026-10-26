@@ -12,8 +12,9 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
-  <link rel="stylesheet" href="css/palier2.css?v=27">
+  <link rel="stylesheet" href="css/palier1.css?v=52">
+  <link rel="stylesheet" href="css/palier2.css?v=28">
+  <link rel="stylesheet" href="css/tentatives.css?v=1">
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -158,6 +159,7 @@
     <h2 id="sasUnlockedTitle">PALIER 2</h2>
     <div class="body">
       <div id="mcStatut" class="mc-statut">⏳ <b>Préparation de la grille…</b></div>
+      <div id="mcTentatives" class="tentatives-jauge" style="display:none"><span class="tentatives-jauge-label">Tentatives avant remontée</span><span class="tentatives-jauge-points"></span><span class="tentatives-jauge-count"></span></div>
       <div id="mcHost"></div>
       <a class="gate-home" href="index.html?ecoutille=0" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
@@ -266,6 +268,20 @@
      Palier 1) : chrono qui démarre avec la grille, compteur d'erreurs. */
   var t0Partie = null;
   var nbErreurs = 0;
+  function majTentatives(){
+    var el = document.getElementById('mcTentatives');
+    if(!el) return;
+    var max = 3;
+    var erreurs = nbErreurs||0;
+    el.style.display = '';
+    el.className = 'tentatives-jauge' + (erreurs >= max ? ' is-critical' : erreurs >= max-1 ? ' is-warning' : '');
+    var points = el.querySelector('.tentatives-jauge-points');
+    var count = el.querySelector('.tentatives-jauge-count');
+    if(points){
+      points.innerHTML = Array.from({length:max}, function(_,i){ return '<span class="tentatives-jauge-pt'+(i < erreurs ? ' is-lost' : '')+'"></span>'; }).join('');
+    }
+    if(count) count.textContent = (max - erreurs) + ' / ' + max;
+  }
 
   var MOTS = [
     { num: 1, dir: 'h', row: 0, col: 2, reponse: 'STEELBOOK', secteur: 'rayon', definition: "Coffret plat à deux volets, trempé contre l'oubli, dont la surface polie renvoie au possesseur son propre visage avant de lui concéder l'accès à la fiction qu'il abrite." },
@@ -454,6 +470,7 @@
 
   function onErreur(n, max) {
     nbErreurs = n;
+    majTentatives();
     if (n >= max) {
       declencherBlocage();
     } else {
@@ -799,6 +816,7 @@
       onVictoire: onVictoire
     });
     ecouterGrilleEquipe();
+    majTentatives();
     renderP2Hints();
   }
 

@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 014046 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 014051 »
 
    Ce que fait ce fichier
    ----------------------
@@ -73,18 +73,15 @@
   const CLE_SESSION = 'nautilusEcoutille';        // ouverte pendant cette session
   const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
-  /* Calendrier de la plongée — RYTHME NOLAN (lent, inexorable) :
-       · 120 ms — la coque cède : léger souffle, pas de pop ;
-       · 780 ms — on retient : zoom mesuré dans le hublot, premier voile ;
-       · 1680 ms — chute : le noir nous avale, letterbox Scope ;
-       · 3000 ms — révélation : l'abyss s'ouvre sur l'accueil ;
-       · 4200 ms — retrait : la garde s'efface, 60fps garanti. */
+  /* Calendrier de la plongée — RYTHME FLUIDE (v360) :
+       lé ger + rapide, sans blur lourd ni letterbox. On garde le hublot
+       et la mer, on retire le cinéma 65mm. */
   const T = {
-    plongee:  120,
-    eclat:    780,
-    impact:  1680,
-    sortie:  3000,
-    retrait: 4200
+    plongee:   60,
+    eclat:    320,
+    impact:   700,
+    sortie:  1300,
+    retrait: 1900
   };
 
   /* Tous les navigateurs du parc savent le dire ; le test est protégé pour

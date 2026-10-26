@@ -12,7 +12,8 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=51">
+  <link rel="stylesheet" href="css/palier1.css?v=52">
+  <link rel="stylesheet" href="css/tentatives.css?v=1">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=2" defer></script>
@@ -910,8 +911,9 @@ async function getMotEquipage(team) {
   }
 }
 async function assignerMotEquipage(teamCode) {
-  /* Choisit un mot NON encore attribué à un autre équipage. */
+  /* Choisit un mot NON encore attribué à un autre équipage — garantie simultanée. */
   const used = new Set();
+  const activeWordHashes = new Set();
   try {
     const allSnap = await getDocs(collection(db, 'teams'));
     allSnap.forEach(d => {
@@ -920,12 +922,37 @@ async function assignerMotEquipage(teamCode) {
       if (typeof dd.morseWordHash === 'number') used.add(dd.morseWordHash);
       if (dd.morseWord) used.add(hashString(dd.morseWord));
     });
+    // Garantie simultanée : exclure aussi les sessions actives (mots en cours)
+    const activeChecks = [];
+    allSnap.forEach(d => {
+      if (d.id === teamCode) return;
+      activeChecks.push(getDoc(doc(db, 'teams', d.id, 'morseSession', 'current')).then(snap=>{
+        if(snap.exists()){
+          const sd = snap.data();
+          if(sd && typeof sd.wordHash === 'number' && sd.status !== 'finished' && sd.status !== 'abandoned'){
+            activeWordHashes.add(sd.wordHash);
+            used.add(sd.wordHash);
+          }
+        }
+      }).catch(()=>{}));
+    });
+    await Promise.all(activeChecks);
   } catch (e) { /* lecture impossible : on tire quand même */ }
   let choix = null;
   for (const m of MORSE_WORDS) {
     if (!used.has(hashString(m.w))) { choix = m; break; }
   }
-  if (!choix) choix = MORSE_WORDS[Math.floor(Math.random() * MORSE_WORDS.length)];
+  // Fallback : si tous les mots sont pris historiquement, éviter au moins les mots actifs simultanés
+  if (!choix) {
+    const pool = MORSE_WORDS.filter(m => !activeWordHashes.has(hashString(m.w)));
+    const source = pool.length ? pool : MORSE_WORDS;
+    choix = source[Math.floor(Math.random() * source.length)];
+    // Ultime : si même le pool actif est vide (40 équipes simultanées), tirage déterministe par équipe pour éviter collision 100%
+    if (pool.length === 0) {
+      const sel = hashString(teamCode + '|' + Date.now().toString().slice(0,8));
+      choix = MORSE_WORDS[Math.abs(sel) % MORSE_WORDS.length];
+    }
+  }
   try {
     await updateDoc(doc(db, 'teams', teamCode), {
       morseWordHash: hashString(choix.w),
@@ -2482,7 +2509,7 @@ window.Nautilus = {
               ${listensLeft > 0 ? '▶️ Écouter le signal' : '🔇 Plus d\'écoute'}
             </button>
             <div class="morse-counter">Écoutes restantes : <b id="morseCounter">${listensLeft}</b> / 3</div>
-            <div class="morse-counter">Erreurs : <b style="color:${errors >= maxErrors - 1 ? '#ff7b72' : '#8ee7ff'};">${errors}</b> / ${maxErrors}</div>
+            <div class="tentatives-jauge ${errors >= maxErrors ? 'is-critical' : errors >= maxErrors - 1 ? 'is-warning' : ''}"><span class="tentatives-jauge-label">Tentatives avant remontée</span><span class="tentatives-jauge-points">${Array.from({length:maxErrors}, (_,i)=>`<span class="tentatives-jauge-pt${i < errors ? ' is-lost' : ''}"></span>`).join('')}</span><span class="tentatives-jauge-count">${maxErrors - errors} / ${maxErrors}</span></div>
           </div>
         </div>
 
@@ -3243,7 +3270,7 @@ window.Nautilus = {
           </div>
           <div class="morse-controls">
             <div class="morse-counter">Écoutes restantes : <b>${s.listensLeft ?? 0}</b> / 3</div>
-            <div class="morse-counter">Erreurs : <b style="color:${(s.errors||0) >= (s.maxErrors||3) - 1 ? '#ff7b72' : '#8ee7ff'};">${s.errors || 0}</b> / ${s.maxErrors || 3}</div>
+            <div class="tentatives-jauge ${(s.errors||0) >= (s.maxErrors||3) ? 'is-critical' : (s.errors||0) >= (s.maxErrors||3)-1 ? 'is-warning' : ''}"><span class="tentatives-jauge-label">Tentatives avant remontée</span><span class="tentatives-jauge-points">${Array.from({length: s.maxErrors||3}, (_,i)=>`<span class="tentatives-jauge-pt${i < (s.errors||0) ? ' is-lost' : ''}"></span>`).join('')}</span><span class="tentatives-jauge-count">${(s.maxErrors||3) - (s.errors||0)} / ${s.maxErrors||3}</span></div>
             <div class="morse-counter">Tentatives : ${s.attempts || 0}</div>
           </div>
         </div>

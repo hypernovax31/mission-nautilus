@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 014050 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 014051 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 014050 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 014051 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -1846,6 +1846,143 @@
     #ecoutille .m-bulles{ opacity:.36 !important; }
   </style>
 
+  <!-- ═══ LUMIÈRE FLUIDE — CORRECTIF 2026-10-28 (v359→v360) ═══
+       Demande : supprimer le format pellicule IMAX, exploiter 100% de
+       l'écran visible (mobile + PC), lisibilité mobile, alléger l'animatique.
+       On garde le hublot + mer + film, on retire tout le cinéma lourd. -->
+  <style id="ec-lumiere-fluide">
+    /* --- ON RETIRE LA PELLICULE --- */
+    #ecoutille .ec-letterbox{ display:none !important; height:0 !important; opacity:0 !important; pointer-events:none !important; }
+    #ecoutille::after{ display:none !important; } /* grain + vignette lourde */
+    #ecoutille .ec-ecran::after{ display:none !important; } /* scanline */
+    #ecoutille .ec-fanaux{ display:none !important; }
+    #ecoutille .ec-etalo{ display:none !important; }
+    #ecoutille .ec-reflet{ display:none !important; }
+    #ecoutille .ec-flood{ display:none !important; }
+    #ecoutille .ec-flash{ display:none !important; }
+
+    /* --- FOND ALLÉGÉ : statique, pas d'animation lourde --- */
+    #ecoutille .ec-paroi{
+      animation:none !important;
+      filter:none !important;
+      opacity:.42 !important;
+      background: radial-gradient(140% 120% at 50% 30%, #0E2842 0%, #081A2E 36%, #040E1C 68%, #02080F 100%) !important;
+    }
+    #ecoutille .ec-halo{
+      animation:none !important;
+      filter: blur(6px) !important;
+      opacity:.14 !important;
+      background: radial-gradient(closest-side at 50% 50%, rgba(90,200,240,.22) 0 38%, transparent 72%) !important;
+    }
+    #ecoutille .ec-vignette{
+      background: radial-gradient(120% 96% at 50% 50%, transparent 62%, rgba(0,0,0,.32) 88%, rgba(0,0,0,.62) 100%) !important;
+    }
+    #ecoutille .ec-cadre{
+      border-color: rgba(255,255,255,.06) !important;
+      box-shadow: inset 0 0 32px rgba(0,0,0,.45) !important;
+    }
+
+    /* --- ANIMATIQUE ALLÉGÉE : GPU ONLY, DURÉES COURTES --- */
+    #ecoutille .ec-hublot,
+    #ecoutille .ec-ecran,
+    #ecoutille .ec-scene,
+    #ecoutille .ec-titre,
+    #ecoutille .ec-hud,
+    #ecoutille .ec-consigne,
+    #ecoutille .ec-magasin-wrap,
+    #ecoutille .ec-pied,
+    #ecoutille .ec-start{
+      will-change: transform, opacity !important;
+      transition: transform .55s cubic-bezier(.22,.8,.36,1), opacity .4s ease !important;
+    }
+    /* On annule les transitions lourdes héritées */
+    #ecoutille .ec-titre::after,
+    #ecoutille .ec-paroi,
+    #ecoutille .ec-halo,
+    #ecoutille .ec-start::after,
+    #ecoutille .m-rayons,
+    #ecoutille .m-caustique,
+    #ecoutille .m-neige,
+    #ecoutille .m-bulles{
+      animation:none !important;
+    }
+    /* Mer : on garde le mouvement mais ralenti et très léger */
+    #ecoutille .m-rayons{ animation: mRayons 22s ease-in-out infinite alternate !important; opacity:.28 !important; }
+    #ecoutille .m-caustique{ animation: mCaustique 18s ease-in-out infinite alternate !important; }
+    #ecoutille .m-caustique.b{ animation-duration: 26s !important; }
+    #ecoutille .m-neige{ animation: mNeige 28s linear infinite !important; }
+    #ecoutille .m-bulles{ animation: mBulles 16s ease-in infinite !important; }
+
+    /* --- PLONGÉE FLUIDE : rapide, net, sans blur lourd --- */
+    #ecoutille.ec-plongee .ec-scene{ transform: scale(1.03) !important; }
+    #ecoutille.ec-eclat .ec-scene{ transform: scale(1.08) !important; }
+    #ecoutille.ec-eclat .ec-hublot{ transform: scale(1.18) !important; }
+    #ecoutille.ec-eclat .ec-titre{ opacity:.92 !important; }
+    #ecoutille.ec-impact .ec-scene{ transform: scale(1.6) !important; opacity:.88 !important; }
+    #ecoutille.ec-impact .ec-hublot{ transform: scale(1.9) !important; }
+    #ecoutille.ec-impact .ec-titre,
+    #ecoutille.ec-impact .ec-sous-titre-h4,
+    #ecoutille.ec-impact .ec-consigne,
+    #ecoutille.ec-impact .ec-start{ opacity:0 !important; transform: scale(.96) !important; }
+    #ecoutille.ec-impact{ animation:none !important; } /* plus de shake */
+    #ecoutille.ec-sortie{ opacity:0 !important; transform: scale(1.04) !important; transition: opacity .6s ease, transform .6s ease !important; }
+
+    /* --- LISIBILITÉ MOBILE : textes plus gros, contrastés --- */
+    #ecoutille .ec-titre{
+      font-weight: 700 !important;
+      letter-spacing: .14em !important;
+      text-shadow: 0 2px 12px rgba(0,0,0,.85), 0 1px 2px rgba(0,0,0,.9) !important;
+      line-height: 1.05 !important;
+    }
+    #ecoutille .ec-sous-titre-h4{
+      font-weight: 600 !important;
+      letter-spacing: .28em !important;
+      color: rgba(255,255,255,.88) !important;
+      text-shadow: 0 1px 8px rgba(0,0,0,.7) !important;
+    }
+    #ecoutille .ec-hud{
+      background: rgba(2,14,26,.42) !important;
+      backdrop-filter: blur(6px) !important;
+      border: 1px solid rgba(255,255,255,.08) !important;
+      border-radius: 10px !important;
+      padding: 7px 12px !important;
+    }
+    #ecoutille .ec-o2-nom{ color: rgba(255,255,255,.82) !important; font-size: 10px !important; }
+    #ecoutille .ec-o2-piste{ height:4px !important; border-radius:99px !important; }
+    #ecoutille .ec-consigne--sous-hublot{
+      background: rgba(2,14,26,.38) !important;
+      border: 1px solid rgba(255,255,255,.07) !important;
+      border-radius: 999px !important;
+      padding: 6px 14px !important;
+      backdrop-filter: blur(6px) !important;
+      font-size: 11px !important;
+      font-weight:500 !important;
+      color: rgba(255,255,255,.86) !important;
+      text-shadow: 0 1px 4px rgba(0,0,0,.6) !important;
+    }
+    #ecoutille .ec-titre-bloc{ gap: 8px !important; }
+    #ecoutille .ec-enseigne{ gap: 6px !important; }
+    #ecoutille .ec-magasin-wrap{ gap: 10px !important; }
+    #ecoutille .ec-start{
+      box-shadow: 0 8px 24px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08) inset !important;
+    }
+    #ecoutille .ec-start--open{
+      box-shadow: 0 8px 24px rgba(0,0,0,.45), 0 0 0 1px rgba(255,80,60,.5) inset, 0 0 18px rgba(255,80,60,.3) !important;
+      animation:none !important;
+    }
+    /* Sur petit écran, on grossit encore */
+    @media (max-width: 480px){
+      #ecoutille .ec-titre{ font-size: clamp(22px, 7vw, 34px) !important; letter-spacing:.12em !important; }
+      #ecoutille .ec-sous-titre-h4{ font-size: clamp(10px, 2.6vw, 13px) !important; }
+      #ecoutille .ec-hud{ padding: 6px 10px !important; }
+      #ecoutille .ec-consigne--sous-hublot{ font-size: 10.5px !important; padding: 5px 12px !important; }
+      #ecoutille .ec-magasin-case{ width: min(94vw, 360px) !important; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      #ecoutille .m-rayons, #ecoutille .m-caustique, #ecoutille .m-neige, #ecoutille .m-bulles{ animation:none !important; }
+    }
+  </style>
+
 
 
 
@@ -1946,13 +2083,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=19" defer></script>
+  <script src="ecoutille.js?v=20" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 014050 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 014051 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -2047,7 +2184,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 014050</span>
+      <span class="ec-version">COMMIT 014051</span>
     </footer>
   </div>
 
