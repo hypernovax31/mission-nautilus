@@ -653,32 +653,35 @@
         onRemontee({ motif: 'echec', erreurs: etat.erreurs, maxErreurs: r.maxErreurs });
         return;
       }
-      // Mise à jour ultra-visible : recréation complète avec états warning/critical + animation
-      var pup = hote && hote.querySelector('.af-pupitre');
-      if (pup) {
-        var max = r.maxErreurs || M.MAX_ERREURS;
-        var perdues = Math.max(0, max - Math.max(0, max - etat.erreurs));
-        var restantes = Math.max(0, max - etat.erreurs);
-        var jauge = pup.querySelector('.af-jauge');
-        if (jauge) {
-          jauge.classList.remove('is-warning', 'is-critical');
-          if (restantes === 0) jauge.classList.add('is-critical');
-          else if (restantes === 1) jauge.classList.add('is-warning');
-          var cnt = jauge.querySelector('.af-jauge-count');
-          if (cnt) cnt.textContent = restantes + ' / ' + max;
+      // TENTATIVES AVANT REMONTÉE : la jauge sticky du haut (jaugeHtml) + celle du pupitre
+      // doivent toutes suivre les erreurs. Avant ce fix, on ne mettait à jour que
+      // .af-pupitre .af-jauge alors que le vrai bandeau est .af-carte > .af-jauge
+      // (pupitre est sansJauge). On met donc à jour TOUTES les jauges du hote.
+      if (!hote) return;
+      var max = r.maxErreurs || M.MAX_ERREURS;
+      var perdues = Math.min(max, Math.max(0, etat.erreurs));
+      var restantes = Math.max(0, max - etat.erreurs);
+      var jauges = hote.querySelectorAll('.af-jauge');
+      Array.prototype.forEach.call(jauges, function(jauge){
+        jauge.classList.remove('is-warning', 'is-critical');
+        if (restantes === 0) jauge.classList.add('is-critical');
+        else if (restantes === 1) jauge.classList.add('is-warning');
+        var cnt = jauge.querySelector('.af-jauge-count');
+        if (cnt) cnt.textContent = restantes + ' / ' + max;
+      });
+      var pts = hote.querySelectorAll('.af-jauge-pt');
+      Array.prototype.forEach.call(pts, function (p, i) {
+        // i est global sur tous les points de toutes les jauges ; on normalise par modulo max
+        var idx = max ? (i % max) : i;
+        var doitEtrePerdu = idx < perdues;
+        var etaitPerdu = p.classList.contains('is-lost') || p.classList.contains('is-grille');
+        p.classList.toggle('is-lost', doitEtrePerdu);
+        p.classList.toggle('is-grille', doitEtrePerdu);
+        if (doitEtrePerdu && !etaitPerdu) {
+          p.classList.add('is-just-lost');
+          setTimeout(function(){ p.classList.remove('is-just-lost'); }, 600);
         }
-        var pts = pup.querySelectorAll('.af-jauge-pt');
-        Array.prototype.forEach.call(pts, function (p, i) {
-          var doitEtrePerdu = i < perdues;
-          var etaitPerdu = p.classList.contains('is-lost') || p.classList.contains('is-grille');
-          p.classList.toggle('is-lost', doitEtrePerdu);
-          p.classList.toggle('is-grille', doitEtrePerdu);
-          if (doitEtrePerdu && !etaitPerdu) {
-            p.classList.add('is-just-lost');
-            setTimeout(function(){ p.classList.remove('is-just-lost'); }, 600);
-          }
-        });
-      }
+      });
     }
 
     /* --- « Livre introuvable » : aucune erreur, signalement --------- */

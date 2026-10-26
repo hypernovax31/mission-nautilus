@@ -532,30 +532,47 @@
      trouvable dans tout Fnac (donc scannable) : Le Petit Prince,
      EAN 9782070612758 (Gallimard, validité EAN garantie). Ainsi le
      « livre auto-trouvé » est un vrai livre en rayon, pas une fiction. */
-  function livreFallback(magasinId, maintenant) {
-    var ean = '9782070612758'; // Le Petit Prince — Gallimard — EAN valide (clé 8)
+  /* Pool de secours : 6 vrais titres Fnac labellisés, EAN validés (clé OK).
+     Chacun appartient à une famille différente ou à un titre distinct,
+     donc : indice, premierMot, signature et codeFinal sont tous différents
+     d'une équipe à l'autre — l'onglet Réponses ne montre plus les mêmes
+     réponses. Le choix est déterministe par équipe+magasin (aleatoireDeSel)
+     pour rejouabilité. */
+  var FALLBACK_POOL = [
+    { ean:'9782070612758', titre:'Le Petit Prince', auteur:'Antoine de Saint-Exupéry', editeur:'Gallimard', edition:'Collection Folio', editionNumero:1, annee:2020, pages:96, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman','verne'] },
+    { ean:'9782070368228', titre:'1984', auteur:'George Orwell', editeur:'Gallimard', edition:'Collection Folio', editionNumero:12, annee:2018, pages:416, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] },
+    { ean:'9782070584628', titre:"Harry Potter à l'école des sorciers", auteur:'J. K. Rowling', editeur:'Gallimard', edition:'Collection Folio Junior', editionNumero:1, annee:2017, pages:320, format:'Poche', type:'litterature', famille:'jeunesse-aventure', liens:['jeunesse','aventure','roman'] },
+    { ean:'9782266284226', titre:'Le Seigneur des anneaux', auteur:'J. R. R. Tolkien', editeur:'Christian Bourgois', edition:'Poche', editionNumero:3, annee:2019, pages:700, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] },
+    { ean:'9782070412600', titre:'Vingt mille lieues sous les mers', auteur:'Jules Verne', editeur:'Gallimard', edition:'Collection Folio', editionNumero:7, annee:2015, pages:640, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman','verne'] },
+    { ean:'9782070365302', titre:'Le Vieil Homme et la Mer', auteur:'Ernest Hemingway', editeur:'Gallimard', edition:'Collection Folio', editionNumero:5, annee:2016, pages:160, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] }
+  ];
+  function livreFallback(magasinId, equipeCle, maintenant) {
     var iso = new Date(Number(maintenant) || Date.now()).toISOString();
+    var selDeterministe = M.aleatoireDeSel(String(equipeCle||'') + '|' + String(magasinId||'') + '|fallback-v2');
+    var idx = Math.floor(selDeterministe() * FALLBACK_POOL.length) % FALLBACK_POOL.length;
+    var modele = FALLBACK_POOL[idx];
+    var ean = modele.ean;
     var livre = {
-      id: 'fallback-' + String(magasinId || 'magasin').toLowerCase() + '-' + ean,
-      titre: 'Le Petit Prince',
+      id: 'fallback-' + String(magasinId || 'magasin').toLowerCase() + '-' + ean + '-' + String(equipeCle||'X').toLowerCase(),
+      titre: modele.titre,
       sousTitre: '',
-      auteur: 'Antoine de Saint-Exupéry',
+      auteur: modele.auteur,
       auteurType: 'unique',
-      editeur: 'Gallimard',
-      edition: 'Collection Folio',
-      editionNumero: 1,
-      annee: 2020,
-      pages: 96,
-      format: 'Poche',
+      editeur: modele.editeur,
+      edition: modele.edition,
+      editionNumero: modele.editionNumero,
+      annee: modele.annee,
+      pages: modele.pages,
+      format: modele.format,
       ean: ean,
-      sku: 'NAU-FALLBACK-' + String(magasinId || 'X').toUpperCase(),
+      sku: 'NAU-FALLBACK-' + String(magasinId || 'X').toUpperCase() + '-' + String(equipeCle||'').slice(0,4),
       url: '',
       categorieFnac: 'Livres - Littérature',
       etiquetteFnac: 'Littérature',
       rayon: 'Littérature',
-      type: 'litterature',
-      famille: 'litterature-aventure',
-      liens: ['litterature', 'aventure', 'roman', 'verne'],
+      type: modele.type,
+      famille: modele.famille,
+      liens: modele.liens,
       priorite: 5,
       vendeur: 'fnac',
       disponibilite: {}
@@ -566,13 +583,11 @@
     return livre;
   }
 
-  function assurerCartoucheFallback(magasinId, maintenant) {
-    var livre = livreFallback(magasinId, maintenant);
+  function assurerCartoucheFallback(magasinId, equipeCle, maintenant) {
+    var livre = livreFallback(magasinId, equipeCle, maintenant);
     var v = M.validerLivre(livre);
     if (!v.livre) return Promise.reject(new Error('fallback invalide: ' + v.erreurs.join('; ')));
     var mag = String(magasinId);
-    // Le fallback écrit maintenant cartouche + coffre (enClair) pour que l'onglet Réponses
-    // affiche le livre + EAN + sceau/couverture/signature/chambre forte.
     return genererCartouche(v.livre, mag, { maintenant: maintenant }).then(function(r){ return r.cartouche; });
   }
 
@@ -633,16 +648,16 @@
                   return creerSession(cle, magasin, r.cartouche, 'automatique-serveur', cfg, maintenant, session);
                 }
               }
-              // Aucun ouvrage via fonction → fallback local garanti (livre réel)
-              return assurerCartoucheFallback(magasin, maintenant).then(function(fb){
+              // Aucun ouvrage via fonction → fallback local garanti (livre réel déterministe par équipe)
+              return assurerCartoucheFallback(magasin, cle, maintenant).then(function(fb){
                 return creerSession(cle, magasin, fb, 'automatique-fallback-fonction', cfg, maintenant, session);
               }).catch(function(){
                 return { erreur: 'aucun-ouvrage', message: M.MESSAGES.aucunOuvrageMagasin };
               });
             })
             .catch(function (e) {
-              // Fonction injoignable → fallback local (livre réel)
-              return assurerCartoucheFallback(magasin, maintenant).then(function(fb){
+              // Fonction injoignable → fallback local (livre réel déterministe par équipe)
+              return assurerCartoucheFallback(magasin, cle, maintenant).then(function(fb){
                 return creerSession(cle, magasin, fb, 'automatique-fallback-fonction', cfg, maintenant, session);
               }).catch(function(){
                 return { erreur: 'service-indisponible', message: 'Service de sélection injoignable : '
@@ -654,7 +669,7 @@
         return listerCartouches(magasin).then(function (docs) {
           var utilisables = docs.filter(function (c) { return cartoucheUtilisable(c, cfg, magasin, maintenant); });
           if (!utilisables.length) {
-            return assurerCartoucheFallback(magasin, maintenant).then(function(cartoucheFallback){
+            return assurerCartoucheFallback(magasin, cle, maintenant).then(function(cartoucheFallback){
               return creerSession(cle, magasin, cartoucheFallback, 'automatique-fallback', cfg, maintenant, session);
             }).catch(function(e){
               var ecartes = docs.map(function (c) {
@@ -666,6 +681,9 @@
             });
           }
           // Garantie simultanée : exclure les ouvrages déjà en cours pour ce magasin
+          // Si tous les ouvrages sont déjà pris (libres vide), on préfère générer un fallback
+          // unique par équipe (pool diversifié) plutôt que de réutiliser la même réponse —
+          // c'est la cause des « réponses similaires » vues dans l'onglet admin.
           return stockage().lister(CHEMINS.sessions).then(function (sessions) {
             var enCoursIds = {};
             (sessions||[]).forEach(function(ss){
@@ -674,12 +692,27 @@
               }
             });
             var libres = utilisables.filter(function(c){ return !enCoursIds[c.id]; });
+            if (!libres.length && utilisables.length) {
+              // Pool épuisé : on tente d'abord un fallback unique par équipe pour éviter la collision
+              return assurerCartoucheFallback(magasin, cle, maintenant).then(function(fb){
+                return creerSession(cle, magasin, fb, 'automatique-fallback-collision', cfg, maintenant, session);
+              }).catch(function(){
+                // fallback indisponible : on retombe sur le pool complet avec tirage déterministe
+                var pool = utilisables;
+                var tirage = M.aleatoireDeSel(cle + '|' + magasin + '|complet');
+                var choix = pool.length === 1 ? pool[0] : pool[Math.floor(tirage() * pool.length) % pool.length];
+                if (enCoursIds[choix.id] && pool.length > 1) {
+                  var altTirage = M.aleatoireDeSel(cle + '|' + magasin + '|' + choix.id);
+                  var alt = pool[Math.floor(altTirage() * pool.length) % pool.length];
+                  if (!enCoursIds[alt.id]) choix = alt;
+                }
+                return creerSession(cle, magasin, choix, 'automatique', cfg, maintenant, session);
+              });
+            }
             var pool = libres.length ? libres : utilisables;
-            // Si tout est pris simultanément, on garde le pool complet mais le tirage déterministe évite au max les collisions
             var tirage = M.aleatoireDeSel(cle + '|' + magasin + '|' + (libres.length ? 'libre' : 'complet'));
             var choix = pool.length === 1 ? pool[0]
               : pool[Math.floor(tirage() * pool.length) % pool.length];
-            // Ultime vérif : si pool==utilisables et le choix est en cours, tenter un second tirage décalé
             if (enCoursIds[choix.id] && libres.length === 0 && pool.length > 1) {
               var altTirage = M.aleatoireDeSel(cle + '|' + magasin + '|' + choix.id);
               var alt = pool[Math.floor(altTirage() * pool.length) % pool.length];
