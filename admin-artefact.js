@@ -627,7 +627,7 @@
     var regle = secret.regle || '';
     var html = '<span class="adm-af-lbl">P3</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">';
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">';
-    var href = ''; try{ if(lv.url && /^https?:\/\//i.test(lv.url)) href = lv.url; else if(lv.ean) href = 'https://www.fnac.com/a' + String(lv.ean).replace(/\D/g,''); else if(lv.sku) href = 'https://www.fnac.com/SearchResult/ResultList.aspx?SCat=0&Search=' + encodeURIComponent(lv.titre||''); }catch(e){}
+    var href = ''; try{ if(lv.url && /^https?:\/\//i.test(lv.url)) href = lv.url; else if(lv.ean) href = 'https://www.fnac.com/SearchResult/ResultList.aspx?SCat=0&Search=' + encodeURIComponent(String(lv.ean).replace(/\D/g,'')); else if(lv.sku) href = 'https://www.fnac.com/SearchResult/ResultList.aspx?SCat=0&Search=' + encodeURIComponent(lv.sku||lv.titre||''); else if(lv.titre) href = 'https://www.fnac.com/SearchResult/ResultList.aspx?SCat=0&Search=' + encodeURIComponent(lv.titre); }catch(e){}
     if(href){ html += '<a href="'+esc(href)+'" target="_blank" rel="noopener" class="adm-af-chip adm-af-chip--hl" title="Ouvrir la fiche Fnac — '+esc(lv.titre||'')+'">📖 '+esc(lv.titre||'?')+' ↗</a>'; } else { html += '<span class="adm-af-chip adm-af-chip--hl" title="'+esc(lv.titre||'')+'">📖 '+esc(lv.titre||'?')+'</span>'; }
     if(codeFinal) html += '<span class="adm-af-chip" style="background:#0b1a2e;color:#fff" title="Chambre forte — code final">🔐 '+esc(codeFinal)+'</span>';
     html += '</div>';
