@@ -61,6 +61,23 @@
   'use strict';
 
   var BASE = [16, 1, 12, 9, 5, 18];      // P A L I E R
+  var STEPS_ORDER = ['start','livres','son','zone51','occasion','papeterie','drone','final'];
+  function palierStepId(p){ return STEPS_ORDER[(p|0)-1] || null; }
+  function teamHasPassedPalier(teamData, palierNum){
+    if(!teamData) return false;
+    var stepId = palierStepId(palierNum);
+    if(!stepId) return false;
+    var completed = teamData.completedSteps || [];
+    if(completed.indexOf(stepId) !== -1) return true;
+    var cur = teamData.currentStep;
+    if(!cur) return false;
+    var curIdx = STEPS_ORDER.indexOf(cur);
+    var palIdx = STEPS_ORDER.indexOf(stepId);
+    if(curIdx > palIdx) return true;
+    // si currentStep est exactement ce palier mais sas déjà ouvert, on considère briefing dû
+    // (le sasUnlocks sera vérifié séparément)
+    return false;
+  }
   var NOMS_EQUIPAGES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
 
   function init(palier) {
@@ -232,6 +249,22 @@
         B.db().then(function (x) {
           var termine = false;
           var unsub = null;
+          // vérification immédiate du niveau d'équipe (briefing doit apparaître avec dernier niveau même sans QR déjà scanné)
+          x.fs.getDoc(x.fs.doc(x.db, 'teams', ident.teamCode)).then(function(snap){
+            try{
+              if(snap && snap.exists()){
+                var d0 = snap.data()||{};
+                if(teamHasPassedPalier(d0, n)){
+                  // déjà passé ce palier → briefing direct
+                  showUnlocked(false);
+                  return;
+                }
+                // si onSnapshot tarde, on peut déjà ouvrir si sasUnlocks présent
+                var o0 = d0.sasUnlocks||{};
+                if(o0[n]){ showUnlocked(false); return; }
+              }
+            }catch(e){}
+          }).catch(function(){});
           unsub = x.fs.onSnapshot(
             x.fs.doc(x.db, 'teams', ident.teamCode),
             function (snap) {
@@ -239,7 +272,7 @@
               if(epreuveDejaLancee()) return;
               var data = snap.data() || {};
               var ouverts = data.sasUnlocks || {};
-              if (ouverts[n]) {
+              if (ouverts[n] || teamHasPassedPalier(data, n)) {
                 termine = true;
                 try { if (unsub) unsub(); } catch (e) {}
                 showUnlocked(false);
