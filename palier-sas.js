@@ -548,13 +548,13 @@
   }
 
   // Outil de secours console : NautilusSas.forceUnlock(2) ouvre le palier 2 sans QR (debug)
-  function forceUnlock(palier){
+  // NOTE: défini hors de init() pour éviter ReferenceError (n/showUnlocked sont locaux à init)
+  function forceUnlockGlobal(palier){
     var n2 = Math.max(2, palier|0);
     var code2 = BASE.map(function(x){ return String(x+(n2-1)); }).join('');
     try{ localStorage.setItem('nautilusUnlock:palier:'+code2,'ok'); }catch(e){}
     try{ console.log('[SAS] forceUnlock palier '+n2+' code '+code2); }catch(e){}
-    if(n2===n) showUnlocked();
-    else { try{ window.location.reload(); }catch(e){} }
+    try{ window.location.reload(); }catch(e){}
   }
-  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme, scanDemande: scanDemande, forceUnlock: forceUnlock, _debugPayload:_debugPayload, _codeAttendu: function(p){ var _n=Math.max(2,p|0); return BASE.map(function(x){return String(x+(_n-1));}).join(''); } };
+  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme, scanDemande: scanDemande, forceUnlock: forceUnlockGlobal, _codeAttendu: function(p){ var _n=Math.max(2,p|0); return BASE.map(function(x){return String(x+(_n-1));}).join(''); } };
 })();

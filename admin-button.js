@@ -42,7 +42,7 @@
      Les styles complets restent dans css/admin.css. */
   const ADMIN_MODAL_FALLBACK_CSS = `
     #adminPanel.nautilus-admin-modal{
-      position:fixed !important; inset:0 !important; z-index:12000 !important;
+      position:fixed !important; inset:0 !important; z-index:100002 !important;
       display:none !important; flex-direction:column; align-items:center;
       justify-content:center; margin:0 !important; padding:clamp(10px,2vw,24px);
       overflow:hidden; border:0; border-radius:0 !important;
@@ -446,6 +446,24 @@
   $('adminPanel')?.addEventListener('click', e => {
     if(e.target === $('adminPanel')) closeAdminPanel();
   });
+  // ISOLATION : quand le panneau admin est ouvert, les frappes/clics
+  // dedans ne doivent PAS remonter au mini-jeu derrière (mots-croisés,
+  // artefact). Sans ça, taper le code admin écrivait aussi dans le jeu.
+  function isolateAdminPanel(){
+    const panel = $('adminPanel');
+    if(!panel || panel.dataset.nautilusIso) return;
+    panel.dataset.nautilusIso = '1';
+    ['keydown','keyup','keypress','input','click','mousedown','touchstart'].forEach(function(ev){
+      panel.addEventListener(ev, function(e){ e.stopPropagation(); }, false);
+    });
+    // Empêche aussi que les inputs admin ne fassent remonter un 'input' au document
+    var adminCodeEl = $('adminCodeInput');
+    if(adminCodeEl) adminCodeEl.addEventListener('keydown', function(e){ e.stopPropagation(); }, false);
+  }
+  isolateAdminPanel();
+  // Ré-isole après chaque ouverture (le panneau peut être réinjecté)
+  var _origOpen = openAdminPanel;
+  openAdminPanel = function(){ try{ document.activeElement && document.activeElement.blur && document.activeElement.blur(); }catch(e){} _origOpen(); isolateAdminPanel(); setTimeout(function(){ try{ $('adminCodeInput')?.focus({preventScroll:true}); }catch(e){} }, 90); };
   /**
    * Vide le champ code admin de manière agressive (mémoire JS + DOM).
    * Appelé après chaque action admin sensible (endAdminSession), sur tentative

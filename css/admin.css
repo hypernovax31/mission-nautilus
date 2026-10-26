@@ -107,7 +107,7 @@
       margin:0 !important;
       padding:clamp(12px,2vw,24px);
       box-sizing:border-box;
-      z-index:12000 !important;
+      z-index:100002 !important;
       display:none !important;
       align-items:center;
       justify-content:center;
@@ -293,3 +293,7 @@ h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-wo
 img,video,svg,canvas,iframe{max-width:100%;height:auto;}
 button,input,select,textarea{max-width:100%;box-sizing:border-box;}
 body{overflow-wrap:break-word;}
+/* Quand admin ouvert : le jeu derrière ne doit plus capter clics/focus — l'admin est seule interactive */
+body.admin-modal-open main, body.admin-modal-open .topbar{pointer-events:none !important}
+body.admin-modal-open #adminPanel, body.admin-modal-open #adminPanel *{pointer-events:auto !important}
+body.admin-modal-open .site-footer{pointer-events:none !important}
