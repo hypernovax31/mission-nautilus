@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 014053 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 014054 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 014053 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 014054 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -1983,6 +1983,83 @@
     }
   </style>
 
+  <!-- ═══ BOUTON OPEN ROUGE→VERT + MODE CINÉPHILE — 2026-10-28 (v361) ═══
+       Demande : bouton OPEN rouge dès le début, passe au vert au clic,
+       toujours en mode cinéphile (film, hublot, mer, letterbox, grain).
+       La v360 avait masqué letterbox/flood/flash/grain pour alléger ;
+       on les RÉACTIVE ici pour rester cinéphile, et on ajoute la
+       transition rouge→vert ultra-visible. -->
+  <style id="ec-bouton-vert">
+    /* — Cinéphile réaffirmé : on ré-expose le décor masqué par v360 — */
+    #ecoutille .ec-letterbox{ display:block !important; height:6vh !important; opacity:1 !important; pointer-events:none !important; }
+    #ecoutille.ec-eclat .ec-letterbox{ height:7vh !important; }
+    #ecoutille.ec-impact .ec-letterbox{ height:11vh !important; }
+    #ecoutille::after{ display:block !important; }
+    #ecoutille .ec-ecran::after{ display:block !important; }
+    #ecoutille .ec-fanaux{ display:block !important; }
+    #ecoutille .ec-flood{ display:block !important; opacity:.62 !important; }
+    #ecoutille .ec-flash{ display:block !important; }
+
+    /* — Bouton OPEN : ROUGE au départ (cinéphile hollywood) — */
+    #ecoutille .ec-dome{
+      background: radial-gradient(circle at 30% 22%, #ffb8ae 0 4%, #ff5a42 16%, #e01a0f 40%, #8f0c07 68%, #3d0402 100%) !important;
+      box-shadow: 0 1.6vmin 3vmin rgba(0,0,0,.68), inset 0 0 0 3px rgba(0,0,0,.5), inset 0 .7vmin 1.6vmin rgba(255,255,255,.32), inset 0 -1.2vmin 2.2vmin rgba(0,0,0,.62), 0 0 18px rgba(255,60,40,.45) !important;
+      transition: background .42s cubic-bezier(.22,.8,.36,1), box-shadow .42s ease, filter .32s ease, transform .2s ease !important;
+    }
+    #ecoutille .ec-start::after{
+      background: radial-gradient(circle, rgba(255,80,64,.52) 28%, rgba(255,80,64,.14) 52%, rgba(255,80,64,0) 72%) !important;
+      animation: ecAppel 1.9s cubic-bezier(.45,0,.55,1) infinite !important;
+    }
+    #ecoutille .ec-start-label{
+      color: #fff !important;
+      text-shadow: 0 2px 0 rgba(0,0,0,.65), 0 5px 10px rgba(0,0,0,.6), 0 0 20px rgba(255,150,140,.7), 0 0 36px rgba(255,80,60,.45) !important;
+      transition: color .3s ease, text-shadow .3s ease !important;
+    }
+    #ecoutille .ec-start--open{ animation: ecRingPulse 2.6s ease-out infinite !important; }
+
+    /* — Au clic : VERT nautilus (succès, autorisation) — */
+    #ecoutille.ec-ouvert .ec-dome,
+    #ecoutille.ec-plongee .ec-dome,
+    #ecoutille.ec-eclat .ec-dome,
+    #ecoutille.ec-impact .ec-dome{
+      background: radial-gradient(circle at 32% 24%, #c8f5d8 0 4%, #5be3a0 18%, #1fb86a 42%, #0e8a4a 68%, #083d22 100%) !important;
+      box-shadow: 0 1.6vmin 3vmin rgba(0,0,0,.68), inset 0 0 0 3px rgba(0,0,0,.45), inset 0 .7vmin 1.6vmin rgba(255,255,255,.34), inset 0 -1.2vmin 2.2vmin rgba(0,0,0,.5), 0 0 22px rgba(60,220,120,.62), 0 0 36px rgba(60,220,120,.28) !important;
+      filter: brightness(1.05) drop-shadow(0 0 10px rgba(60,220,120,.55)) !important;
+      animation: ecDomePulseVert 1.6s ease-in-out infinite !important;
+    }
+    @keyframes ecDomePulseVert{
+      0%,100%{ filter: brightness(1.05) drop-shadow(0 0 8px rgba(60,220,120,.45)); transform: scale(1) }
+      50%{ filter: brightness(1.14) drop-shadow(0 0 16px rgba(60,220,120,.78)); transform: scale(1.018) }
+    }
+    #ecoutille.ec-ouvert .ec-start::after,
+    #ecoutille.ec-plongee .ec-start::after,
+    #ecoutille.ec-eclat .ec-start::after{
+      background: radial-gradient(circle, rgba(80,220,120,.58) 28%, rgba(80,220,120,.18) 52%, rgba(80,220,120,0) 72%) !important;
+      animation: ecAppelVert 1.4s cubic-bezier(.45,0,.55,1) infinite !important;
+    }
+    @keyframes ecAppelVert{
+      0%,100%{ opacity:.9; transform: scale(1) }
+      50%{ opacity:1; transform: scale(1.06) }
+    }
+    #ecoutille.ec-ouvert .ec-start-label,
+    #ecoutille.ec-plongee .ec-start-label{
+      color: #eafff0 !important;
+      text-shadow: 0 2px 0 rgba(0,40,20,.7), 0 6px 12px rgba(0,0,0,.6), 0 0 22px rgba(120,255,160,.85), 0 0 38px rgba(60,220,120,.5) !important;
+    }
+    #ecoutille.ec-ouvert .ec-start--open,
+    #ecoutille.ec-plongee .ec-start--open{
+      box-shadow: 0 0 0 0 rgba(60,220,120,.48) !important;
+      animation: ecRingPulseVert 1.8s ease-out infinite !important;
+    }
+    @keyframes ecRingPulseVert{
+      0%{ box-shadow: 0 0 0 0 rgba(60,220,120,.48) }
+      70%{ box-shadow: 0 0 0 16px rgba(60,220,120,0) }
+      100%{ box-shadow: 0 0 0 0 rgba(60,220,120,0) }
+    }
+    /* Feedback instantané au pressé */
+    #ecoutille.ec-presse .ec-dome{ transform: translateY(3px) scale(.965) !important; }
+  </style>
+
 
 
 
@@ -2083,13 +2160,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=22" defer></script>
+  <script src="ecoutille.js?v=23" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 014053 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 014054 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -2184,7 +2261,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 014053</span>
+      <span class="ec-version">COMMIT 014054</span>
     </footer>
   </div>
 
@@ -2223,6 +2300,7 @@
       sessionStorage.setItem('nautilusEcoutille', '1');
       sessionStorage.removeItem('nautilusEcoutilleForce');
     }catch(e){ /* mode privé : on ouvre quand même */ }
+    racine.classList.add('ec-ouvert');
     racine.classList.add('ec-presse');
     setTimeout(function(){ racine.classList.remove('ec-presse'); }, 240);
     /* Le geste relance le film au besoin (lecture refusée, batterie faible) :
@@ -10063,7 +10141,7 @@ window.PWAInstall = {
      chargé pour l'onglet admin (admin-artefact.js), qui s'injecte dans le
      panneau admin en ligne de cette page comme dans celui des pages palier.
      Aucun de ces fichiers ne contient de titre d'ouvrage, d'EAN ni de SKU. -->
-<script src="artefact-moteur.js?v=6"></script>
+<script src="artefact-moteur.js?v=7"></script>
 <script src="artefact-service.js?v=7"></script>
 <script src="magasin-fnac.js?v=1"></script>
 <script src="magasin-guard.js?v=3"></script>

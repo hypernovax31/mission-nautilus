@@ -527,31 +527,36 @@
     return M.disponibiliteValide(dispo, magasinId, { fenetreMinutes: fenetre, maintenant: maintenant }).ok;
   }
 
+  /* Fallback « livre réel » — sert uniquement quand aucune cartouche
+     utilisable n'existe pour le magasin. On utilise un ouvrage RÉEL,
+     trouvable dans tout Fnac (donc scannable) : Le Petit Prince,
+     EAN 9782070612758 (Gallimard, validité EAN garantie). Ainsi le
+     « livre auto-trouvé » est un vrai livre en rayon, pas une fiction. */
   function livreFallback(magasinId, maintenant) {
-    var ean = '2000000000008';
+    var ean = '9782070612758'; // Le Petit Prince — Gallimard — EAN valide (clé 8)
     var iso = new Date(Number(maintenant) || Date.now()).toISOString();
     var livre = {
       id: 'fallback-' + String(magasinId || 'magasin').toLowerCase() + '-' + ean,
-      titre: 'Atlas des Océans',
+      titre: 'Le Petit Prince',
       sousTitre: '',
-      auteur: 'Collectif',
-      auteurType: 'collectif',
-      editeur: 'Nautilus Éditions',
-      edition: 'Édition de la salle des machines',
+      auteur: 'Antoine de Saint-Exupéry',
+      auteurType: 'unique',
+      editeur: 'Gallimard',
+      edition: 'Collection Folio',
       editionNumero: 1,
-      annee: 2024,
-      pages: 160,
-      format: 'Relié',
+      annee: 2020,
+      pages: 96,
+      format: 'Poche',
       ean: ean,
       sku: 'NAU-FALLBACK-' + String(magasinId || 'X').toUpperCase(),
       url: '',
-      categorieFnac: 'Livres - Atlas des océans',
-      etiquetteFnac: 'Atlas',
-      rayon: 'Atlas',
-      type: 'atlas-maritime',
-      famille: 'atlas-maritime',
-      liens: ['atlas', 'ocean', 'carte', 'maritime'],
-      priorite: 1,
+      categorieFnac: 'Livres - Littérature',
+      etiquetteFnac: 'Littérature',
+      rayon: 'Littérature',
+      type: 'litterature',
+      famille: 'litterature-aventure',
+      liens: ['litterature', 'aventure', 'roman', 'verne'],
+      priorite: 5,
       vendeur: 'fnac',
       disponibilite: {}
     };
@@ -587,8 +592,30 @@
       return lireSession(cle).then(function (session) {
         if (session && session.statut === 'terminee') return { session: session, reprise: true };
         if (session && session.statut === 'active' && session.cartouche && session.cartouche.id) {
-          /* Session verrouillée : on rejoue la même mission. */
-          return { session: session, reprise: true, verrouillee: true };
+          /* Session verrouillée : on rejoue la même mission — sauf si la
+             cartouche est devenue inutilisable (plus en rayon, EAN invalide,
+             magasin changé) ou si c'est l'ancien fallback fictif
+             « Atlas des Océans » (EAN 2000000000008) qui n'existe dans aucun
+             rayon. C'est exactement le cas NEMO : livre auto-trouvé avec
+             ancien fallback → ne pourra jamais être scanné → on régénère
+             vers un vrai livre (Le Petit Prince, 9782070612758). */
+          var _cartOk = cartoucheUtilisable(session.cartouche, cfg, session.magasinId || magasinId, maintenant);
+          // Détection ancien fallback 2000000000008 : son empreinte est présente dans l'étape sceau
+          var _estAncienFallback = false;
+          try {
+            var _c = session.cartouche;
+            if (_c && _c.etapes && _c.etapes[0] && _c.etapes[0].id === 'sceau' && _c.sel && _c.iterations) {
+              var _eanAncien = '2000000000008';
+              var _empAncien = M.empreinte(M.eanNormalise(_eanAncien), _c.sel, _c.iterations.ean || _c.etapes[0].iterations);
+              if (_c.etapes[0].empreintes && _c.etapes[0].empreintes.indexOf(_empAncien) >= 0) _estAncienFallback = true;
+            }
+          } catch(e){}
+          if (!_cartOk || _estAncienFallback) {
+            // cartouche périmée/invalide/ancien fallback : on la jette et on recommence une sélection
+            // (on garde l'historique des erreurs perso pour ne pas pénaliser)
+          } else {
+            return { session: session, reprise: true, verrouillee: true };
+          }
         }
         if (session && session.statut === 'suspendue') return { session: session, reprise: true, suspendue: true };
 
@@ -598,8 +625,15 @@
         if (cfg.mode === 'fonction' && cfg.endpoint) {
           return appelerFonction('selectionner', { equipe: cle, magasinId: magasin })
             .then(function (r) {
-              if (r && r.cartouche) return creerSession(cle, magasin, r.cartouche, 'automatique-serveur', cfg, maintenant, session);
-              // Aucun ouvrage via fonction → fallback local garanti
+              if (r && r.cartouche) {
+                // Vérif EAN : si la fonction renvoie une cartouche à EAN invalide, on la refuse
+                if (r.cartouche.etapes && r.cartouche.etapes[0] && r.cartouche.etapes[0].type === 'ean' && !r.cartouche.etapes[0].empreintes.length) {
+                  // empreintes vides = cartouche invalide
+                } else {
+                  return creerSession(cle, magasin, r.cartouche, 'automatique-serveur', cfg, maintenant, session);
+                }
+              }
+              // Aucun ouvrage via fonction → fallback local garanti (livre réel)
               return assurerCartoucheFallback(magasin, maintenant).then(function(fb){
                 return creerSession(cle, magasin, fb, 'automatique-fallback-fonction', cfg, maintenant, session);
               }).catch(function(){
@@ -607,7 +641,7 @@
               });
             })
             .catch(function (e) {
-              // Fonction injoignable → fallback local
+              // Fonction injoignable → fallback local (livre réel)
               return assurerCartoucheFallback(magasin, maintenant).then(function(fb){
                 return creerSession(cle, magasin, fb, 'automatique-fallback-fonction', cfg, maintenant, session);
               }).catch(function(){

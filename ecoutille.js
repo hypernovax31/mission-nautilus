@@ -370,6 +370,8 @@
     arreterCadreur();
 
     const start = document.getElementById('ecStart');
+    /* Rouge → vert : le geste valide l'embarquement (cinéphile : on garde le film, on change la lumière) */
+    try{ racine.classList.add('ec-ouvert'); if(start) start.classList.add('is-ouvert'); }catch(e){}
     racine.classList.add('ec-presse');
     plusTard(() => racine.classList.remove('ec-presse'), 260);
 

@@ -348,6 +348,7 @@
     if (!livre.id) erreurs.push('identifiant manquant');
     if (!livre.titre) erreurs.push('titre manquant');
     if (!livre.ean) erreurs.push('EAN absent ou invalide (13 chiffres, clé contrôlée)');
+    else if (!eanValide(livre.ean)) erreurs.push('EAN invalide : clé de contrôle erronée (' + livre.ean + ' — attendu ' + (function(s){var t=0;for(var k=0;k<12;k++) t+=Number(s[k])*(k%2===0?1:3);return (10-(t%10))%10;})(livre.ean) + ') : l’ouvrage ne pourra jamais être scanné');
     if (!livre.edition && !livre.editionNumero && !livre.annee) {
       erreurs.push('édition non identifiée : titre, édition et année ne peuvent pas être tous absents');
     }
