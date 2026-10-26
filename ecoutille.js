@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 014051 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 014063 »
 
    Ce que fait ce fichier
    ----------------------
@@ -73,13 +73,13 @@
   const CLE_SESSION = 'nautilusEcoutille';        // ouverte pendant cette session
   const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
-  /* Calendrier fluide : zoom intense progressif sans saccade (v014060) */
+  /* Calendrier ultra-fluide : zoom continu 60fps, sortie douce (v014063) */
   const T = {
-    plongee:   180,
-    eclat:     560,
-    impact:   1020,
-    sortie:   2100,
-    retrait:  3000
+    plongee:   200,
+    eclat:     620,
+    impact:   1200,
+    sortie:   2650,
+    retrait:  3400
   };
 
   /* Tous les navigateurs du parc savent le dire ; le test est protégé pour
