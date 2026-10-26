@@ -227,9 +227,7 @@
     }
 
     function refuser(payload) {
-      var attendu = CODE_CHIFFRES;
-      var recu = String(payload||'').replace(/\D+/g,'').slice(0,30) || '(vide)';
-      message('❌ Ce QR Code n’ouvre pas le sas du ' + LABEL + ' (attendu '+attendu+' · reçu '+recu+'). Recherche le bon !', 'danger');
+      message('❌ Ce QR Code n’ouvre pas le sas du Palier 2', 'danger');
       // Aide manuelle : si le scan échoue répétitivement, proposer la saisie du code (secours)
       try{
         var el = $('gateMsg');
