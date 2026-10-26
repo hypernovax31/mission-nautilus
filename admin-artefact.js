@@ -255,6 +255,49 @@
       }, function(){ /* lecture indisponible */ });
     }).catch(function(){});
   }
+  var _unsubP3 = null; var _unsubP3Coffres = null;
+  function ecouterP3Live(){
+    if(_unsubP3) return;
+    var getDb=null;
+    try{
+      if(window.NautilusBlocages && window.NautilusBlocages.db) getDb=window.NautilusBlocages.db;
+      else if(S() && S().stockage && S().stockage()._base) return;
+    }catch(e){}
+    if(!getDb) return;
+    getDb().then(function(x){
+      var refSessions = x.fs.collection(x.db, 'sessions');
+      _unsubP3 = x.fs.onSnapshot(refSessions, function(snap){
+        snap.forEach(function(d){
+          var data=d.data()||{}; var equipe=d.id;
+          if(EQUIPES.indexOf(equipe)<0 && equipe!=='TEST' && equipe!=='APERCU' && equipe!=='ANON' && equipe!=='MODE_TEST') return;
+          var elDom=$('afP3-'+equipe); if(!elDom) return;
+          // si l'onglet Réponses n'est pas encore monté, majCarteP3Auto créera le DOM au prochain majCartesEquipes — on force quand même
+          var cid=data.cartoucheId; if(!cid) return;
+          lireCoffreRobuste(cid).then(function(secret){ if(secret && secret.reponses) majCarteP3(equipe, secret); }).catch(function(){});
+        });
+        // aussi rafraîchir le compteur global P1 (optionnel)
+      }, function(){});
+      // Ecoute coffres : quand le secret est posé en clair (fallback) ou chiffré, on peut afficher sans attendre la session
+      try{
+        var refCoffres = x.fs.collection(x.db, 'coffres');
+        _unsubP3Coffres = x.fs.onSnapshot(refCoffres, function(snap){
+          snap.docChanges().forEach(function(ch){
+            if(ch.type!=='added' && ch.type!=='modified') return;
+            var d=ch.doc; var data=d.data()||{}; var cid=data.cartoucheId||d.id;
+            var secret=null;
+            if(data.secret && data.secret.reponses) secret=data.secret;
+            else if(data.secret && data.enClair) secret=data.secret;
+            if(!secret || !secret.reponses) return;
+            // On ne connaît pas l'équipe depuis le coffre seul — on tente de matcher toutes les sessions connues en mémoire via lecture sessions locales
+            // Solution simple : rafraîchir toutes les équipes dont la session pointe vers ce cid (lecture locale rapide)
+            // Le coffre seul ne sait pas à quelle équipe il appartient — on laisse le listener sessions faire le dispatch
+            // (il fera lireCoffreRobuste(cid) au bon moment). On ignore le broadcast pour éviter d'afficher le même livre à toutes les équipes.
+            void secret; void cid;
+          });
+        }, function(){});
+      }catch(e){}
+    }).catch(function(){});
+  }
 
   function htmlToutesReponses(){
     // UN SEUL CARD — toutes les équipes regroupées (plus de cards TEST séparées)
@@ -383,6 +426,7 @@
       }
     }catch(e){}
     try{ ecouterP2Live(); }catch(e){}
+    try{ ecouterP3Live(); }catch(e){}
   }
   function majCarteP3Auto(equipe){
     var el=$('afP3-'+equipe);
@@ -779,7 +823,7 @@
       p.style.display = (p.dataset.pane === target ? '' : 'none');
     });
     if (target === ONGLET_MAG) charger(false);
-    if (target === ONGLET_REP) { try{ majCartesEquipes(); }catch(e){} }
+    if (target === ONGLET_REP) { try{ majCartesEquipes(); }catch(e){} try{ ecouterP3Live(); }catch(e2){} }
   }
 
   function brancher() {
