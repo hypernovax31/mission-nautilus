@@ -62,7 +62,26 @@
 
   var BASE = [16, 1, 12, 9, 5, 18];      // P A L I E R
   var STEPS_ORDER = ['start','livres','son','zone51','occasion','papeterie','drone','final'];
+  var PALIER_PAGES = { start:'palier1.html', livres:'1721310619.html', son:'1831411720.html', zone51:'1941512821.html', occasion:'2051613922.html', papeterie:'2161714023.html', drone:'2271814124.html', final:'2381914225.html' };
   function palierStepId(p){ return STEPS_ORDER[(p|0)-1] || null; }
+  function pageForStep(stepId){ if(!stepId) return null; if(PALIER_PAGES[stepId]) return PALIER_PAGES[stepId]; var idx=STEPS_ORDER.indexOf(stepId); if(idx<0) return null; var palNum=idx+1; var code=BASE.map(function(x){ return String(x+(palNum-1)); }).join(''); return code+'.html'; }
+  function shouldRedirectToCorrectPalier(teamData, currentPalierNum){
+    if(!teamData || !teamData.currentStep) return null;
+    var curStep = teamData.currentStep;
+    var curPalier = STEPS_ORDER.indexOf(curStep)+1;
+    // Si l'équipe est en 'start' (palier1) mais visite palier2+, ne redirige pas encore (elle doit finir palier1)
+    // Mais si elle est sur un palier plus avancé, redirige vers son palier courant
+    if(curPalier && curPalier !== currentPalierNum){
+      // Ne redirige que si le palier visité est antérieur au palier courant (revisite) ou si le palier courant est plus avancé
+      // On évite la redirection infinie en vérifiant que la page cible existe et n'est pas la même que l'actuelle
+      var targetPage = pageForStep(curStep);
+      if(targetPage){
+        var curPage = (location.pathname.split('/').pop()||'').split('?')[0];
+        if(targetPage !== curPage) return targetPage;
+      }
+    }
+    return null;
+  }
   function teamHasPassedPalier(teamData, palierNum){
     if(!teamData) return false;
     var stepId = palierStepId(palierNum);
@@ -283,6 +302,16 @@
             try{
               if(snap && snap.exists()){
                 var d0 = snap.data()||{};
+                // Redirection si l'équipe est sur un autre palier (dernier niveau)
+                var redir = shouldRedirectToCorrectPalier(d0, n);
+                if(redir){
+                  try{
+                    var m = codeMatelot || (localStorage.getItem('nautilusMatelotCode')||'');
+                    if(m) redir += (redir.indexOf('?')>-1?'&':'?')+'m='+encodeURIComponent(m);
+                    location.replace(redir);
+                  }catch(e){}
+                  return;
+                }
                 if(teamHasPassedPalier(d0, n)){
                   // déjà passé ce palier → briefing direct
                   showUnlocked(false);
@@ -291,6 +320,11 @@
                 // si onSnapshot tarde, on peut déjà ouvrir si sasUnlocks présent
                 var o0 = d0.sasUnlocks||{};
                 if(o0[n] || o0[String(n)]){ showUnlocked(false); return; }
+                // Si le palier courant de l'équipe correspond à cette page et SAS déjà ouvert localement, briefing
+                // (cas reprise où sasUnlocks vient d'être posé mais pas encore propagé)
+                if(d0.currentStep && palierStepId(n) === d0.currentStep && (o0[n] || o0[String(n)])){
+                  showUnlocked(false); return;
+                }
               }
             }catch(e){}
           }).catch(function(){});
@@ -300,6 +334,18 @@
               if (termine || !snap || !snap.exists()) return;
               if(epreuveDejaLancee()) return;
               var data = snap.data() || {};
+              // Redirection si changement de palier en live (coéquipier progresse)
+              var redirLive = shouldRedirectToCorrectPalier(data, n);
+              if(redirLive){
+                try{
+                  var ml = codeMatelot || (localStorage.getItem('nautilusMatelotCode')||'');
+                  if(ml) redirLive += (redirLive.indexOf('?')>-1?'&':'?')+'m='+encodeURIComponent(ml);
+                  location.replace(redirLive);
+                }catch(e){}
+                termine = true;
+                try { if (unsub) unsub(); } catch (e) {}
+                return;
+              }
               var ouverts = data.sasUnlocks || {};
               if (ouverts[n] || ouverts[String(n)] || teamHasPassedPalier(data, n)) {
                 termine = true;
@@ -689,5 +735,8 @@
   window.NautilusSas.teamHasPassedPalier = teamHasPassedPalier;
   window.NautilusSas.STEPS_ORDER = STEPS_ORDER;
   window.NautilusSas.palierStepId = palierStepId;
-  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme, scanDemande: scanDemande, forceUnlock: forceUnlockGlobal, _codeAttendu: function(p){ var _n=Math.max(2,p|0); return BASE.map(function(x){return String(x+(_n-1));}).join(''); }, teamHasPassedPalier: teamHasPassedPalier, STEPS_ORDER: STEPS_ORDER, palierStepId: palierStepId };
+  window.NautilusSas.pageForStep = pageForStep;
+  window.NautilusSas.shouldRedirectToCorrectPalier = shouldRedirectToCorrectPalier;
+  window.NautilusSas.PALIER_PAGES = PALIER_PAGES;
+  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme, scanDemande: scanDemande, forceUnlock: forceUnlockGlobal, _codeAttendu: function(p){ var _n=Math.max(2,p|0); return BASE.map(function(x){return String(x+(_n-1));}).join(''); }, teamHasPassedPalier: teamHasPassedPalier, STEPS_ORDER: STEPS_ORDER, palierStepId: palierStepId, pageForStep: pageForStep, shouldRedirectToCorrectPalier: shouldRedirectToCorrectPalier, PALIER_PAGES: PALIER_PAGES };
 })();

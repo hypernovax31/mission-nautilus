@@ -139,7 +139,7 @@
 <script src="son-partage.js?v=2"></script>
 <script src="journal-bord.js?v=7"></script>
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
-<script src="palier-sas.js?v=20"></script>
+<script src="palier-sas.js?v=21"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
 <script src="palier-briefing.js?v=5"></script>
 <script>window.NautilusSas.init(3);</script>
@@ -910,6 +910,26 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
      Mode test ZZZZ-0000 bypass le sas comme l'aperçu organisateur :
      l'organisateur qui active le test sur 1831411720.html doit voir
      directement le briefing, pas la page scellée. */
+  // Redirection auto vers le palier courant (dernier niveau de l'équipage) — évite ZONE SCELLÉE sur mauvais palier
+  (function(){
+    try{
+      var B = window.NautilusBlocages;
+      if(!B || !B.identiteCourante || !window.NautilusSas || !window.NautilusSas.shouldRedirectToCorrectPalier) return;
+      B.identiteCourante().then(function(ident){
+        if(!ident || !ident.teamCode) return;
+        B.db().then(function(x){ return x.fs.getDoc(x.fs.doc(x.db, 'teams', ident.teamCode)); }).then(function(snap){
+          if(!snap || !snap.exists()) return;
+          var d = snap.data()||{};
+          var redir = window.NautilusSas.shouldRedirectToCorrectPalier(d, 3);
+          if(redir){
+            var m = (location.search.match(/[?&]m=([^&]+)/)||[])[1] || (localStorage.getItem('nautilusMatelotCode')||'');
+            if(m) { try{ m = decodeURIComponent(m); }catch(e){} redir += (redir.indexOf('?')>-1?'&':'?')+'m='+encodeURIComponent(m); }
+            location.replace(redir);
+          }
+        }).catch(function(){});
+      }).catch(function(){});
+    }catch(e){}
+  })();
   if (apercuAdminAutorise() || enModeTest()) {
     var banniereModeTest = function () {
       if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
@@ -953,6 +973,17 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
             }).then(function(snap){
               if(!snap || !snap.exists()) return;
               var d = snap.data()||{};
+              var redir = window.NautilusSas.shouldRedirectToCorrectPalier ? window.NautilusSas.shouldRedirectToCorrectPalier(d, 3) : null;
+              if(redir){
+                try{
+                  var mm = (localStorage.getItem('nautilusMatelotCode')||'');
+                  var urlM = location.search.match(/[?&]m=([^&]+)/);
+                  if(urlM && urlM[1]) mm = decodeURIComponent(urlM[1]);
+                  if(mm) redir += (redir.indexOf('?')>-1?'&':'?')+'m='+encodeURIComponent(mm);
+                  location.replace(redir);
+                }catch(e){}
+                return;
+              }
               if(window.NautilusSas.teamHasPassedPalier(d, 3)){
                 afficherVueBriefing();
               } else if(d.sasUnlocks && (d.sasUnlocks[3] || d.sasUnlocks[String(3)])){
