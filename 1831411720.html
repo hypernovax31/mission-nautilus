@@ -165,7 +165,7 @@
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="artefact-service.js?v=9"></script>
 <script src="magasin-fnac.js?v=1"></script>
-<script src="magasin-guard.js?v=2"></script>
+<script src="magasin-guard.js?v=3"></script>
 <script src="artefact-palier3.js?v=6"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
 <script src="victoire-palier.js?v=12"></script>
@@ -637,7 +637,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var host=$('artefactHost');
     if(!host) return;
     var G=window.NautilusMagasinGuard;
-    host.innerHTML = G ? G.messageHTML(info) : '<div class="af-carte af-carte--scellee"><p class="af-kicker">Magasin d’origine requis</p><h3 class="af-titre">⛔ Hors magasin d’origine</h3><p class="af-msg">Tu n’es plus dans le magasin d’origine. Rapproche-toi à moins de 500 m pour reprendre la mission.<br><span style="opacity:.9">Un coéquipier sur place peut prendre le relais immédiatement.</span></p><div class="af-actions"><a href="index.html?ecoutille=0" class="af-btn af-btn--ghost">🏠 Accueil</a></div></div>';
+    host.innerHTML = G ? G.messageHTML(info) : '<div class="af-carte af-carte--scellee"><p class="af-kicker">Magasin d’origine requis</p><h3 class="af-titre">⛔ Hors magasin d’origine</h3><p class="af-msg">Tu n’es plus dans le magasin d’origine. Rapproche-toi à moins de 500 m pour reprendre la mission.<br><span style="opacity:.9">Un coéquipier sur place peut prendre le relais immédiatement.</span></p><div class="af-actions" style="display:none"></div></div>';
     statut('📍 <b>Accès réservé au magasin d’origine.</b> Rapproche-toi à moins de 500 m pour continuer.', 'danger');
     // bouton retry
     var btn=host.querySelector('#afGuardRetry');
@@ -953,7 +953,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   <script src="palier-cinematic.js?v=3"></script>
 <!-- Onglet ADMIN de l'artefact : s'injecte dans le panneau admin existant
      (admin-button.js) sans modifier son HTML dupliqué. -->
-<script src="admin-artefact.js?v=21" defer></script>
+<script src="admin-artefact.js?v=22" defer></script>
 <script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>

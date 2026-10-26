@@ -277,7 +277,7 @@
       + '<p class="af-msg">'+corps+'<br><span style="opacity:.9">Un coéquipier sur place peut prendre le relais immédiatement.</span></p>'
       + '<div class="af-actions">'
       + '<button type="button" class="af-btn" id="afGuardRetry">📍 Vérifier ma position</button>'
-      + '<a href="index.html?ecoutille=0" class="af-btn af-btn--ghost">🏠 Accueil</a>'
+      + ''  // 🏠 Accueil supprimé — bloc Hors magasin d'origine n'a plus de bouton accueil
       + '</div>'
       + '</div>';
     return html;

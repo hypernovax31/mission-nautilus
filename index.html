@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 010345 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 011016 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 010345 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 011016 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -757,6 +757,379 @@
     }
   </style>
 
+  <!-- ═══ HOLLYWOOD ÉPIQUE — SURCHARGE CINÉMATOGRAPHIQUE (2026-10-27) ═══
+       Cette couche vient PAR-DESSUS le socle : elle ne retire rien,
+       elle sublime. Objectif : passer de "page de garde correcte" à
+       "bande-annonce de blockbuster sous-marin" — lumière, profondeur,
+       souffle, échelle IMAX. Tout en transform/opacity, donc 60 fps
+       même sur iPhone SE. -->
+  <style id="ec-hollywood-epique">
+    /* --- FOND ABYSSAL CINÉMA : dégradé plus profond + vignette IMAX --- */
+    #ecoutille{
+      background: radial-gradient(120% 120% at 50% 50%, #0a1e2e 0%, #06101a 45%, #020a14 100%);
+    }
+    #ecoutille .ec-paroi{
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, rgba(0,0,0,.06) 1px 2px, transparent 2px 72px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, rgba(0,0,0,.04) 1px 2px, transparent 2px 98px),
+        radial-gradient(140% 110% at 50% 38%, #1e3444 0%, #0f2430 36%, #07131c 68%, #020a14 100%) !important;
+      animation: ecParoiBreath 18s ease-in-out infinite alternate;
+    }
+    @keyframes ecParoiBreath{
+      from{ filter: brightness(.96) contrast(1.02) }
+      to{ filter: brightness(1.04) contrast(1.06) }
+    }
+    /* Halo plus cinématographique : respiration lente */
+    #ecoutille .ec-halo{
+      background: radial-gradient(closest-side at 50% 50%,
+        rgba(90,205,245,.26) 0 38%, rgba(70,180,225,.10) 58%, rgba(0,0,0,0) 78%) !important;
+      animation: ecHaloPulse 7s ease-in-out infinite alternate;
+    }
+    @keyframes ecHaloPulse{
+      from{ opacity:.8; transform: scale(1) }
+      to{ opacity:1; transform: scale(1.06) }
+    }
+    /* --- TITRE HOLLYWOOD : entrée grandiose, tracking + 3D --- */
+    #ecoutille .ec-enseigne{
+      animation: ecEnseigneEnter 1.6s cubic-bezier(.16,1,.3,1) .2s both;
+    }
+    @keyframes ecEnseigneEnter{
+      0%{ opacity:0; transform: translateY(22px) }
+      100%{ opacity:1; transform: translateY(0) }
+    }
+    #ecoutille .ec-titre{
+      font-size: clamp(28px, 7.4vmin, 84px) !important;
+      line-height: .92 !important;
+      letter-spacing: .03em !important;
+      text-shadow: 0 2px 0 rgba(0,0,0,.5), 0 8px 22px rgba(0,0,0,.72), 0 0 30px rgba(110,220,255,.18) !important;
+      animation: ecTitreHollywood 1.4s cubic-bezier(.16,1,.3,1) .4s both;
+      position: relative;
+    }
+    @keyframes ecTitreHollywood{
+      0%{ opacity:0; letter-spacing:.45em; filter: blur(10px) brightness(1.4); transform: scale(.86) translateY(12px) }
+      60%{ opacity:1; letter-spacing:.02em; filter: blur(0) brightness(1); transform: scale(1.02) }
+      100%{ opacity:1; letter-spacing:.02em; filter: blur(0); transform: scale(1) }
+    }
+    #ecoutille .ec-titre::after{
+      content:""; position:absolute; left:-10%; right:-10%; top:46%; height:2px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.85), transparent);
+      opacity:0; transform: scaleX(.2);
+      animation: ecLightSweep 1.8s cubic-bezier(.4,0,.2,1) 1.3s both;
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+    @keyframes ecLightSweep{
+      0%{ opacity:0; transform: translateX(-40%) scaleX(.1) }
+      20%{ opacity:1 }
+      100%{ opacity:0; transform: translateX(40%) scaleX(1.6) }
+    }
+    #ecoutille .ec-sous-titre-h4{
+      font-size: clamp(11px, 2.2vmin, 18px) !important;
+      letter-spacing: .22em !important;
+      color:#d6f2ff !important;
+      text-shadow: 0 2px 14px rgba(0,0,0,.85), 0 0 18px rgba(120,220,255,.35) !important;
+      animation: ecSousTitreIn 1.2s cubic-bezier(.16,1,.3,1) .85s both;
+    }
+    @keyframes ecSousTitreIn{
+      0%{ opacity:0; transform: translateY(14px); letter-spacing:.45em; filter: blur(6px) }
+      100%{ opacity:1; transform: translateY(0); letter-spacing:.22em; filter: blur(0) }
+    }
+    #ecoutille .ec-titre-bloc{
+      gap: clamp(6px, 1.2vmin, 10px) !important;
+      padding: clamp(8px, 1.8vmin, 14px) clamp(12px, 2.4vmin, 22px) !important;
+      position: relative;
+    }
+    #ecoutille .ec-titre-bloc::before{
+      content:""; position:absolute; inset:-6% -4% -10% -4%;
+      background: radial-gradient(closest-side, rgba(120,222,255,.14), rgba(120,222,255,0) 72%);
+      pointer-events:none; z-index:-1;
+      animation: ecTitreGlow 3.2s ease-in-out infinite alternate;
+    }
+    @keyframes ecTitreGlow{
+      from{ opacity:.7; transform: scale(1) }
+      to{ opacity:1; transform: scale(1.08) }
+    }
+    /* --- HUBLOT ÉPIQUE : flottement + profondeur + reflet cinéma --- */
+    #ecoutille .ec-hublot{
+      animation: ecHublotFloat 6.5s ease-in-out infinite, ecHublotEnter 1.5s cubic-bezier(.16,1,.3,1) .6s both !important;
+      transform-origin: 50% 50%;
+      filter: drop-shadow(0 1.2vmin 3vmin rgba(0,0,0,.85)) drop-shadow(0 0 3vmin rgba(90,205,245,.18)) !important;
+      perspective: 800px;
+    }
+    @keyframes ecHublotEnter{
+      0%{ opacity:0; transform: scale(.78) translateY(30px) rotateX(8deg); filter: blur(12px) brightness(.7) }
+      100%{ opacity:1; transform: scale(1) translateY(0) rotateX(0); filter: blur(0) brightness(1) }
+    }
+    @keyframes ecHublotFloat{
+      0%,100%{ transform: translateY(0) rotateZ(0) }
+      25%{ transform: translateY(-6px) rotateZ(.3deg) }
+      50%{ transform: translateY(-2px) rotateZ(0) }
+      75%{ transform: translateY(-9px) rotateZ(-.3deg) }
+    }
+    /* Verre plus épais, plus ciné */
+    #ecoutille .ec-verre{
+      box-shadow: inset 0 0 6vmin 1.4vmin rgba(1,12,20,.78), inset 0 0 2vmin rgba(170,235,255,.32), 0 0 0 1px rgba(255,255,255,.08) !important;
+    }
+    /* Cercle bronze plus massif, plus IMAX */
+    #ecoutille .ec-cercle{
+      border-width: clamp(11px, 2.6vmin, 30px) !important;
+      box-shadow: 0 0 0 clamp(2px, .6vmin, 6px) rgba(12,8,2,.9), inset 0 .8vmin 0 rgba(255,244,206,.48), inset 0 -1.2vmin 1.8vmin rgba(0,0,0,.78), 0 .9vmin 3vmin rgba(0,0,0,.75), 0 0 8vmin rgba(110,220,255,.16) !important;
+    }
+    /* --- MER PLUS VIVANTE : god rays + caustiques intenses --- */
+    #ecoutille .m-rayons{
+      opacity:.62 !important;
+      background: repeating-linear-gradient(76deg, rgba(198,244,255,.26) 0 2.1%, rgba(198,244,255,.08) 2.1% 5.2%, rgba(198,244,255,0) 5.2% 11%) !important;
+      animation: ecMerRais 14s ease-in-out infinite alternate !important;
+      filter: blur(.4px);
+    }
+    #ecoutille .m-caustique{
+      opacity:.92 !important;
+      filter: contrast(1.18) brightness(1.12);
+      animation-duration: 26s !important;
+    }
+    #ecoutille .m-caustique.b{
+      opacity:.58 !important;
+      animation-duration: 38s !important;
+      filter: contrast(1.12) brightness(1.08);
+    }
+    #ecoutille .m-neige, #ecoutille .m-bulles{
+      filter: blur(.2px);
+    }
+    /* Reflet ciné plus visible */
+    #ecoutille .ec-reflet::before{
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.22), rgba(255,255,255,0)) !important;
+      width: 42% !important;
+      animation: ecReflet 12s ease-in-out infinite !important;
+    }
+    /* --- HUD : plus premium, avec scanline --- */
+    #ecoutille .ec-hud{
+      backdrop-filter: blur(6px);
+      background: linear-gradient(180deg, rgba(2,10,18,.55), rgba(2,10,18,0));
+      border-bottom: 1px solid rgba(120,200,220,.18);
+      padding: 6px 10px;
+      margin: -6px -10px 4px;
+      animation: ecHudIn 1s ease .9s both;
+    }
+    @keyframes ecHudIn{
+      from{ opacity:0; transform: translateY(-8px) }
+      to{ opacity:1; transform: translateY(0) }
+    }
+    /* O2 pulsation subtile */
+    #ecoutille .ec-o2-niveau{
+      background: linear-gradient(90deg, #0ea86a, #7ff0c8, #0ea86a) !important;
+      background-size: 200% 100%;
+      animation: ecO2Shift 2.8s linear infinite;
+      box-shadow: 0 0 8px rgba(100,240,180,.7), inset 0 0 4px rgba(255,255,255,.6) !important;
+    }
+    @keyframes ecO2Shift{
+      0%{ background-position: 0 0 }
+      100%{ background-position: 200% 0 }
+    }
+    /* --- CONSIGNE + MAGASIN : entrée théâtrale --- */
+    #ecoutille .ec-consigne--sous-hublot{
+      animation: ecConsigneIn 1s cubic-bezier(.16,1,.3,1) 1.1s both;
+      font-weight: 800 !important;
+      letter-spacing: .18em !important;
+      color:#cbe9f6 !important;
+      text-shadow: 0 2px 10px rgba(0,0,0,.85) !important;
+    }
+    @keyframes ecConsigneIn{
+      from{ opacity:0; transform: translateY(10px) }
+      to{ opacity:1; transform: translateY(0) }
+    }
+    #ecoutille .ec-magasin-wrap{
+      animation: ecMagasinIn 1s cubic-bezier(.16,1,.3,1) 1.25s both;
+    }
+    @keyframes ecMagasinIn{
+      from{ opacity:0; transform: translateY(14px) }
+      to{ opacity:1; transform: translateY(0) }
+    }
+    #ecoutille .ec-magasin-select{
+      box-shadow: 0 4px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.9) !important;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease !important;
+    }
+    #ecoutille .ec-magasin-select:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(0,0,0,.32) !important;
+    }
+    /* --- BOUTON OPEN : LE CŒUR DU BLOCKBUSTER --- */
+    #ecoutille .ec-start{
+      animation: ecStartEnter 1s cubic-bezier(.16,1,.3,1) 1.5s both;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,.55));
+    }
+    @keyframes ecStartEnter{
+      0%{ opacity:0; transform: scale(.7) }
+      100%{ opacity:1; transform: scale(1) }
+    }
+    #ecoutille .ec-start::before{
+      background: conic-gradient(from 208deg, #6d5c3c, #e8ca8a 14%, #8a6f42 28%, #fff2c8 45%, #7d6538 60%, #d8b87a 78%, #6d5c3c 100%) !important;
+      animation: ecBronzeRotate 22s linear infinite;
+    }
+    @keyframes ecBronzeRotate{
+      to{ filter: hue-rotate(6deg) brightness(1.03) }
+    }
+    #ecoutille .ec-start::after{
+      inset: -22% !important;
+      background: radial-gradient(circle, rgba(255,80,64,.52) 28%, rgba(255,80,64,.14) 52%, rgba(255,80,64,0) 72%) !important;
+      animation: ecAppel 1.9s cubic-bezier(.45,0,.55,1) infinite !important;
+      filter: blur(.4px);
+    }
+    /* Double halo épique */
+    #ecoutille .ec-start--open::before{ box-shadow: 0 0 0 2px rgba(255,255,255,.08); }
+    #ecoutille .ec-dome{
+      background: radial-gradient(circle at 30% 22%, #ffb8ae 0 4%, #ff5a42 16%, #e01a0f 40%, #8f0c07 68%, #3d0402 100%) !important;
+      box-shadow: 0 1.6vmin 3vmin rgba(0,0,0,.68), inset 0 0 0 3px rgba(0,0,0,.5), inset 0 .7vmin 1.6vmin rgba(255,255,255,.32), inset 0 -1.2vmin 2.2vmin rgba(0,0,0,.62), 0 0 18px rgba(255,60,40,.45) !important;
+      animation: ecDomePulse 2.2s ease-in-out infinite;
+    }
+    @keyframes ecDomePulse{
+      0%,100%{ filter: brightness(1) drop-shadow(0 0 6px rgba(255,70,50,.45)); transform: scale(1) }
+      50%{ filter: brightness(1.08) drop-shadow(0 0 14px rgba(255,70,50,.75)); transform: scale(1.015) }
+    }
+    #ecoutille .ec-start-label{
+      font-size: clamp(18px, 4.4vmin, 32px) !important;
+      letter-spacing: .2em !important;
+      text-shadow: 0 2px 0 rgba(0,0,0,.65), 0 5px 10px rgba(0,0,0,.6), 0 0 20px rgba(255,150,140,.7), 0 0 36px rgba(255,80,60,.45) !important;
+      animation: ecLabelGlow 2.2s ease-in-out infinite;
+    }
+    @keyframes ecLabelGlow{
+      0%,100%{ text-shadow: 0 2px 0 rgba(0,0,0,.65), 0 5px 10px rgba(0,0,0,.6), 0 0 20px rgba(255,150,140,.7) }
+      50%{ text-shadow: 0 2px 0 rgba(0,0,0,.65), 0 7px 14px rgba(0,0,0,.7), 0 0 28px rgba(255,150,140,.95), 0 0 46px rgba(255,80,60,.55) }
+    }
+    #ecoutille .ec-start:hover{ transform: scale(1.04); }
+    #ecoutille .ec-start:active{ transform: scale(.97); }
+    #ecoutille .ec-start:hover .ec-dome{ filter: brightness(1.12) }
+    /* Anneau externe pulsant additionnel (via box-shadow animé) */
+    #ecoutille .ec-start--open{
+      box-shadow: 0 0 0 0 rgba(255,80,60,.45);
+      animation: ecRingPulse 2.6s ease-out infinite;
+    }
+    @keyframes ecRingPulse{
+      0%{ box-shadow: 0 0 0 0 rgba(255,80,60,.45) }
+      70%{ box-shadow: 0 0 0 14px rgba(255,80,60,0) }
+      100%{ box-shadow: 0 0 0 0 rgba(255,80,60,0) }
+    }
+    /* --- GRAIN CINÉMA + VIGNETTE ÉPIQUE --- */
+    #ecoutille::after{
+      content:""; position:absolute; inset:0; pointer-events:none; z-index:5;
+      background:
+        radial-gradient(120% 90% at 50% 50%, transparent 58%, rgba(0,0,0,.42) 92%),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 2px);
+      opacity:.9; mix-blend-mode: soft-light;
+    }
+    /* Scanner line qui traverse l'écran toutes les 7s */
+    #ecoutille .ec-ecran::after{
+      content:""; position:absolute; left:0; right:0; height:2px; top:-2px;
+      background: linear-gradient(90deg, transparent, rgba(120,220,255,.85), transparent);
+      box-shadow: 0 0 12px rgba(120,220,255,.9), 0 0 24px rgba(120,220,255,.5);
+      animation: ecScanline 7s ease-in-out infinite;
+      opacity:.0; pointer-events:none;
+    }
+    @keyframes ecScanline{
+      0%{ opacity:0; transform: translateY(-2px) }
+      8%{ opacity:.9 }
+      28%{ opacity:.9; transform: translateY(102vh) }
+      30%{ opacity:0 }
+      100%{ opacity:0 }
+    }
+    /* --- LETTERBOX PLUS CINÉMA : transition plus lente, plus premium --- */
+    #ecoutille .ec-letterbox{
+      background: #020a14 !important;
+      box-shadow: 0 0 30px rgba(0,0,0,.9) inset;
+      transition: height 1s cubic-bezier(.22,.78,.18,1) !important;
+    }
+    #ecoutille.ec-eclat .ec-letterbox{ height:5.2vh !important; }
+    #ecoutille.ec-impact .ec-letterbox{ height:11vh !important; }
+    /* --- PLONGÉE HOLLYWOOD : 3 actes, plus rapide, plus violent --- */
+    #ecoutille .ec-hublot, #ecoutille .ec-ecran, #ecoutille .ec-scene, #ecoutille .ec-flood{
+      will-change: transform, filter, opacity;
+    }
+    #ecoutille .ec-flood{
+      background:
+        radial-gradient(closest-side at 50% 50%,
+          rgba(12,52,92,0) 0 18%,
+          rgba(8,42,78,.32) 32%,
+          rgba(5,28,52,.68) 52%,
+          rgba(2,16,32,.92) 74%,
+          rgba(1,8,20,1) 88%,
+          #020a14 100%) !important;
+      transition: transform 1.2s cubic-bezier(.22,.78,.18,1), opacity .8s ease !important;
+    }
+    #ecoutille.ec-eclat .ec-flood{ opacity:.82 !important; transform: scale(.88) !important; }
+    #ecoutille.ec-impact .ec-flood{ opacity:1 !important; transform: scale(1.18) !important; }
+    /* Acte 1 : anticipation — le Nautilus retient son souffle */
+    #ecoutille.ec-eclat .ec-scene{ transform: scale(1.06) !important; filter: blur(.6px) brightness(.98) saturate(.98) !important; }
+    #ecoutille.ec-eclat .ec-hublot{ transform: scale(1.22) !important; }
+    #ecoutille.ec-eclat .ec-ecran{ transform: scale(1.05) !important; filter: brightness(.96) !important; }
+    #ecoutille.ec-eclat .ec-titre{ transform: scale(1.02); filter: brightness(1.1); }
+    /* Acte 2 : IMPACT — on s'engouffre dans le hublot, tout explose */
+    #ecoutille.ec-impact .ec-scene{
+      transform: scale(3.2) !important;
+      filter: blur(16px) brightness(.38) saturate(.52) !important;
+      opacity:.9 !important;
+    }
+    #ecoutille.ec-impact .ec-hublot{
+      transform: scale(4.2) !important;
+      filter: blur(1.2px) brightness(.92) !important;
+    }
+    #ecoutille.ec-impact .ec-ecran{
+      transform: scale(1.28) !important;
+      filter: blur(8px) brightness(.44) saturate(.48) !important;
+    }
+    #ecoutille.ec-impact .ec-paroi{ filter: brightness(.32) blur(3px) !important; }
+    #ecoutille.ec-impact .ec-titre,
+    #ecoutille.ec-impact .ec-sous-titre-h4,
+    #ecoutille.ec-impact .ec-consigne,
+    #ecoutille.ec-impact .ec-start{
+      opacity:0 !important;
+      transform: scale(.92);
+      transition: opacity .22s ease, transform .22s ease !important;
+    }
+    /* Flash abyssal plus violent, avec chromatic aberration simulée */
+    #ecoutille .ec-flash{
+      background: radial-gradient(ellipse 115% 88% at 50% 48%,
+        rgba(120,230,255,.42) 0 16%,
+        rgba(70,180,235,.20) 32%,
+        rgba(20,110,170,.10) 56%,
+        rgba(2,18,38,0) 78%) !important;
+      filter: blur(.6px);
+    }
+    #ecoutille.ec-impact .ec-flash{ animation: ecBloom 1s cubic-bezier(.22,.6,.2,1) !important; }
+    @keyframes ecBloom{
+      0%{ opacity:0; transform: scale(.82); filter: brightness(1.4) blur(2px) }
+      14%{ opacity:.68; transform: scale(1); filter: brightness(1.2) blur(0) }
+      55%{ opacity:.32; transform: scale(1.06); filter: brightness(1) blur(.8px) }
+      100%{ opacity:0; transform: scale(1.12); filter: brightness(.8) blur(1.2px) }
+    }
+    /* Shake subtil à l'impact */
+    #ecoutille.ec-impact{
+      animation: ecShake .42s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes ecShake{
+      10%,30%,50%,70%{ transform: translate3d(-1px, 1px, 0) }
+      20%,40%,60%,80%{ transform: translate3d(1px, -1px, 0) }
+    }
+    /* Version texte pour lecteurs d'écran reste invisible */
+    @media (prefers-reduced-motion: reduce){
+      #ecoutille .ec-paroi, #ecoutille .ec-halo, #ecoutille .ec-start::after,
+      #ecoutille .m-rayons, #ecoutille .m-caustique, #ecoutille .m-neige,
+      #ecoutille .m-bulles, #ecoutille .ec-reflet::before, #ecoutille .ec-fanaux i,
+      #ecoutille .ec-titre, #ecoutille .ec-sous-titre-h4, #ecoutille .ec-hublot,
+      #ecoutille .ec-consigne--sous-hublot, #ecoutille .ec-magasin-wrap,
+      #ecoutille .ec-start, #ecoutille .ec-o2-niveau, #ecoutille .ec-ecran::after{
+        animation: none !important; transition: none !important;
+      }
+      #ecoutille .ec-titre::after{ display:none !important; }
+      #ecoutille::after{ display:none !important; }
+      #ecoutille.ec-impact{ animation: none !important; }
+    }
+    /* --- RESPONSIVE ÉPIQUE : garde la lisibilité --- */
+    @media (max-width: 400px){
+      #ecoutille .ec-titre{ font-size: clamp(20px, 6.2vmin, 32px) !important; }
+    }
+  </style>
+
+
+
   <!-- ===== PAGE DE GARDE : DÉCISION PRISE AVANT LE PREMIER RENDU =====
        L'écoutille s'affiche à CHAQUE chargement de l'accueil. Ce n'est pas
        un excès de zèle : à chaque chargement, le navigateur repart de zéro
@@ -860,7 +1233,7 @@
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 010345 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 011016 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -955,7 +1328,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 010345</span>
+      <span class="ec-version">COMMIT 011016</span>
     </footer>
   </div>
 
@@ -8837,7 +9210,7 @@ window.PWAInstall = {
 <script src="artefact-moteur.js?v=6"></script>
 <script src="artefact-service.js?v=7"></script>
 <script src="magasin-fnac.js?v=1"></script>
-<script src="magasin-guard.js?v=2"></script>
+<script src="magasin-guard.js?v=3"></script>
 <script>
 /* Carte « MAGASIN DE LA MISSION » : liste officielle + recherche + géoloc
    à la demande. Le choix est mémorisé localement (nautilusMagasin) et repris
@@ -9075,7 +9448,7 @@ window.PWAInstall = {
 <!-- Lecteur des fiches publiques fnac.com : hors ligne, jamais appele par le jeu.
      L’onglet admin de l’accueil en a besoin comme celui du Palier 3. -->
 <script src="fnac-lecteur.js?v=1"></script>
-<script src="admin-artefact.js?v=21" defer></script>
+<script src="admin-artefact.js?v=22" defer></script>
 <script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>

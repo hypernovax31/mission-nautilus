@@ -271,6 +271,17 @@
               + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>'
               + '</div>';
           }).join('')
+    +     (function(){
+            // Card dédiée MODE TEST — toujours visible (hors classement)
+            var p2m = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-MODE_TEST-'+w+'">'+esc(w)+'</span>'; }).join('');
+            return '<div class="adm-af-teamcard" data-team="MODE_TEST" style="border-color:#e8c05f;background:linear-gradient(180deg,#fffef4 0%,#fff8db 100%);box-shadow:0 4px 14px rgba(232,192,95,.22)">'
+              + '<div class="adm-af-teamhead"><span>🧪 MODE TEST — APERÇU <span class="small" style="background:#fff4d8;border:1px solid #e8c05f;border-radius:999px;padding:1px 6px;font-size:10px">HORS CLASSEMENT</span></span><span class="small" id="afTeamPill-MODE_TEST" style="color:#6e7a84">aperçu</span></div>'
+              + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-MODE_TEST">—</span><span class="small" style="color:#6e7a84">morse</span></div>'
+              + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-MODE_TEST">'+p2m+'</div></div>'
+              + '<div class="adm-af-row" id="afP3-MODE_TEST"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>'
+              + '<div class="small" style="margin-top:6px;color:#8a6d33;background:rgba(255,244,186,.55);border:1px dashed #e8c05f;border-radius:8px;padding:6px 8px">Ce bloc agrège les réponses jouées en <b>mode test / aperçu</b> (QR scellés, mots croisés, artefact). Visibles uniquement depuis ce panneau admin.</div>'
+              + '</div>';
+          })()
     +   '</div>'
     + '</div>';
   }
@@ -333,6 +344,23 @@
       });
       majCarteP3Auto(eq);
     });
+    // ── Carte MODE TEST — toujours alimentée (même sans session, affiche “—” si vide)
+    try{
+      (function peuplerModeTest(){
+        var eq='MODE_TEST';
+        try{
+          var motTest = lireP1DepuisLocal('APERCU') || lireP1DepuisLocal('TEST') || lireP1DepuisLocal('ANON') || lireP1DepuisLocal('MODE_TEST') || '';
+          // fallback générique : nautilusP1TestWord sans suffixe
+          if(!motTest){ try{ var g=localStorage.getItem('nautilusP1TestWord'); if(g){ try{ var jg=JSON.parse(g); motTest=jg.w||jg.word||''; }catch(e){ motTest=g; }} }catch(e){} }
+          var p1m=$('afP1-'+eq); if(p1m) p1m.textContent = motTest || '—';
+          var pillM=$('afTeamPill-'+eq); if(pillM) pillM.textContent = motTest ? 'donnée test trouvée' : 'aperçu';
+          var listeM = lireP2DepuisLocal('APERCU') || lireP2DepuisLocal('TEST') || lireP2DepuisLocal('ANON') || null;
+          if(listeM && listeM.length){ majP2Chips(eq, listeM); } else { majP2Chips(eq, []); }
+          // P3 : affichage via alias MODE_TEST → APERCU/TEST/ANON
+          majCarteP3Auto(eq);
+        }catch(e){ try{ majCarteP3Auto(eq); }catch(e2){} }
+      })();
+    }catch(e){}
     // équipes de test (APERCU/TEST) — n'apparaissent que si une session locale existe (mode test/admin)
     try{
       EQUIPES_TEST.forEach(function(eq){
@@ -468,6 +496,23 @@
     }
     function lireSessionLocale(eq){
       try{
+        // MODE_TEST = alias visuel qui agrège APERCU/TEST/ANON
+        if(eq==='MODE_TEST'){
+          for(var _k=0; _k<['APERCU','TEST','ANON','MODE_TEST'].length; _k++){
+            var cand=_k===3? eq : ['APERCU','TEST','ANON'][_k];
+            var ra2=localStorage.getItem('nautilusP3Session_'+cand);
+            if(ra2){ try{ var s2=JSON.parse(ra2); if(s2 && s2.cartoucheId) return s2; }catch(e){} }
+          }
+          // aussi via aggregates
+          try{
+            var agg2=localStorage.getItem('nautilusP3SessionSecrets');
+            if(agg2){ var m2=JSON.parse(agg2); for(var kk in m2){ if(m2[kk] && m2[kk].cartoucheId){ if(kk==='APERCU' || kk==='TEST' || kk==='ANON') return m2[kk]; } } }
+          }catch(e){}
+          try{
+            var aggA=localStorage.getItem('nautilusP3ApercuSecrets');
+            if(aggA){ var ma=JSON.parse(aggA); for(var kka in ma){ if(ma[kka] && ma[kka].cartoucheId) return ma[kka]; if(ma[kka] && ma[kka].secret) return {cartoucheId:kka, cartouche:ma[kka]}; } }
+          }catch(e){}
+        }
         var raw = localStorage.getItem('nautilusP3Session_'+eq);
         if(raw){ var s=JSON.parse(raw); if(s && s.cartoucheId) return s; }
         var agg = localStorage.getItem('nautilusP3SessionSecrets');
