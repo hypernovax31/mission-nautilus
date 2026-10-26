@@ -549,12 +549,12 @@
      réponses. Le choix est déterministe par équipe+magasin (aleatoireDeSel)
      pour rejouabilité. */
   var FALLBACK_POOL = [
-    { ean:'9782070612758', titre:'Le Petit Prince', auteur:'Antoine de Saint-Exupéry', editeur:'Gallimard', edition:'Collection Folio', editionNumero:1, annee:2020, pages:96, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman','verne'] },
-    { ean:'9782070368228', titre:'1984', auteur:'George Orwell', editeur:'Gallimard', edition:'Collection Folio', editionNumero:12, annee:2018, pages:416, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] },
-    { ean:'9782070584628', titre:"Harry Potter à l'école des sorciers", auteur:'J. K. Rowling', editeur:'Gallimard', edition:'Collection Folio Junior', editionNumero:1, annee:2017, pages:320, format:'Poche', type:'litterature', famille:'jeunesse-aventure', liens:['jeunesse','aventure','roman'] },
-    { ean:'9782266284226', titre:'Le Seigneur des anneaux', auteur:'J. R. R. Tolkien', editeur:'Christian Bourgois', edition:'Poche', editionNumero:3, annee:2019, pages:700, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] },
-    { ean:'9782070412600', titre:'Vingt mille lieues sous les mers', auteur:'Jules Verne', editeur:'Gallimard', edition:'Collection Folio', editionNumero:7, annee:2015, pages:640, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman','verne'] },
-    { ean:'9782070365302', titre:'Le Vieil Homme et la Mer', auteur:'Ernest Hemingway', editeur:'Gallimard', edition:'Collection Folio', editionNumero:5, annee:2016, pages:160, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] }
+    { ean:'9782070612758', url:'https://www.fnac.com/a1956006/Le-Petit-Prince-Antoine-de-Saint-Exupery', titre:'Le Petit Prince', auteur:'Antoine de Saint-Exupéry', editeur:'Gallimard', edition:'Collection Folio', editionNumero:1, annee:2020, pages:96, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman','verne'] },
+    { ean:'9782070368228', url:'https://www.fnac.com/a79120/George-Orwell-1984', titre:'1984', auteur:'George Orwell', editeur:'Gallimard', edition:'Collection Folio', editionNumero:12, annee:2018, pages:416, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] },
+    { ean:'9782070584628', url:'https://www.fnac.com/a11027877/Harry-Potter-a-l-ecole-des-sorciers-J-K-Rowling', titre:"Harry Potter à l'école des sorciers", auteur:'J. K. Rowling', editeur:'Gallimard', edition:'Collection Folio Junior', editionNumero:1, annee:2017, pages:320, format:'Poche', type:'litterature', famille:'jeunesse-aventure', liens:['jeunesse','aventure','roman'] },
+    { ean:'9782266286268', url:'https://www.fnac.com/a12099836/Le-Seigneur-des-Anneaux-Integrale-J-R-R-Tolkien', titre:'Le Seigneur des Anneaux - Intégrale (nouvelle traduction)', auteur:'J. R. R. Tolkien', editeur:'Pocket', edition:'', editionNumero:1, annee:2018, pages:1216, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] },
+    { ean:'9782070424832', url:'https://www.fnac.com/a1629814/Vingt-mille-lieues-sous-les-mers-Jules-Verne', titre:'Vingt mille lieues sous les mers', auteur:'Jules Verne', editeur:'Gallimard', edition:'Collection Folio Classique', editionNumero:7, annee:2001, pages:704, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman','verne'] },
+    { ean:'9782072762086', url:'https://www.fnac.com/a11550786/Le-vieil-homme-et-la-mer-Ernest-Hemingway', titre:'Le Vieil Homme et la Mer', auteur:'Ernest Hemingway', editeur:'Gallimard', edition:'Collection Folio', editionNumero:5, annee:2018, pages:192, format:'Poche', type:'litterature', famille:'litterature-aventure', liens:['litterature','aventure','roman'] }
   ];
   function livreFallback(magasinId, equipeCle, maintenant) {
     var iso = new Date(Number(maintenant) || Date.now()).toISOString();
@@ -576,7 +576,7 @@
       format: modele.format,
       ean: ean,
       sku: 'NAU-FALLBACK-' + String(magasinId || 'X').toUpperCase() + '-' + String(equipeCle||'').slice(0,4),
-      url: '',
+      url: modele.url || '',
       categorieFnac: 'Livres - Littérature',
       etiquetteFnac: 'Littérature',
       rayon: 'Littérature',
