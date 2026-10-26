@@ -1,5 +1,5 @@
 /* =============================================================================
-   Mission Nautilus — ANIMATION D'INCITATION À L'INSTALLATION (PWA) — v8
+   Mission Nautilus — ANIMATION D'INCITATION À L'INSTALLATION (PWA) — v9
    =============================================================================
 
    BUT
@@ -43,6 +43,13 @@
      avalée par une écoutille qui refuserait de s'ouvrir. */
   var DUREE_CALME_MS = 3000;              /* « EAUX SEREINES » : 3 secondes
      EN TOUT avant d'envoyer le reste (instructions ou fermeture). */
+  var CLE_ATTENTE = 'nautilusInstallAttente';
+  var CLE_CELEBRATION = 'nautilusInstallCelebrationDone';
+  function marquerAttente(){ try{ localStorage.setItem(CLE_ATTENTE,'1'); localStorage.setItem(CLE_ATTENTE+'TS', String(Date.now())); }catch(e){} }
+  function attenteEnCours(){ try{ return localStorage.getItem(CLE_ATTENTE)==='1'; }catch(e){ return false; } }
+  function effacerAttente(){ try{ localStorage.removeItem(CLE_ATTENTE); localStorage.removeItem(CLE_ATTENTE+'TS'); }catch(e){} }
+  function aDejaCelebre(){ try{ return localStorage.getItem(CLE_CELEBRATION)==='1'; }catch(e){ return true; } }
+  function marquerCelebre(){ try{ localStorage.setItem(CLE_CELEBRATION,'1'); }catch(e){} }
 
   /* ---------- conditions d'affichage ---------- */
   function estInstallee() {
@@ -86,6 +93,15 @@
     if (promptLocal) return true;
     return !!(window.PWAInstall && typeof window.PWAInstall.aUnPrompt === 'function' && window.PWAInstall.aUnPrompt());
   }
+  // si l'installation réussit (prompt accepté ou ajout manuel), on célèbre en eaux sereines
+  window.addEventListener('appinstalled', function(){
+    try{
+      if (!attenteEnCours() && aDejaCelebre()) return;
+      effacerAttente();
+      // laisser le toast système passer, puis célébrer
+      setTimeout(function(){ celebrerInstallation(); }, 700);
+    }catch(e){}
+  });
 
   /* ---------- dessin : le sous-marin Nautilus (SVG inline, aucune image) --- */
   var SUB_SVG = '<svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
@@ -113,7 +129,7 @@
     + '.ip-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;'
     + 'padding:18px;box-sizing:border-box;width:100vw;height:100vh;margin:0;'
     + 'background:radial-gradient(ellipse at 50% 20%,rgba(6,22,38,.55),rgba(2,6,14,.9));'
-    + 'opacity:0;transition:opacity .45s ease;pointer-events:none;}'
+    + 'opacity:0;transition:opacity .45s ease;pointer-events:auto;}'
     + '.ip-overlay.ip-in{opacity:1;pointer-events:auto}'
     + '.ip-overlay.ip-out{opacity:0;pointer-events:none}'
     + '.ip-card{display:flex;flex-direction:column;align-items:center;pointer-events:auto;'
@@ -236,8 +252,8 @@
       + sceneHtml()
       + '<h2 class="ip-titre">🌊 Évite les tumultes de l’océan</h2>'
       + '<p class="ip-intro">Installe l’appli sur ton écran d’accueil pour naviguer en eaux sereines.</p>'
-      + '<button type="button" class="ip-cta">⚓ Installer l’appli</button>'
-      + '<button type="button" class="ip-later">Continuer dans les tumultes</button>'
+      + '<button type="button" class="ip-cta" onclick="if(window.NautilusInstallPromo&&window.NautilusInstallPromo.installer)window.NautilusInstallPromo.installer()">⚓ Installer l’appli</button>'
+      + '<button type="button" class="ip-later" onclick="if(window.NautilusInstallPromo&&window.NautilusInstallPromo.fermerAvecSnooze)window.NautilusInstallPromo.fermerAvecSnooze()">Continuer dans les tumultes</button>'
       + '</div>';
     document.body.appendChild(overlay);
     var cta = overlay.querySelector('.ip-cta');
@@ -276,6 +292,27 @@
     cible.classList.add('ip-out');
     overlay = null;
     setTimeout(function () { if (cible && cible.remove) cible.remove(); }, 500);
+  }
+  function fermerAvecSnooze(){ try{ ecrireSnooze(); }catch(e){} fermer(); }
+  function ouvrirEnCalme(titre, sousTitre, autoFermer){
+    ouvrir();
+    // passage immédiat en eaux sereines (le temps que le DOM soit prêt)
+    setTimeout(function(){
+      passerAuCalme(titre || '🌞 Cap mis sur les eaux sereines !', sousTitre || 'Le Nautilus vogue désormais depuis ton écran d’accueil.', autoFermer!=null?autoFermer:DUREE_CALME_MS);
+      try{ marquerCelebre(); ecrireSnooze(); }catch(e){}
+    }, 80);
+  }
+  function celebrerInstallation(opts){
+    opts=opts||{};
+    var titre = opts.titre || '🌞 Cap mis sur les eaux sereines !';
+    var sous = opts.sousTitre || 'Le Nautilus vogue désormais depuis ton écran d’accueil.';
+    // si une promo est déjà ouverte (tempête), on la ferme d'abord
+    if (overlay){
+      fermer();
+      setTimeout(function(){ ouvrirEnCalme(titre, sous, DUREE_CALME_MS); }, 600);
+    } else {
+      ouvrirEnCalme(titre, sous, DUREE_CALME_MS);
+    }
   }
 
   /* ---------- déclenchement, calé sur la fin de la machine à écrire --- */
@@ -328,10 +365,10 @@
     if (autoFermerMs) setTimeout(fermer, autoFermerMs);
   }
 
-  // exposé pour debug console : NautilusInstallPromo._installer()
+  // exposé pour debug console : NautilusInstallPromo.installer()
   async function installer() {
     try{ console.log('[promo] clic Installer'); }catch(e){}
-    /* 1) Prompt natif disponible (Android, Chrome/Edge PC & Mac) */
+    /* 1) Prompt natif disponible (Android, Chrome/Edge PC & Mac) — après acceptation on célèbre */
     var p = consommerPrompt();
     if (p && typeof p.prompt === 'function') {
       passerAuCalme('🌞 Eaux sereines en vue…', 'Confirme dans la boîte du navigateur.');
@@ -339,30 +376,46 @@
         p.prompt();
         var choix = await p.userChoice;
         if (choix && choix.outcome === 'accepted') {
-          passerAuCalme('⚓ Application installée !', 'Le Nautilus t’attend sur ton écran d’accueil.', DUREE_CALME_MS);
-          ecrireSnooze();
+          // installation réussie → on passe directement en eaux sereines célébration
+          // (même texte exigé pour Mac/PC/Mobile : « Cap mis sur les eaux sereines ! »)
+          passerAuCalme('🌞 Cap mis sur les eaux sereines !', 'Le Nautilus t’attend sur ton écran d’accueil.', DUREE_CALME_MS);
+          try{ marquerAttente(); marquerCelebre(); ecrireSnooze(); }catch(e){}
+          // le navigateur va aussi émettre appinstalled → on évitera le doublon via aDejaCelebre
           return;
         }
       } catch (e) { /* le navigateur a refusé : on retombe sur les instructions */ }
     }
-    /* 2) Instructions manuelles (iOS, macOS Safari, autres) : on reutilise
-          la modale detaillee de la page d'accueil — jamais de copie.
-          La mer calme reste 3 secondes EN TOUT (DUREE_CALME_MS) avant
-          d'envoyer le reste. */
-    passerAuCalme('🌞 Cap mis sur les eaux sereines !', 'La suite s’affiche juste après.');
-    ecrireSnooze();
+    /* 2) Instructions manuelles (iOS, macOS Safari, autres) : on mémorise l'attente
+          puis on ouvre la modale d'instructions existante. La célébration « Cap mis… »
+          n'apparaît qu'APRÈS l'installation (événement appinstalled ou retour en standalone). */
+    try{ marquerAttente(); ecrireSnooze(); }catch(e){}
+    fermer();
     setTimeout(function () {
-      fermer();
       if (window.PWAInstall && typeof window.PWAInstall.showInstallInstructions === 'function') {
         window.PWAInstall.showInstallInstructions();
       } else if (window.PWAInstall && typeof window.PWAInstall.openInstallModal === 'function') {
         window.PWAInstall.openInstallModal();
       }
-    }, DUREE_CALME_MS);
+    }, 350);
   }
 
   /* ---------- déclenchement ---------- */
   function demarrer() {
+    // si l'app vient d'être installée (standalone) et qu'on était en attente → célébration immédiate
+    try{
+      if (estInstallee()){
+        if (attenteEnCours() && !aDejaCelebre()){
+          effacerAttente();
+          setTimeout(function(){ celebrerInstallation(); }, 900);
+          return;
+        }
+        // première ouverture en mode app installée (PWA) mais sans attente : on célèbre une fois si jamais vu
+        if (!aDejaCelebre() && !lireSnooze()){
+          setTimeout(function(){ celebrerInstallation({ sousTitre: 'Mission Nautilus prête à appareiller depuis ton écran d’accueil.' }); }, 900);
+          return;
+        }
+      }
+    }catch(e){}
     var snooze = lireSnooze();
     var paramsEnCours = false;
     try {
@@ -394,7 +447,7 @@
 
   /* Export minimal : tests + pilotage manuel éventuel. */
   window.NautilusInstallPromo = {
-    ouvrir: ouvrir, fermer: fermer, doitAfficher: doitAfficher, installer: installer, passerAuCalme: passerAuCalme,
+    ouvrir: ouvrir, fermer: fermer, fermerAvecSnooze: fermerAvecSnooze, doitAfficher: doitAfficher, installer: installer, passerAuCalme: passerAuCalme, celebrerInstallation: celebrerInstallation, ouvrirEnCalme: ouvrirEnCalme,
     estInstallee: estInstallee, promptDisponible: promptDisponible,
     signalerFinTypewriter: signalerFinTypewriter,
     SNOOZE_MS: SNOOZE_MS, DELAI_AFFICHAGE_MS: DELAI_AFFICHAGE_MS,
