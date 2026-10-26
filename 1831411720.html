@@ -258,7 +258,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       + '<div class="lock-ligne lock-ligne--pause"><span class="lock-ligne-ico" aria-hidden="true">⏱</span><span>Retour le « '+esc(_date)+' » à « '+esc(_time)+' ».</span></div>'
       + '<div class="lock-ligne lock-ligne--relais"><span class="lock-ligne-ico" aria-hidden="true">⚓</span><span>La barre est libre : un autre matelot peut reprendre dès maintenant.</span></div>'
       + '<div class="lock-ligne lock-ligne--next"><span class="lock-ligne-ico" aria-hidden="true">🔁</span><span>Prochain échec : « '+esc(String(_next))+' » h en surface.</span></div>'
-      + '</div><a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a></section>';
+      + '</div><a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l\'accueil</a></section>';
   }
   function lockScreenIndice(nom, lockedUntil, hours, aide, texteIndice){
     var _h = Number(hours||1);
@@ -269,11 +269,10 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       + '<div class="lock-heading"><span class="lock-heading-icon" aria-hidden="true">🧭</span><div><p class="lock-kicker">INDICE TRANSMIS</p><h2>'+esc(String(nom||'Matelot'))+', ton indice a été transmis.</h2></div></div>'
       + '<p class="lock-lead">Pendant ta pause, un autre matelot de ton équipage peut reprendre les commandes.</p>'
       + '<section class="lock-resume-card"><span class="lock-resume-icon" aria-hidden="true">⏱</span><div><span class="lock-card-label">Prochaine prise de commande possible</span><strong class="lock-resume-date">'+esc(_date+' à '+_time)+'</strong><span class="lock-resume-duration">En surface · '+esc(String(_h))+' h</span></div></section>'
-      + '<div class="lock-lignes"><div class="lock-ligne"><span class="lock-ligne-ico" aria-hidden="true">✓</span><span>L'indice reste disponible pour <b>tout l'équipage</b>.</span></div>'
+      + '<div class="lock-lignes"><div class="lock-ligne"><span class="lock-ligne-ico" aria-hidden="true">✓</span><span>L\'indice reste disponible pour <b>tout l\'équipage</b>.</span></div>'
       + '<div class="lock-ligne lock-ligne--next"><span class="lock-ligne-ico" aria-hidden="true">🔁</span><span>Prochain échec : « '+esc(String(_next))+' » h en surface.</span></div></div>'
       + (aide||texteIndice?'<div class="af-indice-transmis"><b>🕯️ Ton indice</b>'+(aide?'<br>'+lignes(aide):'')+(texteIndice?'<br>📯 '+lignes(texteIndice):'')+'</div>':'')
-      + '<a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a></section>';
-  }
+      + '<a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l\'accueil</a></section>';
   }
 
   /* QUI joue sur cet appareil ? (mêmes conventions que les autres paliers). */
