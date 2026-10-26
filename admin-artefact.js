@@ -304,7 +304,7 @@
     return ''
     + '<div class="adm-af-sec" id="afEquipesSec">'
     +   '<h4 style="margin:0 0 6px;font-size:13px">BONNES RÉPONSES — TOUTES ÉQUIPES</h4>'
-    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">P1 1 mot/équipe · P2 11 mots · P3 livre + EAN + sceau, couverture, signature, chambre forte • P4….</p>'
+    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Livres attribués automatiquement — apparaissent ici dès l\'ouverture du palier 3 (temps réel).</p>'
     +   '<div id="afTeamCards" class="adm-af-cards">'
     +     '<div class="adm-af-teamcard" id="afSingleCard" data-team="ALL" style="border:1px solid #0b1a2e;background:#fff">'
     +       '<div class="adm-af-teamhead"><span>🔑 RÉPONSES</span><span class="small" id="afGlobalPill" style="color:#6e7a84">chargement…</span></div>'
@@ -697,9 +697,7 @@
   }
 
   function HTML_REP() {
-    return ''
-    + '<p class="small" style="margin-bottom:8px;color:#6e7a84">P1 1 mot/équipe · P2 11 mots · P3 livre : signature + chambre forte • P4….</p>'
-    + htmlToutesReponses();
+    return htmlToutesReponses();
   }
 
   // ── QR Codes paliers 2→7 (déverrouillage Zone Scellée) ──
