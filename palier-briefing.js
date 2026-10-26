@@ -87,7 +87,12 @@
     var btn = document.getElementById(ctaId);
     if (btn && typeof cfg.onDepart === 'function') {
       var origDepart = cfg.onDepart;
+      var origPreload = cfg.onPreload;
       var departAvecCinematic = function(ev){
+        // 🔒 verrou anti-rebond sas : une fois le compte à rebours lancé, l'épreuve est engagée → le sas ne doit plus ramener au briefing
+        try{ window.__nautilusEpreuveDemarree = true; }catch(e){}
+        // 🚀 pré-chargement instantané : on lance la recherche du livre / grille PENDANT les 3,2,1,GO (idéal palier 3)
+        try{ if(typeof origPreload === 'function') origPreload(); }catch(e){}
         if(window.NautilusCinematic && window.NautilusCinematic.playCountdown){
           window.NautilusCinematic.playCountdown(function(){
             try{ origDepart(ev); }catch(e){}

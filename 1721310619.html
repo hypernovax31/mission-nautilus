@@ -998,7 +998,7 @@
       window.NautilusSas.observerDeverrouillageEquipe();
     }
   }
-  window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
+  window.addEventListener('nautilus:sas-ouvert', function(){ try{ if(window.__nautilusEpreuveDemarree) return; }catch(e){} var _gu=document.getElementById('gateUnlocked'); if(_gu && !_gu.hidden && _gu.style.display!=='none') return; afficherVueBriefing(); });
 
   /* --- Indication de la zone de recherche : dépliable SUR PLACE ---
      Le bouton « 📍 Voir l'indication… » déplie/replie l'encart
@@ -1024,7 +1024,7 @@
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
 <script src="sonar-button.js?v=4" defer></script>
 <script src="palier-annonces.js?v=3" defer></script>
-  <script src="palier-cinematic.js?v=3"></script>
+  <script src="palier-cinematic.js?v=4"></script>
 <script src="fnac-lecteur.js?v=1" defer></script>
 <script src="admin-artefact.js?v=22" defer></script>
 <script src="admin-button.js?v=28" type="module"></script>

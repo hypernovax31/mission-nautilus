@@ -622,11 +622,37 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       + ' · règle : ' + esc(secret.regle && secret.regle.id || '?'), 'info');
   }
 
+  /* 🔥 pré-chargement pendant le compte à rebours : on lance la recherche du livre dès le clic (3,2,1,GO ≈ 3,5 s) */
+  var _preloadPromise = null;
+  var _preloadMagasinId = null;
+  function _magasinCourantId(){
+    try{
+      var m = (window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant()) || null;
+      if(m && m.id) return m.id;
+      var pm = location.search.match(/[?&]magasin=([^&]+)/); if(pm && pm[1]) return decodeURIComponent(pm[1]);
+      var pm2 = location.search.match(/[?&]magasinId=([^&]+)/); if(pm2 && pm2[1]) return decodeURIComponent(pm2[1]);
+    }catch(e){}
+    return '';
+  }
+  function prechargerEpreuve(){
+    if(_preloadPromise) return _preloadPromise;
+    try{
+      var mid = _magasinCourantId();
+      _preloadMagasinId = mid;
+      // on lance amorcerService en avance (Firestore + mémoire) — sans afficher encore la vue
+      _preloadPromise = Promise.resolve().then(function(){ return amorcerService(mid || ''); }).catch(function(e){ return { demo:false, erreur:String(e&&e.message||e)}; });
+      try{ console.log('[P3] pré-chargement livre lancé pendant le décompte, magasin=', mid); }catch(e){}
+    }catch(e){ _preloadPromise = Promise.resolve(null); }
+    return _preloadPromise;
+  }
+  // expose pour palier-briefing.js (onPreload) et debug console
+  try{ window.prechargerEpreuve = prechargerEpreuve; window.__preloadPalier3 = function(){ return _preloadPromise; }; }catch(e){}
   /* ================= DÉMARRAGE ================= */
   var lance = false;
   function lancer() {
     if (lance) return;
     lance = true;
+    try{ window.__nautilusEpreuveDemarree = true; }catch(e){}
     demarrer();
   }
 
@@ -743,7 +769,13 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       }
     }catch(e){}
     var identJeu = await monIdentite();
-    var amorcage = await amorcerService(magasin ? magasin.id : '');
+    // si un pré-chargement est en cours (lancé pendant le 3,2,1), on le réutilise — évite la seconde d'attente après GO
+    var amorcage = null;
+    if(_preloadPromise && _preloadMagasinId === (magasin ? magasin.id : '')){
+      try{ amorcage = await _preloadPromise; }catch(e){ amorcage = await amorcerService(magasin ? magasin.id : ''); }
+    } else {
+      amorcage = await amorcerService(magasin ? magasin.id : '');
+    }
 
     if (amorcage.demo && !magasin) {
       /* En aperçu, on ne force pas la géolocalisation : le sélecteur du jeu
@@ -860,6 +892,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       { warn: true, ico: '❌', html: "<b>3 erreurs = remontée</b>. Un coéquipier peut reprendre la piste" }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
+    onPreload: function(){ try{ prechargerEpreuve(); }catch(e){} },
     onDepart: function () {
       glisserEnHaut();
       lancer();
@@ -896,7 +929,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       window.NautilusSas.observerDeverrouillageEquipe();
     }
   }
-  window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
+  window.addEventListener('nautilus:sas-ouvert', function(){ try{ if(window.__nautilusEpreuveDemarree) return; }catch(e){} var _gu=document.getElementById('gateUnlocked'); if(_gu && !_gu.hidden && _gu.style.display!=='none') return; afficherVueBriefing(); });
 
   /* DEBUG MODE TEST — si le scellé reste affiché alors que l'URL porte les marques du test,
      on l'explique et on propose de forcer le briefing (évite un cache HTML périmé). */
@@ -952,7 +985,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 <!-- Bouton d'ambiance sonore, commun à toutes les pages du jeu. -->
 <script src="sonar-button.js?v=4" defer></script>
 <script src="palier-annonces.js?v=3" defer></script>
-  <script src="palier-cinematic.js?v=3"></script>
+  <script src="palier-cinematic.js?v=4"></script>
 <!-- Onglet ADMIN de l'artefact : s'injecte dans le panneau admin existant
      (admin-button.js) sans modifier son HTML dupliqué. -->
 <script src="admin-artefact.js?v=22" defer></script>

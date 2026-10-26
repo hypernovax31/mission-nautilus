@@ -130,7 +130,21 @@
       el.className = 'gate-msg' + (texte ? ' is-' + (kind || 'info') : '');
     }
 
+    // 🔒 anti-rebond : une fois l'épreuve lancée (compte à rebours), le sas ne doit plus ramener au briefing
+    function epreuveDejaLancee(){
+      try{ if(window.__nautilusEpreuveDemarree) return true; }catch(e){}
+      try{
+        var _gu = document.getElementById('gateUnlocked');
+        if(_gu && !_gu.hidden && _gu.style.display !== 'none') return true;
+        var _brief = document.getElementById('briefCard');
+        // si ni gateHero ni briefCard visibles, on est déjà en épreuve (cas palier 3 où brief masqué après lancement)
+        if(_gu && !_gu.hidden) return true;
+      }catch(e){}
+      return false;
+    }
     function showUnlocked(propager) {
+      // si l'épreuve est déjà en cours, on ne rebascule JAMAIS vers le briefing (évite le rebond post-compte à rebours palier 3)
+      if(epreuveDejaLancee()) { persistUnlock(); try{ revelerContenuProtege(); }catch(e){} return; }
       persistUnlock();
       stopCamera();
       // Compat HTML : les pages actuelles utilisent #gateHero (pas #gateCard)
@@ -144,10 +158,12 @@
          'nautilus:sas-ouvert') — l'épreuve ne s'arme qu'après le
          « ⚓ PRENDRE LES COMMANDES » du briefing, sur toute la mission. */
       var _fireBrief = function(){
+        if(epreuveDejaLancee()) return;
         try { window.dispatchEvent(new Event('nautilus:sas-ouvert')); } catch (e) {}
         // Fallback si la page n'a pas encore branché son écouteur ou si le sas était déjà ouvert :
         // on force l'affichage du briefing directement si #briefCard existe encore cachée.
         try{
+          if(epreuveDejaLancee()) return;
           var _brief = document.getElementById('briefCard');
           if(_brief && _brief.hidden){
             _brief.hidden = false; _brief.style.display = '';
@@ -161,8 +177,8 @@
         }catch(e){}
       };
       _fireBrief();
-      // Re-tente à 600ms si la page branchait son écouteur en différé (cas init tardif)
-      try{ setTimeout(_fireBrief, 600); }catch(e){}
+      // Re-tente à 600ms si la page branchait son écouteur en différé (cas init tardif) — mais jamais si épreuve déjà lancée
+      try{ setTimeout(function(){ if(!epreuveDejaLancee()) _fireBrief(); }, 600); }catch(e){}
       /* DÉVERROUILLAGE PARTAGÉ AVEC L'ÉQUIPAGE : un seul matelot scanne
          le QR, tout son équipage voit le sas s'ouvrir en direct (état
          écrit dans Firestore, teams/{code}.sasUnlocks[n]).
@@ -212,6 +228,7 @@
             x.fs.doc(x.db, 'teams', ident.teamCode),
             function (snap) {
               if (termine || !snap || !snap.exists()) return;
+              if(epreuveDejaLancee()) return;
               var data = snap.data() || {};
               var ouverts = data.sasUnlocks || {};
               if (ouverts[n]) {
@@ -511,7 +528,52 @@
       _showDejaOuvert();
       journal('🔓 Sas déjà ouvert sur cet appareil : le briefing du capitaine s’affiche directement.', 'success');
     } else {
-      cacherContenuProtege();
+      // ⏳ anti-flash : on ne plaque pas immédiatement la page scellée ; on affiche une vérification courte
+      // et on laisse 700 ms à l'écoute d'équipe (Firestore) pour éventuellement ouvrir le sas sans flash
+      (function(){
+        var _hero = $('gateHero');
+        var _alreadyHandled = false;
+        function _afficherVerif(){
+          if(_alreadyHandled) return;
+          if(isUnlocked()){ _alreadyHandled=true; _showDejaOuvert(); return; }
+          if(_hero){
+            try{
+              var _lock = _hero.querySelector('.sas-lock-ico');
+              if(_lock) _lock.textContent = '🔎';
+              var _t = _hero.querySelector('.sas-titre');
+              if(_t) _t.textContent = 'Vérification du sas…';
+              var _m = _hero.querySelector('.sas-msg');
+              if(_m) _m.innerHTML = 'On vérifie si ton équipage a déjà ouvert ce sas…';
+              var _box = document.getElementById('gateScanbox');
+              if(_box) _box.style.opacity = '.35';
+            }catch(e){}
+          }
+        }
+        _afficherVerif();
+        // si après 900 ms toujours scellé, on restaure la vraie scène scellée
+        setTimeout(function(){
+          if(_alreadyHandled) return;
+          if(epreuveDejaLancee()) return;
+          if(isUnlocked()){ _showDejaOuvert(); return; }
+          // vérifie si observer a déjà ouvert (gateHero déjà masqué)
+          var _h = $('gateHero');
+          if(_h && _h.hidden) return;
+          // restaure le vrai contenu scellé
+          try{
+            var _lock2 = _hero && _hero.querySelector('.sas-lock-ico');
+            if(_lock2) _lock2.textContent = '🔒';
+            var _t2 = _hero && _hero.querySelector('.sas-titre');
+            if(_t2) _t2.textContent = '⛔ Ce palier est verrouillé.';
+            var _m2 = _hero && _hero.querySelector('.sas-msg');
+            if(_m2) _m2.innerHTML = 'Déverrouillez le palier suivant grâce au <b>QR Code de la zone de recherche</b>.';
+            var _box2 = document.getElementById('gateScanbox');
+            if(_box2) _box2.style.opacity = '';
+          }catch(e){}
+          _showScelle();
+          journal('🔒 ' + LABEL + ' — zone scellée : QR Code requis.', 'info');
+        }, 900);
+        cacherContenuProtege();
+      })();
     }
 
     /* Expose l'écoute d'équipe : la page l'appelle quand elle affiche la
