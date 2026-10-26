@@ -1,0 +1,22 @@
+{
+  "name": "mission-nautilus-artefact",
+  "description": "Palier 3 — service serveur de sélection et de vérification de « l'artefact du Nautilus » (facultatif : le jeu fonctionne aussi en mode operateur sur un hébergement statique).",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions,firestore",
+    "shell": "firebase functions:shell",
+    "deploy": "firebase deploy --only functions:artefact",
+    "logs": "firebase functions:log artefact"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.1.0"
+  }
+}

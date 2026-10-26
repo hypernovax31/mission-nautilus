@@ -1,0 +1,104 @@
+# =====================================================================
+# Catalogue live — alimentation automatique depuis fnac.com
+#
+#   Le sync GitHub alimente le catalogue en live, la piste est choisie
+#   à l'ouverture du palier 3 (pas à la main).
+#
+#   - Source: fiches publiques fnac.com (rendues côté serveur)
+#   - Filtrage: En stock en magasin + Retrait gratuit sous 1H pour le
+#     magasin choisi par le matelot (notification du retrait 1h)
+#   - Sans stock/1h => ouvrage écarté, jamais proposé
+#   - Sélection: à l'ouverture du palier, ouvrirSession() tire au hasard
+#     parmi les cartouches utilisables du magasin (déterministe par équipe)
+#
+#   Déclenchement: quotidien 04:00 UTC + manuel. L'outil respecte
+#   robots.txt, cadence 3s, plafond 60 requêtes, user-agent identifié.
+# =====================================================================
+name: Catalogue live (Fnac → Firestore)
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # quotidien 04:00 UTC — avant ouverture magasins
+  workflow_dispatch:
+    inputs:
+      magasin:
+        description: 'Magasin cible (ex: cl57 = Labège)'
+        required: false
+        default: 'cl57'
+      max:
+        description: 'Plafond fiches lues'
+        required: false
+        default: '20'
+      dry_run:
+        description: 'Dry-run (ne publie pas)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalogue-live
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Vérifier liste magasins
+        run: node tools/sync-magasins-fnac.mjs --check --quiet || true
+
+      - name: Collecte catalogue (rayons Nautilus)
+        id: collecte
+        continue-on-error: true
+        env:
+          FNAC_SESSION_COOKIE: ${{ secrets.FNAC_SESSION_COOKIE }}
+        run: |
+          MAGASIN="${{ inputs.magasin || 'cl57' }}"
+          MAX="${{ inputs.max || '20' }}"
+          ARGS="--magasin $MAGASIN --max $MAX --anonyme"
+          if [ -n "$FNAC_SESSION_COOKIE" ]; then
+            echo "$FNAC_SESSION_COOKIE" > /tmp/fnac.cookie
+            ARGS="$ARGS --cookie-file /tmp/fnac.cookie"
+          fi
+          # Rayons liés à l'univers Nautilus — pages publiques (pas de SearchResult filtrée)
+          # L'outil refusera robots.txt interdit lui-même.
+          for rayon in \
+            "https://www.fnac.com/livre" \
+            "https://www.fnac.com/Atlas-et-cartes/n309" \
+            "https://www.fnac.com/Exploration/n99999"; do
+            ARGS="$ARGS --rayon $rayon"
+          done
+          node tools/sync-catalogue-artefacts.mjs $ARGS --dry-run | tee rapport-catalogue.json || true
+          rm -f /tmp/fnac.cookie
+
+      - name: Rapport
+        if: always()
+        run: |
+          echo "### Catalogue live — Fnac → Firestore" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          sed -n '/^{/,$p' rapport-catalogue.json 2>/dev/null | head -80 >> $GITHUB_STEP_SUMMARY || echo "aucun rapport" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Sélection automatique à l'ouverture du palier 3 : En stock + Retrait 1h pour le magasin du matelot." >> $GITHUB_STEP_SUMMARY
+
+      - name: Artefact rapport (anonyme)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-catalogue-live
+          path: rapport-catalogue.json
+          if-no-files-found: ignore

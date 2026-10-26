@@ -5,7 +5,14 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "firestore.rules"
+      "firestore.rules",
+      "**/functions/**",
+      "**/tools/**",
+      "**/docs/**",
+      "**/*.md",
+      "data/*.local.json",
+      "data/catalogue-artefacts.local.json",
+      "tools/fixtures/**"
     ],
     "rewrites": [
       {
@@ -16,5 +23,24 @@
   },
   "firestore": {
     "rules": "firestore.rules"
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "*.log",
+        "artefact-moteur.js",
+        "fnac-lecteur.js",
+        "magasins-fnac.json"
+      ],
+      "predeploy": [
+        "cp artefact-moteur.js functions/artefact-moteur.js",
+        "cp fnac-lecteur.js functions/fnac-lecteur.js",
+        "cp data/magasins-fnac.json functions/magasins-fnac.json"
+      ]
+    }
+  ]
 }

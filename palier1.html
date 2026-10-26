@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="anti-zoom.js?v=1"></script>
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
   <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil) : SVG
@@ -11,7 +12,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier1.css?v=51">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=2" defer></script>
@@ -23,6 +24,7 @@
   <!-- Records de résolution des paliers (écran de victoire) : écriture
        et lecture Firestore communes à tous les paliers. -->
   <script src="records-palier.js?v=2" defer></script>
+  <script src="palier-cinematic.js?v=4"></script>
 
 </head>
 <body>
@@ -76,7 +78,7 @@
         </div>
         <div id="identifyMsg" class="direct-resume-message" aria-live="polite"></div>
       </div>
-      <p class="direct-resume-new">Nouveau matelot ? <a href="index.html">Retourne à l'accueil pour embarquer et recevoir ton Code Matelot.</a></p>
+      <p class="direct-resume-new">Nouveau matelot ? <a href="index.html?ecoutille=0">Retourne à l'accueil pour embarquer et recevoir ton Code Matelot.</a></p>
     </div>
   </section>
 
@@ -216,7 +218,7 @@
    ============================================================= */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteField, onSnapshot, collection
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -337,11 +339,34 @@ const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
 /* ---------- INITIALISATION FIREBASE ---------- */
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-/* Authentification anonyme : elle ne change pas l'identité de jeu du
-   matelot, mais permet aux règles Firestore de refuser les écritures d'un
-   client totalement non authentifié. */
-signInAnonymously(auth).catch(e => console.warn('Firebase Auth anonyme indisponible:', e));
 const db = getFirestore(app);
+/* Authentification anonyme — le jeu attend qu'elle soit prête avant
+   d'écrire la session. Si Firebase refuse l'anonyme (provider désactivé
+   dans la console), le jeu reste jouable : les règles Firestore ci-jointes
+   autorisent temporairement les écritures sans auth (voir firestore.rules). */
+let _authReadyResolve = null;
+let _authReadyPromise = new Promise(function(r){ _authReadyResolve = r; });
+let _authDone = false;
+try{
+  onAuthStateChanged(auth, function(user){
+    if(user && !_authDone){ _authDone = true; if(_authReadyResolve){ _authReadyResolve(user); _authReadyResolve=null; } }
+    if(user) console.log('[Nautilus] Firebase auth prête:', user.uid);
+  });
+}catch(e){}
+function waitForAuth(timeoutMs){
+  timeoutMs = timeoutMs || 4500;
+  if(auth.currentUser) return Promise.resolve(auth.currentUser);
+  var fallback = new Promise(function(r){ setTimeout(function(){ r(auth.currentUser||null); }, timeoutMs); });
+  return Promise.race([_authReadyPromise, fallback]);
+}
+signInAnonymously(auth).then(function(cred){
+  if(!_authDone){ _authDone=true; if(_authReadyResolve){ _authReadyResolve(cred.user); _authReadyResolve=null; } }
+}).catch(function(e){
+  console.warn('Firebase Auth anonyme indisponible:', e && e.code, e && e.message);
+  // Si l'anonyme est désactivé (auth/admin-restricted-operation), on débloque quand même au bout de 2s
+  setTimeout(function(){ if(!_authDone){ _authDone=true; if(_authReadyResolve){ _authReadyResolve(auth.currentUser||null); _authReadyResolve=null; } } }, 1800);
+});
+setTimeout(function(){ if(!_authDone){ _authDone=true; if(_authReadyResolve) _authReadyResolve(auth.currentUser||null); } }, 5000);
 
 /* ---------- HELPERS GÉNÉRIQUES ---------- */
 const $ = (id) => document.getElementById(id);
@@ -498,8 +523,12 @@ async function getTeamRealtime(code, callback) {
 const TEST_MATELOT_CODE = 'ZZZZ-0000';
 
 function isTestMode() {
-  try { return (localStorage.getItem('nautilusMatelotCode') || '') === TEST_MATELOT_CODE; }
-  catch (e) { return false; }
+  try {
+    var c = (localStorage.getItem('nautilusMatelotCode') || '').toUpperCase().trim();
+    if (c === TEST_MATELOT_CODE) return true;
+    if (/[?&]m=zzzz-0000(?:&|$)/i.test(location.search)) return true;
+    return false;
+  } catch (e) { return /[?&]m=zzzz-0000(?:&|$)/i.test(location.search); }
 }
 
 /* Cette session appartient-elle au compte fantome ?
@@ -515,7 +544,8 @@ function isTestMode() {
    monde des vrais joueurs, ni les bloquer. */
 function isTestSession(session) {
   if (!session) return false;
-  return session.startedByMatelot === TEST_MATELOT_CODE
+  var c = session.startedByMatelot ? String(session.startedByMatelot).toUpperCase().trim() : '';
+  return c === TEST_MATELOT_CODE
       || session.isTest === true
       || session.startedByName === 'TEST';
 }
@@ -527,7 +557,8 @@ function isTestSession(session) {
    ne doit plus jamais faire apparaître TEST dans un équipage. */
 function isTestMember(m) {
   if (!m) return false;
-  return m.codeMatelot === TEST_MATELOT_CODE
+  var cm = m.codeMatelot ? String(m.codeMatelot).toUpperCase().trim() : '';
+  return cm === TEST_MATELOT_CODE
       || m.memberKey === 'TEST'
       || normalize(m.name || '') === 'TEST';
 }
@@ -709,6 +740,20 @@ function isMatelotLocked(team, key) {
   return !!(l && l.lockedUntil && new Date(l.lockedUntil).getTime() > Date.now());
 }
 function formatDate(iso) { return iso ? new Date(iso).toLocaleString('fr-FR') : '—'; }
+function formatRetourDate(iso){
+  if(!iso) return '—';
+  try{ const d=new Date(iso); return d.toLocaleDateString('fr-FR'); }catch(e){ return '—'; }
+}
+function formatRetourHeure(iso){
+  if(!iso) return '—';
+  try{
+    const d=new Date(iso);
+    const hh=String(d.getHours()).padStart(2,'0');
+    const mm=String(d.getMinutes()).padStart(2,'0');
+    const ss=String(d.getSeconds()).padStart(2,'0');
+    return hh+'h'+mm+'m'+ss+'s';
+  }catch(e){ return '—'; }
+}
 
 /* ---------- AUDIO WEB API ---------- */
 /* Le bouton "sonar" de la page d'accueil est l'interrupteur general du son
@@ -978,7 +1023,7 @@ window.Nautilus = {
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, getSessionBrute, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, remonteesDe, prochainePeineH,
-  getMatelotLock, isMatelotLocked, formatDate,
+  getMatelotLock, isMatelotLocked, formatDate, formatRetourDate, formatRetourHeure,
   getMissionConfig,
   isTestMode, isTestMember,
   isSoundEnabled, getAudioCtx, getMorseCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
@@ -1946,6 +1991,8 @@ window.Nautilus = {
   }
 
   function renderGameArea() {
+    // Si hors jeu, couper les bords clignotants
+    try{ if(window.NautilusCinematic && (!state.session || state.session.state !== 'playing')) window.NautilusCinematic.stopEdgeFlash(); }catch(e){}
     const body = $('gameBody');
     if (!body) return;
     const t = state.team;
@@ -2177,15 +2224,36 @@ window.Nautilus = {
 
   function bindIdleEvents() {
     $('takeLeadBtn')?.addEventListener('click', () => {
-      glisserVersEpreuve();
-      startNewSession();
-      setTimeout(glisserVersEpreuve, 350);
-      setTimeout(glisserVersEpreuve, 900);
+      var go = function(){
+        glisserVersEpreuve();
+        Promise.resolve().then(function(){ return startNewSession(); }).catch(function(e){
+          console.error('startNewSession échoué', e);
+          var _p = e && e.message && /Missing|insufficient|permission/i.test(e.message);
+          try{ N.showToast(_p ? "Permission Firestore refusée — publie firestore.rules ou active l'anonyme. Détail : " + e.message : 'Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 7500); }catch(_e){}
+          var b = $('takeLeadBtn');
+          if(b){ b.disabled = false; b.textContent = '⚓ PRENDRE LES COMMANDES'; }
+        });
+        setTimeout(glisserVersEpreuve, 350);
+        setTimeout(glisserVersEpreuve, 900);
+        if(window.NautilusCinematic && window.NautilusCinematic.autoWatchFromDom){
+          setTimeout(function(){ try{ window.NautilusCinematic.autoWatchFromDom(); }catch(e){} }, 650);
+        }
+      };
+      if(window.NautilusCinematic && window.NautilusCinematic.playCountdown){
+        window.NautilusCinematic.playCountdown(go);
+      } else {
+        go();
+      }
     });
   }
 
   async function startNewSession() {
-    if (!state.me || !state.team) return;
+    if (!state.me || !state.team){ try{ N.showToast('Équipage non chargé : recharge la page.', 'warning', 6000); }catch(_e){} return; }
+    // Attend l'auth anonyme (max 4,5s) — sinon Firestore renvoie Missing or insufficient permissions
+    try{ await waitForAuth(4500); }catch(_e){ console.warn('waitForAuth', _e); }
+    if(!auth.currentUser){
+      console.warn('[Nautilus] Aucun utilisateur Firebase — les règles doivent autoriser les écritures publiques (voir firestore.rules).');
+    }
     /* Garde-fou : un matelot bloque ne peut pas reprendre les commandes,
        meme en cliquant vite depuis un ecran affiche avant son blocage. */
     if (N.isMatelotLocked(state.team, state.me.memberKey)) {
@@ -2220,6 +2288,7 @@ window.Nautilus = {
       renderGameArea();
     };
 
+    try{
     if (state.session && state.session.state === 'playing') {
       rendreLaMain(`${state.session.startedByName || 'Un autre matelot'} est déjà aux commandes.`);
       return;
@@ -2287,6 +2356,15 @@ window.Nautilus = {
         lastEvent: 'session_started'
       };
       N.addActe('prend les commandes', 'info', state.me.name);
+      try{
+        var _mir = { team: state.teamCode, w: entry.w, hash: N.hashString(entry.w), word: entry.w, session: state.session, at: new Date().toISOString() };
+        localStorage.setItem('nautilusP1TestSession:'+state.teamCode, JSON.stringify(_mir));
+        localStorage.setItem('nautilusP1TestWord:'+state.teamCode, entry.w);
+        localStorage.setItem('nautilusP1TestSession', JSON.stringify(_mir));
+        localStorage.setItem('nautilusP1TestWord', entry.w);
+        // Aussi pour compat admin générique
+        localStorage.setItem('nautilusP1Session:'+state.teamCode, JSON.stringify(state.session));
+      }catch(e){}
       /* renderGameArea() et non onSessionUpdate() : cette derniere REMPLACE
          state.session par son argument, ce qui effacerait la session qu'on
          vient de fabriquer. */
@@ -2294,26 +2372,66 @@ window.Nautilus = {
       return;
     }
 
-    await N.createSession(state.teamCode, {
-      startedBy: state.me.clientId,
-      startedByName: state.me.name,
-      startedByMemberKey: state.me.memberKey,
-      /* Signe la session avec le Code Matelot de celui qui l'a lancee.
-         Sert de garde-fou : une session du compte fantome devient ainsi
-         reconnaissable et sera ignoree par les vrais joueurs. */
-      startedByMatelot: N.getCurrentMatelotCode() || '',
-      wordLength: entry.w.length,
-      wordHash: N.hashString(entry.w),
-      listensLeft: 3,
-      attempts: 0,
-      errors: 0,
-      maxErrors: 3,
-      timeLimit: 210,        /* 3 min 30 */
-      hintsRevealed: indicesAcquis,
-      startedWordHint: entry.h,
-      lastEvent: 'session_started'
-    });
-    N.addActe('prend les commandes', 'info', state.me.name);
+    try{
+      await N.createSession(state.teamCode, {
+        startedBy: state.me.clientId,
+        startedByName: state.me.name,
+        startedByMemberKey: state.me.memberKey,
+        startedByMatelot: N.getCurrentMatelotCode() || '',
+        wordLength: entry.w.length,
+        wordHash: N.hashString(entry.w),
+        listensLeft: 3,
+        attempts: 0,
+        errors: 0,
+        maxErrors: 3,
+        timeLimit: 210,
+        hintsRevealed: indicesAcquis,
+        startedWordHint: entry.h,
+        lastEvent: 'session_started'
+      });
+      N.addActe('prend les commandes', 'info', state.me.name);
+      // Rendu optimiste : on n'attend pas l'aller-retour Firestore temps réel — l'écran apparaît immédiatement.
+      // La session temps réel viendra écraser cet état local dès qu'elle arrive, sans scintillement.
+      try{
+        state.session = {
+          teamCode: state.teamCode,
+          state: 'playing',
+          startedAt: new Date().toISOString(),
+          startedBy: state.me.clientId,
+          startedByName: state.me.name,
+          startedByMemberKey: state.me.memberKey,
+          startedByMatelot: N.getCurrentMatelotCode() || '',
+          wordLength: entry.w.length,
+          wordHash: N.hashString(entry.w),
+          listensLeft: 3,
+          attempts: 0,
+          errors: 0,
+          maxErrors: 3,
+          timeLimit: 210,
+          hintsRevealed: indicesAcquis,
+          startedWordHint: entry.h,
+          lastEvent: 'session_started'
+        };
+        renderGameArea();
+      }catch(_e){}
+    }catch(e){
+      console.error('createSession échoué', e);
+      // Le bouton était resté en "Prise de commandes…" — on le rend et on explique.
+      var _btn = $('takeLeadBtn');
+      if(_btn){ _btn.disabled = false; _btn.textContent = '⚓ PRENDRE LES COMMANDES'; }
+      var _isPerm = e && e.message && /Missing|insufficient|permission/i.test(e.message);
+      try{ N.showToast(_isPerm ? "Impossible de démarrer : permission Firestore refusée. Active l'anonyme dans Firebase Console > Authentication > Sign-in method, OU publie le firestore.rules du dépôt (Firestore > Règles > Publier). Détail : " + e.message : 'Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 8000); }catch(_e2){}
+      throw e;
+    }
+    }catch(e){
+      console.error('startNewSession outer', e);
+      var _b2 = $('takeLeadBtn');
+      if(_b2){ _b2.disabled = false; _b2.textContent = '⚓ PRENDRE LES COMMANDES'; }
+      var _isPerm2 = e && e.message && /Missing|insufficient|permission/i.test(e.message);
+      try{ N.showToast(_isPerm2 ? "Impossible de démarrer : permission Firestore refusée. Active l'anonyme dans Firebase Console > Authentication, OU publie le firestore.rules du dépôt. Détail : " + e.message : 'Impossible de démarrer la partie : ' + (e && e.message ? e.message : e), 'danger', 8000); }catch(_e3){}
+      // On laisse aussi la vue se rafraîchir pour ne pas rester bloqué
+      try{ renderGameArea(); }catch(_e4){}
+    }
   }
 
   /* === ÉCRAN : joueur actif === */
@@ -2440,13 +2558,14 @@ window.Nautilus = {
   }
 
   function bindPlayerEvents() {
-    /* Timer live */
+    /* Timer live — bords qui clignotent à <10s via NautilusCinematic */
     if (state.timerHandle) clearInterval(state.timerHandle);
     state.timerHandle = setInterval(() => {
       if (!state.session) return;
       const rem = computeRemaining(state.session);
       majChronoTitre(rem, 'Temps restant');
-      if (rem <= 0) onTimeOut();
+      if(window.NautilusCinematic) try{ window.NautilusCinematic.updateEdgeFlash(rem); }catch(e){}
+      if (rem <= 0){ if(window.NautilusCinematic) try{ window.NautilusCinematic.stopEdgeFlash(); }catch(e){}; onTimeOut(); }
     }, 500);
 
     /* Listen button */
@@ -3002,6 +3121,17 @@ window.Nautilus = {
     /* En memoire aussi : en partie d'essai rien n'est ecrit en base, et en
        partie reelle cela evite d'attendre l'aller-retour reseau. */
     state.session = { ...(state.session || {}), ...patch };
+    try{
+      if(state.isTest){
+        var _mir2 = { team: state.teamCode, w: state.word, word: state.word, hash: state.session ? state.session.wordHash : N.hashString(state.word||''), session: state.session, at: new Date().toISOString() };
+        localStorage.setItem('nautilusP1TestSession:'+state.teamCode, JSON.stringify(_mir2));
+        localStorage.setItem('nautilusP1Session:'+state.teamCode, JSON.stringify(state.session));
+        localStorage.setItem('nautilusP1TestSession', JSON.stringify(_mir2));
+      } else {
+        // Pour les parties réelles aussi, miroir pour admin local
+        try{ localStorage.setItem('nautilusP1Session:'+state.teamCode, JSON.stringify(state.session)); }catch(e){}
+      }
+    }catch(e){}
 
     N.addActe('demande un indice', 'warning', state.me.name);
     showFloatingHint('🆘 Indice débloqué : ' + buildHintContent(idx), 10000);
@@ -3154,7 +3284,9 @@ window.Nautilus = {
     if (state.timerHandle) clearInterval(state.timerHandle);
     state.timerHandle = setInterval(() => {
       if (!state.session) return;
-      majChronoTitre(computeRemaining(state.session), 'Temps restant');
+      var _rem = computeRemaining(state.session);
+      majChronoTitre(_rem, 'Temps restant');
+      if(window.NautilusCinematic) try{ window.NautilusCinematic.updateEdgeFlash(_rem); }catch(e){}
     }, 500);
     /* sendSpectatorHint() a ete SUPPRIMEE : un spectateur ne peut plus
        envoyer d'indice. Seul le matelot aux commandes en demande, pour
@@ -3299,7 +3431,7 @@ window.Nautilus = {
           <p class="won-direction-line">Sur place, repérez le <b>QR Code</b> : il ouvre le sas.</p>
         </div>
         <p><a class="won-next-btn" href="${esc(url)}">⏭️ ALLER AU SAS DU ${esc(nextLabel.toUpperCase())}</a></p>
-        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
+        <a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a>
       </div>
     `;
   }
@@ -3327,6 +3459,7 @@ window.Nautilus = {
   }
 
   /* === ÉCRAN : retour en surface après une tentative ===
+     TEXTE D'ERREUR (tous paliers) : « RETOUR EN SURFACE — REMONTÉE FORCÉE durant X h ! » + « ⏱ Retour le « date » à « heure » » — date/heure = moment remontée + durée barème (calcul dynamique, jamais 26/10/2026 figé)
      REFONTE « page d'erreurs » : TOUTE la largeur du bloc, trois lignes
      pleines et courtes à la place des longs paragraphes et des deux
      cartes côte à côte (illisibles sur téléphone). À l'essentiel :
@@ -3342,20 +3475,21 @@ window.Nautilus = {
     /* Les lignes sont CONSTRUITES PAR LA MEME FONCTION que la page
        « Blocage personnel » : formulation identique, jamais de double
        maintenance (lignesBlocageHtml). */
+    const _hoursKicker = Math.max(1, Number(monLock?.lastLockHours || 1)); // durée barème au moment de la remontée
     const lignes = lignesBlocageHtml(t, monLock, 'echec');
     return `
       <section class="lock-screen lock-screen--lost" aria-live="polite">
         <div class="lock-heading">
           <span class="lock-heading-icon" aria-hidden="true">↟</span>
           <div>
-            <p class="lock-kicker">RETOUR EN SURFACE</p>
+            <p class="lock-kicker">RETOUR EN SURFACE — <strong>REMONTÉE FORCÉE durant ${esc(String(_hoursKicker))} h !</strong></p>
             <h2>Remontée forcée !</h2>
           </div>
         </div>
         <p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la plongée.</p>
-        <div class="lock-attempt"><span aria-hidden="true">◌</span>${esc(attemptLabel)}</div>
+        <div class="lock-attempt"><span aria-hidden="true">❌</span><strong>3 erreurs sur cette tentative</strong></div>
         <div class="lock-lignes">${lignes}</div>
-        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
+        <a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a>
       </section>
     `;
   }
@@ -3381,6 +3515,13 @@ window.Nautilus = {
        cas imprévu) divergeait, on préfère l'afficher telle qu'elle sera
        plutôt que de promettre une durée fausse. */
     const suivanteAffichee = Math.max(suivante, N.prochainePeineH(monLock));
+    // ⏱ Retour le « date » à « heure » — CALCUL DYNAMIQUE : lockedUntil = moment de la remontée (blockedAt) + durée barème (lastLockHours), pas date figée
+    // Si lockedUntil manquait, on le déduit de blockedAt + lastLockHours pour ne jamais afficher 0 h ni date statique
+    const _lockedUntilISO = monLock.lockedUntil || (monLock.blockedAt && monLock.lastLockHours ? new Date(new Date(monLock.blockedAt).getTime() + Number(monLock.lastLockHours)*3600e3).toISOString() : monLock.lockedUntil);
+    const _dateRetour = N.formatRetourDate ? N.formatRetourDate(_lockedUntilISO) : N.formatDate(_lockedUntilISO);
+    const _heureRetour = N.formatRetourHeure ? N.formatRetourHeure(_lockedUntilISO) : '';
+    const _retourTxt = _heureRetour ? `Retour le « ${esc(_dateRetour)} » à « ${esc(_heureRetour)} ».` : `Retour <b>${esc(N.formatDate(monLock.lockedUntil))}</b>.`;
+
     if (variante === 'indice') {
       return `
         <div class="lock-ligne">
@@ -3395,17 +3536,15 @@ window.Nautilus = {
     return `
         <div class="lock-ligne lock-ligne--pause">
           <span class="lock-ligne-ico" aria-hidden="true">⏱</span>
-          <span>En surface : <b>${esc(String(hours))} h</b> — retour <b>${esc(N.formatDate(monLock.lockedUntil))}</b>.</span>
+          <span>Retour le « ${esc(_dateRetour)} » à « ${esc(_heureRetour)} ».</span>
         </div>
         <div class="lock-ligne lock-ligne--relais">
           <span class="lock-ligne-ico" aria-hidden="true">⚓</span>
-          <span>${noms
-            ? `<b>${noms}</b> ${relais.length > 1 ? 'peuvent' : 'peut'} reprendre <b>dès maintenant</b> (risque ${esc(String(relayHours))} h).`
-            : `La barre est libre : <b>un autre matelot</b> peut reprendre <b>dès maintenant</b>.`}</span>
+          <span>La barre est libre : un autre matelot peut reprendre dès maintenant.</span>
         </div>
         <div class="lock-ligne lock-ligne--next">
           <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
-          <span>Prochaine remontée, échec ou indice : <b>${esc(String(suivanteAffichee))} h</b> en surface (compteur personnel).</span>
+          <span>Prochain échec : « ${esc(String(suivanteAffichee))} » h en surface.</span>
         </div>`;
   }
 
@@ -3484,7 +3623,7 @@ window.Nautilus = {
         <p class="lock-lead">${lead}</p>
         ${parIndice && l.lockedUntil ? lockResumeCard(l, 'Prochaine prise de commande possible') : ''}
         <div class="lock-lignes">${lignesBlocageHtml(t, l, parIndice ? 'indice' : 'echec')}</div>
-        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
+        <a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a>
       </section>
     `;
   }
@@ -3571,6 +3710,8 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=4" defer></script>
+<script src="fnac-lecteur.js?v=1" defer></script>
+<script src="admin-artefact.js?v=22" defer></script>
 <script src="admin-button.js?v=26" type="module"></script>
 </body>
 </html>

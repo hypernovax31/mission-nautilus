@@ -86,6 +86,19 @@
       + '</div>';
     var btn = document.getElementById(ctaId);
     if (btn && typeof cfg.onDepart === 'function') {
+      var origDepart = cfg.onDepart;
+      var departAvecCinematic = function(ev){
+        if(window.NautilusCinematic && window.NautilusCinematic.playCountdown){
+          window.NautilusCinematic.playCountdown(function(){
+            try{ origDepart(ev); }catch(e){}
+            if(window.NautilusCinematic.autoWatchFromDom){
+              setTimeout(function(){ try{ window.NautilusCinematic.autoWatchFromDom(); }catch(e){} }, 650);
+            }
+          });
+        } else {
+          try{ origDepart(ev); }catch(e){}
+        }
+      };
       btn.addEventListener('click', function (ev) {
         /* Clics répétés d'un joueur impatient : le départ ne peut pas
            partir deux fois (même réflexe que le « PRENDRE LES
@@ -94,8 +107,8 @@
            il resterait mort. */
         if (btn.disabled) return;
         btn.disabled = true;
-        try { cfg.onDepart(ev); } finally {
-          setTimeout(function () { btn.disabled = false; }, 3000);
+        try { departAvecCinematic(ev); } finally {
+          setTimeout(function () { btn.disabled = false; }, 4200);
         }
       });
     }

@@ -1,0 +1,91 @@
+name: Surveillance Palier 3 — par équipe (Fnac live)
+
+# Robot GitHub qui ne se déclenche QUE quand une équipe arrive au Palier 3
+# et s'arrête quand elle passe au Palier 4. Vrai pour chaque équipe.
+#
+# Déclencheurs :
+#   - repository_dispatch type "palier3-entree" (appelé depuis 1831411720.html via Firestore → ce workflow poll)
+#   - schedule toutes les 1h : regarde qui est en Palier 3 et fait 1 check poli par équipe
+#   - manuel pour test
+
+on:
+  repository_dispatch:
+    types: [palier3-entree, palier3-surveillance]
+  schedule:
+    - cron: '0 * * * *'  # toutes les 1h — ne fait quelque chose que s'il y a une équipe en P3
+  workflow_dispatch:
+    inputs:
+      team:
+        description: 'Équipe à vérifier (ex: NEMO) — vide = toutes'
+        required: false
+        default: ''
+      magasin:
+        description: 'Magasin à vérifier (ex: cl57) — vide = celui de l''équipe'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry-run (ne publie pas)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: surveillance-palier3
+  cancel-in-progress: false
+
+jobs:
+  surveiller:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Robot Palier 3 — vérification Fnac par équipe
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ -n "${{ inputs.team }}" ]; then ARGS="$ARGS --team=${{ inputs.team }}"; fi
+          if [ -n "${{ inputs.magasin }}" ]; then ARGS="$ARGS --magasin=${{ inputs.magasin }}"; fi
+          # payload repository_dispatch
+          TEAM_PAYLOAD="${{ github.event.client_payload.team }}"
+          MAGASIN_PAYLOAD="${{ github.event.client_payload.magasin }}"
+          if [ -n "$TEAM_PAYLOAD" ]; then ARGS="$ARGS --team=$TEAM_PAYLOAD"; fi
+          if [ -n "$MAGASIN_PAYLOAD" ]; then ARGS="$ARGS --magasin=$MAGASIN_PAYLOAD"; fi
+          node tools/robot-palier3.mjs $ARGS 2>&1 | tee robot-palier3.log
+
+      - name: Résumé
+        if: always()
+        run: |
+          echo "### 🤖 Surveillance Palier 3 — par équipe" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Se déclenche à l'arrivée au Palier 3, s'arrête au Palier 4, pour chaque équipe." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f robot-palier3.log ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat robot-palier3.log | tail -n 60 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Politesse : robots.txt, 3s entre requêtes, plafond 20, arrêt au mur anti-bot." >> $GITHUB_STEP_SUMMARY
+
+      - name: Log artefact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surveillance-palier3-log
+          path: robot-palier3.log
+          if-no-files-found: ignore

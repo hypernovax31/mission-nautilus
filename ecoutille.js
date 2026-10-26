@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « garde v16 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 014041 »
 
    Ce que fait ce fichier
    ----------------------
@@ -13,10 +13,10 @@
         marine, bulles) pendant que le film tourne ; en haut, la jauge
         d'oxygène se vide au rythme réel de l'équipage pendant que le
         relèvement annonce le retour du signal ;
-     3. le visiteur frappe le BOUTON ROUGE « START » ;
-     4. le projecteur du Nautilus nous éblouit : la lumière s'ouvre jusqu'à
-        remplir l'écran, un éclair passe, puis son fondu découvre l'accueil —
-        qui s'anime pendant que la lumière se retire ;
+     3. le visiteur frappe le BOUTON ROUGE « OPEN » ;
+     4. on plonge DANS le hublot : zoom cinématographique à l'intérieur du verre,
+        flou progressif, assombrissement abyssal et letterbox — comme si l'on
+        s'enfonçait sous l'océan. Lueur azur diffuse, puis fondu qui révèle l'accueil ;
      5. l'accueil du jeu est là, déjà en marche.
 
    RIEN QUI PUISSE CASSER — la leçon des versions précédentes
@@ -73,18 +73,18 @@
   const CLE_SESSION = 'nautilusEcoutille';        // ouverte pendant cette session
   const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
-  /* Calendrier de la sortie, en millisecondes après le clic. Cinq temps :
+  /* Calendrier de la plongée, en millisecondes après le clic. Cinq temps :
        · 130 ms — la plongée s'engage : le décor avance, le souffle monte ;
-       · 540 ms — le projecteur s'allume (l'éblouissement s'ouvre) ;
-       · 1050 ms — l'éclair de l'impact ;
-       · 1500 ms — la lumière se retire : c'est le fondu qui révèle l'accueil ;
+       · 540 ms — zoom dans le hublot + premier voile abyssal (flou léger) ;
+       · 1050 ms — on s'enfonce : flou progressif + letterbox + lueur azur ;
+       · 1500 ms — l'abyss se referme : fondu qui révèle l'accueil ;
        · 2400 ms — la page de garde a fini sa vie, on la retire du DOM. */
   const T = {
-    plongee:  130,
-    eclat:    540,
-    impact:  1050,
-    sortie:  1500,
-    retrait: 2400
+    plongee:  130,   // léger avance — GPU déjà prêt
+    eclat:    540,   // voile abyssal
+    impact:  1080,   // +30 ms pour laisser l'éclat finir (560 ms transition)
+    sortie:  1650,   // +150 ms pour laisser l'impact (620 ms) respirer
+    retrait: 2650    // +250 ms pour le fondu global 480 ms
   };
 
   /* Tous les navigateurs du parc savent le dire ; le test est protégé pour
@@ -341,9 +341,29 @@
     if(_cadreur) clearTimeout(_cadreur);
     _cadreur = null;
   }
+  // Vraie jauge O₂ (mission réelle) — appelée depuis index.html quand Firestore répond
+  // ratio01 : 0..1 (1 = 100% → 6000 L), litres : optionnel, sinon déduit de ratio
+  window.nautilusSetEcoutilleO2 = function(ratio01, litres){
+    arreterCadreur();
+    const ratio = Math.max(0, Math.min(1, Number(ratio01) || 0));
+    if(o2Niveau && ratio !== _o2Echelle){
+      _o2Echelle = ratio;
+      o2Niveau.style.transform = 'scaleX(' + ratio.toFixed(4) + ')';
+    }
+    let lit = litres;
+    if(lit == null && ratio01 != null) lit = Math.round(O2_RESERVE_L * ratio);
+    if(o2Valeur && lit != null){
+      const arrondi = Math.round(lit);
+      if(arrondi !== _o2Litres){
+        _o2Litres = arrondi;
+        o2Valeur.textContent = milliers(arrondi) + ' L';
+      }
+    }
+  };
+  window.nautilusStopEcoutilleO2 = arreterCadreur;
 
   /* ------------------------------------------------------------------ *
-   * 5. LA SORTIE : le projecteur nous éblouit
+   * 5. LA PLONGÉE : zoom dans le hublot + flou d'abysses
    * ------------------------------------------------------------------ */
   let _ouverte = false;
 
@@ -375,22 +395,29 @@
     }
 
     /* — la plongée s'engage : le décor avance, l'eau s'engouffre — */
-    plusTard(() => {
+    // rAF double pour promouvoir les calques GPU AVANT la première transition
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       racine.classList.add('ec-plongee');
+    }));
+    plusTard(() => {
+      // re-promotion avant l'éclat pour éviter le jank du premier scale
+      void racine.offsetWidth;
+      racine.classList.add('ec-eclat');
+      sonEcho();
+    }, ms(T.eclat));
+    // on pousse le souffle un peu après le début de plongée pour ne pas bloquer le thread
+    plusTard(() => {
       sonSouffle(ms(1400));
       if(start) start.setAttribute('aria-disabled', 'true');
     }, ms(T.plongee));
 
-    /* — le projecteur s'allume — */
+    /* — on s'enfonce : flou hollywoodien + letterbox — */
     plusTard(() => {
-      racine.classList.add('ec-eclat');
-      sonEcho();
-    }, ms(T.eclat));
+      void racine.offsetWidth; // force reflow : la transition précédente est commitée
+      racine.classList.add('ec-impact');
+    }, ms(T.impact));
 
-    /* — l'éclair de l'impact — */
-    plusTard(() => racine.classList.add('ec-impact'), ms(T.impact));
-
-    /* — la lumière se retire : c'est ce fondu qui révèle l'accueil — */
+    /* — l'abyss se referme : fondu qui révèle l'accueil — */
     plusTard(reveler, ms(T.sortie));
 
     /* — puis la page de garde disparaît pour de bon — */

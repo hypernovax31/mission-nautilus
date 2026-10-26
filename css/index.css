@@ -25,6 +25,14 @@
       --dangerb:#efb2ac;        /*  et son contour */
       --successbg:#effff7;      /* fond de reussite */
       --successb:#aee5ca;       /*  et son contour */
+      /* Échelle d'espaces équidistants — tout le site respire sur la même grille */
+      --space-xs: clamp(6px, 1vw, 10px);
+      --space-sm: clamp(10px, 1.6vw, 14px);
+      --space-md: clamp(14px, 2vw, 20px);
+      --space-lg: clamp(18px, 2.6vw, 26px);
+      --space-xl: clamp(24px, 3.2vw, 32px);
+      --gutter: var(--space-md);
+      --gutter-inner: var(--space-md);
     }
     *{box-sizing:border-box}
     /* PROTECTION-COPIE (desactivee) : selection de texte libre.
@@ -249,10 +257,10 @@
     }
     header{
       position:relative;
-      min-height:400px;
+      min-height:auto;
       color:#fff;
-      padding:34px clamp(20px,4vw,52px) 64px;
-      border-bottom:10px solid var(--fnac);
+      padding:var(--space-md) var(--space-lg);
+      border-bottom:4px solid var(--fnac);
       background:
         linear-gradient(135deg,rgba(0,0,0,.72),rgba(3,17,31,.74)),
         radial-gradient(circle at 75% 35%,rgba(142,231,255,.18),transparent 28%);
@@ -554,25 +562,20 @@
       z-index:2;
       width:100%;
       max-width:none;
-      margin:0 auto 24px;
-      padding:28px clamp(14px,2.4vw,44px) 0;
+      margin:0 auto var(--space-md);
+      padding:var(--gutter) var(--gutter) 0;
       display:grid;
-      gap:24px;
+      gap:var(--gutter);
     }
     .card{
       background:rgba(255,255,255,.97);
-      /* Liseré d'or UNIQUE pour tous les blocs du site : celui du bloc
-         ORDRE DE MISSION (.intro-card). L'ancien filet blanc translucide,
-         le cyan de la jauge et le rouge des abysses sont remplacés par
-         cette même ligne ambrée rgba(245,176,39,.28). */
       border:1px solid rgba(245,176,39,.28);
-      border-radius:28px;
-      box-shadow:0 22px 48px rgba(0,0,0,.24);
+      border-radius:20px;
+      box-shadow:0 12px 28px rgba(0,0,0,.18);
       overflow:hidden;
     }
     .card h2{
       margin:0;
-      /* Bronze ambré poli : reflet diagonal + patine + métal brossé, texte argent */
       background:
         linear-gradient(115deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,0) 32%, rgba(255,255,255,.06) 72%),
         radial-gradient(130% 90% at 8% 12%, rgba(48,22,2,.52), transparent 48%),
@@ -580,23 +583,15 @@
         repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, rgba(0,0,0,.09) 1px 3px),
         linear-gradient(180deg, #b57318 0%, #8f4f0a 30%, #663606 58%, #452404 82%, #7c4808 100%);
       color:#f2f6f9;
-      padding:18px clamp(18px,3vw,26px);
-      font-size:clamp(20px,2.6vw,24px);
+      padding:var(--space-sm) var(--gutter-inner);
+      font-size:clamp(18px,2.4vw,22px);
       font-weight:700;
       letter-spacing:.06em;
       line-height:1.18;
-      /* Argent métallique : lueur au-dessus, ombre portée dessous (relief + contraste) */
-      text-shadow:
-        0 1px 2px rgba(0,0,0,.65),
-        0 -1px 0 rgba(255,255,255,.22);
-      /* Arête claire en haut, tranche sombre en bas */
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.28),
-        inset 0 -3px 0 rgba(30,14,0,.65),
-        inset 0 0 18px rgba(0,0,0,.2),
-        0 2px 5px rgba(0,0,0,.35);
+      text-shadow:0 1px 2px rgba(0,0,0,.65), 0 -1px 0 rgba(255,255,255,.22);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -3px 0 rgba(30,14,0,.65), inset 0 0 18px rgba(0,0,0,.2), 0 2px 5px rgba(0,0,0,.35);
     }
-    .body{padding:clamp(18px,3vw,28px)}
+    .body{padding:var(--gutter-inner)}
 
     /* ===== JOURNAL DE BORD DU COCKPIT =====
        Le titre etait un simple texte de 11 px en majuscules, plus petit
@@ -844,7 +839,7 @@
 
     @media(max-width:900px){.boarding-grid{grid-template-columns:1fr 180px}.boarding-action{grid-column:1/-1}header{min-height:auto;padding-bottom:42px}header:before,header:after{opacity:.12}.oxygen-bottom{align-items:flex-start}.countdown{white-space:normal}.countdown-block{align-items:flex-start;margin-left:0}.countdown-label{text-align:left}}
     @media(max-width:520px){.sonar-loader{text-align:center;padding-left:8px;padding-right:8px}.sonar-screen{width:145px;height:145px;min-width:145px;flex-basis:145px}.sonar-text{font-size:clamp(12px,3.4vw,14px);letter-spacing:.015em}}
-    @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:26px 14px 36px}.hero-title{font-size:clamp(44px,13vw,72px);line-height:1.04;-webkit-text-stroke:2px #050505}.hero-line{margin-top:18px;font-size:clamp(20px,6vw,30px);line-height:1.22}.hero-kicker{font-size:var(--fs-tiny);line-height:1.25;align-items:flex-start}main{padding:18px 10px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}button{width:100%;margin-right:0}.team{padding:14px}}
+    @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:var(--gutter) var(--gutter-inner)}.hero-title{font-size:clamp(38px,11vw,64px);line-height:1.04;-webkit-text-stroke:1.5px #050505}.hero-line{margin-top:var(--space-sm);font-size:clamp(18px,5vw,26px);line-height:1.22}.hero-kicker{font-size:var(--fs-tiny);line-height:1.25;align-items:flex-start}main{padding:var(--gutter) var(--gutter) 0;gap:var(--gutter)}.card{border-radius:18px}.body{padding:var(--gutter-inner)}.grid{grid-template-columns:1fr;gap:var(--gutter)}.grid>div{min-height:auto}button{width:100%;margin-right:0}.team{padding:var(--gutter-inner)}}
 
     /* ===== Correctifs responsive : anti-chevauchement ===== */
     /* Le texte des hublots ne déborde jamais de son cercle */
@@ -1095,24 +1090,30 @@
       .oxygen-meter-top strong{font-size:clamp(20px,7vw,32px)}
       .countdown{font-size:clamp(22px,8vw,34px)}
     }
+    /* Panoramique — espaces strictement équidistants (même grille partout) */
     @media (orientation:landscape) and (max-height:620px){
-      header{min-height:auto;padding:18px 22px 26px}
-      .brand{font-size:18px;margin-bottom:8px}
-      .hero-kicker{font-size:var(--fs-tiny);padding:6px 10px}
-      .hero-title{margin-top:10px;font-size:clamp(38px,8vh,72px);line-height:.9;max-width:100vw}
-      .hero-line{margin-top:10px;font-size:clamp(18px,4.4vh,30px);line-height:1.1}
-      .hero-actions{margin-top:22px;gap:14px}
-      .hero-cta{padding:11px 16px;min-height:42px;font-size:13px}
-      main{padding-top:14px;gap:14px;margin-bottom:60px}
-      .card{border-radius:18px}.card h2{padding:12px 16px;font-size:18px}.body{padding:14px}
-      .intro-text{font-size:14px;line-height:1.45;padding:12px}
-      .oxygen-meter{padding:14px}.oxygen-tube{height:28px}.oxygen-meter-top strong{font-size:clamp(18px,6.5vw,26px)}.countdown{font-size:30px}
-      .sonar-screen{width:120px;height:120px;min-width:120px;flex-basis:120px}.sonar-loader{padding:18px 12px}
+      :root{--gutter:var(--space-sm); --gutter-inner:var(--space-sm);}
+      header{padding:var(--gutter) var(--gutter) !important; min-height:auto !important}
+      .brand{font-size:17px; margin-bottom:var(--space-xs)}
+      .hero-kicker{font-size:var(--fs-tiny); padding:var(--space-xs) var(--space-sm)}
+      .hero-title{margin-top:var(--space-xs); font-size:clamp(32px,7vh,62px); line-height:.92; max-width:100vw}
+      .hero-line{margin-top:var(--space-xs); font-size:clamp(16px,3.8vh,26px); line-height:1.15}
+      .hero-actions{margin-top:var(--space-sm); gap:var(--space-sm)}
+      .hero-cta{padding:var(--space-xs) var(--space-sm); min-height:38px; font-size:13px}
+      main{padding:var(--gutter) var(--gutter) 0 !important; gap:var(--gutter) !important; margin-bottom:var(--gutter)}
+      .card{border-radius:16px} .card h2{padding:var(--space-sm) var(--gutter-inner); font-size:17px} .body{padding:var(--gutter-inner)}
+      .intro-text{font-size:14px; line-height:1.45; padding:var(--space-sm)}
+      .oxygen-meter{padding:var(--gutter-inner)} .oxygen-tube{height:28px} .oxygen-meter-top strong{font-size:clamp(18px,6vw,26px)} .countdown{font-size:28px}
+      .sonar-screen{width:110px; height:110px; min-width:110px; flex-basis:110px} .sonar-loader{padding:var(--gutter-inner)}
     }
     @media (orientation:landscape) and (max-height:430px){
-      .hero-title{font-size:clamp(34px,10vh,56px)}
-      .hero-line{font-size:clamp(16px,5vh,24px)}
-      .sonar-screen{width:96px;height:96px;min-width:96px;flex-basis:96px}
+      :root{--gutter:var(--space-xs); --gutter-inner:var(--space-xs);}
+      .hero-title{font-size:clamp(28px,9vh,48px)}
+      .hero-line{font-size:clamp(14px,4.5vh,20px)}
+      .sonar-screen{width:90px; height:90px; min-width:90px; flex-basis:90px}
+      main{gap:var(--gutter) !important; padding:var(--gutter) !important}
+      .card h2{padding:var(--space-xs) var(--gutter-inner)}
+      .body{padding:var(--gutter-inner)}
     }
 
     /* Correction hublots : cercles parfaitement ronds + contenu centré */
@@ -2415,3 +2416,648 @@ h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{
 img,video,svg,canvas,iframe{max-width:100%;height:auto;}
 button,input,select,textarea{max-width:100%;box-sizing:border-box;}
 body{overflow-wrap:break-word;}
+
+/* =====================================================================
+/* =====================================================================
+   PC — DASHBOARD CORRIGÉ : une seule fenêtre sans chevauchement
+   Blocs aérés, textes lisibles (≥13px), grille 3 colonnes équilibrée.
+   Header compact mais lisible (160px), main en 100vh flex, cartes avec
+   scroll interne uniquement si nécessaire. Aucune déformation.
+   ===================================================================== */
+@media (min-width: 1100px) {
+  html { background:#020b14; }
+  body { overflow-x:clip; }
+  .ocean-wallpaper {
+    position:fixed !important; inset:0; z-index:0 !important; opacity:1 !important;
+    background:linear-gradient(180deg, rgba(3,18,33,.74) 0%, rgba(3,18,33,.48) 28%, rgba(3,18,33,.88) 100%), url('../assets/fond-nautilus.jpg') center 18% / cover no-repeat;
+  }
+  header, main, .site-footer { position:relative; z-index:1; }
+
+  /* Header : espacements strictement équidistants */
+  body > header {
+    padding:var(--space-md) var(--space-lg) !important;
+    text-align:center !important;
+    display:block !important;
+    background:linear-gradient(135deg, rgba(2,14,26,.92), rgba(6,30,50,.82)) !important;
+    border-bottom:1px solid rgba(245,176,39,.26) !important;
+  }
+  body > header::before, body > header::after { display:none !important; }
+  body > header .hero-meta { justify-content:center !important; gap:8px !important; margin:0 !important; }
+  body > header .hero-meta .brand { font-size:14px !important; letter-spacing:.08em !important; }
+  body > header .hero-meta .hero-kicker { font-size:11px !important; padding:4px 10px !important; }
+  body > header .hero-title { font-size:clamp(34px,3vw,46px) !important; margin:8px auto 0 !important; width:auto !important; text-align:center !important; line-height:1 !important; -webkit-text-stroke:1.5px #050505 !important; }
+  body > header .hero-line { margin:6px auto 0 !important; text-align:center !important; max-width:54ch !important; font-size:15px !important; line-height:1.3 !important; }
+  body > header .hero-actions { justify-content:center !important; gap:10px !important; margin:12px auto 0 !important; flex-wrap:wrap !important; }
+  body > header .hero-actions .hero-cta { display:inline-flex !important; min-width:160px !important; padding:10px 18px !important; font-size:12px !important; border-radius:999px !important; min-height:36px !important; }
+
+  .top-bar {
+    top:10px !important; right:50% !important; left:auto !important; transform:translateX(50%) !important;
+    width:auto !important; max-width:none !important; gap:8px !important;
+    background:rgba(6,22,38,.70); backdrop-filter:blur(10px); border:1px solid rgba(142,231,255,.22); border-radius:999px; padding:5px !important;
+  }
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle { height:32px !important; padding:0 14px !important; font-size:11px !important; flex:0 0 auto !important; max-width:none !important; }
+
+  /* Grille PC : même gouttière partout — dehors = dedans */
+  main {
+    max-width:1260px !important; width:100% !important; margin:0 auto !important;
+    padding:var(--gutter) !important;
+    display:grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap:var(--gutter) !important;
+    align-items:start !important;
+    box-sizing:border-box !important;
+  }
+  /* Grands blocs : pleine largeur */
+  main .intro-card { grid-column:1 / -1 !important; }
+  main #oxygenPanel { grid-column:1 / -1 !important; }
+  main #equipagesEnMer { grid-column:1 / -1 !important; display:block !important; }
+  main #gameCard { grid-column:1 / -1 !important; }
+  main #bottomAlertMessage { grid-column:1 / -1 !important; }
+  /* Petits blocs : côte à côte */
+  main #embarquementMatelot { grid-column:1 !important; }
+  main #retrouverEquipage { grid-column:2 !important; }
+
+  /* Cartes : marges internes = marges externes (équidistance) */
+  .card { border-radius:16px !important; overflow:hidden !important; display:block !important; }
+  .card h2 { padding:var(--space-sm) var(--gutter-inner) !important; font-size:13px !important; letter-spacing:.06em !important; }
+  .card .body { padding:var(--gutter-inner) !important; }
+
+  /* Intro — même grille partout */
+  .intro-card .intro-text { font-size:13px !important; line-height:1.5 !important; padding:var(--space-sm) var(--gutter-inner) !important; }
+  .intro-card .rule-invite { margin:var(--gutter) 0 0 !important; padding:var(--space-sm) var(--gutter-inner) !important; gap:var(--space-sm) !important; }
+  .card .rule-invite-eyebrow { font-size:12px !important; }
+  .rule-invite-main { font-size:13px !important; }
+  .intro-card .mission-steps { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:var(--gutter) !important; margin:var(--gutter) 0 0 !important; }
+  .rule-detail { margin-top:var(--gutter) !important; padding:var(--gutter-inner) !important; }
+  .rule-detail h3 { font-size:13px !important; }
+  .rule-detail p, .rule-detail li { font-size:12px !important; line-height:1.45 !important; }
+  #ruleProgress { gap:6px !important; } #ruleProgress i { width:22px !important; height:5px !important; }
+
+  /* Formulaires — gouttière unique */
+  .boarding-grid { display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:var(--gutter) !important; }
+  .grid { display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--gutter) !important; }
+  label { font-size:12px !important; margin:0 0 5px !important; }
+  input, select { min-height:38px !important; height:38px !important; padding:8px 10px !important; font-size:16px !important; border-radius:10px !important; }
+  button { min-height:38px !important; padding:8px 14px !important; font-size:13px !important; }
+  #registerMsg, #joinMsg { font-size:12px !important; }
+
+  /* O2 — même grille que partout */
+  #oxygenPanel .oxygen-meter { padding:var(--gutter-inner) !important; border-radius:14px !important; }
+  #oxygenPanel .oxygen-meter-top .oxygen-level-title { font-size:13px !important; }
+  #oxygenPanel .oxygen-meter-top strong { font-size:28px !important; }
+  #oxygenPanel .oxygen-status { font-size:13px !important; margin:0 0 var(--space-sm) !important; }
+  #oxygenPanel .oxygen-tube { height:28px !important; }
+  #oxygenPanel .oxygen-bottom { display:flex !important; flex-direction:row !important; gap:var(--gutter) !important; margin-top:var(--space-sm) !important; }
+  #oxygenPanel .countdown { font-size:20px !important; }
+  #oxygenPanel .countdown-kicker { font-size:11px !important; }
+
+  /* Equipages — même pas d'un pixel de différence */
+  #equipagesEnMer #equipagesBody { display:block !important; padding:0 !important; }
+  #equipagesEnMer .radar-stage { padding:var(--gutter-inner) !important; margin:0 0 var(--gutter) !important; }
+  #equipagesEnMer .radar-screen-big { width:150px !important; height:150px !important; }
+  #equipagesEnMer #teamsBox { padding:var(--gutter-inner) !important; gap:var(--gutter) !important; display:grid !important; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)) !important; }
+
+  /* Cockpit — grille identique */
+  #gameCard .cockpit { padding:var(--gutter-inner) !important; }
+  #gameCard .ck-gauges { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:var(--gutter) !important; margin-bottom:var(--gutter) !important; }
+  #gameCard .ck-dial { width:68px !important; height:68px !important; }
+  #gameCard .ck-dial-value { font-size:16px !important; }
+
+  /* Abysses — même respiration */
+  #bottomAlertMessage .body { padding:var(--gutter-inner) !important; }
+  #bottomAlertMessage.card h2 { font-size:16px !important; }
+  #bottomAlertMessage .abyss-bottom { font-size:13px !important; }
+
+  .site-footer { max-width:1260px !important; margin:var(--gutter) auto 0 !important; padding:var(--gutter) var(--space-lg) !important; display:flex !important; flex-direction:row !important; align-items:center !important; justify-content:space-between !important; background:transparent !important; border-top:none !important; }
+}
+/* =====================================================================
+   ÉCOUTILLES PC — tout visible à l'écran (PC)
+   Sur PC, l'écoutille doit tenir en 100dvh sans scroll, boutons compris.
+   FIX START invisible : on garde 100dvh mais on autorise le scroll interne
+   si le viewport est trop court — START reste atteignable.
+   ===================================================================== */
+@media (min-width: 1100px) {
+  #ecoutille {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+  #ecoutille .ec-scene {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding:var(--gutter) var(--space-lg) !important;
+    gap:var(--gutter) !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  #ecoutille .ec-enseigne { gap:var(--space-sm) !important; flex-shrink: 0; }
+  #ecoutille .ec-verne { font-size: 11px !important; letter-spacing:.38em !important; }
+  #ecoutille .ec-titre { font-size: clamp(28px, 3.2vw, 52px) !important; line-height:.92 !important; }
+  #ecoutille .ec-regle { margin:var(--space-xs) 0 !important; }
+  #ecoutille .ec-sous-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4 { font-size: 13px !important; }
+  #ecoutille .ec-hud { font-size: 9px !important; padding: 0 !important; gap:var(--space-sm) !important; }
+  /* Hublot calibré pour PC : tient entre enseigne et pied sans pousser */
+  #ecoutille .ec-hublot {
+    width: min(38vh, 480px) !important;
+    height: min(38vh, 480px) !important;
+    max-width: 480px !important; max-height: 480px !important;
+    margin:0 !important;
+    flex: 0 0 auto !important;
+  }
+  #ecoutille .ec-pied { gap:var(--space-sm) !important; flex-shrink: 0 !important; padding-bottom:var(--space-xs) !important; min-height: fit-content !important; }
+  #ecoutille .ec-consigne { font-size: 11px !important; display:block !important; }
+  #ecoutille .ec-start {
+    width: clamp(110px, 11vw, 148px) !important;
+    flex-shrink: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  #ecoutille .ec-start-label { font-size: 18px !important; }
+  #ecoutille .ec-version { font-size: 9px !important; opacity:.7; }
+}
+@media (min-width: 1100px) and (max-height: 820px) {
+  #ecoutille .ec-scene{padding:var(--space-sm) var(--space-md) !important; gap:var(--space-sm) !important;}
+  #ecoutille .ec-hublot { width: min(36vh, 440px) !important; height: min(36vh, 440px) !important; }
+  #ecoutille .ec-titre { font-size: clamp(24px, 3vw, 40px) !important; }
+  #ecoutille .ec-pied { gap:var(--space-sm) !important; }
+}
+@media (min-width: 1100px) and (max-height: 720px) {
+  #ecoutille .ec-scene{padding:var(--space-xs) var(--space-sm) !important; gap:var(--space-xs) !important;}
+  #ecoutille .ec-sous-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4 { font-size:10px !important; opacity:.9 }
+  #ecoutille .ec-hublot { width: min(30vh, 360px) !important; height: min(30vh, 360px) !important; }
+}
+/* =====================================================================
+   1 SEULE COLONNE — TABLETTE (641–1099px) : même pile que PC
+   La page d'accueil et de démarrage est pensée mobile-first :
+   dès 641px on garde la pile verticale (pas de 2 colonnes).
+   ===================================================================== */
+@media (min-width: 641px) and (max-width: 1099px) {
+  html { background:#020b14; }
+  .ocean-wallpaper {
+    position: fixed !important; inset:0; z-index:0 !important; opacity:1 !important;
+    background: linear-gradient(180deg, rgba(3,18,33,.72) 0%, rgba(3,18,33,.45) 22%, rgba(3,18,33,.86) 100%), url('../assets/fond-nautilus.jpg') center 18% / cover no-repeat;
+  }
+  header, main, .site-footer { position:relative; z-index:1; }
+  body > header {
+    min-height:auto !important;
+    padding:var(--space-md) var(--space-lg) !important;
+    text-align:center !important;
+    display:block !important;
+    background: linear-gradient(135deg, rgba(2,14,26,.88), rgba(4,28,48,.72)) !important;
+    border-bottom:1px solid rgba(245,176,39,.22) !important;
+  }
+  body > header::before, body > header::after { display:none !important; }
+  body > header .hero-meta { justify-content:center !important; gap:var(--space-sm) !important; }
+  body > header .hero-title { text-align:center !important; margin:var(--space-sm) auto 0 !important; }
+  body > header .hero-line { margin:var(--space-sm) auto 0 !important; text-align:center !important; max-width:40ch !important; }
+  body > header .hero-actions { justify-content:center !important; flex-direction:column !important; align-items:center !important; gap:var(--gutter) !important; margin-top:var(--gutter) !important; }
+  body > header .hero-actions .hero-cta { width:100% !important; max-width:420px !important; justify-content:center !important; }
+  main { max-width:760px !important; margin:0 auto !important; padding:var(--gutter) var(--gutter) 0 !important; display:flex !important; flex-direction:column !important; gap:var(--gutter) !important; }
+  .grid, .boarding-grid, .matelot-reveal, .teamlist, .ck-gauges, .admin-form-grid, .admin-form-grid-6, .admin-o2-form { display:flex !important; flex-direction:column !important; gap:var(--gutter) !important; grid-template-columns:1fr !important; }
+  .intro-card .mission-steps { display:flex !important; flex-direction:column !important; gap:var(--gutter) !important; }
+  .oxygen-bottom { flex-direction:column !important; align-items:stretch !important; gap:var(--gutter) !important; }
+  .countdown-block { align-items:flex-start !important; margin-left:0 !important; text-align:left !important; }
+  .card h2{padding:var(--space-sm) var(--gutter-inner) !important} .body, .oxygen-meter, .cockpit{padding:var(--gutter-inner) !important}
+  .site-footer { max-width:760px; margin:var(--gutter) auto 0 !important; padding:var(--gutter) var(--space-lg) !important; flex-direction:column !important; align-items:center !important; gap:var(--space-sm) !important; }
+  #adminPanel { max-width:760px !important; margin:14px auto 0 !important; }
+}
+/* =====================================================================
+   ÉCOUTILLES MOBILE — blocs égalisés (≤640px)
+   Les 3 zones (enseigne / hublot / pied) occupent chacune 1/3 de 100dvh
+   avec gaps identiques, plus de bloc écrasé ou décalé.
+   ===================================================================== */
+@media (max-width: 640px) {
+  #ecoutille { height:100dvh !important; min-height:100dvh !important; overflow:hidden !important; }
+  #ecoutille .ec-scene {
+    height:100dvh !important; min-height:100dvh !important;
+    display:flex !important; flex-direction:column !important;
+    justify-content:space-between !important;
+    align-items:center !important;
+    gap:var(--gutter, clamp(8px,1.8vmin,14px)) !important;
+    padding:var(--space-md, clamp(10px,2.2vmin,16px)) var(--space-md, clamp(10px,2.2vmin,16px)) !important;
+    box-sizing:border-box !important;
+  }
+  #ecoutille .ec-enseigne {
+    flex:0 0 auto !important; width:100% !important;
+    display:flex !important; flex-direction:column !important; align-items:center !important;
+    gap:var(--space-sm) !important; padding:0 !important;
+  }
+  #ecoutille .ec-verne { font-size:9px !important; }
+  #ecoutille .ec-titre { font-size:clamp(22px, 6.5vw, 30px) !important; line-height:1 !important; }
+  #ecoutille .ec-sous-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4 { font-size:11px !important; }
+  #ecoutille .ec-hud { font-size:8px !important; gap:var(--space-sm) !important; }
+  #ecoutille .ec-hublot {
+    flex:1 1 auto !important;
+    width:min(44vh, 74vw) !important; height:min(44vh, 74vw) !important;
+    margin:0 !important;
+  }
+  #ecoutille .ec-pied {
+    flex:0 0 auto !important; width:100% !important;
+    gap:var(--space-sm) !important; padding:0 !important;
+  }
+  #ecoutille .ec-consigne { font-size:10px !important; line-height:1.3 !important; }
+  #ecoutille .ec-start { width:88px !important; height:88px !important; }
+  #ecoutille .ec-start-label { font-size:13px !important; }
+}
+/* =====================================================================
+   GARANTIE RESPONSIVE GLOBALE — TOUS ÉCRANS VISIBLES
+   Vérifie toutes tailles : 320→1920, portrait/paysage, safe-area
+   ===================================================================== */
+html, body{width:100%; max-width:100vw; overflow-x:hidden; -webkit-text-size-adjust:100%;}
+header, main, .site-footer, .card, .intro-card, #oxygenPanel, #equipagesEnMer, #gameCard, #bottomAlertMessage{max-width:100%; min-width:0; box-sizing:border-box;}
+main{width:100%; max-width:min(1260px, 100vw); margin-left:auto; margin-right:auto; padding-left:max(var(--gutter,14px), env(safe-area-inset-left)); padding-right:max(var(--gutter,14px), env(safe-area-inset-right)); box-sizing:border-box;}
+.hero-title, .hero-line, .card h2, .body, .intro-text, .oxygen-status, .countdown, .team, .cockpit, .rule-detail{overflow-wrap:break-word; word-break:break-word; max-width:100%;}
+img, video, svg, canvas, iframe{max-width:100%; height:auto; display:block;}
+@media (max-width:360px){
+  :root{--gutter:var(--space-sm); --gutter-inner:var(--space-sm);}
+  body > header{padding:var(--space-sm) var(--gutter) !important;}
+  main{padding:var(--gutter) var(--gutter) 0 !important; gap:var(--gutter) !important;}
+  .card h2{font-size:11px !important; padding:var(--space-xs) var(--gutter-inner) !important;}
+  .body, .oxygen-meter, .cockpit, .team{padding:var(--gutter-inner) !important;}
+  .hero-title{font-size:clamp(26px, 9vw, 38px) !important; -webkit-text-stroke:1px #050505 !important;}
+  .hero-line{font-size:clamp(14px, 4vw, 20px) !important;}
+  .hero-cta{font-size:11px !important; padding:8px 12px !important;}
+}
+@media (max-height:520px) and (orientation:landscape){
+  body > header{padding:var(--space-sm) var(--gutter) !important;}
+  main{gap:var(--space-sm) !important; padding:var(--space-sm) var(--gutter) 0 !important;}
+  .card{border-radius:14px !important;}
+  .card h2{padding:var(--space-xs) var(--gutter-inner) !important; font-size:11px !important;}
+  .body{padding:var(--space-sm) !important;}
+}
+@media (min-width:1920px){
+  main{max-width:1400px !important;}
+  body > header .hero-title{font-size:clamp(38px, 2.8vw, 52px) !important;}
+  body > header .hero-line{font-size:18px !important;}
+  .card{border-radius:20px !important;}
+}
+/* Cercle garanti — aucun breakpoint ne peut l'écraser */
+#ecoutille .ec-hublot{aspect-ratio:1/1 !important; border-radius:50% !important; overflow:visible !important; width:clamp(100px, min(38vh, 68vw), 500px) !important; height:clamp(100px, min(38vh, 68vw), 500px) !important; flex:0 0 auto !important; max-width:88vw !important; max-height:58vh !important; margin:0 auto !important;}
+#ecoutille .ec-fenetre, #ecoutille .ec-mer, #ecoutille .ec-verre, #ecoutille .ec-cercle, #ecoutille .ec-reflet{border-radius:50% !important; overflow:hidden !important;}
+#ecoutille .ec-enseigne, #ecoutille .ec-pied, #ecoutille .ec-start{max-width:100%; min-width:0; flex-shrink:0;}
+#ecoutille .ec-scene{overflow:hidden !important; min-height:0 !important; justify-content:space-between !important; align-items:center !important; gap:var(--gutter, 14px) !important; padding:max(var(--space-md,14px), env(safe-area-inset-top)) max(var(--space-md,14px), env(safe-area-inset-right)) max(var(--space-sm,10px), env(safe-area-inset-bottom)) max(var(--space-md,14px), env(safe-area-inset-left)) !important;}
+/* Écoutille responsive — laisse texte + START toujours visibles */
+@media (max-width:360px){
+  #ecoutille .ec-hublot{width:clamp(88px, min(32vh, 78vw), 240px) !important; height:clamp(88px, min(32vh, 78vw), 240px) !important;}
+  #ecoutille .ec-titre{font-size:clamp(15px, 5vw, 22px) !important;}
+  #ecoutille .ec-sous-titre-h4{font-size:clamp(7px, 2.4vw, 10px) !important;}
+}
+@media (max-height:520px){
+  #ecoutille .ec-hublot{width:clamp(78px, min(30vh, 46vw), 200px) !important; height:clamp(78px, min(30vh, 46vw), 200px) !important;}
+  #ecoutille .ec-enseigne{gap:4px !important;}
+  #ecoutille .ec-pied{gap:4px !important;}
+}
+@media (min-width:768px) and (max-width:1024px) and (orientation:portrait){
+  #ecoutille .ec-hublot{width:clamp(120px, min(32vh, 56vw), 380px) !important; height:clamp(120px, min(32vh, 56vw), 380px) !important;}
+}
+/* Radar ÉQUIPAGES EN PLONGÉE — cercle parfait jamais déformé */
+#equipagesEnMer .radar-stage{display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:var(--gutter) !important; width:100% !important; box-sizing:border-box !important;}
+#equipagesEnMer .radar-screen-big, .radar-screen-big, .radar-screen, .sonar-screen{aspect-ratio:1/1 !important; border-radius:50% !important; overflow:hidden !important; flex:0 0 auto !important; min-width:0 !important; min-height:0 !important; width:clamp(130px, min(42vw, 260px), 280px) !important; height:clamp(130px, min(42vw, 260px), 280px) !important; max-width:90vw !important; max-height:90vw !important; margin:0 auto !important; display:block !important; position:relative !important;}
+#equipagesEnMer .radar-grid, #equipagesEnMer .radar-rings, #equipagesEnMer .radar-sweep-big, #equipagesEnMer .radar-center{border-radius:50% !important;}
+/* Responsive radar : s'adapte sans se déformer */
+@media (max-width:640px){
+  #equipagesEnMer .radar-screen-big, .radar-screen-big, .sonar-screen{width:clamp(120px, min(48vw, 220px), 240px) !important; height:clamp(120px, min(48vw, 220px), 240px) !important;}
+}
+@media (orientation:landscape) and (max-height:620px){
+  #equipagesEnMer .radar-screen-big, .radar-screen-big, .sonar-screen{width:clamp(100px, min(38vh, 200px), 220px) !important; height:clamp(100px, min(38vh, 200px), 220px) !important;}
+}
+@media (min-width:1100px){
+  #equipagesEnMer .radar-screen-big{width:clamp(140px, 18vw, 260px) !important; height:clamp(140px, 18vw, 260px) !important;}
+}
+@media (min-width:1920px){
+  #equipagesEnMer .radar-screen-big{width:280px !important; height:280px !important;}
+}
+/* =====================================================================
+   TOP-BAR — toujours en haut à droite, jamais sur les textes/titres
+   PC + mobile : même position, même taille compacte, header dégagé
+   ===================================================================== */
+.top-bar{
+  position:fixed !important;
+  top:max(8px, env(safe-area-inset-top)) !important;
+  right:max(8px, env(safe-area-inset-right)) !important;
+  left:auto !important;
+  transform:none !important;
+  width:auto !important;
+  max-width:min(92vw, 380px) !important;
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+  gap:6px !important;
+  background:rgba(6,22,38,.78) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border:1px solid rgba(142,231,255,.22) !important;
+  border-radius:999px !important;
+  padding:4px !important;
+  box-sizing:border-box !important;
+  z-index:10000 !important;
+  pointer-events:none !important;
+}
+.top-bar > *{pointer-events:auto !important;}
+.top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{
+  flex:0 0 auto !important;
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:30px !important;
+  min-height:30px !important;
+  padding:0 12px !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  letter-spacing:.02em !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  border-radius:999px !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+}
+/* Header dégagé : réserve la hauteur de la top-bar */
+body > header{
+  padding-top:calc(var(--space-md,16px) + 38px + env(safe-area-inset-top)) !important;
+}
+@media (max-width:640px){
+  .top-bar{
+    top:max(6px, env(safe-area-inset-top)) !important;
+    right:max(6px, env(safe-area-inset-right)) !important;
+    gap:5px !important;
+    padding:3px !important;
+    max-width:min(96vw, 340px) !important;
+  }
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{
+    height:28px !important;
+    min-height:28px !important;
+    padding:0 10px !important;
+    font-size:10px !important;
+    gap:3px !important;
+  }
+  body > header{padding-top:calc(var(--gutter,14px) + 34px + env(safe-area-inset-top)) !important;}
+}
+@media (max-width:360px){
+  .top-bar{max-width:98vw !important; gap:4px !important;}
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{height:26px !important; min-height:26px !important; padding:0 8px !important; font-size:9.5px !important;}
+  body > header{padding-top:calc(var(--space-sm,10px) + 30px + env(safe-area-inset-top)) !important;}
+}
+@media (min-width:1100px){
+  .top-bar{
+    top:max(10px, env(safe-area-inset-top)) !important;
+    right:max(14px, env(safe-area-inset-right)) !important;
+    gap:6px !important;
+    padding:4px !important;
+  }
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{height:32px !important; min-height:32px !important; padding:0 14px !important; font-size:11px !important;}
+  body > header{padding-top:calc(var(--space-md,16px) + 42px + env(safe-area-inset-top)) !important;}
+}
+/* =====================================================================
+   SCROLL MOBILE PAYSAGE — jamais bloqué
+   L'écoutille reste en 100dvh mais devient scrollable si elle dépasse,
+   la page principale reste toujours scrollable en paysage
+   ===================================================================== */
+@media (orientation:landscape){
+  html, body{overflow-y:auto !important; overflow-x:hidden !important; height:auto !important; min-height:100vh !important; min-height:100dvh !important; -webkit-overflow-scrolling:touch !important;}
+  main{overflow:visible !important; min-height:auto !important;}
+  /* Écoutille en paysage : si le hublot + textes dépassent, on scroll dedans pour atteindre START */
+  #ecoutille{overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; overscroll-behavior:contain !important;}
+  #ecoutille .ec-scene{overflow-y:auto !important; overflow-x:hidden !important; -webkit-overflow-scrolling:touch !important; max-height:100dvh !important; min-height:100dvh !important; height:100dvh !important; justify-content:flex-start !important; gap:var(--gutter,14px) !important;}
+  /* Mobile paysage : header + main toujours visibles */
+  body.ec-bloque, body.ec-bloque html{overflow:hidden !important;}
+  body:not(.ec-bloque){overflow-y:auto !important;}
+}
+/* =====================================================================
+   PAYSAGE MOBILE/TABLETTE — exploite toute la largeur comme PC
+   Hublots, boutons et embarquement réorganisés pour être esthétiques
+   et confortables, jamais entassés en 1 colonne
+   ===================================================================== */
+@media (orientation:landscape) and (min-width:480px) and (max-height:800px){
+  body > header{padding:var(--space-sm) var(--space-lg) calc(var(--space-sm) + 6px) !important; text-align:left !important; min-height:auto !important;}
+  body > header .hero-meta{flex-direction:row !important; justify-content:space-between !important; align-items:center !important; gap:var(--space-sm) !important; flex-wrap:wrap !important;}
+  body > header .hero-meta .brand{font-size:13px !important; flex:0 0 auto !important;}
+  body > header .hero-meta .hero-kicker{font-size:10px !important; padding:4px 8px !important; flex:0 1 auto !important; max-width:52% !important;}
+  body > header .hero-title{font-size:clamp(26px, 4vw, 38px) !important; text-align:left !important; margin:var(--space-xs) 0 0 !important; width:100% !important; max-width:100% !important; line-height:.98 !important;}
+  body > header .hero-line{font-size:clamp(13px, 1.8vw, 17px) !important; text-align:left !important; margin:var(--space-xs) 0 0 !important; max-width:100% !important;}
+  body > header .hero-actions{flex-direction:row !important; flex-wrap:wrap !important; justify-content:flex-start !important; align-items:center !important; gap:var(--space-sm) !important; margin-top:var(--space-sm) !important;}
+  body > header .hero-actions .hero-cta{flex:0 1 auto !important; min-width:132px !important; width:auto !important; max-width:220px !important; padding:8px 14px !important; font-size:11px !important; min-height:34px !important; justify-content:center !important;}
+  main{display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--gutter) !important; max-width:1200px !important; padding:var(--gutter) !important; margin:0 auto !important; align-items:start !important;}
+  main .intro-card, main #oxygenPanel, main #equipagesEnMer, main #gameCard, main #bottomAlertMessage{grid-column:1 / -1 !important;}
+  main #embarquementMatelot{grid-column:1 !important;}
+  main #retrouverEquipage{grid-column:2 !important;}
+  .card{border-radius:16px !important;}
+  .card h2{padding:var(--space-sm) var(--gutter-inner) !important; font-size:12px !important; letter-spacing:.05em !important;}
+  .card .body{padding:var(--gutter-inner) !important;}
+  .intro-card .intro-text{font-size:13px !important; line-height:1.5 !important; padding:var(--space-sm) var(--gutter-inner) !important;}
+  .intro-card .rule-invite{margin:var(--space-sm) 0 0 !important; padding:var(--space-sm) var(--gutter-inner) !important; gap:var(--space-xs) !important;}
+  .card .rule-invite-eyebrow{font-size:11px !important;}
+  .rule-invite-main{font-size:12px !important;}
+  .intro-card .mission-steps{display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:var(--space-sm) !important; margin:var(--space-sm) 0 0 !important;}
+  .rule-detail{margin-top:var(--space-sm) !important; padding:var(--gutter-inner) !important;}
+  .rule-detail h3{font-size:13px !important;}
+  .rule-detail p, .rule-detail li{font-size:12px !important; line-height:1.45 !important;}
+  .boarding-grid{display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:var(--space-sm) !important; align-items:end !important;}
+  .grid{display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--space-sm) !important;}
+  label{font-size:11px !important; margin:0 0 4px !important;}
+  input, select{min-height:36px !important; height:36px !important; padding:6px 10px !important; font-size:16px !important; border-radius:10px !important;}
+  button{min-height:34px !important; padding:7px 12px !important; font-size:11px !important;}
+  .oxygen-meter{padding:var(--gutter-inner) !important;}
+  #oxygenPanel .oxygen-meter-top strong{font-size:22px !important;}
+  #oxygenPanel .countdown{font-size:16px !important;}
+  #equipagesEnMer .radar-stage{padding:var(--space-sm) var(--gutter-inner) !important; min-height:180px !important; margin:0 0 var(--space-sm) !important;}
+  #equipagesEnMer #teamsBox{padding:var(--gutter-inner) !important; gap:var(--space-sm) !important; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)) !important;}
+  #gameCard .cockpit{padding:var(--gutter-inner) !important;}
+  #gameCard .ck-gauges{grid-template-columns:repeat(4,1fr) !important; gap:var(--space-sm) !important; margin-bottom:var(--space-sm) !important;}
+  #gameCard .ck-dial{width:58px !important; height:58px !important;}
+  #gameCard .ck-dial-value{font-size:14px !important;}
+  .site-footer{flex-direction:row !important; justify-content:space-between !important; padding:var(--space-sm) var(--gutter) !important; margin:var(--space-sm) auto 0 !important; max-width:1200px !important;}
+  #adminPanel{max-width:900px !important;}
+}
+/* =====================================================================
+   BLOCS EMBARQUEMENT / REPRENDRE — dimensions largeur-hauteur identiques
+   Sélecteurs à la taille du texte, boutons même hauteur centrés
+   Vérifié portrait/paysage PC/mobile
+   ===================================================================== */
+main{ align-items:stretch !important; }
+#embarquementMatelot, #retrouverEquipage{
+  display:flex !important; flex-direction:column !important;
+  height:100% !important; min-height:clamp(160px, 20vh, 200px) !important;
+  box-sizing:border-box !important; align-self:stretch !important;
+}
+#embarquementMatelot .body, #retrouverEquipage .body{
+  flex:1 1 auto !important; display:flex !important; flex-direction:column !important;
+  justify-content:center !important; gap:var(--space-sm) !important; min-height:0 !important;
+}
+#embarquementMatelot .boarding-grid, #retrouverEquipage .grid{
+  width:100% !important; gap:var(--space-sm) !important; align-items:end !important;
+}
+#embarquementMatelot .boarding-grid{grid-template-columns:1fr auto minmax(130px, auto) !important;}
+#retrouverEquipage .grid{grid-template-columns:1fr minmax(150px, auto) !important;}
+#embarquementMatelot input, #embarquementMatelot select, #retrouverEquipage input{
+  width:100% !important; min-width:0 !important;
+  height:38px !important; min-height:38px !important; max-height:38px !important;
+  padding:0 10px !important; line-height:38px !important; font-size:16px !important;
+  box-sizing:border-box !important; display:block !important; border-radius:10px !important;
+}
+#embarquementMatelot select{width:auto !important; min-width:84px !important; max-width:100% !important; padding-right:24px !important; text-align:center !important; text-align-last:center !important;}
+#embarquementMatelot .boarding-action button, #retrouverEquipage .grid button{
+  width:100% !important; height:38px !important; min-height:38px !important; max-height:38px !important;
+  padding:0 14px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important;
+  line-height:1 !important; text-align:center !important; white-space:nowrap !important;
+  border-radius:10px !important; box-sizing:border-box !important;
+}
+@media (max-width:640px){
+  #embarquementMatelot, #retrouverEquipage{min-height:clamp(150px, 18vh, 190px) !important;}
+  #embarquementMatelot .boarding-grid, #retrouverEquipage .grid{grid-template-columns:1fr !important; gap:var(--space-sm) !important;}
+  #embarquementMatelot select{width:100% !important; min-width:0 !important;}
+}
+@media (orientation:landscape) and (min-width:480px) and (max-height:800px){
+  #embarquementMatelot, #retrouverEquipage{min-height:140px !important;}
+  /* En paysage : nom + service utilisent toute la largeur du bloc */
+  #embarquementMatelot .boarding-grid{grid-template-columns:1fr 1fr !important; gap:var(--space-sm) !important;}
+  #embarquementMatelot .boarding-grid > div:nth-child(1),
+  #embarquementMatelot .boarding-grid > div:nth-child(2){min-width:0 !important;}
+  #embarquementMatelot .boarding-grid .boarding-action{grid-column:1 / -1 !important;}
+  #embarquementMatelot input, #embarquementMatelot select{width:100% !important; min-width:0 !important; max-width:none !important;}
+  #retrouverEquipage .grid{grid-template-columns:1fr minmax(130px, auto) !important;}
+}
+
+/* =====================================================================
+   TITRE + BOUTONS ACCUEIL — plus gros et centré horizontalement
+   Demande utilisateur : MISSION NAUTILUS + Plongez dans les 20 000
+   lieues + 3 CTA bien visibles et parfaitement centrés
+   ===================================================================== */
+body > header {
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+body > header .hero-title {
+  font-size: clamp(48px, 6vw, 82px) !important;
+  line-height: 0.95 !important;
+  text-align: center !important;
+  margin: 18px auto 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  -webkit-text-stroke: 1.8px #050505 !important;
+}
+body > header .hero-line {
+  font-size: clamp(20px, 2.8vw, 30px) !important;
+  line-height: 1.25 !important;
+  text-align: center !important;
+  margin: 14px auto 0 !important;
+  max-width: 780px !important;
+  width: 100% !important;
+  display: block !important;
+}
+body > header .hero-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  align-content: center !important;
+  gap: 16px 18px !important;
+  margin: 28px auto 0 !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  text-align: center !important;
+}
+body > header .hero-actions .hero-cta {
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  letter-spacing: .06em !important;
+  padding: 16px 28px !important;
+  min-width: 240px !important;
+  min-height: 52px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 1.1 !important;
+  border-radius: 999px !important;
+}
+/* Tablette */
+@media (max-width: 1099px) and (min-width: 641px) {
+  body > header .hero-title { font-size: clamp(44px, 7vw, 68px) !important; }
+  body > header .hero-line { font-size: clamp(18px, 3.2vw, 26px) !important; max-width: 640px !important; }
+  body > header .hero-actions { gap: 14px !important; margin-top: 22px !important; }
+  body > header .hero-actions .hero-cta { min-width: 220px !important; font-size: 14px !important; padding: 14px 24px !important; min-height: 48px !important; }
+}
+/* Mobile — 3 boutons sur un axe horizontal, compacts */
+@media (max-width: 640px) {
+  body > header { padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; }
+  /* GRAND JEU INTERNE · MISSION CONFIDENTIELLE juste sous FNAC LABÈGE — mobile uniquement */
+  body > header .hero-meta { flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px !important; margin: 0 auto !important; width: 100% !important; text-align: center !important; }
+  body > header .hero-meta .brand { font-size: clamp(14px, 4vw, 16px) !important; text-align: center !important; margin: 0 !important; flex: 0 0 auto !important; }
+  body > header .hero-meta .hero-kicker { font-size: 10px !important; padding: 4px 10px !important; text-align: center !important; max-width: 100% !important; flex: 0 0 auto !important; margin: 0 !important; }
+  /* MISSION NAUTILUS : utilise toute la largeur mobile */
+  body > header .hero-title { font-size: clamp(34px, 11.5vw, 54px) !important; width: 100% !important; max-width: 100% !important; letter-spacing: -0.015em !important; line-height: 0.95 !important; text-align: center !important; padding: 0 2px !important; margin: 8px auto 0 !important; -webkit-text-stroke: 1.2px #050505 !important; }
+  body > header .hero-line { font-size: clamp(14px, 4vw, 20px) !important; margin-top: var(--space-sm) !important; max-width: 40ch !important; }
+  /* Supprime CONSULTER LA RÉSERVE O₂ sur mobile et étend les 2 restants sur toute la largeur */
+  body > header #reserveMissionBtn { display: none !important; }
+  body > header .hero-actions { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; margin-top: 14px !important; width: 100% !important; max-width: 100% !important; justify-content: stretch !important; align-items: stretch !important; }
+  body > header .hero-actions .hero-cta { flex: initial !important; width: 100% !important; max-width: none !important; min-width: 0 !important; font-size: 11px !important; line-height: 1.15 !important; padding: 12px 10px !important; min-height: 44px !important; letter-spacing: .04em !important; white-space: normal !important; text-align: center !important; justify-content: center !important; display: flex !important; align-items: center !important; }
+}
+
+/* =====================================================================
+   PANNEAU ADMIN — RECENTRÉ AU MILIEU EN VERSION PC
+   L'overlay était désaxé par les surcharges tablet/paysage
+   (max-width:760px / 900px + margin) qui cassaient le centrage flex.
+   Ici on restaure le centrage parfait : plein écran + flex center.
+   ===================================================================== */
+@media (min-width: 1100px) {
+  #adminPanel {
+    position: fixed !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100dvh !important;
+    padding: clamp(14px, 2vw, 28px) !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: column !important;
+    background: rgba(2,8,18,.82) !important;
+    backdrop-filter: blur(7px) !important;
+    -webkit-backdrop-filter: blur(7px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+    z-index: 12000 !important;
+    overflow: hidden !important;
+  }
+  #adminPanel.open {
+    display: flex !important;
+  }
+  #adminPanel > h2,
+  #adminPanel h2 {
+    width: 100% !important;
+    max-width: 920px !important;
+    margin: 0 auto !important;
+    align-self: center !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+  #adminPanel > div.body,
+  #adminPanel .body {
+    width: 100% !important;
+    max-width: 920px !important;
+    margin: 0 auto !important;
+    align-self: center !important;
+    max-height: calc(100dvh - 150px) !important;
+  }
+}

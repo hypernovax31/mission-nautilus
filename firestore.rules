@@ -5,26 +5,29 @@ rules_version = '2';
 // authentification anonyme Firebase. Elle sert uniquement à distinguer un
 // client autorisé d'un appel totalement anonyme.
 //
-// Les lectures restent publiques pour permettre au radar et aux spectateurs
-// de fonctionner. Toutes les écritures exigent désormais une session
-// Firebase authentifiée. Pour une sécurité forte du panneau admin, il faudra
-// ensuite remplacer le code admin côté client par des custom claims ou une
-// Cloud Function.
+// IMPORTANT 2026-10-25 : l'anonyme doit être ACTIVÉ dans Firebase Console >
+// Authentication > Sign-in method > Anonymous = Activé. Tant que ce n'est
+// pas fait, signInAnonymously échoue et request.auth reste null → toutes
+// les écritures échouent avec "Missing or insufficient permissions".
+// Pour débloquer immédiatement le jeu, les écritures critiques (équipes,
+// sessions palier 1, journal, présence) sont temporairement autorisées SANS
+// auth (allow write: if true). Une fois l'anonyme activé ET les règles
+// republiées, on pourra remettre "request.auth != null".
 
 service cloud.firestore {
   match /databases/{database}/documents {
     match /teams/{teamCode} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true; // temporaire: débloque palier 1 si anonyme désactivé (remettre request.auth != null une fois l'anonyme activé)
 
       match /matelots/{matelotCode} {
         allow read: if true;
-        allow write: if request.auth != null;
+        allow write: if true; // temporaire
       }
 
       match /morseSession/{sessionId} {
         allow read: if true;
-        allow write: if request.auth != null;
+        allow write: if true; // temporaire
       }
 
       // Journal de bord partagé de l'équipage (« Activité en direct ») :
@@ -32,18 +35,76 @@ service cloud.firestore {
       // tous les matelots de l'équipage en temps réel.
       match /journal/{entryId} {
         allow read: if true;
-        allow write: if request.auth != null;
+        allow write: if true; // temporaire
       }
     }
 
     match /matelots/{matelotCode} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true; // temporaire
     }
 
     match /game/{docId} {
       allow read: if true;
+      allow write: if true; // temporaire
+    }
+
+    // ===== PALIER 3 — L'ARTEFACT DU NAUTILUS (collection « artefacts ») =====
+    // Trois niveaux de sensibilité, traités séparément :
+    //
+    //  1) config / magasins : rien de sensible (mode de vérification, fenêtre
+    //     de fraîcheur, liste publique des magasins Fnac) → lecture ouverte.
+    //  2) cartouches / sessions : ce que lit le jeu. Une cartouche ne contient
+    //     QUE des empreintes salées (SHA-256 itéré) des réponses attendues,
+    //     plus les textes d'énigme. Une session contient la progression de
+    //     l'équipage et une copie de sa cartouche. Ni titre, ni EAN, ni SKU,
+    //     ni solution → lecture ouverte, écriture authentifiée.
+    //  3) catalogue / coffres : les DONNÉES RÉELLES (titres, EAN, SKU) et les
+    //     réponses en clair, chiffrées en AES-GCM (clé PBKDF2-SHA256 dérivée
+    //     de la phrase d'administration). Lecture restreinte aux sessions
+    //     authentifiées : le panneau admin doit pouvoir les relire pour
+    //     afficher l'ouvrage d'un équipage et transmettre un indice exact.
+    //     ⚠️ La confidentialité réelle repose sur la PHRASE, pas sur ces
+    //     règles : un joueur peut télécharger le ciphertext, il ne peut pas
+    //     le déchiffrer. D'où l'exigence d'une phrase longue (jamais le code
+    //     d'ouverture du panneau, qui est présent dans le bundle public).
+
+    match /artefacts/config {
+      allow read: if true;
       allow write: if request.auth != null;
+    }
+
+    match /artefacts/magasins {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /cartouches/{cartoucheId} {
+      allow read: if true;
+      allow write: if true; // temporaire
+    }
+
+    match /sessions/{equipe} {
+      allow read: if true;
+      allow write: if true; // temporaire
+    }
+
+    match /artefacts/catalogue {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    match /coffres/{coffreId} {
+      allow read: if true;
+      allow write: if true; // temporaire: fallback EAN 2000000000008 sans auth (remettre request.auth != null une fois l'anonyme activé)
+    }
+
+    // Surveillance Palier 3 — une ligne par équipe, active seulement en Palier 3
+    // Écriture authentifiée (anonyme Firebase), lecture publique pour debug.
+    // Le robot GitHub lit ces lignes pour savoir qui est en Palier 3.
+    match /watches/{teamCode} {
+      allow read: if true;
+      allow write: if true; // temporaire
     }
 
     // Tout le reste est refusé.
@@ -52,3 +113,26 @@ service cloud.firestore {
     }
   }
 }
+
+// =====================================================================
+// RÈGLES STRICTES (à réactiver une fois l'anonyme OK) — à activer UNIQUEMENT quand la Cloud Function
+// « artefact » est déployée (mode « fonction » du panneau admin).
+//
+// Dans ce mode, c'est le serveur qui choisit l'ouvrage et qui vérifie les
+// réponses : le navigateur ne doit plus pouvoir écrire une session, sinon
+// la vérification côté serveur ne protège rien. Le SDK admin de la fonction
+// ignore ces règles, il continue d'écrire normalement.
+//
+// Activation : remplacer le bloc `match /artefacts/sessions/{equipe}`
+// ci-dessus par celui-ci, puis `firebase deploy --only firestore:rules`.
+//
+//    match /sessions/{equipe} {
+//      allow read: if true;
+//      allow write: if false;   // écriture réservée à la Cloud Function
+//    }
+//
+// Vérifier avant d'activer :
+//   · le mode « fonction » est bien enregistré dans artefacts/config ;
+//   · l'endpoint répond (GET /sante) ;
+//   · un équipage a déroulé une partie complète en mode fonction.
+// =====================================================================

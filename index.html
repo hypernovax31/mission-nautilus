@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="anti-zoom.js?v=1"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700&display=swap" rel="stylesheet">
@@ -25,15 +26,15 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « garde v16 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 014042 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
        lumière, caustiques réelles, neige marine, bulles. En haut, la JAUGE
        D'OXYGÈNE du bord (elle se vide pour de vrai) et le relèvement du signal ;
        au centre, le titre en lettres de bronze ; sous le hublot, le bouton
-       rouge. Et pour finir, le projecteur du Nautilus nous éblouit : l'accueil
-       apparaît dans la lumière.
+       rouge. Et pour finir, on plonge DANS le hublot : zoom hollywoodien,
+       flou progressif et voile abyssal — l'accueil se révèle dans les profondeurs.
 
        RIEN QUI PUISSE CASSER — c'est la leçon des deux versions précédentes :
          · aucun découpage, aucun masque, aucune image : ni clip-path, ni
@@ -50,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « garde v7 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 014042 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -58,6 +59,8 @@
        jamais à la page du jeu, qui reste intacte derrière. */
     #ecoutille{
       position:fixed; inset:0; z-index:13000 !important; overflow:hidden;
+      /* Pleine hauteur visible sur tous les devices */
+      height:100dvh; min-height:100dvh; height:100svh; min-height:100svh; height:100vh; min-height:100vh;
       background:transparent;      /* la page du jeu est derrière, jamais touchée */
       color:#e8f8ff; font-family:Consolas,"Courier New",monospace;
       touch-action:none; -webkit-tap-highlight-color:transparent;
@@ -395,6 +398,38 @@
         filter:drop-shadow(0 .5vmin 1.6vmin rgba(0,0,0,.72));
       }
     }
+    /* Bloc titre resserré et ajusté au contenu : H1 + H4 centrés, marges internes responsives */
+    #ecoutille .ec-titre-bloc{
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:clamp(3px,.7vmin,8px);
+      width:fit-content; max-width:100%; margin:0 auto;
+      padding:clamp(2px,.5vmin,6px) clamp(8px,1.6vmin,16px);
+      text-align:center;
+    }
+    /* Portrait : bloc titre aéré + hublot à 10px du bord du bloc titre */
+    @media (orientation:portrait){
+      #ecoutille .ec-titre-bloc{padding:clamp(10px,2.4vmin,16px) clamp(14px,3.4vmin,22px) !important; gap:clamp(6px,1.6vmin,10px) !important;}
+      #ecoutille .ec-enseigne{gap:0 !important;}
+      #ecoutille .ec-scene{gap:10px !important;}
+      #ecoutille .ec-hublot{margin:0 auto !important;}
+    }
+    #ecoutille .ec-titre{ text-align:center }
+    #ecoutille .ec-sous-titre-h3,
+    #ecoutille .ec-sous-titre-h4{
+      margin:0; font-family:Georgia,"Times New Roman",serif; font-style:normal;
+      font-size:clamp(10px, 2vmin, 17px); line-height:1.25; letter-spacing:.18em;
+      text-transform:uppercase; color:#bfe8f7; text-align:center;
+      text-shadow:0 2px 12px rgba(0,0,0,.75);
+    }
+    /* Compat ancien titre unique */
+    #ecoutille .ec-titre-unique span{
+      display:block; margin-top:6px;
+      font-family:Georgia,"Times New Roman",serif; font-style:italic;
+      font-size:clamp(11px, 2.1vmin, 16px); line-height:1.3;
+      letter-spacing:.06em; text-transform:none; font-weight:400;
+      color:#bfe8f7; text-shadow:0 2px 8px rgba(0,0,0,.7);
+      -webkit-text-fill-color:#bfe8f7; background:none; filter:none;
+    }
     #ecoutille .ec-regle{
       width:min(560px, 76%); height:2px; margin:clamp(2px,.6vmin,8px) 0;
       background:linear-gradient(90deg, rgba(232,198,128,0), rgba(232,198,128,.75), rgba(232,198,128,0));
@@ -489,10 +524,13 @@
       position:absolute; inset:0;
       display:flex; flex-direction:column; align-items:center;
       justify-content:space-between;
-      gap:clamp(8px, 2.2vmin, 28px);
-      padding:clamp(14px, 3.6vmin, 34px) clamp(16px, 4.4vmin, 56px);
+      gap:var(--gutter, clamp(14px, 2vmin, 20px));
+      padding:var(--space-md, clamp(14px, 2vmin, 20px)) var(--space-lg, clamp(16px, 3vmin, 28px));
       text-align:center;
       transition:transform 1.15s cubic-bezier(.2,.72,.2,1), opacity .45s ease;
+      /* Prend toute la hauteur visible */
+      height:100dvh; min-height:100dvh; height:100svh; min-height:100svh; height:100vh; min-height:100vh;
+      box-sizing:border-box;
     }
     #ecoutille .ec-enseigne,
     #ecoutille .ec-pied{width:100%; max-width:min(1180px, 95vw)}
@@ -502,10 +540,7 @@
     /* La commande : le bouton rouge d'alarme, puis sa consigne. */
     #ecoutille .ec-pied{
       display:flex; flex-direction:column; align-items:center;
-      /* Le bouton s'entoure d'un halo qui déborde de sa boîte : la consigne
-         reste donc à bonne distance. 12 px au minimum, mesurés entre le bas
-         du texte et le haut du halo — le texte ne peut pas le toucher. */
-      gap:clamp(12px, 2.4vmin, 22px);
+      gap:var(--gutter, clamp(12px, 2vmin, 18px));
     }
     #ecoutille .ec-consigne{
       margin:0; max-width:min(620px, 92vw);
@@ -557,33 +592,84 @@
     #ecoutille .ec-start:focus-visible{outline:3px solid #a6ecff; outline-offset:7px}
     #ecoutille.ec-presse .ec-dome{transform:translateY(3px) scale(.965); filter:brightness(.9)}
     #ecoutille.ec-presse .ec-start::after{animation:none; opacity:0}
+    /* OPEN — bouton START plus visible (anneau blanc + halo renforcé + label agrandi) */
+    /* OPEN — pro minimaliste, design sous-marin d'origine conservé */
+    #ecoutille .ec-start--open{width:clamp(96px, 20vmin, 170px) !important;}
+    #ecoutille .ec-start--open .ec-start-label{font-size:clamp(17px, 4.2vmin, 30px) !important; letter-spacing:.16em !important;}
     /* Repère de version : discret, il dit quelle page de garde est chargée. */
     #ecoutille .ec-version{
       position:absolute; right:clamp(10px, 2.4vmin, 28px); bottom:clamp(8px, 2vmin, 22px);
       font-size:10px; letter-spacing:.1em; color:#5f8496; pointer-events:none;
     }
 
-    /* ── 6. LA SORTIE : LE PROJECTEUR NOUS ÉBLOUIT ────────────────────────
-       Une seule couche, opaque au centre : elle part d'un point (le
-       projecteur du bord) et s'ouvre jusqu'à remplir l'écran. Ensuite son
-       fondu découvre l'accueil du jeu. Transform et opacité, rien d'autre. */
+    /* ── 6. LA PLONGÉE CINÉMATOGRAPHIQUE ───────────────────────────────────
+       Plus de flash blanc : on s'enfonce DANS le hublot, comme une caméra
+       qui traverse le verre. Zoom progressif + flou d'abysses + obscurité.
+       Hollywood sous-marin : la paroi recule, le hublot grandit, la mer
+       se brouille et l'azur profond nous avale. */
+    #ecoutille .ec-hublot{
+      transition:transform 1.35s cubic-bezier(.16,.78,.22,1), filter .9s ease, opacity .6s ease;
+      will-change:transform;
+    }
+    #ecoutille .ec-ecran{
+      transition:transform 1.25s cubic-bezier(.2,.7,.2,1), opacity .7s ease, filter 1s ease;
+    }
+    #ecoutille .ec-scene{
+      will-change:transform, filter;
+    }
+    /* Voile abyssal : ce n'est plus un projecteur blanc, c'est l'océan
+       qui se referme. Dégradé d'azur profond qui s'étend depuis le hublot. */
     #ecoutille .ec-flood{
-      position:absolute; left:50%; top:60%; width:236vmax; height:236vmax;
-      margin:-118vmax 0 0 -118vmax;
-      opacity:0; pointer-events:none; transform:scale(.05);
-      background:radial-gradient(closest-side,
-        #ffffff 0 20%, #f4feff 32%, rgba(226,248,255,.98) 46%,
-        rgba(160,226,255,.96) 64%, rgba(80,168,228,.9) 80%, rgba(12,54,94,0) 100%);
-      transition:transform 1s cubic-bezier(.2,.82,.2,1), opacity .5s ease;
+      position:absolute; left:50%; top:50%; width:260vmax; height:260vmax;
+      margin:-130vmax 0 0 -130vmax;
+      opacity:0; pointer-events:none; transform:scale(.12);
+      background:
+        radial-gradient(closest-side at 50% 50%,
+          rgba(12,52,92,0) 0 22%,
+          rgba(8,42,78,.28) 36%,
+          rgba(5,28,52,.62) 56%,
+          rgba(2,16,32,.88) 76%,
+          rgba(1,8,20,.98) 88%,
+          #020a14 100%);
+      transition:transform 1.1s cubic-bezier(.22,.78,.18,1), opacity .75s ease;
     }
-    #ecoutille.ec-eclat .ec-flood{opacity:1; transform:scale(1)}
+    #ecoutille.ec-eclat .ec-flood{opacity:.72; transform:scale(.85)}
+    #ecoutille.ec-impact .ec-flood{opacity:.96; transform:scale(1.15)}
     #ecoutille.ec-sortie .ec-flood{opacity:0; transition:opacity .85s ease}
-    /* L'éclair de l'impact, juste au moment où le projecteur nous atteint. */
-    #ecoutille .ec-flash{position:absolute; inset:0; background:#ffffff; opacity:0; pointer-events:none}
-    #ecoutille.ec-impact .ec-flash{animation:ecFlash .6s ease-out}
-    @keyframes ecFlash{
-      0%{opacity:0} 16%{opacity:.9} 100%{opacity:0}
+    /* Étape 1 — l'entrée dans le hublot : léger zoom + premier voile */
+    #ecoutille.ec-eclat .ec-scene{transform:scale(1.08); filter:blur(1px) brightness(.94) saturate(.95)}
+    #ecoutille.ec-eclat .ec-hublot{transform:scale(1.28)}
+    #ecoutille.ec-eclat .ec-ecran{transform:scale(1.06); filter:brightness(.92)}
+    #ecoutille.ec-eclat .ec-paroi{filter:brightness(.92)}
+    /* Étape 2 — on s'enfonce : zoom massif dans le verre + flou progressif + assombrissement */
+    #ecoutille.ec-impact .ec-scene{transform:scale(2.85); filter:blur(14px) brightness(.42) saturate(.62); opacity:.88}
+    #ecoutille.ec-impact .ec-hublot{transform:scale(3.9); filter:blur(.8px)}
+    #ecoutille.ec-impact .ec-ecran{transform:scale(1.22); filter:blur(6px) brightness(.5) saturate(.55)}
+    #ecoutille.ec-impact .ec-paroi{filter:brightness(.45) blur(2px)}
+    #ecoutille.ec-impact .ec-titre,
+    #ecoutille.ec-impact .ec-sous-titre-h4,
+    #ecoutille.ec-impact .ec-consigne,
+    #ecoutille.ec-impact .ec-start{opacity:0; transition:opacity .32s ease}
+    /* Souffle lumineux abyssal : plus blanc, mais lueur azur diffuse qui traverse l'eau */
+    #ecoutille .ec-flash{position:absolute; inset:0; pointer-events:none; opacity:0;
+      background:radial-gradient(ellipse 110% 85% at 50% 48%,
+        rgba(110,220,255,.38) 0 18%,
+        rgba(60,170,230,.22) 34%,
+        rgba(18,90,145,.12) 58%,
+        rgba(2,18,38,0) 78%)}
+    #ecoutille.ec-impact .ec-flash{animation:ecBloom .9s cubic-bezier(.22,.6,.2,1)}
+    @keyframes ecBloom{
+      0%{opacity:0; transform:scale(.88)}
+      18%{opacity:.55; transform:scale(1)}
+      65%{opacity:.28; transform:scale(1.04)}
+      100%{opacity:0; transform:scale(1.08)}
     }
+    /* Letterbox cinéma : deux bandes noires qui resserrent l'image */
+    #ecoutille .ec-letterbox{position:absolute; left:0; right:0; height:0; background:#020a14; pointer-events:none; z-index:6; transition:height .7s cubic-bezier(.2,.7,.2,1)}
+    #ecoutille .ec-letterbox--top{top:0}
+    #ecoutille .ec-letterbox--bottom{bottom:0}
+    #ecoutille.ec-eclat .ec-letterbox{height:4.5vh}
+    #ecoutille.ec-impact .ec-letterbox{height:8.5vh}
 
     /* ── 7. LECTEURS D'ÉCRAN ───────────────────────────────────────────────
        Le récit est un décor : on le cache aux lecteurs d'écran et on leur
@@ -593,16 +679,64 @@
       overflow:hidden; border:0; white-space:nowrap;
     }
 
-    /* ── 8. TÉLÉPHONE COUCHÉ : on gagne de la place en hauteur ───────────── */
+    /* ── 8. PANORAMIQUE : espaces équidistants conservés ──────────────── */
     @media (orientation:landscape) and (max-height:600px){
-      #ecoutille .ec-titre{font-size:clamp(26px, 7.4vmin, 58px)}
-      #ecoutille .ec-regle{width:min(360px, 62%)}
-      #ecoutille .ec-sous-titre{font-size:clamp(10px, 2vmin, 15px)}
-      #ecoutille .ec-hud{font-size:clamp(7px, 1.4vmin, 9px)}
-      #ecoutille .ec-consigne{display:none}
-      #ecoutille .ec-start{width:clamp(84px, 20vmin, 132px)}
-      #ecoutille .ec-start-label{font-size:clamp(13px, 3.2vmin, 22px)}
+      #ecoutille{--gutter:var(--space-sm, clamp(8px,1.6vw,14px)); --space-md:var(--space-sm, clamp(8px,1.6vw,14px));}
+      #ecoutille .ec-scene{gap:var(--space-sm, clamp(6px,1.4vmin,12px)); padding:var(--space-sm, clamp(8px,1.6vw,14px)) var(--space-md, clamp(10px,2vmin,16px));}
+      #ecoutille .ec-titre{font-size:clamp(22px, 6vmin, 46px)}
+      #ecoutille .ec-sous-titre-h3,#ecoutille .ec-sous-titre-h4{font-size:clamp(9px,1.8vmin,13px)}
+      #ecoutille .ec-hud{font-size:clamp(7px, 1.3vmin, 9px)}
+      #ecoutille .ec-pied{gap:var(--space-sm, clamp(6px,1.2vmin,10px))}
+      #ecoutille .ec-consigne{font-size:clamp(8px,1.6vmin,11px)}
+      #ecoutille .ec-hublot{width:min(34vh, 62vw) !important; height:min(34vh, 62vw) !important;}
+      #ecoutille .ec-start{width:clamp(72px, 18vmin, 112px)}
+      #ecoutille .ec-start-label{font-size:clamp(12px, 2.8vmin, 18px)}
     }
+    /* ── 8bis. GARANTIE CERCLE + VISIBILITÉ TOTALE — TOUS ÉCRANS ─────── */
+    #ecoutille{width:100vw; max-width:100vw; height:100dvh; min-height:100dvh; max-height:100dvh; height:100svh; min-height:100svh; height:100vh; overflow:hidden}
+    #ecoutille .ec-scene{width:100%; max-width:100vw; min-width:0; min-height:0; overflow:hidden; padding-left:max(var(--space-md,14px), env(safe-area-inset-left)); padding-right:max(var(--space-md,14px), env(safe-area-inset-right)); padding-top:max(var(--space-md,14px), env(safe-area-inset-top)); padding-bottom:max(var(--space-sm,10px), env(safe-area-inset-bottom));}
+    #ecoutille .ec-hublot{aspect-ratio:1/1; border-radius:50% !important; overflow:visible; flex-shrink:1; flex-grow:0; min-width:0; min-height:0; width:clamp(110px, min(38vh, 72vw), 520px) !important; height:clamp(110px, min(38vh, 72vw), 520px) !important;}
+    #ecoutille .ec-fenetre, #ecoutille .ec-mer, #ecoutille .ec-verre, #ecoutille .ec-cercle, #ecoutille .ec-reflet{border-radius:50% !important;}
+    #ecoutille .ec-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4{max-width:100%; overflow-wrap:break-word; word-break:break-word; text-wrap:balance;}
+    #ecoutille .ec-enseigne, #ecoutille .ec-pied{max-width:100%; min-width:0; flex-shrink:0;}
+    #ecoutille .ec-start{flex-shrink:0; flex-grow:0; touch-action:manipulation;}
+    @media (max-width:360px){
+      #ecoutille .ec-hublot{width:clamp(100px, min(34vh, 82vw), 280px) !important; height:clamp(100px, min(34vh, 82vw), 280px) !important}
+      #ecoutille .ec-titre{font-size:clamp(16px, 5.2vw, 24px) !important}
+      #ecoutille .ec-sous-titre-h4{font-size:clamp(8px, 2.6vw, 11px) !important; letter-spacing:.12em !important}
+      #ecoutille .ec-start{width:76px !important; height:76px !important}
+      #ecoutille .ec-start-label{font-size:12px !important}
+    }
+    @media (max-height:520px){
+      #ecoutille .ec-hublot{width:clamp(78px, min(38vh, 48vw), 240px) !important; height:clamp(78px, min(38vh, 48vw), 240px) !important}
+      #ecoutille .ec-enseigne{gap:4px !important}
+      #ecoutille .ec-pied{gap:4px !important}
+      #ecoutille .ec-consigne{font-size:9px !important}
+    }
+    @media (min-width:768px) and (max-width:1024px) and (orientation:portrait){
+      #ecoutille .ec-hublot{width:min(34vh, 58vw) !important; height:min(34vh, 58vw) !important}
+    }
+    @media (min-width:1920px){
+      #ecoutille .ec-scene{max-width:1400px; margin:0 auto; left:50%; transform:translateX(-50%)}
+      #ecoutille .ec-hublot{width:min(34vh, 440px) !important; height:min(34vh, 440px) !important}
+    }
+    @media (min-height:1000px) and (orientation:portrait){
+      #ecoutille .ec-hublot{width:min(30vh, 66vw) !important; height:min(30vh, 66vw) !important}
+    }
+    /* ── 8ter. BOUTON À 100PX DU CADRE, CENTRE ENTRE HUBLOT ET BOUTON ─────── */
+    #ecoutille .ec-scene{padding-bottom:calc(clamp(7px, 2.2vmin, 24px) + 100px + env(safe-area-inset-bottom)) !important; justify-content:space-between !important;}
+    #ecoutille .ec-consigne--sous-hublot{flex:0 0 auto !important; margin:12px auto 0 !important; padding:0 !important; text-align:center !important; width:100% !important; max-width:min(620px, 92vw) !important;}
+    #ecoutille .ec-magasin-wrap{flex:1 1 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:clamp(14px, 2.5vmin, 22px) !important; width:100% !important; max-width:min(620px, 92vw) !important; margin:0 auto !important; padding:clamp(12px, 2vmin, 20px) 0 !important; min-height:clamp(140px, 18vh, 180px) !important;}
+    #ecoutille .ec-consigne{margin:0 !important; padding:0 !important; text-align:center !important; width:100% !important; max-width:100% !important;}
+    #ecoutille .ec-pied{flex:0 0 auto !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:flex-end !important; gap:0 !important; padding:0 !important; margin:0 !important; width:100% !important;}
+    #ecoutille .ec-start{margin:0 auto !important; flex-shrink:0 !important;}
+    #ecoutille .ec-magasin-wrap .ec-start{margin-top:2px !important;}
+    /* ── 8quater. SÉLECTEUR MAGASIN SUR PAGE DÉMARRAGE — reprend CSS jeu ─────── */
+    #ecoutille .ec-magasin-case{display:flex !important; flex-direction:column !important; align-items:center !important; gap:6px !important; width:min(92vw, 380px) !important; margin:0 auto !important; padding:0 !important; flex:0 0 auto !important;}
+    #ecoutille .ec-magasin-label{font-size:clamp(10px, 1.8vmin, 12px) !important; font-weight:900 !important; letter-spacing:.08em !important; text-transform:uppercase !important; color:#a9cfe0 !important; text-shadow:0 1px 4px rgba(0,0,0,.6) !important; text-align:center !important; margin:0 !important;}
+    #ecoutille .ec-magasin-select{width:100% !important; height:38px !important; min-height:38px !important; max-height:38px !important; padding:0 10px !important; line-height:38px !important; font-size:14px !important; font-family:'Exo 2',Arial,Helvetica,sans-serif !important; font-weight:600 !important; border:2px solid #d8e0e6 !important; border-radius:10px !important; background:#fff !important; color:#111 !important; text-align:center !important; text-align-last:center !important; box-sizing:border-box !important; appearance:auto !important; -webkit-appearance:auto !important;}
+    #ecoutille .ec-magasin-select:focus{outline:none !important; border-color:#f5b027 !important; box-shadow:0 0 0 4px rgba(245,176,39,.22) !important;}
+    #ecoutille .ec-magasin-geo{font-size:10px !important; line-height:1.3 !important; color:#a9cfe0 !important; text-align:center !important; margin:2px 0 0 !important; min-height:12px !important; text-shadow:0 1px 3px rgba(0,0,0,.6) !important;}
     /* ── 9. MOINS D'ANIMATION : le décor se pose, tout reste lisible ─────── */
     @media (prefers-reduced-motion: reduce){
       #ecoutille .m-rayons{animation:none; opacity:.45}
@@ -614,8 +748,561 @@
       #ecoutille .ec-fanaux i{animation:none; opacity:.22}
       #ecoutille .ec-start::after{animation:none; opacity:.55}
       #ecoutille .ec-flood{transition-duration:.4s}
+      #ecoutille .ec-letterbox{transition:none}
+      #ecoutille.ec-eclat .ec-scene, #ecoutille.ec-impact .ec-scene,
+      #ecoutille.ec-eclat .ec-hublot, #ecoutille.ec-impact .ec-hublot,
+      #ecoutille.ec-eclat .ec-ecran, #ecoutille.ec-impact .ec-ecran{transform:none !important; filter:none !important}
+      #ecoutille.ec-eclat .ec-letterbox, #ecoutille.ec-impact .ec-letterbox{height:0 !important}
+      #ecoutille .ec-flash{animation:none !important}
     }
   </style>
+
+  <!-- ═══ HOLLYWOOD ÉPIQUE — SURCHARGE CINÉMATOGRAPHIQUE (2026-10-27) ═══
+       Cette couche vient PAR-DESSUS le socle : elle ne retire rien,
+       elle sublime. Objectif : passer de "page de garde correcte" à
+       "bande-annonce de blockbuster sous-marin" — lumière, profondeur,
+       souffle, échelle IMAX. Tout en transform/opacity, donc 60 fps
+       même sur iPhone SE. -->
+  <style id="ec-hollywood-epique">
+    /* --- FOND ABYSSAL CINÉMA : dégradé plus profond + vignette IMAX --- */
+    #ecoutille{
+      background: radial-gradient(120% 120% at 50% 50%, #0a1e2e 0%, #06101a 45%, #020a14 100%);
+    }
+    #ecoutille .ec-paroi{
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, rgba(0,0,0,.06) 1px 2px, transparent 2px 72px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, rgba(0,0,0,.04) 1px 2px, transparent 2px 98px),
+        radial-gradient(140% 110% at 50% 38%, #1e3444 0%, #0f2430 36%, #07131c 68%, #020a14 100%) !important;
+      animation: ecParoiBreath 18s ease-in-out infinite alternate;
+    }
+    @keyframes ecParoiBreath{
+      from{ filter: brightness(.96) contrast(1.02) }
+      to{ filter: brightness(1.04) contrast(1.06) }
+    }
+    /* Halo plus cinématographique : respiration lente */
+    #ecoutille .ec-halo{
+      background: radial-gradient(closest-side at 50% 50%,
+        rgba(90,205,245,.26) 0 38%, rgba(70,180,225,.10) 58%, rgba(0,0,0,0) 78%) !important;
+      animation: ecHaloPulse 7s ease-in-out infinite alternate;
+    }
+    @keyframes ecHaloPulse{
+      from{ opacity:.8; transform: scale(1) }
+      to{ opacity:1; transform: scale(1.06) }
+    }
+    /* --- TITRE HOLLYWOOD : entrée grandiose, tracking + 3D --- */
+    #ecoutille .ec-enseigne{
+      animation: ecEnseigneEnter 1.6s cubic-bezier(.16,1,.3,1) .2s both;
+    }
+    @keyframes ecEnseigneEnter{
+      0%{ opacity:0; transform: translateY(22px) }
+      100%{ opacity:1; transform: translateY(0) }
+    }
+    #ecoutille .ec-titre{
+      font-size: clamp(28px, 7.4vmin, 84px) !important;
+      line-height: .92 !important;
+      letter-spacing: .03em !important;
+      text-shadow: 0 2px 0 rgba(0,0,0,.5), 0 8px 22px rgba(0,0,0,.72), 0 0 30px rgba(110,220,255,.18) !important;
+      animation: ecTitreHollywood 1.4s cubic-bezier(.16,1,.3,1) .4s both;
+      position: relative;
+    }
+    @keyframes ecTitreHollywood{
+      0%{ opacity:0; letter-spacing:.45em; filter: blur(10px) brightness(1.4); transform: scale(.86) translateY(12px) }
+      60%{ opacity:1; letter-spacing:.02em; filter: blur(0) brightness(1); transform: scale(1.02) }
+      100%{ opacity:1; letter-spacing:.02em; filter: blur(0); transform: scale(1) }
+    }
+    #ecoutille .ec-titre::after{
+      content:""; position:absolute; left:-10%; right:-10%; top:46%; height:2px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.85), transparent);
+      opacity:0; transform: scaleX(.2);
+      animation: ecLightSweep 1.8s cubic-bezier(.4,0,.2,1) 1.3s both;
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+    @keyframes ecLightSweep{
+      0%{ opacity:0; transform: translateX(-40%) scaleX(.1) }
+      20%{ opacity:1 }
+      100%{ opacity:0; transform: translateX(40%) scaleX(1.6) }
+    }
+    #ecoutille .ec-sous-titre-h4{
+      font-size: clamp(11px, 2.2vmin, 18px) !important;
+      letter-spacing: .22em !important;
+      color:#d6f2ff !important;
+      text-shadow: 0 2px 14px rgba(0,0,0,.85), 0 0 18px rgba(120,220,255,.35) !important;
+      animation: ecSousTitreIn 1.2s cubic-bezier(.16,1,.3,1) .85s both;
+    }
+    @keyframes ecSousTitreIn{
+      0%{ opacity:0; transform: translateY(14px); letter-spacing:.45em; filter: blur(6px) }
+      100%{ opacity:1; transform: translateY(0); letter-spacing:.22em; filter: blur(0) }
+    }
+    #ecoutille .ec-titre-bloc{
+      gap: clamp(6px, 1.2vmin, 10px) !important;
+      padding: clamp(8px, 1.8vmin, 14px) clamp(12px, 2.4vmin, 22px) !important;
+      position: relative;
+    }
+    #ecoutille .ec-titre-bloc::before{
+      content:""; position:absolute; inset:-6% -4% -10% -4%;
+      background: radial-gradient(closest-side, rgba(120,222,255,.14), rgba(120,222,255,0) 72%);
+      pointer-events:none; z-index:-1;
+      animation: ecTitreGlow 3.2s ease-in-out infinite alternate;
+    }
+    @keyframes ecTitreGlow{
+      from{ opacity:.7; transform: scale(1) }
+      to{ opacity:1; transform: scale(1.08) }
+    }
+    /* --- HUBLOT ÉPIQUE : flottement + profondeur + reflet cinéma --- */
+    #ecoutille .ec-hublot{
+      animation: ecHublotFloat 6.5s ease-in-out infinite, ecHublotEnter 1.5s cubic-bezier(.16,1,.3,1) .6s both !important;
+      transform-origin: 50% 50%;
+      filter: drop-shadow(0 1.2vmin 3vmin rgba(0,0,0,.85)) drop-shadow(0 0 3vmin rgba(90,205,245,.18)) !important;
+      perspective: 800px;
+    }
+    @keyframes ecHublotEnter{
+      0%{ opacity:0; transform: scale(.78) translateY(30px) rotateX(8deg); filter: blur(12px) brightness(.7) }
+      100%{ opacity:1; transform: scale(1) translateY(0) rotateX(0); filter: blur(0) brightness(1) }
+    }
+    @keyframes ecHublotFloat{
+      0%,100%{ transform: translateY(0) rotateZ(0) }
+      25%{ transform: translateY(-6px) rotateZ(.3deg) }
+      50%{ transform: translateY(-2px) rotateZ(0) }
+      75%{ transform: translateY(-9px) rotateZ(-.3deg) }
+    }
+    /* Verre plus épais, plus ciné */
+    #ecoutille .ec-verre{
+      box-shadow: inset 0 0 6vmin 1.4vmin rgba(1,12,20,.78), inset 0 0 2vmin rgba(170,235,255,.32), 0 0 0 1px rgba(255,255,255,.08) !important;
+    }
+    /* Cercle bronze plus massif, plus IMAX */
+    #ecoutille .ec-cercle{
+      border-width: clamp(11px, 2.6vmin, 30px) !important;
+      box-shadow: 0 0 0 clamp(2px, .6vmin, 6px) rgba(12,8,2,.9), inset 0 .8vmin 0 rgba(255,244,206,.48), inset 0 -1.2vmin 1.8vmin rgba(0,0,0,.78), 0 .9vmin 3vmin rgba(0,0,0,.75), 0 0 8vmin rgba(110,220,255,.16) !important;
+    }
+    /* --- MER PLUS VIVANTE : god rays + caustiques intenses --- */
+    #ecoutille .m-rayons{
+      opacity:.62 !important;
+      background: repeating-linear-gradient(76deg, rgba(198,244,255,.26) 0 2.1%, rgba(198,244,255,.08) 2.1% 5.2%, rgba(198,244,255,0) 5.2% 11%) !important;
+      animation: ecMerRais 14s ease-in-out infinite alternate !important;
+      filter: blur(.4px);
+    }
+    #ecoutille .m-caustique{
+      opacity:.92 !important;
+      filter: contrast(1.18) brightness(1.12);
+      animation-duration: 26s !important;
+    }
+    #ecoutille .m-caustique.b{
+      opacity:.58 !important;
+      animation-duration: 38s !important;
+      filter: contrast(1.12) brightness(1.08);
+    }
+    #ecoutille .m-neige, #ecoutille .m-bulles{
+      filter: blur(.2px);
+    }
+    /* Reflet ciné plus visible */
+    #ecoutille .ec-reflet::before{
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.22), rgba(255,255,255,0)) !important;
+      width: 42% !important;
+      animation: ecReflet 12s ease-in-out infinite !important;
+    }
+    /* --- HUD : plus premium, avec scanline --- */
+    #ecoutille .ec-hud{
+      backdrop-filter: blur(6px);
+      background: linear-gradient(180deg, rgba(2,10,18,.55), rgba(2,10,18,0));
+      border-bottom: 1px solid rgba(120,200,220,.18);
+      padding: 6px 10px;
+      margin: -6px -10px 4px;
+      animation: ecHudIn 1s ease .9s both;
+    }
+    @keyframes ecHudIn{
+      from{ opacity:0; transform: translateY(-8px) }
+      to{ opacity:1; transform: translateY(0) }
+    }
+    /* O2 pulsation subtile */
+    #ecoutille .ec-o2-niveau{
+      background: linear-gradient(90deg, #0ea86a, #7ff0c8, #0ea86a) !important;
+      background-size: 200% 100%;
+      animation: ecO2Shift 2.8s linear infinite;
+      box-shadow: 0 0 8px rgba(100,240,180,.7), inset 0 0 4px rgba(255,255,255,.6) !important;
+    }
+    @keyframes ecO2Shift{
+      0%{ background-position: 0 0 }
+      100%{ background-position: 200% 0 }
+    }
+    /* --- CONSIGNE + MAGASIN : entrée théâtrale --- */
+    #ecoutille .ec-consigne--sous-hublot{
+      animation: ecConsigneIn 1s cubic-bezier(.16,1,.3,1) 1.1s both;
+      font-weight: 800 !important;
+      letter-spacing: .18em !important;
+      color:#cbe9f6 !important;
+      text-shadow: 0 2px 10px rgba(0,0,0,.85) !important;
+    }
+    @keyframes ecConsigneIn{
+      from{ opacity:0; transform: translateY(10px) }
+      to{ opacity:1; transform: translateY(0) }
+    }
+    #ecoutille .ec-magasin-wrap{
+      animation: ecMagasinIn 1s cubic-bezier(.16,1,.3,1) 1.25s both;
+    }
+    @keyframes ecMagasinIn{
+      from{ opacity:0; transform: translateY(14px) }
+      to{ opacity:1; transform: translateY(0) }
+    }
+    #ecoutille .ec-magasin-select{
+      box-shadow: 0 4px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.9) !important;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease !important;
+    }
+    #ecoutille .ec-magasin-select:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(0,0,0,.32) !important;
+    }
+    /* --- BOUTON OPEN : LE CŒUR DU BLOCKBUSTER --- */
+    #ecoutille .ec-start{
+      animation: ecStartEnter 1s cubic-bezier(.16,1,.3,1) 1.5s both;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,.55));
+    }
+    @keyframes ecStartEnter{
+      0%{ opacity:0; transform: scale(.7) }
+      100%{ opacity:1; transform: scale(1) }
+    }
+    #ecoutille .ec-start::before{
+      background: conic-gradient(from 208deg, #6d5c3c, #e8ca8a 14%, #8a6f42 28%, #fff2c8 45%, #7d6538 60%, #d8b87a 78%, #6d5c3c 100%) !important;
+      animation: ecBronzeRotate 22s linear infinite;
+    }
+    @keyframes ecBronzeRotate{
+      to{ filter: hue-rotate(6deg) brightness(1.03) }
+    }
+    #ecoutille .ec-start::after{
+      inset: -22% !important;
+      background: radial-gradient(circle, rgba(255,80,64,.52) 28%, rgba(255,80,64,.14) 52%, rgba(255,80,64,0) 72%) !important;
+      animation: ecAppel 1.9s cubic-bezier(.45,0,.55,1) infinite !important;
+      filter: blur(.4px);
+    }
+    /* Double halo épique */
+    #ecoutille .ec-start--open::before{ box-shadow: 0 0 0 2px rgba(255,255,255,.08); }
+    #ecoutille .ec-dome{
+      background: radial-gradient(circle at 30% 22%, #ffb8ae 0 4%, #ff5a42 16%, #e01a0f 40%, #8f0c07 68%, #3d0402 100%) !important;
+      box-shadow: 0 1.6vmin 3vmin rgba(0,0,0,.68), inset 0 0 0 3px rgba(0,0,0,.5), inset 0 .7vmin 1.6vmin rgba(255,255,255,.32), inset 0 -1.2vmin 2.2vmin rgba(0,0,0,.62), 0 0 18px rgba(255,60,40,.45) !important;
+      animation: ecDomePulse 2.2s ease-in-out infinite;
+    }
+    @keyframes ecDomePulse{
+      0%,100%{ filter: brightness(1) drop-shadow(0 0 6px rgba(255,70,50,.45)); transform: scale(1) }
+      50%{ filter: brightness(1.08) drop-shadow(0 0 14px rgba(255,70,50,.75)); transform: scale(1.015) }
+    }
+    #ecoutille .ec-start-label{
+      font-size: clamp(18px, 4.4vmin, 32px) !important;
+      letter-spacing: .2em !important;
+      text-shadow: 0 2px 0 rgba(0,0,0,.65), 0 5px 10px rgba(0,0,0,.6), 0 0 20px rgba(255,150,140,.7), 0 0 36px rgba(255,80,60,.45) !important;
+      animation: ecLabelGlow 2.2s ease-in-out infinite;
+    }
+    @keyframes ecLabelGlow{
+      0%,100%{ text-shadow: 0 2px 0 rgba(0,0,0,.65), 0 5px 10px rgba(0,0,0,.6), 0 0 20px rgba(255,150,140,.7) }
+      50%{ text-shadow: 0 2px 0 rgba(0,0,0,.65), 0 7px 14px rgba(0,0,0,.7), 0 0 28px rgba(255,150,140,.95), 0 0 46px rgba(255,80,60,.55) }
+    }
+    #ecoutille .ec-start:hover{ transform: scale(1.04); }
+    #ecoutille .ec-start:active{ transform: scale(.97); }
+    #ecoutille .ec-start:hover .ec-dome{ filter: brightness(1.12) }
+    /* Anneau externe pulsant additionnel (via box-shadow animé) */
+    #ecoutille .ec-start--open{
+      box-shadow: 0 0 0 0 rgba(255,80,60,.45);
+      animation: ecRingPulse 2.6s ease-out infinite;
+    }
+    @keyframes ecRingPulse{
+      0%{ box-shadow: 0 0 0 0 rgba(255,80,60,.45) }
+      70%{ box-shadow: 0 0 0 14px rgba(255,80,60,0) }
+      100%{ box-shadow: 0 0 0 0 rgba(255,80,60,0) }
+    }
+    /* --- GRAIN CINÉMA + VIGNETTE ÉPIQUE --- */
+    #ecoutille::after{
+      content:""; position:absolute; inset:0; pointer-events:none; z-index:5;
+      background:
+        radial-gradient(120% 90% at 50% 50%, transparent 58%, rgba(0,0,0,.42) 92%),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 2px);
+      opacity:.9; mix-blend-mode: soft-light;
+    }
+    /* Scanner line qui traverse l'écran toutes les 7s */
+    #ecoutille .ec-ecran::after{
+      content:""; position:absolute; left:0; right:0; height:2px; top:-2px;
+      background: linear-gradient(90deg, transparent, rgba(120,220,255,.85), transparent);
+      box-shadow: 0 0 12px rgba(120,220,255,.9), 0 0 24px rgba(120,220,255,.5);
+      animation: ecScanline 7s ease-in-out infinite;
+      opacity:.0; pointer-events:none;
+    }
+    @keyframes ecScanline{
+      0%{ opacity:0; transform: translateY(-2px) }
+      8%{ opacity:.9 }
+      28%{ opacity:.9; transform: translateY(102vh) }
+      30%{ opacity:0 }
+      100%{ opacity:0 }
+    }
+    /* --- LETTERBOX PLUS CINÉMA : transition plus lente, plus premium --- */
+    #ecoutille .ec-letterbox{
+      background: #020a14 !important;
+      box-shadow: 0 0 30px rgba(0,0,0,.9) inset;
+      transition: height 1s cubic-bezier(.22,.78,.18,1) !important;
+    }
+    #ecoutille.ec-eclat .ec-letterbox{ height:5.2vh !important; }
+    #ecoutille.ec-impact .ec-letterbox{ height:11vh !important; }
+    /* --- PLONGÉE HOLLYWOOD : 3 actes, plus rapide, plus violent --- */
+    #ecoutille .ec-hublot, #ecoutille .ec-ecran, #ecoutille .ec-scene, #ecoutille .ec-flood{
+      will-change: transform, filter, opacity;
+    }
+    #ecoutille .ec-flood{
+      background:
+        radial-gradient(closest-side at 50% 50%,
+          rgba(12,52,92,0) 0 18%,
+          rgba(8,42,78,.32) 32%,
+          rgba(5,28,52,.68) 52%,
+          rgba(2,16,32,.92) 74%,
+          rgba(1,8,20,1) 88%,
+          #020a14 100%) !important;
+      transition: transform 1.2s cubic-bezier(.22,.78,.18,1), opacity .8s ease !important;
+    }
+    #ecoutille.ec-eclat .ec-flood{ opacity:.82 !important; transform: scale(.88) !important; }
+    #ecoutille.ec-impact .ec-flood{ opacity:1 !important; transform: scale(1.18) !important; }
+    /* Acte 1 : anticipation — le Nautilus retient son souffle */
+    #ecoutille.ec-eclat .ec-scene{ transform: scale(1.06) !important; filter: blur(.6px) brightness(.98) saturate(.98) !important; }
+    #ecoutille.ec-eclat .ec-hublot{ transform: scale(1.22) !important; }
+    #ecoutille.ec-eclat .ec-ecran{ transform: scale(1.05) !important; filter: brightness(.96) !important; }
+    #ecoutille.ec-eclat .ec-titre{ transform: scale(1.02); filter: brightness(1.1); }
+    /* Acte 2 : IMPACT — on s'engouffre dans le hublot, tout explose */
+    #ecoutille.ec-impact .ec-scene{
+      transform: scale(3.2) !important;
+      filter: blur(16px) brightness(.38) saturate(.52) !important;
+      opacity:.9 !important;
+    }
+    #ecoutille.ec-impact .ec-hublot{
+      transform: scale(4.2) !important;
+      filter: blur(1.2px) brightness(.92) !important;
+    }
+    #ecoutille.ec-impact .ec-ecran{
+      transform: scale(1.28) !important;
+      filter: blur(8px) brightness(.44) saturate(.48) !important;
+    }
+    #ecoutille.ec-impact .ec-paroi{ filter: brightness(.32) blur(3px) !important; }
+    #ecoutille.ec-impact .ec-titre,
+    #ecoutille.ec-impact .ec-sous-titre-h4,
+    #ecoutille.ec-impact .ec-consigne,
+    #ecoutille.ec-impact .ec-start{
+      opacity:0 !important;
+      transform: scale(.92);
+      transition: opacity .22s ease, transform .22s ease !important;
+    }
+    /* Flash abyssal plus violent, avec chromatic aberration simulée */
+    #ecoutille .ec-flash{
+      background: radial-gradient(ellipse 115% 88% at 50% 48%,
+        rgba(120,230,255,.42) 0 16%,
+        rgba(70,180,235,.20) 32%,
+        rgba(20,110,170,.10) 56%,
+        rgba(2,18,38,0) 78%) !important;
+      filter: blur(.6px);
+    }
+    #ecoutille.ec-impact .ec-flash{ animation: ecBloom 1s cubic-bezier(.22,.6,.2,1) !important; }
+    @keyframes ecBloom{
+      0%{ opacity:0; transform: scale(.82); filter: brightness(1.4) blur(2px) }
+      14%{ opacity:.68; transform: scale(1); filter: brightness(1.2) blur(0) }
+      55%{ opacity:.32; transform: scale(1.06); filter: brightness(1) blur(.8px) }
+      100%{ opacity:0; transform: scale(1.12); filter: brightness(.8) blur(1.2px) }
+    }
+    /* Shake subtil à l'impact */
+    #ecoutille.ec-impact{
+      animation: ecShake .42s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes ecShake{
+      10%,30%,50%,70%{ transform: translate3d(-1px, 1px, 0) }
+      20%,40%,60%,80%{ transform: translate3d(1px, -1px, 0) }
+    }
+    /* Version texte pour lecteurs d'écran reste invisible */
+    @media (prefers-reduced-motion: reduce){
+      #ecoutille .ec-paroi, #ecoutille .ec-halo, #ecoutille .ec-start::after,
+      #ecoutille .m-rayons, #ecoutille .m-caustique, #ecoutille .m-neige,
+      #ecoutille .m-bulles, #ecoutille .ec-reflet::before, #ecoutille .ec-fanaux i,
+      #ecoutille .ec-titre, #ecoutille .ec-sous-titre-h4, #ecoutille .ec-hublot,
+      #ecoutille .ec-consigne--sous-hublot, #ecoutille .ec-magasin-wrap,
+      #ecoutille .ec-start, #ecoutille .ec-o2-niveau, #ecoutille .ec-ecran::after{
+        animation: none !important; transition: none !important;
+      }
+      #ecoutille .ec-titre::after{ display:none !important; }
+      #ecoutille::after{ display:none !important; }
+      #ecoutille.ec-impact{ animation: none !important; }
+    }
+    /* --- RESPONSIVE ÉPIQUE : garde la lisibilité --- */
+    @media (max-width: 400px){
+      #ecoutille .ec-titre{ font-size: clamp(20px, 6.2vmin, 32px) !important; }
+    }
+  </style>
+
+  <!-- ═══ SORTIE FLUIDE 60fps — CORRECTIF 2026-10-28 (v347→v348) ═══
+       Problème : saccade à la sortie (zoom + 4 blurs + height en layout).
+       Solution : GPU-only (transform/opacity), blur unique, animations
+       parasites coupées, letterbox en scaleY, timings alignés. -->
+  <style id="ec-sortie-fluide">
+    /* 0. PROMOTION GPU AVANT LA SORTIE — pas pendant */
+    #ecoutille .ec-ecran,
+    #ecoutille .ec-scene,
+    #ecoutille .ec-hublot,
+    #ecoutille .ec-flood,
+    #ecoutille .ec-flash,
+    #ecoutille .ec-letterbox{
+      will-change: transform, opacity;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+    #ecoutille .ec-scene{ contain: paint; }
+
+    /* 1. COUPER LE BRUIT DE FOND DÈS QUE LA PLONGÉE S'ENGAGE
+          Le hublot flottait (translateY) + scale massif = conflit de transform.
+          Caustiques/rayons/neige/bulles/reflet/fanaux/O2/halo continuaient de
+          calculer 60 fps en arrière-plan pendant le zoom — GPU saturé. */
+    #ecoutille.ec-plongee .ec-hublot,
+    #ecoutille.ec-eclat .ec-hublot,
+    #ecoutille.ec-impact .ec-hublot{
+      animation: none !important;
+    }
+    #ecoutille.ec-plongee .m-rayons,
+    #ecoutille.ec-plongee .m-caustique,
+    #ecoutille.ec-plongee .m-neige,
+    #ecoutille.ec-plongee .m-bulles,
+    #ecoutille.ec-eclat .m-rayons,
+    #ecoutille.ec-eclat .m-caustique,
+    #ecoutille.ec-eclat .m-neige,
+    #ecoutille.ec-eclat .m-bulles,
+    #ecoutille.ec-impact .m-rayons,
+    #ecoutille.ec-impact .m-caustique,
+    #ecoutille.ec-impact .m-neige,
+    #ecoutille.ec-impact .m-bulles{
+      animation-play-state: paused !important;
+      animation: none !important;
+    }
+    #ecoutille.ec-plongee .ec-reflet::before,
+    #ecoutille.ec-eclat .ec-reflet::before,
+    #ecoutille.ec-impact .ec-reflet::before,
+    #ecoutille.ec-plongee .ec-fanaux i,
+    #ecoutille.ec-eclat .ec-fanaux i,
+    #ecoutille.ec-impact .ec-fanaux i,
+    #ecoutille.ec-plongee .ec-ecran::after,
+    #ecoutille.ec-eclat .ec-ecran::after,
+    #ecoutille.ec-impact .ec-ecran::after,
+    #ecoutille.ec-plongee .ec-o2-niveau,
+    #ecoutille.ec-eclat .ec-o2-niveau,
+    #ecoutille.ec-impact .ec-o2-niveau,
+    #ecoutille.ec-plongee .ec-start::after,
+    #ecoutille.ec-eclat .ec-start::after,
+    #ecoutille.ec-impact .ec-start::after,
+    #ecoutille.ec-plongee .ec-dome,
+    #ecoutille.ec-eclat .ec-dome,
+    #ecoutille.ec-impact .ec-dome,
+    #ecoutille.ec-plongee .ec-start::before,
+    #ecoutille.ec-eclat .ec-start::before,
+    #ecoutille.ec-impact .ec-start::before,
+    #ecoutille.ec-impact .ec-start--open{
+      animation: none !important;
+    }
+    #ecoutille.ec-eclat .ec-verre::after,
+    #ecoutille.ec-impact .ec-verre::after{
+      animation: none !important;
+    }
+    /* Shake de tout #ecoutille faisait trembler le layout entier */
+    #ecoutille.ec-impact{
+      animation: none !important;
+    }
+
+    /* 2. TRANSITIONS EXPLICITES, COURTES ET ALIGNÉES SUR LE JS (T)
+          Avant : durées 1.1s/1.35s qui chevauchaient les étapes (540→1050→1500)
+          Maintenant : chaque étape a le temps de finir avant la suivante. */
+    #ecoutille .ec-ecran{
+      transition: transform 520ms cubic-bezier(.22,.78,.18,1), opacity 420ms ease, filter 520ms ease !important;
+    }
+    #ecoutille .ec-scene{
+      transition: transform 560ms cubic-bezier(.22,.78,.18,1), opacity 380ms ease, filter 560ms ease !important;
+    }
+    #ecoutille .ec-hublot{
+      transition: transform 560ms cubic-bezier(.22,.78,.18,1), filter 440ms ease, opacity 380ms ease !important;
+    }
+    #ecoutille .ec-paroi{
+      transition: filter 520ms ease, transform 520ms cubic-bezier(.22,.78,.18,1) !important;
+    }
+    #ecoutille .ec-flood{
+      transition: transform 620ms cubic-bezier(.22,.78,.18,1), opacity 520ms ease !important;
+    }
+    #ecoutille .ec-flood{
+      will-change: transform, opacity;
+    }
+
+    /* 3. LETTERBOX EN GPU (scaleY) AU LIEU DE height (layout thrashing) */
+    #ecoutille .ec-letterbox{
+      height: 11vh !important;
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 520ms cubic-bezier(.22,.78,.18,1) !important;
+      /* height fixe, on anime l'échelle */
+    }
+    #ecoutille .ec-letterbox--bottom{
+      transform-origin: bottom;
+    }
+    #ecoutille.ec-eclat .ec-letterbox{
+      transform: scaleY(.47) !important;
+      height: 11vh !important;
+    }
+    #ecoutille.ec-impact .ec-letterbox{
+      transform: scaleY(1) !important;
+      height: 11vh !important;
+    }
+    /* prefers-reduced-motion : letterbox reste caché */
+    @media (prefers-reduced-motion: reduce){
+      #ecoutille .ec-letterbox{ transform: scaleY(0) !important; }
+    }
+
+    /* 4. ÉTAPES ALLÉGÉES — UN SEUL BLUR (sur .ec-scene) */
+    #ecoutille.ec-plongee .ec-ecran{ transform: scale(1.03) translateZ(0) !important; }
+    #ecoutille.ec-plongee .ec-scene{ transform: scale(1.02) translateZ(0) !important; }
+    #ecoutille.ec-eclat .ec-ecran{ transform: scale(1.04) translateZ(0) !important; filter: brightness(.97) !important; }
+    #ecoutille.ec-eclat .ec-scene{ transform: scale(1.05) translateZ(0) !important; filter: blur(.5px) brightness(.98) !important; }
+    #ecoutille.ec-eclat .ec-hublot{ transform: scale(1.18) translateZ(0) !important; filter: none !important; }
+    #ecoutille.ec-eclat .ec-paroi{ filter: brightness(.94) !important; }
+    #ecoutille.ec-eclat .ec-titre{ transform: scale(1.01) translateZ(0); filter: brightness(1.06); }
+    #ecoutille.ec-eclat .ec-flood{ opacity:.78 !important; transform: scale(.86) translateZ(0) !important; }
+
+    /* IMPACT : zoom massif mais fluide — 1 seul blur modéré sur la scène */
+    #ecoutille.ec-impact .ec-ecran{ transform: scale(1.18) translateZ(0) !important; filter: brightness(.52) !important; }
+    #ecoutille.ec-impact .ec-scene{ transform: scale(2.95) translateZ(0) !important; filter: blur(7px) brightness(.48) saturate(.65) !important; opacity:.92 !important; }
+    #ecoutille.ec-impact .ec-hublot{ transform: scale(3.6) translateZ(0) !important; filter: none !important; }
+    #ecoutille.ec-impact .ec-paroi{ filter: brightness(.5) !important; } /* plus de blur(3px) */
+    #ecoutille.ec-impact .ec-flood{ opacity:1 !important; transform: scale(1.14) translateZ(0) !important; }
+    #ecoutille.ec-impact .ec-titre,
+    #ecoutille.ec-impact .ec-sous-titre-h4,
+    #ecoutille.ec-impact .ec-consigne,
+    #ecoutille.ec-impact .ec-start{
+      opacity:0 !important;
+      transform: scale(.96) translateZ(0) !important;
+      transition: opacity 280ms ease, transform 280ms ease !important;
+    }
+
+    /* 5. SORTIE : FONDU GLOBAL DE #ecoutille (pas de 3 opacités concurrentes) */
+    #ecoutille{ transition: opacity 480ms ease !important; }
+    #ecoutille.ec-sortie{ opacity:0 !important; pointer-events:none; }
+    #ecoutille.ec-sortie .ec-ecran{ opacity:1 !important; } /* évite double fade */
+    #ecoutille.ec-sortie .ec-scene{ opacity:1 !important; }
+    #ecoutille.ec-sortie .ec-flood{ opacity:0 !important; transition: opacity 380ms ease !important; }
+    #ecoutille.ec-sortie .ec-flash{ opacity:0 !important; }
+
+    /* Flash abyssal plus court, GPU-only */
+    #ecoutille .ec-flash{
+      will-change: transform, opacity;
+      transform: translateZ(0);
+    }
+    #ecoutille.ec-impact .ec-flash{
+      animation: ecBloom 820ms cubic-bezier(.22,.6,.2,1) !important;
+    }
+    @keyframes ecBloom{
+      0%{ opacity:0; transform: scale(.84) translateZ(0); }
+      16%{ opacity:.58; transform: scale(1) translateZ(0); }
+      62%{ opacity:.22; transform: scale(1.04) translateZ(0); }
+      100%{ opacity:0; transform: scale(1.08) translateZ(0); }
+    }
+
+    /* En fin de sortie, on coupe tout calcul */
+    #ecoutille.ec-passee{ display:none !important; }
+  </style>
+
+
+
 
   <!-- ===== PAGE DE GARDE : DÉCISION PRISE AVANT LE PREMIER RENDU =====
        L'écoutille s'affiche à CHAQUE chargement de l'accueil. Ce n'est pas
@@ -689,8 +1376,10 @@
     }catch(e){}
   })();
   </script>
-  <link rel="stylesheet" href="css/index.css?v=54">
+  <link rel="stylesheet" href="css/index.css?v=79">
   <link rel="stylesheet" href="css/hublots.css?v=15">
+  <!-- Sélecteur de magasin (accueil) + onglet admin de l'artefact (Palier 3). -->
+  <link rel="stylesheet" href="css/artefact.css?v=1">
   <!-- Page de garde « ÉCOUTILLE » : son style est écrit DANS la page (voir
        le socle dans le <head>) — rien à charger, rien qui puisse manquer. -->
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
@@ -712,13 +1401,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=16" defer></script>
+  <script src="ecoutille.js?v=18" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« garde v16 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 014042 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -731,9 +1420,7 @@
      animations de l'accueil. C'est aussi le seul élément interactif de
      toute la page : rien d'autre à cliquer, rien à lire d'inutile.
 
-     LA SORTIE, EN UNE PHRASE : le projecteur du Nautilus nous éblouit, la
-     lumière traverse le verre et s'ouvre jusqu'à remplir l'écran, puis son
-     fondu découvre l'accueil — qui s'anime pendant qu'elle se retire.
+     LA SORTIE, EN UNE PHRASE : on plonge DANS le hublot — zoom hollywoodien, flou progressif et voile abyssal — puis son fondu révèle l'accueil dans les profondeurs.
      Le style est écrit DANS cette page (voir le socle dans le <head>) ;
      ecoutille.js joue le récit et la sortie.
      ═══════════════════════════════════════════════════════════════════════════ -->
@@ -770,10 +1457,10 @@
           <span class="ec-signal">Signal détecté après 156 ans</span>
         </span>
       </div>
-      <p class="ec-verne">De Jules Verne à la Fnac Labège</p>
-      <h1 class="ec-titre">Expédition dans le Nautilus</h1>
-      <div class="ec-regle" aria-hidden="true"></div>
-      <p class="ec-sous-titre">Matelots, la mer monte entre les rayons</p>
+      <div class="ec-titre-bloc">
+        <h1 class="ec-titre">Expedition Fnac à bord du Nautilus</h1>
+        <h4 class="ec-sous-titre-h4">Montée des eaux entre les rayons</h4>
+      </div>
     </header>
 
     <!-- LE HUBLOT DU SALON : la mer, vraie, dans le verre. Le film du
@@ -802,29 +1489,38 @@
       <div class="ec-cercle"></div>
     </div>
 
-    <footer class="ec-pied">
-      <p class="ec-consigne">Huit paliers. <b>Une seule légende.</b></p>
-      <button id="ecStart" class="ec-start" type="button" aria-label="START — ouvrir le sas du Nautilus et lancer l'aventure">
+    <p class="ec-consigne ec-consigne--sous-hublot">Huit paliers. <b>Une seule légende.</b></p>
+    <div class="ec-magasin-wrap">
+      <div class="ec-magasin-case">
+        <label for="ecMagasinSelect" class="ec-magasin-label">MAGASIN DE LA MISSION</label>
+        <select id="ecMagasinSelect" class="ec-magasin-select"><option value="">Chargement des magasins…</option></select>
+        <div id="ecMagasinGeoMsg" class="ec-magasin-geo" aria-live="polite"></div>
+      </div>
+      <button id="ecStart" class="ec-start ec-start--open" type="button" aria-label="OPEN — ouvrir le sas du Nautilus et lancer l'aventure">
         <span class="ec-dome" aria-hidden="true"></span>
-        <span class="ec-start-label">START</span>
+        <span class="ec-start-label">OPEN</span>
       </button>
-      <span class="ec-version">garde v16</span>
+    </div>
+    <footer class="ec-pied">
+      <span class="ec-version">COMMIT 014042</span>
     </footer>
   </div>
 
-  <!-- LA SORTIE : le projecteur qui nous éblouit, puis l'éclair d'impact. -->
+  <!-- LA PLONGÉE : voile abyssal + lueur azur (remplace le flash blanc) -->
   <div class="ec-flood" aria-hidden="true"></div>
   <div class="ec-flash" aria-hidden="true"></div>
+  <div class="ec-letterbox ec-letterbox--top" aria-hidden="true"></div>
+  <div class="ec-letterbox ec-letterbox--bottom" aria-hidden="true"></div>
 
   <!-- Ce que lisent les lecteurs d'écran (le décor ci-dessus est muet). -->
-  <p class="ec-lu">Expédition dans le Nautilus — grand jeu interne de la Fnac Labège, d'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de Labège 2, le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et recevoir l'ordre de mission.</p>
+  <p class="ec-lu" id="ecLuText">Expédition dans le Nautilus — grand jeu interne de la Fnac Labège, d'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de Labège 2, le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et recevoir l'ordre de mission.</p>
 </div>
 
 <!-- ═══════════ SOCLE — LE CLIC ═══════════
      Ce mini-script est écrit DANS la page : le bouton rouge peut donc ouvrir
      la page de garde même si ecoutille.js n'arrive pas (réseau, cache,
-     fichier manquant). Il fait la même sortie que le moteur, en plus court :
-     le projecteur nous éblouit, la lumière s'ouvre, puis s'efface.
+     fichier manquant). Il fait la même plongée que le moteur, en plus court :
+     zoom dans le hublot, flou progressif et voile abyssal, puis révélation.
      Quand ecoutille.js se charge, il RETIRE ce gestionnaire et prend la main
      pour la sortie complète (récit, sons, révélation).
      Sans lui, un visiteur enfermé derrière le hublot ne pourrait plus rien
@@ -852,18 +1548,18 @@
     try{ if(film){ var relance = film.play(); if(relance && relance.catch) relance.catch(function(){}); } }catch(e){}
     setTimeout(function(){ racine.classList.add('ec-plongee'); }, 120);
     setTimeout(function(){ racine.classList.add('ec-eclat'); }, 520);
-    setTimeout(function(){ racine.classList.add('ec-impact'); }, 1000);
+    setTimeout(function(){ racine.classList.add('ec-impact'); }, 1080);
     setTimeout(function(){
       racine.classList.add('ec-sortie');
       document.documentElement.classList.remove('ec-bloque');
       document.documentElement.classList.add('ec-arrivee');
       try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
       try{ window.dispatchEvent(new CustomEvent('nautilus:ecoutille-ouverte')); }catch(e){}
-    }, 1560);
+    }, 1650);
     setTimeout(function(){
       racine.classList.add('ec-passee');
       setTimeout(function(){ if(racine.parentNode) racine.parentNode.removeChild(racine); }, 80);
-    }, 2400);
+    }, 2650);
   }
 
   /* LE FILM DE FOND : muet, en boucle, sans aucune commande. On ne montre
@@ -1018,12 +1714,12 @@
 <div class="ocean-wallpaper" aria-hidden="true"></div>
 <header>
   <div class="hero-meta">
-    <div class="brand">FNAC LABÈGE</div>
+    <div class="brand" id="brandMagasin">FNAC LABÈGE</div>
     <div class="hero-kicker">Grand jeu interne · Mission confidentielle</div>
   </div>
   <h1 class="hero-title">Mission Nautilus</h1>
-  <h2 class="hero-line">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</h2>
-  <div class="hero-actions"><button class="hero-cta pulse-engage btn-pulse" id="launchMissionBtn">⚓ Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la plongée</button><button class="hero-cta ghost" id="reserveMissionBtn" type="button">O₂ Consulter la réserve</button></div>
+  <h2 class="hero-line" id="heroMagasin">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</h2>
+  <div class="hero-actions"><button class="hero-cta pulse-engage btn-pulse" id="launchMissionBtn">⚓ Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la plongée</button><button class="hero-cta ghost" id="reserveMissionBtn" type="button">Consulter la réserve O₂</button></div>
 </header>
 <main>
   <section class="card intro-card">
@@ -1095,7 +1791,7 @@
           <div class="oxygen-state" id="oxygenState">PRESSION STABLE</div>
             <div class="countdown-block">
             <div class="countdown-label">
-              <span class="countdown-kicker" id="oxygenInitialDuration">COMPTE À REBOURS — Durée initiale : 7 jours</span>
+              <span class="countdown-kicker" id="oxygenInitialDuration">Durée initiale : 7 jours</span>
             </div>
             <div class="countdown" id="oxygenCountdown">7J 00h00m00s</div>
           </div>
@@ -1155,11 +1851,10 @@
     <div class="body abyss-warning">
       <p class="abyss-top">Attention équipages</p>
       <h2>LES ABYSSES NE PARDONNENT PAS.</h2>
-      <p class="abyss-bottom">La course est lancée.</p>
+      <p class="abyss-bottom" id="abyssPhase">La course est lancée.</p>
     </div>
   </section>
 
-  
 </main>
 <section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">
     <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">
@@ -1275,10 +1970,6 @@
 
 <!-- Pied de page ancré : l'engrenage scrolle avec la page -->
 <footer class="site-footer" role="contentinfo">
-  <!-- Rejouer l'écran d'embarquement, à tout moment et sans taper
-       d'adresse : l'écoutille ne s'affiche qu'à la première visite de
-       l'onglet, et ce bouton remet le compteur à zéro avant de recharger. -->
-  <button id="ecRevoirBtn" class="ec-revoir" type="button" title="Rejouer l'écran d'embarquement">🎬 Revoir l'écoutille d'embarquement</button>
   <button id="adminFabBtn" type="button" aria-label="Maintenance" title="Maintenance">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
   </button>
@@ -1345,7 +2036,7 @@
   const STEPS = {
     start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le signal du Nautilus réapparaît enfin. Votre équipage attend le feu vert pour appareiller vers le Palier 1."},
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
-    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Le sonar a fragmenté la photo de la prochaine zone. Reconstruisez l’image pour trouver le chemin."},
+    son:{label:"Palier 3",next:"zone51",time:300,errors:3,description:"Le Nautilus a dissimulé un artefact dans les rayons de votre magasin. Retrouvez l’ouvrage, présentez-le au sceau et ouvrez la chambre forte."},
     zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
     papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
@@ -4153,7 +4844,7 @@ function qrDataUri(text, opts){
       const href = pageParPalier[id] || null;
       const note = id === 'start' ? 'épreuve — compte de test'
         : id === 'livres' ? 'mots croisés'
-        : id === 'son' ? 'puzzle photo du lieu'
+        : id === 'son' ? 'artefact du Nautilus (chasse à l’ouvrage en magasin)'
         : 'en construction';
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
         href ? ((id === 'livres' || id === 'son')
@@ -4742,6 +5433,31 @@ function qrDataUri(text, opts){
       + '</div>';
 
     $('cockpitMissionBtn')?.addEventListener('click', () => launchSelectedPalier());
+    // ── GARDE MAGASIN D'ORIGINE : à la reprise, remplace le bouton si hors zone ──
+    (function gardeMagasinCockpit(){
+      try{
+        const G = window.NautilusMagasinGuard;
+        const launchHost = document.querySelector('.ck-launch');
+        if(!G || !G.verifierAcces || !launchHost) return;
+        const boutonOrigine = launchHost.innerHTML;
+        launchHost.innerHTML = '<div class="small" style="color:var(--muted)">📍 Vérification du magasin…</div>';
+        G.verifierAcces().then(function(info){
+          if(info && !info.autorise){
+            launchHost.innerHTML = G.messageHTML(info);
+            const retry = document.getElementById('afGuardRetry');
+            if(retry) retry.addEventListener('click', function(){ renderGame(justUnlocked); });
+          } else {
+            launchHost.innerHTML = boutonOrigine;
+            const btn = document.getElementById('cockpitMissionBtn');
+            if(btn) btn.addEventListener('click', () => launchSelectedPalier());
+          }
+        }).catch(function(){
+          launchHost.innerHTML = boutonOrigine;
+          const btn = document.getElementById('cockpitMissionBtn');
+          if(btn) btn.addEventListener('click', () => launchSelectedPalier());
+        });
+      }catch(e){}
+    })();
   }
 
   const RULES = {
@@ -5666,7 +6382,7 @@ function qrDataUri(text, opts){
   function updateInitialDurationLabel(){
     const el = $('oxygenInitialDuration');
     if(!el) return;
-    el.textContent = 'COMPTE À REBOURS — Durée initiale : ' + formatInitialDuration(getMissionDurationMs());
+    el.textContent = 'Durée initiale : ' + formatInitialDuration(getMissionDurationMs());
   }
 
   /* Format « XJ XXhXXmXXs » d'une durée (état « en attente du top départ »,
@@ -5812,6 +6528,7 @@ function qrDataUri(text, opts){
      comme si le buffer manquait — l'alerte reste purement visuelle. */
   function jouerAlarmeFinWebAudio(dureeMs){
     if(!isSoundEnabled()) return false;
+    if(typeof _gesteRecu !== 'undefined' && !_gesteRecu) return false;
     if(!_alarmeFinBuffer) return false;
     const ctx = sfxContext();
     if(!ctx) return false;
@@ -5934,8 +6651,12 @@ function qrDataUri(text, opts){
        Repli <audio> pour les ordinateurs si le buffer n'est pas prêt.
        Si le joueur a coupé le sonar, AUCUN des deux chemins ne joue :
        l'écran rouge et son decompte restent, en silence. */
-    if(!jouerAlarmeFinWebAudio(5000)){
+    // Seul l'animation rouge est automatique ; le son attend un geste (aligné mobile)
+    const _allowAlarmSound = (typeof _gesteRecu === 'undefined' || _gesteRecu) && isSoundEnabled();
+    if(_allowAlarmSound && !jouerAlarmeFinWebAudio(5000)){
       playSubmarineAlarm(5000);
+    } else if(!_allowAlarmSound){
+      // sonar coupé ou pas encore de geste : silence, on laisse l'overlay visuel seul
     }
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
@@ -5981,6 +6702,8 @@ function qrDataUri(text, opts){
       bar.classList.remove('warning-level','critical');
       if(pctEl) pctEl.textContent = '100%';
       if(state){state.textContent='PRESSION STABLE';state.className='oxygen-state';}
+      // Écoutille : vraie jauge à 100% (6000 L) même avant départ
+      try{ if(window.nautilusSetEcoutilleO2) window.nautilusSetEcoutilleO2(1, 6000); }catch(e){}
       return;
     }
 
@@ -6047,6 +6770,13 @@ function qrDataUri(text, opts){
       else if(percent <= 50){state.textContent='RÉSERVE EN BAISSE';state.className='oxygen-state warning';}
       else{state.textContent='PRESSION STABLE';state.className='oxygen-state';}
     }
+    // Écoutille : synchronise la vraie jauge (même % que le bloc O₂)
+    try{
+      if(window.nautilusSetEcoutilleO2){
+        const ratio01 = Math.max(0, Math.min(1, ratio));
+        window.nautilusSetEcoutilleO2(ratio01, Math.round(6000 * ratio01));
+      }
+    }catch(e){}
   }
 
   /* ===== DEPART DE L'ANIMATION DE LA JAUGE A L'APPARITION DU BLOC =====
@@ -6189,9 +6919,35 @@ function qrDataUri(text, opts){
         updatedAt: new Date().toISOString()
       }, {merge:true});
       missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt };
+      // Fige le magasin d'origine (global) au premier démarrage : il servira de garde 500 m pour tous les paliers
+      try{
+        const snapOri = await getDoc(doc(db,'game','config'));
+        const cfgOri = snapOri.exists() ? snapOri.data() : {};
+        if(!cfgOri.magasinOrigine && !cfgOri.magasinOrigineId){
+          let cur=null; try{ cur=window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant(); }catch(e){}
+          if(cur && cur.id){
+            let full=null; try{ if(window.NautilusMagasin && window.NautilusMagasin.trouver){ const r=await window.NautilusMagasin.trouver(cur.id); full=r.magasin; } }catch(e){}
+            const orig={ id:String(cur.id), nom:String((full&&full.nom)||cur.nom||cur.id), ville:String((full&&full.ville)||cur.ville||''), cp:String((full&&full.cp)||cur.cp||''), setAt: startedAt, setBy: currentTeam?.teamCode||null };
+            if(full && typeof full.lat==='number') orig.lat=full.lat;
+            if(full && typeof full.lon==='number') orig.lon=full.lon;
+            await setDoc(doc(db,'game','config'), { magasinOrigine: orig, updatedAt: new Date().toISOString() }, {merge:true});
+            try{ localStorage.setItem('nautilusMagasinOrigine', JSON.stringify(orig)); }catch(e){}
+          }
+        }
+      }catch(e){}
       updateCountdown();
     }else{
       updateCountdown();
+      // Si la partie a déjà commencé mais l'origine n'a jamais été figée (déploiement rétro-compatible), on la fige maintenant
+      try{
+        const snapOri2 = await getDoc(doc(db,'game','config'));
+        const cfgOri2 = snapOri2.exists() ? snapOri2.data() : {};
+        if(cfgOri2 && cfgOri2.missionStartedAt && !cfgOri2.magasinOrigine && !cfgOri2.magasinOrigineId){
+          if(window.NautilusMagasinGuard && window.NautilusMagasinGuard.assurerOrigineDepuisCourant){
+            window.NautilusMagasinGuard.assurerOrigineDepuisCourant().catch(function(){});
+          }
+        }
+      }catch(e){}
     }
   }
 
@@ -6215,6 +6971,11 @@ function qrDataUri(text, opts){
        rouge vit seule. Plus aucun paramètre « force » n'existe : la
        porte dérobée a été supprimée, pas seulement fermée. */
     if(!isSoundEnabled()) return;
+    /* Alignement PC/mobile : l'alarme ne part qu'après un vrai geste
+       (clic/toucher/scroll/mousemove). Sans cela, le PC jouait l'alarme
+       dès le chargement via Web Audio débloqué par l'écoutille, alors
+       que le mobile restait silencieux (contexte encore verrouillé). */
+    if(typeof _gesteRecu !== 'undefined' && !_gesteRecu) return;
 
     /* PRIORITÉ AU CHEMIN WEB AUDIO (bug corrigé).
        Cette alarme part d'un MINUTEUR (alerte reçue passivement, fin de
@@ -6939,6 +7700,23 @@ function qrDataUri(text, opts){
       smartScroll(document.getElementById('gameCard'));
       return;
     }
+    // ── Garde magasin d'origine : on bloque le lancement si hors zone et on affiche le message dans le cockpit
+    if(window.NautilusMagasinGuard && window.NautilusMagasinGuard.verifierAcces){
+      try{
+        const gInfo = await window.NautilusMagasinGuard.verifierAcces();
+        if(gInfo && !gInfo.autorise){
+          const box = document.getElementById('gameBox');
+          if(box){
+            const host = box.querySelector('.ck-launch');
+            if(host) host.innerHTML = window.NautilusMagasinGuard.messageHTML(gInfo);
+            const retry = document.getElementById('afGuardRetry');
+            if(retry) retry.addEventListener('click', () => renderGame());
+            if(host) host.scrollIntoView({behavior:'smooth', block:'center'});
+          }
+          return;
+        }
+      }catch(e){}
+    }
     startOceanAudio();
 
     /* DEPART DU COMPTE A REBOURS DES 7 JOURS.
@@ -7001,21 +7779,20 @@ function qrDataUri(text, opts){
 
   function launchMission(){
     startOceanAudio();
+    const inp = $('memberName');
+    // Clavier immédiat DANS le geste utilisateur (sinon iOS ne l'ouvre pas)
+    if(inp){ try{ inp.focus({preventScroll:true}); inp.select(); }catch(e){ try{ inp.focus(); }catch(_){} } }
     smartScroll(document.getElementById('embarquementMatelot'), true);
-    setTimeout(()=>$('memberName')?.focus(), 650);
+    // Filet : re-focus court après le scroll si le navigateur l'a perdu (hors geste, ne rouvre pas le clavier mais replace le curseur)
+    requestAnimationFrame(()=> setTimeout(()=>{ if(inp && document.activeElement!==inp) try{ inp.focus({preventScroll:true}); }catch(_){} }, 320));
   }
   $('launchMissionBtn')?.addEventListener('click', launchMission);
   $('resumeMissionBtn')?.addEventListener('click', () => {
     startOceanAudio();
+    const input = $('matelotCodeInput');
+    if(input){ try{ input.focus({preventScroll:true}); input.select(); }catch(e){ try{ input.focus(); }catch(_){} } }
     smartScroll(document.getElementById('retrouverEquipage'), true);
-    /* Focus auto sur l'input après le scroll pour faciliter la saisie */
-    setTimeout(() => {
-      const input = $('matelotCodeInput');
-      if (input) {
-        input.focus();
-        input.select();
-      }
-    }, 700);
+    requestAnimationFrame(()=> setTimeout(()=>{ if(input && document.activeElement!==input) try{ input.focus({preventScroll:true}); }catch(_){} }, 320));
   });
   /* Le raccourci demandé dans la conversation Ashna, corrigé à la réalité
      de cette page : il vit sur l'accueil OUVERT (jamais dans la garde
@@ -8598,7 +9375,266 @@ window.PWAInstall = {
   aUnPrompt: () => Boolean(pwaDeferredPrompt)
 };
 </script>
-<script src="admin-button.js?v=26" type="module"></script>
+<!-- ============ PALIER 3 — L'ARTEFACT DU NAUTILUS (accueil) ============
+     Sur l'accueil, seuls le moteur et le module magasin sont utiles : ils
+     animent la carte « MAGASIN DE LA MISSION ». artefact-service.js est
+     chargé pour l'onglet admin (admin-artefact.js), qui s'injecte dans le
+     panneau admin en ligne de cette page comme dans celui des pages palier.
+     Aucun de ces fichiers ne contient de titre d'ouvrage, d'EAN ni de SKU. -->
+<script src="artefact-moteur.js?v=6"></script>
+<script src="artefact-service.js?v=7"></script>
+<script src="magasin-fnac.js?v=1"></script>
+<script src="magasin-guard.js?v=3"></script>
+<script>
+/* Carte « MAGASIN DE LA MISSION » : liste officielle + recherche + géoloc
+   à la demande. Le choix est mémorisé localement (nautilusMagasin) et repris
+   par le Palier 3. La suggestion automatique de position est DÉSACTIVÉE :
+   une demande d'autorisation au chargement surprendrait l'équipage — le
+   bouton « Me géolocaliser » reste à un geste de distance. */
+(function(){
+  function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function monter(){
+    var hote = document.getElementById('magasinHost');
+    var etat = document.getElementById('magasinEtat');
+    if(!hote || !window.NautilusMagasin) return;
+    function rafraichirEtat(fiche){
+      if(!etat) return;
+      etat.innerHTML = fiche
+        ? '✅ Magasin de la mission : <b>' + esc(fiche.nom) + '</b>'
+          + (fiche.ville ? ' — ' + esc(fiche.ville) : '') + (fiche.cp ? ' (' + esc(fiche.cp) + ')' : '')
+          + '. Choisi le ' + esc(new Date(fiche.choisiLe).toLocaleDateString('fr-FR'))
+          + ' · repris automatiquement par le Palier 3.'
+        : 'Aucun magasin confirmé : le Palier 3 te le demandera avant de chercher un ouvrage.';
+    }
+    window.NautilusMagasin.monterSelecteur(hote, {
+      titre: '📍 Ton magasin Fnac',
+      intro: 'Le signal du Nautilus a été relevé à Labège, mais l’artefact du Palier 3 t’attend dans TON magasin. '
+        + 'Choisis-le ici : les ouvrages proposés et les indices dépendent de ce choix.',
+      suggereGeo: false,
+      onConfirme: function(fiche){ rafraichirEtat(fiche); }
+    });
+    rafraichirEtat(window.NautilusMagasin.courant());
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', monter);
+  else monter();
+})();
+</script>
+<script>
+// Sélecteur magasin sur la page de démarrage — sous l'écoutille, mémorisé pour appareil + matelot
+// Géoloc : sélection auto si dans un magasin, sinon 3 plus proches en tête puis alphabétique
+(function(){
+  function initEcMagasin(){
+    var sel = document.getElementById('ecMagasinSelect');
+    var btn = document.getElementById('ecStart');
+    var caisse = document.querySelector('.ec-magasin-case');
+    if(!sel || !window.NautilusMagasin || !btn || !caisse) return;
+    var courant = window.NautilusMagasin.courant();
+    function esc(s){ return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c];}); }
+    function triAlpha(a,b){
+      var na=(a.nom||'').toLowerCase(), nb=(b.nom||'').toLowerCase();
+      if(na<nb) return -1; if(na>nb) return 1;
+      var va=(a.ville||'').toLowerCase(), vb=(b.ville||'').toLowerCase();
+      if(va<vb) return -1; if(va>vb) return 1;
+      return 0;
+    }
+    function remplir(liste, suggestions){
+      var utilisables = liste.filter(function(m){return m && m.id && m.actif!==false;}).sort(triAlpha);
+      var html = '<option value="">— choisis ton magasin —</option>';
+      var prochesIds = {};
+      if(suggestions && suggestions.length){
+        suggestions.forEach(function(s, i){
+          var m = s.magasin;
+          if(!m || prochesIds[m.id]) return;
+          prochesIds[m.id]=true;
+          var dist = (typeof s.distanceKm==='number') ? s.distanceKm.toFixed(1) + ' km' : '';
+          var prefix = i===0 ? '📍 Le plus proche — ' : '📍 ';
+          html += '<option value="' + esc(m.id) + '">' + esc(prefix + 'Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (dist ? ' ('+dist+')' : '')) + '</option>';
+        });
+        html += '<option disabled>──────────────</option>';
+      }
+      utilisables.forEach(function(m){
+        if(prochesIds[m.id]) return;
+        html += '<option value="' + esc(m.id) + '">' + esc('Fnac ' + m.nom + (m.ville ? ' — ' + m.ville : '') + (m.cp ? ' ('+m.cp+')' : '')) + '</option>';
+      });
+      sel.innerHTML = html;
+      if(courant && courant.id) sel.value = courant.id;
+    }
+    function estModeTestEcoutille(){
+      try{
+        var c = (localStorage.getItem('nautilusMatelotCode')||'').toUpperCase().trim();
+        if(c==='ZZZZ-0000') return true;
+        if(/[?&]m=zzzz-0000/i.test(location.search)) return true;
+        if(/[?&]apercu=jeu/i.test(location.search)) return true;
+      }catch(e){}
+      return false;
+    }
+    function chargerEtAfficher(){
+      window.NautilusMagasin.chargerListe().then(function(r){
+        var geoP = null;
+        // pas de géoloc en mode test (zzzz-0000) — accès direct aux paliers
+        if(estModeTestEcoutille()){ remplir(r.magasins||[], null); if(courant && courant.id) sel.value=courant.id; return; }
+        try{ geoP = window.NautilusMagasin.suggerer({nombre:3, delaiMs:6000}); }catch(e){ geoP=null; }
+        if(geoP && geoP.then){
+          geoP.then(function(g){
+            var sugs = (g && g.suggestions && g.suggestions.length) ? g.suggestions.slice(0,3) : null;
+            // auto-sélection si le joueur est DANS un magasin (< 150m)
+            var autoSel = null;
+            if(sugs && sugs.length && typeof sugs[0].distanceKm==='number' && sugs[0].distanceKm < 0.15){
+              autoSel = sugs[0].magasin;
+            }
+            remplir(r.magasins||[], sugs);
+            if(autoSel && !courant){
+              sel.value = autoSel.id;
+              courant = window.NautilusMagasin.memoriser(autoSel, 'ecoutille-geoloc');
+            } else if(courant && courant.id){
+              sel.value = courant.id;
+            }
+          }).catch(function(){ remplir(r.magasins||[], null); if(courant && courant.id) sel.value=courant.id; });
+        } else {
+          remplir(r.magasins||[], null);
+          if(courant && courant.id) sel.value = courant.id;
+        }
+      }).catch(function(){
+        sel.innerHTML = '<option value="">Liste indisponible — recharge la page</option>';
+      });
+    }
+    chargerEtAfficher();
+    sel.addEventListener('change', function(){
+      var id = sel.value; if(!id) return;
+      window.NautilusMagasin.chargerListe().then(async function(r){
+        var m = (r.magasins||[]).find(function(x){return x.id===id;});
+        if(!m) return;
+        // Garde : si partie globale démarrée, changement de magasin = refusé
+        try{
+          if(window.NautilusMagasinGuard){
+            var gc = await window.NautilusMagasinGuard.verifierAcces({ magasin: m });
+            if(!gc.autorise && gc.motif==='changement-magasin'){
+              // revert visuel vers origine
+              if(gc.origine && gc.origine.id) sel.value = gc.origine.id;
+              var msg='⛔ Magasin d’origine figé : Fnac '+(gc.origine&&gc.origine.nom?gc.origine.nom:gc.origine.id)+' — changement impossible après le départ.';
+              try{ if(window.Nautilus && window.Nautilus.showToast) window.Nautilus.showToast(msg,'warning',6000); else alert(msg); }catch(e){}
+              return;
+            }
+          }
+        }catch(e){}
+        window.NautilusMagasin.memoriser(m, 'ecoutille'); courant = window.NautilusMagasin.courant(); sel.style.borderColor='#d8e0e6'; sel.style.boxShadow='';
+      });
+    });
+    btn.addEventListener('click', function(){
+      var id = sel.value; if(!id) return;
+      window.NautilusMagasin.chargerListe().then(async function(r){
+        var m = (r.magasins||[]).find(function(x){return x.id===id;});
+        if(!m) return;
+        try{
+          if(window.NautilusMagasinGuard){
+            var gc = await window.NautilusMagasinGuard.verifierAcces({ magasin: m });
+            if(!gc.autorise && gc.motif==='changement-magasin'){
+              if(gc.origine && gc.origine.id) sel.value = gc.origine.id;
+              var msg2='⛔ Magasin d’origine figé : Fnac '+(gc.origine&&gc.origine.nom?gc.origine.nom:gc.origine.id)+' — changement impossible après le départ.';
+              try{ if(window.Nautilus && window.Nautilus.showToast) window.Nautilus.showToast(msg2,'warning',6000); }catch(e){}
+              return;
+            }
+          }
+        }catch(e){}
+        window.NautilusMagasin.memoriser(m, 'ecoutille-start');
+      });
+    });
+    // validation AVANT ouverture : exige un magasin (capture avant ecoutille.js)
+    btn.addEventListener('click', function(e){
+      if(sel.value) return;
+      var deja = window.NautilusMagasin.courant();
+      if(deja && deja.id){ sel.value = deja.id; return; }
+      e.preventDefault(); e.stopImmediatePropagation();
+      sel.focus();
+      sel.style.borderColor = '#e74c3c';
+      sel.style.boxShadow = '0 0 0 4px rgba(231,76,60,.22)';
+      caisse.style.transition = 'transform .12s';
+      caisse.style.transform = 'translateX(-4px)';
+      setTimeout(function(){ caisse.style.transform = 'translateX(4px)'; }, 80);
+      setTimeout(function(){ caisse.style.transform = 'translateX(0)'; }, 160);
+      var lbl = document.querySelector('.ec-magasin-label');
+      if(lbl){ var orig = lbl.textContent; lbl.textContent = 'choisis d\u2019abord ton magasin \u2193'; lbl.style.color = '#ff6b6b'; setTimeout(function(){ lbl.textContent = orig; lbl.style.color = ''; }, 2200); }
+    }, true);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initEcMagasin);
+  else initEcMagasin();
+})();
+</script>
+<script>
+// FNAC LABÈGE dynamique — remplace par le magasin sélectionné au démarrage
+(function(){
+  function nomMagasin(m){
+    if(!m || !m.nom) return 'Labège';
+    return m.nom;
+  }
+  function brandText(m){ return 'FNAC ' + nomMagasin(m).toUpperCase(); }
+  function heroText(m){ return 'Plongez dans les <span>20 000 lieues</span> de la Fnac ' + nomMagasin(m); }
+  function missionText(m){
+    return 'En 1870, le Nautilus disparaît au large des îles Lofoten. 156 ans plus tard, son signal réapparaît sous les rayons de la Fnac ' + nomMagasin(m) + '. Le premier équipage à le remonter en surface entrera dans la légende du magasin. Sonar allumé, matelot. À vous de jouer !';
+  }
+  function ecLuText(m){
+    var nom = nomMagasin(m);
+    return 'Expédition dans le Nautilus — grand jeu interne de la Fnac ' + nom + ', d\'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de ' + nom + ', le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d\'oxygène indique la réserve d\'air du bord. Appuie sur START pour ouvrir le sas et recevoir l\'ordre de mission.';
+  }
+  function appliquer(m){
+    var mag = m || (window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant()) || null;
+    var brand = document.getElementById('brandMagasin');
+    if(brand) brand.textContent = brandText(mag);
+    var hero = document.getElementById('heroMagasin');
+    if(hero) hero.innerHTML = heroText(mag);
+    var mission = document.getElementById('missionOrderText');
+    if(mission){
+      var txt = missionText(mag);
+      mission.setAttribute('data-text', txt);
+      var typing = document.getElementById('missionOrderTyping');
+      if(typing && typing.textContent && typing.textContent.length > 20){
+        if(!typing.classList.contains('typewriter-live')){
+          // déjà tapé : remplace le texte affiché
+          typing.textContent = txt;
+        }
+      }
+    }
+    var ecLu = document.getElementById('ecLuText');
+    if(ecLu) ecLu.textContent = ecLuText(mag);
+    // générique : remplace tout autre "Fnac Labège" restant dans le DOM (header/footer)
+    try{
+      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+      var toReplace = [];
+      var node;
+      while(node = walker.nextNode()){
+        if(node.nodeValue && node.nodeValue.indexOf('Fnac Labège') !== -1){
+          // évite les zones déjà gérées (brand/hero/mission/ecLu/select)
+          var p = node.parentElement;
+          if(p && (p.id==='brandMagasin' || p.id==='heroMagasin' || p.id==='missionOrderText' || p.id==='ecLuText' || p.closest && p.closest('.ec-magasin-case'))) continue;
+          toReplace.push(node);
+        }
+      }
+      toReplace.forEach(function(n){
+        n.nodeValue = n.nodeValue.replace(/Fnac Labège/g, 'Fnac ' + nomMagasin(mag));
+      });
+    }catch(e){}
+  }
+  function init(){
+    if(!window.NautilusMagasin){ setTimeout(init, 120); return; }
+    appliquer();
+    window.addEventListener('nautilus:magasin-change', function(e){ appliquer(e.detail); });
+    window.addEventListener('storage', function(e){
+      if(e.key==='nautilusMagasin' || e.key==='nautilusMagasinId') appliquer();
+    });
+    // aussi après l'ouverture de l'écoutille (le main devient visible)
+    window.addEventListener('nautilus:ecoutille-ouverte', function(){ appliquer(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<!-- Onglet ADMIN « Artefact » : s'injecte dans le panneau admin existant. -->
+<!-- Lecteur des fiches publiques fnac.com : hors ligne, jamais appele par le jeu.
+     L’onglet admin de l’accueil en a besoin comme celui du Palier 3. -->
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="admin-artefact.js?v=22" defer></script>
+<script src="admin-button.js?v=28" type="module"></script>
 </body>
 </html>
 
@@ -8663,3 +9699,78 @@ window.PWAInstall = {
   onScroll();
 })();
 </script>
+<script>
+// LES ABYSSES — 3 phases dynamiques
+(function(){
+  var PHRASES = {
+    preparation: "Préparation des équipements — Le Nautilus s'apprête à plonger.",
+    course: "La course est lancée.",
+    urgence: "🚨 Un équipage frôle la surface — le Nautilus va remonter ! Plus que deux paliers, matelots, chaque seconde compte !"
+  };
+  var el = null;
+  function getEl(){ if(!el) el = document.getElementById('abyssPhase'); return el; }
+  function getMissionCfg(){
+    try{
+      var brut = localStorage.getItem('nautilusMissionConfig');
+      if(brut) return JSON.parse(brut);
+    }catch(e){}
+    return null;
+  }
+  function getPhase(){
+    var cfg = getMissionCfg();
+    if(!cfg || !cfg.missionStartedAt) return 'preparation';
+    var started = new Date(cfg.missionStartedAt).getTime();
+    if(isNaN(started) || Date.now() < started) return 'preparation';
+    var dur = (cfg && cfg.missionDurationMs) ? Number(cfg.missionDurationMs) : 7*24*60*60*1000;
+    var remaining = started + dur - Date.now();
+    if(remaining > 0 && remaining < 2*60*60*1000) return 'urgence';
+    var pctEl = document.getElementById('oxygenPercent');
+    if(pctEl){
+      var pct = parseInt((pctEl.textContent||'').replace(/[^0-9]/g,''),10);
+      if(!isNaN(pct) && pct > 0 && pct < 15) return 'urgence';
+    }
+    var statusEl = document.getElementById('oxygenStatus');
+    if(statusEl){
+      var txt = (statusEl.textContent||'').toLowerCase();
+      if(txt.indexOf('épuis') !== -1 || txt.indexOf('remont') !== -1) return 'urgence';
+      if(txt.indexOf('attente') !== -1 || txt.indexOf('préparation') !== -1) return 'preparation';
+    }
+    return 'course';
+  }
+  function appliquer(phase){
+    var target = getEl(); if(!target) return;
+    var ph = phase || getPhase();
+    var txt = PHRASES[ph] || PHRASES.course;
+    if(target.textContent !== txt){
+      target.textContent = txt;
+      target.style.transition = 'opacity .3s';
+      target.style.opacity = '0.3';
+      setTimeout(function(){ target.style.opacity = '1'; }, 220);
+    }
+    target.dataset.phase = ph;
+    var card = document.getElementById('bottomAlertMessage');
+    if(card){ card.dataset.phase = ph; }
+  }
+  function init(){
+    window.setAbyssPhase = function(p){ if(PHRASES[p]) appliquer(p); };
+    window.getAbyssPhase = getPhase;
+    appliquer();
+    setInterval(appliquer, 5000);
+    window.addEventListener('storage', function(e){
+      if(e.key==='nautilusMissionConfig' || e.key==='nautilusOxygen') appliquer();
+    });
+    window.addEventListener('nautilus:ecoutille-ouverte', function(){ setTimeout(appliquer, 400); });
+    var obsTarget = document.getElementById('oxygenStatus') || document.getElementById('oxygenPercent');
+    if(obsTarget && window.MutationObserver){
+      var mo = new MutationObserver(function(){ appliquer(); });
+      try{ mo.observe(obsTarget, {childList:true, characterData:true, subtree:true}); }catch(e){}
+      var pct = document.getElementById('oxygenPercent');
+      if(pct && pct!==obsTarget) try{ mo.observe(pct, {childList:true, characterData:true, subtree:true}); }catch(e){}
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+
+
