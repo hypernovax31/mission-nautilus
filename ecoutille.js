@@ -1,5 +1,5 @@
 /* =============================================================================
-   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 011837 »
+   ÉCOUTILLE — ENTRÉE DU NAUTILUS  (ecoutille.js) — « COMMIT 012333 »
 
    Ce que fait ce fichier
    ----------------------
@@ -80,11 +80,11 @@
        · 1500 ms — l'abyss se referme : fondu qui révèle l'accueil ;
        · 2400 ms — la page de garde a fini sa vie, on la retire du DOM. */
   const T = {
-    plongee:  130,
-    eclat:    540,
-    impact:  1050,
-    sortie:  1500,
-    retrait: 2400
+    plongee:  130,   // léger avance — GPU déjà prêt
+    eclat:    540,   // voile abyssal
+    impact:  1080,   // +30 ms pour laisser l'éclat finir (560 ms transition)
+    sortie:  1650,   // +150 ms pour laisser l'impact (620 ms) respirer
+    retrait: 2650    // +250 ms pour le fondu global 480 ms
   };
 
   /* Tous les navigateurs du parc savent le dire ; le test est protégé pour
@@ -395,20 +395,27 @@
     }
 
     /* — la plongée s'engage : le décor avance, l'eau s'engouffre — */
-    plusTard(() => {
+    // rAF double pour promouvoir les calques GPU AVANT la première transition
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       racine.classList.add('ec-plongee');
+    }));
+    plusTard(() => {
+      // re-promotion avant l'éclat pour éviter le jank du premier scale
+      void racine.offsetWidth;
+      racine.classList.add('ec-eclat');
+      sonEcho();
+    }, ms(T.eclat));
+    // on pousse le souffle un peu après le début de plongée pour ne pas bloquer le thread
+    plusTard(() => {
       sonSouffle(ms(1400));
       if(start) start.setAttribute('aria-disabled', 'true');
     }, ms(T.plongee));
 
-    /* — zoom dans le hublot + voile abyssal — */
-    plusTard(() => {
-      racine.classList.add('ec-eclat');
-      sonEcho();
-    }, ms(T.eclat));
-
     /* — on s'enfonce : flou hollywoodien + letterbox — */
-    plusTard(() => racine.classList.add('ec-impact'), ms(T.impact));
+    plusTard(() => {
+      void racine.offsetWidth; // force reflow : la transition précédente est commitée
+      racine.classList.add('ec-impact');
+    }, ms(T.impact));
 
     /* — l'abyss se referme : fondu qui révèle l'accueil — */
     plusTard(reveler, ms(T.sortie));

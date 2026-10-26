@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 011837 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 012333 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 011837 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 012333 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -1128,6 +1128,180 @@
     }
   </style>
 
+  <!-- ═══ SORTIE FLUIDE 60fps — CORRECTIF 2026-10-28 (v347→v348) ═══
+       Problème : saccade à la sortie (zoom + 4 blurs + height en layout).
+       Solution : GPU-only (transform/opacity), blur unique, animations
+       parasites coupées, letterbox en scaleY, timings alignés. -->
+  <style id="ec-sortie-fluide">
+    /* 0. PROMOTION GPU AVANT LA SORTIE — pas pendant */
+    #ecoutille .ec-ecran,
+    #ecoutille .ec-scene,
+    #ecoutille .ec-hublot,
+    #ecoutille .ec-flood,
+    #ecoutille .ec-flash,
+    #ecoutille .ec-letterbox{
+      will-change: transform, opacity;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+    #ecoutille .ec-scene{ contain: paint; }
+
+    /* 1. COUPER LE BRUIT DE FOND DÈS QUE LA PLONGÉE S'ENGAGE
+          Le hublot flottait (translateY) + scale massif = conflit de transform.
+          Caustiques/rayons/neige/bulles/reflet/fanaux/O2/halo continuaient de
+          calculer 60 fps en arrière-plan pendant le zoom — GPU saturé. */
+    #ecoutille.ec-plongee .ec-hublot,
+    #ecoutille.ec-eclat .ec-hublot,
+    #ecoutille.ec-impact .ec-hublot{
+      animation: none !important;
+    }
+    #ecoutille.ec-plongee .m-rayons,
+    #ecoutille.ec-plongee .m-caustique,
+    #ecoutille.ec-plongee .m-neige,
+    #ecoutille.ec-plongee .m-bulles,
+    #ecoutille.ec-eclat .m-rayons,
+    #ecoutille.ec-eclat .m-caustique,
+    #ecoutille.ec-eclat .m-neige,
+    #ecoutille.ec-eclat .m-bulles,
+    #ecoutille.ec-impact .m-rayons,
+    #ecoutille.ec-impact .m-caustique,
+    #ecoutille.ec-impact .m-neige,
+    #ecoutille.ec-impact .m-bulles{
+      animation-play-state: paused !important;
+      animation: none !important;
+    }
+    #ecoutille.ec-plongee .ec-reflet::before,
+    #ecoutille.ec-eclat .ec-reflet::before,
+    #ecoutille.ec-impact .ec-reflet::before,
+    #ecoutille.ec-plongee .ec-fanaux i,
+    #ecoutille.ec-eclat .ec-fanaux i,
+    #ecoutille.ec-impact .ec-fanaux i,
+    #ecoutille.ec-plongee .ec-ecran::after,
+    #ecoutille.ec-eclat .ec-ecran::after,
+    #ecoutille.ec-impact .ec-ecran::after,
+    #ecoutille.ec-plongee .ec-o2-niveau,
+    #ecoutille.ec-eclat .ec-o2-niveau,
+    #ecoutille.ec-impact .ec-o2-niveau,
+    #ecoutille.ec-plongee .ec-start::after,
+    #ecoutille.ec-eclat .ec-start::after,
+    #ecoutille.ec-impact .ec-start::after,
+    #ecoutille.ec-plongee .ec-dome,
+    #ecoutille.ec-eclat .ec-dome,
+    #ecoutille.ec-impact .ec-dome,
+    #ecoutille.ec-plongee .ec-start::before,
+    #ecoutille.ec-eclat .ec-start::before,
+    #ecoutille.ec-impact .ec-start::before,
+    #ecoutille.ec-impact .ec-start--open{
+      animation: none !important;
+    }
+    #ecoutille.ec-eclat .ec-verre::after,
+    #ecoutille.ec-impact .ec-verre::after{
+      animation: none !important;
+    }
+    /* Shake de tout #ecoutille faisait trembler le layout entier */
+    #ecoutille.ec-impact{
+      animation: none !important;
+    }
+
+    /* 2. TRANSITIONS EXPLICITES, COURTES ET ALIGNÉES SUR LE JS (T)
+          Avant : durées 1.1s/1.35s qui chevauchaient les étapes (540→1050→1500)
+          Maintenant : chaque étape a le temps de finir avant la suivante. */
+    #ecoutille .ec-ecran{
+      transition: transform 520ms cubic-bezier(.22,.78,.18,1), opacity 420ms ease, filter 520ms ease !important;
+    }
+    #ecoutille .ec-scene{
+      transition: transform 560ms cubic-bezier(.22,.78,.18,1), opacity 380ms ease, filter 560ms ease !important;
+    }
+    #ecoutille .ec-hublot{
+      transition: transform 560ms cubic-bezier(.22,.78,.18,1), filter 440ms ease, opacity 380ms ease !important;
+    }
+    #ecoutille .ec-paroi{
+      transition: filter 520ms ease, transform 520ms cubic-bezier(.22,.78,.18,1) !important;
+    }
+    #ecoutille .ec-flood{
+      transition: transform 620ms cubic-bezier(.22,.78,.18,1), opacity 520ms ease !important;
+    }
+    #ecoutille .ec-flood{
+      will-change: transform, opacity;
+    }
+
+    /* 3. LETTERBOX EN GPU (scaleY) AU LIEU DE height (layout thrashing) */
+    #ecoutille .ec-letterbox{
+      height: 11vh !important;
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 520ms cubic-bezier(.22,.78,.18,1) !important;
+      /* height fixe, on anime l'échelle */
+    }
+    #ecoutille .ec-letterbox--bottom{
+      transform-origin: bottom;
+    }
+    #ecoutille.ec-eclat .ec-letterbox{
+      transform: scaleY(.47) !important;
+      height: 11vh !important;
+    }
+    #ecoutille.ec-impact .ec-letterbox{
+      transform: scaleY(1) !important;
+      height: 11vh !important;
+    }
+    /* prefers-reduced-motion : letterbox reste caché */
+    @media (prefers-reduced-motion: reduce){
+      #ecoutille .ec-letterbox{ transform: scaleY(0) !important; }
+    }
+
+    /* 4. ÉTAPES ALLÉGÉES — UN SEUL BLUR (sur .ec-scene) */
+    #ecoutille.ec-plongee .ec-ecran{ transform: scale(1.03) translateZ(0) !important; }
+    #ecoutille.ec-plongee .ec-scene{ transform: scale(1.02) translateZ(0) !important; }
+    #ecoutille.ec-eclat .ec-ecran{ transform: scale(1.04) translateZ(0) !important; filter: brightness(.97) !important; }
+    #ecoutille.ec-eclat .ec-scene{ transform: scale(1.05) translateZ(0) !important; filter: blur(.5px) brightness(.98) !important; }
+    #ecoutille.ec-eclat .ec-hublot{ transform: scale(1.18) translateZ(0) !important; filter: none !important; }
+    #ecoutille.ec-eclat .ec-paroi{ filter: brightness(.94) !important; }
+    #ecoutille.ec-eclat .ec-titre{ transform: scale(1.01) translateZ(0); filter: brightness(1.06); }
+    #ecoutille.ec-eclat .ec-flood{ opacity:.78 !important; transform: scale(.86) translateZ(0) !important; }
+
+    /* IMPACT : zoom massif mais fluide — 1 seul blur modéré sur la scène */
+    #ecoutille.ec-impact .ec-ecran{ transform: scale(1.18) translateZ(0) !important; filter: brightness(.52) !important; }
+    #ecoutille.ec-impact .ec-scene{ transform: scale(2.95) translateZ(0) !important; filter: blur(7px) brightness(.48) saturate(.65) !important; opacity:.92 !important; }
+    #ecoutille.ec-impact .ec-hublot{ transform: scale(3.6) translateZ(0) !important; filter: none !important; }
+    #ecoutille.ec-impact .ec-paroi{ filter: brightness(.5) !important; } /* plus de blur(3px) */
+    #ecoutille.ec-impact .ec-flood{ opacity:1 !important; transform: scale(1.14) translateZ(0) !important; }
+    #ecoutille.ec-impact .ec-titre,
+    #ecoutille.ec-impact .ec-sous-titre-h4,
+    #ecoutille.ec-impact .ec-consigne,
+    #ecoutille.ec-impact .ec-start{
+      opacity:0 !important;
+      transform: scale(.96) translateZ(0) !important;
+      transition: opacity 280ms ease, transform 280ms ease !important;
+    }
+
+    /* 5. SORTIE : FONDU GLOBAL DE #ecoutille (pas de 3 opacités concurrentes) */
+    #ecoutille{ transition: opacity 480ms ease !important; }
+    #ecoutille.ec-sortie{ opacity:0 !important; pointer-events:none; }
+    #ecoutille.ec-sortie .ec-ecran{ opacity:1 !important; } /* évite double fade */
+    #ecoutille.ec-sortie .ec-scene{ opacity:1 !important; }
+    #ecoutille.ec-sortie .ec-flood{ opacity:0 !important; transition: opacity 380ms ease !important; }
+    #ecoutille.ec-sortie .ec-flash{ opacity:0 !important; }
+
+    /* Flash abyssal plus court, GPU-only */
+    #ecoutille .ec-flash{
+      will-change: transform, opacity;
+      transform: translateZ(0);
+    }
+    #ecoutille.ec-impact .ec-flash{
+      animation: ecBloom 820ms cubic-bezier(.22,.6,.2,1) !important;
+    }
+    @keyframes ecBloom{
+      0%{ opacity:0; transform: scale(.84) translateZ(0); }
+      16%{ opacity:.58; transform: scale(1) translateZ(0); }
+      62%{ opacity:.22; transform: scale(1.04) translateZ(0); }
+      100%{ opacity:0; transform: scale(1.08) translateZ(0); }
+    }
+
+    /* En fin de sortie, on coupe tout calcul */
+    #ecoutille.ec-passee{ display:none !important; }
+  </style>
+
+
 
 
   <!-- ===== PAGE DE GARDE : DÉCISION PRISE AVANT LE PREMIER RENDU =====
@@ -1227,13 +1401,13 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=17" defer></script>
+  <script src="ecoutille.js?v=18" defer></script>
 
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 011837 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 012333 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -1328,7 +1502,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 011837</span>
+      <span class="ec-version">COMMIT 012333</span>
     </footer>
   </div>
 
@@ -1374,18 +1548,18 @@
     try{ if(film){ var relance = film.play(); if(relance && relance.catch) relance.catch(function(){}); } }catch(e){}
     setTimeout(function(){ racine.classList.add('ec-plongee'); }, 120);
     setTimeout(function(){ racine.classList.add('ec-eclat'); }, 520);
-    setTimeout(function(){ racine.classList.add('ec-impact'); }, 1000);
+    setTimeout(function(){ racine.classList.add('ec-impact'); }, 1080);
     setTimeout(function(){
       racine.classList.add('ec-sortie');
       document.documentElement.classList.remove('ec-bloque');
       document.documentElement.classList.add('ec-arrivee');
       try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
       try{ window.dispatchEvent(new CustomEvent('nautilus:ecoutille-ouverte')); }catch(e){}
-    }, 1560);
+    }, 1650);
     setTimeout(function(){
       racine.classList.add('ec-passee');
       setTimeout(function(){ if(racine.parentNode) racine.parentNode.removeChild(racine); }, 80);
-    }, 2400);
+    }, 2650);
   }
 
   /* LE FILM DE FOND : muet, en boucle, sans aucune commande. On ne montre
