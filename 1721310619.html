@@ -196,7 +196,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=18"></script>
+<script src="palier-sas.js?v=19"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2 :
      la vue d'explication immersive du thème (SANS dévoiler le
      contenu) entre la ZONE SCELLÉE et le mini-jeu — mise en page du
@@ -989,11 +989,29 @@
     afficherVueBriefing();
   } else {
     afficherVueScellee();
-    /* DÉVERROUILLAGE D'ÉQUIPE EN DIRECT : tant que la zone est scellée,
-       on écoute le document d'équipage. Dès qu'un coéquipier scanne le
-       QR (sur n'importe quel appareil), le sas s'ouvre ici aussi, à
-       l'instant, sans avoir à rescanner. Couvre aussi le retour d'un
-       matelot dont l'équipage a déjà ouvert le sas entre-temps. */
+    // Si l'équipe a déjà dépassé ce palier, le briefing doit apparaître avec le dernier niveau (même sans QR local)
+    (function(){
+      try{
+        var B = window.NautilusBlocages;
+        if(B && B.identiteCourante && window.NautilusSas && window.NautilusSas.teamHasPassedPalier){
+          B.identiteCourante().then(function(ident){
+            if(!ident || !ident.teamCode) return;
+            B.db().then(function(x){
+              return x.fs.getDoc(x.fs.doc(x.db, 'teams', ident.teamCode));
+            }).then(function(snap){
+              if(!snap || !snap.exists()) return;
+              var d = snap.data()||{};
+              if(window.NautilusSas.teamHasPassedPalier(d, 2)){
+                afficherVueBriefing();
+              } else if(d.sasUnlocks && d.sasUnlocks[2]){
+                afficherVueBriefing();
+                try{ localStorage.setItem('nautilusUnlock:palier:'+window.NautilusSas._codeAttendu(2),'ok'); }catch(e){}
+              }
+            }).catch(function(){});
+          }).catch(function(){});
+        }
+      }catch(e){}
+    })();
     if (window.NautilusSas.observerDeverrouillageEquipe) {
       window.NautilusSas.observerDeverrouillageEquipe();
     }

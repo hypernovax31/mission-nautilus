@@ -657,5 +657,8 @@
     try{ console.log('[SAS] forceUnlock palier '+n2+' code '+code2); }catch(e){}
     try{ window.location.reload(); }catch(e){}
   }
-  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme, scanDemande: scanDemande, forceUnlock: forceUnlockGlobal, _codeAttendu: function(p){ var _n=Math.max(2,p|0); return BASE.map(function(x){return String(x+(_n-1));}).join(''); } };
+  window.NautilusSas.teamHasPassedPalier = teamHasPassedPalier;
+  window.NautilusSas.STEPS_ORDER = STEPS_ORDER;
+  window.NautilusSas.palierStepId = palierStepId;
+  window.NautilusSas = { init: init, estDeverrouille: estDeverrouille, sasForceFerme: sasForceFerme, scanDemande: scanDemande, forceUnlock: forceUnlockGlobal, _codeAttendu: function(p){ var _n=Math.max(2,p|0); return BASE.map(function(x){return String(x+(_n-1));}).join(''); }, teamHasPassedPalier: teamHasPassedPalier, STEPS_ORDER: STEPS_ORDER, palierStepId: palierStepId };
 })();

@@ -139,7 +139,7 @@
 <script src="son-partage.js?v=2"></script>
 <script src="journal-bord.js?v=7"></script>
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
-<script src="palier-sas.js?v=18"></script>
+<script src="palier-sas.js?v=19"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
 <script src="palier-briefing.js?v=5"></script>
 <script>window.NautilusSas.init(3);</script>
@@ -941,6 +941,29 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       // cache les blocs qui n'ont de sens qu'en briefing ouvert
       try{ document.getElementById('teamCard').hidden=true; document.getElementById('logCard').hidden=true; document.getElementById('briefCard').hidden=true; document.getElementById('gateUnlocked').hidden=true; }catch(e){}
     }catch(e){}
+    // Si l'équipe a déjà dépassé ce palier, le briefing doit apparaître avec le dernier niveau
+    (function(){
+      try{
+        var B = window.NautilusBlocages;
+        if(B && B.identiteCourante && window.NautilusSas && window.NautilusSas.teamHasPassedPalier){
+          B.identiteCourante().then(function(ident){
+            if(!ident || !ident.teamCode) return;
+            B.db().then(function(x){
+              return x.fs.getDoc(x.fs.doc(x.db, 'teams', ident.teamCode));
+            }).then(function(snap){
+              if(!snap || !snap.exists()) return;
+              var d = snap.data()||{};
+              if(window.NautilusSas.teamHasPassedPalier(d, 3)){
+                afficherVueBriefing();
+              } else if(d.sasUnlocks && d.sasUnlocks[3]){
+                afficherVueBriefing();
+                try{ localStorage.setItem('nautilusUnlock:palier:'+window.NautilusSas._codeAttendu(3),'ok'); }catch(e){}
+              }
+            }).catch(function(){});
+          }).catch(function(){});
+        }
+      }catch(e){}
+    })();
     if (window.NautilusSas.observerDeverrouillageEquipe) {
       window.NautilusSas.observerDeverrouillageEquipe();
     }
