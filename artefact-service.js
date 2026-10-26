@@ -526,12 +526,16 @@
     var fenetre = Number(cfg.fenetreMinutes) || M.FENETRE_FRAICHEUR_MINUTES;
     var dispoOk = M.disponibiliteValide(dispo, magasinId, { fenetreMinutes: fenetre, maintenant: maintenant }).ok;
     if (!dispoOk) return false;
-    // Exclure l'ancien fallback fictif 2000000000008 (Atlas du monde) : EAN valide checksum mais aucun rayon
+    // Exclure les anciens EAN fictifs ou erronés : pool 2026-10 obsolète + exemples 200…
+    // 2000000000008 Atlas fictif, 2000000000015/0022 exemples, 9782266284226/9782070412600/9782070365302 anciens fallback aux EAN incohérents (remplacés en 014067)
     try {
-      if (c.etapes[0] && c.etapes[0].id === 'sceau' && c.sel && c.iterations) {
-        var _eanAncien = '2000000000008';
-        var _empAncien = M.empreinte(M.eanNormalise(_eanAncien), c.sel, c.iterations.ean || c.etapes[0].iterations);
-        if (c.etapes[0].empreintes && c.etapes[0].empreintes.indexOf(_empAncien) >= 0) return false;
+      if (c.etapes[0] && c.sel && c.iterations) {
+        var _oldEans = ['2000000000008','2000000000015','2000000000022','9782266284226','9782070412600','9782070365302'];
+        var _iter = c.iterations.ean || c.etapes[0].iterations;
+        for(var _k=0; _k<_oldEans.length; _k++){
+          var _empAncien = M.empreinte(M.eanNormalise(_oldEans[_k]), c.sel, _iter);
+          if (c.etapes[0].empreintes && c.etapes[0].empreintes.indexOf(_empAncien) >= 0) return false;
+        }
       }
     } catch(e){}
     return true;
@@ -629,10 +633,13 @@
           var _estAncienFallback = false;
           try {
             var _c = session.cartouche;
-            if (_c && _c.etapes && _c.etapes[0] && _c.etapes[0].id === 'sceau' && _c.sel && _c.iterations) {
-              var _eanAncien = '2000000000008';
-              var _empAncien = M.empreinte(M.eanNormalise(_eanAncien), _c.sel, _c.iterations.ean || _c.etapes[0].iterations);
-              if (_c.etapes[0].empreintes && _c.etapes[0].empreintes.indexOf(_empAncien) >= 0) _estAncienFallback = true;
+            if (_c && _c.etapes && _c.etapes[0] && _c.sel && _c.iterations) {
+              var _oldEans2 = ['2000000000008','2000000000015','2000000000022','9782266284226','9782070412600','9782070365302'];
+              var _iter2 = _c.iterations.ean || _c.etapes[0].iterations;
+              for(var _kk=0; _kk<_oldEans2.length; _kk++){
+                var _emp2 = M.empreinte(M.eanNormalise(_oldEans2[_kk]), _c.sel, _iter2);
+                if (_c.etapes[0].empreintes && _c.etapes[0].empreintes.indexOf(_emp2) >= 0) { _estAncienFallback = true; break; }
+              }
             }
           } catch(e){}
           if (!_cartOk || _estAncienFallback) {

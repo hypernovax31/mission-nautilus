@@ -306,6 +306,7 @@
     + '<div class="adm-af-sec" id="afEquipesSec">'
     +   '<h4 style="margin:0 0 6px;font-size:13px">BONNES RÉPONSES — TOUTES ÉQUIPES</h4>'
     +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Livres attribués automatiquement — apparaissent ici dès l\'ouverture du palier 3 (temps réel).</p>'
+    +   '<div style="margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap"><button id="purgeAllFakesBtn" type="button" style="background:#fff0f0;border:1px solid #e57373;color:#b71c1c;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer">🧹 Purger les anciens livres fictifs (tous)</button><span class="small" id="purgeAllFakesMsg" style="color:#6e7a84"></span></div>'
     +   '<div id="afTeamCards" class="adm-af-cards">'
     +     '<div class="adm-af-teamcard" id="afSingleCard" data-team="ALL" style="border:1px solid #0b1a2e;background:#fff">'
     +       '<div class="adm-af-teamhead"><span>🔑 RÉPONSES</span><span class="small" id="afGlobalPill" style="color:#6e7a84">chargement…</span></div>'
@@ -713,11 +714,143 @@
       afficherPasDeSession('— pas de session');
     });
   }
+  var OLD_FAKE_EANS_PURGE = ['2000000000008','2000000000015','2000000000022','9782266284226','9782070412600','9782070365302'];
+  function purgerAncienLivre(equipe){
+    equipe = String(equipe||'').toUpperCase().replace(/[^A-Z0-9-]/g,'');
+    if(!equipe) return;
+    if(!confirm('Purger l\'ancien livre fictif pour '+equipe+' ?\nLa session sera réinitialisée et un vrai livre (retrait 1H, stock live) sera attribué au prochain chargement du palier 3.')) return;
+    var btn = document.getElementById('purgeBtn-'+equipe);
+    if(btn) btn.textContent='⏳ purge…';
+    var doPurge = function(){
+      var tasks = [];
+      try{ if(window.NautilusArtefact && window.NautilusArtefact.reinitialiser) tasks.push(window.NautilusArtefact.reinitialiser(equipe, {par:'purge-admin-anciens'}).catch(function(){ return null; })); }catch(e){}
+      return Promise.all(tasks).then(function(){ return true; });
+    };
+    doPurge().then(function(){
+      try{
+        ['nautilusP3Session_'+equipe, 'nautilusP3Session_APERCU', 'nautilusP3Session_TEST', 'nautilusP3ApercuSecrets', 'nautilusP3SessionSecrets'].forEach(function(k){
+          try{
+            var v=localStorage.getItem(k);
+            if(!v) return;
+            if(k.indexOf('Secrets')>=0){
+              var o=JSON.parse(v); var changed=false;
+              Object.keys(o).forEach(function(cid){ var sec=o[cid]; var ean=(sec&&sec.livre&&sec.livre.ean)||''; if(OLD_FAKE_EANS_PURGE.indexOf(String(ean).replace(/\D/g,''))>=0 || /^200\d{10}$/.test(String(ean).replace(/\D/g,''))){ delete o[cid]; changed=true; } });
+              if(changed) localStorage.setItem(k, JSON.stringify(o));
+            }
+          }catch(e){}
+        });
+      }catch(e){}
+      var el2=document.getElementById('afP3-'+equipe);
+      if(el2) el2.innerHTML='<span class="adm-af-lbl">P3</span><span class="small" style="color:#0b5c2b">✅ Purge effectuée — recharge le palier 3 côté joueur pour obtenir le nouveau livre live 1H.</span>';
+      setTimeout(function(){ try{ majCarteP3Auto(equipe); }catch(e){} }, 1800);
+    }).catch(function(e){
+      alert('Purge échouée: '+(e&&e.message||e));
+      if(btn) btn.textContent='🗑️ Purger';
+    });
+  }
+  try{ window.NautilusAdminArtefactPurge = purgerAncienLivre; }catch(e){}
+  function purgerTousAnciensFictifs(){
+    var msgEl = document.getElementById('purgeAllFakesMsg');
+    var btn = document.getElementById('purgeAllFakesBtn');
+    if(btn) btn.textContent='⏳ scan…';
+    if(msgEl) msgEl.textContent='';
+    var OLD = OLD_FAKE_EANS_PURGE;
+    var promises = [];
+    var stepSessions = Promise.resolve();
+    try{
+      if(window.NautilusBlocages && window.NautilusBlocages.db){
+        stepSessions = window.NautilusBlocages.db().then(function(x){
+          return x.fs.getDocs(x.fs.collection(x.db, 'sessions')).then(function(snap){
+            var toPurge = [];
+            snap.forEach(function(d){
+              var data=d.data()||{}; var cid=data.cartoucheId;
+              toPurge.push({equipe:d.id, cid:cid, sess:data});
+            });
+            var checks = toPurge.map(function(item){
+              if(!item.cid) return Promise.resolve(null);
+              return window.NautilusBlocages.db().then(function(x2){
+                return x2.fs.getDoc(x2.fs.doc(x2.db, 'coffres', item.cid)).then(function(snapC){
+                  if(!snapC.exists()) return null;
+                  var d2=snapC.data()||{}; var sec=d2.secret && d2.secret.reponses ? d2.secret : (d2.secret && d2.enClair ? d2.secret : null);
+                  var ean = sec && sec.livre && sec.livre.ean ? String(sec.livre.ean).replace(/\D/g,'') : '';
+                  if(!ean) return null;
+                  if(/^200\d{10}$/.test(ean) || OLD.indexOf(ean)>=0){
+                    return item;
+                  }
+                  return null;
+                }).catch(function(){ return null; });
+              });
+            });
+            return Promise.all(checks).then(function(results){
+              var purgeList = results.filter(Boolean);
+              if(!purgeList.length){
+                if(msgEl) msgEl.textContent='✅ Aucun ancien livre fictif détecté.';
+                if(btn) btn.textContent='🧹 Purger les anciens livres fictifs (tous)';
+                return;
+              }
+              if(!confirm('Purger '+purgeList.length+' session(s) avec ancien livre fictif ?\n'+purgeList.map(function(p){return p.equipe+': '+p.cid;}).join('\n')) ) { if(btn) btn.textContent='🧹 Purger les anciens livres fictifs (tous)'; return; }
+              var doPurge = purgeList.map(function(item){
+                try{ if(window.NautilusArtefact && window.NautilusArtefact.reinitialiser) return window.NautilusArtefact.reinitialiser(item.equipe, {par:'purge-admin-tous-anciens'}).catch(function(){ return null; }); }catch(e){ return Promise.resolve(null); }
+                return Promise.resolve(null);
+              });
+              return Promise.all(doPurge).then(function(){
+                if(msgEl) msgEl.textContent='✅ '+purgeList.length+' session(s) purgée(s) — les joueurs obtiendront un vrai livre live 1H au prochain chargement.';
+                if(btn) btn.textContent='🧹 Purger les anciens livres fictifs (tous)';
+                setTimeout(function(){ try{ majCartesEquipes(); }catch(e){} }, 800);
+              });
+            });
+          });
+        });
+      } else {
+        stepSessions = Promise.resolve().then(function(){
+          var count=0;
+          ['nautilusP3ApercuSecrets','nautilusP3SessionSecrets'].forEach(function(k){
+            try{
+              var v=localStorage.getItem(k); if(!v) return;
+              var o=JSON.parse(v); var changed=false;
+              Object.keys(o).forEach(function(cid){
+                var sec=o[cid]; var ean=(sec&&sec.livre&&sec.livre.ean)|| (sec&&sec.secret&&sec.secret.livre&&sec.secret.livre.ean) || '';
+                ean=String(ean).replace(/\D/g,'');
+                if(/^200\d{10}$/.test(ean) || OLD.indexOf(ean)>=0){ delete o[cid]; changed=true; count++; }
+              });
+              if(changed) localStorage.setItem(k, JSON.stringify(o));
+            }catch(e){}
+          });
+          if(msgEl) msgEl.textContent = count ? '✅ '+count+' entrée(s) locale(s) purgée(s).' : '✅ Aucune entrée fictive locale.';
+          if(btn) btn.textContent='🧹 Purger les anciens livres fictifs (tous)';
+        });
+      }
+    }catch(e){
+      if(msgEl) msgEl.textContent='❌ '+(e&&e.message||e);
+      if(btn) btn.textContent='🧹 Purger les anciens livres fictifs (tous)';
+    }
+    stepSessions.catch(function(e){ if(msgEl) msgEl.textContent='❌ '+(e&&e.message||e); if(btn) btn.textContent='🧹 Purger les anciens livres fictifs (tous)'; });
+  }
+  try{ window.purgerTousAnciensFictifs = purgerTousAnciensFictifs; }catch(e){}
+
   function majCarteP3(equipe, secret){
     var el=$('afP3-'+equipe);
     if(!el) return;
     if(!secret || !secret.reponses){ el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>'; return; }
     var r=secret.reponses||{}; var lv=secret.livre||{};
+    try{
+      var _eanCheck = lv.ean ? String(lv.ean).replace(/\D/g,'') : '';
+      var _isOldFake = /^200\d{10}$/.test(_eanCheck) || OLD_FAKE_EANS_PURGE.indexOf(_eanCheck)>=0;
+      if(_isOldFake){
+        var htmlFake = '<span class="adm-af-lbl">P3</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">';
+        htmlFake += '<div style="background:#fff0f0;border:1px solid #e57373;border-radius:8px;padding:8px 10px">'
+          + '<div style="font-weight:900;color:#b71c1c;font-size:12px">⚠️ Ancien livre fictif détecté — purge requise</div>'
+          + '<div style="font-size:11px;color:#6e1a1a;margin-top:4px"><b>'+esc(lv.titre||'?')+'</b> — EAN <code>'+esc(_eanCheck)+'</code> — ancien pool (fictif ou EAN incohérent, corrigé en 014067).<br>'
+          + 'Ce livre n\'est pas en stock live 1H. Clique pour purger la session et régénérer un vrai livre (stock du magasin sélectionné).</div>'
+          + '<button id="purgeBtn-'+esc(equipe)+'" onclick="try{window.NautilusAdminArtefactPurge(\''+esc(equipe)+'\')}catch(e){} " style="margin-top:8px;background:#b71c1c;color:#fff;border:0;border-radius:999px;padding:6px 12px;font-weight:800;cursor:pointer">🗑️ Purger '+esc(equipe)+' et régénérer (retrait 1H)</button>'
+          + '</div>';
+        htmlFake += '<div class="small" style="color:#9aa8b6;font-family:Consolas,monospace">'+esc(lv.id||'')+' · '+esc(secret.cartoucheId||'')+' · EAN fictif</div>';
+        htmlFake += '</div>';
+        el.innerHTML = htmlFake;
+        el.style.alignItems='flex-start';
+        return;
+      }
+    }catch(e){}
     // Palier 3 simplifié : signature + chambre forte (plus de scan EAN/couverture)
     var signature = r.signature || '';
     var codeFinal = r.codeFinal || '';
@@ -895,6 +1028,7 @@
     var s = $('afMagSearch'); if (s) s.addEventListener('input', function(){ _filtre = (s.value||'').toLowerCase().trim(); rendreMag(); });
     var a = $('afMagAjouter'); if (a) a.addEventListener('click', ajouterOuMaj);
     var cl = $('afMagVider'); if (cl) cl.addEventListener('click', viderForm);
+    var purgeAll = $('purgeAllFakesBtn'); if(purgeAll) purgeAll.addEventListener('click', function(){ purgerTousAnciensFictifs(); });
 
     // --- Réponses : cartes auto (aucun bouton manuel) — le livre est lu depuis la session de chaque équipe
     // Pas de copie EAN manuelle : l’EAN est visible dans la carte P3 de chaque équipe
