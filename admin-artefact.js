@@ -274,6 +274,18 @@
               + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>'
               + '</div>';
           }).join('')
+    +       (function(){
+            // Card test admin zzzz-0000 — toujours visible (hors classement) à l'intérieur du card unique
+            var eqT='TEST';
+            var p2t = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eqT+'-'+w+'">'+esc(w)+'</span>'; }).join('');
+            return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:10px 0 0;padding:10px 10px 8px;background:linear-gradient(180deg,#fffef4 0%,#fff8db 100%);border:1px solid #e8c05f;border-radius:10px;box-shadow:0 4px 14px rgba(232,192,95,.18)">'
+              + '<div class="adm-af-teamhead" style="font-size:12px"><span>🧪 zzzz-0000 <span class="small" style="background:#fff4d8;border:1px solid #e8c05f;border-radius:999px;padding:1px 6px;font-size:10px">HORS CLASSEMENT — TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#6e7a84">test</span></div>'
+              + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eqT+'">—</span><span class="small" style="color:#6e7a84">morse</span></div>'
+              + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'">'+p2t+'</div></div>'
+              + '<div class="adm-af-row" id="afP3-'+eqT+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>'
+              + '<div class="small" style="margin-top:6px;color:#8a6d33;background:rgba(255,244,186,.55);border:1px dashed #e8c05f;border-radius:8px;padding:6px 8px">Compte test <b>zzzz-0000</b> — géolocalisation désactivée, accès libre à tous les paliers. Réponses visibles uniquement ici.</div>'
+              + '</div>';
+          })()
     +     '</div>'
     +   '</div>'
     + '</div>';
@@ -337,8 +349,25 @@
       });
       majCarteP3Auto(eq);
     });
-    // MODE_TEST supprimé — un seul card regroupe toutes les réponses (demande admin)
-    // (cards TEST dynamiques supprimées — un seul card suffit)
+    // Card test admin zzzz-0000 — alimente le sous-bloc TEST à l'intérieur du card unique
+    try{
+      (function peuplerTestAdmin(){
+        var eq='TEST';
+        try{
+          var motTest = lireP1DepuisLocal('TEST') || lireP1DepuisLocal('APERCU') || lireP1DepuisLocal('ANON') || lireP1DepuisLocal('MODE_TEST') || lireP1DepuisLocal('ZZZZ-0000') || '';
+          if(!motTest){ try{ var g=localStorage.getItem('nautilusP1TestWord'); if(g){ try{ var jg=JSON.parse(g); motTest=jg.w||jg.word||''; }catch(e){ motTest=g; }} }catch(e){} }
+          if(!motTest){ try{ var g2=localStorage.getItem('nautilusP1TestWord:TEST'); if(g2){ try{ var jg2=JSON.parse(g2); motTest=jg2.w||jg2.word||jg2; }catch(e){ motTest=g2; }} }catch(e){} }
+          var p1m=$('afP1-'+eq); if(p1m) p1m.textContent = motTest || '—';
+          var pillM=$('afTeamPill-'+eq); if(pillM) pillM.textContent = motTest ? 'donnée test trouvée' : 'test — zzzz-0000';
+          var listeM = lireP2DepuisLocal('TEST') || lireP2DepuisLocal('APERCU') || lireP2DepuisLocal('ANON') || lireP2DepuisLocal('MODE_TEST') || null;
+          if(listeM && listeM.length){ majP2Chips(eq, listeM); } else { majP2Chips(eq, []); }
+          majCarteP3Auto(eq);
+          // sync also IDs with zzzz-0000 alias if used
+          var eqAlias='ZZZZ-0000';
+          // no UI for alias, but ensure localStorage alias is mirrored
+        }catch(e){ try{ majCarteP3Auto(eq); }catch(e2){} }
+      })();
+    }catch(e){}
     // mise à jour du compteur global du card unique
     try{
       var gp=$('afGlobalPill');
@@ -348,7 +377,9 @@
           var p1e=$('afP1-'+eq);
           if(p1e && p1e.textContent && p1e.textContent.trim()!=='—' && p1e.textContent.trim()!=='') done++;
         });
-        gp.textContent = done + '/' + EQUIPES.length + ' équipes renseignées';
+        var p1test=$('afP1-TEST');
+        var testDone = (p1test && p1test.textContent && p1test.textContent.trim()!=='—' && p1test.textContent.trim()!=='' ) ? 1 : 0;
+        gp.textContent = done + '/' + EQUIPES.length + ' équipes' + (testDone ? ' + test zzzz-0000' : '') + ' renseignées';
       }
     }catch(e){}
     try{ ecouterP2Live(); }catch(e){}
@@ -427,8 +458,8 @@
     }
     function lireSessionLocale(eq){
       try{
-        // MODE_TEST = alias visuel qui agrège APERCU/TEST/ANON
-        if(eq==='MODE_TEST'){
+        // MODE_TEST/TEST = alias visuel qui agrège APERCU/TEST/ANON/ZZZZ-0000
+        if(eq==='MODE_TEST' || eq==='TEST'){
           for(var _k=0; _k<['APERCU','TEST','ANON','MODE_TEST'].length; _k++){
             var cand=_k===3? eq : ['APERCU','TEST','ANON'][_k];
             var ra2=localStorage.getItem('nautilusP3Session_'+cand);
