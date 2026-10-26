@@ -523,8 +523,12 @@ async function getTeamRealtime(code, callback) {
 const TEST_MATELOT_CODE = 'ZZZZ-0000';
 
 function isTestMode() {
-  try { return (localStorage.getItem('nautilusMatelotCode') || '') === TEST_MATELOT_CODE; }
-  catch (e) { return false; }
+  try {
+    var c = (localStorage.getItem('nautilusMatelotCode') || '').toUpperCase().trim();
+    if (c === TEST_MATELOT_CODE) return true;
+    if (/[?&]m=zzzz-0000(?:&|$)/i.test(location.search)) return true;
+    return false;
+  } catch (e) { return /[?&]m=zzzz-0000(?:&|$)/i.test(location.search); }
 }
 
 /* Cette session appartient-elle au compte fantome ?
@@ -540,7 +544,8 @@ function isTestMode() {
    monde des vrais joueurs, ni les bloquer. */
 function isTestSession(session) {
   if (!session) return false;
-  return session.startedByMatelot === TEST_MATELOT_CODE
+  var c = session.startedByMatelot ? String(session.startedByMatelot).toUpperCase().trim() : '';
+  return c === TEST_MATELOT_CODE
       || session.isTest === true
       || session.startedByName === 'TEST';
 }
@@ -552,7 +557,8 @@ function isTestSession(session) {
    ne doit plus jamais faire apparaître TEST dans un équipage. */
 function isTestMember(m) {
   if (!m) return false;
-  return m.codeMatelot === TEST_MATELOT_CODE
+  var cm = m.codeMatelot ? String(m.codeMatelot).toUpperCase().trim() : '';
+  return cm === TEST_MATELOT_CODE
       || m.memberKey === 'TEST'
       || normalize(m.name || '') === 'TEST';
 }

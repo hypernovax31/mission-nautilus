@@ -128,13 +128,23 @@
       var c = '';
       try{ c = (localStorage.getItem('nautilusMatelotCode')||'').toUpperCase().trim(); }catch(e){}
       if(c === 'ZZZZ-0000') return true;
+      // lower-case explicit (zzzz-0000) + any case via regex
+      if(/[?&]m=zzzz-0000(?:&|$)/i.test(location.search)) return true;
       if(/[?&]m=ZZZZ-0000(?:&|$)/i.test(location.search)) return true;
       if(/[?&]apercu=jeu/i.test(location.search)) return true;
       try{ if(window.Nautilus && window.Nautilus.isTestMode && window.Nautilus.isTestMode()) return true; }catch(e){}
       try{ if(window.NautilusBlocages && window.NautilusBlocages.CODE_TEST && c === window.NautilusBlocages.CODE_TEST) return true; }catch(e){}
+      // fallback : check Nautilus getCurrentMatelotCode if available
+      try{
+        var cc = '';
+        if(window.Nautilus && window.Nautilus.getCurrentMatelotCode) cc = String(window.Nautilus.getCurrentMatelotCode()||'').toUpperCase().trim();
+        if(cc === 'ZZZZ-0000') return true;
+      }catch(e){}
     }catch(e){}
     return false;
   }
+  // exposé pour désactiver la géoloc côté UI sans passer par verifierAcces
+  function isTestBypassActif(){ return isAdminBypass(); }
 
   // Vérification principale : autorise-t-on l'accès ?
   async function verifierAcces(opts){
@@ -308,6 +318,8 @@
     messageHTML: messageHTML,
     assurerOrigineDepuisCourant: assurerOrigineDepuisCourant,
     distanceKm: distanceKm,
+    isAdminBypass: isAdminBypass,
+    isTestBypassActif: isTestBypassActif,
     _lireConfig: lireConfig
   };
 })();

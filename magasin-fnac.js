@@ -159,8 +159,23 @@
       ? ' (' + m.ville + ')' : '');
   }
 
+  /* helper test mode : zzzz-0000 / ZZZZ-0000 ne déclenche jamais la géoloc */
+  function estModeTest() {
+    try {
+      var c = (localStorage.getItem('nautilusMatelotCode') || '').toUpperCase().trim();
+      if (c === 'ZZZZ-0000') return true;
+      if (/[?&]m=zzzz-0000(?:&|$)/i.test(location.search)) return true;
+      if (/[?&]m=ZZZZ-0000(?:&|$)/i.test(location.search)) return true;
+      if (/[?&]apercu=jeu/i.test(location.search)) return true;
+      if (window.Nautilus && window.Nautilus.isTestMode && window.Nautilus.isTestMode()) return true;
+      if (window.NautilusBlocages && window.NautilusBlocages.CODE_TEST && c === window.NautilusBlocages.CODE_TEST) return true;
+    } catch (e) {}
+    return false;
+  }
+
   /* --- géolocalisation : une aide, jamais une preuve ---------------- */
   function geolocaliser(opts) {
+    if (estModeTest()) return Promise.resolve({ erreur: 'desactivee-test', desactiveeTest: true });
     var o = opts || {};
     return new Promise(function (resolve) {
       if (!navigator.geolocation) { resolve({ erreur: 'indisponible' }); return; }
@@ -186,6 +201,7 @@
   }
 
   function suggerer(opts) {
+    if (estModeTest()) return Promise.resolve({ suggestions: [], erreur: 'desactivee-test', desactiveeTest: true });
     var o = opts || {};
     return Promise.all([chargerListe().catch(function () { return null; }), geolocaliser(o)])
       .then(function (r) {
