@@ -7,10 +7,8 @@
 
      1. déduire le RAYON grâce à une énigme (jamais nommée) ;
      2. retrouver l'ouvrage dans le magasin ;
-     3. le présenter au SCEAU : scan du code-barres (EAN) ;
-     4. confirmer ce qu'il voit sur la couverture (sans ouvrir) ;
-     5. résoudre la SIGNATURE de l'ouvrage ;
-     6. ouvrir la CHAMBRE FORTE avec le code final.
+     3. résoudre la SIGNATURE de l'ouvrage ;
+     4. ouvrir la CHAMBRE FORTE avec le code final.
 
    RÈGLES DE JEU (rappel — tout est calculé par artefact-moteur.js)
      · 3ᵉ raté → remontée forcée en surface (1 h, puis 2 h, puis 4 h…)
@@ -29,10 +27,8 @@
      salées (artefact-moteur.js) : la page reste muette même lue de
      bout en bout.
 
-   Lecture du code-barres : BarcodeDetector natif quand il existe,
-   sinon ZXing (même CDN que le lecteur QR du sas), sinon saisie des
-   13 chiffres imprimés sous les barres. Trois chemins, une seule
-   réponse envoyée : le code lui-même, jamais une photo.
+   Jeu simplifié : plus de scan — seule la signature de l'ouvrage
+   (visible sur la couverture) et la chambre forte sont vérifiées.
    ===================================================================== */
 (function () {
   'use strict';
@@ -175,7 +171,7 @@
         var t = e.target;
         while(t && t !== hote){
           if(t.id === 'afIntrouvable'){ e.preventDefault(); vueIntrouvable(); return; }
-          if(t.id === 'afTrouve'){ e.preventDefault(); vueSceau(); return; }
+          if(t.id === 'afTrouve'){ e.preventDefault(); vueSignature(); return; }
           if(t.id === 'afMagasinOk'){
             e.preventDefault();
             var deja = etat.magasin || (magasins && magasins.courant && magasins.courant()) || null;
@@ -251,21 +247,17 @@
           + '<div class="morse-hint-card-label">Indice nº'+ind.rang+' — '+echapper(ind.titre)+' '+(paye?'✓':'🔒')+'</div>'
           + '<div>'+body+'</div></div>';
       }).join('');
-      var sceauFait = etat.session && Array.isArray(etat.session.etapesValidees) && etat.session.etapesValidees.indexOf('sceau') >= 0;
-      var blocIntrouvable = sceauFait ? '' : '<div class="af-actions"><button type="button" class="af-btn af-btn--ghost" id="afIntrouvable">📵 Livre introuvable</button></div>';
+      var chambreFait = etat.session && Array.isArray(etat.session.etapesValidees) && etat.session.etapesValidees.indexOf('chambreForte') >= 0;
+      var blocIntrouvable = chambreFait ? '' : '<div class="af-actions"><button type="button" class="af-btn af-btn--ghost" id="afIntrouvable">📵 Livre introuvable</button></div>';
       var allRevealed = indicesFaits.length >= M.INDICES.length;
       var nextRang = null;
       for(var k=0;k<M.INDICES.length;k++){ if(indicesFaits.indexOf(M.INDICES[k].cle)<0){ nextRang=M.INDICES[k].rang; break; } }
       var heuresProchain = nextRang ? (M.INDICES.filter(function(x){return x.rang===nextRang;})[0]||{}).heures||1 : 1;
       var blocIndices = '';
-      if(!sceauFait){
-        blocIndices = '<div class="morse-hint-target">'
+      blocIndices = '<div class="morse-hint-target">'
           + '<div class="morse-hint-target-info">🆘 <b>Besoin d\'aide ?</b> Un indice est gagné par <b>tout l\'équipage</b>, mais celui qui le demande remonte en surface <b>'+heuresProchain+' h</b> et laisse sa place.</div>'
           + '<button class="morse-hint-btn" id="afHintBtn" '+(allRevealed?'disabled':'')+'>'+(allRevealed?'✅ Tous les indices révélés':'🆘 Demander un indice')+'</button>'
           + '</div><div class="morse-hints-grid">'+cartes+'</div>';
-      } else {
-        blocIndices = '<div class="morse-hints-grid">'+cartes+'</div>';
-      }
       return '<div class="af-pupitre">'
         + jaugePart
         + blocIntrouvable
@@ -442,117 +434,13 @@
         + '</div>'
         + pupitre({sansJauge:true})
         + '</div>');
-      hote.querySelector('#afTrouve').addEventListener('click', vueSceau);
+      hote.querySelector('#afTrouve').addEventListener('click', function(){ etapeSuivante(); });
       brancherPupitre();
     }
 
-    /* --- écran : le hublot (scan EAN) ------------------------------ */
-    function vueSceau() {
-      etat.vue = 'sceau';
-      rendre('<div class="af-carte">'
-        + jaugeHtml()
-        + '<p class="af-kicker">Le hublot d\'identification</p>'
-        + '<h3 class="af-titre">🔏 Passe l’ouvrage au hublot d\'identification</h3>'
-        + '<p class="af-msg">' + lignes(M.MESSAGES.scanInvite) + '</p>'
-        + '<div class="af-scanbox" id="afScanbox">'
-        +   '<video id="afCam" class="af-cam" playsinline autoplay muted hidden></video>'
-        +   '<div class="af-cam-placeholder" id="afCamPlaceholder"><span>📷</span>'
-        +     '<b>Caméra en veille</b>Active la caméra pour présenter le code-barres, ou saisis ses chiffres.</div>'
-        +   '<div class="af-scan-ligne" aria-hidden="true"></div>'
-        + '</div>'
-        + '<div class="af-actions">'
-        +   '<button type="button" class="af-btn af-btn--or" id="afCamBtn">📸 Activer la caméra</button>'
-        +   '<button type="button" class="af-btn af-btn--ghost" id="afManuelBtn">⌨️ Saisir les chiffres</button>'
-        + '</div>'
-        + '<div class="af-manuel" id="afManuel" hidden>'
-        +   '<label for="afEan">Les 13 chiffres imprimés sous le code-barres</label>'
-        +   '<input id="afEan" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="13" placeholder="9781234567897" title="13 chiffres collés, sans espaces">'
-        +   '<button type="button" class="af-btn" id="afEanOk">Passer au hublot d\'identification</button>'
-        + '</div>'
-        + '<div class="af-reponse" id="afReponse" role="status" aria-live="polite"></div>'
-        + pupitre({sansJauge:true})
-        + '</div>');
-
-      var video = hote.querySelector('#afCam');
-      var placeholder = hote.querySelector('#afCamPlaceholder');
-      var reponse = hote.querySelector('#afReponse');
-      var manuel = hote.querySelector('#afManuel');
-
-      function dire(html, kind) {
-        reponse.innerHTML = html;
-        reponse.className = 'af-reponse' + (kind ? ' is-' + kind : '');
-      }
-
-      hote.querySelector('#afCamBtn').addEventListener('click', function () {
-        var btn = this;
-        btn.disabled = true;
-        dire('📷 Autorise l’accès à la caméra, puis vise le code-barres au dos de l’ouvrage.', '');
-        demarrerLecteur(video, function (code) {
-          dire('🔎 Code lu — le hublot examine l’ouvrage…', '');
-          proposer(code);
-        }, function (motif) {
-          btn.disabled = false;
-          dire(motif === 'autorisation-refusee'
-            ? '🚫 Accès caméra refusé. Utilise « Saisir les chiffres » : le hublot accepte aussi la saisie manuelle.'
-            : '⚠️ Caméra indisponible sur cet appareil. Utilise « Saisir les chiffres ».', 'warn');
-        }).then(function (lecteur) {
-          etat.lecteur = lecteur;
-          if (lecteur.moteur === 'manuel') {
-            placeholder.hidden = false;
-            btn.disabled = false;
-            manuel.hidden = false;
-            dire('📵 Lecteur automatique indisponible : saisis les 13 chiffres imprimés sous le code-barres.', 'warn');
-          } else {
-            video.hidden = false;
-            placeholder.hidden = true;
-            btn.textContent = '📸 Caméra active';
-          }
-        });
-      });
-
-      hote.querySelector('#afManuelBtn').addEventListener('click', function () {
-        manuel.hidden = !manuel.hidden;
-        if (!manuel.hidden) hote.querySelector('#afEan').focus();
-      });
-
-      hote.querySelector('#afEanOk').addEventListener('click', function () {
-        proposer(hote.querySelector('#afEan').value);
-      });
-      hote.querySelector('#afEan').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') proposer(this.value);
-      });
-      brancherPupitre();
-
-      function proposer(code) {
-        var normalise = M.eanNormalise(code);
-        if (!normalise || !M.eanValide(normalise)) {
-          /* Code invalide : le hublot ne l'examine même pas → AUCUNE
-             erreur comptée. Un scan à moitié lu ne doit jamais coûter
-             une tentative au matelot. */
-          dire('⚠️ ' + lignes(M.MESSAGES.eanInvalide), 'warn');
-          return;
-        }
-        dire('🔏 Le hublot examine l’ouvrage…', '');
-        service.verifierEtape(etat.session.equipe, 'sceau', normalise, { matelotKey: (o.matelot && o.matelot.memberKey) || '' }).then(function (r) {
-          majSession(r);
-          if (r.ok) {
-            journal('🔏 <b>Le hublot reconnait l\'ouvrage.</b> L’artefact du Nautilus est authentifié.', 'success');
-            dire('✅ ' + lignes(M.MESSAGES.scanAccepte), 'ok');
-            setTimeout(function () { etapeSuivante(); }, 1600);
-            return;
-          }
-          if (r.erreur) {
-            journal('🔍 Le hublot a rejete un ouvrage (' + r.erreurs + '/' + r.maxErreurs + ').', 'warning');
-            dire('❌ ' + lignes(r.motif) + (r.dernierAvertissement ? '<br><b>' + lignes(r.dernierAvertissement) + '</b>' : ''), 'danger');
-            majErreurs(r);
-          } else {
-            dire('⚠️ ' + lignes(r.motif), 'warn');
-          }
-        }).catch(function (e) {
-          dire('⚠️ Vérification impossible (' + lignes(String(e && e.message || e)) + '). Réessaie, ou préviens le capitaine.', 'warn');
-        });
-      }
-    }
+    /* --- écran : signature (le scan EAN a été supprimé) ----- */
+    function vueSceau(){ return etapeSuivante(); }
+    function vueSignature(){ return etapeSuivante(); }
 
     /* --- écran : une étape de réponse saisie ----------------------- */
     function vueEtape(etape) {
@@ -799,13 +687,12 @@
     function etapeSuivante() {
       var e = prochaineEtape();
       if (!e) { terminer(); return; }
-      if (e.id === 'sceau') vueSceau();
-      else vueEtape(e);
+      vueEtape(e);
     }
     function reprendre() {
       var validees = (etat.session && etat.session.etapesValidees) || [];
-      if (!validees.length) { vueIndice(); return; }
-      /* Le hublot est franchi : on enchaîne sur les épreuves de l'ouvrage. */
+      if (validees.length === 0) { etapeSuivante(); return; }
+      // plus de hublot/sceau : on passe direct à la signature
       etapeSuivante();
     }
 

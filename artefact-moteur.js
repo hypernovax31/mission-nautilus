@@ -877,13 +877,8 @@
          le moteur applique.
      ================================================================== */
   var MESSAGES = {
-    lancement: "Le Nautilus a caché un artefact. Retrouve-le et passe-le au hublot.",
-    artefactTrouve: "Passe l'artefact au hublot d'identification.",
-    scanInvite: "Vise le code-barres au dos du livre.",
-    scanAccepte: "Artefact reconnu. Le journal s'ouvre.",
-    scanRejete: "Le sceau rejette cet ouvrage. Réessaie.",
-    scanRejeteCourt: "Livre rejeté. Route scellée.",
-    scanIllisible: "Lecture impossible. Approche le code-barres ou saisis les chiffres.",
+    lancement: "Le Nautilus a caché un artefact. Retrouve-le et observe sa signature.",
+    artefactTrouve: "L’ouvrage est en main. Vérifie sa signature.",
     eanInvalide: "Code invalide : aucune erreur comptée.",
     dernierAvertissement: "Le Nautilus te laisse une dernière tentative avant la remontée.",
     remontee1: "Remontée 1h\nRelais possible.",
@@ -975,17 +970,8 @@
     /* Le sel est recopié dans chaque étape : la vérification doit pouvoir
        se faire sans relire la cartouche entière (et sans jamais exiger le
        secret, qui lui reste chez l'admin). */
+    /* Palier 3 simplifié : plus de scan EAN ni couverture, seule la signature puis la chambre forte. */
     var etapes = [
-      { id: 'sceau', type: 'ean', libelle: 'Le hublot d\'identification',
-        consigne: MESSAGES.scanInvite, sel: sel,
-        iterations: iterEan,
-        empreintes: empreintesAcceptees(valeurs.ean, sel, iterEan, 'ean') },
-      { id: 'couverture', type: 'texte', libelle: 'La couverture',
-        consigne: "Sans ouvrir l'ouvrage, observe seulement sa couverture.\n"
-                + "Quel est le PREMIER MOT SIGNIFICATIF de son titre ?\n"
-                + "(Ignore l'article initial : le, la, les, l', un, une, des, du, de.)",
-        sel: sel, iterations: iterTexte,
-        empreintes: empreintesAcceptees(valeurs.premierMot, sel, iterTexte, 'texte') },
       { id: 'signature', type: 'code', libelle: 'La signature de l’ouvrage',
         consigne: regle.consigne, regle: regle.id, format: regle.format,
         sel: sel, iterations: iterTexte,

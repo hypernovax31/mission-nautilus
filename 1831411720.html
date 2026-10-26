@@ -155,7 +155,7 @@
        artefact-moteur.js  les règles pures : empreintes, épreuves, messages
        artefact-service.js les données : catalogue chiffré, cartouches, sessions
        magasin-fnac.js     le magasin du joueur : liste, recherche, géoloc
-       artefact-palier3.js le jeu : indice, hublot (scan EAN), signature, coffre
+       artefact-palier3.js le jeu : indice, signature, coffre
      AUCUN de ces fichiers ne contient de titre d'ouvrage, d'EAN, de SKU,
      de catégorie Fnac ou de réponse : les vérifications portent sur des
      empreintes salées calculées à la volée. -->
@@ -192,8 +192,8 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
    les disponibles pour le magasin choisi par le matelot. Le matelot :
      1. déduit le rayon grâce à une énigme,
      2. retrouve l'ouvrage,
-     3. le présente au SCEAU (scan du code-barres),
-     4. répond à trois épreuves tirées de la couverture et de la fiche.
+     3. résout la SIGNATURE de l’ouvrage,
+     4. ouvre la CHAMBRE FORTE.
    Le titre, l'EAN et le SKU ne sont JAMAIS affichés : la page ne connaît que
    des empreintes salées. 3 réponses refusées → remontée forcée en surface
    (barème global 1 h / 2 h / 4 h / 8 h / 12 h / 24 h) et relais possible d'un
@@ -615,7 +615,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var secret = _secretsApercu[cartoucheId];
     if (!secret || !apercuAdminAutorise()) return;
     var r = secret.reponses || {};
-    journal('🧪 <b>Solutions (aperçu organisateur)</b> — EAN : <code>' + esc(r.ean) + '</code>'
+    journal('🧪 <b>Solutions (aperçu organisateur)</b> — Signature : <code>' + esc(r.signature) + '</code>'
       + ' · couverture : <code>' + esc(r.premierMot) + '</code>'
       + ' · signature : <code>' + esc(r.signature) + '</code>'
       + ' · chambre forte : <code>' + esc(r.codeFinal) + '</code>'
@@ -849,9 +849,9 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
      Le magasin est celui choisi sur la page de démarrage (écoutille). */
   var magB = null;
   try{ magB = (window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant()) || null; }catch(e){}
-  var introMag = "Le <b>Capitaine</b> a caché un ouvrage dans ton magasin …. Personne ne sait où il se situe. Retrouve-le, scan-le et ouvre la chambre forte grâce à un code secret.";
+  var introMag = "Le <b>Capitaine</b> a caché un ouvrage dans ton magasin …. Personne ne sait où il se situe. Retrouve-le et ouvre la chambre forte grâce à un code secret.";
   if(magB && magB.nom){
-    introMag = "Le <b>Capitaine</b> a caché un ouvrage dans ton magasin <b>Fnac " + esc(magB.nom) + "</b> …. Personne ne sait où il se situe. Retrouve-le, scan-le et ouvre la chambre forte grâce à un code secret.";
+    introMag = "Le <b>Capitaine</b> a caché un ouvrage dans ton magasin <b>Fnac " + esc(magB.nom) + "</b> …. Personne ne sait où il se situe. Retrouve-le et ouvre la chambre forte grâce à un code secret.";
   }
   window.NautilusBriefing.afficher($('briefHost'), {
     intro: introMag,

@@ -619,13 +619,7 @@
     if(!el) return;
     if(!secret || !secret.reponses){ el.innerHTML='<span class="adm-af-lbl">P3</span><span class="small">—</span>'; return; }
     var r=secret.reponses||{}; var lv=secret.livre||{};
-    // EAN de référence : secret.reponses.ean doit égaler secret.livre.ean ; si divergence (ancien cache), livre fait foi + alerte
-    var eanAffiche = r.ean || lv.ean || '';
-    var eanLivre = lv.ean || '';
-    var eanMismatch = eanAffiche && eanLivre && eanAffiche !== eanLivre;
-    if (!eanAffiche) eanAffiche = eanLivre;
-    // toutes les réponses attendues : titre + EAN + cartouche final (signature + chambre forte)
-    var premier = r.premierMot || '';
+    // Palier 3 simplifié : signature + chambre forte (plus de scan EAN/couverture)
     var signature = r.signature || '';
     var codeFinal = r.codeFinal || '';
     var fragments = secret.fragments || null;
@@ -634,13 +628,10 @@
     var html = '<span class="adm-af-lbl">P3</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">';
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">';
     html += '<span class="adm-af-chip adm-af-chip--hl" title="'+esc(lv.titre||'')+'">📖 '+esc(lv.titre||'?')+'</span>';
-    html += '<span class="adm-af-ean" title="'+(eanMismatch ? '⚠️ divergence ean livre vs réponse — livre affiché' : esc(eanAffiche))+'">'+esc(eanAffiche||'—')+'</span>';
-    if (eanMismatch) html += '<span class="small" style="color:#b45309">⚠️ EAN réponse '+esc(r.ean)+' ≠ livre '+esc(eanLivre)+'</span>';
     if(codeFinal) html += '<span class="adm-af-chip" style="background:#0b1a2e;color:#fff" title="Chambre forte — code final">🔐 '+esc(codeFinal)+'</span>';
     html += '</div>';
-    // détails compacts des 4 étapes
+    // détails compacts : signature seule avant chambre forte
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;line-height:1.3">';
-    if(premier) html += '<span style="background:#f0f7ff;border:1px solid #c8daf0;border-radius:6px;padding:3px 6px"><b style="color:#0b3a5e">Couverture:</b> '+esc(premier)+'</span>';
     if(signature) html += '<span style="background:#fff7e6;border:1px solid #f0d0a0;border-radius:6px;padding:3px 6px"><b style="color:#6e3a0a">Signature:</b> '+esc(signature)+' <span style="opacity:.7">('+esc(regle||'')+')</span></span>';
     if(lv.auteur) html += '<span style="background:#f6f8fb;border:1px solid #dfe8ee;border-radius:6px;padding:3px 6px"><b>Auteur:</b> '+esc(lv.auteur)+'</span>';
     if(lv.editeur) html += '<span style="background:#f6f8fb;border:1px solid #dfe8ee;border-radius:6px;padding:3px 6px"><b>Éditeur:</b> '+esc(lv.editeur)+'</span>';
@@ -661,7 +652,7 @@
 
   function HTML_REP() {
     return ''
-    + '<p class="small" style="margin-bottom:8px;color:#6e7a84">P1 1 mot/équipe · P2 11 mots · P3 livre + EAN + sceau, couverture, signature, chambre forte • P4….</p>'
+    + '<p class="small" style="margin-bottom:8px;color:#6e7a84">P1 1 mot/équipe · P2 11 mots · P3 livre : signature + chambre forte • P4….</p>'
     + htmlToutesReponses();
   }
 
