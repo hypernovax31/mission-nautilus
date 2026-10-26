@@ -695,8 +695,8 @@ async function getMissionConfig() {
 /* ---------- BLOCAGE PROGRESSIF (PAR MATELOT) ---------- */
 /* REGLE DU JEU : un echec ne bloque QUE le matelot qui a echoue, jamais
    tout l'equipage. Les autres peuvent reprendre le palier a tour de role.
-   Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e echec. */
-const LOCK_HOURS = [1, 2, 4, 8, 12];
+   Bareme personnel : 1 h, 2 h, 4 h, 6 h, 8 h, 10 h, 12 h, puis 24 h max. */
+const LOCK_HOURS = [1, 2, 4, 6, 8, 10, 12];
 function getLockHours(failCount) {
   const n = Math.max(1, Number(failCount) || 1);
   return n <= LOCK_HOURS.length ? LOCK_HOURS[n - 1] : 24;

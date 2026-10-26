@@ -15,7 +15,7 @@
    doit JAMAIS hériter du blocage de ce collègue.
 
    Barème commun (en phase avec LOCK_HOURS de palier1.html) :
-   1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h dès le 6ᵉ cran.
+   1 h, 2 h, 4 h, 6 h, 8 h, 10 h, 12 h, puis 24 h max.
    LE CRAN SE COMPTE EN REMONTÉES EN SURFACE, échecs ET demandes
    d'indice confondus (champ surfaceCount de la fiche) : un matelot
    remonté 1 h pour un indice voit la remontée suivante coûter 2 h —
@@ -47,7 +47,7 @@
 (function () {
   'use strict';
 
-  var LOCK_HOURS = [1, 2, 4, 8, 12];      // barème commun, = palier1.html
+  var LOCK_HOURS = [1, 2, 4, 6, 8, 10, 12];      // barème commun, = palier1.html (8e cran = 24h)
   var CODE_TEST = 'ZZZZ-0000';            // compte d'essai : jamais en base
 
   var FIREBASE_CONFIG = {

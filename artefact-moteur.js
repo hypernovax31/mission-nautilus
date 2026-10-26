@@ -918,7 +918,7 @@
   ];
 
   var MAX_ERREURS = 3;                 // le 3ᵉ raté remonte en surface
-  var BARREME_HEURES = [1, 2, 4, 8, 12, 24];
+  var BARREME_HEURES = [1, 2, 4, 6, 8, 10, 12, 24];
 
   function messageRemontee(rang) {
     if (rang === 1) return MESSAGES.remontee1;

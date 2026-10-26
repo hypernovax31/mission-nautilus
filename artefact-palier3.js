@@ -466,7 +466,7 @@
         + '</div>'
         + '<div class="af-manuel" id="afManuel" hidden>'
         +   '<label for="afEan">Les 13 chiffres imprimés sous le code-barres</label>'
-        +   '<input id="afEan" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="9 781234 567890">'
+        +   '<input id="afEan" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="13" placeholder="9781234567890" title="13 chiffres collés, sans espaces">'
         +   '<button type="button" class="af-btn" id="afEanOk">Passer au hublot d\'identification</button>'
         + '</div>'
         + '<div class="af-reponse" id="afReponse" role="status" aria-live="polite"></div>'
