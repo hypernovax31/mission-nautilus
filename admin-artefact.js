@@ -145,6 +145,49 @@
   var EQUIPES_TEST = ['APERCU','TEST','ANON','ANON-TEST'];
   function hashString(s){ var h=0; for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
   function motDeHash(h){ if(typeof h!=='number') return null; for(var i=0;i<REF_P1.length;i++){ if(hashString(REF_P1[i].w)===h) return REF_P1[i].w; } return null; }
+  function lireP1DepuisLocal(equipe){
+    try{
+      var cands = ['nautilusP1TestWord:'+equipe, 'nautilusP1Session:'+equipe, 'nautilusP1TestSession:'+equipe, 'nautilusP1TestWord', 'nautilusP1TestSession', 'nautilusP1Word:'+equipe, 'nautilusP1TestWord:APERCU', 'nautilusP1TestSession:APERCU', 'nautilusP1Session:APERCU', 'nautilusP1TestWord:TEST', 'nautilusP1TestSession:TEST'];
+      for(var _i=0;_i<cands.length;_i++){
+        var raw=localStorage.getItem(cands[_i]);
+        if(!raw) continue;
+        try{
+          var j=JSON.parse(raw);
+          if(j && j.w) return j.w;
+          if(j && j.word) return j.word;
+          if(j && typeof j === 'string') return j;
+          if(j && j.session && j.session.wordHash) {
+            var m2=motDeHash(j.session.wordHash);
+            if(m2) return m2;
+          }
+          if(j && j.session && j.session.word) return j.session.word;
+          if(j && j.team && j.team===equipe && j.w) return j.w;
+        }catch(e){
+          if(raw && raw.length<30 && /^[A-ZÉÈÊÂÎÔÛÇ\-]+$/i.test(raw.trim())) return raw.trim().toUpperCase();
+        }
+      }
+      // generic test session without team prefix
+      var gen=localStorage.getItem('nautilusP1TestSession');
+      if(gen){
+        try{ var g=JSON.parse(gen); if(g && g.team===equipe && g.w) return g.w; if(g && g.word) return g.word; if(g && g.w) return g.w; }catch(e){}
+      }
+      // dernier recours : si equipe est NEMO et APERCU a un mot, l'afficher pour NEMO (test joué en APERCU mais lié à NEMO)
+      if(equipe==='NEMO' || equipe==='NAUTILUS' || equipe==='ARONNAX' || equipe==='NEDLAND'){
+        for(var k=0;k<['APERCU','TEST','ANON'].length;k++){
+          var ek=['APERCU','TEST','ANON'][k];
+          var cand2=localStorage.getItem('nautilusP1TestWord:'+ek);
+          if(cand2){
+            try{ var jj=JSON.parse(cand2); if(jj && jj.w) return jj.w; if(jj && jj.word) return jj.word; }catch(e){ if(cand2.length<30) return cand2.trim().toUpperCase(); }
+          }
+          var cand3=localStorage.getItem('nautilusP1TestSession:'+ek);
+          if(cand3){
+            try{ var jj3=JSON.parse(cand3); if(jj3 && jj3.w) return jj3.w; if(jj3 && jj3.word) return jj3.word; }catch(e){}
+          }
+        }
+      }
+    }catch(e){}
+    return null;
+  }
   function lireTeamDoc(code){
     try{
       if(S() && S().stockage) return S().stockage().lire('teams/'+code);
@@ -153,6 +196,22 @@
     return Promise.resolve(null);
   }
   function normaliserP2(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
+  function lireP2DepuisLocal(equipe){
+    try{
+      var keys = ['nautilusGrilleMotsCroises:'+equipe, 'nautilusGrilleMotsCroises:APERCU', 'nautilusGrilleMotsCroises:TEST', 'nautilusGrilleMotsCroises:ANON'];
+      // aussi test générique
+      for(var i=0;i<keys.length;i++){
+        var raw=localStorage.getItem(keys[i]);
+        if(raw){ try{ var arr=JSON.parse(raw); if(Array.isArray(arr) && arr.length) return arr; }catch(e){} }
+      }
+      // Pour le mode test joué en tant que NEMO mais stocké sous APERCU, on a déjà géré NEMO fallback
+      if(equipe==='NEMO'){
+        var r2=localStorage.getItem('nautilusGrilleMotsCroises:APERCU');
+        if(r2){ try{ var a2=JSON.parse(r2); if(Array.isArray(a2)&&a2.length) return a2; }catch(e){} }
+      }
+    }catch(e){}
+    return null;
+  }
   function majP2Chips(equipe, mots){
     var set = {};
     (mots||[]).forEach(function(w){ if(w) set[normaliserP2(w)] = true; });
@@ -219,41 +278,59 @@
     EQUIPES.forEach(function(eq){
       lireTeamDoc(eq).then(function(doc){
         var pill=$('afTeamPill-'+eq); var p1=$('afP1-'+eq);
-        if(!doc){ if(pill) pill.textContent='—'; if(p1) p1.textContent='—'; majP2Chips(eq, []); return; }
-        var d=doc.data? doc.data() : doc;
-        var payload = d || doc;
-        var h = payload.morseWordHash!=null ? payload.morseWordHash : (payload.data && payload.data.morseWordHash);
-        if(h==null && payload.morseWordHash!=null) h=payload.morseWordHash;
-        var mot = motDeHash(h) || (payload.morseWord || '');
+        var d=null, payload=null;
+        if(doc){
+          d=doc.data? doc.data() : doc;
+          payload = d || doc;
+        }
+        // P1 : Firestore d'abord, puis localStorage test
+        var mot = '';
+        if(payload){
+          var h = payload.morseWordHash!=null ? payload.morseWordHash : (payload.data && payload.data.morseWordHash);
+          if(h==null && payload.morseWordHash!=null) h=payload.morseWordHash;
+          mot = motDeHash(h) || (payload.morseWord || '');
+        }
+        if(!mot){
+          mot = lireP1DepuisLocal(eq) || '';
+        }
         if(p1) p1.textContent = mot || '—';
         if(pill){
-          var members = payload.members ? payload.members.length : (payload.data && payload.data.members ? payload.data.members.length : 0);
-          pill.textContent = members ? members+' matelots' : 'vide';
+          if(payload){
+            var members = payload.members ? payload.members.length : (payload.data && payload.data.members ? payload.data.members.length : 0);
+            pill.textContent = members ? members+' matelots' : 'vide';
+          } else if(mot){
+            pill.textContent = 'test';
+          } else {
+            pill.textContent = '—';
+          }
         }
+        // P2 : Firestore ou local
         try{
-          var mc = payload.motsCroises || payload.palier2 || payload.grilleMotsCroises || null;
           var liste = null;
-          if (mc && Array.isArray(mc.motsJustes)) liste = mc.motsJustes;
-          else if (mc && mc.motsJustes && typeof mc.motsJustes === 'object' && !Array.isArray(mc.motsJustes)) liste = Object.keys(mc.motsJustes).filter(function(k){ return mc.motsJustes[k]; });
-          else if (Array.isArray(payload.motsJustes)) liste = payload.motsJustes;
-          else if (payload.motsCroises && Array.isArray(payload.motsCroises)) liste = payload.motsCroises;
+          if(payload){
+            var mc = payload.motsCroises || payload.palier2 || payload.grilleMotsCroises || null;
+            if (mc && Array.isArray(mc.motsJustes)) liste = mc.motsJustes;
+            else if (mc && mc.motsJustes && typeof mc.motsJustes === 'object' && !Array.isArray(mc.motsJustes)) liste = Object.keys(mc.motsJustes).filter(function(k){ return mc.motsJustes[k]; });
+            else if (Array.isArray(payload.motsJustes)) liste = payload.motsJustes;
+            else if (payload.motsCroises && Array.isArray(payload.motsCroises)) liste = payload.motsCroises;
+          }
           if (!liste || !liste.length){
-            try{
-              var localKey='nautilusGrilleMotsCroises:'+eq;
-              var raw=localStorage.getItem(localKey);
-              if(raw){ var arr=JSON.parse(raw); if(Array.isArray(arr) && arr.length) liste=arr; }
-              if((!liste||!liste.length) && eq==='NEMO'){
-                // test mode APERCU sometimes writes under APERCU but corresponds to NEMO — check aussi
-                var raw2=localStorage.getItem('nautilusGrilleMotsCroises:APERCU');
-                if(raw2){ var arr2=JSON.parse(raw2); if(Array.isArray(arr2)&&arr2.length) liste=arr2; }
-                var raw3=localStorage.getItem('nautilusGrilleMotsCroises:TEST');
-                if(!liste||!liste.length){ if(raw3){ var arr3=JSON.parse(raw3); if(Array.isArray(arr3)&&arr3.length) liste=arr3; } }
-              }
-            }catch(e){}
+            liste = lireP2DepuisLocal(eq);
           }
           if (liste) majP2Chips(eq, liste); else majP2Chips(eq, []);
-        }catch(e){}
-      }).catch(function(){ try{ majP2Chips(eq, []); }catch(e){} });
+        }catch(e){ try{ majP2Chips(eq, []);}catch(e2){} }
+        if(!doc && !mot){
+           // même sans doc, on tente quand même P2 via local déjà fait
+        }
+      }).catch(function(){
+        // Firestore erreur → fallback local
+        try{
+          var mLocal = lireP1DepuisLocal(eq);
+          var p1b=$('afP1-'+eq); if(p1b) p1b.textContent = mLocal || '—';
+          var l2 = lireP2DepuisLocal(eq);
+          if(l2) majP2Chips(eq, l2); else majP2Chips(eq, []);
+        }catch(e){ try{ majP2Chips(eq, []);}catch(e2){} }
+      });
       majCarteP3Auto(eq);
     });
     // équipes de test (APERCU/TEST) — n'apparaissent que si une session locale existe (mode test/admin)
@@ -262,13 +339,26 @@
         var has = false;
         try{
           if(localStorage.getItem('nautilusP3Session_'+eq)) has=true;
-          var agg = localStorage.getItem('nautilusP3SessionSecrets'); if(agg && JSON.parse(agg)[eq]) has=true;
-          var cur = localStorage.getItem('nautilusP3CurrentSession'); if(cur && JSON.parse(cur).equipe===eq) has=true;
-          var allKeys = []; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k && k.indexOf('nautilusP3Secret_')===0) allKeys.push(k); }
+          if(localStorage.getItem('nautilusP1TestWord:'+eq)) has=true;
+          if(localStorage.getItem('nautilusP1TestSession:'+eq)) has=true;
+          if(localStorage.getItem('nautilusP1Session:'+eq)) has=true;
+          if(localStorage.getItem('nautilusGrilleMotsCroises:'+eq)) has=true;
+          var agg = localStorage.getItem('nautilusP3SessionSecrets'); if(agg){ try{ if(JSON.parse(agg)[eq]) has=true; }catch(e){} }
+          var cur = localStorage.getItem('nautilusP3CurrentSession'); if(cur){ try{ if(JSON.parse(cur).equipe===eq) has=true; }catch(e){} }
+          // P1 générique
+          var genP1 = localStorage.getItem('nautilusP1TestSession');
+          if(genP1){ try{ var jg=JSON.parse(genP1); if(jg && jg.team===eq) has=true; }catch(e){} }
+          if(localStorage.getItem('nautilusP1TestWord')) has=true;
+          var allKeys = []; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k && (k.indexOf('nautilusP3Secret_')===0 || k.indexOf('nautilusP1Test')===0 || k.indexOf('nautilusGrilleMotsCroises:')===0)) allKeys.push(k); }
           if(allKeys.length && !has){
-            // si des secrets apercu existent, on crée une carte TEST générique une seule fois
-            var testAgg = localStorage.getItem('nautilusP3ApercuSecrets') || localStorage.getItem('nautilusP3TestSecrets');
-            if(testAgg && Object.keys(JSON.parse(testAgg)).length) has = (eq==='APERCU');
+            var testAgg = localStorage.getItem('nautilusP3ApercuSecrets') || localStorage.getItem('nautilusP3TestSecrets') || localStorage.getItem('nautilusP1TestSession') || localStorage.getItem('nautilusGrilleMotsCroises:APERCU');
+            if(testAgg){
+              try{
+                var parsed = JSON.parse(testAgg);
+                if(parsed && (parsed.w || parsed.word || (Array.isArray(parsed) && parsed.length) || Object.keys(parsed).length)) has = (eq==='APERCU');
+                else if(testAgg && testAgg.length>2) has = (eq==='APERCU');
+              }catch(e){ if(testAgg && testAgg.length>2) has=(eq==='APERCU'); }
+            }
           }
         }catch(e){}
         if(!has) return;
@@ -278,11 +368,27 @@
         var div = document.createElement('div');
         div.className = 'adm-af-teamcard';
         div.setAttribute('data-team', eq);
+        var p2chipsTest = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'">'+esc(w)+'</span>'; }).join('');
         div.innerHTML = '<div class=\"adm-af-teamhead\"><span>'+esc(eq)+' <span class=\"small\" style=\"background:#fff4d8;border:1px solid #e8c05f;border-radius:999px;padding:1px 6px;font-size:10px\">TEST</span></span><span class=\"small\" id=\"afTeamPill-'+eq+'\" style=\"color:#6e7a84\">test/apercu</span></div>'
           + '<div class=\"adm-af-row\"><span class=\"adm-af-lbl\">P1</span><span class=\"adm-af-chip adm-af-chip--hl\" id=\"afP1-'+eq+'\">—</span><span class=\"small\" style=\"color:#6e7a84\">morse</span></div>'
-          + '<div class=\"adm-af-row\"><span class=\"adm-af-lbl\">P2</span><div class=\"adm-af-chips\" id=\"afP2wrap-'+eq+'\">—</div></div>'
+          + '<div class=\"adm-af-row\"><span class=\"adm-af-lbl\">P2</span><div class=\"adm-af-chips\" id=\"afP2wrap-'+eq+'\">'+p2chipsTest+'</div></div>'
           + '<div class=\"adm-af-row\" id=\"afP3-'+eq+'\"><span class=\"adm-af-lbl\">P3</span><span class=\"small\" style=\"color:#6e7a84\">chargement…</span></div>';
         cards.appendChild(div);
+        try{
+          var mTest = lireP1DepuisLocal(eq);
+          var p1t=$('afP1-'+eq); if(p1t) p1t.textContent = mTest || '—';
+          var l2t = lireP2DepuisLocal(eq);
+          if(l2t) majP2Chips(eq, l2t);
+          // aussi essayer APERCU générique si eq est NEMO etc.
+          if(!mTest){
+            var mGen = lireP1DepuisLocal('APERCU') || lireP1DepuisLocal('TEST');
+            if(mGen && p1t) p1t.textContent = mGen;
+          }
+          if(!l2t){
+            var lGen = lireP2DepuisLocal('APERCU') || lireP2DepuisLocal('TEST');
+            if(lGen) majP2Chips(eq, lGen);
+          }
+        }catch(e){}
         majCarteP3Auto(eq);
       });
     }catch(e){}

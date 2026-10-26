@@ -2350,6 +2350,15 @@ window.Nautilus = {
         lastEvent: 'session_started'
       };
       N.addActe('prend les commandes', 'info', state.me.name);
+      try{
+        var _mir = { team: state.teamCode, w: entry.w, hash: N.hashString(entry.w), word: entry.w, session: state.session, at: new Date().toISOString() };
+        localStorage.setItem('nautilusP1TestSession:'+state.teamCode, JSON.stringify(_mir));
+        localStorage.setItem('nautilusP1TestWord:'+state.teamCode, entry.w);
+        localStorage.setItem('nautilusP1TestSession', JSON.stringify(_mir));
+        localStorage.setItem('nautilusP1TestWord', entry.w);
+        // Aussi pour compat admin générique
+        localStorage.setItem('nautilusP1Session:'+state.teamCode, JSON.stringify(state.session));
+      }catch(e){}
       /* renderGameArea() et non onSessionUpdate() : cette derniere REMPLACE
          state.session par son argument, ce qui effacerait la session qu'on
          vient de fabriquer. */
@@ -3106,6 +3115,17 @@ window.Nautilus = {
     /* En memoire aussi : en partie d'essai rien n'est ecrit en base, et en
        partie reelle cela evite d'attendre l'aller-retour reseau. */
     state.session = { ...(state.session || {}), ...patch };
+    try{
+      if(state.isTest){
+        var _mir2 = { team: state.teamCode, w: state.word, word: state.word, hash: state.session ? state.session.wordHash : N.hashString(state.word||''), session: state.session, at: new Date().toISOString() };
+        localStorage.setItem('nautilusP1TestSession:'+state.teamCode, JSON.stringify(_mir2));
+        localStorage.setItem('nautilusP1Session:'+state.teamCode, JSON.stringify(state.session));
+        localStorage.setItem('nautilusP1TestSession', JSON.stringify(_mir2));
+      } else {
+        // Pour les parties réelles aussi, miroir pour admin local
+        try{ localStorage.setItem('nautilusP1Session:'+state.teamCode, JSON.stringify(state.session)); }catch(e){}
+      }
+    }catch(e){}
 
     N.addActe('demande un indice', 'warning', state.me.name);
     showFloatingHint('🆘 Indice débloqué : ' + buildHintContent(idx), 10000);
@@ -3681,7 +3701,7 @@ window.Nautilus = {
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=4" defer></script>
 <script src="fnac-lecteur.js?v=1" defer></script>
-<script src="admin-artefact.js?v=20" defer></script>
+<script src="admin-artefact.js?v=21" defer></script>
 <script src="admin-button.js?v=26" type="module"></script>
 </body>
 </html>

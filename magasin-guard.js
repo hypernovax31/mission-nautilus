@@ -123,9 +123,26 @@
     return o;
   }
 
+  function isAdminBypass(){
+    try{
+      var c = '';
+      try{ c = (localStorage.getItem('nautilusMatelotCode')||'').toUpperCase().trim(); }catch(e){}
+      if(c === 'ZZZZ-0000') return true;
+      if(/[?&]m=ZZZZ-0000(?:&|$)/i.test(location.search)) return true;
+      if(/[?&]apercu=jeu/i.test(location.search)) return true;
+      try{ if(window.Nautilus && window.Nautilus.isTestMode && window.Nautilus.isTestMode()) return true; }catch(e){}
+      try{ if(window.NautilusBlocages && window.NautilusBlocages.CODE_TEST && c === window.NautilusBlocages.CODE_TEST) return true; }catch(e){}
+    }catch(e){}
+    return false;
+  }
+
   // Vérification principale : autorise-t-on l'accès ?
   async function verifierAcces(opts){
     opts=opts||{};
+    if(isAdminBypass()){
+      var cfgPre = await lireConfig().catch(function(){ return {}; });
+      return { autorise:true, missionStarted:!!(cfgPre && cfgPre.missionStartedAt), motif:'admin-bypass', cfg:cfgPre, adminBypass:true };
+    }
     var cfg = await lireConfig();
     var missionStarted = !!(cfg && cfg.missionStartedAt);
     if(!missionStarted){
