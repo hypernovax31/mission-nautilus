@@ -885,3 +885,11 @@ body{overflow-wrap:break-word;}
 @keyframes sacrificeFade{from{opacity:0}to{opacity:1}}
 @keyframes sacrificeRise{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.sacrifice-overlay.show,.sacrifice-panel,.sacrifice-emblem{animation:none}}
+
+/* Minimal remontée forcée — uniformisé 014058 */
+.lock-screen--lost .lock-header{flex-direction:column;align-items:center;text-align:center;gap:8px}
+.lock-screen--lost .lock-header > div{text-align:center}
+.lock-screen--lost .lock-lignes{gap:8px}
+#gateUnlocked:has(.lock-screen) .af-retour,
+#gateUnlocked:has(.lock-screen) .gate-home{display:none !important}
+

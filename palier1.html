@@ -3492,23 +3492,13 @@ window.Nautilus = {
      pourquoi / combien de temps / qui reprend. */
   function renderLostScreen(s, t) {
     const monLock = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
-    const reason = s.endReason || 'lost';
-    const attemptLabel = reason === 'timeout'
-      ? 'Temps imparti écoulé'
-      : reason === 'too_many_errors'
-        ? '3 erreurs sur cette tentative'
-        : 'Tentative interrompue';
-    /* Les lignes sont CONSTRUITES PAR LA MEME FONCTION que la page
-       « Blocage personnel » : formulation identique, jamais de double
-       maintenance (lignesBlocageHtml). */
-    const _hoursKicker = Math.max(1, Number(monLock?.lastLockHours || 1)); // durée barème au moment de la remontée
+    const _h = Math.max(1, Number(monLock?.lastLockHours || 1));
     const lignes = lignesBlocageHtml(t, monLock, 'echec');
     return `
       <section class="lock-screen lock-screen--lost" aria-live="polite">
         <div class="lock-header">
           <span class="lock-icon" aria-hidden="true">🔒</span>
-          <h2>Remontée forcée</h2>
-          <p class="lock-subtitle">3 erreurs — mission interrompue</p>
+          <div><h2>Remontée forcée</h2><p class="lock-subtitle">3 erreurs — <b>${_h} h</b> en surface</p></div>
         </div>
         ${lignes}
         <a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l'accueil</a>
@@ -3558,7 +3548,7 @@ window.Nautilus = {
     return `
         <div class="lock-ligne">
           <span class="lock-ligne-ico" aria-hidden="true">⏱</span>
-          <span>Retour le ${esc(_dateRetour)} à ${esc(_heureRetour)} — <b>${esc(String(hours))} h</b> en surface</span>
+          <span>Retour le ${esc(_dateRetour)} à ${esc(_heureRetour)}</span>
         </div>
         <div class="lock-ligne">
           <span class="lock-ligne-ico" aria-hidden="true">⚓</span>

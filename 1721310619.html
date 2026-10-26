@@ -332,11 +332,11 @@
     var _date = formatRetourDate(lockedUntil);
     var _time = formatRetourHeure(lockedUntil);
     return '<section class="lock-screen lock-screen--lost" aria-live="polite">'
-      + '<div class="lock-header"><span class="lock-icon" aria-hidden="true">🔒</span><h2>Remontée forcée</h2><p class="lock-subtitle">3 erreurs — mission interrompue</p></div>'
-      + '<div class="lock-details">'
-      + '<div class="lock-row"><span class="lock-ico" aria-hidden="true">⏱</span><span>Retour le '+esc(_date)+' à '+esc(_time)+' — <b>'+esc(String(_h))+' h</b> en surface</span></div>'
-      + '<div class="lock-row"><span class="lock-ico" aria-hidden="true">⚓</span><span>Un coéquipier peut reprendre immédiatement</span></div>'
-      + '<div class="lock-row is-next"><span class="lock-ico" aria-hidden="true">🔁</span><span>Prochaine sanction : <b>'+esc(String(_next))+' h</b></span></div>'
+      + '<div class="lock-header"><span class="lock-icon" aria-hidden="true">🔒</span><div><h2>Remontée forcée</h2><p class="lock-subtitle">3 erreurs — <b>'+esc(String(_h))+' h</b> en surface</p></div></div>'
+      + '<div class="lock-lignes">'
+      + '<div class="lock-ligne"><span class="lock-ligne-ico" aria-hidden="true">⏱</span><span>Retour le '+esc(_date)+' à '+esc(_time)+'</span></div>'
+      + '<div class="lock-ligne"><span class="lock-ligne-ico" aria-hidden="true">⚓</span><span>Un coéquipier peut reprendre immédiatement</span></div>'
+      + '<div class="lock-ligne lock-ligne--next"><span class="lock-ligne-ico" aria-hidden="true">🔁</span><span>Prochaine sanction : <b>'+esc(String(_next))+' h</b></span></div>'
       + '</div><a class="lock-home-link" href="index.html?ecoutille=0">🏠 Retour à l\'accueil</a></section>';
   }
 
@@ -446,7 +446,6 @@
   }
 
   function afficherBlocage(jusqua, nom, rangOrHours) {
-    // ⏱ Retour calculé dynamiquement : lockedUntil = moment de la remontée (poserBlocage → Date.now()) + durée barème (heuresBlocage) — jamais figé
     afficherVueEpreuve();
     afficherJournalDeBord(true);
     var _hours = 1, _next = 2;
@@ -463,7 +462,8 @@
     }catch(e){}
     var host = $('mcHost');
     if(host) host.innerHTML = lockScreenNomenclature(_hours, jusqua, _next);
-    statut("🔒 <b>Remontée forcée !</b> Retour le « "+esc(formatRetourDate(jusqua))+" » à « "+esc(formatRetourHeure(jusqua))+" ».", 'danger');
+    statut('', '');
+    try{ var _outer=document.querySelector('#gateUnlocked .gate-home'); if(_outer) _outer.style.display='none'; }catch(e){}
   }
 
   function onErreur(n, max) {
