@@ -73,13 +73,13 @@
   const CLE_SESSION = 'nautilusEcoutille';        // ouverte pendant cette session
   const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
-  /* Calendrier intense : zoom dans l'écoutille + flou + eau (v014059) */
+  /* Calendrier fluide : zoom intense progressif sans saccade (v014060) */
   const T = {
-    plongee:   140,
-    eclat:     520,
-    impact:    900,
-    sortie:   1600,
-    retrait:  2500
+    plongee:   180,
+    eclat:     560,
+    impact:   1020,
+    sortie:   2100,
+    retrait:  3000
   };
 
   /* Tous les navigateurs du parc savent le dire ; le test est protégé pour
@@ -391,26 +391,22 @@
       }catch(e){}
     }
 
-    /* — la plongée s'engage : le décor avance, l'eau s'engouffre — */
-    // rAF double pour promouvoir les calques GPU AVANT la première transition
+    /* — la plongée s'engage : zoom + eau — fluide, sans reflow forcé — */
+    try{ racine.style.willChange = 'transform, opacity'; }catch(e){}
     requestAnimationFrame(() => requestAnimationFrame(() => {
       racine.classList.add('ec-plongee');
     }));
     plusTard(() => {
-      // re-promotion avant l'éclat pour éviter le jank du premier scale
-      void racine.offsetWidth;
       racine.classList.add('ec-eclat');
       sonEcho();
     }, ms(T.eclat));
-    // on pousse le souffle un peu après le début de plongée pour ne pas bloquer le thread
     plusTard(() => {
       sonSouffle(ms(1400));
       if(start) start.setAttribute('aria-disabled', 'true');
     }, ms(T.plongee));
 
-    /* — on s'enfonce : flou hollywoodien + letterbox — */
+    /* — on s'enfonce : zoom massif fluide — */
     plusTard(() => {
-      void racine.offsetWidth; // force reflow : la transition précédente est commitée
       racine.classList.add('ec-impact');
     }, ms(T.impact));
 

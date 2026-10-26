@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 014059 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 014060 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 014059 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 014060 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -2060,7 +2060,7 @@
     #ecoutille.ec-presse .ec-dome{ transform: translateY(3px) scale(.965) !important; }
   </style>
 
-  <!-- ═══ ZOOM INTENSE + EAU À TRAVERS L'ÉCOUTILLE — 2026-10-28 (v014059) ═══
+  <!-- ═══ ZOOM INTENSE + EAU À TRAVERS L'ÉCOUTILLE — 2026-10-28 (v014060) ═══
        Au clic OPEN : on plonge DANS le hublot — zoom massif à l'intérieur du verre,
        flou progressif en sortie, et eau qui traverse l'écoutille.
        Apparition reste instantanée (pas d'entrée étalée). -->
@@ -2140,59 +2140,69 @@
       100%{ opacity:.95; transform: translateX(0) scaleX(1) }
     }
 
-    /* ── IMPACT : zoom massif DANS le verre + flou + eau qui submerge ── */
+    /* ── IMPACT : zoom massif DANS le verre — fluide (sans saccade) ── */
+    #ecoutille.ec-impact .ec-scene,
+    #ecoutille.ec-impact .ec-hublot,
+    #ecoutille.ec-impact .ec-ecran{
+      will-change: transform, opacity !important;
+      backface-visibility: hidden !important;
+      transform: translateZ(0) !important;
+    }
     #ecoutille.ec-impact .ec-scene{
-      transform: scale(3.6) !important;
-      filter: blur(14px) brightness(.36) saturate(.55) !important;
-      opacity: .92 !important;
-      transition: transform 1s cubic-bezier(.16,.78,.22,1), filter .85s ease, opacity .6s ease !important;
+      transform: scale(3.6) translateZ(0) !important;
+      filter: brightness(.42) saturate(.6) !important;
+      opacity: .96 !important;
+      transition: transform .95s cubic-bezier(.22,.62,.32,1), filter .5s ease, opacity .5s ease !important;
     }
     #ecoutille.ec-impact .ec-hublot{
-      transform: scale(4.8) !important;
-      filter: blur(.8px) brightness(.88) !important;
-      transition: transform 1s cubic-bezier(.16,.78,.22,1), filter .85s ease !important;
+      transform: scale(4.8) translateZ(0) !important;
+      filter: brightness(.92) !important;
+      transition: transform .95s cubic-bezier(.22,.62,.32,1) !important;
     }
     #ecoutille.ec-impact .ec-ecran{
-      transform: scale(1.24) !important;
-      filter: blur(7px) brightness(.48) saturate(.5) !important;
-      transition: transform 1s cubic-bezier(.16,.78,.22,1), filter .85s ease !important;
+      transform: scale(1.24) translateZ(0) !important;
+      filter: brightness(.52) saturate(.55) !important;
+      transition: transform .95s cubic-bezier(.22,.62,.32,1), filter .5s ease !important;
     }
-    #ecoutille.ec-impact .ec-paroi{ filter: brightness(.42) blur(2px) !important; }
+    #ecoutille.ec-impact .ec-paroi{ filter: brightness(.46) !important; }
     #ecoutille.ec-impact .ec-titre,
     #ecoutille.ec-impact .ec-sous-titre-h4,
     #ecoutille.ec-impact .ec-consigne,
-    #ecoutille.ec-impact .ec-start{ opacity:0 !important; transform: scale(.94) !important; transition: opacity .28s ease, transform .28s ease !important; }
-    #ecoutille.ec-impact .m-caustique{ opacity:.82 !important; filter: blur(.8px) contrast(1.2) !important; }
+    #ecoutille.ec-impact .ec-start{ opacity:0 !important; transform: scale(.94) translateZ(0) !important; transition: opacity .28s ease !important; }
+    #ecoutille.ec-impact .m-caustique{ opacity:.72 !important; filter: contrast(1.1) !important; }
     #ecoutille.ec-impact .ec-flood{
       display:block !important; height:auto !important;
       position:absolute; left:50%; top:50%; width:220vmax; height:220vmax; margin:-110vmax 0 0 -110vmax;
-      opacity:1 !important; transform: scale(1.02) !important;
-      background: radial-gradient(closest-side at 50% 50%, rgba(10,60,110,.0) 0 26%, rgba(8,44,84,.52) 42%, rgba(4,28,58,.78) 58%, rgba(2,16,36,.96) 78%, #020a14 100%) !important;
-      transition: transform 1s ease, opacity .7s ease !important;
+      opacity:.92 !important; transform: scale(1.02) translateZ(0) !important;
+      background: radial-gradient(closest-side at 50% 50%, rgba(10,60,110,.0) 0 26%, rgba(8,44,84,.42) 42%, rgba(4,28,58,.68) 58%, rgba(2,16,36,.88) 78%, #020a14 100%) !important;
+      transition: opacity .6s ease, transform 1s cubic-bezier(.22,.62,.32,1) !important;
       pointer-events:none;
+      will-change: transform, opacity !important;
     }
     #ecoutille.ec-impact .ec-flash{
       display:block !important; opacity:0 !important;
       position:absolute; inset:0; pointer-events:none;
-      background: radial-gradient(ellipse 110% 90% at 50% 50%, rgba(140,230,255,.42) 0 18%, rgba(60,170,230,.18) 36%, transparent 68%) !important;
-      animation: ecBloomIntense .95s cubic-bezier(.22,.6,.2,1) both !important;
+      background: radial-gradient(ellipse 110% 90% at 50% 50%, rgba(140,230,255,.36) 0 18%, rgba(60,170,230,.14) 36%, transparent 68%) !important;
+      animation: ecBloomIntense .9s cubic-bezier(.22,.6,.3,1) both !important;
+      will-change: transform, opacity !important;
     }
     @keyframes ecBloomIntense{
-      0%{ opacity:0; transform: scale(.86) }
-      16%{ opacity:.62; transform: scale(1) }
-      100%{ opacity:0; transform: scale(1.08) }
+      0%{ opacity:0; transform: scale(.88) translateZ(0) }
+      16%{ opacity:.52; transform: scale(1) translateZ(0) }
+      100%{ opacity:0; transform: scale(1.06) translateZ(0) }
     }
 
-    /* ── SORTIE : flou abyssal + fondu — l'écoutille disparaît dans l'eau ── */
+    /* ── SORTIE : fondu fluide — plus de blur lourd sur le conteneur ── */
     #ecoutille.ec-sortie{
       opacity:0 !important;
-      filter: blur(10px) brightness(.72) !important;
-      transform: scale(1.05) !important;
-      transition: opacity .85s ease, filter .85s ease, transform .85s ease !important;
+      transform: scale(1.04) translateZ(0) !important;
+      filter: none !important;
+      transition: opacity .72s cubic-bezier(.4,0,.2,1), transform .72s cubic-bezier(.4,0,.2,1) !important;
       pointer-events:none;
+      will-change: opacity, transform !important;
     }
     #ecoutille.ec-sortie .ec-scene{ opacity:1 !important; }
-    #ecoutille.ec-sortie .ec-flood{ opacity:0 !important; transition: opacity .55s ease !important; }
+    #ecoutille.ec-sortie .ec-flood{ opacity:0 !important; transition: opacity .45s ease !important; }
   </style>
 
 
@@ -2301,7 +2311,7 @@
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 014059 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 014060 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -2396,7 +2406,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 014059</span>
+      <span class="ec-version">COMMIT 014060</span>
     </footer>
   </div>
 
@@ -2441,20 +2451,21 @@
     /* Le geste relance le film au besoin (lecture refusée, batterie faible) :
        c'est le même geste qui débloque tout le reste. Le film reste muet. */
     try{ if(film){ var relance = film.play(); if(relance && relance.catch) relance.catch(function(){}); } }catch(e){}
-    setTimeout(function(){ racine.classList.add('ec-plongee'); }, 140);
-    setTimeout(function(){ racine.classList.add('ec-eclat'); }, 520);
-    setTimeout(function(){ racine.classList.add('ec-impact'); }, 900);
+    try{ racine.style.willChange = 'transform, opacity'; }catch(e){}
+    setTimeout(function(){ racine.classList.add('ec-plongee'); }, 180);
+    setTimeout(function(){ racine.classList.add('ec-eclat'); }, 560);
+    setTimeout(function(){ racine.classList.add('ec-impact'); }, 1020);
     setTimeout(function(){
       racine.classList.add('ec-sortie');
       document.documentElement.classList.remove('ec-bloque');
       document.documentElement.classList.add('ec-arrivee');
       try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
       try{ window.dispatchEvent(new CustomEvent('nautilus:ecoutille-ouverte')); }catch(e){}
-    }, 1600);
+    }, 2100);
     setTimeout(function(){
       racine.classList.add('ec-passee');
       setTimeout(function(){ if(racine.parentNode) racine.parentNode.removeChild(racine); }, 80);
-    }, 2500);
+    }, 3000);
   }
 
   /* LE FILM DE FOND : muet, en boucle, sans aucune commande. On ne montre
