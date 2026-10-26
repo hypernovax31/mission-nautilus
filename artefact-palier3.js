@@ -207,7 +207,8 @@
     }
 
     /* --- bandeau permanent : tentatives restantes + actions --------- */
-    function pupitre() {
+    function pupitre(opts) {
+      opts = opts || {};
       var max = (etat.session && etat.session.cartouche && etat.session.cartouche.maxErreurs) || M.MAX_ERREURS;
       var restantes = Math.max(0, max - etat.erreurs);
       var perdues = Math.max(0, max - restantes);
@@ -216,6 +217,14 @@
         points += '<span class="af-jauge-pt' + (i < perdues ? ' is-lost is-grille' : '') + '" aria-hidden="true"></span>';
       }
       var jaugeEtat = restantes === 0 ? ' is-critical' : (restantes === 1 ? ' is-warning' : '');
+      var jaugePart = '';
+      if (!opts.sansJauge) {
+        jaugePart = '<div class="af-jauge' + jaugeEtat + '" role="status" aria-label="Tentatives restantes">'
+          + '<span class="af-jauge-label">Tentatives avant remontée</span>'
+          + '<span class="af-jauge-points">' + points + '</span>'
+          + '<span class="af-jauge-count" style="margin-left:8px;font:700 11px ui-monospace,Menlo,monospace;color:#cfe8ff;opacity:.9">' + restantes + ' / ' + max + '</span>'
+          + '</div>';
+      }
       var indicesFaits = etat.indices || [];
       var transmis = (etat.session && etat.session.indicesTransmis) || {};
       var blocTransmis = '';
@@ -258,13 +267,25 @@
         blocIndices = '<div class="morse-hints-grid">'+cartes+'</div>';
       }
       return '<div class="af-pupitre">'
-        + '<div class="af-jauge' + jaugeEtat + '" role="status" aria-label="Tentatives restantes">'
-        +   '<span class="af-jauge-label">Tentatives avant remontée</span>'
-        +   '<span class="af-jauge-points">' + points + '</span>'
-        +   '<span class="af-jauge-count" style="margin-left:8px;font:700 11px ui-monospace,Menlo,monospace;color:#cfe8ff;opacity:.9">' + restantes + ' / ' + max + '</span>'
-        + '</div>'
+        + jaugePart
         + blocIntrouvable
         + blocIndices
+        + '</div>';
+    }
+
+    function jaugeHtml() {
+      var max = (etat.session && etat.session.cartouche && etat.session.cartouche.maxErreurs) || M.MAX_ERREURS;
+      var restantes = Math.max(0, max - etat.erreurs);
+      var perdues = Math.max(0, max - restantes);
+      var points = '';
+      for (var i = 0; i < max; i++) {
+        points += '<span class="af-jauge-pt' + (i < perdues ? ' is-lost is-grille' : '') + '" aria-hidden="true"></span>';
+      }
+      var jaugeEtat = restantes === 0 ? ' is-critical' : (restantes === 1 ? ' is-warning' : '');
+      return '<div class="af-jauge' + jaugeEtat + '" role="status" aria-label="Tentatives restantes">'
+        + '<span class="af-jauge-label">Tentatives avant remontée</span>'
+        + '<span class="af-jauge-points">' + points + '</span>'
+        + '<span class="af-jauge-count" style="margin-left:8px;font:700 11px ui-monospace,Menlo,monospace;color:#cfe8ff;opacity:.9">' + restantes + ' / ' + max + '</span>'
         + '</div>';
     }
 
@@ -410,6 +431,7 @@
       etat.vue = 'indice';
       var transmis = (etat.session.indicesTransmis || {}).rayon;
       rendre('<div class="af-carte">'
+        + jaugeHtml()
         + '<p class="af-kicker">Journal de bord — première trace</p>'
         + '<h3 class="af-titre">🧭 L’indice du Nautilus</h3>'
         + '<blockquote class="af-enigme">' + lignes(c.indice) + '</blockquote>'
@@ -418,7 +440,7 @@
         + '<div class="af-actions">'
         +   '<button type="button" class="af-btn af-btn--or" id="afTrouve">📖 J’ai l’ouvrage en main</button>'
         + '</div>'
-        + pupitre()
+        + pupitre({sansJauge:true})
         + '</div>');
       hote.querySelector('#afTrouve').addEventListener('click', vueSceau);
       brancherPupitre();
@@ -428,6 +450,7 @@
     function vueSceau() {
       etat.vue = 'sceau';
       rendre('<div class="af-carte">'
+        + jaugeHtml()
         + '<p class="af-kicker">Le hublot d\'identification</p>'
         + '<h3 class="af-titre">🔏 Passe l’ouvrage au hublot d\'identification</h3>'
         + '<p class="af-msg">' + lignes(M.MESSAGES.scanInvite) + '</p>'
@@ -447,7 +470,7 @@
         +   '<button type="button" class="af-btn" id="afEanOk">Passer au hublot d\'identification</button>'
         + '</div>'
         + '<div class="af-reponse" id="afReponse" role="status" aria-live="polite"></div>'
-        + pupitre()
+        + pupitre({sansJauge:true})
         + '</div>');
 
       var video = hote.querySelector('#afCam');
@@ -542,6 +565,7 @@
           + '</div>'
         : '';
       rendre('<div class="af-carte">'
+        + jaugeHtml()
         + '<p class="af-kicker">Journal de bord — ' + echapper(etape.libelle) + '</p>'
         + '<h3 class="af-titre">📜 ' + echapper(etape.libelle) + '</h3>'
         + '<blockquote class="af-enigme">' + lignes(etape.consigne) + '</blockquote>'
@@ -553,7 +577,7 @@
         +   '<button type="button" class="af-btn af-btn--or" id="afValider">⚓ Sceller cette réponse</button>'
         + '</div>'
         + '<div class="af-reponse" id="afReponse" role="status" aria-live="polite"></div>'
-        + pupitre()
+        + pupitre({sansJauge:true})
         + '</div>');
 
       var champ = hote.querySelector('#afReponseChamp');
@@ -629,12 +653,30 @@
         onRemontee({ motif: 'echec', erreurs: etat.erreurs, maxErreurs: r.maxErreurs });
         return;
       }
+      // Mise à jour ultra-visible : recréation complète avec états warning/critical + animation
       var pup = hote && hote.querySelector('.af-pupitre');
       if (pup) {
-        var reste = Math.max(0, r.maxErreurs - etat.erreurs);
+        var max = r.maxErreurs || M.MAX_ERREURS;
+        var perdues = Math.max(0, max - Math.max(0, max - etat.erreurs));
+        var restantes = Math.max(0, max - etat.erreurs);
+        var jauge = pup.querySelector('.af-jauge');
+        if (jauge) {
+          jauge.classList.remove('is-warning', 'is-critical');
+          if (restantes === 0) jauge.classList.add('is-critical');
+          else if (restantes === 1) jauge.classList.add('is-warning');
+          var cnt = jauge.querySelector('.af-jauge-count');
+          if (cnt) cnt.textContent = restantes + ' / ' + max;
+        }
         var pts = pup.querySelectorAll('.af-jauge-pt');
         Array.prototype.forEach.call(pts, function (p, i) {
-          p.classList.toggle('is-grille', i >= reste);
+          var doitEtrePerdu = i < perdues;
+          var etaitPerdu = p.classList.contains('is-lost') || p.classList.contains('is-grille');
+          p.classList.toggle('is-lost', doitEtrePerdu);
+          p.classList.toggle('is-grille', doitEtrePerdu);
+          if (doitEtrePerdu && !etaitPerdu) {
+            p.classList.add('is-just-lost');
+            setTimeout(function(){ p.classList.remove('is-just-lost'); }, 600);
+          }
         });
       }
     }

@@ -4,7 +4,7 @@
    Utilisé par Palier 1, 2 et 3 (morse, mots-croisés, artefact)
    ===================================================================== */
 
-/* --- Conteneur bandeau --- */
+/* --- Conteneur bandeau — ULTRA VISIBLE, STICKY --- */
 .tentatives-jauge,
 .af-jauge {
   display: flex !important;
@@ -15,10 +15,12 @@
   padding: 14px 18px !important;
   margin: 0 0 16px !important;
   background: linear-gradient(180deg, rgba(8, 22, 36, 0.96), rgba(4, 14, 24, 0.98)) !important;
-  border: 2px solid rgba(46, 204, 113, 0.45) !important;
+  border: 2px solid rgba(46, 204, 113, 0.55) !important;
   border-radius: 14px !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(46, 204, 113, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-  position: relative !important;
+  position: sticky !important;
+  top: 8px !important;
+  z-index: 20 !important;
   overflow: hidden !important;
   transition: border-color 0.4s ease, box-shadow 0.4s ease, background 0.4s ease !important;
 }
@@ -122,7 +124,7 @@
   pointer-events: none !important;
 }
 
-/* État perdu (vert → rouge) */
+/* État perdu (vert → rouge) — override complet avec opacity */
 .tentatives-jauge-pt.is-lost,
 .tentatives-jauge-pt.is-grille,
 .af-jauge-pt.is-lost,
@@ -131,6 +133,7 @@
   border-color: rgba(255, 255, 255, 0.18) !important;
   box-shadow: 0 0 14px rgba(231, 76, 60, 0.85), 0 2px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 3px rgba(0, 0, 0, 0.3) !important;
   transform: scale(1.06) !important;
+  opacity: 1 !important;
 }
 
 /* Croix blanche sur point perdu */

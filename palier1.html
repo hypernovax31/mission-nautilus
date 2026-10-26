@@ -12,8 +12,8 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=53">
-  <link rel="stylesheet" href="css/tentatives.css?v=1">
+  <link rel="stylesheet" href="css/palier1.css?v=54">
+  <link rel="stylesheet" href="css/tentatives.css?v=2">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=2" defer></script>
@@ -2491,6 +2491,7 @@ window.Nautilus = {
         <p class="morse-brief">
           Écoute le signal et écris le mot qu'il épelle.
         </p>
+        <div class="tentatives-jauge ${errors >= maxErrors ? 'is-critical' : errors >= maxErrors - 1 ? 'is-warning' : ''}" role="status" aria-live="polite"><span class="tentatives-jauge-label">Tentatives avant remontée</span><span class="tentatives-jauge-points">${Array.from({length:maxErrors}, (_,i)=>`<span class="tentatives-jauge-pt${i < errors ? ' is-lost' : ''}"></span>`).join('')}</span><span class="tentatives-jauge-count">${maxErrors - errors} / ${maxErrors}</span></div>
 
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
@@ -2509,7 +2510,6 @@ window.Nautilus = {
               ${listensLeft > 0 ? '▶️ Écouter le signal' : '🔇 Plus d\'écoute'}
             </button>
             <div class="morse-counter">Écoutes restantes : <b id="morseCounter">${listensLeft}</b> / 3</div>
-            <div class="tentatives-jauge ${errors >= maxErrors ? 'is-critical' : errors >= maxErrors - 1 ? 'is-warning' : ''}"><span class="tentatives-jauge-label">Tentatives avant remontée</span><span class="tentatives-jauge-points">${Array.from({length:maxErrors}, (_,i)=>`<span class="tentatives-jauge-pt${i < errors ? ' is-lost' : ''}"></span>`).join('')}</span><span class="tentatives-jauge-count">${maxErrors - errors} / ${maxErrors}</span></div>
           </div>
         </div>
 
@@ -3256,6 +3256,7 @@ window.Nautilus = {
       </div>
       <div class="morse-stepbox">
         <p class="morse-brief">Une épreuve est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — s'il échoue, il sera seul repoussé en surface et tu pourras prendre sa place.</p>
+        <div class="tentatives-jauge ${(s.errors||0) >= (s.maxErrors||3) ? 'is-critical' : (s.errors||0) >= (s.maxErrors||3)-1 ? 'is-warning' : ''}" role="status" aria-live="polite"><span class="tentatives-jauge-label">Tentatives avant remontée</span><span class="tentatives-jauge-points">${Array.from({length: s.maxErrors||3}, (_,i)=>`<span class="tentatives-jauge-pt${i < (s.errors||0) ? ' is-lost' : ''}"></span>`).join('')}</span><span class="tentatives-jauge-count">${(s.maxErrors||3) - (s.errors||0)} / ${s.maxErrors||3}</span></div>
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
             <!-- Lampe temoin EN PREMIER : le CSS (.on ~ .morse-scope)
@@ -3270,8 +3271,6 @@ window.Nautilus = {
           </div>
           <div class="morse-controls">
             <div class="morse-counter">Écoutes restantes : <b>${s.listensLeft ?? 0}</b> / 3</div>
-            <div class="tentatives-jauge ${(s.errors||0) >= (s.maxErrors||3) ? 'is-critical' : (s.errors||0) >= (s.maxErrors||3)-1 ? 'is-warning' : ''}"><span class="tentatives-jauge-label">Tentatives avant remontée</span><span class="tentatives-jauge-points">${Array.from({length: s.maxErrors||3}, (_,i)=>`<span class="tentatives-jauge-pt${i < (s.errors||0) ? ' is-lost' : ''}"></span>`).join('')}</span><span class="tentatives-jauge-count">${(s.maxErrors||3) - (s.errors||0)} / ${s.maxErrors||3}</span></div>
-            <div class="morse-counter">Tentatives : ${s.attempts || 0}</div>
           </div>
         </div>
         <div class="morse-answer-zone">

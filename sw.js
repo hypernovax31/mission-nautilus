@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v361';
+const CACHE_NAME = 'nautilus-v362';
 const PRECACHE = [
   './',
   './index.html',
@@ -11,10 +11,10 @@ const PRECACHE = [
   './css/index.css?v=54',
   './css/classement.css?v=9',
   './css/hublots.css?v=15',
-  './css/palier1.css?v=53',
+  './css/palier1.css?v=54',
   './css/palier2.css?v=26',
   './css/artefact.css?v=3',
-  './css/tentatives.css?v=1',
+  './css/tentatives.css?v=2',
   './css/admin.css?v=11',
   './son-partage.js?v=2',
   './sonar-button.js?v=4',
@@ -31,10 +31,10 @@ const PRECACHE = [
      Les deux fichiers de données sont préchargés : le sélecteur de magasin
      et l'aperçu organisateur doivent fonctionner même hors ligne. */
   './artefact-moteur.js?v=6',
-  './artefact-service.js?v=11',
+  './artefact-service.js?v=12',
   './magasin-fnac.js?v=1',
   './magasin-guard.js?v=3',
-  './artefact-palier3.js?v=8',
+  './artefact-palier3.js?v=9',
   './fnac-lecteur.js?v=1',
   './admin-artefact.js?v=22',
   './data/magasins-fnac.json',
@@ -42,7 +42,7 @@ const PRECACHE = [
   './victoire-palier.js?v=12',
   './records-palier.js?v=2',
   './install-promo.js?v=7',
-  './ecoutille.js?v=21',
+  './ecoutille.js?v=22',
   './assets/qr/QR-palier-2_noir-sur-blanc.png',
   './assets/qr/QR-palier-2_jaune-sur-noir.png',
   './assets/qr/QR-palier-3_noir-sur-blanc.png',
