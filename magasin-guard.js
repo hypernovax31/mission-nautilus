@@ -146,9 +146,25 @@
   // exposé pour désactiver la géoloc côté UI sans passer par verifierAcces
   function isTestBypassActif(){ return isAdminBypass(); }
 
+  // =================================================================
+  // TODO_GARDE — RÉACTIVER À LA FIN DU JEU GLOBAL
+  // 2026-10-27 : géolocalisation temporairement DÉSACTIVÉE sur demande
+  // « laisse rentrer tous les joueurs qui le sont pas dans le magasin
+  // d'origine ». Quand le jeu global sera totalement terminé (ou sur
+  // demande explicite), supprimer le bloc TEMP ci-dessous pour rétablir
+  // la vérif 500m d'origine.
+  // =================================================================
+  var _GARDE_DESACTIVEE = true; // <- mettre à false pour réactiver
+
   // Vérification principale : autorise-t-on l'accès ?
   async function verifierAcces(opts){
     opts=opts||{};
+    if(_GARDE_DESACTIVEE){
+      try{
+        var _cfgTmp = await lireConfig().catch(function(){ return {}; });
+        return { autorise:true, missionStarted: !!(_cfgTmp && _cfgTmp.missionStartedAt), motif:'garde-desactivee-temporaire', cfg:_cfgTmp, gardeDesactivee:true, _todo_reactiver:'Supprimer ce bypass quand le jeu sera terminé — voir magasin-guard.js _GARDE_DESACTIVEE' };
+      }catch(e){ return { autorise:true, missionStarted:false, motif:'garde-desactivee-temporaire', cfg:{}, gardeDesactivee:true }; }
+    }
     if(isAdminBypass()){
       var cfgPre = await lireConfig().catch(function(){ return {}; });
       return { autorise:true, missionStarted:!!(cfgPre && cfgPre.missionStartedAt), motif:'admin-bypass', cfg:cfgPre, adminBypass:true };
