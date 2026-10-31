@@ -26,7 +26,7 @@
        s'afficher et s'ouvrir même si AUCUN fichier externe n'arrive (réseau
        coupé, vieille version encore en cache, hébergement qui répond mal).
 
-       GRANDEUR — « COMMIT 014081 ». On entre par le hublot du salon du Nautilus :
+       GRANDEUR — « COMMIT 014082 ». On entre par le hublot du salon du Nautilus :
        un FILM de six plans y tourne en boucle — l'entrée du Nautilus, la
        traversée, le calmar géant, le hublot doré, le salon de Nemo, la
        descente dans l'abîme. Par-dessus, la mer est calculée : rais de
@@ -51,7 +51,7 @@
            chevaucher, quelle que soit la taille de l'écran ;
          · un seul élément interactif sur toute la page : le bouton START.
 
-       La version réellement chargée est écrite dans le coin : « COMMIT 014081 ». -->
+       La version réellement chargée est écrite dans le coin : « COMMIT 014082 ». -->
   <style>
     /* ── 0. LA TABLE ───────────────────────────────────────────────────────
        La page de garde est un calque fixe, plein écran, au-dessus de tout
@@ -2339,6 +2339,59 @@
         try{ forcer = sessionStorage.getItem('nautilusEcoutilleForce') === '1'; }catch(e){}
       }
 
+      /* RÉSERVE O₂ ÉPUISÉE : ne plus présenter l'écoutille — rentrer directement sur l'accueil (index.html sans overlay) */
+      function ecoutilleReserveEpuisee(){
+        try{
+          var cfgRaw = localStorage.getItem('nautilusMissionConfig');
+          if(!cfgRaw) return false;
+          var cfg = JSON.parse(cfgRaw);
+          if(!cfg || !cfg.missionStartedAt) return false;
+          var duree = (typeof cfg.missionDurationMs === 'number' && cfg.missionDurationMs > 0) ? cfg.missionDurationMs : 7*24*60*60*1000;
+          var fin = new Date(cfg.missionStartedAt).getTime() + duree;
+          if(isNaN(fin)) return false;
+          return Date.now() >= fin;
+        }catch(e){ return false; }
+      }
+      /* Sortie directe sur l'accueil, réutilisable quand Firestore confirme
+         le 0 % après le premier rendu (mémoire absente ou configuration
+         modifiée depuis un autre appareil). */
+      window.nautilusPasserEcoutilleO2 = function(){
+        window.__ecoutilleJouer = false;
+        window.__ecoutilleReserveEpuisee = true;
+        window.__ecoutillePrete = true;
+        if(window.__ecoutilleMinuteurSecours){
+          clearTimeout(window.__ecoutilleMinuteurSecours);
+          window.__ecoutilleMinuteurSecours = null;
+        }
+        try{ if(window.nautilusStopEcoutilleO2) window.nautilusStopEcoutilleO2(); }catch(e){}
+        try{ if(typeof window.__ecoutilleSecours === 'function') window.__ecoutilleSecours(); }catch(e){}
+        racine.classList.remove('ec-bloque');
+        racine.classList.add('ec-passee');
+        try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
+
+        var porte = null;
+        try{ porte = document.getElementById('ecoutille'); }catch(e){}
+        if(!porte) return; /* au premier rendu, le body n'existe pas encore */
+        try{
+          /* Empêche une sortie cinématographique déjà programmée de rouvrir
+             ou de rejouer un son après ce retrait immédiat. */
+          porte.dataset.rendu = '1';
+          porte.dataset.renduNU = '1';
+          var film = porte.querySelector('.ec-film');
+          if(film) film.pause();
+          porte.classList.add('ec-passee');
+          if(porte.parentNode) porte.parentNode.removeChild(porte);
+        }catch(e){}
+        if(!window.__ecoutilleO2SignalEnvoye){
+          window.__ecoutilleO2SignalEnvoye = true;
+          try{ window.dispatchEvent(new CustomEvent('nautilus:ecoutille-ouverte')); }catch(e){}
+        }
+      };
+      if(ecoutilleReserveEpuisee()){
+        window.nautilusPasserEcoutilleO2();
+        return;
+      }
+
       /* TOUJOURS, sauf ordre contraire (voir l'en-tête ci-dessus). */
       var jouer = !passer || forcer;
 
@@ -2401,7 +2454,7 @@
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════════
      PAGE DE GARDE — EXPÉDITION DANS LE NAUTILUS
-     (« COMMIT 014081 », film, jauge d'oxygène et sas des gestes)
+     (« COMMIT 014082 », film, jauge d'oxygène et sas des gestes)
 
      Au premier chargement, c'est la seule chose que voit le visiteur : le
      hublot du salon du Nautilus : derrière son verre épais, la mer vit et le
@@ -2496,7 +2549,7 @@
       </button>
     </div>
     <footer class="ec-pied">
-      <span class="ec-version">COMMIT 014081</span>
+      <span class="ec-version">COMMIT 014082</span>
     </footer>
   </div>
 
@@ -2526,6 +2579,14 @@
   var racine = document.getElementById('ecoutille');
   if(!racine) return;
   window.__ecoutillePrete = true;   /* quelque chose est là pour ouvrir */
+
+  /* O₂ épuisée (ou écoutille explicitement passée) : ne charge pas le film
+     d'une page de garde invisible et retire immédiatement son sas de gestes. */
+  if(window.__ecoutilleJouer === false){
+    racine.classList.add('ec-passee');
+    if(racine.parentNode) racine.parentNode.removeChild(racine);
+    return;
+  }
 
   function ouvrirNU(){
     if(!window.__ecoutilleSecours) return;      /* ecoutille.js a pris la main */
@@ -7749,6 +7810,11 @@ function qrDataUri(text, opts){
        une faute pour "plongee" — et il ne disait pas l'essentiel : que le
        chrono tourne pour tout le monde. */
     const reserveEpuisee = Date.now() >= end;
+    /* O₂ à 0 : l'écoutille ne doit jamais rester devant l'accueil, y
+       compris quand l'épuisement est confirmé après le chargement. */
+    if(reserveEpuisee){
+      try{ if(window.nautilusPasserEcoutilleO2) window.nautilusPasserEcoutilleO2(); }catch(e){}
+    }
     status.innerHTML = reserveEpuisee
       ? 'Réserves épuisées… Tous les équipages remontent à la surface.'
       : '<h4 class="oxygen-status-title">La mission est en cours…</h4><span class="oxygen-status-question">Quel équipage trouvera le <i>Nautilus</i> avant l’épuisement des réserves d’air&nbsp;?</span>';
