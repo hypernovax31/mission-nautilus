@@ -15,10 +15,10 @@
   <link rel="stylesheet" href="css/palier1.css?v=54">
   <link rel="stylesheet" href="css/palier2.css?v=30">
   <link rel="stylesheet" href="css/tentatives.css?v=3">
-  <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
-       connexion : l'import de la PHOTO du QR Code prend alors le
-       relais. -->
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+  <!-- Lecteur QR embarqué LOCALEMENT (caméra + import photo) : aucun
+       CDN à autoriser, et le lecteur reste disponible hors connexion
+       grâce au précache du service worker. -->
+  <script src="assets/vendor/jsQR.js?v=1" defer></script>
 
 </head>
 <body>
@@ -196,7 +196,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
      le QR Code de la zone de recherche est OBLIGATOIRE avant tout
      accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
-<script src="palier-sas.js?v=21"></script>
+<script src="palier-sas.js?v=22"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2 :
      la vue d'explication immersive du thème (SANS dévoiler le
      contenu) entre la ZONE SCELLÉE et le mini-jeu — mise en page du

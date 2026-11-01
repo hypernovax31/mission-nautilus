@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v391';
+const CACHE_NAME = 'nautilus-v392';
 const PRECACHE = [
   './',
   './index.html',
@@ -21,7 +21,7 @@ const PRECACHE = [
   './admin-button.js?v=28',
   './palier-annonces.js?v=3',
   './journal-bord.js?v=7',
-  './palier-sas.js?v=21',
+  './palier-sas.js?v=22',
   './palier-cinematic.js?v=4',
   './palier-briefing.js?v=5',
   './matelot-blocages.js?v=3',
@@ -44,6 +44,8 @@ const PRECACHE = [
   './records-palier.js?v=2',
   './install-promo.js?v=9',
   './ecoutille.js?v=37',
+  /* Lecteur QR local du sas : caméra et import photo sans CDN. */
+  './assets/vendor/jsQR.js?v=1',
   './assets/qr/QR-palier-2_noir-sur-blanc.png',
   './assets/qr/QR-palier-2_jaune-sur-noir.png',
   './assets/qr/QR-palier-3_noir-sur-blanc.png',

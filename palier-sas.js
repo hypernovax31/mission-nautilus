@@ -732,6 +732,11 @@
     try{ console.log('[SAS] forceUnlock palier '+n2+' code '+code2); }catch(e){}
     try{ window.location.reload(); }catch(e){}
   }
+  /* L'objet doit exister AVANT les premières propriétés exposées. Sans
+     cette initialisation, le script s'arrêtait ici sur une page vierge :
+     init() n'était jamais publié et les boutons caméra/import restaient
+     donc sans aucun gestionnaire de clic. */
+  window.NautilusSas = window.NautilusSas || {};
   window.NautilusSas.teamHasPassedPalier = teamHasPassedPalier;
   window.NautilusSas.STEPS_ORDER = STEPS_ORDER;
   window.NautilusSas.palierStepId = palierStepId;
