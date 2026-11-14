@@ -31,8 +31,6 @@
                 { valeur: '10/10', label: 'Mots validés' },
                 { valeur: '2',     label: 'Erreurs' } ],
        indication: '…',              // indication de direction du QR
-       objet: { nom: 'Livre', retraitH: 1,     // OPTIONNEL : objet
-                rayon: 'Rayon BD' },          //   témoin (retrait 1 h)
                                     // témoin à retirer en magasin,
                                     // réservé X heures en caisse
        labelSuivant: 'Palier 3',
@@ -62,26 +60,14 @@
       : 'Palier « ' + (Number(o.palier) + 1) + ' »';
     var indication = o.indication || '…… (en attente d’indication par l’admin)';
 
-    /* Numérotation DYNAMIQUE des encarts : l'encart « objet témoin »
-       n'apparaît que si la page du palier fournit o.objet. */
+    /* Numérotation DYNAMIQUE des encarts (1, 2, 3…) : le jour où un
+       palier ajoute une étape, la numérotation suit toute seule. */
     var etapes = [];
     etapes.push('<div class="won-zone-panel">'
       + '<div class="won-zone-head"><span class="won-zone-num">' + (etapes.length + 1) + '</span>'
       + '<span class="won-zone-title">Rallier la Zone de recherche</span></div>'
       + '<p class="won-zone-desc">📍 « ' + esc(indication) + ' »</p>'
       + '</div>');
-
-    if (o.objet && o.objet.nom) {
-      var h = Number(o.objet.retraitH);
-      var duree = (h > 0) ? ('réservé ' + h + ' h') : 'à retirer';
-      etapes.push('<div class="won-zone-panel won-zone-panel--objet">'
-        + '<div class="won-zone-head"><span class="won-zone-num">' + (etapes.length + 1) + '</span>'
-        + '<span class="won-zone-title">Retirer l’objet témoin</span></div>'
-        + '<p class="won-zone-desc">🛒 « <b>' + esc(o.objet.nom) + '</b> »'
-        + (o.objet.rayon ? ' — ' + esc(o.objet.rayon) : ' — en rayon dans le magasin')
-        + ', ' + esc(duree) + ' en caisse. C’est lui qui porte l’indication du ' + esc(prochain) + '.</p>'
-        + '</div>');
-    }
 
     etapes.push('<div class="won-zone-panel">'
       + '<div class="won-zone-head"><span class="won-zone-num">' + (etapes.length + 1) + '</span>'

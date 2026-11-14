@@ -191,12 +191,33 @@
       animation-play-state:paused !important;
     }
 
-    /* Respect du reglage systeme : aucune animation decorative. */
+    /* Respect du reglage systeme : aucune animation decorative.
+       EXCEPTION : le BALAYAGE DU SONAR. Il n'est pas decoratif, c'est le
+       seul temoin visuel que l'appareil cherche encore des equipages.
+       L'arreter laissait un hublot vert completement fige, que le joueur
+       prenait pour une panne (bug signale : « le sonar ne tourne plus »).
+       On le RALENTIT tres fortement au lieu de le supprimer : le
+       mouvement reste perceptible, mais lent et sans a-coup. */
     @media (prefers-reduced-motion: reduce){
-      .radar-sweep-big,.radar-center,.radar-blip,.oxygen-liquid::before,
+      .radar-sweep-big{animation:radarRotateFast 14s linear infinite !important}
+      .radar-center,.radar-blip,.oxygen-liquid::before,
       .oxygen-liquid::after,.install-pwa-btn,.hero-cta.pulse-engage{
         animation:none !important;
       }
+    }
+
+    /* FILET DE SECURITE DU BALAYAGE.
+       Quel que soit l'etat des classes posees par le script (.anim-idle,
+       .offscreen, .page-hidden), le faisceau tourne des que le sonar est
+       sous les yeux : on ne veut plus jamais d'un hublot fige. Les regles
+       de pause ci-dessus gardent la priorite quand elles sont legitimes,
+       car elles utilisent :not() ; celle-ci ne s'applique qu'aux elements
+       dont toutes les classes de pause ont ete retirees. */
+    .radar-stage:not(.anim-idle):not(.offscreen) .radar-sweep-big{
+      animation:radarRotateFast 2.8s linear infinite;
+    }
+    body.page-hidden .radar-stage .radar-sweep-big{
+      animation-play-state:paused !important;
     }
 
     /* Les codes sont cliquables : un clic copie dans le presse-papier. */

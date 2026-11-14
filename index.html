@@ -20,7 +20,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nautilus">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="stylesheet" href="css/index.css?v=54">
+  <link rel="stylesheet" href="css/index.css?v=55">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. Chargé AVANT le module
@@ -422,7 +422,7 @@
   const STEPS = {
     start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le signal du Nautilus réapparaît enfin. Votre équipage attend le feu vert pour appareiller vers le Palier 1."},
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
-    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Le sonar a fragmenté la photo de la prochaine zone. Reconstruisez l’image, puis retirez le livre réservé 1 h en caisse : c’est lui qui porte l’indication."},
+    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Le sonar a fragmenté la photo de la prochaine zone. Reconstruisez l’image pour trouver où chercher le QR Code."},
     zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"Le relevé du sonar est sens dessus dessous : recalez chaque écho sur la grille pour retrouver la cache du prochain palier."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
     papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
@@ -861,9 +861,23 @@
     });
   })();
 
-  function waitForRadarVisible(){
+  /* Attend que le sonar soit sous les yeux du joueur, MAIS PAS INDEFINIMENT.
+     Avant, la promesse n'etait resolue qu'au moment ou le bloc atteignait
+     enfin 45 % de visibilite. Si ce seuil n'etait jamais atteint (petit
+     ecran, mise en page differente apres migration, bloc juge hors ecran
+     par un calcul fait trop tot), la file d'annonces restait bloquee POUR
+     TOUJOURS : plus aucun equipage n'apparaissait sur le radar, plus aucun
+     point ne s'allumait — le sonar semblait mort alors qu'il tournait.
+     Passe ce delai, on continue : mieux vaut annoncer un equipage que le
+     joueur ne regarde pas que ne plus jamais rien annoncer. */
+  function waitForRadarVisible(maxMs){
     if(_radarVisible) return Promise.resolve();
-    return new Promise(resolve => _visibilityWaiters.push(resolve));
+    return new Promise(resolve => {
+      let fini = false;
+      const done = () => { if(fini) return; fini = true; resolve(); };
+      _visibilityWaiters.push(done);
+      setTimeout(done, maxMs || 12000);
+    });
   }
 
   /* Mesure de l'angle du balayage : getComputedStyle force un recalcul de
@@ -1198,18 +1212,31 @@
   /* Attente qui ne s'ecoule QUE pendant que le bloc est sous les yeux.
      Un simple setTimeout continuerait de tourner si le joueur regarde
      ailleurs : la carte apparaitrait hors de sa vue. */
+  /* Attend « ms » de temps REELLEMENT visible. Deux garde-fous :
+     - un plafond dur (ms + 4 s) : on ne peut pas patienter plus longtemps,
+       sinon une visibilite mal calculee bloquait la sequence de decouverte ;
+     - un setTimeout de secours : requestAnimationFrame ne tourne pas quand
+       l'onglet passe en arriere-plan (le joueur verrouille son telephone),
+       et la promesse ne se resolvait alors jamais, meme au retour. */
   function waitVisible(ms){
     return new Promise(resolve => {
+      let fini = false;
+      const done = () => { if(fini) return; fini = true; resolve(); };
+      const plafond = ms + 4000;
+      const debut = performance.now();
+      setTimeout(done, plafond);
       let left = ms;
       let last = performance.now();
       const tick = () => {
+        if(fini) return;
         const now = performance.now();
         const dt = now - last;
         last = now;
         if(_radarVisible){
           left -= dt;
-          if(left <= 0){ resolve(); return; }
+          if(left <= 0){ done(); return; }
         }
+        if(now - debut > plafond){ done(); return; }
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
@@ -1551,7 +1578,165 @@
    * Premiere execution : lance le radar en mode veille (definit par le HTML).
    * Executions suivantes : sync incrémental (pas de re-radar).
    */
+  /* Reprise automatique apres un echec de chargement : 3 s, puis 8 s,
+     puis 20 s (et retour au rythme normal ensuite). Un sonar vide parce
+     que le wifi du magasin a hoquete n'a aucune raison de le rester. */
+  let _essaiSuivant = null;
+  let _nbEchecs = 0;
+  function planifierNouvelEssai(){
+    if(_essaiSuivant) return;
+    const delais = [3000, 8000, 20000];
+    const delai = delais[Math.min(_nbEchecs, delais.length - 1)];
+    _nbEchecs++;
+    _essaiSuivant = setTimeout(() => {
+      _essaiSuivant = null;
+      try{ loadTeams(); }catch(e){}
+    }, delai);
+  }
+
   let _loadTeamsRunning = false;
+  /* =====================================================================
+     GARDE-FOU DES ANIMATIONS DU SONAR
+     Deux incidents constates en production, tous deux « muets » (aucune
+     erreur en console, juste un sonar vert completement fige) :
+
+     1. LE SONAR DISPARAISSAIT PUREMENT ET SIMPLEMENT. Le chargement des
+        equipes supprimait #radarStage en cas d'erreur reseau / Firestore
+        (frequents apres une migration : domaine pas encore autorise dans
+        Firebase, coupure de wifi du magasin). Rien ne le recreait, et
+        l'echec etant silencieux, le sonar ne revenait jamais. On le
+        RECONSTRUIT desormais s'il manque.
+
+     2. UNE CLASSE DE PAUSE POUVAIT RESTER COLLEE (.anim-idle, .offscreen,
+        .page-hidden) : ces classes ne sont retirees que sur evenement
+        (defilement, retour d'onglet). Un evenement manque et le balayage
+        restait fige jusqu'au rechargement de la page. Le garde-fou
+        ci-dessous verifie donc l'etat REEL des animations et libere tout
+        ce qui n'est plus justifie.
+     ===================================================================== */
+  function sonarHtml(){
+    var blips = '';
+    for(var i = 1; i <= 5; i++) blips += '<div class="radar-blip" id="radarBlip' + i + '"></div>';
+    return ''
+      + '<div class="sonar-loader radar-big">'
+      +   '<div class="sonar-screen radar-screen-big">'
+      +     '<div class="radar-grid"></div>'
+      +     '<div class="radar-rings" aria-hidden="true"></div>'
+      +     '<div class="radar-sweep-big"></div>'
+      +     blips
+      +     '<div class="radar-center"></div>'
+      +   '</div>'
+      +   '<div class="sonar-text" id="radarStatus"><span class="radar-msg" id="radarMsg">En attente de nouveaux signaux...</span></div>'
+      +   '<div class="sonar-readout" id="sonarReadout" aria-live="polite">'
+      +     '<div class="readout-cell">'
+      +       '<span class="readout-label">Contacts confirmés</span>'
+      +       '<span class="readout-value" id="readoutTeams">0</span>'
+      +       '<span class="readout-unit" id="readoutTeamsUnit">équipage</span>'
+      +     '</div>'
+      +     '<div class="readout-sep" aria-hidden="true"></div>'
+      +     '<div class="readout-cell">'
+      +       '<span class="readout-label">Effectif détecté</span>'
+      +       '<span class="readout-value" id="readoutCrew">0</span>'
+      +       '<span class="readout-unit" id="readoutCrewUnit">matelot</span>'
+      +     '</div>'
+      +     '<div class="readout-sep" aria-hidden="true"></div>'
+      +     '<div class="readout-cell readout-wide">'
+      +       '<span class="readout-label">Relevé du sonar</span>'
+      +       '<span class="readout-line" id="readoutVerdict">Aucun écho. Les fonds sont déserts.</span>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>';
+  }
+
+  /* Remet le sonar dans la page s'il a disparu (incident n°1). */
+  function garantirSonar(){
+    if(document.getElementById('radarStage')) return false;
+    const carte = document.getElementById('equipagesEnMer');
+    const corps = document.getElementById('equipagesBody');
+    if(!carte || !corps) return false;
+    const stage = document.createElement('div');
+    stage.id = 'radarStage';
+    stage.className = 'radar-stage';
+    stage.setAttribute('role', 'status');
+    stage.setAttribute('aria-live', 'polite');
+    stage.innerHTML = sonarHtml();
+    corps.insertBefore(stage, corps.firstChild);
+    _sweepEl = null;            // le cache de mesure pointait sur l'ancien noeud
+    return true;
+  }
+
+  /* Part du bloc « Equipages en plongee » reellement sous les yeux.
+     Meme calcul que le veilleur de visibilite ci-dessus. */
+  function partSonarVisible(){
+    const cible = document.getElementById('equipagesEnMer');
+    if(!cible) return 1;
+    const r = cible.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    if(!vh || !r.height) return 0;
+    const vue = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+    if(vue <= 0) return 0;
+    return vue / Math.min(r.height, vh);
+  }
+
+  /* Debarrasse le sonar de tout verrou de pause devenu injustifie, et
+     restaure l'animation si elle a disparu (CSS perime). */
+  function relancerSonarSiFige(){
+    garantirSonar();
+    const stage = document.getElementById('radarStage');
+    if(!stage) return;
+    const balayage = stage.querySelector('.radar-sweep-big');
+    if(!balayage) return;
+
+    const reduit = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const ongletCache = document.visibilityState === 'hidden'
+      || document.body.classList.contains('page-hidden');
+    const visible = partSonarVisible() >= 0.45;
+
+    /* a) Classes de pause : on ne les garde QUE si elles sont justifiees. */
+    if(!ongletCache && visible){
+      if(stage.classList.contains('anim-idle')) stage.classList.remove('anim-idle');
+      const carte = document.getElementById('equipagesEnMer');
+      if(carte && carte.classList.contains('offscreen')) carte.classList.remove('offscreen');
+      if(stage.classList.contains('offscreen')) stage.classList.remove('offscreen');
+    }
+
+    /* b) Animation absente (feuille de style perimee ou regle perdue) :
+        on la repose directement sur l'element, elle ne peut plus manquer. */
+    const st = window.getComputedStyle(balayage);
+    const doitTourner = !ongletCache && !(st.animationPlayState === 'paused' && !visible);
+    if(st.animationName === 'none' && doitTourner){
+      balayage.style.animation = reduit
+        ? 'radarRotateFast 14s linear infinite'
+        : 'radarRotateFast 2.8s linear infinite';
+    }
+    /* c) Un « paused » laisse en style en ligne (par une ancienne version
+        du script) : on le leve des que le sonar doit tourner. */
+    if(!ongletCache && balayage.style.animationPlayState === 'paused'){
+      balayage.style.animationPlayState = '';
+    }
+  }
+
+  (function surveillerAnimationsSonar(){
+    let dernier = 0;
+    function passe(force){
+      const t = Date.now();
+      if(!force && t - dernier < 900) return;   // jamais plus d'une fois par seconde
+      dernier = t;
+      try{ relancerSonarSiFige(); }catch(e){}
+    }
+    window.addEventListener('load', () => passe(true));
+    setTimeout(() => passe(true), 400);
+    setTimeout(() => passe(true), 1500);
+    setTimeout(() => passe(true), 3500);
+    window.addEventListener('scroll', () => passe(false), { passive:true });
+    window.addEventListener('resize', () => passe(false), { passive:true });
+    document.addEventListener('visibilitychange', () => passe(true));
+    // Filet de securite : un passage toutes les 5 s, uniquement onglet visible.
+    setInterval(() => {
+      if(document.visibilityState === 'visible') passe(false);
+    }, 5000);
+  })();
+
   async function loadTeams(){
     if(_loadTeamsRunning){
       // Debounce : on attend la fin du load en cours, on rejoue apres
@@ -1582,12 +1767,27 @@
 
       // Synchronise l'UI
       syncTeamsUI(teams);
+      _nbEchecs = 0;            // le sonar a repondu : retour au rythme normal
+      relancerSonarSiFige();    // et on s'assure que le balayage tourne
 
     }catch(err){
       console.error('NAUTILUS loadTeams error:', err);
-      const stage = $('radarStage');
-      if(stage) stage.remove();
-      box.innerHTML=`<div class="notice warning"><b>Le sonar gresille...</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Detail technique : ${esc(err.code || err.message || err)}</span></div>`;
+      /* LE SONAR N'EST PLUS SUPPRIME.
+         Il l'etait : une seule erreur reseau (ou un domaine non autorise
+         cote Firebase apres une migration) effacait le radar pour de bon,
+         sans aucune reconstruction — d'ou l'impression que « le sonar ne
+         tourne plus ». On garde le radar a l'ecran (il continue de
+         balayer, c'est le temoin que l'appareil fonctionne) et on place
+         l'avertissement EN DESSOUS, dans la liste des equipages. */
+      garantirSonar();
+      relancerSonarSiFige();
+      if(box){
+        box.innerHTML = '<div class="notice warning"><b>Le sonar gresille...</b> '
+          + 'Impossible de joindre le Nautilus pour le moment.'
+          + '<br><span class="small">Detail technique : ' + esc(err.code || err.message || err) + '</span>'
+          + '<br><span class="small">Nouvelle tentative automatique dans quelques secondes.</span></div>';
+      }
+      planifierNouvelEssai();
     }finally{
       _loadTeamsRunning = false;
     }

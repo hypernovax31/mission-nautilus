@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v298';
+const CACHE_NAME = 'nautilus-v299';
 const PRECACHE = [
   './',
   './index.html',
@@ -10,7 +10,7 @@ const PRECACHE = [
   './1941512821.html',
   './2051613922.html',
   './classement.html',
-  './css/index.css?v=54',
+  './css/index.css?v=55',
   './css/classement.css?v=9',
   './css/hublots.css?v=15',
   './css/palier1.css?v=49',
@@ -90,7 +90,37 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
-  // Assets : cache-first
+  /* CODE ET STYLES (CSS / JS) : « stale-while-revalidate ».
+     On sert la version en cache tout de suite (demarrage instantane, et
+     ca marche hors connexion), MAIS on va chercher la version reseau en
+     arriere-plan pour rafraichir le cache.
+     POURQUOI : ces fichiers etaient servis en cache-first PUR. Un fichier
+     modifie sur le serveur sans que son numero de version changeait
+     (?v=…) restait donc servi depuis le cache INDEMENT — animations
+     disparues, mise en page figee sur une ancienne version, sans aucun
+     moyen de s'en sortir sans vider les donnees du site. C'est exactement
+     ce qui se voit apres une migration : le nouveau serveur envoie du
+     neuf, le navigateur garde l'ancien. */
+  const dest = req.destination;
+  const estCodeOuStyle = dest === 'style' || dest === 'script'
+    || url.pathname.endsWith('.css') || url.pathname.endsWith('.js');
+  if (estCodeOuStyle) {
+    event.respondWith(
+      caches.match(req).then((cached) => {
+        const reseau = fetch(req).then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+          }
+          return res;
+        }).catch(() => cached || caches.match('./index.html'));
+        return cached || reseau;
+      })
+    );
+    return;
+  }
+
+  // Autres assets (images, sons, polices) : cache-first
   event.respondWith(
     caches.match(req).then((cached) => cached || fetch(req).then((res) => {
       const copy = res.clone();

@@ -165,11 +165,7 @@
                      (valeur actuelle : très corsé, on ne voit rien
                      avant d'avoir remonté une bonne partie du hublot.)
      PUZZLE_CADRAGE_X / Y : partie de la photo gardée dans le hublot
-                     rond (0 → 1). À régler pour que le LIVRE soit bien
-                     dans le cercle.
-     OBJET_TEMOIN  : le livre (ou tout autre objet) réservé en caisse,
-                     retiré du rayon OBJET_RETRAIT_H heure(s) pendant la
-                     partie. Il porte l'indication du Palier 4.
+                     rond (0 → 1), pour cadrer le sujet au centre.
      LIEU_DESCRIPTION : le lieu affiché à l'écran de victoire, une fois
                      la photo reconstituée (et l'indication du sas). -->
 <script>
@@ -184,19 +180,6 @@ const NB_PIECES = window.NautilusPuzzle
    gauche, 0.75 / 0.25 pour un cadrage intermédiaire. */
 const PUZZLE_CADRAGE_X = 0.5;
 const PUZZLE_CADRAGE_Y = 0.5;
-/* OBJET TÉMOIN : LE LIVRE du rayon retiré du magasin pour la partie.
-   → OBJET_TEMOIN : le TITRE EXACT du livre mis de côté (ex. « Vingt
-     mille lieues sous les mers »). S'il vaut 'Livre', l'écran affiche
-     simplement « Livre ».
-   → OBJET_RAYON : où le trouver en rayon (ex. « Rayon BD, 3e étagère »).
-     Laisse vide si tu ne veux pas l'afficher.
-   → OBJET_RETRAIT_H : durée du retrait en caisse (1 h).
-   Ce livre est annoncé DANS LE BRIEFING, PENDANT l'épreuve et sur
-   L'ÉCRAN DE VICTOIRE : il est bien présent du début à la fin.
-   ⚠️ La photo du hublot doit montrer l'endroit où il se trouve. */
-const OBJET_TEMOIN = 'Livre';
-const OBJET_RAYON = '';
-const OBJET_RETRAIT_H = 1;
 const LIEU_DESCRIPTION = "…… (en attente d’indication par l’admin)";
 const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
 const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
@@ -436,7 +419,6 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
         { valeur: String(nbErreurs), label: nbErreurs > 1 ? 'Révélations' : 'Révélation' }
       ],
       indication: LIEU_DESCRIPTION,
-      objet: { nom: OBJET_TEMOIN, rayon: OBJET_RAYON, retraitH: OBJET_RETRAIT_H },
       labelSuivant: 'Palier 4',
       urlSuivante: '1941512821.html'
     });
@@ -488,7 +470,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     }
     afficherVueEpreuve();
     t0Partie = Date.now();
-    statut('🧩 <b>Reconstitue la photo.</b> Glisse chaque éclat rond à sa place dans le hublot. <b>3 révélations demandées</b> et tu remontes en surface. L’ouvrage « ' + OBJET_TEMOIN + ' » t’attend au rayon (réservé ' + OBJET_RETRAIT_H + ' h).', 'info');
+    statut('🧩 <b>Reconstitue la photo.</b> Glisse chaque éclat rond à sa place dans le hublot. <b>3 révélations demandées</b> et tu remontes en surface.', 'info');
     window.NautilusPuzzle.init($('puzzleHost'), {
       image: PUZZLE_IMAGE,
       grille: PUZZLE_GRILLE,
@@ -510,7 +492,6 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       { ico: '🧩', html: "Le hublot est découpé en <b>" + NB_PIECES + " éclats ronds</b> mélangés : impossible de lire la photo avant d'en avoir remonté une bonne partie." },
       { ico: '🎯', html: "Glisse chaque éclat dans le cercle. <b>Au bon endroit, il se soude</b> à la photo ; au mauvais, il revient dans la pioche — essaie librement." },
       { ico: '🌀', html: "Attention : chaque éclat est <b>plus large que sa place</b> et déborde sur ses voisins — c'est la <b>position exacte</b> qui compte, pas le premier trou venu." },
-      { ico: '📕', html: "Sur la photo remontée, repère l'ouvrage : <b>un « " + OBJET_TEMOIN + " »</b> du rayon t'est <b>réservé en caisse " + OBJET_RETRAIT_H + " h</b>, le temps de la partie. C'est <b>lui</b> qui porte l'indication du Palier 4." },
       { ico: '🔎', warn: true, html: "Le sonar peut <b>révéler un éclat</b> à ta place, mais chaque aide compte pour <b>1 erreur</b> : <b>3 erreurs</b> = remontée en surface." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
