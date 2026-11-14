@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
-// Strategie : network-first pour les pages, cache-first pour assets statiques
-const CACHE_NAME = 'nautilus-v299';
+// Pages : network-first ; code et styles : cache avec revalidation en fond.
+const CACHE_NAME = 'nautilus-v300';
 const PRECACHE = [
   './',
   './index.html',
@@ -33,6 +33,7 @@ const PRECACHE = [
   './palier4-marqueurs.js?v=1',
   './victoire-palier.js?v=13',
   './records-palier.js?v=2',
+  './typewriter-secours.js?v=1',
   './install-promo.js?v=6',
   './assets/fond-nautilus.jpg',
   './assets/palier3-lieu.jpg',
@@ -90,32 +91,26 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
-  /* CODE ET STYLES (CSS / JS) : « stale-while-revalidate ».
-     On sert la version en cache tout de suite (demarrage instantane, et
-     ca marche hors connexion), MAIS on va chercher la version reseau en
-     arriere-plan pour rafraichir le cache.
-     POURQUOI : ces fichiers etaient servis en cache-first PUR. Un fichier
-     modifie sur le serveur sans que son numero de version changeait
-     (?v=…) restait donc servi depuis le cache INDEMENT — animations
-     disparues, mise en page figee sur une ancienne version, sans aucun
-     moyen de s'en sortir sans vider les donnees du site. C'est exactement
-     ce qui se voit apres une migration : le nouveau serveur envoie du
-     neuf, le navigateur garde l'ancien. */
+  /* CSS et JS : cache immediat, puis revalidation en arriere-plan. Le
+     waitUntil est indispensable : sans lui le navigateur peut terminer le
+     service worker avant que la nouvelle version soit ecrite dans le cache. */
   const dest = req.destination;
   const estCodeOuStyle = dest === 'style' || dest === 'script'
     || url.pathname.endsWith('.css') || url.pathname.endsWith('.js');
   if (estCodeOuStyle) {
+    const miseAJour = fetch(req).then(async (res) => {
+      if (res && res.ok) {
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(req, res.clone());
+        } catch (_) { /* une erreur de cache ne doit pas masquer la reponse */ }
+      }
+      return res;
+    }).catch(() => null);
+    event.waitUntil(miseAJour);
     event.respondWith(
-      caches.match(req).then((cached) => {
-        const reseau = fetch(req).then((res) => {
-          if (res && res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-          }
-          return res;
-        }).catch(() => cached || caches.match('./index.html'));
-        return cached || reseau;
-      })
+      caches.open(CACHE_NAME).then((c) => c.match(req)).catch(() => null)
+        .then((cached) => cached || miseAJour.then((res) => res || Response.error()))
     );
     return;
   }
