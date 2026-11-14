@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Nautilus — Palier 5</title>
+  <meta name="description" content="Accès scellé du Palier 5 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
+  <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil). -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=49">
+  <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
+       communs à tous les paliers ≥ 2. -->
+  <link rel="stylesheet" href="css/palier2.css?v=26">
+  <link rel="stylesheet" href="css/palier4.css?v=1">
+  <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
+       connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
+    <div class="topbar-title" id="topPalierTitle">Palier 5</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER. Vue unique et immersive,
+       commune à tous les paliers ≥ 2 : tant que le QR Code n'est pas
+       scanné, c'est la seule chose à l'écran. -->
+  <section class="card gate-hero" id="gateHero">
+    <h2 id="sasHeroTitle">PALIER 5 — ZONE SCELLÉE</h2>
+    <div class="body">
+      <div class="sas-scene">
+        <div class="sas-head">
+          <div class="sas-lock" aria-hidden="true">
+            <span class="sas-lock-ico">🔒</span>
+          </div>
+          <p class="sas-kicker">Profondeur — sas scellé</p>
+          <p class="sas-titre">⛔ Ce palier est verrouillé.</p>
+          <p class="sas-msg">Déverrouillez le palier suivant grâce au <b>QR Code de la zone de recherche</b>.</p>
+        </div>
+
+        <div class="gate-scanbox sas-scanbox" id="gateScanbox">
+          <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
+          <canvas id="gateCanvas" hidden></canvas>
+          <div class="gate-cam-placeholder" id="gateCamPlaceholder" aria-hidden="true">
+            <span class="gate-cam-icon">📷</span>
+            <span>Caméra en veille — vise le QR Code pour ouvrir le sas.</span>
+          </div>
+          <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
+        </div>
+
+        <div class="gate-actions">
+          <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
+          <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
+          <input type="file" id="gateFile" accept="image/*" hidden>
+        </div>
+
+        <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
+
+        <button type="button" class="sas-indication" id="sasIndicationBtn" aria-expanded="false">📍 Voir l'indication de la zone de recherche</button>
+        <div class="sas-indication-panel" id="sasIndicationPanel" hidden>
+          <div class="won-nextzone">
+            <div class="won-radar" aria-hidden="true">
+              <span class="won-radar-ring"></span>
+              <span class="won-radar-ring won-radar-ring--2"></span>
+              <span class="won-radar-core">🧭</span>
+            </div>
+            <h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>
+            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">……</span> »</p>
+            <div class="won-nextzone-steps">
+              <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
+              <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
+              <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE : même bloc que le Palier 1 / 2. -->
+  <section class="card" id="teamCard" hidden>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- Journal de bord (live). -->
+  <section class="card" id="logCard" hidden>
+    <h2>JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
+        <ul id="morse-log-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING DU CAPITAINE — vue OBLIGATOIRE entre la ZONE SCELLÉE et
+       l'épreuve (même architecture que tous les paliers). -->
+  <section class="card" id="briefCard" hidden>
+    <h2>BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+
+  <!-- ÉPREUVE DU PALIER 5 : EN PRÉPARATION. -->
+  <section class="card gate-unlocked" id="gateUnlocked" hidden>
+    <h2 id="sasUnlockedTitle">PALIER 5</h2>
+    <div class="body">
+      <div id="epreuveStatut" class="status-banner warning">🛠️ <b>Épreuve du Palier 5 en préparation.</b> Le sas est déjà actif : scanne le QR Code de la zone de recherche du Palier 5 pour le franchir. L’épreuve, elle, sera activée par l’organisation.</div>
+      <a class="marq-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
+    </div>
+  </section>
+</main>
+
+<!-- Journal de bord « Activité en direct », code COMMUN à tous les paliers. -->
+<script src="son-partage.js?v=2"></script>
+<script src="journal-bord.js?v=6"></script>
+<!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
+<script src="palier-sas.js?v=13"></script>
+<!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
+<script src="palier-briefing.js?v=3"></script>
+<script>window.NautilusSas.init(5);</script>
+<!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers. -->
+<script src="matelot-blocages.js?v=2"></script>
+<!-- Réserve d'oxygène (jauge du haut), commune à tous les paliers. -->
+<script src="reserve-o2.js?v=4"></script>
+<!-- Équipage actif en plongée, commun à tous les paliers. -->
+<script src="equipage-actif.js?v=10"></script>
+<script>window.EquipageActif.init();</script>
+<!-- Écran de VICTOIRE commun à TOUS les paliers. -->
+<script src="victoire-palier.js?v=13"></script>
+<script src="records-palier.js?v=2"></script>
+
+<!-- Réglages du Palier 5 : indication de la zone de recherche. -->
+<script>
+const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
+</script>
+
+<script>
+/* ================= PALIER 5 — PAGE D'ATTENTE =================
+   Le sas (palier-sas.js) et le briefing sont DÉJÀ opérationnels : seul
+   le mini-jeu manque. Cette page évite une 404 depuis le bouton
+   « Palier 5 » de l'écran de victoire du Palier 4. */
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function montrerCarte(id, visible) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? '' : 'none';
+  }
+  function vueScellee() {
+    montrerCarte('gateHero', true);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', false);
+  }
+  function vueBriefing() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
+    montrerCarte('briefCard', true);
+    montrerCarte('gateUnlocked', false);
+  }
+  function vueEpreuve() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', true);
+    var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
+  }
+
+  window.NautilusBriefing.afficher($('briefHost'), {
+    intro: "Bienvenue à bord, matelot. Le sas du <b>Palier 5</b> est déjà scellé et la zone de recherche est ouverte : le QR Code t'y attend. L'épreuve, elle, est encore en cours de préparation par l'organisation — elle s'activera ici même, sans rien changer à tes habitudes.",
+    consignes: [
+      { ico: '🔒', html: "Le sas fonctionne : <b>scanne le QR Code</b> de la zone de recherche pour franchir le Palier 5." },
+      { ico: '🛠️', html: "Le mini-jeu du Palier 5 n'est <b>pas encore activé</b>. Rien à faire de ton côté : l'organisation le branchera ici." },
+      { ico: '📓', html: "En attendant, le <b>journal de bord</b> et le <b>tableau de bord</b> restent consultables comme d'habitude." }
+    ],
+    cta: '⚓ VOIR LE SAS DU PALIER 5',
+    onDepart: function () {
+      vueEpreuve();
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
+    }
+  });
+
+  if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) vueScellee();
+  else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) vueScellee();
+  else if (window.NautilusSas.estDeverrouille(5)) vueBriefing();
+  else {
+    vueScellee();
+    if (window.NautilusSas.observerDeverrouillageEquipe) window.NautilusSas.observerDeverrouillageEquipe();
+  }
+  window.addEventListener('nautilus:sas-ouvert', vueBriefing);
+
+  var _btn = $('sasIndicationBtn'), _panel = $('sasIndicationPanel');
+  var _txt = $('sasIndicationTexte');
+  if (_txt) _txt.textContent = ZONE_RECHERCHE_HINT;
+  if (_btn && _panel) {
+    _btn.addEventListener('click', function () {
+      var ouvert = !_panel.hidden;
+      _panel.hidden = ouvert;
+      _btn.textContent = ouvert ? '📍 Voir l’indication de la zone de recherche' : '📍 Masquer l’indication';
+      _btn.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
+    });
+  }
+})();
+</script>
+<!-- Bouton d'ambiance sonore, commun à toutes les pages du jeu. -->
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=3" defer></script>
+<script src="admin-button.js?v=26" type="module"></script>
+</body>
+</html>

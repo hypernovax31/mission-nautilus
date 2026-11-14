@@ -19,13 +19,19 @@
    Utilisation :
      window.NautilusPuzzle.init(hote, {
        image: 'assets/palier3-lieu.jpg',
-       grille: 8,              // 8 → 63 éclats ; 7 → 43 ; 9 → 81
+       grille: 8,              // 8 → 61 éclats ; 7 → 55 ; 9 → 85
+       cadrageX: 0.5,          // 0 = bord gauche, 1 = bord droit (photo paysage)
+       cadrageY: 0.5,          // 0 = haut, 1 = bas
        maxErreurs: 3,
        onErreur: function (n, max) { … },
        onVictoire: function () { … }
      });
 
      window.NautilusPuzzle.compterPieces(8) → nombre d'éclats (63)
+
+   CADRAGE : options cadrageX / cadrageY (0 → 1) pour choisir la partie
+   de la photo conservée dans le hublot (voir PUZZLE_CADrage_X/Y dans la
+   page du palier). Par défaut : centré.
 
    NOTE IMPORTANTE SUR LE MÉLANGE : l'ordre de la pioche est tiré UNE
    fois (tableau « ordre ») et c'est CET ordre qui pilote la
@@ -71,6 +77,13 @@
     if (!host || !opts || !opts.image) return;
 
     var geo = geometrie(opts.grille);
+    /* CADRAGE : le hublot est rond et la photo est remplie « cover ».
+       Ces deux coefficients disent QUELLE PARTIE de la photo on garde
+       (0 = bord gauche/haut, 1 = bord droit/bas, 0.5 = centré). */
+    var cadrageX = Math.min(1, Math.max(0, Number(opts.cadrageX)));
+    var cadrageY = Math.min(1, Math.max(0, Number(opts.cadrageY)));
+    if (isNaN(cadrageX)) cadrageX = 0.5;
+    if (isNaN(cadrageY)) cadrageY = 0.5;
     var N = geo.cases.length;
     var image = opts.image;
     var maxErreurs = Number(opts.maxErreurs) || 3;
@@ -343,8 +356,8 @@
       var echelle = Math.max(boardW / img.naturalWidth, boardW / img.naturalHeight);
       imgW = img.naturalWidth * echelle;
       imgH = img.naturalHeight * echelle;
-      offX = (boardW - imgW) / 2;
-      offY = (boardW - imgH) / 2;
+      offX = (boardW - imgW) * cadrageX;
+      offY = (boardW - imgH) * cadrageY;
 
       board.style.width = boardW + 'px';
       board.style.height = boardW + 'px';

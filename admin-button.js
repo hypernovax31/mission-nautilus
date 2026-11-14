@@ -107,8 +107,8 @@
   const STEPS = {
     start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le signal du Nautilus réapparaît enfin. Votre équipage attend le feu vert pour appareiller vers le Palier 1."},
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
-    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Le sonar a fragmenté la photo de la prochaine zone. Reconstruisez l’image pour trouver le chemin."},
-    zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
+    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Le sonar a fragmenté la photo de la prochaine zone. Reconstruisez l’image, puis retirez le livre réservé 1 h en caisse : c’est lui qui porte l’indication."},
+    zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"Le relevé du sonar est sens dessus dessous : recalez chaque écho sur la grille pour retrouver la cache du prochain palier."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
     papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
     drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol."},
@@ -336,15 +336,17 @@
     /* Page connue par palier : start = l'épreuve (compte de test),
        livres = le portail QR scellé. Le nom de fichier du portail EST le
        code du palier. */
-    const pageParPalier = { start: 'palier1.html?code=NEMO&m=ZZZZ-0000', livres: '1721310619.html', son: '1831411720.html' };
+    const pageParPalier = { start: 'palier1.html?code=NEMO&m=ZZZZ-0000', livres: '1721310619.html', son: '1831411720.html', zone51: '1941512821.html', occasion: '2051613922.html' };
     Object.entries(STEPS).forEach(([id, step], index) => {
       const href = pageParPalier[id] || null;
       const note = id === 'start' ? 'épreuve morse — compte de test'
         : id === 'livres' ? 'mots croisés'
         : id === 'son' ? 'puzzle circulaire du lieu'
+        : id === 'zone51' ? 'relevé du sonar'
+        : id === 'occasion' ? 'sas actif — épreuve en préparation'
         : 'en construction';
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
-        href ? ((id === 'livres' || id === 'son')
+        href ? ((id === 'livres' || id === 'son' || id === 'zone51')
           ? lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve')
           : lien(href, '🕹️ Jouer l’épreuve'))
         : '<span class=\"small\" style=\"white-space:nowrap\">Bientôt</span>', !!href));

@@ -31,6 +31,10 @@
                 { valeur: '10/10', label: 'Mots validés' },
                 { valeur: '2',     label: 'Erreurs' } ],
        indication: '…',              // indication de direction du QR
+       objet: { nom: 'Livre', retraitH: 1,     // OPTIONNEL : objet
+                rayon: 'Rayon BD' },          //   témoin (retrait 1 h)
+                                    // témoin à retirer en magasin,
+                                    // réservé X heures en caisse
        labelSuivant: 'Palier 3',
        urlSuivante: '1831411720.html'
      });
@@ -57,6 +61,34 @@
       ? 'Palier final'
       : 'Palier « ' + (Number(o.palier) + 1) + ' »';
     var indication = o.indication || '…… (en attente d’indication par l’admin)';
+
+    /* Numérotation DYNAMIQUE des encarts : l'encart « objet témoin »
+       n'apparaît que si la page du palier fournit o.objet. */
+    var etapes = [];
+    etapes.push('<div class="won-zone-panel">'
+      + '<div class="won-zone-head"><span class="won-zone-num">' + (etapes.length + 1) + '</span>'
+      + '<span class="won-zone-title">Rallier la Zone de recherche</span></div>'
+      + '<p class="won-zone-desc">📍 « ' + esc(indication) + ' »</p>'
+      + '</div>');
+
+    if (o.objet && o.objet.nom) {
+      var h = Number(o.objet.retraitH);
+      var duree = (h > 0) ? ('réservé ' + h + ' h') : 'à retirer';
+      etapes.push('<div class="won-zone-panel won-zone-panel--objet">'
+        + '<div class="won-zone-head"><span class="won-zone-num">' + (etapes.length + 1) + '</span>'
+        + '<span class="won-zone-title">Retirer l’objet témoin</span></div>'
+        + '<p class="won-zone-desc">🛒 « <b>' + esc(o.objet.nom) + '</b> »'
+        + (o.objet.rayon ? ' — ' + esc(o.objet.rayon) : ' — en rayon dans le magasin')
+        + ', ' + esc(duree) + ' en caisse. C’est lui qui porte l’indication du ' + esc(prochain) + '.</p>'
+        + '</div>');
+    }
+
+    etapes.push('<div class="won-zone-panel">'
+      + '<div class="won-zone-head"><span class="won-zone-num">' + (etapes.length + 1) + '</span>'
+      + '<span class="won-zone-title">Passer au prochain palier</span></div>'
+      + '<a class="won-next-btn won-zone-btn" href="' + esc(o.urlSuivante) + '?scan=1">📷 Scanner le QR Code trouvé</a>'
+      + '</div>');
+
     return ''
       + '<div class="won-nextzone" id="wonDirectionPanel">'
       +   '<div class="won-radar" aria-hidden="true">'
@@ -65,16 +97,7 @@
       +     '<span class="won-radar-core">🧭</span>'
       +   '</div>'
       +   '<h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>'
-      +   '<div class="won-zone-steps">'
-      +     '<div class="won-zone-panel">'
-      +       '<div class="won-zone-head"><span class="won-zone-num">1</span><span class="won-zone-title">Rallier la Zone de recherche</span></div>'
-      +       '<p class="won-zone-desc">📍 « ' + esc(indication) + ' »</p>'
-      +     '</div>'
-      +     '<div class="won-zone-panel">'
-      +       '<div class="won-zone-head"><span class="won-zone-num">2</span><span class="won-zone-title">Passer au prochain palier</span></div>'
-      +       '<a class="won-next-btn won-zone-btn" href="' + esc(o.urlSuivante) + '?scan=1">📷 Scanner le QR Code trouvé</a>'
-      +     '</div>'
-      +   '</div>'
+      +   '<div class="won-zone-steps">' + etapes.join('') + '</div>'
       +   '<p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone : c’est la clé d’entrée du ' + esc(prochain) + '.</p>'
       + '</div>';
   }
