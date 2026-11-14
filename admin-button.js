@@ -12,7 +12,7 @@
 
   import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB5ivqXO1W9fZqqhwJ0uDnLgVgvWSfQz50",
@@ -107,7 +107,7 @@
   const STEPS = {
     start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le signal du Nautilus réapparaît enfin. Votre équipage attend le feu vert pour appareiller vers le Palier 1."},
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
-    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Un signal brouillé remonte des profondeurs. Il faudra l’écouter autrement."},
+    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Le sonar a fragmenté la photo de la prochaine zone. Reconstruisez l’image pour trouver le chemin."},
     zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
     papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
@@ -336,15 +336,16 @@
     /* Page connue par palier : start = l'épreuve (compte de test),
        livres = le portail QR scellé. Le nom de fichier du portail EST le
        code du palier. */
-    const pageParPalier = { start: 'palier1.html?code=NEMO&m=ZZZZ-0000', livres: '1721310619.html' };
+    const pageParPalier = { start: 'palier1.html?code=NEMO&m=ZZZZ-0000', livres: '1721310619.html', son: '1831411720.html' };
     Object.entries(STEPS).forEach(([id, step], index) => {
       const href = pageParPalier[id] || null;
       const note = id === 'start' ? 'épreuve morse — compte de test'
         : id === 'livres' ? 'mots croisés'
+        : id === 'son' ? 'puzzle circulaire du lieu'
         : 'en construction';
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
-        href ? (id === 'livres'
-          ? lien('1721310619.html?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(`1721310619.html?apercu=jeu&k=${k}&m=ZZZZ-0000`, '🕹️ Jouer l’épreuve')
+        href ? ((id === 'livres' || id === 'son')
+          ? lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve')
           : lien(href, '🕹️ Jouer l’épreuve'))
         : '<span class=\"small\" style=\"white-space:nowrap\">Bientôt</span>', !!href));
     });
@@ -836,6 +837,67 @@
         await updateDoc(toRef, { members: toMembers, updatedAt: new Date().toISOString() });
       }
 
+      /* ===== PRÉSENCE + BLOCAGE PERSONNEL : ils suivent le matelot =====
+         Ces deux états sont rangés par memberKey — clé dérivée du NOM.
+         Renommer un matelot change donc sa clé. Sans cette migration :
+           • son blocage personnel restait sous l'ancien nom (le matelot
+             paraissait libre, alors que l'ancienne clé traînait « en
+             surface » dans l'onglet Blocages) ;
+           • sa présence « en plongée » restait collée à l'ancien nom
+             dans le bloc ÉQUIPAGE ACTIF, et le matelot, lui, ne pouvait
+             plus être reconnu comme l'auteur de sa propre partie.
+         Déplacer un matelot laissait de même des traces dans l'équipe
+         source. On reporte donc blocage et présence sur la nouvelle clé,
+         et on nettoie l'ancienne — par chemin (jamais d'écrasement de
+         l'état d'un coéquipier écrit au même instant). */
+      const cleChangee = newKey !== oldMemberKey;
+      const deplace = fromTeamCode !== toTeamCode;
+      const lockSource = (fromTeam.matelotLocks || {})[oldMemberKey] || null;
+      const presenceSource = (fromTeam.onlineMatelots || {})[oldMemberKey] || null;
+
+      if (cleChangee || deplace) {
+        const srcNettoyage = {};
+        if (lockSource) srcNettoyage['matelotLocks.' + oldMemberKey] = deleteField();
+        if (presenceSource) srcNettoyage['onlineMatelots.' + oldMemberKey] = deleteField();
+
+        /* Le BLOCAGE suit le matelot (renommer ne doit ni le libérer ni
+           l'oublier sous l'ancien nom). La PRÉSENCE, elle, est seulement
+           retirée : si le matelot joue encore, son prochain battement la
+           recréera sous le bon nom — on n'affiche ainsi jamais un matelot
+           parti comme « encore en plongée » sous son nouveau nom. */
+        const dstReport = {};
+        if (lockSource) dstReport['matelotLocks.' + newKey] = { ...lockSource, name: updatedMember.name };
+
+        const dstRef = doc(db, 'teams', toTeamCode);
+        if (fromTeamCode === toTeamCode) {
+          const patch = { ...srcNettoyage, ...dstReport };
+          if (Object.keys(patch).length) await updateDoc(fromRef, patch);
+        } else {
+          if (Object.keys(srcNettoyage).length) await updateDoc(fromRef, srcNettoyage);
+          if (Object.keys(dstReport).length) await updateDoc(dstRef, dstReport);
+        }
+      }
+
+      /* Session en cours : si c'est CE matelot qui est aux commandes, on
+         reporte son identité sur la nouvelle clé. Sans cela, après un
+         renommage il redeviendrait simple spectateur de sa propre partie
+         (ou se verrait refuser la prise de commandes). */
+      if (fromTeamCode === toTeamCode && cleChangee) {
+        try {
+          const sessRef = doc(db, fromTeamCode, 'morseSession', 'current');
+          const sessSnap = await getDoc(sessRef);
+          if (sessSnap.exists()) {
+            const sess = sessSnap.data();
+            if (sess.startedByMemberKey === oldMemberKey) {
+              await updateDoc(sessRef, {
+                startedByMemberKey: newKey,
+                startedByName: updatedMember.name
+              });
+            }
+          }
+        } catch (e) { /* session absente ou indisponible : sans gravité */ }
+      }
+
       /* ===== SYNCHRONISATION DES 3 EMPLACEMENTS =====
      Un matelot existe a trois endroits, qui doivent TOUJOURS bouger
      ensemble (creation, modification, suppression) :
@@ -888,7 +950,15 @@
       const team = { teamCode, ...snap.data() };
       const victim = (team.members || []).find(m => m.memberKey === targetMemberKey);
       const newMembers = (team.members || []).filter(m => m.memberKey !== targetMemberKey);
-      await updateDoc(ref, { members: newMembers, updatedAt: new Date().toISOString() });
+      const patch = { members: newMembers, updatedAt: new Date().toISOString() };
+      /* PRÉSENCE + BLOCAGE PERSONNEL : un matelot supprimé ne doit plus
+         rester « en plongée » (onlineMatelots) ni « en surface »
+         (matelotLocks) dans le bloc ÉQUIPAGE ACTIF ou l'onglet Blocages. */
+      if (targetMemberKey) {
+        patch['matelotLocks.' + targetMemberKey] = deleteField();
+        patch['onlineMatelots.' + targetMemberKey] = deleteField();
+      }
+      await updateDoc(ref, patch);
 
       /* Purge des deux autres emplacements du matelot. Sans cela son Code
          Matelot restait valide : il pouvait se reconnecter alors qu'il

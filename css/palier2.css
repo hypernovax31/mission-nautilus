@@ -75,13 +75,12 @@ main{ max-width:1720px; }
 
 /* BRIEFING DU CAPITAINE (#briefCard) : vue obligatoire entre la ZONE
    SCELLÉE (sas QR) et l'épreuve, sur TOUS les paliers de la mission
-   (Palier 2 → final). AUCUN style dédié ici : la carte réutilise
-   .card / .body de palier1.css et le bloc rendu par palier-briefing.js
-   réutilise EXACTEMENT les classes .brief du briefing du Palier 1
-   (.brief-signature, .brief-intro, .brief-list, .brief-cta). */
-/* Page pleine largeur : le texte du briefing reste centré à une largeur
-   de lecture confortable au lieu de s'étirer sur toute la carte. */
-.brief{ max-width:760px; margin:0 auto; }
+   (Palier 2 → final). La carte réutilise .card / .body de palier1.css
+   et le bloc rendu par palier-briefing.js réutilise EXACTEMENT les
+   classes .brief du briefing du Palier 1 (.brief-signature,
+   .brief-intro, .brief-list, .brief-cta). Le texte s'étend désormais
+   sur TOUTE la largeur de la carte — comme au Palier 1 — au lieu de
+   rester centré sur une colonne étroite. */
 /* Responsive : la clause descriptive longue du briefing (.brief-verbose)
    est masquée sur petit écran — le texte se lit plus court et plus serré,
    sans mur de texte sur téléphone. */

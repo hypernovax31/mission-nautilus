@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Nautilus — Palier 3</title>
+  <meta name="description" content="Accès scellé du Palier 3 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
+  <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil). -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=49">
+  <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
+       communs à tous les paliers ≥ 2. -->
+  <link rel="stylesheet" href="css/palier2.css?v=26">
+  <link rel="stylesheet" href="css/palier3.css?v=3">
+  <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
+       connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
+    <div class="topbar-title" id="topPalierTitle">Palier 3</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER. Vue unique et immersive,
+       commune à tous les paliers ≥ 2 : tant que le QR Code n'est pas
+       scanné, c'est la seule chose à l'écran. -->
+  <section class="card gate-hero" id="gateHero">
+    <h2 id="sasHeroTitle">PALIER 3 — ZONE SCELLÉE</h2>
+    <div class="body">
+      <div class="sas-scene">
+        <div class="sas-head">
+          <div class="sas-lock" aria-hidden="true">
+            <span class="sas-lock-ico">🔒</span>
+          </div>
+          <p class="sas-kicker">Profondeur — sas scellé</p>
+          <p class="sas-titre">⛔ Ce palier est verrouillé.</p>
+          <p class="sas-msg">Déverrouillez le palier suivant grâce au <b>QR Code de la zone de recherche</b>.</p>
+        </div>
+
+        <div class="gate-scanbox sas-scanbox" id="gateScanbox">
+          <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
+          <canvas id="gateCanvas" hidden></canvas>
+          <div class="gate-cam-placeholder" id="gateCamPlaceholder" aria-hidden="true">
+            <span class="gate-cam-icon">📷</span>
+            <span>Caméra en veille — vise le QR Code pour ouvrir le sas.</span>
+          </div>
+          <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
+        </div>
+
+        <div class="gate-actions">
+          <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
+          <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
+          <input type="file" id="gateFile" accept="image/*" hidden>
+        </div>
+
+        <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
+
+        <button type="button" class="sas-indication" id="sasIndicationBtn" aria-expanded="false">📍 Voir l'indication de la zone de recherche</button>
+        <div class="sas-indication-panel" id="sasIndicationPanel" hidden>
+          <div class="won-nextzone">
+            <div class="won-radar" aria-hidden="true">
+              <span class="won-radar-ring"></span>
+              <span class="won-radar-ring won-radar-ring--2"></span>
+              <span class="won-radar-core">🧭</span>
+            </div>
+            <h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>
+            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">……</span> »</p>
+            <div class="won-nextzone-steps">
+              <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
+              <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
+              <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE : même bloc que le Palier 1 / 2. -->
+  <section class="card" id="teamCard" hidden>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- Journal de bord (live). -->
+  <section class="card" id="logCard" hidden>
+    <h2>JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
+        <ul id="morse-log-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING DU CAPITAINE — vue OBLIGATOIRE entre la ZONE SCELLÉE et
+       l'épreuve (même architecture que tous les paliers). -->
+  <section class="card" id="briefCard" hidden>
+    <h2>BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+
+  <!-- ÉPREUVE : PUZZLE PHOTO DU LIEU. -->
+  <section class="card gate-unlocked" id="gateUnlocked" hidden>
+    <h2 id="sasUnlockedTitle">PALIER 3</h2>
+    <div class="body">
+      <div id="puzzleStatut" class="status-banner info">⏳ <b>Préparation de la photo…</b></div>
+      <div id="puzzleHost"></div>
+      <a class="puzzle-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
+    </div>
+  </section>
+</main>
+
+<!-- Journal de bord « Activité en direct », code COMMUN à tous les paliers. -->
+<script src="son-partage.js?v=2"></script>
+<script src="journal-bord.js?v=6"></script>
+<!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
+<script src="palier-sas.js?v=13"></script>
+<!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
+<script src="palier-briefing.js?v=3"></script>
+<script>window.NautilusSas.init(3);</script>
+<!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers. -->
+<script src="matelot-blocages.js?v=2"></script>
+<!-- Réserve d'oxygène (jauge du haut), commune à tous les paliers. -->
+<script src="reserve-o2.js?v=4"></script>
+<!-- Équipage actif en plongée, commun à tous les paliers. -->
+<script src="equipage-actif.js?v=10"></script>
+<script>window.EquipageActif.init();</script>
+<!-- Moteur de l'épreuve PUZZLE PHOTO (Palier 3). -->
+<script src="puzzle-palier3.js?v=2"></script>
+<!-- Écran de VICTOIRE commun à TOUS les paliers. -->
+<script src="victoire-palier.js?v=12"></script>
+<script src="records-palier.js?v=2"></script>
+
+<!-- ================= RÉGLAGES ADMIN (Palier 3) =================
+     PUZZLE_IMAGE  : la photo du lieu où se cache le QR du Palier 4.
+                     Place ta photo dans assets/ (même nom de fichier,
+                     même format .jpg) ou change ce chemin.
+                     ⚠️ Le puzzle est un HUBLOT ROND : la photo est
+                     centrée et remplie le cercle (les bords gauche et
+                     droite sont rognés si elle est plus large que
+                     haute). Cadre donc le sujet au centre.
+     PUZZLE_GRILLE : DENSITÉ du puzzle (difficulté). Nombre d'éclats
+                     obtenu :  6 → 37   |   7 → 55   |   8 → 61
+                                9 → 85   |  10 → 97
+                     (valeur actuelle : très corsé, on ne voit rien
+                     avant d'avoir remonté une bonne partie du hublot.)
+     LIEU_DESCRIPTION : le lieu affiché à l'écran de victoire, une fois
+                     la photo reconstituée (et l'indication du sas). -->
+<script>
+const PUZZLE_IMAGE = 'assets/palier3-lieu.jpg';
+const PUZZLE_GRILLE = 8;                       /* 8 → 61 éclats ronds */
+const NB_PIECES = window.NautilusPuzzle
+  ? window.NautilusPuzzle.compterPieces(PUZZLE_GRILLE)
+  : 61;
+const LIEU_DESCRIPTION = "…… (en attente d’indication par l’admin)";
+const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
+const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
+</script>
+
+<script>
+/* ================= ÉPREUVE DU PALIER 3 — « PUZZLE CIRCULAIRE DU LIEU » =================
+   Le sonar a fragmenté la photo de la prochaine zone : reconstituer l'image
+   pour découvrir OÙ chercher le QR Code. La photo est enfermée dans un
+   HUBLOT ROND et découpée en une soixantaine d'ÉCLATS RONDS mélangés —
+   impossible de la lire d'un coup d'œil tant qu'elle n'est pas remontée.
+   Un éclat bien posé se verrouille ; un éclat mal posé revient (sans
+   pénalité). « 🔎 Révéler un éclat » coûte 1 erreur :
+   3 erreurs = remontée PERSONNELLE (matelot-blocages.js, règle globale).
+   Joueur SANS Code Matelot : repli local anonyme. La victoire inscrit
+   « son » dans completedSteps et lève les blocages personnels actifs. */
+(function () {
+  'use strict';
+
+  var CLE_BLOCAGE_ANONYME = 'nautilusEpreuve3BloqueJusqua';
+  var BLOCAGE_MS  = 60 * 60 * 1000;          /* repli anonyme : 1 h */
+  var _blocageSession = 0;                   /* mode test : volatil */
+
+  var t0Partie = null;
+  var nbErreurs = 0;
+
+  var $ = function (id) { return document.getElementById(id); };
+  function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
+  function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
+  function enModeTest() {
+    try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
+  }
+  function blocageAnonymeJusqua() {
+    try { return Number(localStorage.getItem(CLE_BLOCAGE_ANONYME) || 0); } catch (e) { return 0; }
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function heureLisible(v) {
+    var d = new Date(typeof v === 'number' ? v : String(v));
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* QUI joue sur cet appareil ? (mêmes conventions que les autres paliers). */
+  var _ident = null, _identLue = false;
+  function monIdentite() {
+    if (_identLue) return Promise.resolve(_ident);
+    _identLue = true;
+    return window.NautilusBlocages.identiteCourante()
+      .then(function (i) { _ident = i; return _ident; })
+      .catch(function () { _ident = null; return null; });
+  }
+
+  /* Aperçu organisateur : ?apercu=jeu&k=… — même clé que les autres
+     paliers (djb2 salé initialisé à 0). */
+  function apercuAdminAutorise() {
+    try {
+      if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
+      var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
+      if (!k) return false;
+      var h = 0, s = 'apercu-admin:NEMO2026';
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return k === ('k' + Math.abs(h).toString(36));
+    } catch (e) { return false; }
+  }
+
+  function statut(html, kind) {
+    var el = $('puzzleStatut');
+    if (!el) return;
+    el.innerHTML = html;
+    el.className = 'status-banner ' + (kind || 'info');
+  }
+
+  /* ================= TROIS VUES EN SÉQUENCE =================
+     ZONE SCELLÉE → BRIEFING DU CAPITAINE → ÉPREUVE (comme le Palier 2). */
+  function montrerCarte(id, visible) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? '' : 'none';
+  }
+  function afficherVueScellee() {
+    montrerCarte('gateHero', true);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueBriefing() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
+    montrerCarte('briefCard', true);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueEpreuve() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', true);
+    var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
+  }
+  function afficherJournalDeBord(visible) {
+    montrerCarte('teamCard', visible);
+    montrerCarte('logCard', visible);
+    var carte = $('gateUnlocked');
+    if (carte) carte.classList.toggle('epreuve-focus', !visible);
+  }
+
+  function afficherBlocage(jusqua, nom) {
+    afficherVueEpreuve();
+    afficherJournalDeBord(true);
+    statut(nom
+      ? "🔒 <b>3 révélations demandées — remontée forcée !</b> " + esc(nom) + " regagne la surface ; reprise possible à <b>"
+        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
+        + "avec son Code Matelot — <b>chacun ses erreurs</b>."
+      : "🔒 <b>3 révélations demandées — remontée forcée !</b> Tu regagnes la surface ; reprise possible à <b>"
+        + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
+        + "pour que tes erreurs restent les tiennes.", 'danger');
+    var host = $('puzzleHost');
+    if (host) host.innerHTML = '';
+  }
+
+  function onErreur(n, max) {
+    nbErreurs = n;
+    if (n >= max) {
+      declencherBlocage();
+    } else {
+      statut('🔎 <b>Le sonar a révélé une pièce.</b> ' + (max - n) + ' aide(s) restante(s) avant la remontée en surface.', 'warning');
+      acte('demande une pièce au sonar (' + n + '/' + max + ')', 'warning');
+    }
+  }
+
+  /* Son de défaite (module partagé), JAMAIS si le sonar est éteint. */
+  function jouerSonDefaite() {
+    try {
+      if (window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound) {
+        window.NautilusAnnonces.playDefeatSound();
+      }
+    } catch (e) {}
+  }
+
+  /* 3 révélations demandées : blocage PERSONNEL (identifié) ou repli local. */
+  function declencherBlocage() {
+    if (apercuAdminAutorise()) {
+      journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
+      return;
+    }
+    monIdentite().then(function (ident) {
+      if (ident && ident.isTest) {
+        statut('🧪 <b>Mode concepteur : 3 révélations demandées.</b> Aucun blocage en test — le puzzle reste jouable, rien n’est enregistré.', 'warning');
+        journal('🧪 Mode concepteur : 3 révélations au puzzle — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
+        return;
+      }
+      jouerSonDefaite();
+      if (ident) {
+        window.NautilusBlocages.poserBlocage(ident, 'puzzle_too_many_reveals')
+          .then(function (r) {
+            afficherBlocage(r.lockedUntil, ident.name);
+            acte('3 révélations — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
+          })
+          .catch(function () {
+            _blocageSession = Date.now() + BLOCAGE_MS;
+            afficherBlocage(_blocageSession, ident.name);
+            journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
+          });
+        return;
+      }
+      var jusqua = Date.now() + BLOCAGE_MS;
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
+      afficherBlocage(jusqua, null);
+      acte('3 révélations — remonte en surface (1 h)', 'danger');
+    });
+  }
+
+  /* Inscription Firestore : mêmes champs que les paliers précédents. */
+  async function propagerVictoire() {
+    var ident = await monIdentite();
+    var equipage = (ident && !ident.isTest) ? ident.teamCode : null;
+    if (!equipage) { try { equipage = localStorage.getItem('nautilusCurrentTeam'); } catch (e) {} }
+    if (!equipage || enModeTest() || apercuAdminAutorise()) {
+      journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
+      return;
+    }
+    try {
+      var x = await window.NautilusBlocages.db();
+      await x.fs.updateDoc(x.fs.doc(x.db, 'teams', equipage), {
+        completedSteps: x.fs.arrayUnion('son'),
+        currentStep: 'zone51',
+        lastEvent: 'step_advanced',
+        lastStepCompleted: 'son',
+        lastStepCompletedAt: new Date().toISOString(),
+        lastStepCompletedLabel: 'Palier 3',
+        lastStepCompletedBy: (ident && !ident.isTest) ? ident.name : 'Un matelot'
+      });
+      if (typeof window.NautilusRecords !== 'undefined') {
+        var NOMS_EQUIPES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+        var dureeSec = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
+        window.NautilusRecords.enregistrer({
+          stepId: 'son',
+          seconds: dureeSec,
+          matelot: (ident && !ident.isTest) ? ident.name : 'Un matelot',
+          equipage: NOMS_EQUIPES[ident.teamCode] || ident.teamCode
+        }).then(chargerRecords);
+      }
+      var leves = await window.NautilusBlocages.leverBlocages(equipage, 'son');
+      journal('📈 Victoire inscrite au tableau de bord — direction le Palier 4 !'
+        + (leves > 0 ? ' ' + leves + ' matelot' + (leves > 1 ? 's' : '') + ' débloqué' + (leves > 1 ? 's' : '') + '.' : ''), 'success');
+    } catch (e) {
+      journal("⚠️ Victoire non inscrite (connexion ?). Préviens l'organisation.", 'warning');
+    }
+  }
+
+  /* ÉCRAN DE VICTOIRE FAÇON PALIER 1/2 — commun à tous les paliers.
+     La destination affichée est le LIEU révélé par la photo. */
+  async function afficherEcranVictoire() {
+    var host = $('puzzleHost');
+    if (!host || !window.NautilusVictoire) return;
+    var ident = await monIdentite();
+    var duree = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
+    var mm = Math.floor(duree / 60), ss = ('0' + (duree % 60)).slice(-2);
+    var NOMS = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+    var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
+    window.NautilusVictoire.afficher(host, {
+      palier: 3,
+      mission: 'Le Puzzle Circulaire du Sonar',
+      equipe: equipe,
+      bravo: (ident && !ident.isTest) ? ident.name : null,
+      stats: [
+        { valeur: mm + ':' + ss, label: 'Temps utilisé' },
+        { valeur: NB_PIECES + '/' + NB_PIECES, label: 'Éclats placés' },
+        { valeur: String(nbErreurs), label: nbErreurs > 1 ? 'Révélations' : 'Révélation' }
+      ],
+      indication: LIEU_DESCRIPTION,
+      labelSuivant: 'Palier 4',
+      urlSuivante: '1941512821.html'
+    });
+    chargerRecords();
+  }
+
+  function chargerRecords() {
+    if (typeof window.NautilusRecords === 'undefined') return;
+    monIdentite().then(function (ident) {
+      window.NautilusRecords.chargerEtRendre($('wonRecordsHost'), {
+        stepId: 'son',
+        moi: (ident && !ident.isTest) ? ident.name : ''
+      });
+    });
+  }
+
+  function onVictoire() {
+    afficherJournalDeBord(false);
+    statut('🏆 <b>Palier 3 franchi !</b> La photo est reconstituée — le lieu est identifié.', 'success');
+    acte('reconstitue la photo', 'success');
+    propagerVictoire();
+    afficherEcranVictoire();
+  }
+
+  var lance = false;
+  function lancer() {
+    if (lance) return;
+    lance = true;
+    demarrer();
+  }
+
+  /* Démarrage protégé : blocage personnel du matelot identifié, sinon
+     repli local anonyme. Le moindre doute réseau laisse JOUER. */
+  async function demarrer() {
+    if (!apercuAdminAutorise()) {
+      var ident = await monIdentite();
+      if (ident && !ident.isTest) {
+        var bloc = await window.NautilusBlocages.blocageActif(ident);
+        if (bloc) {
+          afficherBlocage(bloc.lockedUntil, ident.name);
+          journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
+            + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
+          return;
+        }
+      } else if (!ident) {
+        var jusqua = blocageAnonymeJusqua();
+        if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
+      }
+    }
+    afficherVueEpreuve();
+    t0Partie = Date.now();
+    statut('🧩 <b>Reconstitue la photo.</b> Glisse chaque éclat rond à sa place dans le hublot. <b>3 révélations demandées</b> et tu remontes en surface.', 'info');
+    window.NautilusPuzzle.init($('puzzleHost'), {
+      image: PUZZLE_IMAGE,
+      grille: PUZZLE_GRILLE,
+      maxErreurs: 3,
+      onErreur: onErreur,
+      onVictoire: onVictoire
+    });
+  }
+
+  /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
+     Explication immersive du thème SANS dévoiler le lieu : on raconte
+     la photo fragmentée, jamais ce qu'elle montre. */
+  window.NautilusBriefing.afficher($('briefHost'), {
+    intro: "Bienvenue à bord, matelot. Le <b>sonar du Nautilus</b> a capturé la zone où se cache le QR Code du prochain palier… mais l'onde est revenue <b>fragmentée</b> : la photo s'est brisée en <b>éclats ronds</b>, tous mélangés derrière le hublot. Remonte l'image, éclat après éclat, et elle te montrera <b>où chercher</b> dans le magasin.",
+    consignes: [
+      { ico: '🧩', html: "Le hublot est découpé en <b>" + NB_PIECES + " éclats ronds</b> mélangés : impossible de lire la photo avant d'en avoir remonté une bonne partie." },
+      { ico: '🎯', html: "Glisse chaque éclat dans le cercle. <b>Au bon endroit, il se soude</b> à la photo ; au mauvais, il revient dans la pioche — essaie librement." },
+      { ico: '🌀', html: "Attention : chaque éclat est <b>plus large que sa place</b> et déborde sur ses voisins — c'est la <b>position exacte</b> qui compte, pas le premier trou venu." },
+      { ico: '🔎', warn: true, html: "Le sonar peut <b>révéler un éclat</b> à ta place, mais chaque aide compte pour <b>1 erreur</b> : <b>3 erreurs</b> = remontée en surface." }
+    ],
+    cta: '⚓ PRENDRE LES COMMANDES',
+    onDepart: function () {
+      glisserEnHaut();
+      lancer();
+      setTimeout(glisserEnHaut, 350);
+      setTimeout(glisserEnHaut, 900);
+    }
+  });
+
+  function glisserEnHaut() {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    catch (e) { try { window.scrollTo(0, 0); } catch (_) {} }
+  }
+
+  /* Démarrage : choix de la VUE (identique au Palier 2). */
+  if (apercuAdminAutorise()) {
+    var banniereModeTest = function () {
+      if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+    };
+    banniereModeTest();
+    setTimeout(banniereModeTest, 150);
+    afficherVueBriefing();
+  } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.estDeverrouille(3)) {
+    afficherVueBriefing();
+  } else {
+    afficherVueScellee();
+    if (window.NautilusSas.observerDeverrouillageEquipe) {
+      window.NautilusSas.observerDeverrouillageEquipe();
+    }
+  }
+  window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
+
+  /* --- Indication de la zone de recherche : dépliable SUR PLACE --- */
+  var _btnIndication = $('sasIndicationBtn');
+  var _panelIndication = $('sasIndicationPanel');
+  if (_btnIndication && _panelIndication) {
+    var _txtIndication = $('sasIndicationTexte');
+    if (_txtIndication) _txtIndication.textContent = ZONE_RECHERCHE_HINT;
+    _btnIndication.addEventListener('click', function () {
+      var estOuvert = !_panelIndication.hidden;
+      _panelIndication.hidden = estOuvert;
+      _btnIndication.textContent = estOuvert
+        ? '📍 Voir l’indication de la zone de recherche'
+        : '📍 Masquer l’indication';
+      _btnIndication.setAttribute('aria-expanded', estOuvert ? 'false' : 'true');
+    });
+  }
+})();
+</script>
+<!-- Bouton d'ambiance sonore, commun à toutes les pages du jeu. -->
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=3" defer></script>
+<script src="admin-button.js?v=25" type="module"></script>
+</body>
+</html>

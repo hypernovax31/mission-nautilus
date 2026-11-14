@@ -1,0 +1,107 @@
+/* =============================================================
+   PALIER 3 — « PUZZLE CIRCULAIRE DU LIEU »
+   Hublot rond + éclats ronds. S'ajoute à palier1.css : même liseré
+   d'or, même ambiance.
+   ============================================================= */
+
+/* Page pleine largeur, comme le Palier 2. */
+main{ max-width:1720px; }
+
+/* ---------- Scène du puzzle ---------- */
+.puzzle{ display:flex; flex-direction:column; gap:14px; }
+
+.puzzle-status{
+  color:#8ee7ff; font-size:13px; font-weight:900;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+
+/* La scène contient le hublot (haut) et la pioche (bas), en une seule
+   zone de coordonnées pour le glisser-déposer. */
+.puzzle-stage{ position:relative; width:100%; }
+
+/* HUBLOT : la photo se reconstitue à l'intérieur de ce cercle. Aucune
+   image fantôme : la photo ne doit pas se lire tant qu'elle n'est pas
+   remontée. Les éclats sont rognés par le cercle (overflow:hidden),
+   d'où une silhouette parfaitement ronde. */
+.puzzle-board{
+  position:absolute; top:0; left:0;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(142,231,255,.10), rgba(0,0,0,.55) 70%),
+    rgba(0,0,0,.42);
+  border:2px solid rgba(245,176,39,.45);
+  border-radius:50%;
+  box-shadow:
+    inset 0 0 0 8px rgba(2,8,18,.55),
+    inset 0 0 38px rgba(0,0,0,.75),
+    0 0 0 6px rgba(245,176,39,.10),
+    0 10px 30px rgba(0,0,0,.45);
+  overflow:hidden;
+}
+/* Repères : une fine pastille par emplacement (aucune image fantôme). */
+.puzzle-slot{
+  position:absolute;
+  border-radius:50%;
+  background:rgba(2,8,18,.40);
+  box-shadow:inset 0 0 0 1px rgba(142,231,255,.10);
+}
+
+/* PIOCHE : les éclats mélangés reposent ici, sous le hublot. */
+.puzzle-tray{
+  position:absolute; left:0; width:100%;
+  border:1px dashed rgba(142,231,255,.20); border-radius:14px;
+  background:rgba(0,0,0,.16);
+}
+
+/* ÉCLATS : fragments RONDS de la photo, glissables au doigt. */
+.puzzle-piece{
+  position:absolute;
+  border-radius:50%;
+  background-repeat:no-repeat;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.35);
+  cursor:grab;
+  touch-action:none;               /* le doigt déplace l'éclat, pas la page */
+  user-select:none; -webkit-user-select:none;
+  transition:left .16s ease, top .16s ease;
+  will-change:left, top;
+}
+.puzzle-piece--drag{
+  transition:none; cursor:grabbing;
+  box-shadow:inset 0 0 0 2px rgba(245,176,39,.75), 0 8px 22px rgba(0,0,0,.6);
+}
+.puzzle-piece--lock{
+  cursor:default;
+  box-shadow:none;                 /* soudé à la photo : plus aucune couture */
+}
+
+.puzzle-actions{ display:flex; flex-wrap:wrap; gap:10px; }
+.puzzle-btn{
+  margin:0; flex:1 1 220px; min-height:46px;
+  font-family:inherit; font-weight:1000; font-size:14px; cursor:pointer;
+  background:rgba(142,231,255,.14); color:#8ee7ff;
+  border:1px solid rgba(142,231,255,.45); border-radius:12px;
+}
+.puzzle-btn:hover:not(:disabled){ background:rgba(142,231,255,.24); }
+.puzzle-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+.puzzle-feedback{
+  min-height:22px; font-size:13px; font-weight:800; line-height:1.5;
+  color:#dff6ff;
+}
+.puzzle-feedback.is-warn{ color:#ffe2a0; }
+
+/* Lien de retour à l'accueil. */
+.puzzle-home{
+  display:inline-block; margin-top:8px;
+  background:rgba(255,255,255,.08); color:#fff;
+  border:1px solid rgba(245,176,39,.5); border-radius:12px;
+  padding:11px 20px; font-weight:900; font-size:13px; text-decoration:none;
+  letter-spacing:.04em; text-transform:uppercase;
+}
+.puzzle-home:hover{ background:rgba(245,176,39,.85); color:#111; }
+
+/* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur ===== */
+html{font-size:100%;}
+h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-word;word-break:break-word;}
+img,video,svg,canvas,iframe{max-width:100%;height:auto;}
+button,input,select,textarea{max-width:100%;box-sizing:border-box;}
+body{overflow-wrap:break-word;}

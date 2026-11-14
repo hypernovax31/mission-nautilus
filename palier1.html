@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=47">
+  <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil) : SVG
+       source + PNG de repli + Apple touch (iOS). Sans ces balises, le
+       navigateur affichait son icône générique à la place du logo. -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=49">
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=2" defer></script>
@@ -151,7 +157,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection
+  getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteField, onSnapshot, collection
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ---------- CONFIGURATION ---------- */
@@ -214,8 +220,9 @@ const STEPS = {
 
 /* Banque de mots : 40 mots, 7+ lettres, AVEC accents (UIT-R M.1677-1)
    Chaque mot a un hint thématique interne (pour l'indice nº2 ou pour le log).
-   ATTENTION : ces mots varient l'épreuve (anti-triche par rejouabilité)
-   mais le LIEU DU QR DANS LE MAGASIN est FIXE — voir QR_LOCATION_HINT. */
+   RÈGLE : un mot DIFFÉRENT est assigné à CHAQUE équipage (voir
+   getMotEquipage) — le même équipage garde le même mot à chaque tentative.
+   Le LIEU DU QR DANS LE MAGASIN est FIXE — voir QR_LOCATION_HINT. */
 const MORSE_WORDS = [
   { w:"NAUTILE",   h:"Animal marin à coquille spiralée" },
   { w:"ABYSSES",   h:"Profondeurs inexplorées de l'océan" },
@@ -744,6 +751,65 @@ function markHintsExhausted(word) {
   if (idx >= 0) _usedWords.add(idx);
 }
 
+/* ---------- MOT FIXE PAR ÉQUIPAGE (Palier 1) ----------
+   REGLE : chaque équipage a SON mot à deviner, toujours le même d'une
+   tentative à l'autre, et différent de celui des autres équipages.
+   Le mot est assigné UNE SEULE FOIS (au premier lancement) puis conservé
+   dans le document de l'équipe sous forme d'empreinte (morseWordHash) —
+   jamais le mot en clair, même convention que la session. */
+function motEntry(w) {
+  const m = MORSE_WORDS.find(x => x.w === w);
+  return m || null;
+}
+async function getMotEquipage(team) {
+  /* Repli ultime : un mot local si tout échoue (jamais de blocage). */
+  const repli = () => MORSE_WORDS[Math.floor(Math.random() * MORSE_WORDS.length)];
+  if (!team || !team.teamCode) return repli();
+  try {
+    const snap = await getDoc(doc(db, 'teams', team.teamCode));
+    const data = snap.exists() ? snap.data() : {};
+    if (typeof data.morseWordHash === 'number') {
+      const w = wordFromHash(data.morseWordHash);
+      if (w) return motEntry(w);
+    }
+    /* Compatibilité : un éventuel mot stocké en clair par une ancienne
+       version est relu tel quel. */
+    if (data.morseWord && typeof data.morseWord === 'string') {
+      const e = motEntry(data.morseWord);
+      if (e) return e;
+    }
+    const w = await assignerMotEquipage(team.teamCode);
+    return motEntry(w) || repli();
+  } catch (e) {
+    return repli();
+  }
+}
+async function assignerMotEquipage(teamCode) {
+  /* Choisit un mot NON encore attribué à un autre équipage. */
+  const used = new Set();
+  try {
+    const allSnap = await getDocs(collection(db, 'teams'));
+    allSnap.forEach(d => {
+      if (d.id === teamCode) return;
+      const dd = d.data();
+      if (typeof dd.morseWordHash === 'number') used.add(dd.morseWordHash);
+      if (dd.morseWord) used.add(hashString(dd.morseWord));
+    });
+  } catch (e) { /* lecture impossible : on tire quand même */ }
+  let choix = null;
+  for (const m of MORSE_WORDS) {
+    if (!used.has(hashString(m.w))) { choix = m; break; }
+  }
+  if (!choix) choix = MORSE_WORDS[Math.floor(Math.random() * MORSE_WORDS.length)];
+  try {
+    await updateDoc(doc(db, 'teams', teamCode), {
+      morseWordHash: hashString(choix.w),
+      updatedAt: new Date().toISOString()
+    });
+  } catch (e) { /* écriture impossible : le mot vaut pour cette partie */ }
+  return choix.w;
+}
+
 /* ---------- UI HELPERS (chambre de pilotage live) ---------- */
 function showToast(message, type = 'info', duration = 4000) {
   let container = document.getElementById('nautilus-toast-container');
@@ -787,16 +853,35 @@ async function heartbeat(teamCode, memberKey = null) {
   const team = await getTeam(teamCode);
   if (!team) return;
   const now = new Date().toISOString();
-  const patch = {
-    onlinePlayers: { ...(team.onlinePlayers || {}), [getClientId()]: now },
-    updatedAt: now
-  };
-  /* Presence PAR MATELOT (et non par appareil) : plusieurs matelots se
+  /* ÉCRITURE PAR CHEMIN (onlinePlayers.CLIENT / onlineMatelots.CLE) : fini
+     la lecture puis réécriture de tout l'objet. Deux matelots qui battent
+     au même instant n'écrasent plus l'entrée de l'autre, et une présence
+     périmée n'est plus recopiée indéfiniment.
+     Presence PAR MATELOT (et non par appareil) : plusieurs matelots se
      succedent sur un meme telephone, clientId ne peut donc pas dire QUI
      est en live. onlineMatelots[memberKey] = date du dernier signe de vie ;
      renderCrew() n'affiche que les cles fraiches. */
-  if (memberKey) patch.onlineMatelots = { ...(team.onlineMatelots || {}), [memberKey]: now };
+  const patch = {
+    ['onlinePlayers.' + getClientId()]: now,
+    updatedAt: now
+  };
+  if (memberKey) patch['onlineMatelots.' + memberKey] = now;
   await updateDoc(doc(db, 'teams', teamCode), patch);
+}
+
+/* ---------- PRÉSENCE : retrait immédiat à la sortie du mini-jeu ----------
+   Écrit le retrait de la clé du matelot (onlineMatelots) au moment où la
+   page passe en arrière-plan ou se ferme. Avant, on se contentait
+   d'arrêter le battement : le matelot restait affiché « en plongée »
+   jusqu'à l'expiration de l'horodatage. Best effort : si l'écriture
+   n'aboutit pas (page déjà fermée), l'expiration prend le relais. */
+async function effacerPresence(teamCode, memberKey) {
+  if (isTestMode() || !memberKey || !teamCode) return;
+  try {
+    await updateDoc(doc(db, 'teams', teamCodeFromInput(teamCode)), {
+      ['onlineMatelots.' + memberKey]: deleteField()
+    });
+  } catch (e) { /* best effort */ }
 }
 
 /* ---------- EXPORT GLOBAL ---------- */
@@ -817,7 +902,8 @@ window.Nautilus = {
   isTestMode, isTestMember,
   isSoundEnabled, getAudioCtx, getMorseCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
-  showToast, addLogEntry, addActe, clearLog, heartbeat
+  getMotEquipage, assignerMotEquipage,
+  showToast, addLogEntry, addActe, clearLog, heartbeat, effacerPresence
 };
 
 
@@ -2071,9 +2157,10 @@ window.Nautilus = {
        partie. Un matelot a paye 1 h de blocage pour les obtenir ; il
        serait injuste que la releve reparte de zero et doive repayer.
        On les reporte donc sur la nouvelle partie.
-       A noter : le mot change a chaque partie, mais les indices restent
-       justes — le nombre de lettres et la premiere lettre sont lus sur le
-       NOUVEAU mot au moment de l'affichage, jamais figes. */
+       A noter : le mot est désormais FIXE pour l'équipage (assigné une
+       seule fois), donc les indices restent exacts d'une tentative à
+       l'autre — le nombre de lettres et la première lettre sont relus sur
+       le mot au moment de l'affichage, jamais figés. */
     let indicesAcquis = [false, false, false];
     try {
       const precedente = state.session
@@ -2083,9 +2170,14 @@ window.Nautilus = {
       }
     } catch (e) { /* pas de partie precedente lisible : on repart a zero */ }
 
-    /* Choisir un mot et démarrer. Chaque mot a son indice géographique associé
-       (où se trouve le QR du palier 2 dans le magasin). */
-    const entry = N.pickWord();
+    /* MOT FIXE PAR ÉQUIPAGE : chaque équipage a SON mot à deviner, toujours
+       le même d'une tentative à l'autre, et différent de celui des autres
+       équipages. Il est assigné une seule fois (au premier lancement) puis
+       conservé dans le document de l'équipe (morseWordHash). En mode test
+       (aucune écriture), on garde un simple tirage local. */
+    const entry = state.isTest
+      ? N.pickWord()
+      : await N.getMotEquipage(state.team);
     state.word = entry.w;
     state.typed = '';        // repart d'une reponse vide
 
@@ -3178,10 +3270,14 @@ window.Nautilus = {
       }
     } else {
       if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }
+      /* Le matelot n'est plus devant le mini-jeu : on retire sa présence
+         tout de suite au lieu d'attendre l'expiration de l'horodatage. */
+      N.effacerPresence(state.teamCode, state.me && state.me.memberKey);
     }
   });
   window.addEventListener('pagehide', () => {
     if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }
+    N.effacerPresence(state.teamCode, state.me && state.me.memberKey);
   });
   window.addEventListener('beforeunload', () => {
     if (state.unsubSession) state.unsubSession();
@@ -3199,6 +3295,6 @@ window.Nautilus = {
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
 <script src="sonar-button.js?v=4" defer></script>
-<script src="admin-button.js?v=22" type="module"></script>
+<script src="admin-button.js?v=25" type="module"></script>
 </body>
 </html>
