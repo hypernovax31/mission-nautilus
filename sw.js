@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Pages : network-first ; code et styles : cache avec revalidation en fond.
-const CACHE_NAME = 'nautilus-v300';
+const CACHE_NAME = 'nautilus-v301';
 const PRECACHE = [
   './',
   './index.html',
@@ -47,27 +47,53 @@ const PRECACHE = [
   './assets/icon-512.png'
 ];
 
+/* Chaque ressource est precachee independamment : cache.addAll annule
+   TOUT le lot si une seule reponse echoue (par exemple un son indisponible
+   lors d'une coupure 4G). On essaie au besoin l'ancien cache pour ce meme
+   fichier et cette meme version ; les autres ressources restent utilisables. */
+async function remplirPrecache() {
+  const cache = await caches.open(CACHE_NAME);
+  let prochain = 0;
+  async function charger() {
+    while (prochain < PRECACHE.length) {
+      const adresse = PRECACHE[prochain++];
+      try {
+        const reponse = await fetch(adresse, { cache: 'reload' });
+        if (!reponse.ok) throw new Error('HTTP ' + reponse.status);
+        await cache.put(adresse, reponse);
+      } catch (_) {
+        try {
+          const copie = await caches.match(adresse);
+          if (copie) await cache.put(adresse, copie);
+        } catch (_) { /* stockage indisponible : les autres fichiers restent */ }
+      }
+    }
+  }
+  // Six telechargements en parallele : ne pas saturer une connexion mobile.
+  await Promise.all(Array.from({ length: 6 }, () => charger()));
+}
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE).catch(() => {}))
-  );
-  /* skipWaiting : la nouvelle version prend la main tout de suite, sans
-     attendre la fermeture de tous les onglets. Combine a l'ecoute de
-     'controllerchange' dans index.html, qui affiche alors un bandeau
-     « Nouvelle version prete — Actualiser » : PLUS JAMAIS de rechargement
-     automatique (il causait le faux depart qui effacait la saisie du
-     joueur). Les fichiers frais arrivent d'eux-memes a la prochaine
-     navigation, servis par ce nouveau service worker. */
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    await remplirPrecache();
+    // L'accueil affiche un bandeau de mise a jour, sans recharger le joueur.
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-    ))
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const presents = await Promise.all(PRECACHE.map((adresse) => cache.match(adresse)));
+    if (presents.every(Boolean)) {
+      const keys = await caches.keys();
+      // Ne jamais supprimer les caches d'une autre application du domaine.
+      await Promise.all(keys.filter((k) => k.startsWith('nautilus-v') && k !== CACHE_NAME)
+        .map((k) => caches.delete(k)));
+    }
+    // Si le precache est incomplet, l'ancien reste disponible hors connexion.
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch', (event) => {

@@ -7,6 +7,9 @@ du site ni les fonctions récentes des paliers.
 
 Il modifie uniquement :
 
+- les rayons, caustiques, particules et bulles de l'écoutille, qui utilisaient
+  quatre noms de keyframes inexistants ; leurs animations d'origine sont
+  rétablies, et le réglage de mouvements réduits reste respecté ;
 - le calcul de visibilité dans `index.html`, pour suivre l'écran du radar
   plutôt que l'ensemble de la carte des équipages ;
 - la conservation du radar lorsqu'une lecture Firestore échoue ;
@@ -14,7 +17,8 @@ Il modifie uniquement :
   pas, qui attend bien l'ouverture de l'écoutille ;
 - le cache PWA (`v392` vers `v393`), notamment la revalidation des scripts
   et styles ainsi que le précache des versions réellement utilisées par les
-  pages (dont `css/index.css?v=79`).
+  pages (dont `css/index.css?v=79`). Une ressource indisponible n'annule plus
+  tout le précache ; l'ancien cache est conservé si le nouveau est incomplet.
 
 Depuis une copie de la **version publiée**, récupérer le correctif depuis
 la branche de cette session, puis vérifier avant de l'appliquer :
@@ -40,4 +44,18 @@ NAUTILUS_PUBLISHED_ROOT=/chemin/vers/la/copie node tools/test-animations-browser
 ```
 
 Ces tests requièrent `playwright-core` et un navigateur Chromium installé ;
-`CHROMIUM_BIN` peut indiquer le chemin du navigateur.
+`CHROMIUM_BIN` peut indiquer le chemin du navigateur. Le contrôle des noms
+CSS ne nécessite que Python :
+
+```sh
+python3 tools/verifier-animations.py --root /chemin/vers/la/copie
+```
+
+Pour un aperçu local isolé, sans aucune écriture dans la base réelle :
+
+```sh
+python3 tools/serveur-apercu-animations.py --source /chemin/vers/la/copie
+```
+
+L'aperçu remplace Firebase par des données fictives dans le navigateur et
+bloque les connexions extérieures. Il ne constitue pas un déploiement.

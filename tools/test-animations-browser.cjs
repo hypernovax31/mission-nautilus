@@ -10,6 +10,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
@@ -20,14 +21,21 @@ const root = path.resolve(process.env.NAUTILUS_PUBLISHED_ROOT || path.join(__dir
 const mime = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg',
-  '.png': 'image/png', '.mp3': 'audio/mpeg', '.wav': 'audio/wav'
+  '.png': 'image/png', '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.wav': 'audio/wav',
+  '.json': 'application/json; charset=utf-8'
 };
 let probeCss = 'body { --probe-version: initial; }';
+let failedAsset = '';
 const cacheName = fs.readFileSync(path.join(root, 'sw.js'), 'utf8').match(/CACHE_NAME\s*=\s*'([^']+)'/)[1];
 const landing = base => base + (publishedSite ? '?ecoutille=0' : '');
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  if (url.pathname === failedAsset) {
+    res.writeHead(503, { 'Cache-Control': 'no-store' });
+    res.end('Simulated temporary network failure');
+    return;
+  }
   if (url.pathname === '/blank.html') {
     res.writeHead(200, { 'Content-Type': mime['.html'] });
     res.end('<!doctype html><html><title>Service worker test</title></html>');
@@ -208,6 +216,24 @@ async function testRadar(browser, base, viewport, label) {
   console.log('✓ Radar ' + label + ' : visible, hors écran et reprise');
 }
 
+async function testWithoutIntersectionObserver(browser, base) {
+  const context = await prepareContext(browser, base, { viewport: { width: 390, height: 844 } });
+  await context.addInitScript(() => { delete window.IntersectionObserver; });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(landing(base), { waitUntil: 'domcontentloaded' });
+  await bottomAlignRadar(page);
+  await assertMoving(page, 'navigateur sans IntersectionObserver');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForFunction(() => document.querySelector('#radarStage').classList.contains('anim-idle'));
+  await bottomAlignRadar(page);
+  await assertMoving(page, 'reprise sans IntersectionObserver');
+  assert.deepEqual(errors, [], 'aucune erreur sur le chemin de repli');
+  await context.close();
+  console.log('✓ Radar : repli sans IntersectionObserver');
+}
+
 async function testFirestoreFailure(browser, base) {
   const context = await prepareContext(browser, base, { failFirestore: true });
   const page = await context.newPage();
@@ -283,6 +309,70 @@ async function testHatchFallback(browser, base) {
   console.log('✓ Secours du texte après ouverture de l’écoutille');
 }
 
+async function testHatchAnimation(browser, base, viewport, label) {
+  const context = await prepareContext(browser, base, { viewport });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__ecoutillePrete === true);
+  await page.waitForFunction(() => [...document.querySelector('#ecMagasinSelect').options]
+    .some(option => option.value && !option.disabled), null, { timeout: 10000 });
+  // Laisser démarrer le rendu et la première image des effets très lents.
+  await page.waitForTimeout(1200);
+  await page.waitForFunction(() => {
+    const video = document.querySelector('#ecoutille .ec-film');
+    return video && video.readyState >= 2 && !video.paused;
+  }, null, { timeout: 7000 });
+  const videoAvant = await page.$eval('#ecoutille .ec-film', el => el.currentTime);
+  await page.waitForTimeout(350);
+  const videoApres = await page.$eval('#ecoutille .ec-film', el => el.currentTime);
+  assert.ok(videoApres > videoAvant, label + ': le film du hublot doit avancer');
+  const effets = {
+    '.m-rayons': 'ecMerRais', '.m-caustique': 'ecMerCaustique',
+    '.m-neige': 'ecMerNeige', '.m-bulles': 'ecMerBulles'
+  };
+  const avant = {};
+  for (const [selecteur, nom] of Object.entries(effets)) {
+    avant[selecteur] = await page.$eval('#ecoutille ' + selecteur, el => ({
+      name: getComputedStyle(el).animationName,
+      transform: getComputedStyle(el).transform,
+      instances: el.getAnimations().length
+    }));
+    assert.equal(avant[selecteur].name, nom, label + ': keyframes de ' + selecteur);
+    assert.ok(avant[selecteur].instances > 0, label + ': animation réelle de ' + selecteur);
+  }
+  await page.waitForTimeout(400);
+  for (const selecteur of Object.keys(effets)) {
+    const apres = await page.$eval('#ecoutille ' + selecteur, el => getComputedStyle(el).transform);
+    assert.notEqual(avant[selecteur].transform, apres, label + ': ' + selecteur + ' doit bouger');
+  }
+
+  const store = await page.$eval('#ecMagasinSelect', el =>
+    [...el.options].find(option => option.value && !option.disabled).value);
+  await page.selectOption('#ecMagasinSelect', store);
+  await page.locator('#ecStart').click();
+  await page.waitForSelector('#ecoutille.ec-plongee', { timeout: 2000 });
+  await page.waitForSelector('#ecoutille.ec-impact', { timeout: 3000 });
+  await page.waitForSelector('#ecoutille', { state: 'detached', timeout: 7000 });
+  await page.waitForFunction(() => document.getElementById('missionOrderText').dataset.typed === 'true', null, { timeout: 5000 });
+  assert.deepEqual(errors, [], label + ': erreur pendant la transition');
+  await context.close();
+  console.log('✓ Écoutille animée, ouverture et ordre de mission : ' + label);
+}
+
+async function testHatchReducedMotion(browser, base) {
+  const context = await prepareContext(browser, base, { reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  for (const selecteur of ['.m-rayons', '.m-caustique', '.m-neige', '.m-bulles']) {
+    assert.equal(await page.$eval('#ecoutille ' + selecteur, el => getComputedStyle(el).animationName),
+      'none', 'respecter les mouvements réduits pour ' + selecteur);
+  }
+  await context.close();
+  console.log('✓ Écoutille : préférence de mouvement réduit respectée');
+}
+
 async function testReducedMotion(browser, base) {
   const context = await prepareContext(browser, base, { reducedMotion: 'reduce' });
   const page = await context.newPage();
@@ -299,6 +389,38 @@ async function testReducedMotion(browser, base) {
   assert.equal(await page.$eval('.radar-center', el => getComputedStyle(el).animationName), 'none', 'ne pas réactiver les pulsations désactivées');
   await context.close();
   console.log('✓ Préférence de mouvement réduit conservée');
+}
+
+async function testCssomAnimations(browser, base) {
+  const context = await prepareContext(browser, base);
+  const page = await context.newPage();
+  await page.goto(landing(base), { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1200); // inclut les feuilles injectées par les scripts
+  const missing = await page.evaluate(() => {
+    const definitions = new Set();
+    const usages = new Map();
+    function parcourir(rules, source) {
+      for (const rule of rules) {
+        if (rule.type === CSSRule.KEYFRAMES_RULE) definitions.add(rule.name);
+        if (rule.type === CSSRule.STYLE_RULE) {
+          const noms = rule.style.getPropertyValue('animation-name');
+          for (const nom of noms.split(',').map(n => n.trim())) {
+            if (!nom || ['none', 'initial', 'unset', 'inherit', 'revert'].includes(nom) || nom.includes('var(')) continue;
+            if (!usages.has(nom)) usages.set(nom, []);
+            usages.get(nom).push(source + ': ' + rule.selectorText);
+          }
+        }
+        if (rule.cssRules) parcourir(rule.cssRules, source);
+      }
+    }
+    for (const sheet of document.styleSheets) {
+      try { parcourir(sheet.cssRules, sheet.href || 'style intégré'); } catch (_) { /* feuille externe inaccessible */ }
+    }
+    return [...usages].filter(([nom]) => !definitions.has(nom));
+  });
+  assert.deepEqual(missing, [], 'keyframes manquantes dans les feuilles effectivement chargées');
+  await context.close();
+  console.log('✓ Feuilles CSS chargées : aucune keyframe manquante');
 }
 
 async function testSas(browser, base) {
@@ -341,6 +463,106 @@ async function testServiceWorker(browser, base) {
   console.log('✓ Service worker : revalidation et cache hors connexion');
 }
 
+async function testIsolatedPreview(browser) {
+  const process = spawn('python3', [path.join(__dirname, 'serveur-apercu-animations.py'), '--source', root, '--port', '0']);
+  let context;
+  let second;
+  try {
+    const port = await new Promise((resolve, reject) => {
+      let output = '';
+      const timeout = setTimeout(() => reject(new Error('démarrage de l’aperçu trop long')), 8000);
+      process.stdout.on('data', chunk => {
+        output += chunk;
+        const match = output.match(/port (\d+)/);
+        if (match) { clearTimeout(timeout); resolve(Number(match[1])); }
+      });
+      process.once('error', reject);
+      process.once('exit', code => reject(new Error('aperçu arrêté : ' + code)));
+    });
+    const base = 'http://127.0.0.1:' + port + '/';
+    context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(base + (publishedSite ? '?ecoutille=0' : ''), { waitUntil: 'domcontentloaded' });
+    const resultat = await page.evaluate(async () => {
+      const fs = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js');
+      const ref = fs.doc(fs.getFirestore(), 'teams', 'TEST_ISOLE');
+      await fs.setDoc(ref, { nom: 'fictif' });
+      let bloquee = false;
+      try {
+        await fetch('https://firestore.googleapis.com/v1/projects/mission-nautilus/databases/(default)/documents',
+          { method: 'POST', body: 'test' });
+      } catch (_) { bloquee = true; }
+      return { local: fs.getFirestore().demo === true, nom: (await fs.getDoc(ref)).data().nom, bloquee };
+    });
+    assert.deepEqual(resultat, { local: true, nom: 'fictif', bloquee: true }, 'aucune écriture dans Firebase réel');
+    assert.equal(await page.locator('[aria-label="Aperçu avec données fictives"]').count(), 1);
+    second = await browser.newContext();
+    const autre = await second.newPage();
+    await autre.goto(base + (publishedSite ? '?ecoutille=0' : ''), { waitUntil: 'domcontentloaded' });
+    const isole = await autre.evaluate(async () => {
+      const fs = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js');
+      return !(await fs.getDoc(fs.doc(fs.getFirestore(), 'teams', 'TEST_ISOLE'))).exists();
+    });
+    assert.equal(isole, true, 'les données fictives restent propres à chaque onglet');
+  } finally {
+    if (context) await context.close();
+    if (second) await second.close();
+    process.kill();
+  }
+  console.log('✓ Aperçu isolé : équipes fictives, connexions réelles bloquées');
+}
+
+async function testPartialPrecache(browser, base, withFallback) {
+  failedAsset = '/assets/Victoire.mp3';
+  const context = await prepareContext(browser, base, { serviceWorkers: 'allow' });
+  const page = await context.newPage();
+  try {
+    await page.goto(base + 'blank.html');
+    await page.evaluate(async withFallback => {
+      const previous = await caches.open('nautilus-v-test-ancien');
+      await previous.put('/old-only.txt', new Response('ancienne version'));
+      if (withFallback) {
+        await previous.put('/assets/Victoire.mp3', new Response('son en cache', {
+          headers: { 'Content-Type': 'audio/mpeg' }
+        }));
+      }
+      await (await caches.open('une-autre-application')).put('/other.txt', new Response('autre application'));
+      await navigator.serviceWorker.register('sw.js');
+      await navigator.serviceWorker.ready;
+    }, withFallback);
+    await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller), null, { timeout: 20000 });
+    const state = await page.evaluate(async cache => {
+      const nouveau = await caches.open(cache);
+      const sound = await nouveau.match('/assets/Victoire.mp3');
+      return {
+        pages: Boolean(await nouveau.match('/index.html')),
+        fallback: Boolean(await nouveau.match('/typewriter-secours.js?v=1')),
+        sound: sound ? await sound.text() : null,
+        keys: await caches.keys()
+      };
+    }, cacheName);
+    assert.equal(state.pages, true, 'une erreur ne doit pas annuler tout le précache');
+    assert.equal(state.fallback, true, 'secours typewriter toujours en cache');
+    assert.ok(state.keys.includes('une-autre-application'), 'caches des autres applications préservés');
+    if (withFallback) {
+      assert.equal(state.sound, 'son en cache', 'réutiliser la copie exacte de l’ancien cache');
+      assert.ok(!state.keys.includes('nautilus-v-test-ancien'), 'ancien cache supprimé une fois le nouveau complet');
+    } else {
+      assert.equal(state.sound, null, 'le fichier manquant ne doit pas être inventé');
+      assert.ok(state.keys.includes('nautilus-v-test-ancien'), 'ancien cache préservé si le nouveau est incomplet');
+    }
+    await context.setOffline(true);
+    await page.goto(landing(base), { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await page.waitForFunction(() => document.getElementById('missionOrderText')?.dataset.typed === 'true', null, { timeout: 8000 });
+    assert.equal(await page.$eval('.radar-sweep-big', el => getComputedStyle(el).animationName), 'radarRotateFast',
+      'le CSS des animations reste disponible hors ligne');
+  } finally {
+    failedAsset = '';
+    await context.close();
+  }
+  console.log('✓ Précache partiel et reprise hors ligne (' + (withFallback ? 'avec ancien fichier' : 'sans ancien fichier') + ')');
+}
+
 (async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = 'http://127.0.0.1:' + server.address().port + '/';
@@ -350,15 +572,25 @@ async function testServiceWorker(browser, base) {
   try {
     await testRadar(browser, base, { width: 1440, height: 900 }, 'desktop');
     await testRadar(browser, base, { width: 390, height: 844 }, 'mobile');
+    await testWithoutIntersectionObserver(browser, base);
     await testFirestoreFailure(browser, base);
     await testTypewriter(browser, base, 'no-preference');
     await testTypewriter(browser, base, 'reduce');
     await testTypewriterWithFirebase(browser, base, 0);
     await testTypewriterWithFirebase(browser, base, 4500);
-    if (publishedSite) await testHatchFallback(browser, base);
+    if (publishedSite) {
+      await testHatchFallback(browser, base);
+      await testHatchAnimation(browser, base, { width: 1440, height: 900 }, 'desktop');
+      await testHatchAnimation(browser, base, { width: 390, height: 844 }, 'mobile');
+      await testHatchReducedMotion(browser, base);
+    }
     await testReducedMotion(browser, base);
+    await testCssomAnimations(browser, base);
     await testSas(browser, base);
     await testServiceWorker(browser, base);
+    await testPartialPrecache(browser, base, false);
+    await testPartialPrecache(browser, base, true);
+    await testIsolatedPreview(browser);
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

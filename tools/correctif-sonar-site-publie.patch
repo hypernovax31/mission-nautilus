@@ -1,6 +1,29 @@
 --- a/index.html
 +++ b/index.html
-@@ -2439,6 +2439,8 @@
+@@ -1906,12 +1906,16 @@
+     #ecoutille .m-bulles{
+       animation:none !important;
+     }
+-    /* Mer : on garde le mouvement mais ralenti et très léger */
+-    #ecoutille .m-rayons{ animation: mRayons 22s ease-in-out infinite alternate !important; opacity:.28 !important; }
+-    #ecoutille .m-caustique{ animation: mCaustique 18s ease-in-out infinite alternate !important; }
++    /* Mer : utiliser les keyframes ecMer* définies plus haut. Les noms
++       mRayons/mCaustique/mNeige/mBulles n'existaient pas : le navigateur
++       acceptait la déclaration mais toutes ces couches restaient figées. */
++    #ecoutille .m-rayons{ animation: ecMerRais 22s ease-in-out infinite alternate !important; opacity:.28 !important; }
++    #ecoutille .m-caustique{ animation: ecMerCaustique 18s ease-in-out infinite alternate !important; }
+     #ecoutille .m-caustique.b{ animation-duration: 26s !important; }
+-    #ecoutille .m-neige{ animation: mNeige 28s linear infinite !important; }
+-    #ecoutille .m-bulles{ animation: mBulles 16s ease-in infinite !important; }
++    #ecoutille .m-neige{ animation: ecMerNeige 28s linear infinite !important; }
++    #ecoutille .m-bulles{ animation: ecMerBulles 16s ease-in infinite !important; }
++    #ecoutille .m-bulles.b{ animation-duration: 26s !important; animation-delay: -9s !important; }
++
+-
++
+     /* --- PLONGÉE FLUIDE : rapide, net, sans blur lourd --- */
+     #ecoutille.ec-plongee .ec-scene{ transform: scale(1.03) !important; }
+@@ -2439,6 +2443,8 @@
         ce drapeau est posé avant son chargement (deferred), et l'ordre
         de mission émet 'nautilus:fin-typewriter' à sa dernière lettre. -->
    <script>window.nautilusAttendreTypewriter = true;</script>
@@ -10,7 +33,7 @@
 +
    <!-- Sans JavaScript, il n'y a pas de page de garde : personne ne doit
         rester bloqué devant une écoutille qui ne peut pas s'ouvrir. -->
-@@ -3448,19 +3450,23 @@
+@@ -3448,19 +3454,23 @@
       au repli de playAlarmOnce(). Le declenchement de l'annonce, lui, ne
       depend plus que de la position du bloc a l'ecran (voir plus bas). */
 -
@@ -47,7 +70,7 @@
 +
    /* Gele ou relance les animations du sonar. */
    function setRadarPaused(paused){
-@@ -3499,30 +3505,17 @@
+@@ -3499,30 +3509,17 @@
    }
 -
 +
@@ -89,7 +112,7 @@
        _radarVisible = onScreen;
        setRadarPaused(!onScreen);
        if(onScreen){
-@@ -3530,52 +3523,36 @@
+@@ -3530,52 +3527,36 @@
        }
      }
 -
@@ -168,7 +191,7 @@
 -
 +
    function waitForRadarVisible(){
-@@ -4328,8 +4305,7 @@
+@@ -4328,8 +4309,7 @@
 -
 +
      }catch(err){
@@ -183,8 +206,9 @@
 +++ b/sw.js
 @@ -1,6 +1,6 @@
  // Service worker minimal pour PWA Mission Nautilus
- // Strategie : network-first pour les pages, cache-first pour assets statiques
+-// Strategie : network-first pour les pages, cache-first pour assets statiques
 -const CACHE_NAME = 'nautilus-v392';
++// Pages : network-first ; code et styles : cache avec revalidation en fond.
 +const CACHE_NAME = 'nautilus-v393';
  const PRECACHE = [
    './',
@@ -236,7 +260,81 @@
    './install-promo.js?v=9',
    './ecoutille.js?v=37',
    /* Lecteur QR local du sas : caméra et import photo sans CDN. */
-@@ -117,7 +128,31 @@
+@@ -73,27 +84,53 @@
+   './assets/film-nautilus-P.jpg?v=2'
+ ];
+-
++
++/* Chaque ressource est precachee independamment : cache.addAll annule
++   TOUT le lot si une seule reponse echoue (par exemple un son indisponible
++   lors d'une coupure 4G). On essaie au besoin l'ancien cache pour ce meme
++   fichier et cette meme version ; les autres ressources restent utilisables. */
++async function remplirPrecache() {
++  const cache = await caches.open(CACHE_NAME);
++  let prochain = 0;
++  async function charger() {
++    while (prochain < PRECACHE.length) {
++      const adresse = PRECACHE[prochain++];
++      try {
++        const reponse = await fetch(adresse, { cache: 'reload' });
++        if (!reponse.ok) throw new Error('HTTP ' + reponse.status);
++        await cache.put(adresse, reponse);
++      } catch (_) {
++        try {
++          const copie = await caches.match(adresse);
++          if (copie) await cache.put(adresse, copie);
++        } catch (_) { /* stockage indisponible : les autres fichiers restent */ }
++      }
++    }
++  }
++  // Six telechargements en parallele : ne pas saturer une connexion mobile.
++  await Promise.all(Array.from({ length: 6 }, () => charger()));
++}
++
+ self.addEventListener('install', (event) => {
+-  event.waitUntil(
+-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE).catch(() => {}))
+-  );
+-  /* skipWaiting : la nouvelle version prend la main tout de suite, sans
+-     attendre la fermeture de tous les onglets. Combine a l'ecoute de
+-     'controllerchange' dans index.html, qui affiche alors un bandeau
+-     « Nouvelle version prete — Actualiser » : PLUS JAMAIS de rechargement
+-     automatique (il causait le faux depart qui effacait la saisie du
+-     joueur). Les fichiers frais arrivent d'eux-memes a la prochaine
+-     navigation, servis par ce nouveau service worker. */
+-  self.skipWaiting();
++  event.waitUntil((async () => {
++    await remplirPrecache();
++    // L'accueil affiche un bandeau de mise a jour, sans recharger le joueur.
++    await self.skipWaiting();
++  })());
+ });
+-
++
+ self.addEventListener('activate', (event) => {
+-  event.waitUntil(
+-    caches.keys().then((keys) => Promise.all(
+-      keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+-    ))
+-  );
+-  self.clients.claim();
++  event.waitUntil((async () => {
++    const cache = await caches.open(CACHE_NAME);
++    const presents = await Promise.all(PRECACHE.map((adresse) => cache.match(adresse)));
++    if (presents.every(Boolean)) {
++      const keys = await caches.keys();
++      // Ne jamais supprimer les caches d'une autre application du domaine.
++      await Promise.all(keys.filter((k) => k.startsWith('nautilus-v') && k !== CACHE_NAME)
++        .map((k) => caches.delete(k)));
++    }
++    // Si le precache est incomplet, l'ancien reste disponible hors connexion.
++    await self.clients.claim();
++  })());
+ });
+-
++
+ self.addEventListener('fetch', (event) => {
+@@ -117,7 +154,31 @@
      );
      return;
    }
