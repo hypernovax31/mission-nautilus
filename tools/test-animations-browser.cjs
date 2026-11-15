@@ -16,8 +16,9 @@ const http = require('node:http');
 const path = require('node:path');
 const { chromium } = require('playwright-core');
 
-const publishedSite = Boolean(process.env.NAUTILUS_PUBLISHED_ROOT);
 const root = path.resolve(process.env.NAUTILUS_PUBLISHED_ROOT || path.join(__dirname, '..'));
+// Both the restored home page and a copy of the published site have a hatch.
+const publishedSite = fs.readFileSync(path.join(root, 'index.html'), 'utf8').includes('id="ecoutille"');
 const mime = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg',
@@ -44,6 +45,20 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/probe.css') {
     res.writeHead(200, { 'Content-Type': mime['.css'], 'Cache-Control': 'no-store' });
     res.end(probeCss);
+    return;
+  }
+  if (url.pathname === '/probe.mp4') {
+    const bytes = Buffer.from('0123456789');
+    const range = /^bytes=(\d+)-(\d+)$/.exec(req.headers.range || '');
+    if (range) {
+      const start = Number(range[1]), end = Math.min(Number(range[2]), bytes.length - 1);
+      res.writeHead(206, { 'Content-Type': 'video/mp4', 'Accept-Ranges': 'bytes',
+        'Content-Range': `bytes ${start}-${end}/${bytes.length}`, 'Content-Length': end - start + 1 });
+      res.end(bytes.subarray(start, end + 1));
+    } else {
+      res.writeHead(200, { 'Content-Type': 'video/mp4', 'Content-Length': bytes.length, 'Accept-Ranges': 'bytes' });
+      res.end(bytes);
+    }
     return;
   }
   const name = url.pathname === '/' ? '/index.html' : url.pathname;
@@ -439,6 +454,96 @@ async function testSas(browser, base) {
   console.log('✓ Animation du sas');
 }
 
+async function testIntegratedPaliers(browser, base, viewport, label) {
+  const context = await prepareContext(browser, base, { viewport });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+
+  if (label === 'desktop') {
+    await page.goto(landing(base), { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1200);
+    await page.locator('#adminFabBtn').scrollIntoViewIfNeeded();
+    await page.locator('#adminFabBtn').click();
+    // Le code est lu dans la page locale du test, jamais dans une base réelle.
+    const source = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const admin = source.match(/const ADMIN_CODE\s*=\s*'([^']+)'/);
+    assert.ok(admin, 'code concepteur disponible pour le test local');
+    await page.locator('#adminCodeInput').pressSequentially(admin[1]);
+    await page.locator('#adminCodeInput').press('Enter');
+    await page.waitForSelector('#adminWorkspace:not([style*="display: none"])', { timeout: 5000 });
+    await page.locator('#adminDesignerBtn').click();
+    assert.ok(await page.locator('#adminDesignerBox a[href*="1941512821.html"]').count(),
+      'le palier 4 doit rester accessible dans le mode concepteur');
+    await page.locator('[data-tab="reponses"]').click();
+    await page.waitForTimeout(500);
+    const reponses = await page.locator('[data-pane="reponses"]').innerText();
+    assert.match(reponses, /puzzle photo/i);
+    assert.doesNotMatch(reponses, /retrait.{0,8}1\s*h|livres attribués|ancien livre fictif/i);
+  }
+
+  const paliers = [
+    ['1721310619.html', '#mcHost .mc-grille', 'mots croisés'],
+    ['1831411720.html', '#puzzleHost .puzzle-piece', 'puzzle'],
+    ['1941512821.html', '#epreuveHost .marq-case', 'relevé du sonar']
+  ];
+  for (const [fichier, selecteur, nom] of paliers) {
+    await page.goto(base + fichier + '?apercu=jeu&k=k2h04qj', { waitUntil: 'domcontentloaded' });
+    await page.locator('#briefCtaBtn').waitFor({ state: 'visible', timeout: 6000 });
+    if (nom === 'puzzle') {
+      const briefing = await page.locator('#briefHost').innerText();
+      assert.doesNotMatch(briefing, /livre|ouvrage|retrait/i, 'pas de livre ni de retrait dans le palier 3');
+    }
+    await page.locator('#briefCtaBtn').click();
+    await page.locator(selecteur).first().waitFor({ state: 'visible', timeout: 9000 });
+    if (nom === 'mots croisés') {
+      assert.ok((await page.locator('#mcHost .mc-input').count()) > 30);
+    } else if (nom === 'puzzle') {
+      assert.equal(await page.locator('#puzzleHost .puzzle-piece').count(), 61);
+      const resultat = await page.evaluate(() => {
+        const stage = document.querySelector('#pzStage');
+        const slots = [...document.querySelectorAll('#pzBoard .puzzle-slot')];
+        const piece = [...stage.querySelectorAll('.puzzle-piece')].find(p => Number(p.dataset.idx) === 30);
+        const slot = slots[30];
+        const r = stage.getBoundingClientRect();
+        const size = parseFloat(piece.style.width);
+        const prise = size * 0.62 / 2;
+        const pointer = (type, target, x, y) => target.dispatchEvent(new PointerEvent(type, {
+          bubbles: true, cancelable: true, pointerId: 1, clientX: x, clientY: y
+        }));
+        const x = r.left + parseFloat(piece.style.left) + prise;
+        const y = r.top + parseFloat(piece.style.top) + prise;
+        const cibleX = r.left + parseFloat(slot.style.left) + size / 2;
+        const cibleY = r.top + parseFloat(slot.style.top) + size / 2;
+        pointer('pointerdown', piece, x, y);
+        pointer('pointermove', stage, cibleX, cibleY);
+        pointer('pointerup', stage, cibleX, cibleY);
+        return { place: piece.classList.contains('puzzle-piece--lock'),
+          etat: document.getElementById('pzStatus').textContent };
+      });
+      assert.equal(resultat.place, true, 'une pièce du puzzle doit se placer correctement');
+      assert.match(resultat.etat, /1\s*\/\s*61/);
+    } else {
+      assert.equal(await page.locator('#epreuveHost .marq-case').count(), 81);
+      assert.equal(await page.locator('#epreuveHost .marq-jeton').count(), 8);
+      await page.locator('#mrqPing').click();
+      assert.match(await page.locator('#mrqSonar').innerText(), /case/i);
+      await page.locator('#mrqReveal').click();
+      assert.match(await page.locator('#mrqStatus').innerText(), /1\s*\/\s*8/);
+    }
+  }
+  if (label === 'desktop') {
+    await page.goto(base + 'palier1.html?apercu=victoire&k=k2h04qj', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+    assert.match(await page.locator('body').innerText(), /victoire|validée|bravo/i);
+    await page.goto(base + '2051613922.html?sas=ferme', { waitUntil: 'domcontentloaded' });
+    assert.match(await page.locator('#gateHero').innerText(), /PALIER 5/);
+  }
+  assert.deepEqual(errors, [], label + ': erreur JavaScript lors de la navigation');
+  await context.close();
+  console.log('✓ Accueil et paliers conservés : ' + label);
+}
+
 async function testServiceWorker(browser, base) {
   const context = await prepareContext(browser, base, { serviceWorkers: 'allow' });
   const page = await context.newPage();
@@ -454,6 +559,17 @@ async function testServiceWorker(browser, base) {
     const response = await (await caches.open(cache)).match('/probe.css');
     return response && (await response.text()).includes('updated');
   }, cacheName, { timeout: 10000 });
+
+  // Une vidéo présente en cache ne doit pas masquer une requête Range :
+  // Safari et les navigateurs mobiles attendent une réponse HTTP 206.
+  await page.evaluate(() => fetch('/probe.mp4').then(r => r.arrayBuffer()));
+  await page.waitForFunction(async cache => Boolean(await (await caches.open(cache)).match('/probe.mp4')),
+    cacheName, { timeout: 10000 });
+  const extrait = await page.evaluate(async () => {
+    const response = await fetch('/probe.mp4', { headers: { Range: 'bytes=2-4' } });
+    return { status: response.status, text: await response.text(), range: response.headers.get('Content-Range') };
+  });
+  assert.deepEqual(extrait, { status: 206, text: '234', range: 'bytes 2-4/10' }, 'requête Range pour la vidéo');
   await context.setOffline(true);
   const offline = await page.evaluate(() => fetch('/probe.css').then(r => r.text()));
   assert.ok(offline.includes('updated'), 'version rafraîchie disponible hors connexion');
@@ -587,6 +703,10 @@ async function testPartialPrecache(browser, base, withFallback) {
     await testReducedMotion(browser, base);
     await testCssomAnimations(browser, base);
     await testSas(browser, base);
+    if (publishedSite && fs.existsSync(path.join(root, '1941512821.html')) && fs.existsSync(path.join(root, 'admin-artefact.js'))) {
+      await testIntegratedPaliers(browser, base, { width: 1280, height: 900 }, 'desktop');
+      await testIntegratedPaliers(browser, base, { width: 390, height: 844 }, 'mobile');
+    }
     await testServiceWorker(browser, base);
     await testPartialPrecache(browser, base, false);
     await testPartialPrecache(browser, base, true);

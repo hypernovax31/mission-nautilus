@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Pages : network-first ; code et styles : cache avec revalidation en fond.
-const CACHE_NAME = 'nautilus-v301';
+const CACHE_NAME = 'nautilus-v394';
 const PRECACHE = [
   './',
   './index.html',
@@ -10,7 +10,8 @@ const PRECACHE = [
   './1941512821.html',
   './2051613922.html',
   './classement.html',
-  './css/index.css?v=55',
+  './css/index.css?v=80',
+  './css/artefact.css?v=1',
   './css/classement.css?v=9',
   './css/hublots.css?v=15',
   './css/palier1.css?v=49',
@@ -18,6 +19,7 @@ const PRECACHE = [
   './css/palier3.css?v=3',
   './css/palier4.css?v=1',
   './css/admin.css?v=10',
+  './anti-zoom.js?v=1',
   './son-partage.js?v=2',
   './sonar-button.js?v=4',
   './admin-button.js?v=26',
@@ -35,7 +37,21 @@ const PRECACHE = [
   './records-palier.js?v=2',
   './typewriter-secours.js?v=1',
   './install-promo.js?v=6',
+  './install-promo-accueil.js?v=1',
+  './ecoutille.js?v=37',
+  './artefact-moteur.js?v=8',
+  './artefact-service.js?v=8',
+  './magasin-fnac.js?v=1',
+  './magasin-guard.js?v=3',
+  './fnac-lecteur.js?v=1',
+  './admin-artefact.js?v=27',
+  './data/magasins-fnac.json',
+  './data/magasins-fnac.json?v=1',
   './assets/fond-nautilus.jpg',
+  './assets/film-nautilus-P.jpg?v=2',
+  './assets/film-nautilus-L.jpg?v=2',
+  './assets/mer/caustique-1.jpg?v=1',
+  './assets/mer/caustique-2.jpg?v=1',
   './assets/palier3-lieu.jpg',
   './assets/palier4-lieu.jpg',
   './assets/ambiance-sonar.mp3',
@@ -106,6 +122,10 @@ self.addEventListener('fetch', (event) => {
      il pourrait se re-servir sa propre version perimee et le jeu ne se
      mettrait plus jamais a jour. Le navigateur le recharge du reseau. */
   if (url.pathname.endsWith('/sw.js')) return;
+  /* Les vidéos demandent souvent un fragment (Range), notamment sur iOS.
+     Ne jamais répondre avec un fichier complet du cache à une requête qui
+     attend HTTP 206 : laisser le navigateur et le serveur gérer le fragment. */
+  if (req.headers.has('range')) return;
   // Pages HTML : network-first, fallback cache
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
