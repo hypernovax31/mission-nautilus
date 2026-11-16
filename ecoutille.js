@@ -82,12 +82,11 @@
     retrait:  3400
   };
 
-  /* Tous les navigateurs du parc savent le dire ; le test est protégé pour
-     qu'un moteur exotique ne fasse pas tomber la page de garde entière.
-     Moins d'animation : tout reste, mais plus court. */
-  const CALME = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const F = CALME ? 0.45 : 1;
-  const ms = v => Math.round(v * F);
+  /* Réglage système respecté par défaut ; une personne peut choisir
+     explicitement de réactiver les animations sur cet appareil. */
+  const calme = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    && !document.documentElement.classList.contains('nautilus-motion-enabled');
+  const ms = v => Math.round(v * (calme() ? 0.45 : 1));
 
   const html   = document.documentElement;
   const racine = document.getElementById('ecoutille');
@@ -307,7 +306,7 @@
       if(_cadreurMort || _ouverte) return;
       const t  = (Date.now() - t0) / 1000;
       majOxygene(t);
-      _cadreur = plusTard(tic, CALME ? 1000 : 250);
+      _cadreur = plusTard(tic, calme() ? 1000 : 250);
     };
     tic();
   }
@@ -384,7 +383,7 @@
     /* Le film, lui, reste MUET — mais on relance sa lecture au passage : si
        le navigateur l'avait refusée (batterie faible, économie d'énergie),
        ce geste la débloque. C'est le même geste pour tout. */
-    if(film){
+    if(film && !calme()){
       try{
         const lecture = film.play();
         if(lecture && typeof lecture.catch === 'function') lecture.catch(() => {});
@@ -513,8 +512,13 @@
        téléphone debout = montage vertical, tout le reste = montage large. */
     const voulu = (window.matchMedia && window.matchMedia('(orientation: portrait)').matches)
       ? 'assets/film-nautilus-P.mp4?v=2' : 'assets/film-nautilus-L.mp4?v=2';
-    if(film.getAttribute('src') !== voulu){ film.setAttribute('src', voulu); }
-    const montreLeFilm = () => racine.classList.add('ec-film-pret');
+    if(film.getAttribute('src') !== voulu){
+      racine.classList.remove('ec-film-pret');
+      film.setAttribute('src', voulu);
+    }
+    const montreLeFilm = () => {
+      if(!film.paused && film.readyState >= 2) racine.classList.add('ec-film-pret');
+    };
     if(film.readyState >= 2) montreLeFilm();
     film.addEventListener('playing', montreLeFilm);
     film.addEventListener('loadeddata', montreLeFilm);

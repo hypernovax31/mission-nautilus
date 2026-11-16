@@ -106,6 +106,7 @@ async function prepareContext(browser, base, options = {}) {
   const context = await browser.newContext({
     viewport: options.viewport || { width: 1440, height: 900 },
     reducedMotion: options.reducedMotion || 'no-preference',
+    hasTouch: Boolean(options.hasTouch),
     serviceWorkers: options.serviceWorkers || 'block'
   });
   await context.addInitScript(() => {
@@ -339,10 +340,23 @@ async function testHatchAnimation(browser, base, viewport, label) {
     const video = document.querySelector('#ecoutille .ec-film');
     return video && video.readyState >= 2 && !video.paused;
   }, null, { timeout: 7000 });
-  const videoAvant = await page.$eval('#ecoutille .ec-film', el => el.currentTime);
-  await page.waitForTimeout(350);
-  const videoApres = await page.$eval('#ecoutille .ec-film', el => el.currentTime);
-  assert.ok(videoApres > videoAvant, label + ': le film du hublot doit avancer');
+  const imageDuFilm = () => page.$eval('#ecoutille .ec-film', el => {
+    const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 64;
+    const ctx = canvas.getContext('2d'); ctx.drawImage(el, 0, 0, 64, 64);
+    return { time: el.currentTime, pixels: Array.from(ctx.getImageData(0, 0, 64, 64).data) };
+  });
+  const videoAvant = await imageDuFilm();
+  await page.waitForTimeout(600);
+  const videoApres = await imageDuFilm();
+  assert.ok(videoApres.time > videoAvant.time, label + ': le film du hublot doit avancer');
+  let difference = 0;
+  for (let i = 0; i < videoAvant.pixels.length; i += 4) {
+    difference += Math.abs(videoAvant.pixels[i] - videoApres.pixels[i]);
+    difference += Math.abs(videoAvant.pixels[i + 1] - videoApres.pixels[i + 1]);
+    difference += Math.abs(videoAvant.pixels[i + 2] - videoApres.pixels[i + 2]);
+  }
+  assert.ok(difference / (64 * 64 * 3) > 0.05, label + ': les images du film doivent réellement changer');
+  assert.equal(await page.locator('#ecAnimationControl').isHidden(), true, 'aucun bouton supplémentaire si tout fonctionne');
   const effets = {
     '.m-rayons': 'ecMerRais', '.m-caustique': 'ecMerCaustique',
     '.m-neige': 'ecMerNeige', '.m-bulles': 'ecMerBulles'
@@ -384,8 +398,172 @@ async function testHatchReducedMotion(browser, base) {
     assert.equal(await page.$eval('#ecoutille ' + selecteur, el => getComputedStyle(el).animationName),
       'none', 'respecter les mouvements réduits pour ' + selecteur);
   }
+  assert.equal(await page.$eval('#ecoutille .ec-film', el => el.paused), true, 'vidéo immobile par défaut');
+  assert.equal(await page.$eval('#ecoutille .ec-film', el => getComputedStyle(el).opacity), '0',
+    'le premier écran noir ne doit pas cacher l’affiche');
+  await page.waitForFunction(() => [...document.querySelector('#ecMagasinSelect').options]
+    .some(option => option.value && !option.disabled), null, { timeout: 10000 });
+  const store = await page.$eval('#ecMagasinSelect', el =>
+    [...el.options].find(option => option.value && !option.disabled).value);
+  await page.selectOption('#ecMagasinSelect', store);
+  await page.locator('#ecStart').click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.$eval('#ecoutille .ec-film', el => el.paused), true, 'OPEN ne doit pas lancer le film sans accord');
   await context.close();
   console.log('✓ Écoutille : préférence de mouvement réduit respectée');
+}
+
+async function testMotionChoice(browser, base, mode) {
+  const tactile = mode === 'tactile';
+  const context = await prepareContext(browser, base, {
+    viewport: tactile ? { width: 390, height: 844 } : { width: 1280, height: 900 },
+    reducedMotion: 'reduce', hasTouch: tactile
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  const bouton = page.locator('#ecAnimationControl');
+  await bouton.waitFor({ state: 'visible' });
+  assert.match(await bouton.innerText(), /Activer les animations/);
+  assert.equal(await page.$eval('.ec-film', el => el.paused), true);
+  if (tactile) await bouton.tap();
+  else { await bouton.focus(); await bouton.press('Enter'); }
+  await page.waitForFunction(() => document.documentElement.classList.contains('nautilus-motion-enabled'));
+  await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 5000 });
+  assert.equal(await page.$eval('.m-rayons', el => getComputedStyle(el).animationName), 'ecMerRais');
+  assert.equal(await page.evaluate(() => localStorage.getItem('nautilusAnimationsAutorisees')), '1');
+  assert.equal(await page.$eval('#ecoutille', el => el.classList.contains('ec-plongee')), false,
+    'activer les animations ne doit pas ouvrir le sas');
+
+  // Le choix volontaire reste valable au prochain chargement de cet appareil.
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.documentElement.classList.contains('nautilus-motion-enabled'));
+  await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 5000 });
+  await page.waitForFunction(() => [...document.querySelector('#ecMagasinSelect').options]
+    .some(option => option.value && !option.disabled), null, { timeout: 10000 });
+  const store = await page.$eval('#ecMagasinSelect', el =>
+    [...el.options].find(option => option.value && !option.disabled).value);
+  await page.selectOption('#ecMagasinSelect', store);
+  await page.locator('#ecStart').click();
+  await page.waitForSelector('#ecoutille', { state: 'detached', timeout: 7000 });
+  await bottomAlignRadar(page);
+  await assertMoving(page, 'sonar activé volontairement');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.radar-sweep-big')).animationPlayState === 'paused');
+  await bottomAlignRadar(page);
+  await assertMoving(page, 'reprise du sonar activé');
+  await page.evaluate(() => {
+    window.__visibiliteTest = 'hidden';
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => window.__visibiliteTest });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.radar-sweep-big')).animationPlayState === 'paused');
+  await page.evaluate(() => { window.__visibiliteTest = 'visible'; document.dispatchEvent(new Event('visibilitychange')); });
+  await assertMoving(page, 'retour de l’onglet avec animations activées');
+
+  await page.locator('#radarAnimationControl').click();
+  assert.equal(await page.evaluate(() => localStorage.getItem('nautilusAnimationsAutorisees')), null);
+  assert.equal(await page.$eval('.radar-sweep-big', el => getComputedStyle(el).animationName), 'none',
+    'retour au réglage système');
+  assert.deepEqual(errors, [], 'aucune erreur JavaScript');
+  await context.close();
+  console.log('✓ Choix explicite et réversible des animations : ' + mode);
+}
+
+async function testSystemMotionChanges(browser, base) {
+  const context = await prepareContext(browser, base, { viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 6000 });
+  assert.equal(await page.locator('#ecAnimationControl').isHidden(), true);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.locator('#ecAnimationControl').waitFor({ state: 'visible', timeout: 3000 });
+  assert.equal(await page.$eval('.ec-film', el => el.paused), true);
+  assert.equal(await page.$eval('.m-neige', el => getComputedStyle(el).animationName), 'none');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 6000 });
+  assert.equal(await page.locator('#ecAnimationControl').isHidden(), true);
+  assert.equal(await page.$eval('.m-neige', el => getComputedStyle(el).animationName), 'ecMerNeige');
+  await context.close();
+  console.log('✓ Adaptation au changement de réglage système');
+}
+
+async function testAutoplayFallback(browser, base) {
+  const context = await prepareContext(browser, base, { viewport: { width: 390, height: 844 } });
+  await context.addInitScript(() => {
+    const play = HTMLMediaElement.prototype.play;
+    const autoplay = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'autoplay');
+    window.__autoriserFilmTest = false;
+    Object.defineProperty(HTMLMediaElement.prototype, 'autoplay', {
+      configurable: true, get: autoplay.get,
+      set(value) { autoplay.set.call(this, this.classList.contains('ec-film') && !window.__autoriserFilmTest ? false : value); }
+    });
+    HTMLMediaElement.prototype.play = function () {
+      if (this.classList.contains('ec-film') && !window.__autoriserFilmTest)
+        return Promise.reject(new DOMException('Lecture refusée', 'NotAllowedError'));
+      return play.call(this);
+    };
+  });
+  await context.route(base, async route => {
+    const response = await route.fetch();
+    const body = (await response.text()).replace('class="ec-film" autoplay muted', 'class="ec-film" muted');
+    await route.fulfill({ response, body });
+  });
+  const page = await context.newPage();
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  const bouton = page.locator('#ecAnimationControl');
+  await bouton.waitFor({ state: 'visible', timeout: 6000 });
+  assert.match(await bouton.innerText(), /Lancer la vidéo/);
+  assert.equal(await page.$eval('.ec-film', el => el.paused), true);
+  await page.evaluate(() => { window.__autoriserFilmTest = true; });
+  await bouton.click();
+  await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 5000 });
+  assert.equal(await bouton.isHidden(), true);
+  assert.equal(await page.$eval('#ecoutille', el => el.classList.contains('ec-plongee')), false);
+  await context.close();
+  console.log('✓ Vidéo : reprise manuelle si la lecture automatique est refusée');
+}
+
+async function testFilmUnavailable(browser, base) {
+  const context = await prepareContext(browser, base, { viewport: { width: 390, height: 844 } });
+  await context.route('**/assets/film-nautilus-*.mp4*', route => route.abort());
+  const page = await context.newPage();
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.locator('#ecAnimationControl').waitFor({ state: 'visible', timeout: 10000 });
+  assert.match(await page.locator('#ecAnimationControl').innerText(), /Réessayer la vidéo/);
+  const etat = await page.evaluate(() => ({
+    opacite: getComputedStyle(document.querySelector('.ec-film')).opacity,
+    affiche: getComputedStyle(document.querySelector('.ec-fenetre')).backgroundImage,
+    charge: document.querySelector('#ecoutille').classList.contains('ec-film-pret')
+  }));
+  assert.equal(etat.opacite, '0', 'le film indisponible ne doit pas masquer son affiche');
+  assert.match(etat.affiche, /film-nautilus-P\.jpg/);
+  assert.equal(etat.charge, false);
+  await context.close();
+  console.log('✓ Vidéo indisponible : affiche visible et bouton de reprise');
+}
+
+async function testVideoResume(browser, base) {
+  const context = await prepareContext(browser, base, { viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 6000 });
+  await page.evaluate(() => {
+    window.__visibiliteTest = 'hidden';
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => window.__visibiliteTest });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  assert.equal(await page.$eval('.ec-film', el => el.paused), true);
+  await page.evaluate(() => { window.__visibiliteTest = 'visible'; document.dispatchEvent(new Event('visibilitychange')); });
+  await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 5000 });
+
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForFunction(() => /film-nautilus-L\.mp4/.test(document.querySelector('.ec-film').currentSrc)
+    && !document.querySelector('.ec-film').paused, null, { timeout: 8000 });
+  assert.equal(await page.locator('#ecAnimationControl').isHidden(), true);
+  await context.close();
+  console.log('✓ Vidéo : reprise après retour à l’onglet et changement d’orientation');
 }
 
 async function testReducedMotion(browser, base) {
@@ -699,6 +877,12 @@ async function testPartialPrecache(browser, base, withFallback) {
       await testHatchAnimation(browser, base, { width: 1440, height: 900 }, 'desktop');
       await testHatchAnimation(browser, base, { width: 390, height: 844 }, 'mobile');
       await testHatchReducedMotion(browser, base);
+      await testMotionChoice(browser, base, 'clavier');
+      await testMotionChoice(browser, base, 'tactile');
+      await testSystemMotionChanges(browser, base);
+      await testAutoplayFallback(browser, base);
+      await testFilmUnavailable(browser, base);
+      await testVideoResume(browser, base);
     }
     await testReducedMotion(browser, base);
     await testCssomAnimations(browser, base);

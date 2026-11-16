@@ -1829,8 +1829,10 @@
     /* Film plein écran dans le verre : plus lumineux, plus net */
     #ecoutille .ec-film{
       filter: saturate(1.02) contrast(1.06) brightness(1.02) !important;
-      opacity:1 !important;
+      /* L'affiche reste visible tant que le film n'a pas chargé. */
+      opacity:0 !important;
     }
+    #ecoutille.ec-film-pret .ec-film{opacity:1 !important}
     #ecoutille .ec-fenetre{
       box-shadow: inset 0 0 60px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,255,255,.07) !important;
     }
@@ -2431,6 +2433,8 @@
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Styles du sélecteur de magasin et des onglets d'administration. -->
   <link rel="stylesheet" href="css/artefact.css?v=1">
+  <!-- Commandes de secours, visibles uniquement si le mouvement est bloqué. -->
+  <link rel="stylesheet" href="css/animations-accueil.css?v=1">
   <!-- Page de garde « ÉCOUTILLE » : son style est écrit DANS la page (voir
        le socle dans le <head>) — rien à charger, rien qui puisse manquer. -->
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
@@ -2451,10 +2455,12 @@
   <noscript><style>#ecoutille{display:none !important}</style></noscript>
   <!-- Animation d'incitation à installer l'app : tempête → eaux sereines. -->
   <script src="install-promo-accueil.js?v=1" defer></script>
+  <!-- Réglage local et reprise du film après une pause ou un refus d'autoplay. -->
+  <script src="animations-accueil.js?v=1" defer></script>
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=37" defer></script>
+  <script src="ecoutille.js?v=38" defer></script>
 
 </head>
 <body>
@@ -2540,6 +2546,7 @@
       </div>
       <div class="ec-reflet"></div>
       <div class="ec-cercle"></div>
+      <button type="button" id="ecAnimationControl" class="animation-secours" hidden>▶ Activer les animations</button>
     </div>
 
     <p class="ec-consigne ec-consigne--sous-hublot">Huit paliers. <b>Une seule légende.</b></p>
@@ -2607,7 +2614,11 @@
     setTimeout(function(){ racine.classList.remove('ec-presse'); }, 240);
     /* Le geste relance le film au besoin (lecture refusée, batterie faible) :
        c'est le même geste qui débloque tout le reste. Le film reste muet. */
-    try{ if(film){ var relance = film.play(); if(relance && relance.catch) relance.catch(function(){}); } }catch(e){}
+    try{
+      var mouvementReduit = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        && !document.documentElement.classList.contains('nautilus-motion-enabled');
+      if(film && !mouvementReduit){ var relance = film.play(); if(relance && relance.catch) relance.catch(function(){}); }
+    }catch(e){}
     try{ racine.style.willChange = 'transform, opacity'; }catch(e){}
     setTimeout(function(){ racine.classList.add('ec-plongee'); }, 200);
     setTimeout(function(){ racine.classList.add('ec-eclat'); }, 620);
@@ -2631,7 +2642,9 @@
      lecture — ou si la personne a demandé moins d'animations — l'affiche du
      fond reste, et c'est déjà une belle image du film. */
   var film = racine.querySelector('.ec-film');
-  function filmVisible(){ racine.classList.add('ec-film-pret'); }
+  function filmVisible(){
+    if(film && !film.paused && film.readyState >= 2) racine.classList.add('ec-film-pret');
+  }
 
   /* QUEL FORMAT DE FILM ? On ne s'en remet pas au navigateur : le choix est
      fait ici, noir sur blanc. Un téléphone debout reçoit le montage VERTICAL
@@ -2643,6 +2656,7 @@
     var portrait = !!(window.matchMedia && window.matchMedia('(orientation: portrait)').matches);
     var voulu = portrait ? 'assets/film-nautilus-P.mp4?v=2' : 'assets/film-nautilus-L.mp4?v=2';
     if(film.getAttribute('src') === voulu) return;
+    racine.classList.remove('ec-film-pret');
     film.setAttribute('src', voulu);
     if(relancer !== false) film.load();
   }
@@ -2698,6 +2712,18 @@
       GESTES_DU_SAS.forEach(function(type){
         window.removeEventListener(type, retenirGesteAccueil, true);
       });
+      return;
+    }
+    /* Le bouton de secours du film ne doit ni ouvrir l'écoutille ni
+       déclencher les sons d'accueil. On traite son clic ici, pendant le
+       vrai geste utilisateur, puis on retient l'événement comme le décor. */
+    var cible = event.target;
+    if(cible && cible.closest && cible.closest('#ecAnimationControl')){
+      if(event.type === 'click' && window.NautilusAnimations){
+        window.NautilusAnimations.action('film');
+      }
+      event.stopImmediatePropagation();
+      event.stopPropagation();
       return;
     }
     if(enfonceStart(event)) return;
@@ -2881,6 +2907,7 @@
             <div class="radar-center"></div>
           </div>
           <div class="sonar-text" id="radarStatus"><span class="radar-msg" id="radarMsg">En attente de nouveaux signaux...</span></div>
+          <button type="button" id="radarAnimationControl" class="animation-secours" hidden>▶ Activer les animations</button>
           <!-- Bandeau de releve, facon console de sonar : ce que l'appareil
                a detecte jusqu'a present. Rempli par renderSonarReadout(). -->
           <div class="sonar-readout" id="sonarReadout" aria-live="polite">
@@ -3607,7 +3634,7 @@
     if(!el) return false;
     const st = getComputedStyle(el);
     if(st.animationName === 'none' || st.animationPlayState === 'paused') return false;
-    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    if(prefersReducedMotion()) return false;
     return true;
   }
 
@@ -3856,7 +3883,8 @@
   const CARD_AFTER_BLIP_MS = 330;        // delai entre le point et sa carte
 
   function prefersReducedMotion(){
-    return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+      && !document.documentElement.classList.contains('nautilus-motion-enabled');
   }
 
   /* La durée réelle du son, si ses métadonnées sont déjà chargées, sert de

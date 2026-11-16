@@ -12,6 +12,12 @@ Les corrections sont intégrées directement dans les fichiers du site :
 - le sonar suit la visibilité de son écran et ne disparaît pas lors d’une
   erreur Firestore ;
 - l’ordre de mission dispose d’un secours local si Firebase ne charge pas ;
+- si le navigateur refuse la lecture automatique, un bouton discret permet de
+  lancer la vidéo ; la lecture reprend aussi après une mise en arrière-plan
+  ou une rotation de l’écran, et l’affiche reste visible en cas d’erreur ;
+- si l’appareil demande des mouvements réduits, ce choix est respecté par
+  défaut ; un bouton permet d’activer les animations sur cet appareil et de
+  revenir ensuite au réglage système ;
 - le cache PWA contient les ressources des deux versions réunies ; une
   ressource indisponible n’annule plus tout le précache, et les requêtes
   vidéo partielles sont laissées au navigateur.
