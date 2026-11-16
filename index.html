@@ -2460,7 +2460,7 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=38" defer></script>
+  <script src="ecoutille.js?v=39" defer></script>
 
 </head>
 <body>
@@ -2484,6 +2484,10 @@
      ecoutille.js joue le récit et la sortie.
      ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="ecoutille" role="dialog" aria-modal="true" aria-label="Le Nautilus — appuie sur START pour ouvrir le sas et embarquer">
+  <!-- Un seul signal court, préchargé mais jamais joué avant le clic. -->
+  <audio id="openAlertAudio" preload="auto" playsinline aria-hidden="true">
+    <source src="assets/alerte-open.mp3?v=1" type="audio/mpeg">
+  </audio>
 
   <!-- LE DÉCOR : la paroi blindée du salon, son cadre de cuivre, la lumière
        du hublot et la patine du cinéma. Aucun clic, aucun découpage. -->
@@ -2591,6 +2595,25 @@
 (function(){
   var racine = document.getElementById('ecoutille');
   if(!racine) return;
+
+  /* Un seul déclenchement, partagé par le moteur et son repli. La lecture
+     est lancée directement dans le clic : pas de minuterie ni d'amorçage
+     sonore avant le geste, ce qui reste compatible avec Safari sur iPhone. */
+  var alerteOpenJouee = false;
+  window.NautilusAlerteOpen = function(){
+    if(alerteOpenJouee) return;
+    alerteOpenJouee = true;
+    try{ if(localStorage.getItem('nautilusSoundOn') === '0') return; }catch(e){}
+    var audio = document.getElementById('openAlertAudio');
+    if(!audio) return;
+    try{ audio.currentTime = 0; }catch(e){}
+    try{
+      audio.muted = false;
+      audio.volume = 0.7;
+      var lecture = audio.play();
+      if(lecture && lecture.catch) lecture.catch(function(){});
+    }catch(e){ /* un refus audio ne doit pas bloquer l'ouverture */ }
+  };
   window.__ecoutillePrete = true;   /* quelque chose est là pour ouvrir */
 
   /* O₂ épuisée (ou écoutille explicitement passée) : ne charge pas le film
@@ -2605,6 +2628,7 @@
     if(!window.__ecoutilleSecours) return;      /* ecoutille.js a pris la main */
     if(racine.dataset.renduNU) return;
     racine.dataset.renduNU = '1';
+    window.NautilusAlerteOpen();
     try{
       sessionStorage.setItem('nautilusEcoutille', '1');
       sessionStorage.removeItem('nautilusEcoutilleForce');

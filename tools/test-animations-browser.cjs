@@ -403,6 +403,88 @@ async function testHatchAnimation(browser, base, viewport, label) {
   console.log('✓ Écoutille animée, ouverture et ordre de mission : ' + label);
 }
 
+async function testOpenAlert(browser, base, mode) {
+  const mobile = mode !== 'desktop';
+  const context = await prepareContext(browser, base, {
+    viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 },
+    hasTouch: mobile, isMobile: mobile
+  });
+  if (mode === 'silencieux') await context.addInitScript(() => localStorage.setItem('nautilusSoundOn', '0'));
+  if (mode === 'secours') await context.route(/\/ecoutille\.js(?:\?|$)/, route => route.abort());
+  await context.addInitScript(() => {
+    window.__alertesTest = [];
+    window.__clicOpenTest = null;
+    window.__oscillateursOuverture = 0;
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      if (this.id === 'openAlertAudio' || this.id === 'alarmAudio') {
+        window.__alertesTest.push({ id: this.id, temps: performance.now(), muet: this.muted });
+      }
+      return play.apply(this, arguments);
+    };
+    const audio = window.AudioContext || window.webkitAudioContext;
+    if (audio) {
+      const create = audio.prototype.createOscillator;
+      audio.prototype.createOscillator = function () {
+        if (window.__clicOpenTest != null && performance.now() - window.__clicOpenTest < 1800)
+          window.__oscillateursOuverture++;
+        return create.apply(this, arguments);
+      };
+    }
+    document.addEventListener('click', event => {
+      if (event.isTrusted && event.target.closest && event.target.closest('#ecStart') && window.__clicOpenTest == null)
+        window.__clicOpenTest = performance.now();
+    }, true);
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => [...document.querySelector('#ecMagasinSelect').options]
+    .some(option => option.value && !option.disabled), null, { timeout: 10000 });
+  await page.waitForFunction(() => {
+    const audio = document.getElementById('openAlertAudio');
+    return audio && Number.isFinite(audio.duration) && audio.duration > 0;
+  }, null, { timeout: 10000 });
+  const duree = await page.$eval('#openAlertAudio', audio => audio.duration);
+  assert.ok(duree >= 0.3 && duree <= 0.8, 'signal court : ' + duree + ' s');
+  assert.deepEqual(await page.evaluate(() => window.__alertesTest), [], 'aucune alerte avant OPEN');
+
+  if (mode === 'desktop') {
+    // Un clic refusé faute de magasin ne doit pas déclencher l'alerte.
+    await page.locator('#ecStart').click();
+    await page.waitForTimeout(200);
+    assert.deepEqual(await page.evaluate(() => window.__alertesTest), [], 'pas d’alerte si l’ouverture est refusée');
+    await page.evaluate(() => { window.__clicOpenTest = null; });
+  }
+  const store = await page.$eval('#ecMagasinSelect', el =>
+    [...el.options].find(option => option.value && !option.disabled).value);
+  await page.selectOption('#ecMagasinSelect', store);
+  if (mobile) await page.locator('#ecStart').tap();
+  else await page.locator('#ecStart').click();
+  // Plusieurs événements ou deux gestionnaires ne peuvent pas rejouer le son.
+  await page.evaluate(() => {
+    window.NautilusAlerteOpen();
+    document.getElementById('ecStart').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  });
+  await page.waitForTimeout(1600);
+  const resultat = await page.evaluate(() => ({
+    sons: window.__alertesTest, clic: window.__clicOpenTest, oscillateurs: window.__oscillateursOuverture
+  }));
+  const attendu = mode === 'silencieux' ? 0 : 1;
+  assert.equal(resultat.sons.length, attendu, 'une seule alerte, ou aucune si le son est coupé');
+  assert.equal(resultat.oscillateurs, 0, 'aucun écho, choc ou souffle sonore supplémentaire');
+  if (attendu) {
+    assert.equal(resultat.sons[0].id, 'openAlertAudio');
+    assert.equal(resultat.sons[0].muet, false);
+    assert.ok(resultat.sons[0].temps - resultat.clic >= 0 && resultat.sons[0].temps - resultat.clic < 100,
+      'le signal doit partir directement au clic');
+  }
+  assert.deepEqual(errors, [], 'aucune erreur JavaScript pendant OPEN');
+  await context.close();
+  console.log('✓ Une seule alerte OPEN : ' + mode);
+}
+
 async function testHatchReducedMotion(browser, base) {
   const context = await prepareContext(browser, base, { reducedMotion: 'reduce' });
   const page = await context.newPage();
@@ -873,7 +955,25 @@ async function testServiceWorker(browser, base) {
     return { status: response.status, text: await response.text(), range: response.headers.get('Content-Range') };
   });
   assert.deepEqual(extrait, { status: 206, text: '234', range: 'bytes 2-4/10' }, 'requête Range pour la vidéo');
+  await page.evaluate(async cache => {
+    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=1',
+      new Response('0123456789', { headers: { 'Content-Type': 'audio/mpeg' } }));
+  }, cacheName);
   await context.setOffline(true);
+  const extraitSon = await page.evaluate(async () => {
+    const url = '/assets/alerte-open.mp3?v=1';
+    const lire = async range => {
+      const res = await fetch(url, { headers: { Range: range } });
+      return { status: res.status, text: await res.text(), range: res.headers.get('Content-Range') };
+    };
+    return [await lire('bytes=2-4'), await lire('bytes=-3'), await lire('bytes=8-'), await lire('bytes=30-40')];
+  });
+  assert.deepEqual(extraitSon, [
+    { status: 206, text: '234', range: 'bytes 2-4/10' },
+    { status: 206, text: '789', range: 'bytes 7-9/10' },
+    { status: 206, text: '89', range: 'bytes 8-9/10' },
+    { status: 416, text: '', range: 'bytes */10' }
+  ], 'signal court précaché lisible par plages hors ligne');
   const offline = await page.evaluate(() => fetch('/probe.css').then(r => r.text()));
   assert.ok(offline.includes('updated'), 'version rafraîchie disponible hors connexion');
   const missing = await page.evaluate(() => fetch('/missing.css').then(() => 'response', () => 'network error'));
@@ -1001,6 +1101,10 @@ async function testPartialPrecache(browser, base, withFallback) {
       await testHatchFallback(browser, base);
       await testHatchAnimation(browser, base, { width: 1440, height: 900 }, 'desktop');
       await testHatchAnimation(browser, base, { width: 390, height: 844 }, 'mobile');
+      await testOpenAlert(browser, base, 'desktop');
+      await testOpenAlert(browser, base, 'mobile');
+      await testOpenAlert(browser, base, 'silencieux');
+      await testOpenAlert(browser, base, 'secours');
       await testHatchReducedMotion(browser, base);
       await testMotionChoice(browser, base, 'clavier');
       await testMotionChoice(browser, base, 'tactile');

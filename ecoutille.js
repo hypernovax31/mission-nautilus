@@ -107,11 +107,7 @@
      visiteur enfermé derrière le hublot. */
   window.__ecoutillePrete = true;
 
-  /* UN MINUTEUR, ET RIEN DE PLUS. Chaque étape pose son minuteur, sans tenir
-     de liste à nettoyer : ce qui resterait en route après la sortie ne peut
-     rien casser (au pire il retire une classe déjà retirée). Les deux seuls
-     minuteurs qu'il FAUT retenir sont ceux du battement d'alarme, pour
-     pouvoir l'arrêter net — ils ont leur variable. */
+  /* Chaque étape pose son minuteur ; ils ne produisent aucun autre son. */
   const plusTard = (fn, delai) => setTimeout(fn, delai);
 
   /* ------------------------------------------------------------------ *
@@ -126,146 +122,11 @@
 
   /* ------------------------------------------------------------------ *
    * 3. LE SON
-   * ------------------------------------------------------------------ */
-  function silencieux(){
-    try{ return localStorage.getItem('nautilusSoundOn') === '0'; }
-    catch(e){ return false; }
-  }
-
-  let _ctx = null;
-  let _bruit = null;
-  /* Un contexte Web Audio n'est créé qu'au premier son réellement joué —
-     donc jamais avant un geste, et jamais du tout si le sonar est coupé. */
-  function contexte(){
-    if(_ctx) return _ctx;
-    if(silencieux()) return null;
-    try{
-      const C = window.AudioContext || window.webkitAudioContext;
-      if(!C) return null;
-      _ctx = new C();
-    }catch(e){ _ctx = null; }
-    return _ctx;
-  }
-  function bruitBlanc(ctx){
-    if(_bruit) return _bruit;
-    const n = Math.floor(ctx.sampleRate * 1.6);
-    const buf = ctx.createBuffer(1, n, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for(let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
-    _bruit = buf;
-    return buf;
-  }
-  function sourceBruit(ctx, t0, duree){
-    const s = ctx.createBufferSource();
-    s.buffer = bruitBlanc(ctx);
-    s.loop = true;
-    s.start(t0, Math.random() * 0.6);
-    s.stop(t0 + duree + 0.05);
-    return s;
-  }
-
-  /* LE VERROU DE COQUE : coup sourd + choc métallique. C'est le son du
-     bouton : il tombe exactement sur le geste du joueur. */
-  function sonCoup(){
-    const ctx = contexte(); if(!ctx) return;
-    try{
-      const t0 = ctx.currentTime;
-      const o = ctx.createOscillator(); o.type = 'sine';
-      o.frequency.setValueAtTime(160, t0);
-      o.frequency.exponentialRampToValueAtTime(34, t0 + .34);
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(.0001, t0);
-      g.gain.exponentialRampToValueAtTime(.8, t0 + .012);
-      g.gain.exponentialRampToValueAtTime(.0001, t0 + .55);
-      o.connect(g).connect(ctx.destination);
-      o.start(t0); o.stop(t0 + .6);
-
-      const n = sourceBruit(ctx, t0, .18);
-      const f = ctx.createBiquadFilter(); f.type = 'bandpass';
-      f.frequency.value = 1250; f.Q.value = 1.1;
-      const ng = ctx.createGain();
-      ng.gain.setValueAtTime(.4, t0);
-      ng.gain.exponentialRampToValueAtTime(.0001, t0 + .18);
-      n.connect(f).connect(ng).connect(ctx.destination);
-    }catch(e){ /* un navigateur sans Web Audio ne doit pas casser la page */ }
-  }
-
-  /* L'ÉCHO DU SONAR : un « ping » clair, long à s'éteindre. C'est le signal
-     du bord qui répond au geste du joueur. */
-  function sonEcho(){
-    const ctx = contexte(); if(!ctx) return;
-    try{
-      const t0 = ctx.currentTime;
-      const jouer = (debut, force) => {
-        const o = ctx.createOscillator(); o.type = 'sine';
-        o.frequency.setValueAtTime(1180, debut);
-        o.frequency.exponentialRampToValueAtTime(880, debut + 1.5);
-        const g = ctx.createGain();
-        g.gain.setValueAtTime(.0001, debut);
-        g.gain.exponentialRampToValueAtTime(force, debut + .02);
-        g.gain.exponentialRampToValueAtTime(.0001, debut + 1.7);
-        o.connect(g).connect(ctx.destination);
-        o.start(debut); o.stop(debut + 1.75);
-      };
-      jouer(t0, .22);
-      jouer(t0 + .42, .07);        /* l'écho, plus loin dans la coque */
-    }catch(e){}
-  }
-
-  /* L'EAU QUI S'ENGOUFFRE : souffle large qui monte, pendant que la plongée
-     s'engage. */
-  function sonSouffle(duree){
-    const ctx = contexte(); if(!ctx) return;
-    try{
-      const t0 = ctx.currentTime, d = duree / 1000;
-      const n = sourceBruit(ctx, t0, d + .2);
-      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = .8;
-      f.frequency.setValueAtTime(220, t0);
-      f.frequency.exponentialRampToValueAtTime(2600, t0 + d);
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(.0001, t0);
-      g.gain.linearRampToValueAtTime(.28, t0 + d * .8);
-      g.gain.linearRampToValueAtTime(.0001, t0 + d + .18);
-      n.connect(f).connect(g).connect(ctx.destination);
-    }catch(e){}
-  }
-
-  function couperLeSon(){
-    if(_ctx){ try{ _ctx.close(); }catch(e){} _ctx = null; _bruit = null; }
-  }
-
-  /* L'ALARME DU BORD : on réutilise le lecteur <audio> du site (même
-     fichier, même volume que le reste du jeu) au lieu d'en créer un second.
-     Fond de sortie puis remise à zéro : la page retrouve son lecteur intact
-     pour ses propres alarmes. */
-  let _alarmeFin = null;
-  function alarmeDeBord(dureeMs){
-    if(silencieux()) return;
-    const a = document.getElementById('alarmAudio');
-    if(!a) return;
-    try{
-      a.muted = false;
-      a.volume = 0.6;
-      a.currentTime = 0;
-      const p = a.play();
-      if(p && typeof p.catch === 'function') p.catch(() => {});
-    }catch(e){ return; }
-    let etape = 0;
-    const fond = () => {
-      etape++;
-      try{
-        if(etape < 6){ a.volume = 0.6 * (1 - etape / 6); _alarmeFin = plusTard(fond, 70); }
-        else { a.volume = 0.82; a.pause(); a.currentTime = 0; }
-      }catch(e){}
-    };
-    _alarmeFin = plusTard(fond, Math.max(600, dureeMs - 420));
-  }
-  function couperAlarme(){
-    if(_alarmeFin) clearTimeout(_alarmeFin);
-    const a = document.getElementById('alarmAudio');
-    if(!a) return;
-    try{ a.volume = 0.82; a.pause(); a.currentTime = 0; }catch(e){}
-  }
+   * ------------------------------------------------------------------ *
+   * Un seul signal court est joué au clic sur OPEN par NautilusAlerteOpen,
+   * fonction partagée avec le repli de la page. Le choix « sonar éteint »
+   * est respecté. L'ambiance habituelle de l'accueil reste indépendante.
+   * Aucun écho, souffle ni deuxième alarme pendant la plongée. */
 
   /* ------------------------------------------------------------------ *
    * 4. LE BANDEAU DU BORD
@@ -364,6 +225,8 @@
   function ouvrir(){
     if(_ouverte) return;
     _ouverte = true;
+    // Un seul appel synchrone dans le geste, y compris sur iPhone.
+    try{ if(window.NautilusAlerteOpen) window.NautilusAlerteOpen(); }catch(e){}
     arreterCadreur();
 
     const start = document.getElementById('ecStart');
@@ -371,14 +234,6 @@
     try{ racine.classList.add('ec-ouvert'); if(start) start.classList.add('is-ouvert'); }catch(e){}
     racine.classList.add('ec-presse');
     plusTard(() => racine.classList.remove('ec-presse'), 260);
-
-    /* LE GESTE QUI DÉBLOQUE LE SON. C'est ici, et pas avant, que le
-       navigateur accepte la première note : le verrou de coque tombe sous le
-       doigt, l'alarme du bord se fait enfin entendre, et l'écho du sonar
-       répond. On coupe d'abord l'alarme en cours pour ne rien superposer. */
-    sonCoup();
-    couperAlarme();
-    alarmeDeBord(ms(1300));
 
     /* Le film, lui, reste MUET — mais on relance sa lecture au passage : si
        le navigateur l'avait refusée (batterie faible, économie d'énergie),
@@ -395,12 +250,8 @@
     requestAnimationFrame(() => requestAnimationFrame(() => {
       racine.classList.add('ec-plongee');
     }));
+    plusTard(() => racine.classList.add('ec-eclat'), ms(T.eclat));
     plusTard(() => {
-      racine.classList.add('ec-eclat');
-      sonEcho();
-    }, ms(T.eclat));
-    plusTard(() => {
-      sonSouffle(ms(1400));
       if(start) start.setAttribute('aria-disabled', 'true');
     }, ms(T.plongee));
 
@@ -443,7 +294,6 @@
     if(!racine) return;
     racine.classList.add('ec-passee');
     plusTard(() => { if(racine.parentNode) racine.remove(); }, 90);
-    plusTard(couperLeSon, 900);
   }
 
   /* ------------------------------------------------------------------ *

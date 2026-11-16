@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Pages : network-first ; code et styles : cache avec revalidation en fond.
-const CACHE_NAME = 'nautilus-v396';
+const CACHE_NAME = 'nautilus-v397';
 const PRECACHE = [
   './',
   './index.html',
@@ -40,7 +40,7 @@ const PRECACHE = [
   './install-promo.js?v=6',
   './install-promo-accueil.js?v=1',
   './animations-accueil.js?v=2',
-  './ecoutille.js?v=38',
+  './ecoutille.js?v=39',
   './artefact-moteur.js?v=8',
   './artefact-service.js?v=8',
   './magasin-fnac.js?v=1',
@@ -57,6 +57,7 @@ const PRECACHE = [
   './assets/palier3-lieu.jpg',
   './assets/palier4-lieu.jpg',
   './assets/ambiance-sonar.mp3',
+  './assets/alerte-open.mp3?v=1',
   './assets/Victoire.mp3',
   './assets/Submarine_alarm.mp3',
   './assets/hublot-click.wav',
@@ -114,6 +115,39 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
+/* Safari demande parfois quelques octets avant de jouer le son. Comme ce
+   signal est petit et précaché, on peut servir sa plage même hors ligne.
+   Les vidéos et tous les autres médias conservent leur traitement habituel. */
+async function plageAlerte(req) {
+  const format = /^bytes=(\d*)-(\d*)$/i.exec(req.headers.get('range') || '');
+  if (!format || (!format[1] && !format[2])) return fetch(req);
+  const cache = await caches.match(req);
+  if (!cache || !cache.ok) return fetch(req);
+  const contenu = await cache.arrayBuffer();
+  const taille = contenu.byteLength;
+  let debut, fin;
+  if (!format[1]) {
+    const suffixe = Number(format[2]);
+    debut = Math.max(0, taille - suffixe);
+    fin = taille - 1;
+  } else {
+    debut = Number(format[1]);
+    fin = format[2] ? Math.min(Number(format[2]), taille - 1) : taille - 1;
+  }
+  if (!Number.isSafeInteger(debut) || !Number.isSafeInteger(fin) || debut >= taille || debut > fin) {
+    return new Response(null, { status: 416, headers: { 'Content-Range': 'bytes */' + taille } });
+  }
+  return new Response(contenu.slice(debut, fin + 1), {
+    status: 206,
+    headers: {
+      'Content-Type': cache.headers.get('Content-Type') || 'audio/mpeg',
+      'Content-Range': 'bytes ' + debut + '-' + fin + '/' + taille,
+      'Content-Length': String(fin - debut + 1),
+      'Accept-Ranges': 'bytes'
+    }
+  });
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -125,9 +159,12 @@ self.addEventListener('fetch', (event) => {
      mettrait plus jamais a jour. Le navigateur le recharge du reseau. */
   if (url.pathname.endsWith('/sw.js')) return;
   /* Les vidéos demandent souvent un fragment (Range), notamment sur iOS.
-     Ne jamais répondre avec un fichier complet du cache à une requête qui
-     attend HTTP 206 : laisser le navigateur et le serveur gérer le fragment. */
-  if (req.headers.has('range')) return;
+     Pour elles, le serveur gère la réponse 206 ; seule l'alerte courte
+     précachée bénéficie du repli hors ligne ci-dessus. */
+  if (req.headers.has('range')) {
+    if (url.pathname.endsWith('/assets/alerte-open.mp3')) event.respondWith(plageAlerte(req));
+    return;
+  }
   // Pages HTML : network-first, fallback cache
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
