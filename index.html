@@ -2304,42 +2304,42 @@
     #ecoutille.ec-sortie .ec-ecran{ transform: none !important; transition: none !important; opacity:1 !important; }
   </style>
 
-  <!-- Même plongée, calée sur le signal OPEN de 1,5 seconde. -->
+  <!-- Même plongée, calée sur le son d’immersion OPEN de 2 secondes. -->
   <style id="ec-ouverture-synchronisee">
     #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-scene,
     #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-hublot,
     #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-ecran{
-      transition-duration:var(--ec-rapide-plongee,225ms)!important;
+      transition-duration:var(--ec-rapide-plongee,300ms)!important;
     }
     #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-scene,
     #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-hublot,
     #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-ecran{
-      transition-duration:var(--ec-rapide-eclat,300ms)!important;
+      transition-duration:var(--ec-rapide-eclat,400ms)!important;
     }
     #ecoutille.ec-rapide.ec-impact .ec-scene,
     #ecoutille.ec-rapide.ec-impact .ec-hublot,
     #ecoutille.ec-rapide.ec-impact .ec-ecran,
     #ecoutille.ec-rapide.ec-impact .ec-flood{
-      transition-duration:var(--ec-rapide-impact,975ms)!important;
+      transition-duration:var(--ec-rapide-impact,1300ms)!important;
     }
     #ecoutille.ec-rapide.ec-sortie{
-      transition:opacity var(--ec-rapide-sortie,450ms) ease-out!important;
+      transition:opacity var(--ec-rapide-sortie,600ms) ease-out!important;
     }
     #ecoutille.ec-rapide.ec-impact .ec-flash{
-      animation-duration:var(--ec-rapide-impact,975ms)!important;
+      animation-duration:var(--ec-rapide-impact,1300ms)!important;
     }
     /* Ne pas ramener le hublot à sa taille initiale pendant le fondu. */
     #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-scene{
       transform:scale(3.4) translateZ(0)!important;opacity:.98!important;
-      transition:transform var(--ec-rapide-impact,975ms) cubic-bezier(.22,.42,.28,.99),opacity var(--ec-rapide-sortie,450ms) ease!important;
+      transition:transform var(--ec-rapide-impact,1300ms) cubic-bezier(.22,.42,.28,.99),opacity var(--ec-rapide-sortie,600ms) ease!important;
     }
     #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-hublot{
       transform:scale(4.4) translateZ(0)!important;
-      transition:transform var(--ec-rapide-impact,975ms) cubic-bezier(.22,.42,.28,.99)!important;
+      transition:transform var(--ec-rapide-impact,1300ms) cubic-bezier(.22,.42,.28,.99)!important;
     }
     #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-ecran{
       transform:scale(1.22) translateZ(0)!important;
-      transition:transform var(--ec-rapide-impact,975ms) cubic-bezier(.22,.42,.28,.99)!important;
+      transition:transform var(--ec-rapide-impact,1300ms) cubic-bezier(.22,.42,.28,.99)!important;
     }
     @media (prefers-reduced-motion: reduce){
       html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-scene,
@@ -2527,7 +2527,7 @@
   <!-- Moteur de la page de garde (journal de bord, son, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=42" defer></script>
+  <script src="ecoutille.js?v=43" defer></script>
 
 </head>
 <body>
@@ -2553,7 +2553,7 @@
 <!-- Un seul son de bulles progressif, jamais joué avant le clic. Le
      lecteur reste hors du décor pour ne pas couper la fin en le retirant. -->
 <audio id="openAlertAudio" preload="auto" playsinline aria-hidden="true">
-  <source src="assets/alerte-open.mp3?v=4" type="audio/mpeg">
+  <source src="assets/alerte-open.mp3?v=5" type="audio/mpeg">
 </audio>
 <div id="ecoutille" role="dialog" aria-modal="true" aria-label="Le Nautilus — appuie sur START pour ouvrir le sas et embarquer">
 
@@ -2664,9 +2664,9 @@
   var racine = document.getElementById('ecoutille');
   if(!racine) return;
 
-  /* Les bulles et leur animation durent 1,5 seconde, y compris si le son
+  /* L'immersion et son animation durent 2 secondes, y compris si le son
      est coupé ou que ses métadonnées ne sont pas encore disponibles. */
-  window.NautilusDureeOpen = function(){ return 1500; };
+  window.NautilusDureeOpen = function(){ return 2000; };
   window.NautilusPreparerOuverture = function(duree){
     racine.style.setProperty('--ec-rapide-plongee', Math.round(duree * .15) + 'ms');
     racine.style.setProperty('--ec-rapide-eclat', Math.round(duree * .20) + 'ms');
@@ -3217,6 +3217,10 @@
   <button id="adminFabBtn" type="button" aria-label="Maintenance" title="Maintenance">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
   </button>
+  <small id="creditImmersion" style="margin-left:auto;max-width:min(80%,480px);text-align:right;font:500 12px/1.45 system-ui,sans-serif;color:#c4d8e2">
+    Son d’immersion : <a href="https://freesound.org/people/digifishmusic/sounds/45521/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">« Scuba 1 » — digifishmusic</a>
+    (extrait adapté, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">CC BY 4.0</a>).
+  </small>
 </footer>
 
 <script type="module">

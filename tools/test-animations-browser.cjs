@@ -467,43 +467,58 @@ async function testOpenAlert(browser, base, mode) {
     return audio && Number.isFinite(audio.duration) && audio.duration > 0;
   }, null, { timeout: 10000 });
   const duree = await page.$eval('#openAlertAudio', audio => audio.duration);
-  assert.ok(duree >= 1.45 && duree <= 1.56, 'métadonnées du signal de 1,5 s : ' + duree + ' s');
-  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 1500, 'durée prévue de l’ouverture');
+  assert.ok(duree >= 1.95 && duree <= 2.08, 'métadonnées du signal de 2 s : ' + duree + ' s');
+  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 2000, 'durée prévue de l’ouverture');
   if (mode === 'desktop') {
-    // Contrôle du son réellement décodé, et non seulement des métadonnées MP3 :
-    // la fin contient encore un signal, pas une seconde de silence ajoutée.
+    // Contrôler les deux prises, le rendu stéréo et la compatibilité mono,
+    // ainsi que le son décodé plutôt que les seules métadonnées MP3.
     const son = await page.evaluate(async () => {
       const source = document.querySelector('#openAlertAudio source').src;
       const donnees = await (await fetch(source)).arrayBuffer();
-      const original = await (await fetch('/tools/audio-source/bulles-plongee.wav')).arrayBuffer();
+      const bulles = await (await fetch('/tools/audio-source/bulles-plongee.wav')).arrayBuffer();
+      const eau = await (await fetch('/tools/audio-source/immersion-hydrophone.wav')).arrayBuffer();
       const contexte = new (window.AudioContext || window.webkitAudioContext)();
       try {
         const buffer = await contexte.decodeAudioData(donnees);
-        const prise = await contexte.decodeAudioData(original);
-        const canal = buffer.getChannelData(0), reference = prise.getChannelData(0);
-        let produit = 0, energieSon = 0, energiePrise = 0;
-        for (let i = 0; i < Math.min(canal.length, reference.length); i++) {
-          produit += canal[i] * reference[i];
-          energieSon += canal[i] * canal[i]; energiePrise += reference[i] * reference[i];
+        const priseBulles = await contexte.decodeAudioData(bulles);
+        const priseEau = await contexte.decodeAudioData(eau);
+        const gauche = buffer.getChannelData(0), droite = buffer.getChannelData(1);
+        function correlation(a, b) {
+          let produit = 0, energieA = 0, energieB = 0;
+          for (let i = 0; i < Math.min(a.length, b.length); i++) {
+            produit += a[i] * b[i]; energieA += a[i] * a[i]; energieB += b[i] * b[i];
+          }
+          return produit / Math.sqrt(energieA * energieB);
         }
-        const fidelite = produit / Math.sqrt(energieSon * energiePrise);
         function niveau(debut, fin) {
           let somme = 0, n = 0;
           for (let i = Math.floor(debut * buffer.sampleRate); i < Math.floor(fin * buffer.sampleRate); i++) {
-            somme += canal[i] * canal[i]; n++;
+            somme += gauche[i] * gauche[i]; n++;
           }
           return Math.sqrt(somme / n);
         }
-        const pic = canal.reduce((max, valeur) => Math.max(max, Math.abs(valeur)), 0);
-        return { duree: buffer.duration, canaux: buffer.numberOfChannels, fidelite,
-          debut: niveau(.03, .40), milieu: niveau(.40, .75), fin: niveau(1.05, 1.40), pic };
+        let mono = 0, pic = 0;
+        for (let i = 0; i < gauche.length; i++) {
+          mono += ((gauche[i] + droite[i]) / 2) ** 2;
+          pic = Math.max(pic, Math.abs(gauche[i]), Math.abs(droite[i]));
+        }
+        return { duree: buffer.duration, canaux: buffer.numberOfChannels,
+          fideliteBulles: Math.min(correlation(gauche, priseBulles.getChannelData(0)),
+            correlation(droite, priseBulles.getChannelData(1))),
+          fideliteEau: Math.min(correlation(gauche, priseEau.getChannelData(0)),
+            correlation(droite, priseEau.getChannelData(1))),
+          stereo: correlation(gauche, droite), mono: Math.sqrt(mono / gauche.length),
+          debut: niveau(.05, .45), milieu: niveau(.65, 1.05), fin: niveau(1.45, 1.85), pic };
       } finally { await contexte.close(); }
     });
-    assert.ok(Math.abs(son.duree - 1.5) < .01, 'le son décodé dure 1,5 s : ' + son.duree);
+    assert.ok(Math.abs(son.duree - 2) < .01, 'le son décodé dure 2 s : ' + son.duree);
     assert.ok(son.debut > .01 && son.milieu > son.debut * 1.1 && son.fin > son.milieu * 1.1 &&
-      son.fin > son.debut * 1.6, 'les bulles doivent s’intensifier progressivement');
-    assert.equal(son.canaux, 2, 'la prise sous-marine reste stéréo');
-    assert.ok(son.fidelite > .97, 'un extrait continu de la vraie prise, sans montage répété : ' + son.fidelite);
+      son.fin > son.debut * 1.6, 'l’immersion doit s’intensifier progressivement');
+    assert.equal(son.canaux, 2, 'les prises sous-marines restent stéréo');
+    assert.ok(son.fideliteBulles > .70 && son.fideliteEau > .30,
+      'le mixage utilise les deux prises réelles continues');
+    assert.ok(son.stereo < .9 && son.stereo > -.5, 'l’espace stéréo reste audible sans déphasage excessif');
+    assert.ok(son.mono > .02, 'le son reste audible sur un appareil mono');
     assert.ok(son.pic < .98, 'le son ne doit pas saturer');
   }
   assert.deepEqual(await page.evaluate(() => window.__alertesTest), [], 'aucune alerte avant OPEN');
@@ -557,20 +572,20 @@ async function testOpenAlert(browser, base, mode) {
   const phases = resultat.phases;
   for (const [phase, fraction] of [['ec-plongee', 0], ['ec-eclat', .15], ['ec-impact', .35], ['ec-sortie', .70]]) {
     assert.ok(phases[phase], 'phase visuelle manquante : ' + phase);
-    assert.ok(Math.abs(phases[phase].temps - phases['ec-plongee'].temps - 1500 * fraction) < 130,
-      phase + ' doit suivre le rythme de 1,5 s');
+    assert.ok(Math.abs(phases[phase].temps - phases['ec-plongee'].temps - 2000 * fraction) < 130,
+      phase + ' doit suivre le rythme de 2 s');
   }
-  assert.ok(Math.abs((resultat.ouverture - phases['ec-plongee'].temps) - 1500) < 180,
-    'l’animation doit durer 1,5 s');
-  assert.ok(resultat.ouverture - resultat.clic >= 1400 && resultat.ouverture - resultat.clic < 1750,
-    'l’ouverture doit se terminer environ 1,5 s après le clic');
+  assert.ok(Math.abs((resultat.ouverture - phases['ec-plongee'].temps) - 2000) < 180,
+    'l’animation doit durer 2 s');
+  assert.ok(resultat.ouverture - resultat.clic >= 1900 && resultat.ouverture - resultat.clic < 2350,
+    'l’ouverture doit se terminer environ 2 s après le clic');
   if (mode !== 'iphone-calme') {
-    assert.ok(Math.abs(parseFloat(phases['ec-impact'].transitionScene) - .975) < .01,
-      'le zoom finit avec les 1,5 s de la séquence');
-    assert.ok(Math.abs(parseFloat(phases['ec-impact'].animationFlash) - .975) < .01,
+    assert.ok(Math.abs(parseFloat(phases['ec-impact'].transitionScene) - 1.3) < .01,
+      'le zoom finit avec les 2 s de la séquence');
+    assert.ok(Math.abs(parseFloat(phases['ec-impact'].animationFlash) - 1.3) < .01,
       'l’éclat finit avec la séquence');
-    assert.ok(Math.abs(parseFloat(phases['ec-sortie'].transitionRacine) - .45) < .01,
-      'le fondu final occupe les 450 dernières ms');
+    assert.ok(Math.abs(parseFloat(phases['ec-sortie'].transitionRacine) - .6) < .01,
+      'le fondu final occupe les 600 dernières ms');
   }
   if (attendu) {
     assert.equal(resultat.sons[0].id, 'openAlertAudio');
@@ -578,16 +593,26 @@ async function testOpenAlert(browser, base, mode) {
     assert.ok(resultat.sons[0].temps - resultat.clic >= 0 && resultat.sons[0].temps - resultat.clic < 100,
       'le signal doit partir directement au clic');
     assert.ok(resultat.debutSon != null && resultat.finSon != null, 'le signal doit être joué jusqu’à sa fin');
-    assert.ok(Math.abs(resultat.finSon - resultat.debutSon - 1500) < 180,
-      'la lecture audible doit durer environ 1,5 s');
+    assert.ok(Math.abs(resultat.finSon - resultat.debutSon - 2000) < 180,
+      'la lecture audible doit durer environ 2 s');
     assert.ok(Math.abs(resultat.debutSon - phases['ec-plongee'].temps) < 120,
       'le son et l’animation doivent commencer ensemble');
     assert.ok(Math.abs(resultat.ouverture - resultat.finSon) < 180,
       'la fin du signal et la fin de l’ouverture doivent coïncider');
   }
+  if (mode === 'desktop' || mode === 'mobile') {
+    const credit = page.locator('#creditImmersion');
+    assert.equal(await credit.isVisible(), true, 'attribution visible au pied de page');
+    const boiteCredit = await credit.boundingBox();
+    assert.ok(boiteCredit && boiteCredit.x >= 0 && boiteCredit.x + boiteCredit.width <= page.viewportSize().width + 1,
+      'le crédit reste dans la largeur de l’écran');
+    assert.match(await credit.innerText(), /Scuba 1.*digifishmusic.*adapté.*CC BY 4\.0/);
+    assert.equal(await credit.locator('a').first().getAttribute('href'), 'https://freesound.org/people/digifishmusic/sounds/45521/');
+    assert.equal(await credit.locator('a').last().getAttribute('href'), 'https://creativecommons.org/licenses/by/4.0/');
+  }
   assert.deepEqual(errors, [], 'aucune erreur JavaScript pendant OPEN');
   await context.close();
-  console.log('✓ Bulles et animation OPEN de 1,5 s : ' + mode);
+  console.log('✓ Immersion et animation OPEN de 2 s : ' + mode);
 }
 
 async function testOpenLateEngine(browser, base) {
@@ -704,12 +729,12 @@ async function testOpenSlowAudio(browser, base, tropTard) {
     assert.equal(resultat.pause, true, 'le signal n’est pas encore en lecture après l’ouverture');
     if (tropTard) {
       assert.equal(resultat.demarrages, 0, 'aucun signal tardif après un chargement trop long');
-      assert.ok(resultat.duree >= 1900 && resultat.duree < 2600,
+      assert.ok(resultat.duree >= 2300 && resultat.duree < 3200,
         'l’animation de secours conserve sa durée : ' + resultat.duree + ' ms');
     } else {
       assert.equal(resultat.demarrages, 1, 'le signal a démarré malgré le léger retard réseau');
-      assert.ok(Math.abs(resultat.ouverture - resultat.debutSon - 1500) < 180,
-        'l’animation garde 1,5 s à partir du début du signal');
+      assert.ok(Math.abs(resultat.ouverture - resultat.debutSon - 2000) < 180,
+        'l’animation garde 2 s à partir du début du signal');
       assert.ok(Math.abs(resultat.ouverture - resultat.finSon) < 180,
         'le signal et la plongée finissent ensemble après un léger retard réseau');
     }
@@ -758,8 +783,8 @@ async function testOpenAudioUnavailable(browser, base, mode) {
   await page.locator('#ecStart').tap();
   await page.waitForFunction(() => window.__finOuverture != null, null, { timeout: 4000 });
   const delai = await page.evaluate(() => window.__finOuverture - window.__debutOuverture);
-  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 1500, 'durée de secours sans métadonnées');
-  assert.ok(delai >= 1350 && delai < 2500, mode + ' : ouverture de 1,5 s malgré le problème audio (' + delai + ' ms)');
+  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 2000, 'durée de secours sans métadonnées');
+  assert.ok(delai >= 1850 && delai < 3300, mode + ' : ouverture de 2 s malgré le problème audio (' + delai + ' ms)');
   assert.deepEqual(errors, [], 'aucune erreur non gérée lorsque le son est indisponible');
   await context.close();
   console.log('✓ Ouverture rapide si ' + mode);
@@ -1237,24 +1262,24 @@ async function testServiceWorker(browser, base) {
     return { status: response.status, text: await response.text(), range: response.headers.get('Content-Range') };
   });
   assert.deepEqual(extrait, { status: 206, text: '234', range: 'bytes 2-4/10' }, 'requête Range pour la vidéo');
-  // Le vrai signal de 1,5 s doit être présent dans la nouvelle version du
+  // Le vrai signal de 2 s doit être présent dans la nouvelle version du
   // précache, pas uniquement récupéré depuis le réseau lors des tests OPEN.
   await context.setOffline(true);
   const dureeSonHorsLigne = await page.evaluate(async () => {
-    const donnees = await (await fetch('/assets/alerte-open.mp3?v=4')).arrayBuffer();
+    const donnees = await (await fetch('/assets/alerte-open.mp3?v=5')).arrayBuffer();
     const audio = new (window.AudioContext || window.webkitAudioContext)();
     try { return (await audio.decodeAudioData(donnees)).duration; }
     finally { await audio.close(); }
   });
-  assert.ok(Math.abs(dureeSonHorsLigne - 1.5) < .01, 'signal de 1,5 s disponible hors ligne');
+  assert.ok(Math.abs(dureeSonHorsLigne - 2) < .01, 'signal de 2 s disponible hors ligne');
   await context.setOffline(false);
   await page.evaluate(async cache => {
-    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=4',
+    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=5',
       new Response('0123456789', { headers: { 'Content-Type': 'audio/mpeg' } }));
   }, cacheName);
   await context.setOffline(true);
   const extraitSon = await page.evaluate(async () => {
-    const url = '/assets/alerte-open.mp3?v=4';
+    const url = '/assets/alerte-open.mp3?v=5';
     const lire = async range => {
       const res = await fetch(url, { headers: { Range: range } });
       return { status: res.status, text: await res.text(), range: res.headers.get('Content-Range') };
