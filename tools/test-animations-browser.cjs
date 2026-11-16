@@ -475,10 +475,18 @@ async function testOpenAlert(browser, base, mode) {
     const son = await page.evaluate(async () => {
       const source = document.querySelector('#openAlertAudio source').src;
       const donnees = await (await fetch(source)).arrayBuffer();
+      const original = await (await fetch('/tools/audio-source/bulles-plongee.wav')).arrayBuffer();
       const contexte = new (window.AudioContext || window.webkitAudioContext)();
       try {
         const buffer = await contexte.decodeAudioData(donnees);
-        const canal = buffer.getChannelData(0);
+        const prise = await contexte.decodeAudioData(original);
+        const canal = buffer.getChannelData(0), reference = prise.getChannelData(0);
+        let produit = 0, energieSon = 0, energiePrise = 0;
+        for (let i = 0; i < Math.min(canal.length, reference.length); i++) {
+          produit += canal[i] * reference[i];
+          energieSon += canal[i] * canal[i]; energiePrise += reference[i] * reference[i];
+        }
+        const fidelite = produit / Math.sqrt(energieSon * energiePrise);
         function niveau(debut, fin) {
           let somme = 0, n = 0;
           for (let i = Math.floor(debut * buffer.sampleRate); i < Math.floor(fin * buffer.sampleRate); i++) {
@@ -487,13 +495,15 @@ async function testOpenAlert(browser, base, mode) {
           return Math.sqrt(somme / n);
         }
         const pic = canal.reduce((max, valeur) => Math.max(max, Math.abs(valeur)), 0);
-        return { duree: buffer.duration, debut: niveau(.03, .40), milieu: niveau(.40, .75),
-          fin: niveau(1.05, 1.40), pic };
+        return { duree: buffer.duration, canaux: buffer.numberOfChannels, fidelite,
+          debut: niveau(.03, .40), milieu: niveau(.40, .75), fin: niveau(1.05, 1.40), pic };
       } finally { await contexte.close(); }
     });
     assert.ok(Math.abs(son.duree - 1.5) < .01, 'le son décodé dure 1,5 s : ' + son.duree);
     assert.ok(son.debut > .01 && son.milieu > son.debut * 1.1 && son.fin > son.milieu * 1.1 &&
       son.fin > son.debut * 1.6, 'les bulles doivent s’intensifier progressivement');
+    assert.equal(son.canaux, 2, 'la prise sous-marine reste stéréo');
+    assert.ok(son.fidelite > .97, 'un extrait continu de la vraie prise, sans montage répété : ' + son.fidelite);
     assert.ok(son.pic < .98, 'le son ne doit pas saturer');
   }
   assert.deepEqual(await page.evaluate(() => window.__alertesTest), [], 'aucune alerte avant OPEN');
@@ -1231,7 +1241,7 @@ async function testServiceWorker(browser, base) {
   // précache, pas uniquement récupéré depuis le réseau lors des tests OPEN.
   await context.setOffline(true);
   const dureeSonHorsLigne = await page.evaluate(async () => {
-    const donnees = await (await fetch('/assets/alerte-open.mp3?v=3')).arrayBuffer();
+    const donnees = await (await fetch('/assets/alerte-open.mp3?v=4')).arrayBuffer();
     const audio = new (window.AudioContext || window.webkitAudioContext)();
     try { return (await audio.decodeAudioData(donnees)).duration; }
     finally { await audio.close(); }
@@ -1239,12 +1249,12 @@ async function testServiceWorker(browser, base) {
   assert.ok(Math.abs(dureeSonHorsLigne - 1.5) < .01, 'signal de 1,5 s disponible hors ligne');
   await context.setOffline(false);
   await page.evaluate(async cache => {
-    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=3',
+    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=4',
       new Response('0123456789', { headers: { 'Content-Type': 'audio/mpeg' } }));
   }, cacheName);
   await context.setOffline(true);
   const extraitSon = await page.evaluate(async () => {
-    const url = '/assets/alerte-open.mp3?v=3';
+    const url = '/assets/alerte-open.mp3?v=4';
     const lire = async range => {
       const res = await fetch(url, { headers: { Range: range } });
       return { status: res.status, text: await res.text(), range: res.headers.get('Content-Range') };

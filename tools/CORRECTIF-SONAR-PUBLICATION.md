@@ -28,14 +28,18 @@ Les corrections sont intégrées directement dans les fichiers du site :
   ressource indisponible n’annule plus tout le précache, et les requêtes
   vidéo partielles sont laissées au navigateur.
 
-Le bruit de bulles est construit à partir d’un vrai enregistrement de la
-[Skippy Fish Water Sound Collection](https://opengameart.org/content/skippy-fish-water-sound-collection)
-de jcpmcdonald, publié sous licence [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
-La source, conservée dans `tools/audio-source/bulles-skippy.wav`, est aussi
-[disponible chez son auteur](https://github.com/jcpmcdonald/skippy-fish/blob/2a91b5c5f46be99ba097ffcfe9ba6c174137d8d9/assets/bubbles.wav)
-(SHA-256 : `c4f0a47bd5eaa3c4a5a34a1889c6189661360fb874ebf120147f3cc98fc84165`).
-Le fichier final garde son nom historique `assets/alerte-open.mp3`, mais ne
-contient plus d’alarme. Pour le reconstruire (FFmpeg avec libmp3lame requis) :
+Le bruit de bulles vient d’un véritable enregistrement sous-marin réalisé
+lors d’une plongée : [Scuba_bubbles.mp3](https://freesound.org/people/sbvitug/sounds/634225/)
+de sbvitug, sous licence [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+L’extrait continu de 48,25 à 49,75 secondes est conservé en WAV dans
+`tools/audio-source/bulles-plongee.wav` (SHA-256 :
+`a759d4182a7cf00a3371968e37eb210ae481e5951ae87628b86d4ec5f2255362`).
+La [prise d’origine est aussi disponible sur GitHub](https://github.com/alefa03/OpenSCUBA/blob/6b9805e3665be003c2dbd2a92e6f49e459965adc/sounds/scuba_bubbles.mp3)
+(SHA-256 : `eaec4e0bdd205c2db9414577ee57e7e839db114af03d3f0654b715491f266891`).
+Le traitement conserve la stéréo et n’ajoute ni boucle, ni superposition, ni
+changement de hauteur ; il applique une légère montée de volume et de courts
+fondus. Le fichier final garde le nom historique `assets/alerte-open.mp3`,
+mais ne contient pas d’alarme. Pour le reconstruire (FFmpeg avec libmp3lame) :
 
 ```sh
 python3 tools/generer-son-bulles.py
