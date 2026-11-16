@@ -12,12 +12,10 @@ Les corrections sont intégrées directement dans les fichiers du site :
 - le sonar suit la visibilité de son écran et ne disparaît pas lors d’une
   erreur Firestore ;
 - l’ordre de mission dispose d’un secours local si Firebase ne charge pas ;
-- le clic sur OPEN joue une seule alerte courte, sans écho ou souffle
-  supplémentaire, et reste silencieux si le sonar a été coupé ; la plongée
-  démarre avec cette alerte et se termine avec elle (1,5 seconde),
+- le clic sur OPEN joue un seul son de bulles qui s’intensifie, sans
+  alarme ou autre bruit supplémentaire, et reste silencieux si le sonar a été
+  coupé ; la plongée commence et se termine avec le son (1,5 seconde),
   avec le même rythme si la lecture audio est refusée ou indisponible ;
-  le son est une seule impulsion de l’alarme du bord, prolongée puis
-  fondue, sans répétition ;
 - si le navigateur refuse la lecture automatique, un bouton discret permet de
   lancer la vidéo ; la lecture reprend aussi après une mise en arrière-plan
   ou une rotation de l’écran, et l’affiche reste visible en cas d’erreur ;
@@ -30,17 +28,22 @@ Les corrections sont intégrées directement dans les fichiers du site :
   ressource indisponible n’annule plus tout le précache, et les requêtes
   vidéo partielles sont laissées au navigateur.
 
-Pour reconstruire l’alerte de 1,5 s à partir de l’alarme du bord :
+Le bruit de bulles est construit à partir d’un vrai enregistrement de la
+[Skippy Fish Water Sound Collection](https://opengameart.org/content/skippy-fish-water-sound-collection)
+de jcpmcdonald, publié sous licence [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+La source, conservée dans `tools/audio-source/bulles-skippy.wav`, est aussi
+[disponible chez son auteur](https://github.com/jcpmcdonald/skippy-fish/blob/2a91b5c5f46be99ba097ffcfe9ba6c174137d8d9/assets/bubbles.wav)
+(SHA-256 : `c4f0a47bd5eaa3c4a5a34a1889c6189661360fb874ebf120147f3cc98fc84165`).
+Le fichier final garde son nom historique `assets/alerte-open.mp3`, mais ne
+contient plus d’alarme. Pour le reconstruire (FFmpeg avec libmp3lame requis) :
 
 ```sh
-ffmpeg -i assets/Submarine_alarm.mp3 \
-  -af 'atrim=duration=0.54,asetpts=PTS-STARTPTS,atempo=0.5,atempo=0.7,apad=whole_dur=1.5,atrim=duration=1.5,afade=t=in:st=0:d=0.015,afade=t=out:st=1.38:d=0.12,volume=0.82' \
-  -ac 1 -ar 44100 -c:a libmp3lame -b:a 96k assets/alerte-open.mp3
+python3 tools/generer-son-bulles.py
 ```
 
 Le lecteur attend brièvement que le son soit prêt avant de démarrer la
 plongée. En cas de chargement trop lent, il annule la lecture en attente
-pour éviter qu’une alerte ne retentisse après l’ouverture.
+pour éviter que les bulles ne retentissent après l’ouverture.
 
 `correctif-sonar-site-publie.patch` reste une archive destinée **uniquement**
 à une copie non modifiée de l’ancien commit `95c9c203…`. Il ne faut pas

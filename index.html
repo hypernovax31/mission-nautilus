@@ -2524,10 +2524,10 @@
   <script src="install-promo-accueil.js?v=1" defer></script>
   <!-- Réglage local et reprise du film après une pause ou un refus d'autoplay. -->
   <script src="animations-accueil.js?v=2" defer></script>
-  <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
+  <!-- Moteur de la page de garde (journal de bord, son, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=41" defer></script>
+  <script src="ecoutille.js?v=42" defer></script>
 
 </head>
 <body>
@@ -2550,10 +2550,10 @@
      Le style est écrit DANS cette page (voir le socle dans le <head>) ;
      ecoutille.js joue le récit et la sortie.
      ═══════════════════════════════════════════════════════════════════════════ -->
-<!-- Un seul signal court, préchargé mais jamais joué avant le clic. Le
+<!-- Un seul son de bulles progressif, jamais joué avant le clic. Le
      lecteur reste hors du décor pour ne pas couper la fin en le retirant. -->
 <audio id="openAlertAudio" preload="auto" playsinline aria-hidden="true">
-  <source src="assets/alerte-open.mp3?v=2" type="audio/mpeg">
+  <source src="assets/alerte-open.mp3?v=3" type="audio/mpeg">
 </audio>
 <div id="ecoutille" role="dialog" aria-modal="true" aria-label="Le Nautilus — appuie sur START pour ouvrir le sas et embarquer">
 
@@ -2664,7 +2664,7 @@
   var racine = document.getElementById('ecoutille');
   if(!racine) return;
 
-  /* L'alerte et son animation durent 1,5 seconde, y compris si le son
+  /* Les bulles et leur animation durent 1,5 seconde, y compris si le son
      est coupé ou que ses métadonnées ne sont pas encore disponibles. */
   window.NautilusDureeOpen = function(){ return 1500; };
   window.NautilusPreparerOuverture = function(duree){

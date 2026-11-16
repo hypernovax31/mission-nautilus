@@ -45,8 +45,8 @@
    retient au contraire tout geste hors START tant que l'écoutille est
    fermée : un clic dans le décor ne peut donc ni démasquer l'ambiance ni
    lancer l'ordre de mission en coulisses.
-   C'est aussi le moment où l'alarme du bord peut enfin se faire entendre :
-   avant le geste, aucun navigateur ne la jouerait.
+   C'est aussi le moment où les bulles de l'ouverture peuvent se faire
+   entendre : avant le geste, aucun navigateur ne les jouerait.
 
    Le son, justement
    -----------------
@@ -113,10 +113,10 @@
   /* ------------------------------------------------------------------ *
    * 3. LE SON
    * ------------------------------------------------------------------ *
-   * Un seul signal court est joué au clic sur OPEN par NautilusAlerteOpen,
-   * fonction partagée avec le repli de la page. Le choix « sonar éteint »
-   * est respecté. L'ambiance habituelle de l'accueil reste indépendante.
-   * Aucun écho, souffle ni deuxième alarme pendant la plongée. */
+   * Un seul son de bulles croissant est joué au clic sur OPEN par
+   * NautilusAlerteOpen, fonction partagée avec le repli de la page. Le choix
+   * « sonar éteint » est respecté. L'ambiance de l'accueil reste indépendante.
+   * Aucune alarme, aucun écho ni souffle ajouté pendant la plongée. */
 
   /* ------------------------------------------------------------------ *
    * 4. LE BANDEAU DU BORD

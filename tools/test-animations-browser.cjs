@@ -155,12 +155,18 @@ async function radarInfo(page) {
 async function assertMoving(page, name) {
   await page.waitForFunction(() => {
     const beam = document.querySelector('.radar-sweep-big');
+    const style = getComputedStyle(beam);
     return beam.classList.contains('nautilus-radar-js')
-      ? Boolean(window.NautilusAnimations && window.NautilusAnimations.sonarAnime())
-      : getComputedStyle(beam).animationPlayState === 'running';
+      ? Boolean(window.NautilusAnimations && window.NautilusAnimations.sonarAnime()) && style.transform !== 'none'
+      : style.animationPlayState === 'running';
   });
   const before = await radarInfo(page);
-  await page.waitForTimeout(250);
+  // Attendre une vraie image différente plutôt qu’un délai fixe : le premier
+  // requestAnimationFrame peut être retardé par le rendu vidéo en CI.
+  await page.waitForFunction(previous => {
+    const beam = document.querySelector('.radar-sweep-big');
+    return beam && getComputedStyle(beam).transform !== previous;
+  }, before.transform, { timeout: 5000 });
   const after = await radarInfo(page);
   if (after.driver) {
     assert.equal(after.driverRunning, true, name + ': pilote de secours arrêté');
@@ -480,11 +486,15 @@ async function testOpenAlert(browser, base, mode) {
           }
           return Math.sqrt(somme / n);
         }
-        return { duree: buffer.duration, debut: niveau(.1, .2), fin: niveau(1.25, 1.35) };
+        const pic = canal.reduce((max, valeur) => Math.max(max, Math.abs(valeur)), 0);
+        return { duree: buffer.duration, debut: niveau(.03, .40), milieu: niveau(.40, .75),
+          fin: niveau(1.05, 1.40), pic };
       } finally { await contexte.close(); }
     });
     assert.ok(Math.abs(son.duree - 1.5) < .01, 'le son décodé dure 1,5 s : ' + son.duree);
-    assert.ok(son.debut > .01 && son.fin > .01, 'le signal se prolonge jusqu’à la fin, sans silence ajouté');
+    assert.ok(son.debut > .01 && son.milieu > son.debut * 1.1 && son.fin > son.milieu * 1.1 &&
+      son.fin > son.debut * 1.6, 'les bulles doivent s’intensifier progressivement');
+    assert.ok(son.pic < .98, 'le son ne doit pas saturer');
   }
   assert.deepEqual(await page.evaluate(() => window.__alertesTest), [], 'aucune alerte avant OPEN');
 
@@ -567,7 +577,7 @@ async function testOpenAlert(browser, base, mode) {
   }
   assert.deepEqual(errors, [], 'aucune erreur JavaScript pendant OPEN');
   await context.close();
-  console.log('✓ Son et animation OPEN de 1,5 s : ' + mode);
+  console.log('✓ Bulles et animation OPEN de 1,5 s : ' + mode);
 }
 
 async function testOpenLateEngine(browser, base) {
@@ -1221,7 +1231,7 @@ async function testServiceWorker(browser, base) {
   // précache, pas uniquement récupéré depuis le réseau lors des tests OPEN.
   await context.setOffline(true);
   const dureeSonHorsLigne = await page.evaluate(async () => {
-    const donnees = await (await fetch('/assets/alerte-open.mp3?v=2')).arrayBuffer();
+    const donnees = await (await fetch('/assets/alerte-open.mp3?v=3')).arrayBuffer();
     const audio = new (window.AudioContext || window.webkitAudioContext)();
     try { return (await audio.decodeAudioData(donnees)).duration; }
     finally { await audio.close(); }
@@ -1229,12 +1239,12 @@ async function testServiceWorker(browser, base) {
   assert.ok(Math.abs(dureeSonHorsLigne - 1.5) < .01, 'signal de 1,5 s disponible hors ligne');
   await context.setOffline(false);
   await page.evaluate(async cache => {
-    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=2',
+    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=3',
       new Response('0123456789', { headers: { 'Content-Type': 'audio/mpeg' } }));
   }, cacheName);
   await context.setOffline(true);
   const extraitSon = await page.evaluate(async () => {
-    const url = '/assets/alerte-open.mp3?v=2';
+    const url = '/assets/alerte-open.mp3?v=3';
     const lire = async range => {
       const res = await fetch(url, { headers: { Range: range } });
       return { status: res.status, text: await res.text(), range: res.headers.get('Content-Range') };
