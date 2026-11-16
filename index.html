@@ -2527,7 +2527,7 @@
   <!-- Moteur de la page de garde (journal de bord, son, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=43" defer></script>
+  <script src="ecoutille.js?v=44" defer></script>
 
 </head>
 <body>
@@ -2550,10 +2550,10 @@
      Le style est écrit DANS cette page (voir le socle dans le <head>) ;
      ecoutille.js joue le récit et la sortie.
      ═══════════════════════════════════════════════════════════════════════════ -->
-<!-- Un seul son de bulles progressif, jamais joué avant le clic. Le
+<!-- Un seul son de bulles, jamais joué avant le clic. Le
      lecteur reste hors du décor pour ne pas couper la fin en le retirant. -->
 <audio id="openAlertAudio" preload="auto" playsinline aria-hidden="true">
-  <source src="assets/alerte-open.mp3?v=5" type="audio/mpeg">
+  <source src="assets/alerte-open.mp3?v=6" type="audio/mpeg">
 </audio>
 <div id="ecoutille" role="dialog" aria-modal="true" aria-label="Le Nautilus — appuie sur START pour ouvrir le sas et embarquer">
 
@@ -3217,10 +3217,6 @@
   <button id="adminFabBtn" type="button" aria-label="Maintenance" title="Maintenance">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
   </button>
-  <small id="creditImmersion" style="margin-left:auto;max-width:min(80%,480px);text-align:right;font:500 12px/1.45 system-ui,sans-serif;color:#c4d8e2">
-    Son d’immersion : <a href="https://freesound.org/people/digifishmusic/sounds/45521/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">« Scuba 1 » — digifishmusic</a>
-    (extrait adapté, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">CC BY 4.0</a>).
-  </small>
 </footer>
 
 <script type="module">

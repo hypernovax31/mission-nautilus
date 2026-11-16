@@ -10,6 +10,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const http = require('node:http');
@@ -470,19 +471,28 @@ async function testOpenAlert(browser, base, mode) {
   assert.ok(duree >= 1.95 && duree <= 2.08, 'métadonnées du signal de 2 s : ' + duree + ' s');
   assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 2000, 'durée prévue de l’ouverture');
   if (mode === 'desktop') {
-    // Contrôler les deux prises, le rendu stéréo et la compatibilité mono,
-    // ainsi que le son décodé plutôt que les seules métadonnées MP3.
+    // Vérifier le fichier exact demandé, son adaptation temporelle et le
+    // rendu décodé, plutôt que seulement les métadonnées MP3.
+    const sourcePath = path.join(root, 'tools/audio-source/bulles-hotpin7.wav');
+    assert.equal(createHash('sha256').update(fs.readFileSync(sourcePath)).digest('hex'),
+      '6bc428c9766585ba2dda036bd4b059e65a795ca30b636a9d8561eb9685cf4bfa', 'source Freesound choisie');
     const son = await page.evaluate(async () => {
       const source = document.querySelector('#openAlertAudio source').src;
       const donnees = await (await fetch(source)).arrayBuffer();
-      const bulles = await (await fetch('/tools/audio-source/bulles-plongee.wav')).arrayBuffer();
-      const eau = await (await fetch('/tools/audio-source/immersion-hydrophone.wav')).arrayBuffer();
+      const original = await (await fetch('/tools/audio-source/bulles-hotpin7.wav')).arrayBuffer();
       const contexte = new (window.AudioContext || window.webkitAudioContext)();
       try {
         const buffer = await contexte.decodeAudioData(donnees);
-        const priseBulles = await contexte.decodeAudioData(bulles);
-        const priseEau = await contexte.decodeAudioData(eau);
+        const prise = await contexte.decodeAudioData(original);
         const gauche = buffer.getChannelData(0), droite = buffer.getChannelData(1);
+        const reference = prise.getChannelData(0);
+        function niveau(canal, debut, fin, rate) {
+          let somme = 0, n = 0;
+          for (let i = Math.floor(debut * rate); i < Math.floor(fin * rate); i++) {
+            somme += canal[i] * canal[i]; n++;
+          }
+          return Math.sqrt(somme / n);
+        }
         function correlation(a, b) {
           let produit = 0, energieA = 0, energieB = 0;
           for (let i = 0; i < Math.min(a.length, b.length); i++) {
@@ -490,34 +500,26 @@ async function testOpenAlert(browser, base, mode) {
           }
           return produit / Math.sqrt(energieA * energieB);
         }
-        function niveau(debut, fin) {
-          let somme = 0, n = 0;
-          for (let i = Math.floor(debut * buffer.sampleRate); i < Math.floor(fin * buffer.sampleRate); i++) {
-            somme += gauche[i] * gauche[i]; n++;
-          }
-          return Math.sqrt(somme / n);
-        }
+        const fenetres = [[.05,.45],[.45,.85],[.85,1.25],[1.25,1.65],[1.65,1.95]];
+        const rendu = fenetres.map(([a,b]) => niveau(gauche, a, b, buffer.sampleRate));
+        const originalNiveaux = fenetres.map(([a,b]) => niveau(reference, a*.66*.66, b*.66*.66, prise.sampleRate));
         let mono = 0, pic = 0;
         for (let i = 0; i < gauche.length; i++) {
           mono += ((gauche[i] + droite[i]) / 2) ** 2;
           pic = Math.max(pic, Math.abs(gauche[i]), Math.abs(droite[i]));
         }
-        return { duree: buffer.duration, canaux: buffer.numberOfChannels,
-          fideliteBulles: Math.min(correlation(gauche, priseBulles.getChannelData(0)),
-            correlation(droite, priseBulles.getChannelData(1))),
-          fideliteEau: Math.min(correlation(gauche, priseEau.getChannelData(0)),
-            correlation(droite, priseEau.getChannelData(1))),
-          stereo: correlation(gauche, droite), mono: Math.sqrt(mono / gauche.length),
-          debut: niveau(.05, .45), milieu: niveau(.65, 1.05), fin: niveau(1.45, 1.85), pic };
+        return { duree: buffer.duration, dureeOriginale: prise.duration, canaux: buffer.numberOfChannels,
+          fidelite: correlation(rendu, originalNiveaux), stereo: correlation(gauche, droite),
+          mono: Math.sqrt(mono / gauche.length), debut: rendu[0], milieu: rendu[2], fin: rendu[4], pic };
       } finally { await contexte.close(); }
     });
     assert.ok(Math.abs(son.duree - 2) < .01, 'le son décodé dure 2 s : ' + son.duree);
-    assert.ok(son.debut > .01 && son.milieu > son.debut * 1.1 && son.fin > son.milieu * 1.1 &&
-      son.fin > son.debut * 1.6, 'l’immersion doit s’intensifier progressivement');
-    assert.equal(son.canaux, 2, 'les prises sous-marines restent stéréo');
-    assert.ok(son.fideliteBulles > .70 && son.fideliteEau > .30,
-      'le mixage utilise les deux prises réelles continues');
-    assert.ok(son.stereo < .9 && son.stereo > -.5, 'l’espace stéréo reste audible sans déphasage excessif');
+    assert.ok(son.dureeOriginale > 1.18 && son.dureeOriginale < 1.20, 'durée du fichier choisi');
+    assert.ok(son.fidelite > .96, 'le rythme étiré suit l’enveloppe du son choisi : ' + son.fidelite);
+    assert.ok(son.debut > .01 && son.milieu > .01 && son.fin > .001 && son.fin < son.milieu,
+      'le signal conserve son attaque et sa décroissance');
+    assert.equal(son.canaux, 2, 'le son reste stéréo');
+    assert.ok(son.stereo < .98 && son.stereo > -.5, 'la stéréo reste audible sans déphasage excessif');
     assert.ok(son.mono > .02, 'le son reste audible sur un appareil mono');
     assert.ok(son.pic < .98, 'le son ne doit pas saturer');
   }
@@ -601,18 +603,13 @@ async function testOpenAlert(browser, base, mode) {
       'la fin du signal et la fin de l’ouverture doivent coïncider');
   }
   if (mode === 'desktop' || mode === 'mobile') {
-    const credit = page.locator('#creditImmersion');
-    assert.equal(await credit.isVisible(), true, 'attribution visible au pied de page');
-    const boiteCredit = await credit.boundingBox();
-    assert.ok(boiteCredit && boiteCredit.x >= 0 && boiteCredit.x + boiteCredit.width <= page.viewportSize().width + 1,
-      'le crédit reste dans la largeur de l’écran');
-    assert.match(await credit.innerText(), /Scuba 1.*digifishmusic.*adapté.*CC BY 4\.0/);
-    assert.equal(await credit.locator('a').first().getAttribute('href'), 'https://freesound.org/people/digifishmusic/sounds/45521/');
-    assert.equal(await credit.locator('a').last().getAttribute('href'), 'https://creativecommons.org/licenses/by/4.0/');
+    assert.equal(await page.locator('#creditImmersion').count(), 0, 'ancienne mention retirée de la page');
+    assert.equal(await page.getByText('Son d’immersion :', { exact: false }).count(), 0,
+      'la mention que le joueur ne souhaite plus voir est absente');
   }
   assert.deepEqual(errors, [], 'aucune erreur JavaScript pendant OPEN');
   await context.close();
-  console.log('✓ Immersion et animation OPEN de 2 s : ' + mode);
+  console.log('✓ Son choisi et animation OPEN de 2 s : ' + mode);
 }
 
 async function testOpenLateEngine(browser, base) {
@@ -1266,7 +1263,7 @@ async function testServiceWorker(browser, base) {
   // précache, pas uniquement récupéré depuis le réseau lors des tests OPEN.
   await context.setOffline(true);
   const dureeSonHorsLigne = await page.evaluate(async () => {
-    const donnees = await (await fetch('/assets/alerte-open.mp3?v=5')).arrayBuffer();
+    const donnees = await (await fetch('/assets/alerte-open.mp3?v=6')).arrayBuffer();
     const audio = new (window.AudioContext || window.webkitAudioContext)();
     try { return (await audio.decodeAudioData(donnees)).duration; }
     finally { await audio.close(); }
@@ -1274,12 +1271,12 @@ async function testServiceWorker(browser, base) {
   assert.ok(Math.abs(dureeSonHorsLigne - 2) < .01, 'signal de 2 s disponible hors ligne');
   await context.setOffline(false);
   await page.evaluate(async cache => {
-    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=5',
+    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=6',
       new Response('0123456789', { headers: { 'Content-Type': 'audio/mpeg' } }));
   }, cacheName);
   await context.setOffline(true);
   const extraitSon = await page.evaluate(async () => {
-    const url = '/assets/alerte-open.mp3?v=5';
+    const url = '/assets/alerte-open.mp3?v=6';
     const lire = async range => {
       const res = await fetch(url, { headers: { Range: range } });
       return { status: res.status, text: await res.text(), range: res.headers.get('Content-Range') };

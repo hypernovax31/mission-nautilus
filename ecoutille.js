@@ -113,7 +113,7 @@
   /* ------------------------------------------------------------------ *
    * 3. LE SON
    * ------------------------------------------------------------------ *
-   * Un seul son de bulles croissant est joué au clic sur OPEN par
+   * Un seul son de bulles est joué au clic sur OPEN par
    * NautilusAlerteOpen, fonction partagée avec le repli de la page. Le choix
    * « sonar éteint » est respecté. L'ambiance de l'accueil reste indépendante.
    * Aucune alarme, aucun écho ni souffle ajouté pendant la plongée. */
