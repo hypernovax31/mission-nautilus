@@ -405,10 +405,12 @@ async function testHatchAnimation(browser, base, viewport, label) {
 
 async function testOpenAlert(browser, base, mode) {
   const mobile = mode !== 'desktop';
+  const mouvementReduit = mode === 'iphone-réduit' || mode === 'iphone-calme';
   const context = await prepareContext(browser, base, {
     viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 },
     hasTouch: mobile, isMobile: mobile,
-    reducedMotion: mode === 'iphone-réduit' ? 'reduce' : 'no-preference'
+    reducedMotion: mouvementReduit ? 'reduce' : 'no-preference',
+    userAgent: mouvementReduit ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1' : undefined
   });
   if (mode === 'iphone-réduit') await context.addInitScript(() => localStorage.setItem('nautilusAnimationsAutorisees', '1'));
   if (mode === 'silencieux') await context.addInitScript(() => localStorage.setItem('nautilusSoundOn', '0'));
@@ -417,9 +419,13 @@ async function testOpenAlert(browser, base, mode) {
     window.__alertesTest = [];
     window.__clicOpenTest = null;
     window.__ouvertureOpenTest = null;
+    window.__debutSonOpenTest = null;
     window.__finSonOpenTest = null;
     window.__oscillateursOuverture = 0;
     window.addEventListener('nautilus:ecoutille-ouverte', () => { window.__ouvertureOpenTest = performance.now(); });
+    document.addEventListener('playing', event => {
+      if (event.target.id === 'openAlertAudio') window.__debutSonOpenTest = performance.now();
+    }, true);
     document.addEventListener('ended', event => {
       if (event.target.id === 'openAlertAudio') window.__finSonOpenTest = performance.now();
     }, true);
@@ -434,7 +440,7 @@ async function testOpenAlert(browser, base, mode) {
     if (audio) {
       const create = audio.prototype.createOscillator;
       audio.prototype.createOscillator = function () {
-        if (window.__clicOpenTest != null && performance.now() - window.__clicOpenTest < 500)
+        if (window.__clicOpenTest != null && window.__ouvertureOpenTest == null)
           window.__oscillateursOuverture++;
         return create.apply(this, arguments);
       };
@@ -455,14 +461,35 @@ async function testOpenAlert(browser, base, mode) {
     return audio && Number.isFinite(audio.duration) && audio.duration > 0;
   }, null, { timeout: 10000 });
   const duree = await page.$eval('#openAlertAudio', audio => audio.duration);
-  assert.ok(duree >= 0.3 && duree <= 0.8, 'signal court : ' + duree + ' s');
-  await page.$eval('#openAlertAudio', audio => {
-    audio.addEventListener('ended', () => { window.__finSonOpenTest = performance.now(); });
-  });
+  assert.ok(duree >= 1.45 && duree <= 1.56, 'métadonnées du signal de 1,5 s : ' + duree + ' s');
+  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 1500, 'durée prévue de l’ouverture');
+  if (mode === 'desktop') {
+    // Contrôle du son réellement décodé, et non seulement des métadonnées MP3 :
+    // la fin contient encore un signal, pas une seconde de silence ajoutée.
+    const son = await page.evaluate(async () => {
+      const source = document.querySelector('#openAlertAudio source').src;
+      const donnees = await (await fetch(source)).arrayBuffer();
+      const contexte = new (window.AudioContext || window.webkitAudioContext)();
+      try {
+        const buffer = await contexte.decodeAudioData(donnees);
+        const canal = buffer.getChannelData(0);
+        function niveau(debut, fin) {
+          let somme = 0, n = 0;
+          for (let i = Math.floor(debut * buffer.sampleRate); i < Math.floor(fin * buffer.sampleRate); i++) {
+            somme += canal[i] * canal[i]; n++;
+          }
+          return Math.sqrt(somme / n);
+        }
+        return { duree: buffer.duration, debut: niveau(.1, .2), fin: niveau(1.25, 1.35) };
+      } finally { await contexte.close(); }
+    });
+    assert.ok(Math.abs(son.duree - 1.5) < .01, 'le son décodé dure 1,5 s : ' + son.duree);
+    assert.ok(son.debut > .01 && son.fin > .01, 'le signal se prolonge jusqu’à la fin, sans silence ajouté');
+  }
   assert.deepEqual(await page.evaluate(() => window.__alertesTest), [], 'aucune alerte avant OPEN');
 
   if (mode === 'desktop') {
-    // Un clic refusé faute de magasin ne doit pas déclencher l'alerte.
+    // Un clic refusé faute de magasin ne doit pas déclencher l’alerte.
     await page.locator('#ecStart').click();
     await page.waitForTimeout(200);
     assert.deepEqual(await page.evaluate(() => window.__alertesTest), [], 'pas d’alerte si l’ouverture est refusée');
@@ -471,6 +498,23 @@ async function testOpenAlert(browser, base, mode) {
   const store = await page.$eval('#ecMagasinSelect', el =>
     [...el.options].find(option => option.value && !option.disabled).value);
   await page.selectOption('#ecMagasinSelect', store);
+  await page.$eval('#ecoutille', racine => {
+    const phases = ['ec-plongee', 'ec-eclat', 'ec-impact', 'ec-sortie'];
+    window.__phasesOpenTest = {};
+    const observer = new MutationObserver(() => {
+      for (const phase of phases) {
+        if (racine.classList.contains(phase) && !window.__phasesOpenTest[phase]) {
+          window.__phasesOpenTest[phase] = {
+            temps: performance.now(),
+            transitionRacine: getComputedStyle(racine).transitionDuration,
+            transitionScene: getComputedStyle(racine.querySelector('.ec-scene')).transitionDuration,
+            animationFlash: getComputedStyle(racine.querySelector('.ec-flash')).animationDuration
+          };
+        }
+      }
+    });
+    observer.observe(racine, { attributes: true, attributeFilter: ['class'] });
+  });
   if (mobile) await page.locator('#ecStart').tap();
   else await page.locator('#ecStart').click();
   // Plusieurs événements ou deux gestionnaires ne peuvent pas rejouer le son.
@@ -478,30 +522,52 @@ async function testOpenAlert(browser, base, mode) {
     window.NautilusAlerteOpen();
     document.getElementById('ecStart').dispatchEvent(new MouseEvent('click', { bubbles: true }));
   });
-  await page.waitForTimeout(1600);
-  const resultat = await page.evaluate(() => ({
-    sons: window.__alertesTest, clic: window.__clicOpenTest,
-    ouverture: window.__ouvertureOpenTest, finSon: window.__finSonOpenTest,
-    oscillateurs: window.__oscillateursOuverture
-  }));
   const attendu = mode === 'silencieux' ? 0 : 1;
+  await page.waitForFunction(silencieux => window.__ouvertureOpenTest != null &&
+    (silencieux || window.__finSonOpenTest != null), !attendu, { timeout: 4000 });
+  await page.waitForTimeout(100);
+  const resultat = await page.evaluate(() => ({
+    sons: window.__alertesTest, clic: window.__clicOpenTest, phases: window.__phasesOpenTest,
+    ouverture: window.__ouvertureOpenTest, debutSon: window.__debutSonOpenTest,
+    finSon: window.__finSonOpenTest, oscillateurs: window.__oscillateursOuverture
+  }));
   assert.equal(resultat.sons.length, attendu, 'une seule alerte, ou aucune si le son est coupé');
   assert.equal(resultat.oscillateurs, 0, 'aucun écho, choc ou souffle sonore supplémentaire');
   assert.ok(resultat.ouverture != null, 'la page doit être révélée');
-  assert.ok(Math.abs((resultat.ouverture - resultat.clic) - duree * 1000) < 160,
-    'l’ouverture doit durer autant que le signal sonore');
+  const phases = resultat.phases;
+  for (const [phase, fraction] of [['ec-plongee', 0], ['ec-eclat', .15], ['ec-impact', .35], ['ec-sortie', .70]]) {
+    assert.ok(phases[phase], 'phase visuelle manquante : ' + phase);
+    assert.ok(Math.abs(phases[phase].temps - phases['ec-plongee'].temps - 1500 * fraction) < 130,
+      phase + ' doit suivre le rythme de 1,5 s');
+  }
+  assert.ok(Math.abs((resultat.ouverture - phases['ec-plongee'].temps) - 1500) < 180,
+    'l’animation doit durer 1,5 s');
+  assert.ok(resultat.ouverture - resultat.clic >= 1400 && resultat.ouverture - resultat.clic < 1750,
+    'l’ouverture doit se terminer environ 1,5 s après le clic');
+  if (mode !== 'iphone-calme') {
+    assert.ok(Math.abs(parseFloat(phases['ec-impact'].transitionScene) - .975) < .01,
+      'le zoom finit avec les 1,5 s de la séquence');
+    assert.ok(Math.abs(parseFloat(phases['ec-impact'].animationFlash) - .975) < .01,
+      'l’éclat finit avec la séquence');
+    assert.ok(Math.abs(parseFloat(phases['ec-sortie'].transitionRacine) - .45) < .01,
+      'le fondu final occupe les 450 dernières ms');
+  }
   if (attendu) {
     assert.equal(resultat.sons[0].id, 'openAlertAudio');
     assert.equal(resultat.sons[0].muet, false);
     assert.ok(resultat.sons[0].temps - resultat.clic >= 0 && resultat.sons[0].temps - resultat.clic < 100,
       'le signal doit partir directement au clic');
-    assert.ok(resultat.finSon != null, 'le signal doit aller jusqu’à sa fin');
+    assert.ok(resultat.debutSon != null && resultat.finSon != null, 'le signal doit être joué jusqu’à sa fin');
+    assert.ok(Math.abs(resultat.finSon - resultat.debutSon - 1500) < 180,
+      'la lecture audible doit durer environ 1,5 s');
+    assert.ok(Math.abs(resultat.debutSon - phases['ec-plongee'].temps) < 120,
+      'le son et l’animation doivent commencer ensemble');
     assert.ok(Math.abs(resultat.ouverture - resultat.finSon) < 180,
       'la fin du signal et la fin de l’ouverture doivent coïncider');
   }
   assert.deepEqual(errors, [], 'aucune erreur JavaScript pendant OPEN');
   await context.close();
-  console.log('✓ Une seule alerte OPEN : ' + mode);
+  console.log('✓ Son et animation OPEN de 1,5 s : ' + mode);
 }
 
 async function testOpenLateEngine(browser, base) {
@@ -531,7 +597,8 @@ async function testOpenLateEngine(browser, base) {
       const bouton = document.getElementById('ecStart');
       if (bouton) bouton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    await page.waitForTimeout(1200);
+    await page.waitForFunction(() => window.__ouverturesTardives === 1, null, { timeout: 4000 });
+    await page.waitForTimeout(100);
     assert.equal(await page.evaluate(() => window.__sonsOpenTardifs), 1, 'une seule alerte avec moteur retardé');
     assert.equal(await page.evaluate(() => window.__ouverturesTardives), 1, 'une seule ouverture avec moteur retardé');
   } finally {
@@ -539,6 +606,99 @@ async function testOpenLateEngine(browser, base) {
     await context.close();
   }
   console.log('✓ Un seul signal et une seule ouverture si le moteur arrive en retard');
+}
+
+async function testOpenSlowAudio(browser, base, tropTard) {
+  const context = await prepareContext(browser, base, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  let liberer;
+  const attente = new Promise(resolve => { liberer = resolve; });
+  let requetesAudio = 0;
+  await context.route(/\/assets\/alerte-open\.mp3(?:\?|$)/, async route => {
+    requetesAudio++;
+    await attente;
+    try { await route.continue(); } catch (_) { /* requête déjà annulée */ }
+  });
+  await context.addInitScript(() => {
+    window.__lecturesAudioLent = 0;
+    window.__demarragesAudioLent = 0;
+    window.__debutSonAudioLent = null;
+    window.__finSonAudioLent = null;
+    window.__clicAudioLent = null;
+    window.__ouvertureAudioLent = null;
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      if (this.id === 'openAlertAudio') window.__lecturesAudioLent++;
+      return play.apply(this, arguments);
+    };
+    document.addEventListener('playing', event => {
+      if (event.target.id === 'openAlertAudio') {
+        window.__demarragesAudioLent++;
+        window.__debutSonAudioLent = performance.now();
+      }
+    }, true);
+    document.addEventListener('ended', event => {
+      if (event.target.id === 'openAlertAudio') window.__finSonAudioLent = performance.now();
+    }, true);
+    document.addEventListener('click', event => {
+      if (event.isTrusted && event.target.closest && event.target.closest('#ecStart'))
+        window.__clicAudioLent = performance.now();
+    }, true);
+    window.addEventListener('nautilus:ecoutille-ouverte', () => {
+      window.__ouvertureAudioLent = performance.now();
+    });
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  try {
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => [...document.querySelector('#ecMagasinSelect').options]
+      .some(option => option.value && !option.disabled), null, { timeout: 10000 });
+    const store = await page.$eval('#ecMagasinSelect', el =>
+      [...el.options].find(option => option.value && !option.disabled).value);
+    await page.selectOption('#ecMagasinSelect', store);
+    await page.locator('#ecStart').tap();
+    if (tropTard) {
+      await page.waitForSelector('#ecoutille.ec-plongee', { timeout: 2000 });
+      assert.equal(await page.$eval('#openAlertAudio', audio => audio.paused), true,
+        'annuler la lecture en attente avant de lancer le repli visuel');
+    } else {
+      // Une connexion mobile modérément lente doit encore jouer le son et
+      // attendre son démarrage pour lancer l’animation.
+      await page.waitForTimeout(350);
+      assert.equal(await page.$eval('#ecoutille', el => el.classList.contains('ec-plongee')), false,
+        'attendre brièvement le signal avant de lancer la plongée');
+    }
+    assert.ok(requetesAudio > 0, 'le chargement du signal est effectivement bloqué');
+    liberer();
+    await page.waitForFunction(() => window.__ouvertureAudioLent != null, null, { timeout: 4000 });
+    if (!tropTard) await page.waitForFunction(() => window.__finSonAudioLent != null, null, { timeout: 2000 });
+    await page.waitForTimeout(350);
+    const resultat = await page.evaluate(() => ({
+      lectures: window.__lecturesAudioLent, demarrages: window.__demarragesAudioLent,
+      debutSon: window.__debutSonAudioLent, finSon: window.__finSonAudioLent,
+      ouverture: window.__ouvertureAudioLent, pause: document.getElementById('openAlertAudio').paused,
+      duree: window.__ouvertureAudioLent - window.__clicAudioLent
+    }));
+    assert.equal(resultat.lectures, 1, 'une seule tentative de lecture au clic');
+    assert.equal(resultat.pause, true, 'le signal n’est pas encore en lecture après l’ouverture');
+    if (tropTard) {
+      assert.equal(resultat.demarrages, 0, 'aucun signal tardif après un chargement trop long');
+      assert.ok(resultat.duree >= 1900 && resultat.duree < 2600,
+        'l’animation de secours conserve sa durée : ' + resultat.duree + ' ms');
+    } else {
+      assert.equal(resultat.demarrages, 1, 'le signal a démarré malgré le léger retard réseau');
+      assert.ok(Math.abs(resultat.ouverture - resultat.debutSon - 1500) < 180,
+        'l’animation garde 1,5 s à partir du début du signal');
+      assert.ok(Math.abs(resultat.ouverture - resultat.finSon) < 180,
+        'le signal et la plongée finissent ensemble après un léger retard réseau');
+    }
+    assert.deepEqual(errors, [], 'aucune erreur si le son arrive tard');
+  } finally {
+    liberer();
+    await context.close();
+  }
+  console.log('✓ Son ' + (tropTard ? 'annulé si le fichier arrive trop tard' : 'synchronisé après un court délai réseau'));
 }
 
 async function testOpenAudioUnavailable(browser, base, mode) {
@@ -576,9 +736,10 @@ async function testOpenAudioUnavailable(browser, base, mode) {
     [...el.options].find(option => option.value && !option.disabled).value);
   await page.selectOption('#ecMagasinSelect', store);
   await page.locator('#ecStart').tap();
-  await page.waitForFunction(() => window.__finOuverture != null, null, { timeout: 3000 });
+  await page.waitForFunction(() => window.__finOuverture != null, null, { timeout: 4000 });
   const delai = await page.evaluate(() => window.__finOuverture - window.__debutOuverture);
-  assert.ok(delai >= 400 && delai < 1100, mode + ' : ouverture rapide malgré le problème audio (' + delai + ' ms)');
+  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 1500, 'durée de secours sans métadonnées');
+  assert.ok(delai >= 1350 && delai < 2500, mode + ' : ouverture de 1,5 s malgré le problème audio (' + delai + ' ms)');
   assert.deepEqual(errors, [], 'aucune erreur non gérée lorsque le son est indisponible');
   await context.close();
   console.log('✓ Ouverture rapide si ' + mode);
@@ -785,7 +946,9 @@ async function testSystemMotionChanges(browser, base) {
   assert.equal(await page.locator('#ecAnimationControl').isHidden(), true);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.locator('#ecAnimationControl').waitFor({ state: 'visible', timeout: 3000 });
-  assert.equal(await page.$eval('.ec-film', el => el.paused), true);
+  // Le style peut devenir visible juste avant l’événement matchMedia qui
+  // met effectivement la vidéo en pause.
+  await page.waitForFunction(() => document.querySelector('.ec-film').paused, null, { timeout: 3000 });
   assert.equal(await page.$eval('.m-neige', el => getComputedStyle(el).animationName), 'none');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 6000 });
@@ -1054,13 +1217,24 @@ async function testServiceWorker(browser, base) {
     return { status: response.status, text: await response.text(), range: response.headers.get('Content-Range') };
   });
   assert.deepEqual(extrait, { status: 206, text: '234', range: 'bytes 2-4/10' }, 'requête Range pour la vidéo');
+  // Le vrai signal de 1,5 s doit être présent dans la nouvelle version du
+  // précache, pas uniquement récupéré depuis le réseau lors des tests OPEN.
+  await context.setOffline(true);
+  const dureeSonHorsLigne = await page.evaluate(async () => {
+    const donnees = await (await fetch('/assets/alerte-open.mp3?v=2')).arrayBuffer();
+    const audio = new (window.AudioContext || window.webkitAudioContext)();
+    try { return (await audio.decodeAudioData(donnees)).duration; }
+    finally { await audio.close(); }
+  });
+  assert.ok(Math.abs(dureeSonHorsLigne - 1.5) < .01, 'signal de 1,5 s disponible hors ligne');
+  await context.setOffline(false);
   await page.evaluate(async cache => {
-    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=1',
+    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=2',
       new Response('0123456789', { headers: { 'Content-Type': 'audio/mpeg' } }));
   }, cacheName);
   await context.setOffline(true);
   const extraitSon = await page.evaluate(async () => {
-    const url = '/assets/alerte-open.mp3?v=1';
+    const url = '/assets/alerte-open.mp3?v=2';
     const lire = async range => {
       const res = await fetch(url, { headers: { Range: range } });
       return { status: res.status, text: await res.text(), range: res.headers.get('Content-Range') };
@@ -1192,9 +1366,12 @@ async function testPartialPrecache(browser, base, withFallback) {
       await testOpenAlert(browser, base, 'desktop');
       await testOpenAlert(browser, base, 'mobile');
       await testOpenAlert(browser, base, 'iphone-réduit');
+      await testOpenAlert(browser, base, 'iphone-calme');
       await testOpenAlert(browser, base, 'silencieux');
       await testOpenAlert(browser, base, 'secours');
       await testOpenLateEngine(browser, base);
+      await testOpenSlowAudio(browser, base, false);
+      await testOpenSlowAudio(browser, base, true);
       await testOpenAudioUnavailable(browser, base, 'lecture refusée');
       await testOpenAudioUnavailable(browser, base, 'lecture en attente');
       await testOpenAudioUnavailable(browser, base, 'fichier indisponible');
@@ -1215,9 +1392,12 @@ async function testPartialPrecache(browser, base, withFallback) {
       await testOpenAlert(browser, base, 'desktop');
       await testOpenAlert(browser, base, 'mobile');
       await testOpenAlert(browser, base, 'iphone-réduit');
+      await testOpenAlert(browser, base, 'iphone-calme');
       await testOpenAlert(browser, base, 'silencieux');
       await testOpenAlert(browser, base, 'secours');
       await testOpenLateEngine(browser, base);
+      await testOpenSlowAudio(browser, base, false);
+      await testOpenSlowAudio(browser, base, true);
       await testOpenAudioUnavailable(browser, base, 'lecture refusée');
       await testOpenAudioUnavailable(browser, base, 'lecture en attente');
       await testOpenAudioUnavailable(browser, base, 'fichier indisponible');

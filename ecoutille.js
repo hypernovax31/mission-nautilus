@@ -217,7 +217,7 @@
     // une deuxième séquence lorsque ce moteur arrive quelques instants après.
     if(_ouverte || racine.dataset.renduNU === '1') return;
     _ouverte = true;
-    const duree = window.NautilusDureeOpen ? window.NautilusDureeOpen() : 600;
+    const duree = window.NautilusDureeOpen ? window.NautilusDureeOpen() : 1500;
     const phase = fraction => Math.round(duree * fraction);
     try{ if(window.NautilusPreparerOuverture) window.NautilusPreparerOuverture(duree); }catch(e){}
     // Un seul appel synchrone dans le geste, y compris sur iPhone.
