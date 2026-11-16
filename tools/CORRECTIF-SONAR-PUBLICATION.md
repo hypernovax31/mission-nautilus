@@ -12,9 +12,9 @@ Les corrections sont intégrées directement dans les fichiers du site :
 - le sonar suit la visibilité de son écran et ne disparaît pas lors d’une
   erreur Firestore ;
 - l’ordre de mission dispose d’un secours local si Firebase ne charge pas ;
-- le clic sur OPEN joue une seule fois le son « Bubbles » choisi par le
+- le clic sur OPEN joue une seule fois le signal sous-marin choisi par le
   joueur, sans alarme supplémentaire ; il reste silencieux si le sonar a été
-  coupé. La plongée et le son durent 2 secondes et sont synchronisés ;
+  coupé. La plongée et le son durent 1,5 seconde et sont synchronisés ;
   l’animation conserve cette durée si la lecture audio est indisponible ;
 - si le navigateur refuse la lecture automatique, un bouton discret permet de
   lancer la vidéo ; la lecture reprend aussi après une mise en arrière-plan
@@ -28,17 +28,19 @@ Les corrections sont intégrées directement dans les fichiers du site :
   ressource indisponible n’annule plus tout le précache, et les requêtes
   vidéo partielles sont laissées au navigateur.
 
-Le son choisi est [« Bubbles » de hotpin7](https://freesound.org/people/hotpin7/sounds/840042/),
+Le son choisi est [« Underwater, Signal » de LilMati](https://freesound.org/people/LilMati/sounds/448743/),
 mis à disposition sous [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
-Le WAV original est conservé dans `tools/audio-source/bulles-hotpin7.wav`
-(SHA-256 : `6bc428c9766585ba2dda036bd4b059e65a795ca30b636a9d8561eb9685cf4bfa`).
-Une copie est également [disponible sur GitHub](https://github.com/jacobvillard/PotionShop/blob/8f85d878253ea8666dc7a28f27df815c7fd70909/Assets/SFX/Freesound/Caldron/840042__hotpin7__bubbles.wav).
+Le WAV d’origine est conservé dans `tools/audio-source/signal-lilmati.wav`
+(SHA-256 : `c4a9aac1e2ed58af32792ceb6e5af22eb64dee039242ec82d62bcded9f2142fe`).
+Une copie est également [disponible sur GitHub](https://github.com/invadium/gulf.mod/blob/5308053f5ed1b0291e564b435994479998ec3267/res/sfx/signal.wav).
 
-L’original dure environ 1,19 seconde et se termine par une queue très faible.
-À la demande du joueur, la partie audible est étirée à 2 secondes en conservant
-la hauteur autant que possible, sans répétition ni ajout d’autres sons. Le
-fichier final garde le nom historique `assets/alerte-open.mp3`. Pour le
-reconstruire (FFmpeg avec libmp3lame) :
+L’original dure 2 secondes : il est accéléré à 1,5 seconde en conservant sa
+hauteur autant que possible. Un gain de +10 dB est appliqué avant un limiteur :
+les crêtes déjà proches de 0 dBFS sont limitées pour éviter l’écrêtage, donc
+le gain effectif est inférieur à 10 dB sur ces passages. Le lecteur utilise son
+niveau maximal, sans modifier le réglage de coupure du son. Le fichier final garde
+le nom historique `assets/alerte-open.mp3`. Pour le reconstruire (FFmpeg avec
+libmp3lame) :
 
 ```sh
 python3 tools/generer-son-bulles.py
@@ -46,7 +48,7 @@ python3 tools/generer-son-bulles.py
 
 Le lecteur attend brièvement que le son soit prêt avant de démarrer la
 plongée. En cas de chargement trop lent, il annule la lecture en attente
-pour éviter que les bulles ne retentissent après l’ouverture.
+pour éviter que le signal ne retentisse après l’ouverture.
 
 `correctif-sonar-site-publie.patch` reste une archive destinée **uniquement**
 à une copie non modifiée de l’ancien commit `95c9c203…`. Il ne faut pas

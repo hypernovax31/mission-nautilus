@@ -45,8 +45,8 @@
    retient au contraire tout geste hors START tant que l'écoutille est
    fermée : un clic dans le décor ne peut donc ni démasquer l'ambiance ni
    lancer l'ordre de mission en coulisses.
-   C'est aussi le moment où les bulles de l'ouverture peuvent se faire
-   entendre : avant le geste, aucun navigateur ne les jouerait.
+   C'est aussi le moment où le signal d'ouverture peut se faire entendre :
+   avant le geste, aucun navigateur ne le jouerait.
 
    Le son, justement
    -----------------
@@ -113,7 +113,7 @@
   /* ------------------------------------------------------------------ *
    * 3. LE SON
    * ------------------------------------------------------------------ *
-   * Un seul son de bulles est joué au clic sur OPEN par
+   * Un seul signal sous-marin est joué au clic sur OPEN par
    * NautilusAlerteOpen, fonction partagée avec le repli de la page. Le choix
    * « sonar éteint » est respecté. L'ambiance de l'accueil reste indépendante.
    * Aucune alarme, aucun écho ni souffle ajouté pendant la plongée. */
@@ -217,7 +217,7 @@
     // une deuxième séquence lorsque ce moteur arrive quelques instants après.
     if(_ouverte || racine.dataset.renduNU === '1') return;
     _ouverte = true;
-    const duree = window.NautilusDureeOpen ? window.NautilusDureeOpen() : 2000;
+    const duree = window.NautilusDureeOpen ? window.NautilusDureeOpen() : 1500;
     const phase = fraction => Math.round(duree * fraction);
     try{ if(window.NautilusPreparerOuverture) window.NautilusPreparerOuverture(duree); }catch(e){}
     // Un seul appel synchrone dans le geste, y compris sur iPhone.

@@ -439,7 +439,7 @@ async function testOpenAlert(browser, base, mode) {
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () {
       if (this.id === 'openAlertAudio' || this.id === 'alarmAudio') {
-        window.__alertesTest.push({ id: this.id, temps: performance.now(), muet: this.muted });
+        window.__alertesTest.push({ id: this.id, temps: performance.now(), muet: this.muted, volume: this.volume });
       }
       return play.apply(this, arguments);
     };
@@ -468,18 +468,18 @@ async function testOpenAlert(browser, base, mode) {
     return audio && Number.isFinite(audio.duration) && audio.duration > 0;
   }, null, { timeout: 10000 });
   const duree = await page.$eval('#openAlertAudio', audio => audio.duration);
-  assert.ok(duree >= 1.95 && duree <= 2.08, 'métadonnées du signal de 2 s : ' + duree + ' s');
-  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 2000, 'durée prévue de l’ouverture');
+  assert.ok(duree >= 1.45 && duree <= 1.56, 'métadonnées du signal de 1,5 s : ' + duree + ' s');
+  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 1500, 'durée prévue de l’ouverture');
   if (mode === 'desktop') {
     // Vérifier le fichier exact demandé, son adaptation temporelle et le
     // rendu décodé, plutôt que seulement les métadonnées MP3.
-    const sourcePath = path.join(root, 'tools/audio-source/bulles-hotpin7.wav');
+    const sourcePath = path.join(root, 'tools/audio-source/signal-lilmati.wav');
     assert.equal(createHash('sha256').update(fs.readFileSync(sourcePath)).digest('hex'),
-      '6bc428c9766585ba2dda036bd4b059e65a795ca30b636a9d8561eb9685cf4bfa', 'source Freesound choisie');
+      'c4a9aac1e2ed58af32792ceb6e5af22eb64dee039242ec82d62bcded9f2142fe', 'source Freesound choisie');
     const son = await page.evaluate(async () => {
       const source = document.querySelector('#openAlertAudio source').src;
       const donnees = await (await fetch(source)).arrayBuffer();
-      const original = await (await fetch('/tools/audio-source/bulles-hotpin7.wav')).arrayBuffer();
+      const original = await (await fetch('/tools/audio-source/signal-lilmati.wav')).arrayBuffer();
       const contexte = new (window.AudioContext || window.webkitAudioContext)();
       try {
         const buffer = await contexte.decodeAudioData(donnees);
@@ -500,9 +500,9 @@ async function testOpenAlert(browser, base, mode) {
           }
           return produit / Math.sqrt(energieA * energieB);
         }
-        const fenetres = [[.05,.45],[.45,.85],[.85,1.25],[1.25,1.65],[1.65,1.95]];
+        const fenetres = [[.03,.15],[.15,.30],[.30,.45],[.45,.75],[.75,1.05],[1.05,1.35]];
         const rendu = fenetres.map(([a,b]) => niveau(gauche, a, b, buffer.sampleRate));
-        const originalNiveaux = fenetres.map(([a,b]) => niveau(reference, a*.66*.66, b*.66*.66, prise.sampleRate));
+        const originalNiveaux = fenetres.map(([a,b]) => niveau(reference, a*4/3, b*4/3, prise.sampleRate));
         let mono = 0, pic = 0;
         for (let i = 0; i < gauche.length; i++) {
           mono += ((gauche[i] + droite[i]) / 2) ** 2;
@@ -510,16 +510,18 @@ async function testOpenAlert(browser, base, mode) {
         }
         return { duree: buffer.duration, dureeOriginale: prise.duration, canaux: buffer.numberOfChannels,
           fidelite: correlation(rendu, originalNiveaux), stereo: correlation(gauche, droite),
-          mono: Math.sqrt(mono / gauche.length), debut: rendu[0], milieu: rendu[2], fin: rendu[4], pic };
+          gainCalme: 20 * Math.log10(rendu[3] / originalNiveaux[3]),
+          mono: Math.sqrt(mono / gauche.length), debut: rendu[0], milieu: rendu[3], fin: rendu[5], pic };
       } finally { await contexte.close(); }
     });
-    assert.ok(Math.abs(son.duree - 2) < .01, 'le son décodé dure 2 s : ' + son.duree);
-    assert.ok(son.dureeOriginale > 1.18 && son.dureeOriginale < 1.20, 'durée du fichier choisi');
-    assert.ok(son.fidelite > .96, 'le rythme étiré suit l’enveloppe du son choisi : ' + son.fidelite);
+    assert.ok(Math.abs(son.duree - 1.5) < .01, 'le son décodé dure 1,5 s : ' + son.duree);
+    assert.ok(Math.abs(son.dureeOriginale - 2) < .01, 'durée du fichier choisi');
+    assert.ok(son.fidelite > .94, 'le rythme accéléré suit l’enveloppe du son choisi : ' + son.fidelite);
+    assert.ok(son.gainCalme > 9 && son.gainCalme < 11, 'gain de +10 dB hors limitation : ' + son.gainCalme);
     assert.ok(son.debut > .01 && son.milieu > .01 && son.fin > .001 && son.fin < son.milieu,
       'le signal conserve son attaque et sa décroissance');
     assert.equal(son.canaux, 2, 'le son reste stéréo');
-    assert.ok(son.stereo < .98 && son.stereo > -.5, 'la stéréo reste audible sans déphasage excessif');
+    assert.ok(son.stereo > .98, 'la disposition stéréo d’origine est conservée');
     assert.ok(son.mono > .02, 'le son reste audible sur un appareil mono');
     assert.ok(son.pic < .98, 'le son ne doit pas saturer');
   }
@@ -574,29 +576,30 @@ async function testOpenAlert(browser, base, mode) {
   const phases = resultat.phases;
   for (const [phase, fraction] of [['ec-plongee', 0], ['ec-eclat', .15], ['ec-impact', .35], ['ec-sortie', .70]]) {
     assert.ok(phases[phase], 'phase visuelle manquante : ' + phase);
-    assert.ok(Math.abs(phases[phase].temps - phases['ec-plongee'].temps - 2000 * fraction) < 130,
-      phase + ' doit suivre le rythme de 2 s');
+    assert.ok(Math.abs(phases[phase].temps - phases['ec-plongee'].temps - 1500 * fraction) < 130,
+      phase + ' doit suivre le rythme de 1,5 s');
   }
-  assert.ok(Math.abs((resultat.ouverture - phases['ec-plongee'].temps) - 2000) < 180,
-    'l’animation doit durer 2 s');
-  assert.ok(resultat.ouverture - resultat.clic >= 1900 && resultat.ouverture - resultat.clic < 2350,
-    'l’ouverture doit se terminer environ 2 s après le clic');
+  assert.ok(Math.abs((resultat.ouverture - phases['ec-plongee'].temps) - 1500) < 180,
+    'l’animation doit durer 1,5 s');
+  assert.ok(resultat.ouverture - resultat.clic >= 1400 && resultat.ouverture - resultat.clic < 1800,
+    'l’ouverture doit se terminer environ 1,5 s après le clic');
   if (mode !== 'iphone-calme') {
-    assert.ok(Math.abs(parseFloat(phases['ec-impact'].transitionScene) - 1.3) < .01,
-      'le zoom finit avec les 2 s de la séquence');
-    assert.ok(Math.abs(parseFloat(phases['ec-impact'].animationFlash) - 1.3) < .01,
+    assert.ok(Math.abs(parseFloat(phases['ec-impact'].transitionScene) - .975) < .01,
+      'le zoom finit avec les 1,5 s de la séquence');
+    assert.ok(Math.abs(parseFloat(phases['ec-impact'].animationFlash) - .975) < .01,
       'l’éclat finit avec la séquence');
-    assert.ok(Math.abs(parseFloat(phases['ec-sortie'].transitionRacine) - .6) < .01,
-      'le fondu final occupe les 600 dernières ms');
+    assert.ok(Math.abs(parseFloat(phases['ec-sortie'].transitionRacine) - .45) < .01,
+      'le fondu final occupe les 450 dernières ms');
   }
   if (attendu) {
     assert.equal(resultat.sons[0].id, 'openAlertAudio');
     assert.equal(resultat.sons[0].muet, false);
+    assert.equal(resultat.sons[0].volume, 1, 'le signal amplifié ne subit pas d’atténuation supplémentaire');
     assert.ok(resultat.sons[0].temps - resultat.clic >= 0 && resultat.sons[0].temps - resultat.clic < 100,
       'le signal doit partir directement au clic');
     assert.ok(resultat.debutSon != null && resultat.finSon != null, 'le signal doit être joué jusqu’à sa fin');
-    assert.ok(Math.abs(resultat.finSon - resultat.debutSon - 2000) < 180,
-      'la lecture audible doit durer environ 2 s');
+    assert.ok(Math.abs(resultat.finSon - resultat.debutSon - 1500) < 180,
+      'la lecture audible doit durer environ 1,5 s');
     assert.ok(Math.abs(resultat.debutSon - phases['ec-plongee'].temps) < 120,
       'le son et l’animation doivent commencer ensemble');
     assert.ok(Math.abs(resultat.ouverture - resultat.finSon) < 180,
@@ -609,7 +612,7 @@ async function testOpenAlert(browser, base, mode) {
   }
   assert.deepEqual(errors, [], 'aucune erreur JavaScript pendant OPEN');
   await context.close();
-  console.log('✓ Son choisi et animation OPEN de 2 s : ' + mode);
+  console.log('✓ Signal choisi et animation OPEN de 1,5 s : ' + mode);
 }
 
 async function testOpenLateEngine(browser, base) {
@@ -726,12 +729,12 @@ async function testOpenSlowAudio(browser, base, tropTard) {
     assert.equal(resultat.pause, true, 'le signal n’est pas encore en lecture après l’ouverture');
     if (tropTard) {
       assert.equal(resultat.demarrages, 0, 'aucun signal tardif après un chargement trop long');
-      assert.ok(resultat.duree >= 2300 && resultat.duree < 3200,
+      assert.ok(resultat.duree >= 1900 && resultat.duree < 2700,
         'l’animation de secours conserve sa durée : ' + resultat.duree + ' ms');
     } else {
       assert.equal(resultat.demarrages, 1, 'le signal a démarré malgré le léger retard réseau');
-      assert.ok(Math.abs(resultat.ouverture - resultat.debutSon - 2000) < 180,
-        'l’animation garde 2 s à partir du début du signal');
+      assert.ok(Math.abs(resultat.ouverture - resultat.debutSon - 1500) < 180,
+        'l’animation garde 1,5 s à partir du début du signal');
       assert.ok(Math.abs(resultat.ouverture - resultat.finSon) < 180,
         'le signal et la plongée finissent ensemble après un léger retard réseau');
     }
@@ -780,8 +783,8 @@ async function testOpenAudioUnavailable(browser, base, mode) {
   await page.locator('#ecStart').tap();
   await page.waitForFunction(() => window.__finOuverture != null, null, { timeout: 4000 });
   const delai = await page.evaluate(() => window.__finOuverture - window.__debutOuverture);
-  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 2000, 'durée de secours sans métadonnées');
-  assert.ok(delai >= 1850 && delai < 3300, mode + ' : ouverture de 2 s malgré le problème audio (' + delai + ' ms)');
+  assert.equal(await page.evaluate(() => window.NautilusDureeOpen()), 1500, 'durée de secours sans métadonnées');
+  assert.ok(delai >= 1350 && delai < 2500, mode + ' : ouverture de 1,5 s malgré le problème audio (' + delai + ' ms)');
   assert.deepEqual(errors, [], 'aucune erreur non gérée lorsque le son est indisponible');
   await context.close();
   console.log('✓ Ouverture rapide si ' + mode);
@@ -1259,24 +1262,24 @@ async function testServiceWorker(browser, base) {
     return { status: response.status, text: await response.text(), range: response.headers.get('Content-Range') };
   });
   assert.deepEqual(extrait, { status: 206, text: '234', range: 'bytes 2-4/10' }, 'requête Range pour la vidéo');
-  // Le vrai signal de 2 s doit être présent dans la nouvelle version du
+  // Le vrai signal de 1,5 s doit être présent dans la nouvelle version du
   // précache, pas uniquement récupéré depuis le réseau lors des tests OPEN.
   await context.setOffline(true);
   const dureeSonHorsLigne = await page.evaluate(async () => {
-    const donnees = await (await fetch('/assets/alerte-open.mp3?v=6')).arrayBuffer();
+    const donnees = await (await fetch('/assets/alerte-open.mp3?v=7')).arrayBuffer();
     const audio = new (window.AudioContext || window.webkitAudioContext)();
     try { return (await audio.decodeAudioData(donnees)).duration; }
     finally { await audio.close(); }
   });
-  assert.ok(Math.abs(dureeSonHorsLigne - 2) < .01, 'signal de 2 s disponible hors ligne');
+  assert.ok(Math.abs(dureeSonHorsLigne - 1.5) < .01, 'signal de 1,5 s disponible hors ligne');
   await context.setOffline(false);
   await page.evaluate(async cache => {
-    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=6',
+    await (await caches.open(cache)).put('/assets/alerte-open.mp3?v=7',
       new Response('0123456789', { headers: { 'Content-Type': 'audio/mpeg' } }));
   }, cacheName);
   await context.setOffline(true);
   const extraitSon = await page.evaluate(async () => {
-    const url = '/assets/alerte-open.mp3?v=6';
+    const url = '/assets/alerte-open.mp3?v=7';
     const lire = async range => {
       const res = await fetch(url, { headers: { Range: range } });
       return { status: res.status, text: await res.text(), range: res.headers.get('Content-Range') };
