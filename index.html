@@ -1514,8 +1514,8 @@
     #ecoutille.ec-impact .m-caustique,
     #ecoutille.ec-impact .m-neige,
     #ecoutille.ec-impact .m-bulles{
+      /* Garder l'image courante plutôt que revenir au premier état. */
       animation-play-state: paused !important;
-      animation: none !important;
     }
     #ecoutille.ec-plongee .ec-reflet::before,
     #ecoutille.ec-eclat .ec-reflet::before,
@@ -2304,52 +2304,89 @@
     #ecoutille.ec-sortie .ec-ecran{ transform: none !important; transition: none !important; opacity:1 !important; }
   </style>
 
-  <!-- Même plongée, calée sur le signal OPEN de 1,5 seconde. -->
+  <!-- Ouverture synchronisée : une seule trajectoire, puis assombrissement. -->
   <style id="ec-ouverture-synchronisee">
-    #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-scene,
-    #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-hublot,
-    #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-ecran{
-      transition-duration:var(--ec-rapide-plongee,225ms)!important;
-    }
-    #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-scene,
-    #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-hublot,
-    #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-ecran{
-      transition-duration:var(--ec-rapide-eclat,300ms)!important;
-    }
+    /* Éviter qu'un recalage automatique du scroll déplace le hublot. */
+    #ecoutille.ec-rapide.ec-plongee,
+    #ecoutille.ec-rapide.ec-plongee .ec-scene{overflow-anchor:none!important}
+    #ecoutille.ec-rapide.ec-plongee{overflow:hidden!important}
+    /* Seul le hublot zoome : les transformations imbriquées agrandissaient
+       la scène et le verre simultanément, ce qui décentrait et saccadait. */
+    #ecoutille.ec-rapide.ec-plongee .ec-scene,
+    #ecoutille.ec-rapide.ec-eclat .ec-scene,
     #ecoutille.ec-rapide.ec-impact .ec-scene,
-    #ecoutille.ec-rapide.ec-impact .ec-hublot,
+    #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-scene,
+    #ecoutille.ec-rapide.ec-plongee .ec-ecran,
+    #ecoutille.ec-rapide.ec-eclat .ec-ecran,
     #ecoutille.ec-rapide.ec-impact .ec-ecran,
-    #ecoutille.ec-rapide.ec-impact .ec-flood{
-      transition-duration:var(--ec-rapide-impact,975ms)!important;
-    }
-    #ecoutille.ec-rapide.ec-sortie{
-      transition:opacity var(--ec-rapide-sortie,450ms) ease-out!important;
-    }
-    #ecoutille.ec-rapide.ec-impact .ec-flash{
-      animation-duration:var(--ec-rapide-impact,975ms)!important;
-    }
-    /* Ne pas ramener le hublot à sa taille initiale pendant le fondu. */
-    #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-scene{
-      transform:scale(3.4) translateZ(0)!important;opacity:.98!important;
-      transition:transform var(--ec-rapide-impact,975ms) cubic-bezier(.22,.42,.28,.99),opacity var(--ec-rapide-sortie,450ms) ease!important;
-    }
-    #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-hublot{
-      transform:scale(4.4) translateZ(0)!important;
-      transition:transform var(--ec-rapide-impact,975ms) cubic-bezier(.22,.42,.28,.99)!important;
-    }
     #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-ecran{
-      transform:scale(1.22) translateZ(0)!important;
-      transition:transform var(--ec-rapide-impact,975ms) cubic-bezier(.22,.42,.28,.99)!important;
+      transform:none!important;filter:none!important;opacity:1!important;transition:none!important;
     }
+    #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-hublot,
+    #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-hublot,
+    #ecoutille.ec-rapide.ec-impact .ec-hublot,
+    #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-hublot{
+      transform:translate3d(var(--ec-zoom-x,0px),var(--ec-zoom-y,0px),0)
+        scale(var(--ec-zoom-echelle,4))!important;
+      transform-origin:50% 50%!important;
+      transition:transform var(--ec-zoom-duree,1500ms) cubic-bezier(.32,.03,.3,1)!important;
+      animation:none!important;filter:none!important;opacity:1!important;
+      will-change:transform!important;backface-visibility:hidden!important;
+    }
+    #ecoutille.ec-rapide.ec-plongee .ec-paroi{filter:none!important;transition:none!important}
+    /* La paroi conserve son voile initial, mais ne l'agrandit plus pendant le zoom. */
+    #ecoutille.ec-rapide.ec-plongee .ec-flood{
+      /* Conserver sa géométrie : l'ancienne hauteur nulle à l'impact
+         supprimait le défilement et faisait sauter le hublot en paysage. */
+      position:absolute!important;left:50%!important;top:50%!important;
+      width:260vmax!important;height:260vmax!important;margin:-130vmax 0 0 -130vmax!important;
+      opacity:.62!important;transform:translateZ(0)!important;transition:none!important;will-change:auto!important;
+    }
+    #ecoutille.ec-rapide.ec-plongee .ec-flash,
+    #ecoutille.ec-rapide.ec-plongee .ec-letterbox{display:none!important}
+    #ecoutille.ec-rapide.ec-plongee::after{opacity:0!important;transition:opacity 200ms ease!important}
+    #ecoutille.ec-rapide.ec-plongee .ec-fenetre::before,
+    #ecoutille.ec-rapide.ec-plongee .ec-fenetre::after{content:none!important;animation:none!important}
+
+    /* Pause sur l'image courante des couches d'eau, sans les réinitialiser. */
+    #ecoutille.ec-rapide.ec-plongee .m-rayons{animation-duration:22s!important;opacity:.22!important;filter:none!important}
+    #ecoutille.ec-rapide.ec-plongee .m-caustique{animation-duration:18s!important;opacity:.26!important;filter:none!important}
+    #ecoutille.ec-rapide.ec-plongee .m-caustique.b{animation-duration:26s!important;opacity:.14!important}
+    #ecoutille.ec-rapide.ec-plongee .m-neige{animation-duration:28s!important;opacity:.16!important}
+    #ecoutille.ec-rapide.ec-plongee .m-bulles{animation-duration:16s!important;opacity:.20!important}
+    #ecoutille.ec-rapide.ec-plongee .m-bulles.b{animation-duration:26s!important;opacity:.18!important}
+    #ecoutille.ec-rapide.ec-plongee .ec-film{animation-play-state:paused!important}
+
+    /* Les commandes s'effacent doucement, après le retour vert du bouton. */
+    #ecoutille.ec-rapide.ec-plongee .ec-enseigne,
+    #ecoutille.ec-rapide.ec-plongee .ec-consigne,
+    #ecoutille.ec-rapide.ec-plongee .ec-magasin-wrap,
+    #ecoutille.ec-rapide.ec-plongee .ec-pied{
+      opacity:0!important;transition:opacity 200ms ease 120ms!important;pointer-events:none!important;
+    }
+    #ecoutille.ec-rapide.ec-plongee #ecAnimationControl{opacity:0!important;pointer-events:none!important}
+    #ecoutille.ec-rapide.ec-sortie{transition:opacity var(--ec-rapide-sortie,450ms) ease-out!important}
+
+    /* Léger voile abyssal en fin de plongée, suivi du fondu vers l'accueil. */
+    #ecoutille .ec-ombre-zoom{
+      position:absolute;top:var(--ec-ombre-scroll-y,0px);left:var(--ec-ombre-scroll-x,0px);
+      width:100%;height:100%;z-index:12;pointer-events:none;opacity:0;
+      background:linear-gradient(180deg,#020b16,#01050b);will-change:opacity;
+      transition:opacity var(--ec-ombre-duree,420ms) ease!important;
+    }
+    #ecoutille.ec-rapide.ec-impact .ec-ombre-zoom{opacity:.86!important}
+
+    /* Respecter la réduction de mouvement tant qu'elle n'a pas été levée. */
     @media (prefers-reduced-motion: reduce){
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-scene,
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-hublot,
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-ecran,
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-flood,
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-scene,
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-hublot,
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-ecran{
-        transform:none!important;filter:none!important;transition:none!important;
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-plongee .ec-hublot,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-hublot{
+        transform:none!important;filter:none!important;transition:none!important;animation:none!important;
+      }
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-plongee .ec-enseigne,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-plongee .ec-consigne,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-plongee .ec-magasin-wrap,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-plongee .ec-pied{
+        opacity:1!important;transition:none!important;
       }
       html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact .ec-titre,
       html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact .ec-sous-titre-h4,
@@ -2357,13 +2394,10 @@
       html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact .ec-start{
         opacity:1!important;transform:none!important;transition:none!important;
       }
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-flood,
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-flash{
-        display:none!important;
-      }
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-fenetre::before,
-      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-fenetre::after{
-        animation:none!important;opacity:0!important;
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-plongee .ec-flood,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-plongee .ec-flash{display:none!important}
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-plongee .ec-ombre-zoom{
+        opacity:0!important;transition:none!important;
       }
       html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-sortie{
         opacity:1!important;transition:none!important;
@@ -2527,7 +2561,7 @@
   <!-- Moteur de la page de garde (journal de bord, son, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=45" defer></script>
+  <script src="ecoutille.js?v=46" defer></script>
 
 </head>
 <body>
@@ -2641,6 +2675,7 @@
   <!-- LA PLONGÉE : voile abyssal + lueur azur (remplace le flash blanc) -->
   <div class="ec-flood" aria-hidden="true"></div>
   <div class="ec-flash" aria-hidden="true"></div>
+  <div class="ec-ombre-zoom" aria-hidden="true"></div>
   <div class="ec-letterbox ec-letterbox--top" aria-hidden="true"></div>
   <div class="ec-letterbox ec-letterbox--bottom" aria-hidden="true"></div>
 
@@ -2651,8 +2686,8 @@
 <!-- ═══════════ SOCLE — LE CLIC ═══════════
      Ce mini-script est écrit DANS la page : le bouton rouge peut donc ouvrir
      la page de garde même si ecoutille.js n'arrive pas (réseau, cache,
-     fichier manquant). Il fait la même plongée que le moteur, en plus court :
-     zoom dans le hublot, flou progressif et voile abyssal, puis révélation.
+     fichier manquant). Il fait la même plongée que le moteur : zoom continu
+     dans le hublot, voile abyssal, puis révélation.
      Quand ecoutille.js se charge, il RETIRE ce gestionnaire et prend la main
      pour la sortie complète (récit, sons, révélation).
      Sans lui, un visiteur enfermé derrière le hublot ne pourrait plus rien
@@ -2668,10 +2703,26 @@
      est coupé ou que ses métadonnées ne sont pas encore disponibles. */
   window.NautilusDureeOpen = function(){ return 1500; };
   window.NautilusPreparerOuverture = function(duree){
-    racine.style.setProperty('--ec-rapide-plongee', Math.round(duree * .15) + 'ms');
-    racine.style.setProperty('--ec-rapide-eclat', Math.round(duree * .20) + 'ms');
-    racine.style.setProperty('--ec-rapide-impact', Math.round(duree * .65) + 'ms');
     racine.style.setProperty('--ec-rapide-sortie', Math.round(duree * .30) + 'ms');
+    racine.style.setProperty('--ec-zoom-duree', Math.round(duree) + 'ms');
+    racine.style.setProperty('--ec-ombre-duree', Math.round(duree * .28) + 'ms');
+    /* Le voile reste devant la fenêtre visible si l'écoutille a défilé. */
+    racine.style.setProperty('--ec-ombre-scroll-x', racine.scrollLeft + 'px');
+    racine.style.setProperty('--ec-ombre-scroll-y', racine.scrollTop + 'px');
+    /* Viser le centre du hublot, même sur un écran paysage ou défilé. */
+    try{
+      var hublot = racine.querySelector('.ec-hublot');
+      var cible = hublot && hublot.getBoundingClientRect();
+      var vue = racine.getBoundingClientRect();
+      if(cible && cible.width > 0 && cible.height > 0 && vue.width > 0 && vue.height > 0){
+        var x = vue.left + vue.width / 2 - (cible.left + cible.width / 2);
+        var y = vue.top + vue.height / 2 - (cible.top + cible.height / 2);
+        var echelle = Math.max(3, Math.min(12, Math.hypot(vue.width, vue.height) / Math.min(cible.width, cible.height) * 1.06));
+        racine.style.setProperty('--ec-zoom-x', Math.round(x * 100) / 100 + 'px');
+        racine.style.setProperty('--ec-zoom-y', Math.round(y * 100) / 100 + 'px');
+        racine.style.setProperty('--ec-zoom-echelle', echelle.toFixed(3));
+      }
+    }catch(e){ /* les valeurs CSS de repli restent valables */ }
     racine.classList.add('ec-rapide');
   };
 
@@ -2770,7 +2821,7 @@
       if(film && !mouvementReduit){ var relance = film.play(); if(relance && relance.catch) relance.catch(function(){}); }
     }catch(e){}
     function animer(){
-      try{ racine.style.willChange = 'transform, opacity'; }catch(e){}
+      try{ racine.style.willChange = 'opacity'; }catch(e){}
       racine.classList.add('ec-plongee');
       setTimeout(function(){ racine.classList.add('ec-eclat'); }, Math.round(duree * .15));
       setTimeout(function(){ racine.classList.add('ec-impact'); }, Math.round(duree * .35));

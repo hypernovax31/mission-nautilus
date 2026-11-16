@@ -14,9 +14,8 @@
         d'oxygène se vide au rythme réel de l'équipage pendant que le
         relèvement annonce le retour du signal ;
      3. le visiteur frappe le BOUTON ROUGE « OPEN » ;
-     4. on plonge DANS le hublot : zoom cinématographique à l'intérieur du verre,
-        flou progressif, assombrissement abyssal et letterbox — comme si l'on
-        s'enfonçait sous l'océan. Lueur azur diffuse, puis fondu qui révèle l'accueil ;
+     4. on plonge DANS le hublot : zoom continu centré sur le verre,
+        assombrissement abyssal progressif, puis fondu qui révèle l'accueil ;
      5. l'accueil du jeu est là, déjà en marche.
 
    RIEN QUI PUISSE CASSER — la leçon des versions précédentes
@@ -242,7 +241,7 @@
 
     /* Les étapes visuelles démarrent avec le signal et ont sa durée. */
     function animer(){
-      try{ racine.style.willChange = 'transform, opacity'; }catch(e){}
+      try{ racine.style.willChange = 'opacity'; }catch(e){}
       racine.classList.add('ec-plongee');
       plusTard(() => racine.classList.add('ec-eclat'), phase(.15));
       plusTard(() => { if(start) start.setAttribute('aria-disabled', 'true'); }, phase(.20));

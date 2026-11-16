@@ -412,9 +412,11 @@ async function testHatchAnimation(browser, base, viewport, label) {
 
 async function testOpenAlert(browser, base, mode) {
   const mobile = mode !== 'desktop';
-  const mouvementReduit = mode === 'iphone-réduit' || mode === 'iphone-calme';
+  const mouvementReduit = mode === 'iphone-réduit' || mode === 'iphone-calme' || mode === 'paysage-calme';
+  const calme = mode === 'iphone-calme' || mode === 'paysage-calme';
   const context = await prepareContext(browser, base, {
-    viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 },
+    viewport: mode === 'paysage' || mode === 'paysage-calme' ? { width: 844, height: 390 } :
+      (mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 }),
     hasTouch: mobile, isMobile: mobile,
     reducedMotion: mouvementReduit ? 'reduce' : 'no-preference',
     userAgent: mouvementReduit ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1' : undefined
@@ -429,6 +431,13 @@ async function testOpenAlert(browser, base, mode) {
     window.__debutSonOpenTest = null;
     window.__finSonOpenTest = null;
     window.__oscillateursOuverture = 0;
+    window.__zoomTransitions = [];
+    for (const type of ['transitionrun', 'transitioncancel', 'transitionend']) {
+      document.addEventListener(type, event => {
+        if (window.__clicOpenTest != null && event.target.classList?.contains('ec-hublot') && event.propertyName === 'transform')
+          window.__zoomTransitions.push({ type, temps: performance.now() });
+      }, true);
+    }
     window.addEventListener('nautilus:ecoutille-ouverte', () => { window.__ouvertureOpenTest = performance.now(); });
     document.addEventListener('playing', event => {
       if (event.target.id === 'openAlertAudio') window.__debutSonOpenTest = performance.now();
@@ -539,15 +548,53 @@ async function testOpenAlert(browser, base, mode) {
   await page.selectOption('#ecMagasinSelect', store);
   await page.$eval('#ecoutille', racine => {
     const phases = ['ec-plongee', 'ec-eclat', 'ec-impact', 'ec-sortie'];
+    const hublot = racine.querySelector('.ec-hublot');
+    const boite = hublot.getBoundingClientRect(), vue = racine.getBoundingClientRect();
+    window.__zoomBase = { largeur: boite.width, x: boite.left + boite.width/2, y: boite.top + boite.height/2,
+      cibleX: vue.left + vue.width/2, cibleY: vue.top + vue.height/2,
+      vueX: vue.left, vueY: vue.top, vueLargeur: vue.width, vueHauteur: vue.height };
+    window.__zoomFrames = [];
     window.__phasesOpenTest = {};
+    const preparer = window.NautilusPreparerOuverture;
+    window.NautilusPreparerOuverture = function(duree) {
+      preparer(duree);
+      const rect = hublot.getBoundingClientRect();
+      window.__zoomPrepare = { rect: { x: rect.x, y: rect.y, largeur: rect.width, hauteur: rect.height },
+        x: racine.style.getPropertyValue('--ec-zoom-x'), y: racine.style.getPropertyValue('--ec-zoom-y'),
+        scale: racine.style.getPropertyValue('--ec-zoom-echelle'),
+        scrollScene: racine.querySelector('.ec-scene').scrollTop, scrollRacine: racine.scrollTop };
+    };
+    let derniereImage = 0;
+    function suivre(temps) {
+      if (!racine.isConnected) return;
+      if (racine.classList.contains('ec-plongee') && !racine.classList.contains('ec-passee') && temps - derniereImage >= 80) {
+        const r = hublot.getBoundingClientRect();
+        const voile = racine.querySelector('.ec-ombre-zoom'), rectVoile = voile.getBoundingClientRect();
+        window.__zoomFrames.push({ temps, largeur: r.width, x: r.left + r.width/2, y: r.top + r.height/2,
+          ombre: Number(getComputedStyle(voile).opacity),
+          voile: { x: rectVoile.x, y: rectVoile.y, largeur: rectVoile.width, hauteur: rectVoile.height },
+          scrollScene: racine.querySelector('.ec-scene').scrollTop, scrollRacine: racine.scrollTop });
+        derniereImage = temps;
+      }
+      requestAnimationFrame(suivre);
+    }
+    requestAnimationFrame(suivre);
     const observer = new MutationObserver(() => {
       for (const phase of phases) {
         if (racine.classList.contains(phase) && !window.__phasesOpenTest[phase]) {
+          const rayons = getComputedStyle(racine.querySelector('.m-rayons'));
+          const ombre = getComputedStyle(racine.querySelector('.ec-ombre-zoom'));
+          const flood = getComputedStyle(racine.querySelector('.ec-flood'));
           window.__phasesOpenTest[phase] = {
-            temps: performance.now(),
-            transitionRacine: getComputedStyle(racine).transitionDuration,
-            transitionScene: getComputedStyle(racine.querySelector('.ec-scene')).transitionDuration,
-            animationFlash: getComputedStyle(racine.querySelector('.ec-flash')).animationDuration
+            temps: performance.now(), transitionRacine: getComputedStyle(racine).transitionDuration,
+            transitionHublot: getComputedStyle(hublot).transitionDuration,
+            hublotTransform: getComputedStyle(hublot).transform,
+            sceneTransform: getComputedStyle(racine.querySelector('.ec-scene')).transform,
+            titreOpacity: getComputedStyle(racine.querySelector('.ec-titre')).opacity,
+            ombreOpacity: ombre.opacity, ombreTransition: ombre.transitionDuration,
+            floodHeight: flood.height, floodWidth: flood.width,
+            flashDisplay: getComputedStyle(racine.querySelector('.ec-flash')).display,
+            rayonsNom: rayons.animationName, rayonsEtat: rayons.animationPlayState
           };
         }
       }
@@ -567,6 +614,7 @@ async function testOpenAlert(browser, base, mode) {
   await page.waitForTimeout(100);
   const resultat = await page.evaluate(() => ({
     sons: window.__alertesTest, clic: window.__clicOpenTest, phases: window.__phasesOpenTest,
+    zoomBase: window.__zoomBase, zoomPrepare: window.__zoomPrepare, zoomFrames: window.__zoomFrames, zoomTransitions: window.__zoomTransitions,
     ouverture: window.__ouvertureOpenTest, debutSon: window.__debutSonOpenTest,
     finSon: window.__finSonOpenTest, oscillateurs: window.__oscillateursOuverture
   }));
@@ -583,13 +631,57 @@ async function testOpenAlert(browser, base, mode) {
     'l’animation doit durer 1,5 s');
   assert.ok(resultat.ouverture - resultat.clic >= 1400 && resultat.ouverture - resultat.clic < 1800,
     'l’ouverture doit se terminer environ 1,5 s après le clic');
-  if (mode !== 'iphone-calme') {
-    assert.ok(Math.abs(parseFloat(phases['ec-impact'].transitionScene) - .975) < .01,
-      'le zoom finit avec les 1,5 s de la séquence');
-    assert.ok(Math.abs(parseFloat(phases['ec-impact'].animationFlash) - .975) < .01,
-      'l’éclat finit avec la séquence');
+  if (!calme) {
+    for (const phase of ['ec-plongee', 'ec-eclat', 'ec-impact', 'ec-sortie']) {
+      assert.ok(Math.abs(parseFloat(phases[phase].transitionHublot) - 1.5) < .01,
+        'une même transition de zoom pour ' + phase);
+      assert.equal(phases[phase].sceneTransform, 'none', 'pas de zoom imbriqué sur la scène');
+      assert.equal(phases[phase].flashDisplay, 'none', 'pas de flash parasite pendant le zoom');
+      assert.equal(phases[phase].rayonsNom, 'ecMerRais', 'les rais ne sont pas réinitialisés');
+      assert.equal(phases[phase].rayonsEtat, 'paused', 'les rais sont figés pendant la plongée');
+    }
+    assert.ok(Math.abs(parseFloat(phases['ec-impact'].ombreTransition) - .42) < .01,
+      'l’assombrissement progresse sur 420 ms');
+    assert.ok(Number(phases['ec-sortie'].ombreOpacity) > .4, 'la fin du zoom est assombrie');
     assert.ok(Math.abs(parseFloat(phases['ec-sortie'].transitionRacine) - .45) < .01,
       'le fondu final occupe les 450 dernières ms');
+    const runs = resultat.zoomTransitions.filter(event => event.type === 'transitionrun');
+    const interruptions = resultat.zoomTransitions.filter(event => event.type === 'transitioncancel' &&
+      event.temps < resultat.ouverture - 120);
+    assert.equal(runs.length, 1, 'le zoom ne redémarre pas entre les phases');
+    assert.equal(interruptions.length, 0, 'aucune interruption prématurée du zoom');
+    assert.ok(resultat.zoomFrames.length >= 3, 'le zoom produit plusieurs images');
+    assert.ok(Math.abs(parseFloat(phases['ec-impact'].floodHeight) - parseFloat(phases['ec-plongee'].floodHeight)) < 1,
+      'le voile conserve sa hauteur et ne réinitialise pas le scroll à l’impact');
+    assert.ok(Math.abs(parseFloat(phases['ec-impact'].floodWidth) - parseFloat(phases['ec-plongee'].floodWidth)) < 1,
+      'le voile conserve sa largeur à l’impact');
+    const base = resultat.zoomBase;
+    for (let i = 0; i < resultat.zoomFrames.length; i++) {
+      const image = resultat.zoomFrames[i];
+      if (i > 0) assert.ok(image.largeur + 4 >= resultat.zoomFrames[i-1].largeur,
+        'le hublot ne rétrécit pas pendant la plongée');
+      assert.ok(Math.abs(image.scrollRacine - resultat.zoomPrepare.scrollRacine) < 2 &&
+        Math.abs(image.scrollScene - resultat.zoomPrepare.scrollScene) < 2,
+        'aucun saut de défilement pendant le zoom');
+      assert.ok(Math.abs(image.voile.x - base.vueX) < 2 && Math.abs(image.voile.y - base.vueY) < 2 &&
+        Math.abs(image.voile.largeur - base.vueLargeur) < 2 && Math.abs(image.voile.hauteur - base.vueHauteur) < 2,
+        'le voile sombre couvre tout l’écran même après défilement : ' + JSON.stringify({voile: image.voile, base, scroll: image.scrollRacine}));
+    }
+    const depart = resultat.zoomPrepare.rect;
+    const fin = resultat.zoomFrames[resultat.zoomFrames.length - 1];
+    assert.ok(fin.largeur > depart.largeur * 1.8, 'le hublot grandit réellement');
+    const distanceAvant = Math.hypot(depart.x + depart.largeur/2 - base.cibleX, depart.y + depart.hauteur/2 - base.cibleY);
+    const distanceApres = Math.hypot(fin.x - base.cibleX, fin.y - base.cibleY);
+    assert.ok(distanceApres <= distanceAvant * .5 + 8, 'le hublot se recentre sans dériver : ' + JSON.stringify({base, prepare: resultat.zoomPrepare, fin, distanceAvant, distanceApres}));
+  } else {
+    assert.equal(phases['ec-impact'].hublotTransform, 'none', 'pas de zoom sans accord pour les mouvements réduits');
+    assert.equal(Number(phases['ec-sortie'].ombreOpacity), 0, 'pas d’assombrissement animé en mouvement réduit');
+    assert.equal(Number(phases['ec-impact'].titreOpacity), 1, 'le titre reste visible en mouvement réduit');
+    for (const image of resultat.zoomFrames) {
+      assert.ok(Math.abs(image.scrollRacine - resultat.zoomPrepare.scrollRacine) < 2 &&
+        Math.abs(image.scrollScene - resultat.zoomPrepare.scrollScene) < 2,
+        'aucun saut de défilement en mouvement réduit');
+    }
   }
   if (attendu) {
     assert.equal(resultat.sons[0].id, 'openAlertAudio');
@@ -1410,8 +1502,10 @@ async function testPartialPrecache(browser, base, withFallback) {
     if (process.env.NAUTILUS_TEST_ONLY === 'open') {
       await testOpenAlert(browser, base, 'desktop');
       await testOpenAlert(browser, base, 'mobile');
+      await testOpenAlert(browser, base, 'paysage');
       await testOpenAlert(browser, base, 'iphone-réduit');
       await testOpenAlert(browser, base, 'iphone-calme');
+      await testOpenAlert(browser, base, 'paysage-calme');
       await testOpenAlert(browser, base, 'silencieux');
       await testOpenAlert(browser, base, 'secours');
       await testOpenLateEngine(browser, base);
@@ -1436,8 +1530,10 @@ async function testPartialPrecache(browser, base, withFallback) {
       await testHatchAnimation(browser, base, { width: 390, height: 844 }, 'mobile');
       await testOpenAlert(browser, base, 'desktop');
       await testOpenAlert(browser, base, 'mobile');
+      await testOpenAlert(browser, base, 'paysage');
       await testOpenAlert(browser, base, 'iphone-réduit');
       await testOpenAlert(browser, base, 'iphone-calme');
+      await testOpenAlert(browser, base, 'paysage-calme');
       await testOpenAlert(browser, base, 'silencieux');
       await testOpenAlert(browser, base, 'secours');
       await testOpenLateEngine(browser, base);

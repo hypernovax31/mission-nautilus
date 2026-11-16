@@ -16,6 +16,9 @@ Les corrections sont intégrées directement dans les fichiers du site :
   joueur, sans alarme supplémentaire ; il reste silencieux si le sonar a été
   coupé. La plongée et le son durent 1,5 seconde et sont synchronisés ;
   l’animation conserve cette durée si la lecture audio est indisponible ;
+- le zoom suit une trajectoire continue centrée sur le hublot, sans doubler
+  les agrandissements. Un voile assombrit progressivement la fin avant le
+  fondu vers l’accueil ; les défilements et mouvements réduits sont respectés ;
 - si le navigateur refuse la lecture automatique, un bouton discret permet de
   lancer la vidéo ; la lecture reprend aussi après une mise en arrière-plan
   ou une rotation de l’écran, et l’affiche reste visible en cas d’erreur ;
