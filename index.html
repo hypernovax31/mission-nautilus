@@ -2434,7 +2434,7 @@
   <!-- Styles du sélecteur de magasin et des onglets d'administration. -->
   <link rel="stylesheet" href="css/artefact.css?v=1">
   <!-- Commandes de secours, visibles uniquement si le mouvement est bloqué. -->
-  <link rel="stylesheet" href="css/animations-accueil.css?v=1">
+  <link rel="stylesheet" href="css/animations-accueil.css?v=2">
   <!-- Page de garde « ÉCOUTILLE » : son style est écrit DANS la page (voir
        le socle dans le <head>) — rien à charger, rien qui puisse manquer. -->
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
@@ -2456,7 +2456,7 @@
   <!-- Animation d'incitation à installer l'app : tempête → eaux sereines. -->
   <script src="install-promo-accueil.js?v=1" defer></script>
   <!-- Réglage local et reprise du film après une pause ou un refus d'autoplay. -->
-  <script src="animations-accueil.js?v=1" defer></script>
+  <script src="animations-accueil.js?v=2" defer></script>
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
@@ -3493,10 +3493,13 @@
     const screen = document.querySelector('#radarStage .radar-screen-big');
     if(!screen) return false;
     const r = screen.getBoundingClientRect();
-    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+    const vue = window.visualViewport;
+    const haut = vue ? vue.offsetTop : 0;
+    const gauche = vue ? vue.offsetLeft : 0;
+    const vh = vue ? vue.height : (window.innerHeight || document.documentElement.clientHeight || 0);
+    const vw = vue ? vue.width : (window.innerWidth || document.documentElement.clientWidth || 0);
     return Boolean(vh && vw && r.width && r.height &&
-      r.bottom > 0 && r.top < vh && r.right > 0 && r.left < vw);
+      r.bottom > haut && r.top < haut + vh && r.right > gauche && r.left < gauche + vw);
   }
 
   /* Gele ou relance les animations du sonar. */
@@ -3579,6 +3582,12 @@
     window.addEventListener('scroll', onMove, { passive:true });
     window.addEventListener('resize', onMove, { passive:true });
     window.addEventListener('orientationchange', onMove, { passive:true });
+    if(window.visualViewport && typeof window.visualViewport.addEventListener === 'function'){
+      window.visualViewport.addEventListener('scroll', onMove, { passive:true });
+      window.visualViewport.addEventListener('resize', onMove, { passive:true });
+    }
+    window.addEventListener('nautilus:animations-changees', observeScreen);
+    window.addEventListener('nautilus:radar-visibilite', apply);
     window.addEventListener('load', observeScreen, { once:true });
     document.addEventListener('visibilitychange', apply);
     observeScreen();
@@ -3632,6 +3641,9 @@
   function sweepIsRunning(){
     const el = _sweepEl || (_sweepEl = document.querySelector('.radar-sweep-big'));
     if(!el) return false;
+    if(el.classList.contains('nautilus-radar-js')){
+      return Boolean(window.NautilusAnimations && window.NautilusAnimations.sonarAnime());
+    }
     const st = getComputedStyle(el);
     if(st.animationName === 'none' || st.animationPlayState === 'paused') return false;
     if(prefersReducedMotion()) return false;

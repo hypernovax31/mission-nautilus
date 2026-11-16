@@ -51,6 +51,10 @@
     animation-timing-function:linear!important;animation-iteration-count:infinite!important;
     animation-direction:normal!important;
   }
+  /* Le pilote JS évite le blocage CSS constaté sur certains iPhone. */
+  html.nautilus-motion-enabled .radar-sweep-big.nautilus-radar-js{
+    animation:none!important;will-change:transform;
+  }
   html.nautilus-motion-enabled .radar-center{
     animation-name:centerPulse!important;animation-duration:1.6s!important;
     animation-timing-function:ease-in-out!important;animation-iteration-count:infinite!important;

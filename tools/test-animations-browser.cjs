@@ -107,6 +107,8 @@ async function prepareContext(browser, base, options = {}) {
     viewport: options.viewport || { width: 1440, height: 900 },
     reducedMotion: options.reducedMotion || 'no-preference',
     hasTouch: Boolean(options.hasTouch),
+    isMobile: Boolean(options.isMobile),
+    userAgent: options.userAgent,
     serviceWorkers: options.serviceWorkers || 'block'
   });
   await context.addInitScript(() => {
@@ -143,18 +145,29 @@ async function radarInfo(page) {
       top: rect.top, bottom: rect.bottom, viewport: innerHeight,
       name: style.animationName, duration: style.animationDuration,
       state: style.animationPlayState, transform: style.transform,
+      driver: target.classList.contains('nautilus-radar-js'),
+      driverRunning: Boolean(window.NautilusAnimations && window.NautilusAnimations.sonarAnime()),
       idle: document.getElementById('radarStage').classList.contains('anim-idle')
     };
   });
 }
 
 async function assertMoving(page, name) {
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('.radar-sweep-big')).animationPlayState === 'running');
+  await page.waitForFunction(() => {
+    const beam = document.querySelector('.radar-sweep-big');
+    return beam.classList.contains('nautilus-radar-js')
+      ? Boolean(window.NautilusAnimations && window.NautilusAnimations.sonarAnime())
+      : getComputedStyle(beam).animationPlayState === 'running';
+  });
   const before = await radarInfo(page);
   await page.waitForTimeout(250);
   const after = await radarInfo(page);
-  assert.equal(after.name, 'radarRotateFast', name + ': keyframes absentes');
-  assert.equal(after.state, 'running', name + ': animation en pause');
+  if (after.driver) {
+    assert.equal(after.driverRunning, true, name + ': pilote de secours arrêté');
+  } else {
+    assert.equal(after.name, 'radarRotateFast', name + ': keyframes absentes');
+    assert.equal(after.state, 'running', name + ': animation en pause');
+  }
   assert.notEqual(before.transform, after.transform, name + ': le faisceau ne tourne pas');
   return after;
 }
@@ -417,7 +430,8 @@ async function testMotionChoice(browser, base, mode) {
   const tactile = mode === 'tactile';
   const context = await prepareContext(browser, base, {
     viewport: tactile ? { width: 390, height: 844 } : { width: 1280, height: 900 },
-    reducedMotion: 'reduce', hasTouch: tactile
+    reducedMotion: 'reduce', hasTouch: tactile, isMobile: tactile,
+    userAgent: tactile ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1' : undefined
   });
   const page = await context.newPage();
   const errors = [];
@@ -433,6 +447,8 @@ async function testMotionChoice(browser, base, mode) {
   await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 5000 });
   assert.equal(await page.$eval('.m-rayons', el => getComputedStyle(el).animationName), 'ecMerRais');
   assert.equal(await page.evaluate(() => localStorage.getItem('nautilusAnimationsAutorisees')), '1');
+  assert.equal(await bouton.isHidden(), true, 'le bouton du hublot disparaît après activation');
+  assert.equal(await page.locator('#radarAnimationControl').isHidden(), true, 'le bouton du sonar disparaît aussi');
   assert.equal(await page.$eval('#ecoutille', el => el.classList.contains('ec-plongee')), false,
     'activer les animations ne doit pas ouvrir le sas');
 
@@ -440,6 +456,7 @@ async function testMotionChoice(browser, base, mode) {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.documentElement.classList.contains('nautilus-motion-enabled'));
   await page.waitForFunction(() => !document.querySelector('.ec-film').paused, null, { timeout: 5000 });
+  assert.equal(await bouton.isHidden(), true, 'le bouton reste caché après rechargement');
   await page.waitForFunction(() => [...document.querySelector('#ecMagasinSelect').options]
     .some(option => option.value && !option.disabled), null, { timeout: 10000 });
   const store = await page.$eval('#ecMagasinSelect', el =>
@@ -448,9 +465,14 @@ async function testMotionChoice(browser, base, mode) {
   await page.locator('#ecStart').click();
   await page.waitForSelector('#ecoutille', { state: 'detached', timeout: 7000 });
   await bottomAlignRadar(page);
-  await assertMoving(page, 'sonar activé volontairement');
+  const radar = await assertMoving(page, 'sonar activé volontairement');
+  assert.equal(radar.driver, true, 'le pilote de secours évite le blocage CSS sur iPhone');
+  assert.equal(await page.locator('#radarAnimationControl').isHidden(), true, 'pas de bouton sous le sonar');
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('.radar-sweep-big')).animationPlayState === 'paused');
+  await page.waitForFunction(() => !window.NautilusAnimations.sonarAnime());
+  const arrete = (await radarInfo(page)).transform;
+  await page.waitForTimeout(250);
+  assert.equal((await radarInfo(page)).transform, arrete, 'le balayage est arrêté hors écran');
   await bottomAlignRadar(page);
   await assertMoving(page, 'reprise du sonar activé');
   await page.evaluate(() => {
@@ -458,17 +480,120 @@ async function testMotionChoice(browser, base, mode) {
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => window.__visibiliteTest });
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('.radar-sweep-big')).animationPlayState === 'paused');
+  await page.waitForFunction(() => !window.NautilusAnimations.sonarAnime());
   await page.evaluate(() => { window.__visibiliteTest = 'visible'; document.dispatchEvent(new Event('visibilitychange')); });
   await assertMoving(page, 'retour de l’onglet avec animations activées');
 
-  await page.locator('#radarAnimationControl').click();
+  await page.evaluate(() => window.NautilusAnimations.reinitialiser());
   assert.equal(await page.evaluate(() => localStorage.getItem('nautilusAnimationsAutorisees')), null);
   assert.equal(await page.$eval('.radar-sweep-big', el => getComputedStyle(el).animationName), 'none',
     'retour au réglage système');
+  assert.equal(await page.locator('#radarAnimationControl').isVisible(), true);
   assert.deepEqual(errors, [], 'aucune erreur JavaScript');
   await context.close();
   console.log('✓ Choix explicite et réversible des animations : ' + mode);
+}
+
+async function testRadarChoiceOnPage(browser, base, firebaseAbsent) {
+  const context = await prepareContext(browser, base, {
+    viewport: { width: 390, height: 844 }, reducedMotion: 'reduce',
+    hasTouch: true, isMobile: true, blockFirebase: firebaseAbsent,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1'
+  });
+  if (firebaseAbsent) await context.addInitScript(() => localStorage.setItem('nautilusAnimationsAutorisees', '1'));
+  const page = await context.newPage();
+  await page.goto(landing(base), { waitUntil: 'domcontentloaded' });
+  await bottomAlignRadar(page);
+  const bouton = page.locator('#radarAnimationControl');
+  if (!firebaseAbsent) {
+    await bouton.waitFor({ state: 'visible' });
+    await bouton.tap();
+  }
+  assert.equal(await bouton.isHidden(), true, 'le bouton du sonar disparaît après le choix');
+  const radar = await assertMoving(page, firebaseAbsent ? 'sonar sans Firebase' : 'activation depuis le sonar');
+  assert.equal(radar.driver, true);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await bottomAlignRadar(page);
+  assert.equal(await bouton.isHidden(), true, 'le choix mémorisé ne réaffiche pas le bouton');
+  await assertMoving(page, 'sonar après rechargement');
+  await context.close();
+  console.log('✓ Sonar iPhone ' + (firebaseAbsent ? 'sans Firebase' : 'activé sur sa page') + ' : bouton caché et rotation');
+}
+
+async function testRadarVisualViewport(browser, base) {
+  const context = await prepareContext(browser, base, {
+    viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', hasTouch: true, isMobile: true
+  });
+  await context.addInitScript(() => localStorage.setItem('nautilusAnimationsAutorisees', '1'));
+  const page = await context.newPage();
+  await page.goto(landing(base), { waitUntil: 'domcontentloaded' });
+  await bottomAlignRadar(page);
+  await assertMoving(page, 'sonar avant changement du viewport visuel');
+  await page.evaluate(() => {
+    const vue = new EventTarget();
+    Object.assign(vue, { width: innerWidth, height: 80, offsetLeft: 0, offsetTop: 0 });
+    Object.defineProperty(window, 'visualViewport', { configurable: true, value: vue });
+    window.dispatchEvent(new Event('scroll'));
+  });
+  await page.waitForFunction(() => !window.NautilusAnimations.sonarAnime());
+  await page.evaluate(() => { window.visualViewport.height = innerHeight; window.dispatchEvent(new Event('scroll')); });
+  await assertMoving(page, 'sonar après changement du viewport visuel');
+  await context.close();
+  console.log('✓ Sonar : pause et reprise avec le viewport visuel mobile');
+}
+
+async function testRadarSansObservateur(browser, base) {
+  const context = await prepareContext(browser, base, {
+    viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', hasTouch: true, isMobile: true
+  });
+  await context.addInitScript(() => {
+    localStorage.setItem('nautilusAnimationsAutorisees', '1');
+    delete window.IntersectionObserver;
+  });
+  const page = await context.newPage();
+  await page.goto(landing(base), { waitUntil: 'domcontentloaded' });
+  await bottomAlignRadar(page);
+  await assertMoving(page, 'sonar réduit sans IntersectionObserver');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForFunction(() => !window.NautilusAnimations.sonarAnime());
+  await bottomAlignRadar(page);
+  await assertMoving(page, 'reprise du sonar réduit sans IntersectionObserver');
+  await context.close();
+  console.log('✓ Sonar activé : repli sans IntersectionObserver');
+}
+
+async function testRadarStorageFallback(browser, base) {
+  const context = await prepareContext(browser, base, {
+    viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', hasTouch: true, isMobile: true
+  });
+  await context.addInitScript(() => {
+    const get = Storage.prototype.getItem, set = Storage.prototype.setItem, remove = Storage.prototype.removeItem;
+    Storage.prototype.getItem = function (key) {
+      if (this === window.localStorage) throw new Error('localStorage refusé');
+      return get.call(this, key);
+    };
+    Storage.prototype.setItem = function (key, value) {
+      if (this === window.localStorage) throw new Error('localStorage refusé');
+      return set.call(this, key, value);
+    };
+    Storage.prototype.removeItem = function (key) {
+      if (this === window.localStorage) throw new Error('localStorage refusé');
+      return remove.call(this, key);
+    };
+  });
+  const page = await context.newPage();
+  await page.goto(landing(base), { waitUntil: 'domcontentloaded' });
+  await bottomAlignRadar(page);
+  await page.locator('#radarAnimationControl').tap();
+  assert.equal(await page.locator('#radarAnimationControl').isHidden(), true);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('nautilusAnimationsAutorisees')), '1');
+  await assertMoving(page, 'sonar en mode privé');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await bottomAlignRadar(page);
+  assert.equal(await page.locator('#radarAnimationControl').isHidden(), true);
+  await assertMoving(page, 'sonar après rechargement en mode privé');
+  await context.close();
+  console.log('✓ Sonar : choix maintenu dans la session si localStorage est refusé');
 }
 
 async function testSystemMotionChanges(browser, base) {
@@ -879,6 +1004,11 @@ async function testPartialPrecache(browser, base, withFallback) {
       await testHatchReducedMotion(browser, base);
       await testMotionChoice(browser, base, 'clavier');
       await testMotionChoice(browser, base, 'tactile');
+      await testRadarChoiceOnPage(browser, base, false);
+      await testRadarChoiceOnPage(browser, base, true);
+      await testRadarVisualViewport(browser, base);
+      await testRadarSansObservateur(browser, base);
+      await testRadarStorageFallback(browser, base);
       await testSystemMotionChanges(browser, base);
       await testAutoplayFallback(browser, base);
       await testFilmUnavailable(browser, base);
