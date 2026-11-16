@@ -13,7 +13,9 @@ Les corrections sont intégrées directement dans les fichiers du site :
   erreur Firestore ;
 - l’ordre de mission dispose d’un secours local si Firebase ne charge pas ;
 - le clic sur OPEN joue une seule alerte courte, sans écho ou souffle
-  supplémentaire, et reste silencieux si le sonar a été coupé ;
+  supplémentaire, et reste silencieux si le sonar a été coupé ; la plongée
+  démarre avec cette alerte et se termine avec elle (environ 0,6 seconde),
+  avec un repli rapide si la lecture audio est refusée ou indisponible ;
 - si le navigateur refuse la lecture automatique, un bouton discret permet de
   lancer la vidéo ; la lecture reprend aussi après une mise en arrière-plan
   ou une rotation de l’écran, et l’affiche reste visible en cas d’erreur ;

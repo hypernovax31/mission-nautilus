@@ -73,20 +73,10 @@
   const CLE_SESSION = 'nautilusEcoutille';        // ouverte pendant cette session
   const CLE_FORCE   = 'nautilusEcoutilleForce';   // ordre exprès : « rejoue-la »
 
-  /* Calendrier ultra-fluide : zoom continu 60fps, sortie douce (v014064) */
-  const T = {
-    plongee:   200,
-    eclat:     620,
-    impact:   1200,
-    sortie:   2650,
-    retrait:  3400
-  };
-
   /* Réglage système respecté par défaut ; une personne peut choisir
      explicitement de réactiver les animations sur cet appareil. */
   const calme = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
     && !document.documentElement.classList.contains('nautilus-motion-enabled');
-  const ms = v => Math.round(v * (calme() ? 0.45 : 1));
 
   const html   = document.documentElement;
   const racine = document.getElementById('ecoutille');
@@ -223,17 +213,22 @@
   let _ouverte = false;
 
   function ouvrir(){
-    if(_ouverte) return;
+    // Si le repli a déjà pris le clic pendant le chargement, ne pas lancer
+    // une deuxième séquence lorsque ce moteur arrive quelques instants après.
+    if(_ouverte || racine.dataset.renduNU === '1') return;
     _ouverte = true;
+    const duree = window.NautilusDureeOpen ? window.NautilusDureeOpen() : 600;
+    const phase = fraction => Math.round(duree * fraction);
+    try{ if(window.NautilusPreparerOuverture) window.NautilusPreparerOuverture(duree); }catch(e){}
     // Un seul appel synchrone dans le geste, y compris sur iPhone.
     try{ if(window.NautilusAlerteOpen) window.NautilusAlerteOpen(); }catch(e){}
     arreterCadreur();
 
     const start = document.getElementById('ecStart');
-    /* Rouge → vert : le geste valide l'embarquement (cinéphile : on garde le film, on change la lumière) */
+    /* Rouge → vert : le geste valide l'embarquement. */
     try{ racine.classList.add('ec-ouvert'); if(start) start.classList.add('is-ouvert'); }catch(e){}
     racine.classList.add('ec-presse');
-    plusTard(() => racine.classList.remove('ec-presse'), 260);
+    plusTard(() => racine.classList.remove('ec-presse'), phase(.20));
 
     /* Le film, lui, reste MUET — mais on relance sa lecture au passage : si
        le navigateur l'avait refusée (batterie faible, économie d'énergie),
@@ -245,26 +240,18 @@
       }catch(e){}
     }
 
-    /* — la plongée s'engage : zoom + eau — fluide, sans reflow forcé — */
-    try{ racine.style.willChange = 'transform, opacity'; }catch(e){}
-    requestAnimationFrame(() => requestAnimationFrame(() => {
+    /* Les étapes visuelles démarrent avec le signal et ont sa durée. */
+    function animer(){
+      try{ racine.style.willChange = 'transform, opacity'; }catch(e){}
       racine.classList.add('ec-plongee');
-    }));
-    plusTard(() => racine.classList.add('ec-eclat'), ms(T.eclat));
-    plusTard(() => {
-      if(start) start.setAttribute('aria-disabled', 'true');
-    }, ms(T.plongee));
-
-    /* — on s'enfonce : zoom massif fluide — */
-    plusTard(() => {
-      racine.classList.add('ec-impact');
-    }, ms(T.impact));
-
-    /* — l'abyss se referme : fondu qui révèle l'accueil — */
-    plusTard(reveler, ms(T.sortie));
-
-    /* — puis la page de garde disparaît pour de bon — */
-    plusTard(retirer, ms(T.retrait));
+      plusTard(() => racine.classList.add('ec-eclat'), phase(.15));
+      plusTard(() => { if(start) start.setAttribute('aria-disabled', 'true'); }, phase(.20));
+      plusTard(() => racine.classList.add('ec-impact'), phase(.35));
+      plusTard(() => racine.classList.add('ec-sortie'), phase(.70));
+    }
+    function terminer(){ reveler(); retirer(); }
+    if(window.NautilusSynchroniserOpen) window.NautilusSynchroniserOpen(duree, animer, terminer);
+    else { animer(); plusTard(terminer, duree); }
   }
 
   /* ------------------------------------------------------------------ *

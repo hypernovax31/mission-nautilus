@@ -2304,6 +2304,70 @@
     #ecoutille.ec-sortie .ec-ecran{ transform: none !important; transition: none !important; opacity:1 !important; }
   </style>
 
+  <!-- Même plongée, raccourcie et calée sur la durée du signal OPEN. -->
+  <style id="ec-ouverture-synchronisee">
+    #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-scene,
+    #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-hublot,
+    #ecoutille.ec-rapide.ec-plongee:not(.ec-eclat) .ec-ecran{
+      transition-duration:var(--ec-rapide-plongee,90ms)!important;
+    }
+    #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-scene,
+    #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-hublot,
+    #ecoutille.ec-rapide.ec-eclat:not(.ec-impact) .ec-ecran{
+      transition-duration:var(--ec-rapide-eclat,120ms)!important;
+    }
+    #ecoutille.ec-rapide.ec-impact .ec-scene,
+    #ecoutille.ec-rapide.ec-impact .ec-hublot,
+    #ecoutille.ec-rapide.ec-impact .ec-ecran,
+    #ecoutille.ec-rapide.ec-impact .ec-flood{
+      transition-duration:var(--ec-rapide-impact,390ms)!important;
+    }
+    #ecoutille.ec-rapide.ec-sortie{
+      transition:opacity var(--ec-rapide-sortie,180ms) ease-out!important;
+    }
+    /* Ne pas ramener le hublot à sa taille initiale pendant le fondu. */
+    #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-scene{
+      transform:scale(3.4) translateZ(0)!important;opacity:.98!important;
+      transition:transform var(--ec-rapide-impact,390ms) cubic-bezier(.22,.42,.28,.99),opacity var(--ec-rapide-sortie,180ms) ease!important;
+    }
+    #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-hublot{
+      transform:scale(4.4) translateZ(0)!important;
+      transition:transform var(--ec-rapide-impact,390ms) cubic-bezier(.22,.42,.28,.99)!important;
+    }
+    #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-ecran{
+      transform:scale(1.22) translateZ(0)!important;
+      transition:transform var(--ec-rapide-impact,390ms) cubic-bezier(.22,.42,.28,.99)!important;
+    }
+    @media (prefers-reduced-motion: reduce){
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-scene,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-hublot,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-ecran,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-flood,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-scene,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-hublot,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact.ec-sortie .ec-ecran{
+        transform:none!important;filter:none!important;transition:none!important;
+      }
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact .ec-titre,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact .ec-sous-titre-h4,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact .ec-consigne,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-impact .ec-start{
+        opacity:1!important;transform:none!important;transition:none!important;
+      }
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-flood,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-flash{
+        display:none!important;
+      }
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-fenetre::before,
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide .ec-fenetre::after{
+        animation:none!important;opacity:0!important;
+      }
+      html:not(.nautilus-motion-enabled) #ecoutille.ec-rapide.ec-sortie{
+        opacity:1!important;transition:none!important;
+      }
+    }
+  </style>
+
   <!-- ===== PAGE DE GARDE : DÉCISION PRISE AVANT LE PREMIER RENDU =====
        L'écoutille s'affiche à CHAQUE chargement de l'accueil. Ce n'est pas
        un excès de zèle : à chaque chargement, le navigateur repart de zéro
@@ -2460,7 +2524,7 @@
   <!-- Moteur de la page de garde (journal de bord, alarme, ouverture).
        Différé : il s'exécute après les modules qui installent le
        guetteur de premier geste, dont dépend le sonar du site. -->
-  <script src="ecoutille.js?v=39" defer></script>
+  <script src="ecoutille.js?v=40" defer></script>
 
 </head>
 <body>
@@ -2483,11 +2547,12 @@
      Le style est écrit DANS cette page (voir le socle dans le <head>) ;
      ecoutille.js joue le récit et la sortie.
      ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- Un seul signal court, préchargé mais jamais joué avant le clic. Le
+     lecteur reste hors du décor pour ne pas couper la fin en le retirant. -->
+<audio id="openAlertAudio" preload="auto" playsinline aria-hidden="true">
+  <source src="assets/alerte-open.mp3?v=1" type="audio/mpeg">
+</audio>
 <div id="ecoutille" role="dialog" aria-modal="true" aria-label="Le Nautilus — appuie sur START pour ouvrir le sas et embarquer">
-  <!-- Un seul signal court, préchargé mais jamais joué avant le clic. -->
-  <audio id="openAlertAudio" preload="auto" playsinline aria-hidden="true">
-    <source src="assets/alerte-open.mp3?v=1" type="audio/mpeg">
-  </audio>
 
   <!-- LE DÉCOR : la paroi blindée du salon, son cadre de cuivre, la lumière
        du hublot et la patine du cinéma. Aucun clic, aucun découpage. -->
@@ -2596,10 +2661,26 @@
   var racine = document.getElementById('ecoutille');
   if(!racine) return;
 
+  /* Le son est très court : sa durée règle aussi le mouvement d'ouverture.
+     Si les métadonnées ne sont pas encore disponibles, on utilise 600 ms. */
+  window.NautilusDureeOpen = function(){
+    var audio = document.getElementById('openAlertAudio');
+    var duree = audio ? Number(audio.duration) * 1000 : 0;
+    return Number.isFinite(duree) && duree >= 250 && duree <= 1200 ? Math.round(duree) : 600;
+  };
+  window.NautilusPreparerOuverture = function(duree){
+    racine.style.setProperty('--ec-rapide-plongee', Math.round(duree * .15) + 'ms');
+    racine.style.setProperty('--ec-rapide-eclat', Math.round(duree * .20) + 'ms');
+    racine.style.setProperty('--ec-rapide-impact', Math.round(duree * .65) + 'ms');
+    racine.style.setProperty('--ec-rapide-sortie', Math.round(duree * .30) + 'ms');
+    racine.classList.add('ec-rapide');
+  };
+
   /* Un seul déclenchement, partagé par le moteur et son repli. La lecture
      est lancée directement dans le clic : pas de minuterie ni d'amorçage
      sonore avant le geste, ce qui reste compatible avec Safari sur iPhone. */
   var alerteOpenJouee = false;
+  var alerteOpenLecture = null;
   window.NautilusAlerteOpen = function(){
     if(alerteOpenJouee) return;
     alerteOpenJouee = true;
@@ -2610,9 +2691,47 @@
     try{
       audio.muted = false;
       audio.volume = 0.7;
-      var lecture = audio.play();
-      if(lecture && lecture.catch) lecture.catch(function(){});
+      alerteOpenLecture = audio.play();
+      if(alerteOpenLecture && alerteOpenLecture.catch) alerteOpenLecture.catch(function(){});
     }catch(e){ /* un refus audio ne doit pas bloquer l'ouverture */ }
+  };
+
+  /* Démarre l'animation avec le son quand il est prêt, puis termine avec
+     lui. En cas de silence, refus ou chargement lent, des délais bornés
+     garantissent une ouverture rapide sans jamais bloquer le joueur. */
+  window.NautilusSynchroniserOpen = function(duree, demarrer, terminer){
+    var audio = document.getElementById('openAlertAudio');
+    var lance = false, fini = false, debut = 0, attente = null, fin = null;
+    function nettoyer(){
+      clearTimeout(attente); clearTimeout(fin);
+      if(audio){ audio.removeEventListener('ended', sonTermine); audio.removeEventListener('error', sonTermine); }
+    }
+    function finir(){
+      if(fini) return;
+      fini = true; nettoyer(); terminer();
+    }
+    function sonTermine(){
+      if(!lance || fini) return;
+      clearTimeout(fin);
+      var reste = Math.max(0, duree - (performance.now() - debut));
+      fin = setTimeout(finir, reste);
+    }
+    function lancer(){
+      if(lance || fini) return;
+      lance = true; clearTimeout(attente); debut = performance.now();
+      try{ demarrer(); }catch(e){ finir(); return; }
+      if(audio && !audio.paused && !audio.ended){
+        audio.addEventListener('ended', sonTermine);
+        audio.addEventListener('error', sonTermine);
+        fin = setTimeout(finir, duree + 180);
+      }else{
+        fin = setTimeout(finir, duree);
+      }
+    }
+    if(alerteOpenLecture && typeof alerteOpenLecture.then === 'function'){
+      attente = setTimeout(lancer, 180);
+      alerteOpenLecture.then(lancer, lancer);
+    }else lancer();
   };
   window.__ecoutillePrete = true;   /* quelque chose est là pour ouvrir */
 
@@ -2628,6 +2747,8 @@
     if(!window.__ecoutilleSecours) return;      /* ecoutille.js a pris la main */
     if(racine.dataset.renduNU) return;
     racine.dataset.renduNU = '1';
+    var duree = window.NautilusDureeOpen();
+    window.NautilusPreparerOuverture(duree);
     window.NautilusAlerteOpen();
     try{
       sessionStorage.setItem('nautilusEcoutille', '1');
@@ -2635,29 +2756,31 @@
     }catch(e){ /* mode privé : on ouvre quand même */ }
     racine.classList.add('ec-ouvert');
     racine.classList.add('ec-presse');
-    setTimeout(function(){ racine.classList.remove('ec-presse'); }, 240);
-    /* Le geste relance le film au besoin (lecture refusée, batterie faible) :
-       c'est le même geste qui débloque tout le reste. Le film reste muet. */
+    setTimeout(function(){ racine.classList.remove('ec-presse'); }, Math.round(duree * .20));
+    /* Le film reste muet et peut repartir sur ce geste, si autorisé. */
     try{
       var mouvementReduit = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
         && !document.documentElement.classList.contains('nautilus-motion-enabled');
       if(film && !mouvementReduit){ var relance = film.play(); if(relance && relance.catch) relance.catch(function(){}); }
     }catch(e){}
-    try{ racine.style.willChange = 'transform, opacity'; }catch(e){}
-    setTimeout(function(){ racine.classList.add('ec-plongee'); }, 200);
-    setTimeout(function(){ racine.classList.add('ec-eclat'); }, 620);
-    setTimeout(function(){ racine.classList.add('ec-impact'); }, 1200);
-    setTimeout(function(){
-      racine.classList.add('ec-sortie');
+    function animer(){
+      try{ racine.style.willChange = 'transform, opacity'; }catch(e){}
+      racine.classList.add('ec-plongee');
+      setTimeout(function(){ racine.classList.add('ec-eclat'); }, Math.round(duree * .15));
+      setTimeout(function(){ racine.classList.add('ec-impact'); }, Math.round(duree * .35));
+      setTimeout(function(){ racine.classList.add('ec-sortie'); }, Math.round(duree * .70));
+    }
+    function terminer(){
+      if(racine.dataset.rendu === '1') return;
+      racine.dataset.rendu = '1';
       document.documentElement.classList.remove('ec-bloque');
       document.documentElement.classList.add('ec-arrivee');
       try{ if(window.__ecoutilleTitre) document.title = window.__ecoutilleTitre; }catch(e){}
       try{ window.dispatchEvent(new CustomEvent('nautilus:ecoutille-ouverte')); }catch(e){}
-    }, 2650);
-    setTimeout(function(){
       racine.classList.add('ec-passee');
       setTimeout(function(){ if(racine.parentNode) racine.parentNode.removeChild(racine); }, 80);
-    }, 3400);
+    }
+    window.NautilusSynchroniserOpen(duree, animer, terminer);
   }
 
   /* LE FILM DE FOND : muet, en boucle, sans aucune commande. On ne montre

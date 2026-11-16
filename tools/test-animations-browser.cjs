@@ -407,14 +407,22 @@ async function testOpenAlert(browser, base, mode) {
   const mobile = mode !== 'desktop';
   const context = await prepareContext(browser, base, {
     viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 },
-    hasTouch: mobile, isMobile: mobile
+    hasTouch: mobile, isMobile: mobile,
+    reducedMotion: mode === 'iphone-réduit' ? 'reduce' : 'no-preference'
   });
+  if (mode === 'iphone-réduit') await context.addInitScript(() => localStorage.setItem('nautilusAnimationsAutorisees', '1'));
   if (mode === 'silencieux') await context.addInitScript(() => localStorage.setItem('nautilusSoundOn', '0'));
   if (mode === 'secours') await context.route(/\/ecoutille\.js(?:\?|$)/, route => route.abort());
   await context.addInitScript(() => {
     window.__alertesTest = [];
     window.__clicOpenTest = null;
+    window.__ouvertureOpenTest = null;
+    window.__finSonOpenTest = null;
     window.__oscillateursOuverture = 0;
+    window.addEventListener('nautilus:ecoutille-ouverte', () => { window.__ouvertureOpenTest = performance.now(); });
+    document.addEventListener('ended', event => {
+      if (event.target.id === 'openAlertAudio') window.__finSonOpenTest = performance.now();
+    }, true);
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () {
       if (this.id === 'openAlertAudio' || this.id === 'alarmAudio') {
@@ -426,7 +434,7 @@ async function testOpenAlert(browser, base, mode) {
     if (audio) {
       const create = audio.prototype.createOscillator;
       audio.prototype.createOscillator = function () {
-        if (window.__clicOpenTest != null && performance.now() - window.__clicOpenTest < 1800)
+        if (window.__clicOpenTest != null && performance.now() - window.__clicOpenTest < 500)
           window.__oscillateursOuverture++;
         return create.apply(this, arguments);
       };
@@ -448,6 +456,9 @@ async function testOpenAlert(browser, base, mode) {
   }, null, { timeout: 10000 });
   const duree = await page.$eval('#openAlertAudio', audio => audio.duration);
   assert.ok(duree >= 0.3 && duree <= 0.8, 'signal court : ' + duree + ' s');
+  await page.$eval('#openAlertAudio', audio => {
+    audio.addEventListener('ended', () => { window.__finSonOpenTest = performance.now(); });
+  });
   assert.deepEqual(await page.evaluate(() => window.__alertesTest), [], 'aucune alerte avant OPEN');
 
   if (mode === 'desktop') {
@@ -469,20 +480,108 @@ async function testOpenAlert(browser, base, mode) {
   });
   await page.waitForTimeout(1600);
   const resultat = await page.evaluate(() => ({
-    sons: window.__alertesTest, clic: window.__clicOpenTest, oscillateurs: window.__oscillateursOuverture
+    sons: window.__alertesTest, clic: window.__clicOpenTest,
+    ouverture: window.__ouvertureOpenTest, finSon: window.__finSonOpenTest,
+    oscillateurs: window.__oscillateursOuverture
   }));
   const attendu = mode === 'silencieux' ? 0 : 1;
   assert.equal(resultat.sons.length, attendu, 'une seule alerte, ou aucune si le son est coupé');
   assert.equal(resultat.oscillateurs, 0, 'aucun écho, choc ou souffle sonore supplémentaire');
+  assert.ok(resultat.ouverture != null, 'la page doit être révélée');
+  assert.ok(Math.abs((resultat.ouverture - resultat.clic) - duree * 1000) < 160,
+    'l’ouverture doit durer autant que le signal sonore');
   if (attendu) {
     assert.equal(resultat.sons[0].id, 'openAlertAudio');
     assert.equal(resultat.sons[0].muet, false);
     assert.ok(resultat.sons[0].temps - resultat.clic >= 0 && resultat.sons[0].temps - resultat.clic < 100,
       'le signal doit partir directement au clic');
+    assert.ok(resultat.finSon != null, 'le signal doit aller jusqu’à sa fin');
+    assert.ok(Math.abs(resultat.ouverture - resultat.finSon) < 180,
+      'la fin du signal et la fin de l’ouverture doivent coïncider');
   }
   assert.deepEqual(errors, [], 'aucune erreur JavaScript pendant OPEN');
   await context.close();
   console.log('✓ Une seule alerte OPEN : ' + mode);
+}
+
+async function testOpenLateEngine(browser, base) {
+  const context = await prepareContext(browser, base, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  let liberer;
+  const attente = new Promise(resolve => { liberer = resolve; });
+  await context.route(/\/ecoutille\.js(?:\?|$)/, async route => { await attente; await route.continue(); });
+  await context.addInitScript(() => {
+    window.__sonsOpenTardifs = 0;
+    window.__ouverturesTardives = 0;
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      if (this.id === 'openAlertAudio') window.__sonsOpenTardifs++;
+      return play.apply(this, arguments);
+    };
+    window.addEventListener('nautilus:ecoutille-ouverte', () => window.__ouverturesTardives++);
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto(base, { waitUntil: 'commit' });
+    await page.waitForFunction(() => typeof window.__ecoutilleSecours === 'function', null, { timeout: 10000 });
+    await page.waitForFunction(() => document.getElementById('openAlertAudio')?.duration > 0, null, { timeout: 10000 });
+    await page.locator('#ecStart').tap(); // le repli démarre avant le moteur
+    liberer();
+    await page.waitForFunction(() => window.__ecoutilleSecours === null, null, { timeout: 5000 });
+    await page.evaluate(() => {
+      const bouton = document.getElementById('ecStart');
+      if (bouton) bouton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await page.waitForTimeout(1200);
+    assert.equal(await page.evaluate(() => window.__sonsOpenTardifs), 1, 'une seule alerte avec moteur retardé');
+    assert.equal(await page.evaluate(() => window.__ouverturesTardives), 1, 'une seule ouverture avec moteur retardé');
+  } finally {
+    liberer();
+    await context.close();
+  }
+  console.log('✓ Un seul signal et une seule ouverture si le moteur arrive en retard');
+}
+
+async function testOpenAudioUnavailable(browser, base, mode) {
+  const context = await prepareContext(browser, base, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  if (mode === 'fichier indisponible') {
+    await context.route(/\/assets\/alerte-open\.mp3(?:\?|$)/, route => route.abort());
+  } else {
+    await context.addInitScript(mode => {
+      const play = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () {
+        if (this.id === 'openAlertAudio') {
+          if (mode === 'lecture en attente') return new Promise(() => {});
+          return Promise.reject(new DOMException('Lecture refusée', 'NotAllowedError'));
+        }
+        return play.apply(this, arguments);
+      };
+    }, mode);
+  }
+  await context.addInitScript(() => {
+    window.__debutOuverture = null;
+    window.__finOuverture = null;
+    document.addEventListener('click', event => {
+      if (event.isTrusted && event.target.closest && event.target.closest('#ecStart'))
+        window.__debutOuverture = performance.now();
+    }, true);
+    window.addEventListener('nautilus:ecoutille-ouverte', () => { window.__finOuverture = performance.now(); });
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => [...document.querySelector('#ecMagasinSelect').options]
+    .some(option => option.value && !option.disabled), null, { timeout: 10000 });
+  const store = await page.$eval('#ecMagasinSelect', el =>
+    [...el.options].find(option => option.value && !option.disabled).value);
+  await page.selectOption('#ecMagasinSelect', store);
+  await page.locator('#ecStart').tap();
+  await page.waitForFunction(() => window.__finOuverture != null, null, { timeout: 3000 });
+  const delai = await page.evaluate(() => window.__finOuverture - window.__debutOuverture);
+  assert.ok(delai >= 400 && delai < 1100, mode + ' : ouverture rapide malgré le problème audio (' + delai + ' ms)');
+  assert.deepEqual(errors, [], 'aucune erreur non gérée lorsque le son est indisponible');
+  await context.close();
+  console.log('✓ Ouverture rapide si ' + mode);
 }
 
 async function testHatchReducedMotion(browser, base) {
@@ -1089,6 +1188,18 @@ async function testPartialPrecache(browser, base, withFallback) {
   if (process.env.CHROMIUM_BIN) options.executablePath = process.env.CHROMIUM_BIN;
   const browser = await chromium.launch(options);
   try {
+    if (process.env.NAUTILUS_TEST_ONLY === 'open') {
+      await testOpenAlert(browser, base, 'desktop');
+      await testOpenAlert(browser, base, 'mobile');
+      await testOpenAlert(browser, base, 'iphone-réduit');
+      await testOpenAlert(browser, base, 'silencieux');
+      await testOpenAlert(browser, base, 'secours');
+      await testOpenLateEngine(browser, base);
+      await testOpenAudioUnavailable(browser, base, 'lecture refusée');
+      await testOpenAudioUnavailable(browser, base, 'lecture en attente');
+      await testOpenAudioUnavailable(browser, base, 'fichier indisponible');
+      return;
+    }
     await testRadar(browser, base, { width: 1440, height: 900 }, 'desktop');
     await testRadar(browser, base, { width: 390, height: 844 }, 'mobile');
     await testWithoutIntersectionObserver(browser, base);
@@ -1103,8 +1214,13 @@ async function testPartialPrecache(browser, base, withFallback) {
       await testHatchAnimation(browser, base, { width: 390, height: 844 }, 'mobile');
       await testOpenAlert(browser, base, 'desktop');
       await testOpenAlert(browser, base, 'mobile');
+      await testOpenAlert(browser, base, 'iphone-réduit');
       await testOpenAlert(browser, base, 'silencieux');
       await testOpenAlert(browser, base, 'secours');
+      await testOpenLateEngine(browser, base);
+      await testOpenAudioUnavailable(browser, base, 'lecture refusée');
+      await testOpenAudioUnavailable(browser, base, 'lecture en attente');
+      await testOpenAudioUnavailable(browser, base, 'fichier indisponible');
       await testHatchReducedMotion(browser, base);
       await testMotionChoice(browser, base, 'clavier');
       await testMotionChoice(browser, base, 'tactile');
