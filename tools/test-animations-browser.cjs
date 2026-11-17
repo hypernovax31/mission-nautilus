@@ -1268,45 +1268,54 @@ async function testIntegratedPaliers(browser, base, viewport, label) {
 
   const paliers = [
     ['1721310619.html', '#mcHost .mc-grille', 'mots croisés'],
-    ['1831411720.html', '#puzzleHost .puzzle-piece', 'puzzle'],
+    ['1831411720.html', '#puzzleHost .photo-viewfinder, #puzzleHost .puzzle-piece', 'photo défi'],
     ['1941512821.html', '#epreuveHost .marq-case', 'relevé du sonar']
   ];
   for (const [fichier, selecteur, nom] of paliers) {
     await page.goto(base + fichier + '?apercu=jeu&k=k2h04qj', { waitUntil: 'domcontentloaded' });
     await page.locator('#briefCtaBtn').waitFor({ state: 'visible', timeout: 6000 });
-    if (nom === 'puzzle') {
+    if (nom === 'photo défi' || nom === 'puzzle') {
       const briefing = await page.locator('#briefHost').innerText();
-      assert.doesNotMatch(briefing, /livre|ouvrage|retrait/i, 'pas de livre ni de retrait dans le palier 3');
+      assert.doesNotMatch(briefing, /retrait/i, 'pas de retrait dans le palier 3');
     }
     await page.locator('#briefCtaBtn').click();
     await page.locator(selecteur).first().waitFor({ state: 'visible', timeout: 9000 });
     if (nom === 'mots croisés') {
       assert.ok((await page.locator('#mcHost .mc-input').count()) > 30);
-    } else if (nom === 'puzzle') {
-      assert.equal(await page.locator('#puzzleHost .puzzle-piece').count(), 51);
-      const resultat = await page.evaluate(() => {
-        const stage = document.querySelector('#pzStage');
-        const slots = [...document.querySelectorAll('#pzBoard .puzzle-slot')];
-        const piece = [...stage.querySelectorAll('.puzzle-piece')].find(p => Number(p.dataset.idx) === 30);
-        const slot = slots[30];
-        const r = stage.getBoundingClientRect();
-        const size = parseFloat(piece.style.width);
-        const prise = size * 0.62 / 2;
-        const pointer = (type, target, x, y) => target.dispatchEvent(new PointerEvent(type, {
-          bubbles: true, cancelable: true, pointerId: 1, clientX: x, clientY: y
-        }));
-        const x = r.left + parseFloat(piece.style.left) + prise;
-        const y = r.top + parseFloat(piece.style.top) + prise;
-        const cibleX = r.left + parseFloat(slot.style.left) + size / 2;
-        const cibleY = r.top + parseFloat(slot.style.top) + size / 2;
-        pointer('pointerdown', piece, x, y);
-        pointer('pointermove', stage, cibleX, cibleY);
-        pointer('pointerup', stage, cibleX, cibleY);
-        return { place: piece.classList.contains('puzzle-piece--lock'),
-          etat: document.getElementById('pzStatus').textContent };
-      });
-      assert.equal(resultat.place, true, 'une pièce du puzzle doit se placer correctement');
-      assert.match(resultat.etat, /1\s*\/\s*51/);
+    } else if (nom === 'photo défi' || nom === 'puzzle') {
+      const isPhotoDefi = (await page.locator('#puzzleHost .photo-viewfinder').count()) > 0;
+      if (isPhotoDefi) {
+        assert.ok(await page.locator('#puzzleHost #photoVideo').count() > 0);
+        assert.ok(await page.locator('#btnTrigger').count() > 0);
+        assert.ok(await page.locator('#btnUrgence').count() > 0);
+        const timerText = await page.locator('#photoTimer').innerText();
+        assert.match(timerText, /0[23]:\d{2}/, 'le chronomètre de 3 minutes doit être actif');
+      } else {
+        assert.equal(await page.locator('#puzzleHost .puzzle-piece').count(), 51);
+        const resultat = await page.evaluate(() => {
+          const stage = document.querySelector('#pzStage');
+          const slots = [...document.querySelectorAll('#pzBoard .puzzle-slot')];
+          const piece = [...stage.querySelectorAll('.puzzle-piece')].find(p => Number(p.dataset.idx) === 30);
+          const slot = slots[30];
+          const r = stage.getBoundingClientRect();
+          const size = parseFloat(piece.style.width);
+          const prise = size * 0.62 / 2;
+          const pointer = (type, target, x, y) => target.dispatchEvent(new PointerEvent(type, {
+            bubbles: true, cancelable: true, pointerId: 1, clientX: x, clientY: y
+          }));
+          const x = r.left + parseFloat(piece.style.left) + prise;
+          const y = r.top + parseFloat(piece.style.top) + prise;
+          const cibleX = r.left + parseFloat(slot.style.left) + size / 2;
+          const cibleY = r.top + parseFloat(slot.style.top) + size / 2;
+          pointer('pointerdown', piece, x, y);
+          pointer('pointermove', stage, cibleX, cibleY);
+          pointer('pointerup', stage, cibleX, cibleY);
+          return { place: piece.classList.contains('puzzle-piece--lock'),
+            etat: document.getElementById('pzStatus').textContent };
+        });
+        assert.equal(resultat.place, true, 'une pièce du puzzle doit se placer correctement');
+        assert.match(resultat.etat, /1\s*\/\s*51/);
+      }
     } else {
       assert.equal(await page.locator('#epreuveHost .marq-case').count(), 81);
       assert.equal(await page.locator('#epreuveHost .marq-jeton').count(), 8);

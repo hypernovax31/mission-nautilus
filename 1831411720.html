@@ -13,7 +13,7 @@
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier3.css?v=4">
+  <link rel="stylesheet" href="css/palier3.css?v=5">
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
@@ -120,11 +120,11 @@
     </div>
   </section>
 
-  <!-- ÉPREUVE : PUZZLE PHOTO DU LIEU. -->
+  <!-- ÉPREUVE : PHOTO DÉFI EN MAGASIN FNAC. -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 3</h2>
+    <h2 id="sasUnlockedTitle">PALIER 3 — PHOTO DÉFI</h2>
     <div class="body">
-      <div id="puzzleStatut" class="status-banner info">⏳ <b>Préparation de la photo…</b></div>
+      <div id="puzzleStatut" class="status-banner info">📸 <b>Initialisation du collimateur optique…</b></div>
       <div id="puzzleHost"></div>
       <a class="puzzle-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
@@ -146,8 +146,8 @@
 <!-- Équipage actif en plongée, commun à tous les paliers. -->
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<!-- Moteur de l'épreuve PUZZLE PHOTO (Palier 3). -->
-<script src="puzzle-palier3.js?v=4"></script>
+<!-- Moteur de l'épreuve PHOTO DÉFI EN MAGASIN FNAC (Palier 3). -->
+<script src="photo-defi.js?v=1"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
 <script src="victoire-palier.js?v=13"></script>
 <script src="records-palier.js?v=2"></script>
@@ -295,28 +295,21 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     if (carte) carte.classList.toggle('epreuve-focus', !visible);
   }
 
-  function afficherBlocage(jusqua, nom) {
+  function afficherBlocage(jusqua, nom, motif) {
     afficherVueEpreuve();
     afficherJournalDeBord(true);
+    var cause = motif === 'temps_ecoule'
+      ? "⏱️ <b>Temps écoulé (3 min) — réserve d’oxygène épuisée !</b> "
+      : "🔒 <b>Remontée forcée en surface !</b> ";
+
     statut(nom
-      ? "🔒 <b>3 révélations demandées — remontée forcée !</b> " + esc(nom) + " regagne la surface ; reprise possible à <b>"
+      ? cause + esc(nom) + " regagne la surface ; reprise possible à <b>"
         + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
-        + "avec son Code Matelot — <b>chacun ses erreurs</b>."
-      : "🔒 <b>3 révélations demandées — remontée forcée !</b> Tu regagnes la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
-        + "pour que tes erreurs restent les tiennes.", 'danger');
+        + "avec son Code Matelot (nouvelle série de défis assignée)."
+      : cause + "Tu regagnes la surface ; reprise possible à <b>"
+        + heureLisible(jusqua) + "</b> sur cet appareil (nouvelle série de défis assignée).", 'danger');
     var host = $('puzzleHost');
     if (host) host.innerHTML = '';
-  }
-
-  function onErreur(n, max) {
-    nbErreurs = n;
-    if (n >= max) {
-      declencherBlocage();
-    } else {
-      statut('🔎 <b>Le sonar a révélé une pièce.</b> ' + (max - n) + ' aide(s) restante(s) avant la remontée en surface.', 'warning');
-      acte('demande une pièce au sonar (' + n + '/' + max + ')', 'warning');
-    }
   }
 
   /* Son de défaite (module partagé), JAMAIS si le sonar est éteint. */
@@ -328,36 +321,41 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     } catch (e) {}
   }
 
-  /* 3 révélations demandées : blocage PERSONNEL (identifié) ou repli local. */
-  function declencherBlocage() {
+  /* Échec au Photo Défi : temps imparti écoulé ou tentative de permutation non autorisée. */
+  function declencherBlocage(motif) {
     if (apercuAdminAutorise()) {
       journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
       return;
     }
     monIdentite().then(function (ident) {
       if (ident && ident.isTest) {
-        statut('🧪 <b>Mode concepteur : 3 révélations demandées.</b> Aucun blocage en test — le puzzle reste jouable, rien n’est enregistré.', 'warning');
-        journal('🧪 Mode concepteur : 3 révélations au puzzle — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
+        statut('🧪 <b>Mode concepteur.</b> Aucun blocage en test — reprise libre.', 'warning');
+        journal('🧪 Mode concepteur : échec Photo Défi ignoré, aucune écriture.', 'info');
         return;
       }
       jouerSonDefaite();
+      var raison = motif === 'temps_ecoule' ? 'photo_defi_timeout' : 'photo_defi_escape';
+      var texteActe = motif === 'temps_ecoule'
+        ? 'temps écoulé (3 min) — remonte en surface'
+        : 'permutation non autorisée — remonte en surface';
+
       if (ident) {
-        window.NautilusBlocages.poserBlocage(ident, 'puzzle_too_many_reveals')
+        window.NautilusBlocages.poserBlocage(ident, raison)
           .then(function (r) {
-            afficherBlocage(r.lockedUntil, ident.name);
-            acte('3 révélations — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
+            afficherBlocage(r.lockedUntil, ident.name, motif);
+            acte(texteActe + ' (' + r.hours + ' h)', 'danger', ident.name);
           })
           .catch(function () {
             _blocageSession = Date.now() + BLOCAGE_MS;
-            afficherBlocage(_blocageSession, ident.name);
+            afficherBlocage(_blocageSession, ident.name, motif);
             journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
           });
         return;
       }
       var jusqua = Date.now() + BLOCAGE_MS;
       try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
-      afficherBlocage(jusqua, null);
-      acte('3 révélations — remonte en surface (1 h)', 'danger');
+      afficherBlocage(jusqua, null, motif);
+      acte(texteActe + ' (1 h)', 'danger');
     });
   }
 
@@ -436,10 +434,11 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     });
   }
 
-  function onVictoire() {
+  function onVictoire(res) {
+    var duree = res && res.duree ? res.duree : 0;
     afficherJournalDeBord(false);
-    statut('🏆 <b>Palier 3 franchi !</b> La photo est reconstituée — le lieu est identifié.', 'success');
-    acte('reconstitue la photo', 'success');
+    statut('🏆 <b>Palier 3 franchi !</b> Les 3 échantillons ont été identifiés dans les rayons de la Fnac.', 'success');
+    acte('valide les 3 défis photo en magasin' + (duree ? ' en ' + duree + ' s' : ''), 'success');
     propagerVictoire();
     afficherEcranVictoire();
   }
@@ -454,45 +453,50 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   /* Démarrage protégé : blocage personnel du matelot identifié, sinon
      repli local anonyme. Le moindre doute réseau laisse JOUER. */
   async function demarrer() {
+    var ident = null;
     if (!apercuAdminAutorise()) {
-      var ident = await monIdentite();
+      ident = await monIdentite();
       if (ident && !ident.isTest) {
         var bloc = await window.NautilusBlocages.blocageActif(ident);
         if (bloc) {
-          afficherBlocage(bloc.lockedUntil, ident.name);
+          afficherBlocage(bloc.lockedUntil, ident.name, bloc.reason);
           journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
             + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
           return;
         }
       } else if (!ident) {
         var jusqua = blocageAnonymeJusqua();
-        if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
+        if (jusqua > Date.now()) { afficherBlocage(jusqua, null, 'anonyme'); return; }
       }
     }
     afficherVueEpreuve();
     t0Partie = Date.now();
-    statut('🧩 <b>Reconstitue la photo.</b> Glisse chaque éclat rond à sa place dans le hublot. <b>3 révélations demandées</b> et tu remontes en surface.', 'info');
-    window.NautilusPuzzle.init($('puzzleHost'), {
-      image: PUZZLE_IMAGE,
-      grille: PUZZLE_GRILLE,
-      cadrageX: PUZZLE_CADRAGE_X,
-      cadrageY: PUZZLE_CADRAGE_Y,
-      graine: 'palier3',
-      maxErreurs: 3,
-      onErreur: onErreur,
-      onVictoire: onVictoire
+    statut('📸 <b>Viseur optique activé.</b> 3 minutes chrono pour capturer vos 3 échantillons dans la Fnac !', 'info');
+
+    var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
+
+    window.NautilusPhotoDefi.init($('puzzleHost'), {
+      equipe: equipageCode,
+      onVictoire: onVictoire,
+      onEchecTemps: function () {
+        declencherBlocage('temps_ecoule');
+      },
+      onErreurFatale: function () {
+        declencherBlocage('fuite_non_autorisee');
+      }
     });
   }
 
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
      Explication immersive et synthétique du thème SANS dévoiler le lieu :
-     résumé clair et nuancé avec avertissement de remise à zéro. */
+     inspiré des Paliers 1 & 2, concis et immersif pour la Fnac. */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue à bord, matelot. Le <b>sonar du Nautilus</b> a capturé la zone du prochain sas, mais l'onde est revenue <b>fragmentée</b> : la photo est morcelée en <b>éclats ronds</b> derrière le hublot. Reconstitue l'image pour révéler l'indice du magasin.",
+    intro: "Bienvenue à bord, matelot. Le <b>Nautilus</b> est en immersion secrète dans les coursives de la <b>Fnac</b>. Pour calibrer notre système optique et déverrouiller le prochain sas, votre équipe doit capturer <b>3 échantillons visuels précis</b> disséminés dans les rayons.",
     consignes: [
-      { ico: '🧩', html: "Le hublot compte <b>" + NB_PIECES + " éclats ronds</b> à repositionner pour recomposer la photo." },
-      { ico: '🎯', html: "Glisse chaque éclat : <b>au bon emplacement il s'ancre</b>, sinon il retourne dans la pioche." },
-      { ico: '🔎', warn: true, html: "Révéler un éclat compte pour <b>1 erreur</b> (3 erreurs = remontée en surface)." },
+      { ico: '⏱️', warn: true, html: "<b>3 minutes chrono (180 s)</b> pour photographier vos 3 cibles dans le magasin." },
+      { ico: '🎯', html: "<b>Défis uniques par équipe</b> : chaque équipage reçoit sa propre série de clichés à accomplir à la suite." },
+      { ico: '📸', html: "<b>Visée en direct uniquement</b> : utilisez le viseur optique (zoom, macro et torche disponibles) — aucun import autorisé." },
+      { ico: '🔄', warn: true, html: "<b>1 seule permutation d’urgence</b> accordée en cas d’impasse. Tout refus ou échec supplémentaire entraîne la <b>remontée immédiate en surface</b> !" },
       { ico: '⚠️', warn: true, html: "<b>Quitter ce palier remet les compteurs à zéro</b> : toute progression en cours sera réinitialisée." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
