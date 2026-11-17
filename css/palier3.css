@@ -354,9 +354,9 @@ main{ max-width:1720px; }
   color:#ff6b81;
   border:1px solid rgba(255,71,87,.45);
   border-radius:12px;
-  padding:9px 18px;
+  padding:10px 20px;
   font-family:inherit;
-  font-size:12px;
+  font-size:13px;
   font-weight:900;
   cursor:pointer;
   transition:all .18s ease;
@@ -364,18 +364,31 @@ main{ max-width:1720px; }
 .photo-btn-emergency:hover:not(:disabled){
   background:rgba(255,71,87,.26);
 }
-.photo-btn-emergency.is-used{
-  opacity:.45;
-  cursor:not-allowed;
-  background:rgba(255,255,255,.05);
-  color:#888;
-  border-color:#444;
+.photo-btn-emergency.is-abandon{
+  background:rgba(255,71,87,.32);
+  color:#ffffff;
+  border:2px solid #ff4757;
+  box-shadow:0 0 14px rgba(255,71,87,.5);
+  font-weight:1000;
+  animation:abandonPulse 1.2s infinite alternate;
+}
+@keyframes abandonPulse{
+  from{ transform:scale(1); box-shadow:0 0 10px rgba(255,71,87,.4); }
+  to{ transform:scale(1.03); box-shadow:0 0 18px rgba(255,71,87,.8); }
+}
+.photo-btn-emergency.is-abandon:hover{
+  background:#ff4757;
+  color:#fff;
 }
 .photo-emergency-warning{
   font-size:11px;
   color:#ffa502;
   margin-top:6px;
   line-height:1.35;
+}
+.photo-emergency-warning.is-urgent{
+  color:#ff4757;
+  font-weight:800;
 }
 
 /* Lien de retour à l'accueil */

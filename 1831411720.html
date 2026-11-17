@@ -13,7 +13,7 @@
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier3.css?v=5">
+  <link rel="stylesheet" href="css/palier3.css?v=6">
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
@@ -126,7 +126,7 @@
     <div class="body">
       <div id="puzzleStatut" class="status-banner info">📸 <b>Initialisation du collimateur optique…</b></div>
       <div id="puzzleHost"></div>
-      <a class="puzzle-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
 </main>
@@ -147,7 +147,7 @@
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
 <!-- Moteur de l'épreuve PHOTO DÉFI EN MAGASIN FNAC (Palier 3). -->
-<script src="photo-defi.js?v=1"></script>
+<script src="photo-defi.js?v=2"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
 <script src="victoire-palier.js?v=13"></script>
 <script src="records-palier.js?v=2"></script>
@@ -295,19 +295,27 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     if (carte) carte.classList.toggle('epreuve-focus', !visible);
   }
 
+  var partieEnCours = false;
+
   function afficherBlocage(jusqua, nom, motif) {
+    partieEnCours = false;
     afficherVueEpreuve();
     afficherJournalDeBord(true);
-    var cause = motif === 'temps_ecoule'
-      ? "⏱️ <b>Temps écoulé (3 min) — réserve d’oxygène épuisée !</b> "
-      : "🔒 <b>Remontée forcée en surface !</b> ";
+    var cause = "🔒 <b>Remontée immédiate en surface !</b> ";
+    if (motif === 'temps_ecoule') {
+      cause = "⏱️ <b>Temps écoulé (3 min) — réserve d’oxygène épuisée !</b> ";
+    } else if (motif === 'abandon') {
+      cause = "🚨 <b>Abandon de la mission — remontée forcée en surface !</b> ";
+    } else if (motif === 'sortie_jeu') {
+      cause = "🚪 <b>Sortie non autorisée du mini-jeu — remontée forcée en surface !</b> ";
+    }
 
     statut(nom
       ? cause + esc(nom) + " regagne la surface ; reprise possible à <b>"
         + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
-        + "avec son Code Matelot (nouvelle série de défis assignée)."
+        + "avec son Code Matelot (nouvelle série de 5 cibles assignée)."
       : cause + "Tu regagnes la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b> sur cet appareil (nouvelle série de défis assignée).", 'danger');
+        + heureLisible(jusqua) + "</b> sur cet appareil (nouvelle série de 5 cibles assignée).", 'danger');
     var host = $('puzzleHost');
     if (host) host.innerHTML = '';
   }
@@ -321,8 +329,9 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     } catch (e) {}
   }
 
-  /* Échec au Photo Défi : temps imparti écoulé ou tentative de permutation non autorisée. */
+  /* Échec au Photo Défi : abandon, sortie précoce ou temps imparti écoulé. */
   function declencherBlocage(motif) {
+    partieEnCours = false;
     if (apercuAdminAutorise()) {
       journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
       return;
@@ -330,14 +339,15 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     monIdentite().then(function (ident) {
       if (ident && ident.isTest) {
         statut('🧪 <b>Mode concepteur.</b> Aucun blocage en test — reprise libre.', 'warning');
-        journal('🧪 Mode concepteur : échec Photo Défi ignoré, aucune écriture.', 'info');
+        journal('🧪 Mode concepteur : sanction Photo Défi (' + motif + ') ignorée, aucune écriture.', 'info');
         return;
       }
       jouerSonDefaite();
-      var raison = motif === 'temps_ecoule' ? 'photo_defi_timeout' : 'photo_defi_escape';
-      var texteActe = motif === 'temps_ecoule'
-        ? 'temps écoulé (3 min) — remonte en surface'
-        : 'permutation non autorisée — remonte en surface';
+      var raison = 'photo_defi_' + (motif || 'fail');
+      var texteActe = 'remonte en surface';
+      if (motif === 'temps_ecoule') texteActe = 'temps écoulé (3 min) — remonte en surface';
+      else if (motif === 'abandon') texteActe = 'abandonne la plongée — remonte en surface';
+      else if (motif === 'sortie_jeu') texteActe = 'quitte le poste en cours de plongée — remonte en surface';
 
       if (ident) {
         window.NautilusBlocages.poserBlocage(ident, raison)
@@ -435,10 +445,11 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   }
 
   function onVictoire(res) {
+    partieEnCours = false;
     var duree = res && res.duree ? res.duree : 0;
     afficherJournalDeBord(false);
-    statut('🏆 <b>Palier 3 franchi !</b> Les 3 échantillons ont été identifiés dans les rayons de la Fnac.', 'success');
-    acte('valide les 3 défis photo en magasin' + (duree ? ' en ' + duree + ' s' : ''), 'success');
+    statut('🏆 <b>Palier 3 franchi !</b> Les 5 cibles ont été identifiées dans les rayons de la Fnac.', 'success');
+    acte('valide les 5 défis photo en magasin' + (duree ? ' en ' + duree + ' s' : ''), 'success');
     propagerVictoire();
     afficherEcranVictoire();
   }
@@ -471,39 +482,84 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     }
     afficherVueEpreuve();
     t0Partie = Date.now();
-    statut('📸 <b>Viseur optique activé.</b> 3 minutes chrono pour capturer vos 3 échantillons dans la Fnac !', 'info');
+    partieEnCours = true;
+    statut('📸 <b>Viseur optique activé.</b> 3 minutes chrono pour capturer vos 5 cibles en rayon Fnac !', 'info');
 
     var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
 
     window.NautilusPhotoDefi.init($('puzzleHost'), {
       equipe: equipageCode,
-      onVictoire: onVictoire,
+      onVictoire: function (res) {
+        partieEnCours = false;
+        onVictoire(res);
+      },
       onEchecTemps: function () {
         declencherBlocage('temps_ecoule');
       },
-      onErreurFatale: function () {
-        declencherBlocage('fuite_non_autorisee');
+      onAbandon: function () {
+        declencherBlocage('abandon');
       }
     });
   }
+
+  // Interception de sortie précoce du jeu (remontée immédiate en surface)
+  function intercepterSortie(e) {
+    if (partieEnCours) {
+      var conf = confirm("⚠️ Quitter le mini-jeu en cours entraîne la remontée immédiate en surface (blocage matelot). Confirmez-vous l’abandon ?");
+      if (conf) {
+        declencherBlocage('sortie_jeu');
+      } else {
+        if (e) e.preventDefault();
+        return false;
+      }
+    }
+  }
+
+  var btnAccueilTop = $('backBtn');
+  if (btnAccueilTop) {
+    btnAccueilTop.addEventListener('click', function (e) {
+      if (partieEnCours) {
+        if (!intercepterSortie(e)) return;
+      }
+      location.href = 'index.html?ecoutille=0';
+    });
+  }
+
+  var btnAccueilBas = $('btnSortieJeu');
+  if (btnAccueilBas) {
+    btnAccueilBas.addEventListener('click', function (e) {
+      if (partieEnCours) {
+        if (!intercepterSortie(e)) return;
+      }
+    });
+  }
+
+  window.addEventListener('beforeunload', function () {
+    if (partieEnCours && !apercuAdminAutorise()) {
+      declencherBlocage('sortie_jeu');
+    }
+  });
 
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
      Explication immersive et synthétique du thème SANS dévoiler le lieu :
      inspiré des Paliers 1 & 2, concis et immersif pour la Fnac. */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue à bord, matelot. Le <b>Nautilus</b> est en immersion secrète dans les coursives de la <b>Fnac</b>. Pour calibrer notre système optique et déverrouiller le prochain sas, votre équipe doit capturer <b>3 échantillons visuels précis</b> disséminés dans les rayons.",
+    intro: "Bienvenue à bord, matelot. Le <b>Nautilus</b> est en immersion secrète dans les coursives de la <b>Fnac</b>. Pour calibrer notre système optique et déverrouiller le prochain sas, votre équipe doit capturer <b>5 échantillons visuels précis</b> (formes d’objets, spectres et textes OCR) d’articles en vente en rayon.",
     consignes: [
-      { ico: '⏱️', warn: true, html: "<b>3 minutes chrono (180 s)</b> pour photographier vos 3 cibles dans le magasin." },
-      { ico: '🎯', html: "<b>Défis uniques par équipe</b> : chaque équipage reçoit sa propre série de clichés à accomplir à la suite." },
+      { ico: '⏱️', warn: true, html: "<b>3 minutes chrono (180 s)</b> pour photographier vos 5 cibles dans le magasin." },
+      { ico: '🎯', html: "<b>5 cibles uniques par équipe</b> : formes, couleurs et lecture OCR d’articles en vente — révélées une à une." },
       { ico: '📸', html: "<b>Visée en direct uniquement</b> : utilisez le viseur optique (zoom, macro et torche disponibles) — aucun import autorisé." },
-      { ico: '🔄', warn: true, html: "<b>1 seule permutation d’urgence</b> accordée en cas d’impasse. Tout refus ou échec supplémentaire entraîne la <b>remontée immédiate en surface</b> !" },
-      { ico: '⚠️', warn: true, html: "<b>Quitter ce palier remet les compteurs à zéro</b> : toute progression en cours sera réinitialisée." }
+      { ico: '🔄', html: "<b>1 seul changement de cible</b> autorisé. Le bouton se transforme ensuite en <b>Abandon</b>." },
+      { ico: '🚨', warn: true, html: "<b>Remontée immédiate en surface</b> (blocage matelot) en cas d’abandon, de sortie du mini-jeu ou de temps écoulé !" }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
       glisserEnHaut();
       lancer();
       setTimeout(glisserEnHaut, 350);
+      setTimeout(glisserEnHaut, 900);
+    }
+  });
       setTimeout(glisserEnHaut, 900);
     }
   });
