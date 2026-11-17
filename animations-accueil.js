@@ -121,7 +121,7 @@
     if (!radarEnMarche || !radarElement) return;
     if (radarDernierTemps !== null) {
       var delta = Math.max(0, Math.min(1000, maintenant - radarDernierTemps));
-      radarAngle = (radarAngle + delta * 360 / 2800) % 360;
+      radarAngle = (radarAngle + delta * 360 / 1400) % 360;
     }
     radarDernierTemps = maintenant;
     radarElement.style.transform = 'rotate(' + radarAngle.toFixed(3) + 'deg)';

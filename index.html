@@ -4123,8 +4123,8 @@
      Chaque nouvel équipage apparaît sur le sonar sous forme de point blanc
      qui « pop », accompagné exclusivement de assets/Victoire.mp3. La carte
      suit le point sans modifier l'alarme utilisée par le reste du jeu. */
-  const REVEAL_SOUND_FALLBACK_MS = 4100; // durée approchée de Victoire.mp3 si l'événement ended ne vient pas
-  const CARD_AFTER_BLIP_MS = 165;        // delai entre le point et sa carte (2x plus rapide)
+  const REVEAL_SOUND_FALLBACK_MS = 2050; // durée approchée de Victoire.mp3 accélérée
+  const CARD_AFTER_BLIP_MS = 80;         // délai entre le point et sa carte (2x plus rapide)
 
   function prefersReducedMotion(){
     return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -4149,11 +4149,11 @@
   function startVictoryEchoes(blipEl, soundDurationMs){
     if(!blipEl) return;
     clearVictoryEchoes(blipEl);
-    const waveDuration = Math.max(450, Math.round(soundDurationMs / 5.1));
+    const waveDuration = Math.max(225, Math.round(soundDurationMs / 10.2));
     const delays = [
-      Math.max(50, Math.round(soundDurationMs * .015)),
-      Math.round(soundDurationMs * .16),
-      Math.round(soundDurationMs * .30)
+      Math.max(25, Math.round(soundDurationMs * .008)),
+      Math.round(soundDurationMs * .08),
+      Math.round(soundDurationMs * .15)
     ];
     delays.forEach(delay => {
       const echo = document.createElement('span');
@@ -4162,7 +4162,7 @@
       echo.style.setProperty('--echo-delay', `${delay}ms`);
       blipEl.appendChild(echo);
     });
-    setTimeout(() => clearVictoryEchoes(blipEl), soundDurationMs + 250);
+    setTimeout(() => clearVictoryEchoes(blipEl), Math.round(soundDurationMs / 2) + 125);
   }
 
   /* Attente qui ne s'ecoule QUE pendant que le bloc est sous les yeux.
@@ -4495,7 +4495,7 @@
          bon endroit rapidement, on enchaine sans lui. Les annonces
          suivantes gardent le rythme complet, l'attente y est masquee par
          l'animation de la carte precedente. */
-      const sweepTimeout = isFirstReveal ? 350 : 1600;
+      const sweepTimeout = isFirstReveal ? 175 : 800;
       await waitForSweepOver(blipAngle(blipIdx), sweepTimeout);
       isFirstReveal = false;
 
@@ -4510,7 +4510,7 @@
         if(!reducedMotion) startVictoryEchoes(blipEl, victoryDuration);
       }
 
-      /* c) La carte suit le point de très près : 0,33 s plus tard. Le délai
+      /* c) La carte suit le point de très près : 0,08 s plus tard. Le délai
          est mis en pause si le joueur quitte le bloc du regard, pour que la
          carte n'apparaisse jamais hors de sa vue. */
       await waitVisible(CARD_AFTER_BLIP_MS);
@@ -4525,16 +4525,16 @@
       _revealedCodes.add(code);
       renderSonarReadout();      // le compteur suit la decouverte
 
-      /* On laisse le son finir avant d'annoncer l'equipage suivant : le
-         rythme sonore de la sequence reste inchange. */
-      await alarmDone;
+      /* Enchaînement 2x plus rapide pour l'annonce de l'équipage suivant */
+      const waitAlarm = Promise.race([alarmDone, new Promise(r => setTimeout(r, 1600))]);
+      await waitAlarm;
       if(blipEl){
         blipEl.classList.remove('blip-pop');
         clearVictoryEchoes(blipEl);
       }
 
-      // d) Petite respiration avant l'equipe suivante
-      if(_revealQueue.length) await new Promise(r => setTimeout(r, 210));
+      // d) Respiration rapide avant l'équipe suivante
+      if(_revealQueue.length) await new Promise(r => setTimeout(r, 100));
     }
 
     // Retour au message fixe du sonar.
