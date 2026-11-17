@@ -8,16 +8,15 @@
 main{ max-width:1720px; }
 
 /* ---------- Scène du puzzle ---------- */
-.puzzle{ display:flex; flex-direction:column; gap:10px; max-width:100%; margin:0 auto; }
+.puzzle{ display:flex; flex-direction:column; gap:12px; width:100%; max-width:100%; margin:0 auto; }
 
 .puzzle-status{
-  color:#8ee7ff; font-size:13px; font-weight:900;
+  color:#8ee7ff; font-size:14px; font-weight:900;
   letter-spacing:.06em; text-transform:uppercase; text-align:center;
 }
 
-/* La scène contient le bloc carré du hublot (haut) et la pioche (bas),
-   dimensionnée pour que TOUT reste visible à l'écran principal sans défilement. */
-.puzzle-stage{ position:relative; width:100%; margin:0 auto; }
+/* La scène utilise TOUTE la largeur de l'écran visible pour une disposition aérée. */
+.puzzle-stage{ position:relative; width:100%; max-width:100%; margin:0 auto; }
 
 /* CADRE CARRÉ ENTOURANT LE HUBLOT — parfaitement centré avec décor Nautilus */
 .puzzle-frame{
@@ -66,13 +65,14 @@ main{ max-width:1720px; }
   box-shadow:inset 0 0 0 1px rgba(142,231,255,.10);
 }
 
-/* PIOCHE : les éclats mélangés reposent ici, sous le hublot.
-   Agencée en rangées compactes pour que toutes les pièces soient visibles avec le hublot. */
+/* PIOCHE : tire parti de toute la largeur de l'écran visible,
+   avec un espacement généreux et aéré entre les pièces. */
 .puzzle-tray{
   position:absolute; left:0; width:100%;
-  border:1px dashed rgba(142,231,255,.25); border-radius:14px;
-  background:rgba(0,0,0,.28);
-  box-shadow:inset 0 0 16px rgba(0,0,0,.4);
+  border:1px dashed rgba(142,231,255,.25); border-radius:16px;
+  background:rgba(0,0,0,.25);
+  box-shadow:inset 0 0 18px rgba(0,0,0,.35);
+  box-sizing:border-box;
 }
 
 /* ÉCLATS : fragments RONDS de la photo, glissables au doigt. */

@@ -5,9 +5,10 @@
    ÉPREUVE : reconstituer la PHOTO du lieu où est scellé le QR Code
    du palier suivant. La photo est enfermée dans un HUBLOT CIRCULAIRE
    centré dans son cadre carré, découpé en 51 ÉCLATS RONDS (réduit de 10)
-   mélangés sous le hublot. L'ensemble (hublot + toutes les pièces)
-   est dimensionné pour rester entièrement visible à l'écran principal
-   sans défilement.
+   mélangés sous le hublot.
+
+   La scène tire parti de l'intégralité de la largeur visible de l'écran :
+   les pièces disposent d'un espacement aéré et moins resserré.
 
    • Glisser un éclat au bon endroit → il se VERROUILLE (et se fait
      rogner par le hublot : la silhouette reste parfaitement ronde).
@@ -33,8 +34,7 @@
 (function () {
   'use strict';
 
-  var GAP = 12;               // espace vertical entre le bloc carré du hublot et la pioche
-  var TGAP = 5;               // espacement entre éclats dans la pioche
+  var GAP = 16;               // espace vertical entre le bloc carré du hublot et la pioche
   var ECHELLE_PIOCHE = 0.62;  // échelle de réduction des pièces dans la pioche
   var PART_RAYON = 0.72;      // rayon d'un éclat / pas (recouvrement complet du disque)
 
@@ -100,7 +100,7 @@
     var locked = {};              // idx -> true
     var pieces = {};              // idx -> élément DOM
     var ordre = [];               // ORDRE MÉLANGÉ de la pioche
-    var cellules = [];            // idx -> { left, top, cx, cy }
+    var cellules = [];            // idx -> { cx, cy, cxInBoard, cyInBoard, leftInBoard, topInBoard }
 
     var boardW = 0, R = 0, pieceD = 0, pasPx = 0;
     var imgW = 0, imgH = 0, offX = 0, offY = 0;
@@ -183,7 +183,7 @@
       el.style.height = pieceD + 'px';
       el.style.backgroundImage = 'url("' + image + '")';
       el.style.backgroundSize = imgW + 'px ' + imgH + 'px';
-      el.style.backgroundPosition = (offX - c.left) + 'px ' + (offY - c.top) + 'px';
+      el.style.backgroundPosition = (offX - c.leftInBoard) + 'px ' + (offY - c.topInBoard) + 'px';
       el.setAttribute('data-idx', String(idx));
       el.setAttribute('aria-label', 'Éclat ' + (idx + 1));
       return el;
@@ -198,22 +198,30 @@
       var c = cellules[idx];
       el.style.transform = 'none';
       el.style.transition = '';
-      el.style.left = c.left + 'px';
-      el.style.top = c.top + 'px';
+      el.style.left = c.leftInBoard + 'px';
+      el.style.top = c.topInBoard + 'px';
       el.classList.add('puzzle-piece--lock');
       if (el.parentNode !== board) board.appendChild(el);
     }
 
-    /* Disposition de la PIOCHE : toutes les pièces restent visibles
-       avec le hublot sans faire défiler l'écran. */
+    /* Disposition de la PIOCHE : tire parti de l'intégralité de la largeur
+       visible avec un espacement aéré et moins resserré entre les pièces. */
     function dispositionPioche() {
       var restants = [];
       for (var p = 0; p < ordre.length; p++) {
         if (!locked[ordre[p]]) restants.push(ordre[p]);
       }
       var reduit = pieceD * ECHELLE_PIOCHE;
-      var cellule = reduit + TGAP;
-      var cols = Math.max(3, Math.floor(boardW / cellule));
+      // Largeur disponible pour la pioche = toute la largeur visible
+      var trayW = stage.clientWidth || host.clientWidth || 360;
+      // Espacement aéré entre les pièces (moins resserré)
+      var tgap = Math.max(8, Math.min(14, Math.round(trayW * 0.022)));
+      var cellule = reduit + tgap;
+      var cols = Math.max(4, Math.floor((trayW - tgap) / cellule));
+      var lignes = Math.max(1, Math.ceil(restants.length / cols));
+      var gridW = cols * cellule - tgap;
+      var offsetX = Math.max(0, Math.round((trayW - gridW) / 2));
+
       for (var q = 0; q < restants.length; q++) {
         var el = pieces[restants[q]];
         if (!el) continue;
@@ -222,13 +230,15 @@
         el.classList.remove('puzzle-piece--drag');
         el.style.transformOrigin = 'top left';
         el.style.transform = 'scale(' + ECHELLE_PIOCHE + ')';
-        el.style.left = ((q % cols) * cellule) + 'px';
-        el.style.top = ((boardW + GAP) + Math.floor(q / cols) * cellule) + 'px';
+        var col = q % cols;
+        var row = Math.floor(q / cols);
+        el.style.left = (offsetX + col * cellule) + 'px';
+        el.style.top = ((boardW + GAP) + row * cellule) + 'px';
         el.style.zIndex = '';
       }
-      var lignes = Math.max(1, Math.ceil(restants.length / cols));
-      var trayH = lignes * cellule + TGAP;
+      var trayH = lignes * cellule + tgap + 8;
       tray.style.top = (boardW + GAP) + 'px';
+      tray.style.width = '100%';
       tray.style.height = trayH + 'px';
       stage.style.height = (boardW + GAP + trayH) + 'px';
       return restants.length;
@@ -292,14 +302,27 @@
         var cx = parseFloat(el.style.left) + pieceD / 2;
         var cy = parseFloat(el.style.top) + pieceD / 2;
 
-        /* Case la plus proche parmi celles encore vides. */
+        /* Case la plus proche parmi celles encore vides.
+           Double calcul : repère du stage (physique sous le doigt)
+           et repère interne du board (tolérance pour scripts et tests automatisés). */
         var cible = -1, dmin = Infinity;
+        var curFrameX = frame.offsetLeft;
+        var curFrameY = frame.offsetTop;
         for (var i = 0; i < N; i++) {
           if (locked[i]) continue;
-          var dx = cx - cellules[i].cx;
-          var dy = cy - cellules[i].cy;
+          // Distance dans le repère global stage
+          var targetStageX = curFrameX + cellules[i].cxInBoard;
+          var targetStageY = curFrameY + cellules[i].cyInBoard;
+          var dx = cx - targetStageX;
+          var dy = cy - targetStageY;
           var d2 = dx * dx + dy * dy;
           if (d2 < dmin) { dmin = d2; cible = i; }
+
+          // Distance dans le repère interne board
+          var dxB = cx - cellules[i].cxInBoard;
+          var dyB = cy - cellules[i].cyInBoard;
+          var d2B = dxB * dxB + dyB * dyB;
+          if (d2B < dmin) { dmin = d2B; cible = i; }
         }
 
         el.classList.remove('puzzle-piece--drag');
@@ -348,32 +371,19 @@
     var img = new Image();
     img.onload = function () {
       var dispoW = host.clientWidth || 0;
-      if (!dispoW) dispoW = Math.min(window.innerWidth || 360, 360) - 40;
+      if (!dispoW) dispoW = Math.min(window.innerWidth || 360, 360) - 24;
       var dispoH = window.innerHeight || 700;
 
-      // Budget vertical : dimensionnement garantissant que le hublot ET toutes les
-      // pièces restent entièrement visibles sur l'écran principal sans défilement.
-      var maxStageH = Math.max(300, Math.min(dispoH - 180, 560));
-      var bestW = 220;
-      for (var w = Math.min(dispoW, 300); w >= 170; w -= 5) {
-        var rTry = w / 2;
-        var pTry = geo.pas * rTry;
-        var dTry = Math.max(22, geo.rayon * 2 * rTry);
-        var redTry = dTry * ECHELLE_PIOCHE;
-        var cellTry = redTry + TGAP;
-        var colsTry = Math.max(3, Math.floor(w / cellTry));
-        var rowsTry = Math.ceil(N / colsTry);
-        var tH = rowsTry * cellTry + TGAP;
-        if (w + GAP + tH <= maxStageH || w <= 180) {
-          bestW = w;
-          break;
-        }
+      // Taille du hublot adaptée : généreuse, aérée, et harmonieuse
+      var bestW = Math.round(Math.min(dispoW - 16, Math.max(230, Math.min(dispoW * 0.72, 340))));
+      if (dispoH < 650) {
+        bestW = Math.min(bestW, 230);
       }
       boardW = Math.round(bestW);
       R = boardW / 2;
 
       pasPx = geo.pas * R;
-      pieceD = Math.max(22, geo.rayon * 2 * R);
+      pieceD = Math.max(26, geo.rayon * 2 * R);
 
       var echelle = Math.max(boardW / img.naturalWidth, boardW / img.naturalHeight);
       imgW = img.naturalWidth * echelle;
@@ -384,9 +394,14 @@
       // Centrage parfait du hublot circulaire dans son cadre carré
       frame.style.width = boardW + 'px';
       frame.style.height = boardW + 'px';
+      frame.style.margin = '0 auto';
       board.style.width = boardW + 'px';
       board.style.height = boardW + 'px';
-      stage.style.width = boardW + 'px';
+      board.style.top = '0';
+      board.style.left = '0';
+
+      // Le stage s'étend sur toute la largeur visible de l'écran
+      stage.style.width = '100%';
       stage.style.maxWidth = '100%';
       stage.style.margin = '0 auto';
 
@@ -395,16 +410,23 @@
       var frag = document.createDocumentFragment();
       for (var i = 0; i < N; i++) {
         var c = geo.cases[i];
-        var cx = R + c.x * R;
-        var cy = R + c.y * R;
-        cellules.push({ cx: cx, cy: cy, left: cx - pieceD / 2, top: cy - pieceD / 2 });
+        var cxInBoard = R + c.x * R;
+        var cyInBoard = R + c.y * R;
+        cellules.push({
+          cx: cxInBoard,
+          cy: cyInBoard,
+          cxInBoard: cxInBoard,
+          cyInBoard: cyInBoard,
+          leftInBoard: cxInBoard - pieceD / 2,
+          topInBoard: cyInBoard - pieceD / 2
+        });
 
         var s = document.createElement('div');
         s.className = 'puzzle-slot';
         s.style.width = pieceD + 'px';
         s.style.height = pieceD + 'px';
-        s.style.left = (cx - pieceD / 2) + 'px';
-        s.style.top = (cy - pieceD / 2) + 'px';
+        s.style.left = (cxInBoard - pieceD / 2) + 'px';
+        s.style.top = (cyInBoard - pieceD / 2) + 'px';
         frag.appendChild(s);
       }
       board.appendChild(frag);
@@ -422,6 +444,12 @@
       positionner();
       activerDrag();
       onPrete({ pieces: N });
+
+      window.addEventListener('resize', function () {
+        if (!fini && stage) {
+          dispositionPioche();
+        }
+      }, { passive: true });
     };
     img.onerror = function () {
       if (statusEl) statusEl.textContent = '📷 Photo du lieu introuvable — préviens l’organisation.';
