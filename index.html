@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="anti-zoom.js?v=1"></script>
+  <script src="magasin-fnac.js?v=2" defer></script>
+  <script>
+  // Sollicitation immédiate des notifications et de la géolocalisation dès le lancement
+  (function(){
+    try{
+      if('Notification' in window && Notification.permission === 'default'){
+        Notification.requestPermission().catch(function(){});
+      }
+      if(navigator.geolocation && !(localStorage.getItem('nautilusMatelotCode')||'').match(/zzzz-0000/i)){
+        navigator.geolocation.getCurrentPosition(function(){}, function(){}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
+      }
+    }catch(e){}
+  })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -2445,6 +2459,20 @@
       if(!forcer){
         try{ forcer = sessionStorage.getItem('nautilusEcoutilleForce') === '1'; }catch(e){}
       }
+      /* Si le joueur revient à l'accueil depuis un jeu ou a déjà ouvert l'écoutille durant cette session :
+         retourner directement sur la page d'accueil (index.html sans overlay) */
+      if(!forcer){
+        try{
+          if(sessionStorage.getItem('nautilusEcoutille') === '1' ||
+             sessionStorage.getItem('nautilusJeuEnCours') === '1' ||
+             sessionStorage.getItem('nautilusDepartFait') === '1'){
+            passer = true;
+          }
+          if(!passer && document.referrer && (/(palier|\.html)/i.test(document.referrer) && !/index\.html/i.test(document.referrer))){
+            passer = true;
+          }
+        }catch(e){}
+      }
 
       /* RÉSERVE O₂ ÉPUISÉE : ne plus présenter l'écoutille — rentrer directement sur l'accueil (index.html sans overlay) */
       function ecoutilleReserveEpuisee(){
@@ -4050,7 +4078,7 @@
       const code = card.dataset.team;
       if(!newKnown[code]){
         card.classList.add('out');
-        setTimeout(() => card.remove(), 500);
+        setTimeout(() => card.remove(), 250);
         // Elle pourra etre re-annoncee si des matelots reviennent
         _revealedCodes.delete(code);
         const bi = _blipByTeam[code];
@@ -4096,7 +4124,7 @@
      qui « pop », accompagné exclusivement de assets/Victoire.mp3. La carte
      suit le point sans modifier l'alarme utilisée par le reste du jeu. */
   const REVEAL_SOUND_FALLBACK_MS = 4100; // durée approchée de Victoire.mp3 si l'événement ended ne vient pas
-  const CARD_AFTER_BLIP_MS = 330;        // delai entre le point et sa carte
+  const CARD_AFTER_BLIP_MS = 165;        // delai entre le point et sa carte (2x plus rapide)
 
   function prefersReducedMotion(){
     return Boolean(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -4121,11 +4149,11 @@
   function startVictoryEchoes(blipEl, soundDurationMs){
     if(!blipEl) return;
     clearVictoryEchoes(blipEl);
-    const waveDuration = Math.max(900, Math.round(soundDurationMs / 2.55));
+    const waveDuration = Math.max(450, Math.round(soundDurationMs / 5.1));
     const delays = [
-      Math.max(100, Math.round(soundDurationMs * .03)),
-      Math.round(soundDurationMs * .32),
-      Math.round(soundDurationMs * .61)
+      Math.max(50, Math.round(soundDurationMs * .015)),
+      Math.round(soundDurationMs * .16),
+      Math.round(soundDurationMs * .30)
     ];
     delays.forEach(delay => {
       const echo = document.createElement('span');
@@ -4467,7 +4495,7 @@
          bon endroit rapidement, on enchaine sans lui. Les annonces
          suivantes gardent le rythme complet, l'attente y est masquee par
          l'animation de la carte precedente. */
-      const sweepTimeout = isFirstReveal ? 700 : 3200;
+      const sweepTimeout = isFirstReveal ? 350 : 1600;
       await waitForSweepOver(blipAngle(blipIdx), sweepTimeout);
       isFirstReveal = false;
 
@@ -4506,7 +4534,7 @@
       }
 
       // d) Petite respiration avant l'equipe suivante
-      if(_revealQueue.length) await new Promise(r => setTimeout(r, 420));
+      if(_revealQueue.length) await new Promise(r => setTimeout(r, 210));
     }
 
     // Retour au message fixe du sonar.
@@ -10708,14 +10736,42 @@ window.PWAInstall = {
 </script>
 <script>
 // Sélecteur magasin sur la page de démarrage — sous l'écoutille, mémorisé pour appareil + matelot
-// Géoloc : sélection auto si dans un magasin, sinon 3 plus proches en tête puis alphabétique
+// Sollicitation géoloc + notifications dès le lancement de la page de démarrage
+// Ciblage des 3 magasins les plus proches, puis liste alphabétique
 (function(){
+  // Sollicitation immédiate des notifications et de la géolocalisation
+  function solliciterPermissionsImmediates(){
+    try{
+      if(window.NautilusMagasin && typeof window.NautilusMagasin.solliciterPermissions === 'function'){
+        window.NautilusMagasin.solliciterPermissions();
+      } else {
+        if('Notification' in window && Notification.permission === 'default'){
+          Notification.requestPermission().catch(function(){});
+        }
+        if(navigator.geolocation && !estModeTestEcoutille()){
+          navigator.geolocation.getCurrentPosition(function(){}, function(){}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
+        }
+      }
+    }catch(e){}
+  }
+  // Geste de secours si le navigateur exige une interaction pour les notifications
+  window.addEventListener('pointerdown', function(){
+    try{
+      if('Notification' in window && Notification.permission === 'default'){
+        Notification.requestPermission().catch(function(){});
+      }
+    }catch(e){}
+  }, { once: true, capture: true });
+
   function initEcMagasin(retry){
     retry = retry||0;
     var sel = document.getElementById('ecMagasinSelect');
     var btn = document.getElementById('ecStart');
     var caisse = document.querySelector('.ec-magasin-case');
     if(!sel || !btn || !caisse) return;
+
+    solliciterPermissionsImmediates();
+
     if(!window.NautilusMagasin){
       if(retry<12) setTimeout(function(){ initEcMagasin(retry+1); }, 300);
       return;
@@ -10765,7 +10821,7 @@ window.PWAInstall = {
         var geoP = null;
         // pas de géoloc en mode test (zzzz-0000) — accès direct aux paliers
         if(estModeTestEcoutille()){ remplir(r.magasins||[], null); if(courant && courant.id) sel.value=courant.id; return; }
-        try{ geoP = window.NautilusMagasin.suggerer({nombre:3, delaiMs:6000}); }catch(e){ geoP=null; }
+        try{ geoP = window.NautilusMagasin.suggerer({nombre:3, delaiMs:8000}); }catch(e){ geoP=null; }
         if(geoP && geoP.then){
           geoP.then(function(g){
             var sugs = (g && g.suggestions && g.suggestions.length) ? g.suggestions.slice(0,3) : null;
@@ -10780,6 +10836,10 @@ window.PWAInstall = {
               courant = window.NautilusMagasin.memoriser(autoSel, 'ecoutille-geoloc');
             } else if(courant && courant.id){
               sel.value = courant.id;
+            } else if(sugs && sugs.length && sugs[0].magasin){
+              // Propose le plus proche par défaut tout en mémorisant
+              sel.value = sugs[0].magasin.id;
+              courant = window.NautilusMagasin.memoriser(sugs[0].magasin, 'ecoutille-proche');
             }
           }).catch(function(){ remplir(r.magasins||[], null); if(courant && courant.id) sel.value=courant.id; });
         } else {

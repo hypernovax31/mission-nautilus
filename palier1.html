@@ -12,6 +12,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=49">
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
        partagées par toutes les pages du jeu. -->
   <script src="son-partage.js?v=2" defer></script>
@@ -76,7 +77,7 @@
         </div>
         <div id="identifyMsg" class="direct-resume-message" aria-live="polite"></div>
       </div>
-      <p class="direct-resume-new">Nouveau matelot ? <a href="index.html">Retourne à l'accueil pour embarquer et recevoir ton Code Matelot.</a></p>
+      <p class="direct-resume-new">Nouveau matelot ? <a href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">Retourne à l'accueil pour embarquer et recevoir ton Code Matelot.</a></p>
     </div>
   </section>
 
@@ -2052,18 +2053,20 @@ window.Nautilus = {
       ${banniere}
       <div class="brief">
         <p class="brief-intro">
-          Un signal s’échappe des profondeurs : le <b>Nautilus</b> se manifeste enfin. Tends l’oreille, matelot : à toi de le comprendre.
+          Un signal émerge des abysses : le <b>Nautilus</b> se manifeste. Écoute la transmission et déchiffre le message pour guider ton équipage.
         </p>
 
         <ul class="brief-list">
           <li><span class="ico" aria-hidden="true">📋</span>
             <span><b>1 matelot</b> aux commandes à la fois.</span></li>
           <li><span class="ico" aria-hidden="true">⏱️</span>
-            <span><b>3 min 30</b> pour répondre.</span></li>
+            <span><b>3 min 30</b> pour analyser le signal et répondre.</span></li>
           <li class="warn"><span class="ico" aria-hidden="true">❌</span>
-            <span><b>3 erreurs</b> : le matelot remonte en surface — un équipier prend le relais immédiatement.</span></li>
+            <span><b>3 erreurs</b> : remontée en surface — un équipier prend le relais.</span></li>
           <li class="warn"><span class="ico" aria-hidden="true">🆘</span>
             <span>Indice demandé : <b>1 h de blocage</b>.</span></li>
+          <li class="warn"><span class="ico" aria-hidden="true">⚠️</span>
+            <span><b>Quitter ce palier remet les compteurs à zéro</b> : toute progression en cours sera réinitialisée.</span></li>
         </ul>
 
         <button class="brief-cta" id="takeLeadBtn">⚓ PRENDRE LES COMMANDES</button>
@@ -3037,7 +3040,7 @@ window.Nautilus = {
           <p class="won-direction-line">Sur place, repérez le <b>QR Code</b> : il ouvre le sas.</p>
         </div>
         <p><a class="won-next-btn" href="${esc(url)}">⏭️ ALLER AU SAS DU ${esc(nextLabel.toUpperCase())}</a></p>
-        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
+        <a class="lock-home-link" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
       </div>
     `;
   }
@@ -3093,7 +3096,7 @@ window.Nautilus = {
         <p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la plongée.</p>
         <div class="lock-attempt"><span aria-hidden="true">◌</span>${esc(attemptLabel)}</div>
         <div class="lock-lignes">${lignes}</div>
-        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
+        <a class="lock-home-link" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
       </section>
     `;
   }
@@ -3208,7 +3211,7 @@ window.Nautilus = {
         <p class="lock-lead">${lead}</p>
         ${parIndice && l.lockedUntil ? lockResumeCard(l, 'Prochaine prise de commande possible') : ''}
         <div class="lock-lignes">${lignesBlocageHtml(t, l, parIndice ? 'indice' : 'echec')}</div>
-        <a class="lock-home-link" href="index.html">🏠 Retour à l'accueil</a>
+        <a class="lock-home-link" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
       </section>
     `;
   }
@@ -3223,7 +3226,8 @@ window.Nautilus = {
 
   /* === Bouton retour === */
   $('backBtn').addEventListener('click', () => {
-    location.href = 'index.html';
+    try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}
+    location.href = 'index.html?ecoutille=0';
   });
 
   /* ===== ANNONCE « UN ÉQUIPAGE A FRANCHI UN PALIER » =====

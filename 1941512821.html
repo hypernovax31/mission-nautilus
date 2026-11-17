@@ -14,6 +14,7 @@
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <link rel="stylesheet" href="css/palier4.css?v=1">
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
@@ -125,7 +126,7 @@
     <div class="body">
       <div id="epreuveStatut" class="status-banner info">⏳ <b>Relevé du sonar en cours…</b></div>
       <div id="epreuveHost"></div>
-      <a class="marq-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <a class="marq-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
 </main>
@@ -480,14 +481,15 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   }
 
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
-     Explication immersive du thème SANS dévoiler le lieu. */
+     Explication claire et nuancée du thème avec avertissement de remise à zéro. */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue à bord, matelot. Le <b>sonar du Nautilus</b> a relevé une zone pleine d’échos : les coordonnées de la cache du prochain palier y sont, mais chaque marqueur a perdu sa position. Recale les échos, un par un, et le relevé te montrera <b>où chercher</b> dans le magasin.",
+    intro: "Bienvenue à bord, matelot. Le <b>sonar du Nautilus</b> a cartographié la cache du prochain palier, mais les marqueurs d'échos se sont dispersés. Replace chaque écho pour révéler la zone de recherche.",
     consignes: [
-      { ico: '📡', html: "Le relevé compte <b>" + NB_MARQUEURS + " échos</b> sur une grille de <b>" + MARQUEUR_GRILLE + " × " + MARQUEUR_GRILLE + "</b>. Les marqueurs sont mélangés : aucun n’est à sa place." },
-      { ico: '🎯', html: "Sélectionne un marqueur dans le rack, puis <b>touche sa case</b>. Bonne case : il se verrouille. Mauvaise case : elle est <b>écartée</b> (elle ne peut plus être la bonne)." },
-      { ico: '🛰️', html: "<b>Ping sonar</b> (gratuit) : annonce la distance, en cases, du marqueur sélectionné. Recoupe avec les cases écartées pour trianguler." },
-      { ico: '🔎', warn: true, html: "Le sonar peut <b>révéler un marqueur</b> à ta place, mais chaque aide compte pour <b>1 erreur</b> : <b>3 erreurs</b> = remontée en surface." }
+      { ico: '📡', html: "<b>" + NB_MARQUEURS + " échos</b> à repositionner sur la grille de détection." },
+      { ico: '🎯', html: "Sélectionne un marqueur et <b>valide sa case</b>. Une mauvaise case est définitivement écartée." },
+      { ico: '🛰️', html: "<b>Ping sonar gratuit</b> pour évaluer la distance de l'écho et trianguler sa position." },
+      { ico: '🔎', warn: true, html: "Révéler un marqueur coûte <b>1 erreur</b> (3 erreurs = remontée en surface)." },
+      { ico: '⚠️', warn: true, html: "<b>Quitter ce palier remet les compteurs à zéro</b> : toute progression en cours sera réinitialisée." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {

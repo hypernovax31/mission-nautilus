@@ -1283,7 +1283,7 @@ async function testIntegratedPaliers(browser, base, viewport, label) {
     if (nom === 'mots croisés') {
       assert.ok((await page.locator('#mcHost .mc-input').count()) > 30);
     } else if (nom === 'puzzle') {
-      assert.equal(await page.locator('#puzzleHost .puzzle-piece').count(), 61);
+      assert.equal(await page.locator('#puzzleHost .puzzle-piece').count(), 51);
       const resultat = await page.evaluate(() => {
         const stage = document.querySelector('#pzStage');
         const slots = [...document.querySelectorAll('#pzBoard .puzzle-slot')];
@@ -1306,7 +1306,7 @@ async function testIntegratedPaliers(browser, base, viewport, label) {
           etat: document.getElementById('pzStatus').textContent };
       });
       assert.equal(resultat.place, true, 'une pièce du puzzle doit se placer correctement');
-      assert.match(resultat.etat, /1\s*\/\s*61/);
+      assert.match(resultat.etat, /1\s*\/\s*51/);
     } else {
       assert.equal(await page.locator('#epreuveHost .marq-case').count(), 81);
       assert.equal(await page.locator('#epreuveHost .marq-jeton').count(), 8);

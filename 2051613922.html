@@ -14,6 +14,7 @@
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <link rel="stylesheet" href="css/palier4.css?v=1">
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
@@ -124,7 +125,7 @@
     <h2 id="sasUnlockedTitle">PALIER 5</h2>
     <div class="body">
       <div id="epreuveStatut" class="status-banner warning">🛠️ <b>Épreuve du Palier 5 en préparation.</b> Le sas est déjà actif : scanne le QR Code de la zone de recherche du Palier 5 pour le franchir. L’épreuve, elle, sera activée par l’organisation.</div>
-      <a class="marq-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <a class="marq-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
 </main>
@@ -191,11 +192,12 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   }
 
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue à bord, matelot. Le sas du <b>Palier 5</b> est déjà scellé et la zone de recherche est ouverte : le QR Code t'y attend. L'épreuve, elle, est encore en cours de préparation par l'organisation — elle s'activera ici même, sans rien changer à tes habitudes.",
+    intro: "Bienvenue à bord, matelot. Le sas du <b>Palier 5</b> est prêt et la zone de recherche est ouverte. Le QR Code t'attend pour ouvrir l'accès vers l'étape suivante.",
     consignes: [
-      { ico: '🔒', html: "Le sas fonctionne : <b>scanne le QR Code</b> de la zone de recherche pour franchir le Palier 5." },
-      { ico: '🛠️', html: "Le mini-jeu du Palier 5 n'est <b>pas encore activé</b>. Rien à faire de ton côté : l'organisation le branchera ici." },
-      { ico: '📓', html: "En attendant, le <b>journal de bord</b> et le <b>tableau de bord</b> restent consultables comme d'habitude." }
+      { ico: '🔒', html: "<b>Scanne le QR Code</b> de la zone de recherche pour déverrouiller ce palier." },
+      { ico: '🛠️', html: "L'épreuve finale est en cours de déploiement par le commandement." },
+      { ico: '📓', html: "Consulte le <b>journal de bord</b> pour suivre les mouvements des équipages." },
+      { ico: '⚠️', warn: true, html: "<b>Quitter ce palier remet les compteurs à zéro</b> : toute progression en cours sera réinitialisée." }
     ],
     cta: '⚓ VOIR LE SAS DU PALIER 5',
     onDepart: function () {

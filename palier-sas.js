@@ -347,8 +347,12 @@
     }
 
     /* ---------- Câblage ---------- */
+    try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}
     var backBtn = $('backBtn');
-    if (backBtn) backBtn.addEventListener('click', function () { location.href = 'index.html'; });
+    if (backBtn) backBtn.addEventListener('click', function () {
+      try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}
+      location.href = 'index.html?ecoutille=0';
+    });
     var camBtn = $('gateCamBtn');
     if (camBtn) camBtn.addEventListener('click', function () {
       if (scanning) { stopCamera(); journal('⏹ Caméra arrêtée.', 'info'); }

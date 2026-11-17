@@ -200,6 +200,34 @@
     });
   }
 
+  function calculerDistanceKm(lat1, lon1, lat2, lon2) {
+    var mot = window.NautilusArtefactMoteur || MOTEUR;
+    if (mot && typeof mot.distanceKm === 'function') {
+      try { return mot.distanceKm(lat1, lon1, lat2, lon2); } catch (_) {}
+    }
+    var R = 6371;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLon = (lon2 - lon1) * Math.PI / 180;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+  }
+
+  function trouverPlusProches(lat, lon, liste, nb) {
+    if (typeof lat !== 'number' || typeof lon !== 'number') return [];
+    var mot = window.NautilusArtefactMoteur || MOTEUR;
+    if (mot && typeof mot.plusProche === 'function') {
+      try { return mot.plusProche(lat, lon, liste, nb); } catch (_) {}
+    }
+    var avecDist = (liste || []).filter(function (m) {
+      return m && m.id && m.actif !== false && typeof m.lat === 'number' && typeof m.lon === 'number';
+    }).map(function (m) {
+      return { magasin: m, distanceKm: calculerDistanceKm(lat, lon, m.lat, m.lon) };
+    }).sort(function (a, b) { return a.distanceKm - b.distanceKm; });
+    return avecDist.slice(0, Math.max(1, Number(nb) || 3));
+  }
+
   function suggerer(opts) {
     if (estModeTest()) return Promise.resolve({ suggestions: [], erreur: 'desactivee-test', desactiveeTest: true });
     var o = opts || {};
@@ -208,18 +236,38 @@
         var liste = r[0], pos = r[1];
         if (!liste) return { suggestions: [], erreur: 'liste-indisponible' };
         if (!pos || pos.erreur) return { suggestions: [], erreur: (pos && pos.erreur) || 'indisponible' };
-        var proches = MOTEUR ? MOTEUR.plusProche(pos.lat, pos.lon, liste.magasins, Number(o.nombre) || 3) : [];
+        var proches = trouverPlusProches(pos.lat, pos.lon, liste.magasins, Number(o.nombre) || 3);
         return { suggestions: proches, position: { precision: pos.precision } };
       });
   }
 
-  /* --- mémorisation du magasin CONFIRMÉ ---------------------------- */
+  /* --- mémorisation du magasin CONFIRMÉ pour l'appareil et le matelot --- */
   function courant() {
     try {
+      var codeMatelot = (localStorage.getItem('nautilusMatelotCode') || '').toUpperCase().trim();
+      if (codeMatelot) {
+        var mMat = localStorage.getItem('nautilusMagasin_' + codeMatelot);
+        if (mMat) {
+          var parsedMat = JSON.parse(mMat);
+          if (parsedMat && parsedMat.id) return parsedMat;
+        }
+      }
       var brut = localStorage.getItem(CLE_STOCKAGE);
-      if (!brut) return null;
-      var m = JSON.parse(brut);
-      return m && m.id ? m : null;
+      if (brut) {
+        var m = JSON.parse(brut);
+        if (m && m.id) return m;
+      }
+      var matGen = localStorage.getItem('nautilusMagasinMatelot');
+      if (matGen) {
+        var mm = JSON.parse(matGen);
+        if (mm && mm.id) return mm;
+      }
+      var orig = localStorage.getItem('nautilusMagasinOrigine');
+      if (orig) {
+        var mo = JSON.parse(orig);
+        if (mo && mo.id) return mo;
+      }
+      return null;
     } catch (e) { return null; }
   }
 
@@ -229,7 +277,11 @@
   function trouver(id) {
     if (!id) return Promise.resolve({ magasin: null });
     return chargerListe().then(function (liste) {
-      var m = MOTEUR ? MOTEUR.trouverMagasin(liste.magasins, String(id)) : null;
+      var mot = window.NautilusArtefactMoteur || MOTEUR;
+      var m = mot ? mot.trouverMagasin(liste.magasins, String(id)) : null;
+      if (!m && liste && liste.magasins) {
+        m = (liste.magasins || []).find(function (x) { return x && x.id === id; }) || null;
+      }
       return { magasin: m || null };
     }).catch(function () { return { magasin: null }; });
   }
@@ -241,14 +293,40 @@
       cp: nettoyer(magasin.cp, 12), source: source || 'manuel', choisiLe: new Date().toISOString(),
       versionListe: (_cache && _cache.version) || 'inconnue'
     };
-    /* AUCUNE coordonnée GPS n'est conservée : seulement le magasin — c'est la géoloc site-wide. */
+    /* Mémorise le choix du magasin pour cet appareil ET ce matelot */
     try {
-      localStorage.setItem(CLE_STOCKAGE, JSON.stringify(fiche));
-      // Diffuse à tout le site (autres onglets / futurs paliers)
+      var json = JSON.stringify(fiche);
+      localStorage.setItem(CLE_STOCKAGE, json);
+      localStorage.setItem('nautilusMagasinId', fiche.id);
+      localStorage.setItem('nautilusMagasinOrigine', json);
+      localStorage.setItem('nautilusMagasinMatelot', json);
+      var codeMatelot = (localStorage.getItem('nautilusMatelotCode') || '').toUpperCase().trim();
+      if (codeMatelot) {
+        localStorage.setItem('nautilusMagasin_' + codeMatelot, json);
+      }
       try { window.dispatchEvent(new CustomEvent('nautilus:magasin-change', {detail: fiche})); } catch(_){}
-      try { localStorage.setItem('nautilusMagasinId', fiche.id); } catch(_){}
     } catch (e) {}
     return fiche;
+  }
+
+  function solliciterPermissions() {
+    // 1) Notifications
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        var p = Notification.requestPermission();
+        if (p && typeof p.then === 'function') p.catch(function () {});
+      } catch (e) {}
+    }
+    // 2) Géolocalisation
+    if (typeof navigator !== 'undefined' && navigator.geolocation && !estModeTest()) {
+      try {
+        navigator.geolocation.getCurrentPosition(function () {}, function () {}, {
+          enableHighAccuracy: false,
+          timeout: 8000,
+          maximumAge: 300000
+        });
+      } catch (e) {}
+    }
   }
 
   function effacer() { try { localStorage.removeItem(CLE_STOCKAGE); } catch (e) {} }
@@ -435,6 +513,7 @@
     trouver: trouver,
     memoriser: memoriser,
     effacer: effacer,
+    solliciterPermissions: solliciterPermissions,
     monterSelecteur: monterSelecteur
   };
 })();

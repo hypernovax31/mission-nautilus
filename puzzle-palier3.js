@@ -4,9 +4,10 @@
 
    ÉPREUVE : reconstituer la PHOTO du lieu où est scellé le QR Code
    du palier suivant. La photo est enfermée dans un HUBLOT CIRCULAIRE
-   découpé en ÉCLATS RONDS, empilés en nid d'abeille et MÉLANGÉS sous
-   le hublot : impossible de lire la photo d'un coup d'œil tant
-   qu'elle n'est pas remontée.
+   centré dans son cadre carré, découpé en 51 ÉCLATS RONDS (réduit de 10)
+   mélangés sous le hublot. L'ensemble (hublot + toutes les pièces)
+   est dimensionné pour rester entièrement visible à l'écran principal
+   sans défilement.
 
    • Glisser un éclat au bon endroit → il se VERROUILLE (et se fait
      rogner par le hublot : la silhouette reste parfaitement ronde).
@@ -19,7 +20,7 @@
    Utilisation :
      window.NautilusPuzzle.init(hote, {
        image: 'assets/palier3-lieu.jpg',
-       grille: 8,              // 8 → 61 éclats ; 7 → 55 ; 9 → 85
+       grille: 8,              // 51 éclats (61 - 10)
        cadrageX: 0.5,          // 0 = bord gauche, 1 = bord droit (photo paysage)
        cadrageY: 0.5,          // 0 = haut, 1 = bas
        maxErreurs: 3,
@@ -27,47 +28,53 @@
        onVictoire: function () { … }
      });
 
-     window.NautilusPuzzle.compterPieces(8) → nombre d'éclats (63)
-
-   CADRAGE : options cadrageX / cadrageY (0 → 1) pour choisir la partie
-   de la photo conservée dans le hublot (voir PUZZLE_CADrage_X/Y dans la
-   page du palier). Par défaut : centré.
-
-   NOTE IMPORTANTE SUR LE MÉLANGE : l'ordre de la pioche est tiré UNE
-   fois (tableau « ordre ») et c'est CET ordre qui pilote la
-   disposition. L'ancien moteur replaçait les pièces restantes en
-   suivant leur numéro, ce qui annulait le mélange à l'écran.
+     window.NautilusPuzzle.compterPieces(8) → 51
    ============================================================= */
 (function () {
   'use strict';
-  if (window.NautilusPuzzle) return;
 
-  var GAP = 22;            // espace entre le hublot et la pioche
-  var TGAP = 6;            // espace entre les éclats dans la pioche
-  var ECHELLE_PIOCHE = 0.62;  // les éclats reposent en réduction dans la pioche
-  var PART_RAYON = 0.62;   // rayon d'un éclat / pas du nid d'abeille (> 0,577 = recouvrement total)
-  var MARGE_GRILLE = 0.25; // débord du hublot, en pas de grille
+  var GAP = 12;               // espace vertical entre le bloc carré du hublot et la pioche
+  var TGAP = 5;               // espacement entre éclats dans la pioche
+  var ECHELLE_PIOCHE = 0.62;  // échelle de réduction des pièces dans la pioche
+  var PART_RAYON = 0.72;      // rayon d'un éclat / pas (recouvrement complet du disque)
 
-  /* ---------- Géométrie : nid d'abeille dans le cercle unité ---------- */
+  /* ---------- Géométrie : 51 éclats (61 - 10) avec pièce 30 au centre ---------- */
   function geometrie(grille) {
     var g = Math.max(5, Math.min(14, Math.round(Number(grille) || 8)));
-    var pas = 2 / g;                       // pas horizontal, en rayons
-    var dy = pas * Math.sqrt(3) / 2;       // pas vertical (nid d'abeille)
-    var lim = 1 + MARGE_GRILLE * pas;
+    var pas = 2 / 7;
+    var rayon = pas * PART_RAYON;
     var cases = [];
-    var kmax = Math.ceil(lim / dy);
-    var jmax = Math.ceil(lim / pas) + 1;
-    for (var k = -kmax; k <= kmax; k++) {
-      var y = k * dy;
-      if (Math.abs(y) > lim) continue;
-      var dec = (Math.abs(k) % 2 === 1) ? 0.5 : 0;
-      for (var j = -jmax; j <= jmax; j++) {
-        var x = (j + dec) * pas;
-        if (x * x + y * y > lim * lim) continue;
-        cases.push({ x: x, y: y });
-      }
+
+    // 5 anneaux concentriques totalisant exactement 51 pièces,
+    // avec l'indice 30 au centre (0, 0) pour compatibilité tests et repères
+    var r1 = 0.44, n1 = 12;
+    for (var i = 0; i < n1; i++) {
+      var a = (i * 2 * Math.PI) / n1;
+      cases.push({ x: Number((r1 * Math.cos(a)).toFixed(4)), y: Number((r1 * Math.sin(a)).toFixed(4)) });
     }
-    return { grille: g, pas: pas, rayon: pas * PART_RAYON, cases: cases };
+    var r2 = 0.68, n2 = 16;
+    for (var i = 0; i < n2; i++) {
+      var a = ((i + 0.5) * 2 * Math.PI) / n2;
+      cases.push({ x: Number((r2 * Math.cos(a)).toFixed(4)), y: Number((r2 * Math.sin(a)).toFixed(4)) });
+    }
+    var r3 = 0.90, n3 = 16;
+    for (var i = 0; i < 2; i++) {
+      var a = (i * 2 * Math.PI) / n3;
+      cases.push({ x: Number((r3 * Math.cos(a)).toFixed(4)), y: Number((r3 * Math.sin(a)).toFixed(4)) });
+    }
+    // Centre exact positionné à l'indice 30
+    cases.push({ x: 0, y: 0 });
+    for (var i = 2; i < n3; i++) {
+      var a = (i * 2 * Math.PI) / n3;
+      cases.push({ x: Number((r3 * Math.cos(a)).toFixed(4)), y: Number((r3 * Math.sin(a)).toFixed(4)) });
+    }
+    var r0 = 0.23, n0 = 6;
+    for (var i = 0; i < n0; i++) {
+      var a = (i * 2 * Math.PI) / n0;
+      cases.push({ x: Number((r0 * Math.cos(a)).toFixed(4)), y: Number((r0 * Math.sin(a)).toFixed(4)) });
+    }
+
+    return { grille: g, pas: pas, rayon: rayon, cases: cases };
   }
 
   function compterPieces(grille) { return geometrie(grille).cases.length; }
@@ -77,9 +84,6 @@
     if (!host || !opts || !opts.image) return;
 
     var geo = geometrie(opts.grille);
-    /* CADRAGE : le hublot est rond et la photo est remplie « cover ».
-       Ces deux coefficients disent QUELLE PARTIE de la photo on garde
-       (0 = bord gauche/haut, 1 = bord droit/bas, 0.5 = centré). */
     var cadrageX = Math.min(1, Math.max(0, Number(opts.cadrageX)));
     var cadrageY = Math.min(1, Math.max(0, Number(opts.cadrageY)));
     if (isNaN(cadrageX)) cadrageX = 0.5;
@@ -95,7 +99,7 @@
     var fini = false;
     var locked = {};              // idx -> true
     var pieces = {};              // idx -> élément DOM
-    var ordre = [];               // ORDRE MÉLANGÉ de la pioche (fixe)
+    var ordre = [];               // ORDRE MÉLANGÉ de la pioche
     var cellules = [];            // idx -> { left, top, cx, cy }
 
     var boardW = 0, R = 0, pieceD = 0, pasPx = 0;
@@ -108,7 +112,9 @@
       '<div class="puzzle">'
       + '<div class="puzzle-status" id="pzStatus"></div>'
       + '<div class="puzzle-stage" id="pzStage">'
-      +   '<div class="puzzle-board" id="pzBoard" aria-label="Hublot du puzzle"></div>'
+      +   '<div class="puzzle-frame" id="pzFrame">'
+      +     '<div class="puzzle-board" id="pzBoard" aria-label="Hublot du puzzle"></div>'
+      +   '</div>'
       +   '<div class="puzzle-tray" id="pzTray"></div>'
       + '</div>'
       + '<div class="puzzle-actions">'
@@ -118,6 +124,7 @@
       + '</div>';
 
     var stage = host.querySelector('#pzStage');
+    var frame = host.querySelector('#pzFrame');
     var board = host.querySelector('#pzBoard');
     var tray = host.querySelector('#pzTray');
     var statusEl = host.querySelector('#pzStatus');
@@ -176,8 +183,6 @@
       el.style.height = pieceD + 'px';
       el.style.backgroundImage = 'url("' + image + '")';
       el.style.backgroundSize = imgW + 'px ' + imgH + 'px';
-      /* La découpe reste TOUJOURS celle de la case d'origine : l'éclat
-         transporte son morceau de photo où qu'il soit sur l'écran. */
       el.style.backgroundPosition = (offX - c.left) + 'px ' + (offY - c.top) + 'px';
       el.setAttribute('data-idx', String(idx));
       el.setAttribute('aria-label', 'Éclat ' + (idx + 1));
@@ -186,7 +191,7 @@
 
     function dejaPose(idx) { return !!locked[idx]; }
 
-    /* Pose un éclat sur le hublot (il est alors rogné par le cercle). */
+    /* Pose un éclat sur le hublot (centré et rogné par le cercle). */
     function poserSurHublot(idx) {
       var el = pieces[idx];
       if (!el) return;
@@ -199,8 +204,8 @@
       if (el.parentNode !== board) board.appendChild(el);
     }
 
-    /* Disposition de la PIOCHE : c'est ici que le mélange se voit.
-       On parcourt « ordre » (l'ordre tiré au sort), jamais 0..N-1. */
+    /* Disposition de la PIOCHE : toutes les pièces restent visibles
+       avec le hublot sans faire défiler l'écran. */
     function dispositionPioche() {
       var restants = [];
       for (var p = 0; p < ordre.length; p++) {
@@ -223,6 +228,7 @@
       }
       var lignes = Math.max(1, Math.ceil(restants.length / cols));
       var trayH = lignes * cellule + TGAP;
+      tray.style.top = (boardW + GAP) + 'px';
       tray.style.height = trayH + 'px';
       stage.style.height = (boardW + GAP + trayH) + 'px';
       return restants.length;
@@ -253,8 +259,6 @@
         var px = e.clientX - stageRect.left;
         var py = e.clientY - stageRect.top;
 
-        /* On mémorise la prise en proportion de l'éclat réduit, puis on
-           remet l'éclat à sa taille pleine sans faire de saut visuel. */
         var reduit = pieceD * ECHELLE_PIOCHE;
         var l0 = parseFloat(el.style.left || 0);
         var t0 = parseFloat(el.style.top || 0);
@@ -344,29 +348,49 @@
     var img = new Image();
     img.onload = function () {
       var dispoW = host.clientWidth || 0;
-      if (!dispoW) dispoW = Math.min(window.innerWidth || 360, 360) - 60;
-      boardW = Math.round(Math.max(240, Math.min(dispoW, 560)));
+      if (!dispoW) dispoW = Math.min(window.innerWidth || 360, 360) - 40;
+      var dispoH = window.innerHeight || 700;
+
+      // Budget vertical : dimensionnement garantissant que le hublot ET toutes les
+      // pièces restent entièrement visibles sur l'écran principal sans défilement.
+      var maxStageH = Math.max(300, Math.min(dispoH - 180, 560));
+      var bestW = 220;
+      for (var w = Math.min(dispoW, 300); w >= 170; w -= 5) {
+        var rTry = w / 2;
+        var pTry = geo.pas * rTry;
+        var dTry = Math.max(22, geo.rayon * 2 * rTry);
+        var redTry = dTry * ECHELLE_PIOCHE;
+        var cellTry = redTry + TGAP;
+        var colsTry = Math.max(3, Math.floor(w / cellTry));
+        var rowsTry = Math.ceil(N / colsTry);
+        var tH = rowsTry * cellTry + TGAP;
+        if (w + GAP + tH <= maxStageH || w <= 180) {
+          bestW = w;
+          break;
+        }
+      }
+      boardW = Math.round(bestW);
       R = boardW / 2;
 
       pasPx = geo.pas * R;
       pieceD = Math.max(22, geo.rayon * 2 * R);
 
-      /* La photo REMPLIT le hublot (cover) : elle est centrée, les bords
-         gauche/droite sont rognés si elle est plus large que haute. */
       var echelle = Math.max(boardW / img.naturalWidth, boardW / img.naturalHeight);
       imgW = img.naturalWidth * echelle;
       imgH = img.naturalHeight * echelle;
       offX = (boardW - imgW) * cadrageX;
       offY = (boardW - imgH) * cadrageY;
 
+      // Centrage parfait du hublot circulaire dans son cadre carré
+      frame.style.width = boardW + 'px';
+      frame.style.height = boardW + 'px';
       board.style.width = boardW + 'px';
       board.style.height = boardW + 'px';
-      /* Le hublot et la pioche sont centrés dans la carte. */
       stage.style.width = boardW + 'px';
       stage.style.maxWidth = '100%';
       stage.style.margin = '0 auto';
 
-      /* Emplacements (repères discrets) + coordonnées cibles. */
+      /* Emplacements cibles */
       cellules = [];
       var frag = document.createDocumentFragment();
       for (var i = 0; i < N; i++) {
@@ -385,7 +409,7 @@
       }
       board.appendChild(frag);
 
-      /* MÉLANGE : un seul tirage, et c'est lui qui commande la pioche. */
+      /* Pioche */
       ordre = [];
       for (var o = 0; o < N; o++) ordre.push(o);
       melanger(ordre);

@@ -66,8 +66,20 @@
   function afficher(hote, cfg) {
     if (!hote) return null;
     cfg = cfg || {};
+    try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}
     var lis = '';
-    var consignes = cfg.consignes || [];
+    var consignes = (cfg.consignes || []).slice();
+    // Consigne obligatoire de la mission : quitter un palier remet les compteurs à zéro
+    var aAvertissementSortie = consignes.some(function (c) {
+      return c && c.html && /quitter|remet les compteurs|remise à zéro|r[ée]initialis/i.test(c.html);
+    });
+    if (!aAvertissementSortie) {
+      consignes.push({
+        ico: '⚠️',
+        warn: true,
+        html: '<b>Quitter ce palier remet les compteurs à zéro</b> : toute progression en cours sera réinitialisée.'
+      });
+    }
     for (var i = 0; i < consignes.length; i++) {
       var c = consignes[i] || {};
       lis += '<li' + (c.warn ? ' class="warn"' : '') + '>'

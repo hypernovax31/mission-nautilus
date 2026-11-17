@@ -8,23 +8,44 @@
 main{ max-width:1720px; }
 
 /* ---------- Scène du puzzle ---------- */
-.puzzle{ display:flex; flex-direction:column; gap:14px; }
+.puzzle{ display:flex; flex-direction:column; gap:10px; max-width:100%; margin:0 auto; }
 
 .puzzle-status{
   color:#8ee7ff; font-size:13px; font-weight:900;
-  letter-spacing:.06em; text-transform:uppercase;
+  letter-spacing:.06em; text-transform:uppercase; text-align:center;
 }
 
-/* La scène contient le hublot (haut) et la pioche (bas), en une seule
-   zone de coordonnées pour le glisser-déposer. */
-.puzzle-stage{ position:relative; width:100%; }
+/* La scène contient le bloc carré du hublot (haut) et la pioche (bas),
+   dimensionnée pour que TOUT reste visible à l'écran principal sans défilement. */
+.puzzle-stage{ position:relative; width:100%; margin:0 auto; }
 
-/* HUBLOT : la photo se reconstitue à l'intérieur de ce cercle. Aucune
-   image fantôme : la photo ne doit pas se lire tant qu'elle n'est pas
-   remontée. Les éclats sont rognés par le cercle (overflow:hidden),
-   d'où une silhouette parfaitement ronde. */
+/* CADRE CARRÉ ENTOURANT LE HUBLOT — parfaitement centré avec décor Nautilus */
+.puzzle-frame{
+  position:relative;
+  display:block;
+  box-sizing:border-box;
+  margin:0 auto;
+  border-radius:18px;
+  background:radial-gradient(circle at 50% 50%, rgba(8,28,44,.95), rgba(2,8,16,.98));
+  border:2px solid rgba(245,176,39,.45);
+  box-shadow:inset 0 0 25px rgba(0,0,0,.75), 0 8px 24px rgba(0,0,0,.5);
+  overflow:hidden;
+  flex-shrink:0;
+}
+.puzzle-frame::before{
+  content:"";
+  position:absolute;
+  inset:6px;
+  border:1px dashed rgba(245,176,39,.22);
+  border-radius:12px;
+  pointer-events:none;
+}
+
+/* HUBLOT : parfaitement centré dans le bloc carré qui l'entoure.
+   La photo se reconstitue à l'intérieur de ce cercle. Les éclats sont
+   rognés par le cercle (overflow:hidden), d'où une silhouette ronde. */
 .puzzle-board{
-  position:absolute; top:0; left:0;
+  position:absolute; top:0; left:0; width:100%; height:100%;
   background:
     radial-gradient(circle at 50% 45%, rgba(142,231,255,.10), rgba(0,0,0,.55) 70%),
     rgba(0,0,0,.42);
@@ -45,11 +66,13 @@ main{ max-width:1720px; }
   box-shadow:inset 0 0 0 1px rgba(142,231,255,.10);
 }
 
-/* PIOCHE : les éclats mélangés reposent ici, sous le hublot. */
+/* PIOCHE : les éclats mélangés reposent ici, sous le hublot.
+   Agencée en rangées compactes pour que toutes les pièces soient visibles avec le hublot. */
 .puzzle-tray{
   position:absolute; left:0; width:100%;
-  border:1px dashed rgba(142,231,255,.20); border-radius:14px;
-  background:rgba(0,0,0,.16);
+  border:1px dashed rgba(142,231,255,.25); border-radius:14px;
+  background:rgba(0,0,0,.28);
+  box-shadow:inset 0 0 16px rgba(0,0,0,.4);
 }
 
 /* ÉCLATS : fragments RONDS de la photo, glissables au doigt. */
@@ -73,10 +96,10 @@ main{ max-width:1720px; }
   box-shadow:none;                 /* soudé à la photo : plus aucune couture */
 }
 
-.puzzle-actions{ display:flex; flex-wrap:wrap; gap:10px; }
+.puzzle-actions{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
 .puzzle-btn{
-  margin:0; flex:1 1 220px; min-height:46px;
-  font-family:inherit; font-weight:1000; font-size:14px; cursor:pointer;
+  margin:0; flex:0 1 280px; min-height:40px; padding:8px 16px;
+  font-family:inherit; font-weight:1000; font-size:13px; cursor:pointer;
   background:rgba(142,231,255,.14); color:#8ee7ff;
   border:1px solid rgba(142,231,255,.45); border-radius:12px;
 }

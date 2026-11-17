@@ -14,6 +14,7 @@
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <link rel="stylesheet" href="css/palier3.css?v=3">
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
@@ -125,7 +126,7 @@
     <div class="body">
       <div id="puzzleStatut" class="status-banner info">⏳ <b>Préparation de la photo…</b></div>
       <div id="puzzleHost"></div>
-      <a class="puzzle-home" href="index.html" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <a class="puzzle-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
 </main>
@@ -170,10 +171,10 @@
                      la photo reconstituée (et l'indication du sas). -->
 <script>
 const PUZZLE_IMAGE = 'assets/palier3-lieu.jpg';
-const PUZZLE_GRILLE = 8;                       /* 8 → 61 éclats ronds */
+const PUZZLE_GRILLE = 8;                       /* 8 → 51 éclats ronds */
 const NB_PIECES = window.NautilusPuzzle
   ? window.NautilusPuzzle.compterPieces(PUZZLE_GRILLE)
-  : 61;
+  : 51;
 /* CADRAGE du hublot (photo paysage rognée en cercle) :
    0 = bord gauche/haut · 0.5 = centré · 1 = bord droit/bas.
    Passe à 1 si le sujet est sur la droite de la photo, 0 s'il est à
@@ -484,15 +485,15 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   }
 
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
-     Explication immersive du thème SANS dévoiler le lieu : on raconte
-     la photo fragmentée, jamais ce qu'elle montre. */
+     Explication immersive et synthétique du thème SANS dévoiler le lieu :
+     résumé clair et nuancé avec avertissement de remise à zéro. */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue à bord, matelot. Le <b>sonar du Nautilus</b> a capturé la zone où se cache le QR Code du prochain palier… mais l'onde est revenue <b>fragmentée</b> : la photo s'est brisée en <b>éclats ronds</b>, tous mélangés derrière le hublot. Remonte l'image, éclat après éclat, et elle te montrera <b>où chercher</b> dans le magasin.",
+    intro: "Bienvenue à bord, matelot. Le <b>sonar du Nautilus</b> a capturé la zone du prochain sas, mais l'onde est revenue <b>fragmentée</b> : la photo est morcelée en <b>éclats ronds</b> derrière le hublot. Reconstitue l'image pour révéler l'indice du magasin.",
     consignes: [
-      { ico: '🧩', html: "Le hublot est découpé en <b>" + NB_PIECES + " éclats ronds</b> mélangés : impossible de lire la photo avant d'en avoir remonté une bonne partie." },
-      { ico: '🎯', html: "Glisse chaque éclat dans le cercle. <b>Au bon endroit, il se soude</b> à la photo ; au mauvais, il revient dans la pioche — essaie librement." },
-      { ico: '🌀', html: "Attention : chaque éclat est <b>plus large que sa place</b> et déborde sur ses voisins — c'est la <b>position exacte</b> qui compte, pas le premier trou venu." },
-      { ico: '🔎', warn: true, html: "Le sonar peut <b>révéler un éclat</b> à ta place, mais chaque aide compte pour <b>1 erreur</b> : <b>3 erreurs</b> = remontée en surface." }
+      { ico: '🧩', html: "Le hublot compte <b>" + NB_PIECES + " éclats ronds</b> à repositionner pour recomposer la photo." },
+      { ico: '🎯', html: "Glisse chaque éclat : <b>au bon emplacement il s'ancre</b>, sinon il retourne dans la pioche." },
+      { ico: '🔎', warn: true, html: "Révéler un éclat compte pour <b>1 erreur</b> (3 erreurs = remontée en surface)." },
+      { ico: '⚠️', warn: true, html: "<b>Quitter ce palier remet les compteurs à zéro</b> : toute progression en cours sera réinitialisée." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
