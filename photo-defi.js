@@ -624,6 +624,92 @@
 
   /* ================= SÉRIES ALÉATOIRES DE 5 CIBLES PAR ÉQUIPE ================= */
 
+  var LABELS_COURTS = {
+    jaune_article: 'Jaune',
+    rouge_article: 'Rouge',
+    bleu_article: 'Bleu océan',
+    vert_article: 'Vert',
+    orange_article: 'Orange',
+    noir_profond: 'Noir vinyle',
+    blanc_argent: 'Blanc / argent',
+    objet_rond: 'Enceinte ronde',
+    forme_rectangulaire_livre: 'Livre portrait',
+    forme_carree_vinyle: 'Carré vinyle',
+    objet_cylindrique: 'Cylindre gourde',
+    ecran_allume: 'Écran allumé',
+    motifs_rayures: 'Rayures',
+    ocr_mer: 'OCR Mer',
+    ocr_prix: 'OCR Prix (€)',
+    ocr_fnac: 'OCR Fnac',
+    ocr_format: 'OCR Format'
+  };
+
+  function formaterCibles(liste) {
+    return (liste || []).map(function (d, i) {
+      return {
+        id: d.id,
+        num: i + 1,
+        titre: d.titre,
+        court: LABELS_COURTS[d.id] || d.titre || d.id,
+        famille: d.famille,
+        rayon: d.rayon
+      };
+    });
+  }
+
+  function sauvegarderEtatEquipe(equipeCode, serie, indexActuel, changementUtilise) {
+    if (!equipeCode) return;
+    var ciblesFormattees = formaterCibles(serie);
+    try {
+      localStorage.setItem('nautilusP3Cibles:' + equipeCode, JSON.stringify(ciblesFormattees));
+      localStorage.setItem('nautilusP3Index:' + equipeCode, String(indexActuel || 0));
+    } catch (e) {}
+
+    try {
+      window.dispatchEvent(new CustomEvent('nautilus:p3-cibles-change', {
+        detail: { equipe: equipeCode, cibles: ciblesFormattees, indexActuel: indexActuel }
+      }));
+    } catch (e) {}
+
+    try {
+      if (window.NautilusBlocages && window.NautilusBlocages.db) {
+        window.NautilusBlocages.db().then(function (x) {
+          var docRef = x.fs.doc(x.db, 'teams', equipeCode);
+          x.fs.setDoc(docRef, {
+            photoDefi: {
+              cibles: ciblesFormattees,
+              indexActuel: indexActuel,
+              changementUtilise: !!changementUtilise,
+              misAJourLe: new Date().toISOString()
+            }
+          }, { merge: true }).catch(function () {});
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+
+  function getCiblesEquipe(equipeCode) {
+    if (!equipeCode) equipeCode = 'NEMO';
+    equipeCode = String(equipeCode).trim().toUpperCase();
+
+    try {
+      var raw = localStorage.getItem('nautilusP3Cibles:' + equipeCode);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length === NB_CIBLES_PAR_PARTIE) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    var serie = genererSerieUnique(equipeCode);
+    var ciblesFormattees = formaterCibles(serie);
+    try {
+      localStorage.setItem('nautilusP3Cibles:' + equipeCode, JSON.stringify(ciblesFormattees));
+    } catch (e) {}
+    return ciblesFormattees;
+  }
+
   function getHistorique() {
     try {
       var raw = localStorage.getItem(CLE_HISTORIQUE_SERIES);
@@ -940,6 +1026,7 @@
         feedbackEl.className = 'photo-feedback is-success';
 
         indexDefi++;
+        sauvegarderEtatEquipe(equipeCode, serieDefis, indexDefi, changementUtilise);
         if (indexDefi >= serieDefis.length) {
           // VICTOIRE DES 5 CIBLES DU PALIER 3 !
           clearInterval(timerInterval);
@@ -976,6 +1063,7 @@
         var nouveauDefi = disponibles[Math.floor(Math.random() * disponibles.length)];
         serieDefis[indexDefi] = nouveauDefi;
         majDefiAffiche();
+        sauvegarderEtatEquipe(equipeCode, serieDefis, indexDefi, changementUtilise);
 
         // Transformation immédiate en bouton "Abandon"
         btnUrgence.className = 'photo-btn-emergency is-abandon';
@@ -1025,6 +1113,7 @@
 
     majDefiAffiche();
     demarrerCamera();
+    sauvegarderEtatEquipe(equipeCode, serieDefis, indexDefi, changementUtilise);
 
     return {
       arreter: function () {
@@ -1036,6 +1125,9 @@
 
   window.NautilusPhotoDefi = {
     init: init,
-    catalogue: CATALOGUE_DEFIS
+    catalogue: CATALOGUE_DEFIS,
+    getCiblesEquipe: getCiblesEquipe,
+    formaterCibles: formaterCibles,
+    sauvegarderEtatEquipe: sauvegarderEtatEquipe
   };
 })();

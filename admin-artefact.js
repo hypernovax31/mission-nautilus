@@ -251,19 +251,71 @@
           else if (mc && mc.motsJustes && typeof mc.motsJustes === 'object' && !Array.isArray(mc.motsJustes)) liste = Object.keys(mc.motsJustes).filter(function(k){ return mc.motsJustes[k]; });
           else if (Array.isArray(data.motsJustes)) liste = data.motsJustes;
           if (liste) majP2Chips(equipe, liste);
+
+          // P3 : Photo Défi en direct
+          var pd = data.photoDefi || data.palier3 || null;
+          if (pd && pd.cibles && Array.isArray(pd.cibles)){
+            majP3Chips(equipe, pd.cibles, pd.indexActuel);
+          } else {
+            majCarteP3Auto(equipe);
+          }
         });
       }, function(){ /* lecture indisponible */ });
     }).catch(function(){});
   }
-  // Le Palier 3 conserve son puzzle photo, sans session d'artefact.
-  function ecouterP3Live() {}
+
+  function majP3Chips(equipe, cibles, indexActuel){
+    var wrap = $('afP3wrap-'+equipe);
+    if (!wrap){
+      var row = $('afP3-'+equipe);
+      if (row) {
+        row.innerHTML = '<span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'"></div>';
+        wrap = $('afP3wrap-'+equipe);
+      }
+    }
+    if (!wrap) return;
+    if (!cibles || !cibles.length){
+      wrap.innerHTML = '<span class="small" style="color:#6e7a84">en attente</span>';
+      return;
+    }
+    var idx = typeof indexActuel === 'number' ? indexActuel : 0;
+    wrap.innerHTML = cibles.map(function(c, i){
+      var valide = i < idx;
+      var label = (i + 1) + '. ' + (c.court || c.titre || c.id || ('Cible ' + (i + 1)));
+      var titreComplet = (c.titre || c.id) + (c.rayon ? ' (' + c.rayon + ')' : '');
+      return '<span class="adm-af-chip' + (valide ? ' adm-af-chip--hl' : '') + '" title="' + esc(titreComplet) + '" style="font-size:11px">'
+        + (valide ? '✓ ' : '') + esc(label)
+        + '</span>';
+    }).join('');
+    wrap.title = idx + '/' + cibles.length + ' cibles validées';
+  }
+
+  var _ecouteP3Branchee = false;
+  function ecouterP3Live() {
+    if (_ecouteP3Branchee) return;
+    _ecouteP3Branchee = true;
+
+    window.addEventListener('storage', function(e){
+      if (e.key && e.key.indexOf('nautilusP3') >= 0){
+        EQUIPES.forEach(majCarteP3Auto);
+        majCarteP3Auto('TEST');
+      }
+    });
+    window.addEventListener('nautilus:p3-cibles-change', function(e){
+      if (e.detail && e.detail.equipe){
+        majCarteP3Auto(e.detail.equipe);
+      } else {
+        EQUIPES.forEach(majCarteP3Auto);
+        majCarteP3Auto('TEST');
+      }
+    });
+  }
 
   function htmlToutesReponses(){
-    // UN SEUL CARD — toutes les équipes regroupées (plus de cards TEST séparées)
+    // UN SEUL CARD — toutes les équipes regroupées
     return ''
     + '<div class="adm-af-sec" id="afEquipesSec">'
-    +   '<h4 style="margin:0 0 6px;font-size:13px">BONNES RÉPONSES — TOUTES ÉQUIPES</h4>'
-    +   '<p class="small" style="margin:0 0 8px;color:#6e7a84">Le Palier 3 est un puzzle photo : il ne comporte pas de réponse textuelle.</p>'
+    +   '<h4 style="margin:0 0 8px;font-size:13px">BONNES RÉPONSES — TOUTES ÉQUIPES</h4>'
     +   '<div id="afTeamCards" class="adm-af-cards">'
     +     '<div class="adm-af-teamcard" id="afSingleCard" data-team="ALL" style="border:1px solid #0b1a2e;background:#fff">'
     +       '<div class="adm-af-teamhead"><span>🔑 RÉPONSES</span><span class="small" id="afGlobalPill" style="color:#6e7a84">chargement…</span></div>'
@@ -271,21 +323,19 @@
             var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'">'+esc(w)+'</span>'; }).join('');
             return '<div class="adm-af-teamcard" data-team="'+eq+'" style="margin:10px 0 0;padding:10px 10px 8px;background:#f7fafc;border:1px solid #e3eaf0;border-radius:10px;box-shadow:none">'
               + '<div class="adm-af-teamhead" style="font-size:12px"><span>'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#6e7a84">…</span></div>'
-              + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eq+'">—</span><span class="small" style="color:#6e7a84">morse</span></div>'
+              + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eq+'">—</span></div>'
               + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+eq+'">'+p2+'</div></div>'
-              + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>'
+              + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+eq+'"></div></div>'
               + '</div>';
           }).join('')
     +       (function(){
-            // Card test admin zzzz-0000 — toujours visible (hors classement) à l'intérieur du card unique
             var eqT='TEST';
             var p2t = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eqT+'-'+w+'">'+esc(w)+'</span>'; }).join('');
             return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:10px 0 0;padding:10px 10px 8px;background:linear-gradient(180deg,#fffef4 0%,#fff8db 100%);border:1px solid #e8c05f;border-radius:10px;box-shadow:0 4px 14px rgba(232,192,95,.18)">'
-              + '<div class="adm-af-teamhead" style="font-size:12px"><span>🧪 zzzz-0000 <span class="small" style="background:#fff4d8;border:1px solid #e8c05f;border-radius:999px;padding:1px 6px;font-size:10px">HORS CLASSEMENT — TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#6e7a84">test</span></div>'
-              + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eqT+'">—</span><span class="small" style="color:#6e7a84">morse</span></div>'
+              + '<div class="adm-af-teamhead" style="font-size:12px"><span>🧪 zzzz-0000 <span class="small" style="background:#fff4d8;border:1px solid #e8c05f;border-radius:999px;padding:1px 6px;font-size:10px">TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#6e7a84">test</span></div>'
+              + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eqT+'">—</span></div>'
               + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'">'+p2t+'</div></div>'
-              + '<div class="adm-af-row" id="afP3-'+eqT+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>'
-              + '<div class="small" style="margin-top:6px;color:#8a6d33;background:rgba(255,244,186,.55);border:1px dashed #e8c05f;border-radius:8px;padding:6px 8px">Compte test <b>zzzz-0000</b> — géolocalisation désactivée, accès libre à tous les paliers. Réponses visibles uniquement ici.</div>'
+              + '<div class="adm-af-row" id="afP3-'+eqT+'"><span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+eqT+'"></div></div>'
               + '</div>';
           })()
     +     '</div>'
@@ -313,9 +363,9 @@
     card.dataset.team = equipe;
     card.style.cssText = 'margin:10px 0 0;padding:10px 10px 8px;background:#f0faf6;border:1px solid #bfe7d2;border-radius:10px;box-shadow:none';
     card.innerHTML = '<div class="adm-af-teamhead" style="font-size:12px"><span>'+esc(equipe)+' <span class="small" style="background:#e8fff4;border:1px solid #bfe7d2;border-radius:999px;padding:1px 6px;font-size:10px">SESSION LIVE</span></span><span class="small" id="afTeamPill-'+equipe+'" style="color:#6e7a84">auto</span></div>'
-      + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+equipe+'">—</span><span class="small" style="color:#6e7a84">morse</span></div>'
+      + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+equipe+'">—</span></div>'
       + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+equipe+'">'+p2+'</div></div>'
-      + '<div class="adm-af-row" id="afP3-'+equipe+'"><span class="adm-af-lbl">P3</span><span class="small" style="color:#6e7a84">chargement…</span></div>';
+      + '<div class="adm-af-row" id="afP3-'+equipe+'"><span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'"></div></div>';
     // insère avant la carte TEST si elle existe, sinon à la fin
     var testCard = targetHost.querySelector('[data-team="TEST"]');
     if(testCard) targetHost.insertBefore(card, testCard);
@@ -370,6 +420,15 @@
           }
           if (liste) majP2Chips(eq, liste); else majP2Chips(eq, []);
         }catch(e){ try{ majP2Chips(eq, []);}catch(e2){} }
+        // P3 : Photo Défi (5 cibles en direct)
+        try{
+          var pd = payload ? (payload.photoDefi || payload.palier3 || null) : null;
+          if (pd && pd.cibles && Array.isArray(pd.cibles)){
+            majP3Chips(eq, pd.cibles, pd.indexActuel);
+          } else {
+            majCarteP3Auto(eq);
+          }
+        }catch(e){ majCarteP3Auto(eq); }
         if(!doc && !mot){
            // même sans doc, on tente quand même P2 via local déjà fait
         }
@@ -381,8 +440,8 @@
           var l2 = lireP2DepuisLocal(eq);
           if(l2) majP2Chips(eq, l2); else majP2Chips(eq, []);
         }catch(e){ try{ majP2Chips(eq, []);}catch(e2){} }
+        majCarteP3Auto(eq);
       });
-      majCarteP3Auto(eq);
     });
     // Card test admin zzzz-0000 — alimente le sous-bloc TEST à l'intérieur du card unique
     try{
@@ -442,8 +501,29 @@
     try{ ecouterP3Live(); }catch(e){}
   }
   function majCarteP3Auto(equipe){
-    var el = $('afP3-'+equipe);
-    if(el) el.innerHTML = '<span class="adm-af-lbl">P3</span><span class="small">Puzzle photo circulaire</span>';
+    try{
+      var cibles = null, indexActuel = 0;
+      var raw = localStorage.getItem('nautilusP3Cibles:' + equipe);
+      if (raw){
+        try{ cibles = JSON.parse(raw); }catch(e){}
+      }
+      var rawIdx = localStorage.getItem('nautilusP3Index:' + equipe);
+      if (rawIdx != null) indexActuel = Number(rawIdx) || 0;
+
+      if (!cibles || !cibles.length){
+        if (window.NautilusPhotoDefi && window.NautilusPhotoDefi.getCiblesEquipe){
+          cibles = window.NautilusPhotoDefi.getCiblesEquipe(equipe);
+        }
+      }
+      if (cibles && cibles.length){
+        majP3Chips(equipe, cibles, indexActuel);
+      } else {
+        var row = $('afP3-'+equipe);
+        if (row && !$('afP3wrap-'+equipe)){
+          row.innerHTML = '<span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'"><span class="small" style="color:#6e7a84">en attente</span></div>';
+        }
+      }
+    }catch(e){}
   }
 
   function HTML_REP() {

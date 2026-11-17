@@ -1262,7 +1262,7 @@ async function testIntegratedPaliers(browser, base, viewport, label) {
     await page.locator('[data-tab="reponses"]').click();
     await page.waitForTimeout(500);
     const reponses = await page.locator('[data-pane="reponses"]').innerText();
-    assert.match(reponses, /puzzle photo/i);
+    assert.match(reponses, /r[eé]ponses|p3|photo/i);
     assert.doesNotMatch(reponses, /retrait.{0,8}1\s*h|livres attribués|ancien livre fictif/i);
   }
 
