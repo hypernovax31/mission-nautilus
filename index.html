@@ -4495,7 +4495,7 @@
          bon endroit rapidement, on enchaine sans lui. Les annonces
          suivantes gardent le rythme complet, l'attente y est masquee par
          l'animation de la carte precedente. */
-      const sweepTimeout = isFirstReveal ? 175 : 800;
+      const sweepTimeout = isFirstReveal ? 250 : 1200;
       await waitForSweepOver(blipAngle(blipIdx), sweepTimeout);
       isFirstReveal = false;
 

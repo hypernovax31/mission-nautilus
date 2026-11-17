@@ -47,7 +47,7 @@
     animation-direction:alternate!important;
   }
   html.nautilus-motion-enabled .radar-sweep-big{
-    animation-name:radarRotateFast!important;animation-duration:1.4s!important;
+    animation-name:radarRotateFast!important;animation-duration:2.8s!important;
     animation-timing-function:linear!important;animation-iteration-count:infinite!important;
     animation-direction:normal!important;
   }
@@ -56,7 +56,7 @@
     animation:none!important;will-change:transform;
   }
   html.nautilus-motion-enabled .radar-center{
-    animation-name:centerPulse!important;animation-duration:.8s!important;
+    animation-name:centerPulse!important;animation-duration:1.6s!important;
     animation-timing-function:ease-in-out!important;animation-iteration-count:infinite!important;
   }
   html.nautilus-motion-enabled .radar-blip.blip-pop{

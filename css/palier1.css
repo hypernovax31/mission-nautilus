@@ -655,17 +655,16 @@
     .o2-fill::before{
       content:"";position:absolute;top:0;bottom:0;left:-140px;right:0;
       background:
-        radial-gradient(circle at 20% 45%,rgba(255,255,255,.98) 0 2.5px,rgba(142,231,255,.6) 4px,transparent 6px),
-        radial-gradient(circle at 55% 55%,rgba(255,255,255,.95) 0 3px,rgba(142,231,255,.55) 5px,transparent 7px),
-        radial-gradient(circle at 85% 40%,rgba(255,255,255,.98) 0 3.5px,rgba(142,231,255,.7) 6px,transparent 8px);
+        radial-gradient(circle at 20% 45%,rgba(255,255,255,.5) 0 1.5px,rgba(142,231,255,.2) 3px,transparent 4px),
+        radial-gradient(circle at 55% 55%,rgba(255,255,255,.45) 0 2px,rgba(142,231,255,.18) 3.5px,transparent 4.5px),
+        radial-gradient(circle at 85% 40%,rgba(255,255,255,.5) 0 1.5px,rgba(142,231,255,.2) 3px,transparent 4px);
       background-size:140px 100%;
-      animation:bubblesMove 4s linear infinite;
-      opacity:.92;
-      filter:drop-shadow(0 0 4px rgba(255,255,255,.85));
+      animation:bubblesMove 10s linear infinite;
+      opacity:.38;
       will-change:transform;
       pointer-events:none;
     }
-    @keyframes bubblesMove{0%{transform:translateX(0) translateY(0)}50%{transform:translateX(70px) translateY(-2px)}100%{transform:translateX(140px) translateY(0)}}
+    @keyframes bubblesMove{0%{transform:translateX(0) translateY(0)}50%{transform:translateX(70px) translateY(-1px)}100%{transform:translateX(140px) translateY(0)}}
     @media(prefers-reduced-motion:reduce){.o2-fill::before{animation:none}}
     /* Le pourcentage est ECRIT DANS la jauge, centre, avec un lisere noir
        pour rester lisible aussi bien sur le vert que sur le fond sombre. */
