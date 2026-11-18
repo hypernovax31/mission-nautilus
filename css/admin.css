@@ -51,8 +51,8 @@
     }
     .admin-o2-badge{
       font-size:var(--fs-tiny);font-weight:900;text-transform:uppercase;
-      letter-spacing:.04em;color:#8c5a1f;background:rgba(245,176,39,.14);
-      border:1px solid rgba(245,176,39,.4);border-radius:999px;
+      letter-spacing:.04em;color:#075c39;background:#effff7;
+      border:1px solid #aee5ca;border-radius:999px;
       padding:2px 9px;text-align:right;
     }
 
@@ -71,8 +71,8 @@
     .admin-add-title{font-size:var(--fs-small);font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#52606a;margin-bottom:10px}
     .admin-add-member .admin-actions-row{margin-top:10px}
     #adminAddMemberMsg:not(:empty){margin-top:10px}
-    .admin-o2-badge.warning{color:#8c5a1f;background:rgba(245,176,39,.14);border-color:rgba(245,176,39,.4)}
-    .admin-o2-badge.critical{color:#a3271b;background:rgba(255,75,62,.12);border-color:rgba(255,75,62,.45)}
+    .admin-o2-badge.warning{color:#734300;background:#fff3cd;border-color:#ffd166}
+    .admin-o2-badge.critical{color:#841818;background:#ffe6e6;border-color:#ff9999}
     /* Panneau admin : le h2 (titre + ✕) ne déborde jamais */
     #adminPanel h2{gap:6px;flex-wrap:nowrap;min-width:0}
     #adminPanel h2>span{font-size:clamp(12px,2.8vw,14px);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}
@@ -293,3 +293,116 @@ h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-wo
 img,video,svg,canvas,iframe{max-width:100%;height:auto;}
 button,input,select,textarea{max-width:100%;box-sizing:border-box;}
 body{overflow-wrap:break-word;}
+
+/* ===== MODE SOMBRE — PANNEAU ADMIN ===== */
+@media (prefers-color-scheme: dark) {
+  #adminPanel > div.body,
+  #adminPanel .body {
+    background: linear-gradient(180deg, #071a2b 0%, #03111f 100%) !important;
+    color: #eaf8ff !important;
+    border: 1px solid rgba(245, 176, 39, 0.35) !important;
+    border-top: 0 !important;
+    box-shadow: 0 26px 80px rgba(0, 0, 0, 0.75) !important;
+  }
+
+  #adminPanel p.small,
+  #adminPanel .small {
+    color: #9bc4d4 !important;
+  }
+
+  #adminPanel label {
+    color: #cfe6f4 !important;
+  }
+
+  #adminPanel .body p.small[style*="9b1111"] {
+    color: #ff8579 !important;
+  }
+
+  #adminWorkspace span.small[style*="075c39"] {
+    color: #5be09b !important;
+  }
+
+  #adminWorkspace div[style*="163f58"] {
+    color: #8ee7ff !important;
+  }
+
+  .admin-designer-box {
+    background: rgba(11, 52, 78, 0.35) !important;
+    border-color: rgba(142, 231, 255, 0.3) !important;
+  }
+
+  .admin-tabs {
+    background: rgba(2, 10, 20, 0.7) !important;
+    border-bottom: 1px solid rgba(142, 231, 255, 0.2) !important;
+  }
+
+  .admin-tab {
+    background: rgba(142, 231, 255, 0.08) !important;
+    color: #9bc4d4 !important;
+    border: 1px solid rgba(142, 231, 255, 0.2) !important;
+  }
+
+  .admin-tab.active {
+    background: linear-gradient(135deg, #f5b027, #d48b13) !important;
+    color: #04101d !important;
+    border-color: #ffd36c !important;
+  }
+
+  .admin-add-member {
+    background: rgba(6, 24, 40, 0.75) !important;
+    border: 1px solid rgba(142, 231, 255, 0.22) !important;
+  }
+
+  .admin-add-title {
+    color: #8ee7ff !important;
+  }
+
+  .admin-o2-status {
+    background: rgba(255, 75, 62, 0.10) !important;
+    border-color: rgba(255, 75, 62, 0.35) !important;
+  }
+
+  .admin-o2-row > span:first-child {
+    color: #9bc4d4 !important;
+  }
+
+  .admin-o2-row > strong {
+    color: #ff7b72 !important;
+  }
+
+  .admin-o2-badge {
+    color: #5be09b !important;
+    background: rgba(91, 255, 156, 0.14) !important;
+    border-color: rgba(91, 255, 156, 0.4) !important;
+  }
+
+  .admin-o2-badge.warning {
+    color: #ffd36c !important;
+    background: rgba(245, 176, 39, 0.18) !important;
+    border-color: rgba(245, 176, 39, 0.45) !important;
+  }
+
+  .admin-o2-badge.critical {
+    color: #ff8579 !important;
+    background: rgba(255, 75, 62, 0.18) !important;
+    border-color: rgba(255, 75, 62, 0.45) !important;
+  }
+
+  #adminPanel input,
+  #adminPanel select {
+    background: rgba(3, 17, 31, 0.88) !important;
+    color: #f2f8fc !important;
+    border: 1px solid rgba(142, 231, 255, 0.3) !important;
+  }
+
+  #adminPanel .team {
+    background: rgba(6, 22, 36, 0.85) !important;
+    border: 1px solid rgba(142, 231, 255, 0.2) !important;
+    color: #eaf8ff !important;
+  }
+
+  #adminPanel .team h3 {
+    color: #eaf8ff !important;
+  }
+}
+

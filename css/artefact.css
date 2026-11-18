@@ -377,3 +377,50 @@ button, input, select, textarea { max-width: 100%; box-sizing: border-box; }
 .af-carte :focus-visible, .magasin-selec :focus-visible, .adm-af-sec :focus-visible {
   outline: 2px solid var(--af-cyan); outline-offset: 2px;
 }
+
+@media (prefers-color-scheme: dark) {
+  #adminPanel .adm-af-sec {
+    background: rgba(6, 24, 40, 0.75) !important;
+    border: 1px solid rgba(142, 231, 255, 0.22) !important;
+    color: #eaf8ff !important;
+  }
+  #adminPanel .adm-af-sec > h4 {
+    color: #8ee7ff !important;
+  }
+  #adminPanel .adm-af-note {
+    color: #9bc4d4 !important;
+  }
+  #adminPanel .adm-af-note code {
+    background: rgba(142, 231, 255, 0.1) !important;
+    color: #8ee7ff !important;
+  }
+  #adminPanel .adm-af-table th {
+    color: #8ee7ff !important;
+    border-bottom: 1px solid rgba(142, 231, 255, 0.18) !important;
+  }
+  #adminPanel .adm-af-table td {
+    color: #eaf8ff !important;
+    border-bottom: 1px solid rgba(142, 231, 255, 0.12) !important;
+  }
+  #adminPanel .adm-af-table code {
+    color: #8ee7ff !important;
+  }
+  #adminPanel .adm-af-badge--ok {
+    background: rgba(46, 213, 115, 0.18) !important;
+    color: #7ce6ad !important;
+    border: 1px solid rgba(46, 213, 115, 0.4) !important;
+  }
+  #adminPanel .adm-af-badge--warn {
+    background: rgba(245, 176, 39, 0.18) !important;
+    color: #ffd36c !important;
+    border: 1px solid rgba(245, 176, 39, 0.4) !important;
+  }
+  #adminPanel .adm-af-badge--danger {
+    background: rgba(255, 75, 62, 0.18) !important;
+    color: #ff8579 !important;
+    border: 1px solid rgba(255, 75, 62, 0.4) !important;
+  }
+  #adminPanel .adm-af-hist {
+    color: #9bc4d4 !important;
+  }
+}

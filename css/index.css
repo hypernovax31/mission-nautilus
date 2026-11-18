@@ -64,8 +64,8 @@
     }
     .admin-o2-badge{
       font-size:var(--fs-tiny);font-weight:900;text-transform:uppercase;
-      letter-spacing:.04em;color:#8c5a1f;background:rgba(245,176,39,.14);
-      border:1px solid rgba(245,176,39,.4);border-radius:999px;
+      letter-spacing:.04em;color:#075c39;background:#effff7;
+      border:1px solid #aee5ca;border-radius:999px;
       padding:2px 9px;text-align:right;
     }
 
@@ -215,13 +215,13 @@
       .code,.code.code-copied{transition:none;transform:none}
     }
 
-    .admin-o2-badge.warning{color:#8c5a1f;background:rgba(245,176,39,.14);border-color:rgba(245,176,39,.4)}
-    .admin-o2-badge.critical{color:#a3271b;background:rgba(255,75,62,.12);border-color:rgba(255,75,62,.45)}
+    .admin-o2-badge.warning{color:#734300;background:#fff3cd;border-color:#ffd166}
+    .admin-o2-badge.critical{color:#841818;background:#ffe6e6;border-color:#ff9999}
 
-    /* Placeholders : gris tres clair, identique sur input et select */
-    input::placeholder{color:#b8c4cd;opacity:1}
-    input::-webkit-input-placeholder{color:#b8c4cd}
-    select:invalid,select option[value=""]{color:#b8c4cd}
+    /* Placeholders : gris lisible conforme WCAG, identique sur input et select */
+    input::placeholder{color:#617181;opacity:1}
+    input::-webkit-input-placeholder{color:#617181}
+    select:invalid,select option[value=""]{color:#617181}
 
     /* Le Code Matelot doit rester selectionnable en TOUTES circonstances,
        y compris si une protection anti-copie est reactivee plus tard. */
@@ -3061,3 +3061,332 @@ body > header .hero-actions .hero-cta {
     max-height: calc(100dvh - 150px) !important;
   }
 }
+
+/* ==========================================================================
+   MISSION NAUTILUS — MODE SOMBRE (DARK MODE & HAUT CONTRASTE)
+   Assure une immersion totale dans l'univers sous-marin avec des contrastes
+   strictement conformes WCAG AA / AAA sur l'ensemble des écrans et composants.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --text: #eaf8ff;
+    --muted: #9bc4d4;
+    --bad: #ff5a4e;
+    --warn: rgba(245, 176, 39, 0.16);
+    --warnb: rgba(245, 176, 39, 0.45);
+    --dangerbg: rgba(255, 75, 62, 0.18);
+    --dangerb: rgba(255, 75, 62, 0.5);
+    --successbg: rgba(91, 255, 156, 0.14);
+    --successb: rgba(91, 255, 156, 0.45);
+  }
+
+  /* Cartes d'embarquement et de reprise de mission */
+  .card,
+  #embarquementMatelot,
+  #retrouverEquipage {
+    background: linear-gradient(135deg, rgba(5, 16, 28, 0.95), rgba(12, 53, 77, 0.95)) !important;
+    border: 1px solid rgba(245, 176, 39, 0.28) !important;
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45) !important;
+    color: #eaf8ff !important;
+  }
+
+  #embarquementMatelot .body p.small,
+  #retrouverEquipage .body p.small {
+    color: #cfe6f4 !important;
+  }
+
+  label,
+  #embarquementMatelot label,
+  #retrouverEquipage label {
+    color: #eaf8ff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Champs de saisie & listes déroulantes */
+  input,
+  select,
+  textarea {
+    background: rgba(3, 17, 31, 0.88) !important;
+    color: #f2f8fc !important;
+    border: 2px solid rgba(142, 231, 255, 0.35) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none !important;
+    border-color: #8ee7ff !important;
+    box-shadow: 0 0 0 3px rgba(142, 231, 255, 0.28), inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  input::placeholder,
+  input::-webkit-input-placeholder {
+    color: #8ba5b5 !important;
+    opacity: 1 !important;
+  }
+
+  select:invalid,
+  select option[value=""] {
+    color: #8ba5b5 !important;
+  }
+
+  select option {
+    background: #071a2b !important;
+    color: #f2f8fc !important;
+  }
+
+  /* Bouton secondaire */
+  .secondary {
+    background: rgba(142, 231, 255, 0.12) !important;
+    color: #8ee7ff !important;
+    border: 1px solid rgba(142, 231, 255, 0.35) !important;
+  }
+  .secondary:hover {
+    background: rgba(142, 231, 255, 0.22) !important;
+    color: #ffffff !important;
+  }
+
+  /* Encart après inscription du matelot */
+  .matelot-reveal-code,
+  .matelot-qr-card {
+    background: rgba(4, 18, 32, 0.85) !important;
+    border: 1px solid rgba(142, 231, 255, 0.28) !important;
+  }
+
+  .matelot-reveal-label {
+    color: #8ee7ff !important;
+  }
+
+  .matelot-code-help,
+  .matelot-qr-help {
+    color: #cfe6f4 !important;
+  }
+
+  .matelot-code-help b,
+  .matelot-qr-help b {
+    color: var(--fnac) !important;
+  }
+
+  .matelot-alert {
+    background: rgba(90, 16, 16, 0.55) !important;
+    border: 2px solid #ff5a4e !important;
+    border-left-width: 6px !important;
+    color: #ffd0cd !important;
+  }
+
+  .matelot-alert-titre {
+    color: #ffffff !important;
+  }
+
+  .matelot-alert-l b {
+    color: #ffe2a0 !important;
+  }
+
+  .matelot-crewhint {
+    color: #cfe6f4 !important;
+  }
+
+  /* Cartes d'équipage (Sonar & Équipages en mer) */
+  .team {
+    background: linear-gradient(180deg, rgba(8, 28, 46, 0.90), rgba(4, 16, 28, 0.95)) !important;
+    border: 1px solid rgba(142, 231, 255, 0.25) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    color: #eaf8ff !important;
+  }
+
+  .team h3 {
+    color: #eaf8ff !important;
+  }
+
+  .team .small {
+    color: #9bc4d4 !important;
+  }
+
+  .team b {
+    color: #ffffff !important;
+  }
+
+  .team .service {
+    background: rgba(142, 231, 255, 0.15) !important;
+    color: #8ee7ff !important;
+    border: 1px solid rgba(142, 231, 255, 0.3) !important;
+  }
+
+  .team .hr {
+    background: rgba(142, 231, 255, 0.15) !important;
+  }
+
+  /* Panneau Admin en mode sombre */
+  #adminPanel > div.body,
+  #adminPanel .body {
+    background: linear-gradient(180deg, #071a2b 0%, #03111f 100%) !important;
+    color: #eaf8ff !important;
+    border: 1px solid rgba(245, 176, 39, 0.35) !important;
+    border-top: 0 !important;
+    box-shadow: 0 26px 80px rgba(0, 0, 0, 0.75) !important;
+  }
+
+  #adminPanel p.small,
+  #adminPanel .small {
+    color: #9bc4d4 !important;
+  }
+
+  #adminPanel label {
+    color: #cfe6f4 !important;
+  }
+
+  #adminPanel .body p.small[style*="9b1111"] {
+    color: #ff8579 !important;
+  }
+
+  #adminWorkspace span.small[style*="075c39"] {
+    color: #5be09b !important;
+  }
+
+  #adminWorkspace div[style*="163f58"] {
+    color: #8ee7ff !important;
+  }
+
+  .admin-designer-box {
+    background: rgba(11, 52, 78, 0.35) !important;
+    border-color: rgba(142, 231, 255, 0.3) !important;
+  }
+
+  .admin-tabs {
+    background: rgba(2, 10, 20, 0.7) !important;
+    border-bottom: 1px solid rgba(142, 231, 255, 0.2) !important;
+  }
+
+  .admin-tab {
+    background: rgba(142, 231, 255, 0.08) !important;
+    color: #9bc4d4 !important;
+    border: 1px solid rgba(142, 231, 255, 0.2) !important;
+  }
+
+  .admin-tab.active {
+    background: linear-gradient(135deg, #f5b027, #d48b13) !important;
+    color: #04101d !important;
+    border-color: #ffd36c !important;
+  }
+
+  .admin-add-member {
+    background: rgba(6, 24, 40, 0.75) !important;
+    border: 1px solid rgba(142, 231, 255, 0.22) !important;
+  }
+
+  .admin-add-title {
+    color: #8ee7ff !important;
+  }
+
+  .admin-o2-status {
+    background: rgba(255, 75, 62, 0.10) !important;
+    border-color: rgba(255, 75, 62, 0.35) !important;
+  }
+
+  .admin-o2-row > span:first-child {
+    color: #9bc4d4 !important;
+  }
+
+  .admin-o2-row > strong {
+    color: #ff7b72 !important;
+  }
+
+  .admin-o2-badge {
+    color: #5be09b !important;
+    background: rgba(91, 255, 156, 0.14) !important;
+    border-color: rgba(91, 255, 156, 0.4) !important;
+  }
+
+  .admin-o2-badge.warning {
+    color: #ffd36c !important;
+    background: rgba(245, 176, 39, 0.18) !important;
+    border-color: rgba(245, 176, 39, 0.45) !important;
+  }
+
+  .admin-o2-badge.critical {
+    color: #ff8579 !important;
+    background: rgba(255, 75, 62, 0.18) !important;
+    border-color: rgba(255, 75, 62, 0.45) !important;
+  }
+
+  #adminPanel input,
+  #adminPanel select {
+    background: rgba(3, 17, 31, 0.88) !important;
+    color: #f2f8fc !important;
+    border: 1px solid rgba(142, 231, 255, 0.3) !important;
+  }
+
+  #adminPanel .team {
+    background: rgba(6, 22, 36, 0.85) !important;
+    border: 1px solid rgba(142, 231, 255, 0.2) !important;
+    color: #eaf8ff !important;
+  }
+
+  #adminPanel .team h3 {
+    color: #eaf8ff !important;
+  }
+
+  #adminPanel .adm-af-sec {
+    background: rgba(6, 24, 40, 0.75) !important;
+    border: 1px solid rgba(142, 231, 255, 0.22) !important;
+    color: #eaf8ff !important;
+  }
+
+  #adminPanel .adm-af-sec > h4 {
+    color: #8ee7ff !important;
+  }
+
+  #adminPanel .adm-af-note {
+    color: #9bc4d4 !important;
+  }
+
+  #adminPanel .adm-af-table th {
+    color: #8ee7ff !important;
+    border-bottom: 1px solid rgba(142, 231, 255, 0.18) !important;
+  }
+
+  #adminPanel .adm-af-table td {
+    color: #eaf8ff !important;
+    border-bottom: 1px solid rgba(142, 231, 255, 0.12) !important;
+  }
+
+  #adminPanel .adm-af-table code {
+    color: #8ee7ff !important;
+    background: rgba(142, 231, 255, 0.1) !important;
+  }
+
+  #adminPanel .adm-af-badge--ok {
+    background: rgba(46, 213, 115, 0.18) !important;
+    color: #7ce6ad !important;
+    border: 1px solid rgba(46, 213, 115, 0.4) !important;
+  }
+
+  #adminPanel .adm-af-badge--warn {
+    background: rgba(245, 176, 39, 0.18) !important;
+    color: #ffd36c !important;
+    border: 1px solid rgba(245, 176, 39, 0.4) !important;
+  }
+
+  #adminPanel .adm-af-badge--danger {
+    background: rgba(255, 75, 62, 0.18) !important;
+    color: #ff8579 !important;
+    border: 1px solid rgba(255, 75, 62, 0.4) !important;
+  }
+
+  #adminPanel .adm-af-hist {
+    color: #9bc4d4 !important;
+  }
+
+  /* Bannières et cartes PWA */
+  .pwa-card,
+  .pwa-modal-box,
+  .ios-install-banner {
+    background: linear-gradient(135deg, rgba(6, 22, 36, 0.95), rgba(4, 14, 24, 0.95)) !important;
+    border: 1px solid rgba(245, 176, 39, 0.3) !important;
+    color: #eaf8ff !important;
+  }
+}
+

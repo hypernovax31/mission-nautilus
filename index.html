@@ -48,7 +48,9 @@
   <!-- Manifeste PWA integre en data: URI (plus de manifest.json externe).
        Les chemins d'icones sont absolus car un data: URI n'a pas de base relative. -->
   <link rel="manifest" href="data:application/manifest+json,%7B%22name%22:%22Mission%20Nautilus%22,%22short_name%22:%22Nautilus%22,%22description%22:%22Mission%20Nautilus%20-%2020%20000%20lieues%20sous%20les%20mers%20(Fnac%20Labege)%22,%22start_url%22:%22/index.html%22,%22scope%22:%22/%22,%22display%22:%22standalone%22,%22orientation%22:%22portrait%22,%22background_color%22:%22%23020812%22,%22theme_color%22:%22%23f5b027%22,%22icons%22:[%7B%22src%22:%22/assets/icon.svg%22,%22sizes%22:%22any%22,%22type%22:%22image/svg+xml%22,%22purpose%22:%22any%22%7D,%7B%22src%22:%22/assets/icon-192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22,%22purpose%22:%22any%22%7D,%7B%22src%22:%22/assets/icon-512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22,%22purpose%22:%22any%22%7D,%7B%22src%22:%22/assets/icon-maskable-512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22,%22purpose%22:%22maskable%22%7D],%22categories%22:[%22games%22,%22entertainment%22],%22lang%22:%22fr%22,%22dir%22:%22ltr%22%7D">
-  <meta name="theme-color" content="#f5b027">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#020812">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5b027">
   <!-- Icones : SVG source (Chrome/Safari/FF) + PNG de repli + Apple touch (iOS) -->
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -2581,10 +2583,10 @@
     }catch(e){}
   })();
   </script>
-  <link rel="stylesheet" href="css/index.css?v=80">
+  <link rel="stylesheet" href="css/index.css?v=81">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Styles du sélecteur de magasin et des onglets d'administration. -->
-  <link rel="stylesheet" href="css/artefact.css?v=1">
+  <link rel="stylesheet" href="css/artefact.css?v=2">
   <!-- Commandes de secours, visibles uniquement si le mouvement est bloqué. -->
   <link rel="stylesheet" href="css/animations-accueil.css?v=2">
   <!-- Page de garde « ÉCOUTILLE » : son style est écrit DANS la page (voir

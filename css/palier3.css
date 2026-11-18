@@ -362,7 +362,7 @@ main{ max-width:1720px; }
   to{ transform:scale(1.03); box-shadow:0 0 18px rgba(255,71,87,.8); }
 }
 .photo-btn-emergency.is-abandon:hover{
-  background:#ff4757;
+  background:#d91438;
   color:#fff;
 }
 .photo-emergency-warning{

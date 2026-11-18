@@ -114,14 +114,14 @@
       link.rel = 'stylesheet';
       // Versionné pour ne jamais réutiliser l'ancienne feuille corrompue du
       // cache PWA sur les pages palier et classement.
-      link.href = 'css/admin.css?v=10';
+      link.href = 'css/admin.css?v=11';
       document.head.appendChild(link);
     }
     if(!document.getElementById('nautilusArtefactCss')){
       const linkA = document.createElement('link');
       linkA.id = 'nautilusArtefactCss';
       linkA.rel = 'stylesheet';
-      linkA.href = 'css/artefact.css?v=1';
+      linkA.href = 'css/artefact.css?v=2';
       document.head.appendChild(linkA);
     }
     ensureAdminModules();

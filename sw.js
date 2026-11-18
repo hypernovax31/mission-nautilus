@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Pages : network-first ; code et styles : cache avec revalidation en fond.
-const CACHE_NAME = 'nautilus-v416';
+const CACHE_NAME = 'nautilus-v417';
 const PRECACHE = [
   './',
   './index.html',
@@ -10,16 +10,16 @@ const PRECACHE = [
   './1941512821.html',
   './2051613922.html',
   './classement.html',
-  './css/index.css?v=80',
-  './css/artefact.css?v=1',
+  './css/index.css?v=81',
+  './css/artefact.css?v=2',
   './css/animations-accueil.css?v=2',
   './css/classement.css?v=9',
   './css/hublots.css?v=15',
   './css/palier1.css?v=49',
   './css/palier2.css?v=26',
-  './css/palier3.css?v=7',
+  './css/palier3.css?v=8',
   './css/palier4.css?v=1',
-  './css/admin.css?v=10',
+  './css/admin.css?v=11',
   './anti-zoom.js?v=1',
   './son-partage.js?v=2',
   './sonar-button.js?v=4',
