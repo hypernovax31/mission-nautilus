@@ -70,6 +70,46 @@
     return n <= LOCK_HOURS.length ? LOCK_HOURS[n - 1] : 24;
   }
 
+  /* Clé du jour courant (au fuseau horaire de France 'Europe/Paris') : "YYYY-MM-DD".
+     RÈGLE DU JEU : le barème progressif des pénalités (1h, 2h, 4h, 8h, 12h, 24h)
+     se réinitialise tous les jours. Un matelot qui échoue un nouveau jour recommence
+     donc à 1 h de surface pour sa première avarie de la journée. */
+  function cleJour(d) {
+    var date = d ? (d instanceof Date ? d : new Date(d)) : new Date();
+    if (isNaN(date.getTime())) date = new Date();
+    try {
+      return date.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+    } catch (e) {
+      var y = date.getFullYear();
+      var m = String(date.getMonth() + 1).padStart(2, '0');
+      var day = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+  }
+
+  function estAujourdhui(dateStr) {
+    if (!dateStr) return false;
+    try {
+      return cleJour(dateStr) === cleJour();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /* Nombre d'échecs subis par le matelot AUJOURD'HUI.
+     Si le dernier échec date d'un jour précédent, le compteur est remis à 0. */
+  function echecsDuJour(ancien) {
+    if (!ancien) return 0;
+    var today = cleJour();
+    if (ancien.lastFailDay) {
+      return ancien.lastFailDay === today ? Number(ancien.failCount || 0) : 0;
+    }
+    if (ancien.blockedAt) {
+      return estAujourdhui(ancien.blockedAt) ? Number(ancien.failCount || 0) : 0;
+    }
+    return 0;
+  }
+
   /* Firebase mutualisé : getApp() si la page (ou le bouton admin) a
      déjà initialisé l'app — jamais deux initializeApp. */
   function importMod(kind) {
@@ -185,13 +225,21 @@
     var snap = await x.fs.getDoc(ref);
     var data = snap.exists() ? (snap.data() || {}) : {};
     var ancien = (data.matelotLocks || {})[ident.memberKey] || null;
-    var nextFail = Number((ancien && ancien.failCount) || 0) + 1;
+    var echecsJour = echecsDuJour(ancien);
+    var nextFail = echecsJour + 1;
     var hours = heuresBlocage(nextFail);
     var until = new Date(Date.now() + hours * 3600e3).toISOString();
+    var today = cleJour();
     var patch = {};
     patch['matelotLocks.' + ident.memberKey] = {
-      name: ident.name, failCount: nextFail, lastLockHours: hours,
-      lockedUntil: until, reason: reason || '', blockedAt: new Date().toISOString()
+      name: ident.name,
+      failCount: nextFail,
+      totalFailCount: Number((ancien && (ancien.totalFailCount || ancien.failCount)) || 0) + 1,
+      lastFailDay: today,
+      lastLockHours: hours,
+      lockedUntil: until,
+      reason: reason || '',
+      blockedAt: new Date().toISOString()
     };
     patch.failCount = Number(data.failCount || 0) + 1;
     patch.lastEvent = 'matelot_blocked';
@@ -235,6 +283,9 @@
     poserBlocage: poserBlocage,
     leverBlocages: leverBlocages,
     heuresBlocage: heuresBlocage,
+    echecsDuJour: echecsDuJour,
+    cleJour: cleJour,
+    estAujourdhui: estAujourdhui,
     memberKey: memberKey,
     CODE_TEST: CODE_TEST
   };

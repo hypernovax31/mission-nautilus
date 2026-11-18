@@ -1175,6 +1175,37 @@
     }
   }
 
+  function cleJour(d) {
+    var date = d ? (d instanceof Date ? d : new Date(d)) : new Date();
+    if (isNaN(date.getTime())) date = new Date();
+    try {
+      return date.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+    } catch (e) {
+      var y = date.getFullYear();
+      var m = String(date.getMonth() + 1).padStart(2, '0');
+      var day = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+  }
+  function estAujourdhui(dateStr) {
+    if (!dateStr) return false;
+    try {
+      return cleJour(dateStr) === cleJour();
+    } catch (e) {
+      return false;
+    }
+  }
+  function echecsDuJour(l) {
+    if (!l) return 0;
+    if (l.lastFailDay) {
+      return l.lastFailDay === cleJour() ? Number(l.failCount || 0) : 0;
+    }
+    if (l.blockedAt) {
+      return estAujourdhui(l.blockedAt) ? Number(l.failCount || 0) : 0;
+    }
+    return 0;
+  }
+
   /* Liste des matelots actuellement en surface (blocage personnel).
      Sans cet affichage, un blocage individuel serait invisible depuis
      l'admin : impossible de savoir qui est bloque, ni de le liberer. */
@@ -1186,11 +1217,13 @@
     if(!actifs.length){
       return '<div class="small" style="margin-bottom:10px;color:#075c39">Aucun matelot bloqué individuellement.</div>';
     }
-    const lignes = actifs.map(([key, l]) =>
-      `<li style="margin:4px 0">🔒 <b>${esc(l.name || key)}</b> — jusqu'au ${esc(formatDate(l.lockedUntil))}
-        (${esc(String(l.failCount || 1))} échec(s))
-        <button class="secondary lk-free-one" type="button" data-key="${esc(key)}" style="margin-left:8px;padding:3px 10px;font-size:12px">Libérer</button></li>`
-    ).join('');
+    const lignes = actifs.map(([key, l]) => {
+      const echecsAuj = echecsDuJour(l);
+      const dureeTxt = l.lastLockHours ? ` · ${l.lastLockHours} h` : '';
+      return `<li style="margin:4px 0">🔒 <b>${esc(l.name || key)}</b> — jusqu'au ${esc(formatDate(l.lockedUntil))}
+        (${esc(String(echecsAuj || l.failCount || 1))} échec(s) aujourd'hui${dureeTxt})
+        <button class="secondary lk-free-one" type="button" data-key="${esc(key)}" style="margin-left:8px;padding:3px 10px;font-size:12px">Libérer</button></li>`;
+    }).join('');
     return `<div class="small" style="margin-bottom:10px">
         <b>Matelots en surface (${actifs.length})</b>
         <ul style="margin:6px 0 8px 0;padding-left:18px">${lignes}</ul>

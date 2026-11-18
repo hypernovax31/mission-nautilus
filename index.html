@@ -3456,10 +3456,46 @@
     const n = Math.max(1, Number(rang) || 1);
     return n <= LOCK_HOURS.length ? LOCK_HOURS[n-1] : 24;
   }
+  function cleJour(d) {
+    var date = d ? (d instanceof Date ? d : new Date(d)) : new Date();
+    if (isNaN(date.getTime())) date = new Date();
+    try {
+      return date.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+    } catch (e) {
+      var y = date.getFullYear();
+      var m = String(date.getMonth() + 1).padStart(2, '0');
+      var day = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+  }
+  function estAujourdhui(dateStr) {
+    if (!dateStr) return false;
+    try {
+      return cleJour(dateStr) === cleJour();
+    } catch (e) {
+      return false;
+    }
+  }
+  function echecsDuJour(ancien) {
+    if (!ancien) return 0;
+    var today = cleJour();
+    if (ancien.lastFailDay) {
+      return ancien.lastFailDay === today ? Number(ancien.failCount || 0) : 0;
+    }
+    if (ancien.blockedAt) {
+      return estAujourdhui(ancien.blockedAt) ? Number(ancien.failCount || 0) : 0;
+    }
+    return 0;
+  }
   /* Nombre de remontees en surface (echecs + demandes d'indice) d'un
-     matelot. Les fiches ecrites avant cette regle n'ont pas de
-     surfaceCount : on retombe sur failCount, soit l'ancien calcul. */
+     matelot AUJOURD'HUI. Le barème se réinitialise tous les jours. */
   function remonteesDe(lock){
+    if (!lock) return 0;
+    if (lock.lastFailDay) {
+      if (lock.lastFailDay !== cleJour()) return 0;
+    } else if (lock.blockedAt) {
+      if (!estAujourdhui(lock.blockedAt)) return 0;
+    }
     return Number(lock?.surfaceCount ?? lock?.failCount ?? 0);
   }
   function getLockedUntilISO(rang){const d=new Date();d.setHours(d.getHours()+getLockHours(rang));return d.toISOString();}
@@ -11031,7 +11067,7 @@ window.PWAInstall = {
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=2" defer></script>
 <script src="admin-artefact.js?v=27" defer></script>
-<script src="admin-button.js?v=26" type="module"></script>
+<script src="admin-button.js?v=27" type="module"></script>
 </body>
 </html>
 

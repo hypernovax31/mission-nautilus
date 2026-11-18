@@ -603,11 +603,44 @@ async function getMissionConfig() {
 /* ---------- BLOCAGE PROGRESSIF (PAR MATELOT) ---------- */
 /* REGLE DU JEU : un echec ne bloque QUE le matelot qui a echoue, jamais
    tout l'equipage. Les autres peuvent reprendre le palier a tour de role.
-   Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e echec. */
+   Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e echec.
+   REINITIALISATION QUOTIDIENNE : le barème se réinitialise tous les jours
+   (chaque nouvelle journée recommence à 1 h pour la première avarie). */
 const LOCK_HOURS = [1, 2, 4, 8, 12];
 function getLockHours(failCount) {
   const n = Math.max(1, Number(failCount) || 1);
   return n <= LOCK_HOURS.length ? LOCK_HOURS[n - 1] : 24;
+}
+function cleJour(d) {
+  var date = d ? (d instanceof Date ? d : new Date(d)) : new Date();
+  if (isNaN(date.getTime())) date = new Date();
+  try {
+    return date.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+  } catch (e) {
+    var y = date.getFullYear();
+    var m = String(date.getMonth() + 1).padStart(2, '0');
+    var day = String(date.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+}
+function estAujourdhui(dateStr) {
+  if (!dateStr) return false;
+  try {
+    return cleJour(dateStr) === cleJour();
+  } catch (e) {
+    return false;
+  }
+}
+function echecsDuJour(ancien) {
+  if (!ancien) return 0;
+  var today = cleJour();
+  if (ancien.lastFailDay) {
+    return ancien.lastFailDay === today ? Number(ancien.failCount || 0) : 0;
+  }
+  if (ancien.blockedAt) {
+    return estAujourdhui(ancien.blockedAt) ? Number(ancien.failCount || 0) : 0;
+  }
+  return 0;
 }
 function getLockedUntilISO(failCount) {
   const d = new Date();
@@ -620,7 +653,7 @@ function getLockedUntilISO(failCount) {
    automatiquement une equipe restee bloquee en base par l'ancienne
    version du jeu. */
 /* Fiche de blocage d'un matelot, rangee dans le document de l'equipe
-   sous matelotLocks[memberKey] = { failCount, lockedUntil, lastLockHours }. */
+   sous matelotLocks[memberKey] = { failCount, lockedUntil, lastLockHours, lastFailDay }. */
 function getMatelotLock(team, key) {
   if (!team || !key) return null;
   return (team.matelotLocks || {})[key] || null;
@@ -899,6 +932,7 @@ window.Nautilus = {
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, getSessionBrute, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, getMatelotLock, isMatelotLocked, formatDate,
+  cleJour, estAujourdhui, echecsDuJour,
   getMissionConfig,
   isTestMode, isTestMember,
   isSoundEnabled, getAudioCtx, getMorseCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
@@ -2623,7 +2657,8 @@ window.Nautilus = {
        reprendre chacun leur tour. */
     const key = state.me.memberKey;
     const ancien = N.getMatelotLock(state.team, key);
-    const nextFail = Number(ancien?.failCount || 0) + 1;
+    const echecsJour = N.echecsDuJour(ancien);
+    const nextFail = echecsJour + 1;
     const hours = N.getLockHours(nextFail);
     /* MODE CONCEPTEUR (partie d'essai) : jamais bridé par les erreurs —
        le blocage est immédiatement expiré : l'écran de défaite et le
@@ -2640,9 +2675,16 @@ window.Nautilus = {
        On garde desormais l'equipe renvoyee par saveTeam() : elle
        contient deja le blocage. */
     const locks = { ...(state.team.matelotLocks || {}) };
+    const today = N.cleJour();
     locks[key] = {
-      name: state.me.name, failCount: nextFail, lastLockHours: hours,
-      lockedUntil: until, reason: reason || '', blockedAt: new Date().toISOString()
+      name: state.me.name,
+      failCount: nextFail,
+      totalFailCount: Number((ancien && (ancien.totalFailCount || ancien.failCount)) || 0) + 1,
+      lastFailDay: today,
+      lastLockHours: hours,
+      lockedUntil: until,
+      reason: reason || '',
+      blockedAt: new Date().toISOString()
     };
     /* L'INSTANT est releve AVANT l'ecriture reseau. Sans cela, la ligne
        portait l'heure de la REPONSE du serveur : un message ecrit plus
@@ -2801,9 +2843,13 @@ window.Nautilus = {
                                : new Date(Date.now() + HINT_LOCK_HOURS * 3600 * 1000).toISOString();
     const locks = { ...(state.team.matelotLocks || {}) };
     const ancien = locks[key] || {};
+    const echecsJour = N.echecsDuJour(ancien);
+    const today = N.cleJour();
     locks[key] = {
       name: state.me.name,
-      failCount: Number(ancien.failCount || 0),   // inchange : ce n'est pas un echec
+      failCount: echecsJour,   // inchangé pour un indice
+      totalFailCount: Number((ancien && (ancien.totalFailCount || ancien.failCount)) || 0),
+      lastFailDay: today,
       lastLockHours: HINT_LOCK_HOURS,
       lockedUntil: until,
       reason: 'indice_demande',
@@ -3159,7 +3205,7 @@ window.Nautilus = {
   }
 
   function peineEtRelais(t, l) {
-    const echecs = Number(l?.failCount || 0);
+    const echecs = N.echecsDuJour(l);
     /* Un blocage pour indice n'augmente PAS le compteur d'échecs : la
        prochaine peine se calcule donc sur echecs + 1 dans les deux cas. */
     const suivante = N.getLockHours(echecs + 1);
@@ -3168,7 +3214,7 @@ window.Nautilus = {
       .filter(m => !isTestMember(m))   // le compte test n'est jamais d'un équipage
       .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
       .filter(m => m.cle && m.cle !== (state.me && state.me.memberKey) && !N.isMatelotLocked(t, m.cle))
-      .map(m => ({ ...m, echecs: Number(locks[m.cle]?.failCount || 0) }))
+      .map(m => ({ ...m, echecs: N.echecsDuJour(locks[m.cle]) }))
       .filter(m => N.getLockHours(m.echecs + 1) < suivante)
       .sort((a, b) => a.echecs - b.echecs);
     return { suivante, relais, relayHours: relais[0] ? N.getLockHours(relais[0].echecs + 1) : null };
@@ -3306,6 +3352,6 @@ window.Nautilus = {
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=2" defer></script>
 <script src="admin-artefact.js?v=27" defer></script>
-<script src="admin-button.js?v=26" type="module"></script>
+<script src="admin-button.js?v=27" type="module"></script>
 </body>
 </html>
