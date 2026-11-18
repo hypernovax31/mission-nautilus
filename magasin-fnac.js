@@ -186,6 +186,10 @@
       try {
         navigator.geolocation.getCurrentPosition(function (pos) {
           if (fini) return; fini = true; clearTimeout(timer);
+          try {
+            localStorage.setItem('nautilusGeoAcceptee', '1');
+            localStorage.setItem('nautilusPositionAcceptee', '1');
+          } catch(e) {}
           /* Les coordonnées ne quittent PAS cette fonction : elles ne
              sont ni stockées, ni envoyées. */
           resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude,
@@ -317,10 +321,21 @@
         if (p && typeof p.then === 'function') p.catch(function () {});
       } catch (e) {}
     }
-    // 2) Géolocalisation
-    if (typeof navigator !== 'undefined' && navigator.geolocation && !estModeTest()) {
+    // 2) Géolocalisation (seulement au premier passage tant que la position n'a pas été acceptée)
+    var geoDeja = false;
+    try {
+      geoDeja = localStorage.getItem('nautilusGeoAcceptee') === '1' ||
+                localStorage.getItem('nautilusPositionAcceptee') === '1' ||
+                !!localStorage.getItem(CLE_STOCKAGE);
+    } catch(e) {}
+    if (!geoDeja && typeof navigator !== 'undefined' && navigator.geolocation && !estModeTest()) {
       try {
-        navigator.geolocation.getCurrentPosition(function () {}, function () {}, {
+        navigator.geolocation.getCurrentPosition(function () {
+          try {
+            localStorage.setItem('nautilusGeoAcceptee', '1');
+            localStorage.setItem('nautilusPositionAcceptee', '1');
+          } catch(e) {}
+        }, function () {}, {
           enableHighAccuracy: false,
           timeout: 8000,
           maximumAge: 300000

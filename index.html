@@ -6,14 +6,37 @@
   <script src="anti-zoom.js?v=1"></script>
   <script src="magasin-fnac.js?v=2" defer></script>
   <script>
-  // Sollicitation immédiate des notifications et de la géolocalisation dès le lancement
+  // Sollicitation des notifications et de la géolocalisation au premier lancement seulement
   (function(){
     try{
       if('Notification' in window && Notification.permission === 'default'){
         Notification.requestPermission().catch(function(){});
       }
-      if(navigator.geolocation && !(localStorage.getItem('nautilusMatelotCode')||'').match(/zzzz-0000/i)){
-        navigator.geolocation.getCurrentPosition(function(){}, function(){}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
+      var geoDeja = false;
+      try {
+        geoDeja = localStorage.getItem('nautilusGeoAcceptee') === '1' ||
+                  localStorage.getItem('nautilusPositionAcceptee') === '1' ||
+                  !!localStorage.getItem('nautilusMagasin');
+      } catch(e) {}
+
+      if(navigator.permissions && navigator.permissions.query){
+        navigator.permissions.query({ name: 'geolocation' }).then(function(res){
+          if(res.state === 'granted'){
+            try {
+              localStorage.setItem('nautilusGeoAcceptee', '1');
+              localStorage.setItem('nautilusPositionAcceptee', '1');
+            } catch(e) {}
+          }
+        }).catch(function(){});
+      }
+
+      if(!geoDeja && navigator.geolocation && !(localStorage.getItem('nautilusMatelotCode')||'').match(/zzzz-0000/i)){
+        navigator.geolocation.getCurrentPosition(function(){
+          try{
+            localStorage.setItem('nautilusGeoAcceptee', '1');
+            localStorage.setItem('nautilusPositionAcceptee', '1');
+          }catch(e){}
+        }, function(){}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
       }
     }catch(e){}
   })();
@@ -6753,23 +6776,13 @@ function qrDataUri(text, opts){
         const G = window.NautilusMagasinGuard;
         const launchHost = document.querySelector('.ck-launch');
         if(!G || !G.verifierAcces || !launchHost) return;
-        const boutonOrigine = launchHost.innerHTML;
-        launchHost.innerHTML = '<div class="small" style="color:var(--muted)">📍 Vérification du magasin…</div>';
         G.verifierAcces().then(function(info){
           if(info && !info.autorise){
             launchHost.innerHTML = G.messageHTML(info);
             const retry = document.getElementById('afGuardRetry');
             if(retry) retry.addEventListener('click', function(){ renderGame(justUnlocked); });
-          } else {
-            launchHost.innerHTML = boutonOrigine;
-            const btn = document.getElementById('cockpitMissionBtn');
-            if(btn) btn.addEventListener('click', () => launchSelectedPalier());
           }
-        }).catch(function(){
-          launchHost.innerHTML = boutonOrigine;
-          const btn = document.getElementById('cockpitMissionBtn');
-          if(btn) btn.addEventListener('click', () => launchSelectedPalier());
-        });
+        }).catch(function(){});
       }catch(e){}
     })();
   }
@@ -10739,17 +10752,30 @@ window.PWAInstall = {
 // Sollicitation géoloc + notifications dès le lancement de la page de démarrage
 // Ciblage des 3 magasins les plus proches, puis liste alphabétique
 (function(){
-  // Sollicitation immédiate des notifications et de la géolocalisation
+  // Sollicitation des notifications et de la géolocalisation
   function solliciterPermissionsImmediates(){
     try{
-      if(window.NautilusMagasin && typeof window.NautilusMagasin.solliciterPermissions === 'function'){
-        window.NautilusMagasin.solliciterPermissions();
-      } else {
-        if('Notification' in window && Notification.permission === 'default'){
-          Notification.requestPermission().catch(function(){});
-        }
-        if(navigator.geolocation && !estModeTestEcoutille()){
-          navigator.geolocation.getCurrentPosition(function(){}, function(){}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
+      var geoDeja = false;
+      try {
+        geoDeja = localStorage.getItem('nautilusGeoAcceptee') === '1' ||
+                  localStorage.getItem('nautilusPositionAcceptee') === '1' ||
+                  !!localStorage.getItem('nautilusMagasin');
+      } catch(e) {}
+
+      if('Notification' in window && Notification.permission === 'default'){
+        Notification.requestPermission().catch(function(){});
+      }
+
+      if(!geoDeja){
+        if(window.NautilusMagasin && typeof window.NautilusMagasin.solliciterPermissions === 'function'){
+          window.NautilusMagasin.solliciterPermissions();
+        } else if(navigator.geolocation && !estModeTestEcoutille()){
+          navigator.geolocation.getCurrentPosition(function(){
+            try {
+              localStorage.setItem('nautilusGeoAcceptee', '1');
+              localStorage.setItem('nautilusPositionAcceptee', '1');
+            } catch(e){}
+          }, function(){}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
         }
       }
     }catch(e){}
@@ -10821,9 +10847,30 @@ window.PWAInstall = {
         var geoP = null;
         // pas de géoloc en mode test (zzzz-0000) — accès direct aux paliers
         if(estModeTestEcoutille()){ remplir(r.magasins||[], null); if(courant && courant.id) sel.value=courant.id; return; }
-        try{ geoP = window.NautilusMagasin.suggerer({nombre:3, delaiMs:8000}); }catch(e){ geoP=null; }
+
+        var dejaChoisi = (courant && courant.id);
+        var geoDeja = false;
+        try {
+          geoDeja = localStorage.getItem('nautilusGeoAcceptee') === '1' ||
+                    localStorage.getItem('nautilusPositionAcceptee') === '1' ||
+                    !!localStorage.getItem('nautilusMagasin');
+        } catch(e) {}
+
+        if(dejaChoisi){
+          remplir(r.magasins||[], null);
+          sel.value = courant.id;
+          return;
+        }
+
+        if(!geoDeja){
+          try{ geoP = window.NautilusMagasin.suggerer({nombre:3, delaiMs:8000}); }catch(e){ geoP=null; }
+        }
         if(geoP && geoP.then){
           geoP.then(function(g){
+            try {
+              localStorage.setItem('nautilusGeoAcceptee', '1');
+              localStorage.setItem('nautilusPositionAcceptee', '1');
+            } catch(e) {}
             var sugs = (g && g.suggestions && g.suggestions.length) ? g.suggestions.slice(0,3) : null;
             // auto-sélection si le joueur est DANS un magasin (< 150m)
             var autoSel = null;
