@@ -540,17 +540,15 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     }
   });
 
-  /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
-     Explication immersive et synthétique du thème SANS dévoiler le lieu :
-     inspiré des Paliers 1 & 2, concis et immersif pour la Fnac. */
+  /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============ */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue à bord, matelot. Le <b>Nautilus</b> est en immersion secrète dans les coursives de la <b>Fnac</b>. Pour calibrer notre système optique et déverrouiller le prochain sas, votre équipe doit capturer <b>5 échantillons visuels précis</b> (formes d’objets, spectres et textes OCR) d’articles en vente en rayon.",
+    intro: "<b>Capitaine Nemo :</b><br>« Bienvenue à bord, matelot. Durant l’immersion secrète du Nautilus au sein des coursives de la Fnac, certains objets ont été laissés sur place. Votre équipe est chargée de photographier 5 cibles précises. »",
     consignes: [
-      { ico: '⏱️', warn: true, html: "<b>3 minutes chrono (180 s)</b> pour photographier vos 5 cibles dans le magasin." },
-      { ico: '🎯', html: "<b>5 cibles uniques par équipe</b> : formes, couleurs et lecture OCR d’articles en vente — révélées une à une." },
+      { ico: '⏱️', warn: true, html: "<b>3 minutes chrono</b> pour photographier les objets dans le magasin." },
+      { ico: '🎯', html: "<b>5 cibles uniques par équipe</b> — révélées une à une." },
       { ico: '📸', html: "<b>Visée en direct uniquement</b> : utilisez le viseur optique (zoom, macro et torche disponibles) — aucun import autorisé." },
-      { ico: '🔄', html: "<b>1 seul changement de cible</b> autorisé. Le bouton se transforme ensuite en <b>Abandon</b>." },
-      { ico: '🚨', warn: true, html: "<b>Remontée immédiate en surface</b> (blocage matelot) en cas d’abandon, de sortie du mini-jeu ou de temps écoulé !" }
+      { ico: '🔄', html: "<b>1 seul changement de cible</b> autorisé en cas de difficulté." },
+      { ico: '🚨', warn: true, html: "<b>Remontée immédiate en surface</b> en cas d’abandon, de sortie du mini-jeu ou de temps écoulé !" }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {

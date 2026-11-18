@@ -38,6 +38,11 @@
   var MOTS_PRIX = ['€', 'EUR', 'PRIX', 'PROMO', 'SOLDE', 'OFFRE', 'ADH', 'TTC'];
   var MOTS_FORMATS = ['VINYLE', 'CD', 'DVD', '4K', 'MANGA', 'BD', 'GUIDE', 'POCHE', 'TOME', 'ALBUM'];
   var MOTS_FNAC = ['FNAC', 'ADH', 'CLUB', 'SELECTION', 'COEUR'];
+  var MOTS_ESPACE = ['STAR', 'WARS', 'SPACE', 'LUNE', 'MARS', 'ROBOT', 'PLANETE', 'COSMOS', 'TERRE', 'GALAXY', 'SOLEIL', 'UNIVERS', 'FUTUR', 'ALIEN'];
+  var MOTS_TOME = ['TOME', 'VOL', 'VOLUME', 'CHAPITRE', 'SAISON', 'EPISODE', 'N°', 'EDITION'];
+  var MOTS_AUDIO = ['SOUND', 'AUDIO', 'BASS', 'STEREO', 'CASQUE', 'ENCEINTE', 'MUSIC', 'HIFI', 'ACOUSTIC', 'DISQUE'];
+  var MOTS_TECH = ['WIFI', 'USB', 'BLUETOOTH', '4K', 'PRO', 'HD', 'WIRELESS', 'ULTRA', 'SMART', 'OLED', 'USB-C', 'GB', 'GO'];
+  var MOTS_AGE_PEGI = ['PEGI', 'ANS', 'AGE', '3+', '7+', '12+', '16+', '18+', 'KIDS'];
 
   /* ================= CATALOGUE DE DÉFIS D'ARTICLES EN VENTE EN FNAC ================= */
   var CATALOGUE_DEFIS = [
@@ -112,6 +117,36 @@
         return analyserBlancArgent(pixels, w, h);
       }
     },
+    {
+      id: 'violet_article',
+      famille: 'spectral',
+      titre: 'Article ou packaging VIOLET / mauve',
+      consigne: 'Cadrez un boîtier de jeu, un roman fantasy, un vinyle ou un article de papeterie VIOLET ou MAUVE en rayon.',
+      rayon: 'Gaming, Littérature imaginaire ou Papeterie',
+      analyser: function (pixels, w, h) {
+        return analyserCouleur(pixels, w, h, { hMin: 265, hMax: 325, sMin: 0.28, vMin: 0.18, vMax: 1.0 }, 'violet');
+      }
+    },
+    {
+      id: 'rose_article',
+      famille: 'spectral',
+      titre: 'Produit ou accessoire ROSE vif',
+      consigne: 'Photographiez un casque audio, un carnet, une figurine ou un packaging au coloris ROSE éclatant en vente.',
+      rayon: 'Papeterie, Son ou Accessoires',
+      analyser: function (pixels, w, h) {
+        return analyserCouleur(pixels, w, h, { hMin: 325, hMax: 348, sMin: 0.30, vMin: 0.22, vMax: 1.0 }, 'rose');
+      }
+    },
+    {
+      id: 'dore_or_article',
+      famille: 'spectral',
+      titre: 'Livre ou objet aux reflets DORÉS / or',
+      consigne: 'Cadrez un beau livre à tranche/titre d’or, une édition collector dorée ou un carnet aux reflets d’OR en rayon.',
+      rayon: 'Beaux-arts, Éditions collector ou Papeterie',
+      analyser: function (pixels, w, h) {
+        return analyserDoreOr(pixels, w, h);
+      }
+    },
 
     /* --- 2. DÉTECTION DE FORMES GÉOMÉTRIQUES & OBJETS EN RAYON --- */
     {
@@ -174,6 +209,36 @@
         return analyserMotifRayures(pixels, w, h);
       }
     },
+    {
+      id: 'touches_clavier',
+      famille: 'forme',
+      titre: 'Clavier à touches d’ordinateur ou PC portable',
+      consigne: 'Cadrez de près le clavier à touches alignées d’un PC portable en exposition ou d’un clavier gamer en rayon.',
+      rayon: 'Informatique, PC portables ou Gaming',
+      analyser: function (pixels, w, h) {
+        return analyserTouchesClavier(pixels, w, h);
+      }
+    },
+    {
+      id: 'double_cercle_optique',
+      famille: 'forme',
+      titre: 'Deux oreillettes de casque audio ou objectif photo',
+      consigne: 'Isolez les deux oreillettes circulaires d’un casque audio exposé ou les bagues concentriques d’un objectif photo.',
+      rayon: 'Rayon Casques audio ou Rayon Photo',
+      analyser: function (pixels, w, h) {
+        return analyserDoubleCercle(pixels, w, h);
+      }
+    },
+    {
+      id: 'boitier_compact',
+      famille: 'forme',
+      titre: 'Boîtier de jeu compact (Switch) ou Blu-ray élancé',
+      consigne: 'Cadrez un boîtier de jeu Nintendo Switch ou un boîtier Blu-ray vertical au format compact et élancé.',
+      rayon: 'Gaming / Jeux Switch ou Vidéo / Blu-ray',
+      analyser: function (pixels, w, h) {
+        return analyserBoitierCompact(pixels, w, h);
+      }
+    },
 
     /* --- 3. LECTURE PAR OCR LOCAL (TEXTES & MENTIONS SUR ARTICLES) --- */
     {
@@ -214,6 +279,56 @@
       rayon: 'Musique, Vidéo, Mangas ou Librairie',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_FORMATS, 'format (Vinyle, CD, 4K, Manga...)');
+      }
+    },
+    {
+      id: 'ocr_espace',
+      famille: 'ocr',
+      titre: 'Livre ou jeu avec mot ESPACE / SF sur la couverture',
+      consigne: 'Cadrez un titre ou une couverture mentionnant l’espace ou le futur (STAR, WARS, SPACE, LUNE, MARS, ROBOT, PLANÈTE...).',
+      rayon: 'Rayons Science-Fiction, BD / Comics ou Gaming',
+      analyser: function (pixels, w, h, canvas) {
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_ESPACE, 'mot SF / Espace (Star, Wars, Mars, Robot, Lune...)');
+      }
+    },
+    {
+      id: 'ocr_tome',
+      famille: 'ocr',
+      titre: 'Manga ou BD avec mention TOME ou VOLUME',
+      consigne: 'Rapprochez-vous d’un manga, d’un comics ou d’une BD affichant la mention TOME, VOL ou VOLUME sur la couverture.',
+      rayon: 'Rayon Mangas, BD Franco-Belge ou Comics',
+      analyser: function (pixels, w, h, canvas) {
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_TOME, 'mention Tome / Volume (Tome, Vol, Chapitre...)');
+      }
+    },
+    {
+      id: 'ocr_audio',
+      famille: 'ocr',
+      titre: 'Article audio avec mention SOUND, BASS ou CASQUE',
+      consigne: 'Cadrez un packaging au rayon son mentionnant AUDIO, SOUND, BASS, STEREO, CASQUE ou ENCEINTE.',
+      rayon: 'Rayon Son, Casques audio ou Enceintes',
+      analyser: function (pixels, w, h, canvas) {
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_AUDIO, 'mention Son (Audio, Sound, Bass, Stereo, Casque...)');
+      }
+    },
+    {
+      id: 'ocr_tech',
+      famille: 'ocr',
+      titre: 'Article tech avec mention WIFI, USB, 4K ou PRO',
+      consigne: 'Cadrez une étiquette ou boîte tech portant une mention de connectivité (WIFI, USB, BLUETOOTH, 4K, PRO, HD).',
+      rayon: 'Informatique, Téléphonie ou TV',
+      analyser: function (pixels, w, h, canvas) {
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_TECH, 'mention Tech (WiFi, USB, 4K, Pro, Bluetooth...)');
+      }
+    },
+    {
+      id: 'ocr_age_pegi',
+      famille: 'ocr',
+      titre: 'Boîtier de jeu avec mention PEGI ou logo d’âge',
+      consigne: 'Cadrez le logo d’âge ou la mention PEGI (PEGI, 3, 7, 12, 16, 18, ANS) sur un boîtier de jeu ou jouet.',
+      rayon: 'Gaming, Jeux vidéo ou Jeux de société',
+      analyser: function (pixels, w, h, canvas) {
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_AGE_PEGI, 'mention PEGI / Âge (PEGI, 3+, 12+, 16+, 18+...)');
       }
     }
   ];
@@ -548,6 +663,171 @@
   }
   function cx(w) { return Math.floor(w / 2); }
 
+  // Doré / Or scintillant (Tranches de beaux livres, dorures, éditions collector)
+  function analyserDoreOr(pixels, w, h) {
+    var total = 0, doreCount = 0;
+    var cx0 = Math.floor(w / 2), cy0 = Math.floor(h / 2);
+    var rayon = Math.floor(Math.min(w, h) * 0.30);
+
+    for (var dy = -rayon; dy <= rayon; dy += 3) {
+      for (var dx = -rayon; dx <= rayon; dx += 3) {
+        if (dx * dx + dy * dy <= rayon * rayon) {
+          var x = cx0 + dx, y = cy0 + dy;
+          if (x >= 0 && x < w && y >= 0 && y < h) {
+            var idx = (y * w + x) * 4;
+            var r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
+            var hsv = rgbToHsv(r, g, b);
+            if (hsv.h >= 36 && hsv.h <= 56 && hsv.s >= 0.28 && hsv.s <= 0.88 && hsv.v >= 0.38 && r > g && g > b) {
+              doreCount++;
+            }
+            total++;
+          }
+        }
+      }
+    }
+    var ratio = total > 0 ? (doreCount / total) : 0;
+    var score = Math.min(100, Math.round(ratio * 380));
+    if (score >= 40) {
+      return {
+        succes: true,
+        score: score,
+        message: '🟢 Spectre doré / reflets or validés (Couverture dorée : ' + score + '%) ! Article collector confirmé.'
+      };
+    }
+    return {
+      succes: false,
+      score: score,
+      message: '⚠️ Reflets or / dorures insuffisants (' + score + '%). Visez un titre ou une tranche dorée au centre.'
+    };
+  }
+
+  // Clavier d’ordinateur (grille périodique de touches)
+  function analyserTouchesClavier(pixels, w, h) {
+    var cx0 = Math.floor(w / 2), cy0 = Math.floor(h / 2);
+    var demi = Math.floor(Math.min(w, h) * 0.32);
+    var transX = 0, transY = 0;
+
+    for (var dy = -demi; dy <= demi; dy += Math.floor(demi / 2)) {
+      var y = cy0 + dy, lastBin = 0;
+      for (var x = cx0 - demi; x <= cx0 + demi; x += 4) {
+        var idx = (y * w + x) * 4;
+        var lum = (pixels[idx] * 0.299 + pixels[idx + 1] * 0.587 + pixels[idx + 2] * 0.114);
+        var bin = lum > 115 ? 1 : 0;
+        if (bin !== lastBin) transX++;
+        lastBin = bin;
+      }
+    }
+    for (var dx = -demi; dx <= demi; dx += Math.floor(demi / 2)) {
+      var xC = cx0 + dx, lastBinY = 0;
+      for (var yC = cy0 - demi; yC <= cy0 + demi; yC += 4) {
+        var idxY = (yC * w + xC) * 4;
+        var lumY = (pixels[idxY] * 0.299 + pixels[idxY + 1] * 0.587 + pixels[idxY + 2] * 0.114);
+        var binY = lumY > 115 ? 1 : 0;
+        if (binY !== lastBinY) transY++;
+        lastBinY = binY;
+      }
+    }
+    var totalTrans = transX + transY;
+    var score = Math.min(100, Math.round((totalTrans / 48) * 100));
+    if (totalTrans >= 24) {
+      return {
+        succes: true,
+        score: score,
+        message: '🟢 Grille de touches périodique détectée (' + totalTrans + ' arêtes) ! Clavier d’ordinateur validé.'
+      };
+    }
+    return {
+      succes: false,
+      score: score,
+      message: '⚠️ Motif de touches non net (' + totalTrans + ' arêtes). Rapprochez-vous du clavier d’un PC portable en exposition.'
+    };
+  }
+
+  // Évaluation de courbure circulaire
+  function testerCercleGradient(pixels, w, h, cx0, cy0, rayon) {
+    var angles = 12, grad = 0;
+    for (var a = 0; a < angles; a++) {
+      var rad = (a * 2 * Math.PI) / angles;
+      var x1 = Math.floor(cx0 + (rayon * 0.72) * Math.cos(rad));
+      var y1 = Math.floor(cy0 + (rayon * 0.72) * Math.sin(rad));
+      var x2 = Math.floor(cx0 + (rayon * 1.15) * Math.cos(rad));
+      var y2 = Math.floor(cy0 + (rayon * 1.15) * Math.sin(rad));
+      if (x1 >= 0 && x1 < w && y1 >= 0 && y1 < h && x2 >= 0 && x2 < w && y2 >= 0 && y2 < h) {
+        var i1 = (y1 * w + x1) * 4, i2 = (y2 * w + x2) * 4;
+        var lum1 = (pixels[i1] + pixels[i1 + 1] + pixels[i1 + 2]) / 3;
+        var lum2 = (pixels[i2] + pixels[i2 + 1] + pixels[i2 + 2]) / 3;
+        if (Math.abs(lum1 - lum2) > 20) grad++;
+      }
+    }
+    return grad;
+  }
+
+  // Double cercle (deux oreillettes de casque audio ou objectif photo)
+  function analyserDoubleCercle(pixels, w, h) {
+    var cx0 = Math.floor(w / 2), cy0 = Math.floor(h / 2);
+    var r = Math.floor(Math.min(w, h) * 0.18);
+    var offset = Math.floor(Math.min(w, h) * 0.22);
+
+    var gArc = testerCercleGradient(pixels, w, h, cx0 - offset, cy0, r);
+    var dArc = testerCercleGradient(pixels, w, h, cx0 + offset, cy0, r);
+    var cArc1 = testerCercleGradient(pixels, w, h, cx0, cy0, r);
+    var cArc2 = testerCercleGradient(pixels, w, h, cx0, cy0, Math.floor(r * 1.55));
+
+    var scoreDual = Math.round(((gArc + dArc) / 24) * 100);
+    var scoreConcentric = Math.round(((cArc1 + cArc2) / 24) * 100);
+    var score = Math.max(scoreDual, scoreConcentric);
+
+    if (score >= 40) {
+      return {
+        succes: true,
+        score: score,
+        message: '🟢 Géométrie circulaire jumelée validée (' + score + '% de courbure) ! Casque audio ou optique confirmé.'
+      };
+    }
+    return {
+      succes: false,
+      score: score,
+      message: '⚠️ Cercles non nets (' + score + '%). Cadrez les oreillettes d’un casque audio ou un objectif photo.'
+    };
+  }
+
+  // Boîtier Switch ou Blu-ray (format élancé)
+  function analyserBoitierCompact(pixels, w, h) {
+    var cx0 = Math.floor(w / 2), cy0 = Math.floor(h / 2);
+    var demiW = Math.floor(Math.min(w, h) * 0.22);
+    var demiH = Math.floor(demiW * 1.70);
+
+    var bordsDetectes = 0;
+    for (var step = -demiH; step <= demiH; step += Math.floor(demiH / 3)) {
+      var y = cy0 + step;
+      if (y >= 0 && y < h) {
+        var xG1 = cx0 - demiW - 10, xG2 = cx0 - demiW + 10;
+        var xD1 = cx0 + demiW - 10, xD2 = cx0 + demiW + 10;
+        if (xG1 >= 0 && xD2 < w) {
+          var lumG1 = (pixels[(y * w + xG1) * 4] + pixels[(y * w + xG1) * 4 + 1] + pixels[(y * w + xG1) * 4 + 2]) / 3;
+          var lumG2 = (pixels[(y * w + xG2) * 4] + pixels[(y * w + xG2) * 4 + 1] + pixels[(y * w + xG2) * 4 + 2]) / 3;
+          var lumD1 = (pixels[(y * w + xD1) * 4] + pixels[(y * w + xD1) * 4 + 1] + pixels[(y * w + xD1) * 4 + 2]) / 3;
+          var lumD2 = (pixels[(y * w + xD2) * 4] + pixels[(y * w + xD2) * 4 + 1] + pixels[(y * w + xD2) * 4 + 2]) / 3;
+          if (Math.abs(lumG1 - lumG2) > 20) bordsDetectes++;
+          if (Math.abs(lumD1 - lumD2) > 20) bordsDetectes++;
+        }
+      }
+    }
+    var score = Math.round((bordsDetectes / 14) * 100);
+    if (score >= 40) {
+      return {
+        succes: true,
+        score: score,
+        message: '🟢 Silhouette compacte élancée validée (' + score + '% de rectitude) ! Boîtier Switch / Blu-ray confirmé.'
+      };
+    }
+    return {
+      succes: false,
+      score: score,
+      message: '⚠️ Format compact non net (' + score + '%). Cadrez un boîtier de jeu Switch ou Blu-ray verticalement.'
+    };
+  }
+
   /* ================= MOTEUR OCR LOCAL SUR CANVAS (100% SANS API) ================= */
 
   function analyserOcrLocal(pixels, w, h, canvas, dictionnaire, labelCible) {
@@ -632,16 +912,27 @@
     orange_article: 'Orange',
     noir_profond: 'Noir vinyle',
     blanc_argent: 'Blanc / argent',
+    violet_article: 'Violet / mauve',
+    rose_article: 'Rose vif',
+    dore_or_article: 'Doré / or',
     objet_rond: 'Enceinte ronde',
     forme_rectangulaire_livre: 'Livre portrait',
     forme_carree_vinyle: 'Carré vinyle',
     objet_cylindrique: 'Cylindre gourde',
     ecran_allume: 'Écran allumé',
     motifs_rayures: 'Rayures',
+    touches_clavier: 'Clavier touches',
+    double_cercle_optique: 'Double cercle',
+    boitier_compact: 'Boîtier compact',
     ocr_mer: 'OCR Mer',
     ocr_prix: 'OCR Prix (€)',
     ocr_fnac: 'OCR Fnac',
-    ocr_format: 'OCR Format'
+    ocr_format: 'OCR Format',
+    ocr_espace: 'OCR Espace / SF',
+    ocr_tome: 'OCR Tome / Vol',
+    ocr_audio: 'OCR Son / Audio',
+    ocr_tech: 'OCR Tech / Sans fil',
+    ocr_age_pegi: 'OCR Âge / PEGI'
   };
 
   function formaterCibles(liste) {

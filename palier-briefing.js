@@ -71,7 +71,7 @@
     var consignes = (cfg.consignes || []).slice();
     // Consigne obligatoire de la mission : quitter un palier remet les compteurs à zéro
     var aAvertissementSortie = consignes.some(function (c) {
-      return c && c.html && /quitter|remet les compteurs|remise à zéro|r[ée]initialis/i.test(c.html);
+      return c && c.html && /quitter|remet les compteurs|remise à zéro|r[ée]initialis|remont[ée]e|sortie|abandon/i.test(c.html);
     });
     if (!aAvertissementSortie) {
       consignes.push({
