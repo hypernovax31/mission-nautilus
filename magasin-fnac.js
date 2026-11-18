@@ -159,6 +159,71 @@
       ? ' (' + m.ville + ')' : '');
   }
 
+  function formaterNom(m) {
+    if (!m) return 'Labège';
+    if (typeof m === 'string') return m.trim();
+    var nom = (m.nom || '').trim();
+    var ville = (m.ville || '').trim();
+    if (!nom) return ville || 'Labège';
+
+    if (/^Aéroport/i.test(nom)) {
+      if (/Lyon/i.test(nom)) {
+        return 'Lyon - ' + nom.replace(/^Aéroport\s+Lyon/i, 'Aéroport de Lyon');
+      }
+      if (/Marseille/i.test(nom)) {
+        return 'Marseille - ' + nom.replace(/^Aéroport\s+Marseille/i, 'Aéroport de Marseille');
+      }
+      if (/Toulouse/i.test(nom)) {
+        return 'Toulouse - ' + nom.replace(/^Aéroport\s+Toulouse[\s\-]*Blagnac/i, 'Aéroport de Toulouse-Blagnac');
+      }
+      if (/Orly/i.test(nom)) {
+        return 'Paris - ' + nom.replace(/^Aéroport\s+Orly/i, "Aéroport d'Orly");
+      }
+      if (/Roissy/i.test(nom)) {
+        return 'Paris - ' + nom.replace(/^Aéroport\s+Roissy/i, 'Aéroport de Roissy');
+      }
+      return (ville ? ville + ' - ' : '') + nom;
+    }
+
+    var multiVilles = ['Lyon', 'Marseille', 'Toulouse', 'Limoges', 'Reims', 'Ajaccio'];
+    for (var i = 0; i < multiVilles.length; i++) {
+      var v = multiVilles[i];
+      if (nom.startsWith(v + ' ') && !nom.startsWith(v + ' - ')) {
+        return v + ' - ' + nom.substring(v.length + 1);
+      }
+    }
+
+    return nom;
+  }
+
+  function designationHero(m) {
+    var nom = formaterNom(m);
+
+    if (/^Le\s+/i.test(nom)) {
+      return 'du ' + nom.substring(3);
+    }
+    if (/^La\s+/i.test(nom)) {
+      return 'de ' + nom;
+    }
+    if (/^L['’]/i.test(nom)) {
+      return "de l'" + nom.substring(2);
+    }
+    if (/^Isle\s+d['’]Abeau/i.test(nom)) {
+      return "de l'Isle d'Abeau";
+    }
+    if (/^(Carré\s+Sénart|Val\s+d['’]Europe)/i.test(nom)) {
+      return 'du ' + nom;
+    }
+    if (/^[aàâäeéèêëiîïoôöuùûüyæœh]/i.test(nom)) {
+      return "d'" + nom;
+    }
+    return 'de ' + nom;
+  }
+
+  function heroText(m) {
+    return 'Plongez dans les <span>20 000 lieues</span> de la Fnac ' + designationHero(m);
+  }
+
   /* helper test mode : zzzz-0000 / ZZZZ-0000 ne déclenche jamais la géoloc */
   function estModeTest() {
     try {
@@ -522,6 +587,9 @@
     rechercher: rechercher,
     urlFiche: urlFiche,
     libelle: libelle,
+    formaterNom: formaterNom,
+    designationHero: designationHero,
+    heroText: heroText,
     geolocaliser: geolocaliser,
     suggerer: suggerer,
     courant: courant,

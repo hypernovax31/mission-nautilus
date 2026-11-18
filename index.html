@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="anti-zoom.js?v=1"></script>
-  <script src="magasin-fnac.js?v=2" defer></script>
+  <script src="magasin-fnac.js?v=3" defer></script>
   <script>
   // Sollicitation des notifications et de la géolocalisation au premier lancement seulement
   (function(){
@@ -2731,7 +2731,7 @@
   <div class="ec-letterbox ec-letterbox--bottom" aria-hidden="true"></div>
 
   <!-- Ce que lisent les lecteurs d'écran (le décor ci-dessus est muet). -->
-  <p class="ec-lu" id="ecLuText">Expédition dans le Nautilus — grand jeu interne de la Fnac Labège, d'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de Labège 2, le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et recevoir l'ordre de mission.</p>
+  <p class="ec-lu" id="ecLuText">Expédition dans le Nautilus — grand jeu interne de la Fnac de Labège, d'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de Labège, le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d'oxygène indique la réserve d'air du bord. Appuie sur START pour ouvrir le sas et recevoir l'ordre de mission.</p>
 </div>
 
 <!-- ═══════════ SOCLE — LE CLIC ═══════════
@@ -3062,14 +3062,14 @@
     <div class="hero-kicker">Grand jeu interne · Mission confidentielle</div>
   </div>
   <h1 class="hero-title">Mission Nautilus</h1>
-  <h2 class="hero-line" id="heroMagasin">Plongez dans les <span>20 000 lieues</span> de la Fnac Labège</h2>
+  <h2 class="hero-line" id="heroMagasin">Plongez dans les <span>20 000 lieues</span> de la Fnac de Labège</h2>
   <div class="hero-actions"><button class="hero-cta pulse-engage btn-pulse" id="launchMissionBtn">⚓ Engagez-vous à bord</button><button class="hero-cta ghost" id="resumeMissionBtn">Reprendre la plongée</button><button class="hero-cta ghost" id="reserveMissionBtn" type="button">Consulter la réserve O₂</button></div>
 </header>
 <main>
   <section class="card intro-card">
     <h2>ORDRE DE MISSION</h2>
     <div class="body">
-      <p class="intro-text typewriter" id="missionOrderText" data-text="En 1870, le Nautilus disparaît au large des îles Lofoten. 156 ans plus tard, son signal réapparaît sous les rayons de la Fnac Labège. Le premier équipage à le remonter en surface entrera dans la légende du magasin. Sonar allumé, matelot. À vous de jouer !"><span id="missionOrderTyping"></span><span id="missionOrderCaret" class="typewriter-caret">▌</span></p>
+      <p class="intro-text typewriter" id="missionOrderText" data-text="En 1870, le Nautilus disparaît au large des îles Lofoten. 156 ans plus tard, son signal réapparaît sous les rayons de la Fnac de Labège. Le premier équipage à le remonter en surface entrera dans la légende du magasin. Sonar allumé, matelot. À vous de jouer !"><span id="missionOrderTyping"></span><span id="missionOrderCaret" class="typewriter-caret">▌</span></p>
       <div class="rule-invite">
         <h2 class="rule-invite-eyebrow">Consignes de plongée</h2>
         <span class="rule-invite-main">Cliquez sur les 4 hublots du <i>Nautilus</i> pour prendre connaissance de votre feuille de route.</span>
@@ -10747,7 +10747,7 @@ window.PWAInstall = {
      Le Palier 3 conserve son épreuve de puzzle photo indépendante. -->
 <script src="artefact-moteur.js?v=8"></script>
 <script src="artefact-service.js?v=8"></script>
-<script src="magasin-fnac.js?v=1"></script>
+<script src="magasin-fnac.js?v=3"></script>
 <script src="magasin-guard.js?v=3"></script>
 <script>
 /* Carte « MAGASIN DE LA MISSION » : liste officielle + recherche + géoloc
@@ -10998,18 +10998,63 @@ window.PWAInstall = {
 <script>
 // FNAC LABÈGE dynamique — remplace par le magasin sélectionné au démarrage
 (function(){
+  function formaterNomMagasin(m){
+    if(window.NautilusMagasin && typeof window.NautilusMagasin.formaterNom === 'function'){
+      return window.NautilusMagasin.formaterNom(m);
+    }
+    if(!m) return 'Labège';
+    if(typeof m === 'string') return m.trim();
+    var nom = (m.nom || '').trim();
+    var ville = (m.ville || '').trim();
+    if(!nom) return ville || 'Labège';
+    if(/^Aéroport/i.test(nom)){
+      if(/Lyon/i.test(nom)) return 'Lyon - ' + nom.replace(/^Aéroport\s+Lyon/i, 'Aéroport de Lyon');
+      if(/Marseille/i.test(nom)) return 'Marseille - ' + nom.replace(/^Aéroport\s+Marseille/i, 'Aéroport de Marseille');
+      if(/Toulouse/i.test(nom)) return 'Toulouse - ' + nom.replace(/^Aéroport\s+Toulouse[\s\-]*Blagnac/i, 'Aéroport de Toulouse-Blagnac');
+      if(/Orly/i.test(nom)) return 'Paris - ' + nom.replace(/^Aéroport\s+Orly/i, "Aéroport d'Orly");
+      if(/Roissy/i.test(nom)) return 'Paris - ' + nom.replace(/^Aéroport\s+Roissy/i, 'Aéroport de Roissy');
+      return (ville ? ville + ' - ' : '') + nom;
+    }
+    var multiVilles = ['Lyon', 'Marseille', 'Toulouse', 'Limoges', 'Reims', 'Ajaccio'];
+    for(var i = 0; i < multiVilles.length; i++){
+      var v = multiVilles[i];
+      if(nom.startsWith(v + ' ') && !nom.startsWith(v + ' - ')){
+        return v + ' - ' + nom.substring(v.length + 1);
+      }
+    }
+    return nom;
+  }
+
+  function designationHero(m){
+    if(window.NautilusMagasin && typeof window.NautilusMagasin.designationHero === 'function'){
+      return window.NautilusMagasin.designationHero(m);
+    }
+    var nom = formaterNomMagasin(m);
+    if(/^Le\s+/i.test(nom)) return 'du ' + nom.substring(3);
+    if(/^La\s+/i.test(nom)) return 'de ' + nom;
+    if(/^L['’]/i.test(nom)) return "de l'" + nom.substring(2);
+    if(/^Isle\s+d['’]Abeau/i.test(nom)) return "de l'Isle d'Abeau";
+    if(/^(Carré\s+Sénart|Val\s+d['’]Europe)/i.test(nom)) return 'du ' + nom;
+    if(/^[aàâäeéèêëiîïoôöuùûüyæœh]/i.test(nom)) return "d'" + nom;
+    return 'de ' + nom;
+  }
+
   function nomMagasin(m){
-    if(!m || !m.nom) return 'Labège';
-    return m.nom;
+    return formaterNomMagasin(m);
   }
   function brandText(m){ return 'FNAC ' + nomMagasin(m).toUpperCase(); }
-  function heroText(m){ return 'Plongez dans les <span>20 000 lieues</span> de la Fnac ' + nomMagasin(m); }
+  function heroText(m){
+    if(window.NautilusMagasin && typeof window.NautilusMagasin.heroText === 'function'){
+      return window.NautilusMagasin.heroText(m);
+    }
+    return 'Plongez dans les <span>20 000 lieues</span> de la Fnac ' + designationHero(m);
+  }
   function missionText(m){
-    return 'En 1870, le Nautilus disparaît au large des îles Lofoten. 156 ans plus tard, son signal réapparaît sous les rayons de la Fnac ' + nomMagasin(m) + '. Le premier équipage à le remonter en surface entrera dans la légende du magasin. Sonar allumé, matelot. À vous de jouer !';
+    return 'En 1870, le Nautilus disparaît au large des îles Lofoten. 156 ans plus tard, son signal réapparaît sous les rayons de la Fnac ' + designationHero(m) + '. Le premier équipage à le remonter en surface entrera dans la légende du magasin. Sonar allumé, matelot. À vous de jouer !';
   }
   function ecLuText(m){
-    var nom = nomMagasin(m);
-    return 'Expédition dans le Nautilus — grand jeu interne de la Fnac ' + nom + ', d\'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin de ' + nom + ', le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d\'oxygène indique la réserve d\'air du bord. Appuie sur START pour ouvrir le sas et recevoir l\'ordre de mission.';
+    var desig = designationHero(m);
+    return 'Expédition dans le Nautilus — grand jeu interne de la Fnac ' + desig + ', d\'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin ' + desig + ', le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d\'oxygène indique la réserve d\'air du bord. Appuie sur START pour ouvrir le sas et recevoir l\'ordre de mission.';
   }
   function appliquer(m){
     var mag = m || (window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant()) || null;
