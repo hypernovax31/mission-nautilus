@@ -59,9 +59,9 @@
     {
       id: 'jaune_article',
       famille: 'spectral',
-      titre: 'Article ou packaging JAUNE vif',
-      consigne: 'Trouvez et cadrez au centre un livre (ex: collection « Pour les nuls »), un étui ou un emballage JAUNE éclatant en vente.',
-      rayon: 'Librairie, Informatique ou Papeterie',
+      titre: 'Élément JAUNE vif',
+      consigne: 'Photographiez un élément ou un article jaune vif en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 36, hMax: 68, sMin: 0.25, vMin: 0.18, vMax: 1.0 }, 'jaune');
       }
@@ -69,9 +69,9 @@
     {
       id: 'rouge_article',
       famille: 'spectral',
-      titre: 'Produit ou accessoire ROUGE vif',
-      consigne: 'Cadrez un boîtier de jeu (univers Nintendo / Mario), un casque audio rouge ou un roman à couverture ROUGE en vente.',
-      rayon: 'Gaming, Son ou Littérature',
+      titre: 'Élément ROUGE vif',
+      consigne: 'Photographiez un élément ou un article rouge vif en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 345, hMax: 16, sMin: 0.30, vMin: 0.18, vMax: 1.0, wraps: true }, 'rouge');
       }
@@ -79,9 +79,9 @@
     {
       id: 'bleu_article',
       famille: 'spectral',
-      titre: 'Boîtier ou produit BLEU océan',
-      consigne: 'Repérez un boîtier Blu-ray Disc de film, un accessoire tech ou un livre aux teintes BLEU océan en rayon.',
-      rayon: 'Vidéo / Cinéma ou Papeterie',
+      titre: 'Élément BLEU océan',
+      consigne: 'Photographiez un élément ou un article bleu océan en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 180, hMax: 248, sMin: 0.26, vMin: 0.16, vMax: 1.0 }, 'bleu');
       }
@@ -89,9 +89,9 @@
     {
       id: 'vert_article',
       famille: 'spectral',
-      titre: 'Boîtier ou article VERT émeraude',
-      consigne: 'Photographiez un boîtier de jeu Xbox, un guide vert Michelin ou un carnet de papeterie VERT vif en vente.',
-      rayon: 'Gaming, Tourisme ou Papeterie',
+      titre: 'Élément VERT émeraude',
+      consigne: 'Photographiez un élément ou un article vert émeraude en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 75, hMax: 160, sMin: 0.25, vMin: 0.16, vMax: 1.0 }, 'vert');
       }
@@ -99,9 +99,9 @@
     {
       id: 'orange_article',
       famille: 'spectral',
-      titre: 'Manga ou livre de poche ORANGE',
-      consigne: 'Isolez un manga à dos orange (ex: Naruto), un livre de poche ou un étui ORANGE éclatant en rayon.',
-      rayon: 'Mangas, Poche ou Papeterie',
+      titre: 'Élément ORANGE éclatant',
+      consigne: 'Photographiez un élément ou un article orange éclatant en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 16, hMax: 38, sMin: 0.35, vMin: 0.18, vMax: 1.0 }, 'orange');
       }
@@ -109,9 +109,9 @@
     {
       id: 'noir_profond',
       famille: 'spectral',
-      titre: 'Casque audio ou vinyle NOIR profond',
-      consigne: 'Cadrez un casque audio à arceau noir, un disque vinyle 33T ou une enceinte ébène en vente.',
-      rayon: 'Disquaire / Vinyles, Casques ou Photo',
+      titre: 'Élément NOIR profond',
+      consigne: 'Photographiez un élément ou un article noir profond en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserNoirProfond(pixels, w, h);
       }
@@ -119,9 +119,9 @@
     {
       id: 'blanc_argent',
       famille: 'spectral',
-      titre: 'Produit ou packaging BLANC / argenté',
-      consigne: 'Visez un boîtier d’écouteurs sans fil blancs (AirPods), une liseuse blanche ou un packaging épuré en rayon.',
-      rayon: 'Téléphonie, Objets connectés ou Liseuses',
+      titre: 'Élément BLANC ou argenté',
+      consigne: 'Photographiez un élément blanc ou argenté en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserBlancArgent(pixels, w, h);
       }
@@ -129,9 +129,9 @@
     {
       id: 'violet_article',
       famille: 'spectral',
-      titre: 'Article ou packaging VIOLET / mauve',
-      consigne: 'Cadrez un boîtier de jeu, un roman fantasy, un vinyle ou un article de papeterie VIOLET ou MAUVE en rayon.',
-      rayon: 'Gaming, Littérature imaginaire ou Papeterie',
+      titre: 'Élément VIOLET ou mauve',
+      consigne: 'Photographiez un élément violet ou mauve en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 265, hMax: 325, sMin: 0.28, vMin: 0.18, vMax: 1.0 }, 'violet');
       }
@@ -139,9 +139,9 @@
     {
       id: 'rose_article',
       famille: 'spectral',
-      titre: 'Produit ou accessoire ROSE vif',
-      consigne: 'Photographiez un casque audio, un carnet, une figurine ou un packaging au coloris ROSE éclatant en vente.',
-      rayon: 'Papeterie, Son ou Accessoires',
+      titre: 'Élément ROSE vif',
+      consigne: 'Photographiez un élément rose vif en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 325, hMax: 348, sMin: 0.30, vMin: 0.22, vMax: 1.0 }, 'rose');
       }
@@ -149,9 +149,9 @@
     {
       id: 'dore_or_article',
       famille: 'spectral',
-      titre: 'Livre ou objet aux reflets DORÉS / or',
-      consigne: 'Cadrez un beau livre à tranche/titre d’or, une édition collector dorée ou un carnet aux reflets d’OR en rayon.',
-      rayon: 'Beaux-arts, Éditions collector ou Papeterie',
+      titre: 'Élément aux reflets DORÉS / or',
+      consigne: 'Photographiez un élément aux reflets dorés ou d’or en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserDoreOr(pixels, w, h);
       }
@@ -159,9 +159,9 @@
     {
       id: 'arc_en_ciel',
       famille: 'spectral',
-      titre: 'Objet multicolore ou arc-en-ciel 🌈',
-      consigne: 'Photographiez un article arborant un motif ARC-EN-CIEL, un dégradé multicolore ou une boîte de feutres / crayons en vente.',
-      rayon: 'Papeterie, Jeux / Jouets, Jeunesse ou Accessoires',
+      titre: 'Élément MULTICOLORE ou arc-en-ciel 🌈',
+      consigne: 'Photographiez un élément multicolore ou arc-en-ciel en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserArcEnCiel(pixels, w, h);
       }
@@ -171,9 +171,9 @@
     {
       id: 'objet_rond',
       famille: 'forme',
-      titre: 'Enceinte ou haut-parleur ROND',
-      consigne: 'Cadrez une enceinte Bluetooth circulaire (ex: JBL Clip, Bose), un haut-parleur rond ou un objectif photo.',
-      rayon: 'Son / Enceintes portables, Vinyles ou Photo',
+      titre: 'Forme RONDE ou circulaire',
+      consigne: 'Photographiez une forme ronde ou circulaire en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserObjetRond(pixels, w, h);
       }
@@ -181,9 +181,9 @@
     {
       id: 'forme_rectangulaire_livre',
       famille: 'forme',
-      titre: 'Livre au format RECTANGLE portrait',
-      consigne: 'Isolez un grand roman, un beau livre ou un album BD rectangulaire bien cadré de face.',
-      rayon: 'Tous rayons Librairie / BD',
+      titre: 'Forme RECTANGULAIRE portrait',
+      consigne: 'Photographiez une forme rectangulaire portrait en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserFormeRectanglePortrait(pixels, w, h);
       }
@@ -191,9 +191,9 @@
     {
       id: 'forme_carree_vinyle',
       famille: 'forme',
-      titre: 'Pochette carrée de VINYLE ou CD',
-      consigne: 'Cadrez la pochette parfaitement carrée d’un disque vinyle 33 tours ou d’un album CD en rayon.',
-      rayon: 'Disquaire / Vinyles ou Musique CD',
+      titre: 'Forme CARRÉE',
+      consigne: 'Photographiez une forme parfaitement carrée en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserFormeCarree(pixels, w, h);
       }
@@ -201,9 +201,9 @@
     {
       id: 'objet_cylindrique',
       famille: 'forme',
-      titre: 'Gourde design ou objet CYLINDRIQUE',
-      consigne: 'Photographiez une gourde isotherme, un mug de voyage ou un étui cylindrique en vente en rayon.',
-      rayon: 'Papeterie, Cadeaux ou Accessoires',
+      titre: 'Forme CYLINDRIQUE',
+      consigne: 'Photographiez une forme cylindrique en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserObjetCylindrique(pixels, w, h);
       }
@@ -211,9 +211,9 @@
     {
       id: 'ecran_allume',
       famille: 'forme',
-      titre: 'Écran d’un appareil allumé en exposition',
-      consigne: 'Visez l’écran lumineux d’un téléviseur, d’un PC portable, d’une tablette ou d’un smartphone allumé en rayon.',
-      rayon: 'TV, Informatique ou Téléphonie',
+      titre: 'ÉCRAN allumé',
+      consigne: 'Photographiez un écran lumineux allumé en exposition dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserEcranAllume(pixels, w, h);
       }
@@ -221,9 +221,9 @@
     {
       id: 'motifs_rayures',
       famille: 'forme',
-      titre: 'Article à RAYURES ou motif zébré',
-      consigne: 'Repérez un carnet de papeterie rayé, un tote bag Fnac ou un packaging à rayures contrastées.',
-      rayon: 'Papeterie ou Accessoires',
+      titre: 'Motif à RAYURES',
+      consigne: 'Photographiez un motif à rayures contrastées en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserMotifRayures(pixels, w, h);
       }
@@ -231,9 +231,9 @@
     {
       id: 'touches_clavier',
       famille: 'forme',
-      titre: 'Clavier à touches d’ordinateur ou PC portable',
-      consigne: 'Cadrez de près le clavier à touches alignées d’un PC portable en exposition ou d’un clavier gamer en rayon.',
-      rayon: 'Informatique, PC portables ou Gaming',
+      titre: 'Grille de TOUCHES alignées',
+      consigne: 'Photographiez une grille de touches alignées en exposition dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserTouchesClavier(pixels, w, h);
       }
@@ -241,9 +241,9 @@
     {
       id: 'double_cercle_optique',
       famille: 'forme',
-      titre: 'Deux oreillettes de casque audio ou objectif photo',
-      consigne: 'Isolez les deux oreillettes circulaires d’un casque audio exposé ou les bagues concentriques d’un objectif photo.',
-      rayon: 'Rayon Casques audio ou Rayon Photo',
+      titre: 'DOUBLE CERCLE symétrique',
+      consigne: 'Photographiez une double forme circulaire en exposition dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserDoubleCercle(pixels, w, h);
       }
@@ -251,9 +251,9 @@
     {
       id: 'forme_cube',
       famille: 'forme',
-      titre: 'Boîte CUBIQUE de jeu de société ou figurine',
-      consigne: 'Cadrez de face la boîte volumétrique ou cubique d’un jeu de société, d’une figurine Pop ou d’un coffret en rayon.',
-      rayon: 'Jeux de société, Figurines Pop, Coffrets ou Jouets',
+      titre: 'Forme CUBIQUE',
+      consigne: 'Photographiez une forme cubique ou boîte volumétrique en vente dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h) {
         return analyserFormeCube(pixels, w, h);
       }
@@ -263,29 +263,29 @@
     {
       id: 'ocr_mer',
       famille: 'ocr',
-      titre: 'Livre avec mot MARIN sur la couverture',
-      consigne: 'Cadrez la couverture d’un livre ou BD contenant un mot marin lisible (MER, OCÉAN, CAPITAINE, ÎLE, ABYSSES...).',
-      rayon: 'Littérature, BD, Voyage ou Jeunesse',
+      titre: 'Mot évoquant la MER',
+      consigne: 'Photographiez un mot évoquant la mer dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_MARITIMES, 'mot marin (Mer, Océan, Capitaine, Île...)');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_MARITIMES, 'mot lié à la mer');
       }
     },
     {
       id: 'ocr_prix',
       famille: 'ocr',
-      titre: 'Étiquette de prix se terminant par ,99 € (ou XX€99)',
-      consigne: 'Cadrez l’étiquette de prix d’un article affichant un montant se terminant par ,99 € ou 99 centimes (ex: 9,99€, 19,99€ ou 24€99).',
-      rayon: 'N’importe quel rayon du magasin',
+      titre: 'Prix se terminant par ,99 €',
+      consigne: 'Photographiez une étiquette de prix se terminant par ,99 € dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_PRIX, 'prix se terminant par 99 cts / ,99 €');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_PRIX, 'prix se terminant par ,99 €');
       }
     },
     {
       id: 'ocr_fnac',
       famille: 'ocr',
-      titre: 'Article ou sticker mentionnant FNAC',
-      consigne: 'Cadrez un sticker « Coup de cœur Fnac », une carte cadeau Fnac ou un article portant la mention FNAC.',
-      rayon: 'Rayons Librairie, Musique ou Tête de gondole',
+      titre: 'Mention ou logo FNAC',
+      consigne: 'Photographiez la mention ou le logo FNAC dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_FNAC, 'mention FNAC');
       }
@@ -293,81 +293,81 @@
     {
       id: 'ocr_format',
       famille: 'ocr',
-      titre: 'Mention en gros caractères : « VINYLE », « CD » ou « DVD »',
-      consigne: 'Photographiez le mot « VINYLE », « CD » ou « DVD » écrit en gros sur un disque, un album ou un boîtier.',
-      rayon: 'Rayons Musique / Disquaire, CD ou Vidéo / DVD',
+      titre: 'Mention de FORMAT média',
+      consigne: 'Photographiez une mention de format média dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_FORMATS, 'mention VINYLE, CD ou DVD');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_FORMATS, 'mention de format');
       }
     },
     {
       id: 'ocr_espace',
       famille: 'ocr',
-      titre: 'Livre ou jeu avec mot ESPACE / SF sur la couverture',
-      consigne: 'Cadrez un titre ou une couverture mentionnant l’espace ou le futur (STAR, WARS, SPACE, LUNE, MARS, ROBOT, PLANÈTE...).',
-      rayon: 'Rayons Science-Fiction, BD / Comics ou Gaming',
+      titre: 'Mot évoquant l’ESPACE',
+      consigne: 'Photographiez un mot évoquant l’espace ou le futur dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_ESPACE, 'mot SF / Espace (Star, Wars, Mars, Robot, Lune...)');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_ESPACE, 'mot lié à l’espace');
       }
     },
     {
       id: 'ocr_tome',
       famille: 'ocr',
-      titre: 'Manga ou BD avec mention TOME ou VOLUME',
-      consigne: 'Rapprochez-vous d’un manga, d’un comics ou d’une BD affichant la mention TOME, VOL ou VOLUME sur la couverture.',
-      rayon: 'Rayon Mangas, BD Franco-Belge ou Comics',
+      titre: 'Mention de NUMÉRO ou tome',
+      consigne: 'Photographiez une mention de tome, volume ou numéro dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_TOME, 'mention Tome / Volume (Tome, Vol, Chapitre...)');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_TOME, 'mention de tome ou volume');
       }
     },
     {
       id: 'ocr_audio',
       famille: 'ocr',
-      titre: 'Article audio avec mention SOUND, BASS ou CASQUE',
-      consigne: 'Cadrez un packaging au rayon son mentionnant AUDIO, SOUND, BASS, STEREO, CASQUE ou ENCEINTE.',
-      rayon: 'Rayon Son, Casques audio ou Enceintes',
+      titre: 'Mention AUDIO ou sonore',
+      consigne: 'Photographiez une mention audio ou sonore dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_AUDIO, 'mention Son (Audio, Sound, Bass, Stereo, Casque...)');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_AUDIO, 'mention audio');
       }
     },
     {
       id: 'ocr_tech',
       famille: 'ocr',
-      titre: 'Article tech avec mention WIFI, USB, 4K ou PRO',
-      consigne: 'Cadrez une étiquette ou boîte tech portant une mention de connectivité (WIFI, USB, BLUETOOTH, 4K, PRO, HD).',
-      rayon: 'Informatique, Téléphonie ou TV',
+      titre: 'Mention TECHNOLOGIE ou sans-fil',
+      consigne: 'Photographiez une mention technologique ou de connectivité dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_TECH, 'mention Tech (WiFi, USB, 4K, Pro, Bluetooth...)');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_TECH, 'mention technologique');
       }
     },
     {
       id: 'ocr_age_pegi',
       famille: 'ocr',
-      titre: 'Boîtier de jeu avec mention PEGI ou logo d’âge',
-      consigne: 'Cadrez le logo d’âge ou la mention PEGI (PEGI, 3, 7, 12, 16, 18, ANS) sur un boîtier de jeu ou jouet.',
-      rayon: 'Gaming, Jeux vidéo ou Jeux de société',
+      titre: 'Indication d’ÂGE ou classification',
+      consigne: 'Photographiez une mention d’âge ou une classification dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_AGE_PEGI, 'mention PEGI / Âge (PEGI, 3+, 12+, 16+, 18+...)');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_AGE_PEGI, 'indication d’âge');
       }
     },
     {
       id: 'ocr_destination',
       famille: 'ocr',
-      titre: 'Livre ou guide avec nom de VILLE, PAYS ou LIEU',
-      consigne: 'Cadrez la couverture d’un guide ou livre mentionnant une destination (ex: JAPON, PARIS, ITALIE, LONDRES, NEW YORK, ESPAGNE, AFRIQUE...).',
-      rayon: 'Tourisme, Guides de voyage, Géographie ou Littérature',
+      titre: 'Nom de DESTINATION ou lieu',
+      consigne: 'Photographiez un nom de destination ou de lieu géographique dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_DESTINATIONS, 'nom de ville ou pays (Japon, Italie, Paris, Londres...)');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_DESTINATIONS, 'nom de lieu');
       }
     },
     {
       id: 'ocr_mot',
       famille: 'ocr',
-      titre: 'Mot énigmatique du Nautilus (SECRET, ABYSSES, ENIGME...)',
-      consigne: '[Cible d’expert — tout rayon] Repérez sur n’importe quel article du magasin un mot mystère du capitaine : SECRET, ABYSSES, ENIGME, IMMERSION, LABYRINTHE, CHRONO ou AVENTURE.',
-      rayon: 'N’importe quel rayon (Livres, Jeux, Papeterie, Vinyles, Tech)',
+      titre: 'Mot MYSTÈRE du Nautilus',
+      consigne: 'Photographiez un mot ou une mention énigmatique dans le rayon.',
+      rayon: 'Tous rayons du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_MYSTERE, 'mot mystère du capitaine (Secret, Abysses, Enigme, Chrono...)', true);
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_MYSTERE, 'mot mystère', true);
       }
     }
   ];
@@ -461,13 +461,13 @@
       return {
         succes: true,
         score: pct,
-        message: '🟢 Densité sombre validée (' + pct + '% de noir profond détecté) ! Casque ou vinyle confirmé.'
+        message: '🟢 Densité sombre validée (' + pct + '% de noir profond détecté) ! Élément noir confirmé.'
       };
     }
     return {
       succes: false,
       score: pct,
-      message: '⚠️ Densité sombre insuffisante (' + pct + '%). Cadrez un objet noir ou un vinyle au centre.'
+      message: '⚠️ Densité sombre insuffisante (' + pct + '%). Cadrez un élément noir au centre.'
     };
   }
 
@@ -494,13 +494,13 @@
       return {
         succes: true,
         score: pct,
-        message: '🟢 Teinte blanche / argentée validée (' + pct + '% détecté) ! Article blanc confirmé.'
+        message: '🟢 Teinte blanche / argentée validée (' + pct + '% détecté) ! Élément clair confirmé.'
       };
     }
     return {
       succes: false,
       score: pct,
-      message: '⚠️ Luminance blanche insuffisante (' + pct + '%). Cadrez un boîtier d’écouteurs blancs ou un packaging clair.'
+      message: '⚠️ Luminance blanche insuffisante (' + pct + '%). Cadrez un élément blanc ou clair au centre.'
     };
   }
 
@@ -531,11 +531,11 @@
     return {
       succes: false,
       score: pct,
-      message: '⚠️ Luminance d’écran non détectée (' + pct + '%). Visez un écran TV, PC ou smartphone allumé.'
+      message: '⚠️ Luminance d’écran non détectée (' + pct + '%). Visez un écran allumé bien de face.'
     };
   }
 
-  // Circularité (Enceinte ronde, haut-parleur)
+  // Circularité
   function analyserObjetRond(pixels, w, h) {
     var cx = Math.floor(w / 2), cy = Math.floor(h / 2);
     var rayonTest = Math.min(w, h) * 0.32;
@@ -558,13 +558,13 @@
       return {
         succes: true,
         score: score,
-        message: '🟢 Symétrie circulaire confirmée (' + score + '% de courbure) ! Enceinte ou haut-parleur rond validé.'
+        message: '🟢 Symétrie circulaire confirmée (' + score + '% de courbure) ! Forme ronde validée.'
       };
     }
     return {
       succes: false,
       score: score,
-      message: '⚠️ Courbure circulaire insuffisante (' + score + '%). Cadrez une enceinte ou un objet rond bien au centre.'
+      message: '⚠️ Courbure circulaire insuffisante (' + score + '%). Cadrez une forme ronde bien au centre.'
     };
   }
 
@@ -596,17 +596,17 @@
       return {
         succes: true,
         score: score,
-        message: '🟢 Géométrie rectangulaire portrait validée (' + score + '% de rectitude) ! Livre / BD confirmé.'
+        message: '🟢 Géométrie rectangulaire portrait validée (' + score + '% de rectitude) ! Forme rectangulaire confirmée.'
       };
     }
     return {
       succes: false,
       score: score,
-      message: '⚠️ Format rectangulaire non net (' + score + '%). Cadrez un livre de face dans le collimateur.'
+      message: '⚠️ Format rectangulaire non net (' + score + '%). Cadrez une forme rectangulaire de face.'
     };
   }
 
-  // Format Carré (Pochette vinyle 33T ou CD)
+  // Format Carré
   function analyserFormeCarree(pixels, w, h) {
     var cx = Math.floor(w / 2), cy = Math.floor(h / 2);
     var demiCote = Math.floor(Math.min(w, h) * 0.32);
@@ -632,17 +632,17 @@
       return {
         succes: true,
         score: score,
-        message: '🟢 Silhouette carrée 1:1 validée (' + score + '% d’orthogonalité) ! Pochette vinyle / CD confirmée.'
+        message: '🟢 Silhouette carrée 1:1 validée (' + score + '% d’orthogonalité) ! Forme carrée confirmée.'
       };
     }
     return {
       succes: false,
       score: score,
-      message: '⚠️ Format carré non net (' + score + '%). Cadrez la pochette d’un vinyle ou d’un CD bien en face.'
+      message: '⚠️ Format carré non net (' + score + '%). Cadrez une forme carrée bien en face.'
     };
   }
 
-  // Cylindre (Gourde, thermos Fnac, mug)
+  // Forme cylindrique
   function analyserObjetCylindrique(pixels, w, h) {
     var cx = Math.floor(w / 2), cy = Math.floor(h / 2);
     var demiW = Math.floor(Math.min(w, h) * 0.22);
@@ -664,13 +664,13 @@
       return {
         succes: true,
         score: score,
-        message: '🟢 Relief cylindrique validé (' + score + '% de courbure verticale) ! Gourde ou étui confirmé.'
+        message: '🟢 Relief cylindrique validé (' + score + '% de courbure verticale) ! Forme cylindrique confirmée.'
       };
     }
     return {
       succes: false,
       score: score,
-      message: '⚠️ Profil cylindrique non détecté (' + score + '%). Cadrez une gourde ou un mug verticalement.'
+      message: '⚠️ Profil cylindrique non détecté (' + score + '%). Cadrez une forme cylindrique verticalement.'
     };
   }
 
@@ -730,17 +730,17 @@
       return {
         succes: true,
         score: score,
-        message: '🟢 Spectre doré / reflets or validés (Couverture dorée : ' + score + '%) ! Article collector confirmé.'
+        message: '🟢 Spectre doré / reflets or validés (Couverture dorée : ' + score + '%) ! Reflets dorés confirmés.'
       };
     }
     return {
       succes: false,
       score: score,
-      message: '⚠️ Reflets or / dorures insuffisants (' + score + '%). Visez un titre ou une tranche dorée au centre.'
+      message: '⚠️ Reflets or / dorures insuffisants (' + score + '%). Visez un élément doré au centre.'
     };
   }
 
-  // Clavier d’ordinateur (grille périodique de touches)
+  // Alignement de touches
   function analyserTouchesClavier(pixels, w, h) {
     var cx0 = Math.floor(w / 2), cy0 = Math.floor(h / 2);
     var demi = Math.floor(Math.min(w, h) * 0.32);
@@ -772,13 +772,13 @@
       return {
         succes: true,
         score: score,
-        message: '🟢 Grille de touches périodique détectée (' + totalTrans + ' arêtes) ! Clavier d’ordinateur validé.'
+        message: '🟢 Grille de touches périodique détectée (' + totalTrans + ' arêtes) ! Touches alignées validées.'
       };
     }
     return {
       succes: false,
       score: score,
-      message: '⚠️ Motif de touches non net (' + totalTrans + ' arêtes). Rapprochez-vous du clavier d’un PC portable en exposition.'
+      message: '⚠️ Motif de touches non net (' + totalTrans + ' arêtes). Rapprochez-vous et cadrez l’alignement de touches.'
     };
   }
 
@@ -801,7 +801,7 @@
     return grad;
   }
 
-  // Double cercle (deux oreillettes de casque audio ou objectif photo)
+  // Double cercle
   function analyserDoubleCercle(pixels, w, h) {
     var cx0 = Math.floor(w / 2), cy0 = Math.floor(h / 2);
     var r = Math.floor(Math.min(w, h) * 0.18);
@@ -820,13 +820,13 @@
       return {
         succes: true,
         score: score,
-        message: '🟢 Géométrie circulaire jumelée validée (' + score + '% de courbure) ! Casque audio ou optique confirmé.'
+        message: '🟢 Géométrie circulaire jumelée validée (' + score + '% de courbure) ! Double cercle confirmé.'
       };
     }
     return {
       succes: false,
       score: score,
-      message: '⚠️ Cercles non nets (' + score + '%). Cadrez les oreillettes d’un casque audio ou un objectif photo.'
+      message: '⚠️ Cercles non nets (' + score + '%). Cadrez une double forme circulaire bien en face.'
     };
   }
 
@@ -949,13 +949,13 @@
       return {
         succes: true,
         score: Math.max(score, 45),
-        message: '🟢 Silhouette cubique 3D / boîte validée (' + Math.max(score, 45) + '% de géométrie cubique) ! Boîte de jeu ou figurine confirmée.'
+        message: '🟢 Silhouette cubique 3D / boîte validée (' + Math.max(score, 45) + '% de géométrie cubique) ! Forme cubique confirmée.'
       };
     }
     return {
       succes: false,
       score: score,
-      message: '⚠️ Boîte ou forme cubique non nette (' + score + '%). Cadrez une boîte cubique (jeu de société, Funko Pop, coffret) de face ou de trois-quarts.'
+      message: '⚠️ Forme cubique non nette (' + score + '%). Cadrez une forme cubique de face ou de trois-quarts.'
     };
   }
 
@@ -1002,7 +1002,7 @@
         return {
           succes: true,
           score: densiteTypographique,
-          message: '🟢 Mot mystère du Capitaine identifié par OCR (Netteté ' + densiteTypographique + '%) ! Mot de passe secret validé.'
+          message: '🟢 Mot mystère identifié par OCR (Netteté ' + densiteTypographique + '%) ! Mot de passe secret validé.'
         };
       }
       return {
@@ -1018,7 +1018,7 @@
         return {
           succes: true,
           score: densiteTypographique,
-          message: '🟢 Destination de voyage identifiée par OCR (Netteté ' + densiteTypographique + '%) ! Guide / ouvrage touristique validé.'
+          message: '🟢 Destination identifiée par OCR (Netteté ' + densiteTypographique + '%) ! Destination validée.'
         };
       }
     }
@@ -1029,7 +1029,7 @@
         return {
           succes: true,
           score: densiteTypographique,
-          message: '🟢 Mention de format (VINYLE, CD ou DVD) validée par OCR (Netteté ' + densiteTypographique + '%) ! Support musical / vidéo confirmé.'
+          message: '🟢 Mention de format validée par OCR (Netteté ' + densiteTypographique + '%) ! Format média confirmé.'
         };
       }
     }
@@ -1041,7 +1041,7 @@
         return {
           succes: true,
           score: Math.max(bleu.score, densiteTypographique),
-          message: '🟢 Typographie / Thématique maritime validée (Score ' + Math.max(bleu.score, densiteTypographique) + '%) ! Ouvrage marin confirmé.'
+          message: '🟢 Typographie / Thématique maritime validée (Score ' + Math.max(bleu.score, densiteTypographique) + '%) ! Ouvrage confirmé.'
         };
       }
     }
@@ -1081,30 +1081,30 @@
     bleu_article: 'Bleu océan',
     vert_article: 'Vert',
     orange_article: 'Orange',
-    noir_profond: 'Noir vinyle',
+    noir_profond: 'Noir',
     blanc_argent: 'Blanc / argent',
     violet_article: 'Violet / mauve',
     rose_article: 'Rose vif',
     dore_or_article: 'Doré / or',
-    arc_en_ciel: 'Arc-en-ciel 🌈',
-    objet_rond: 'Enceinte ronde',
-    forme_rectangulaire_livre: 'Livre portrait',
-    forme_carree_vinyle: 'Carré vinyle',
-    objet_cylindrique: 'Cylindre gourde',
+    arc_en_ciel: 'Multicolore 🌈',
+    objet_rond: 'Forme ronde',
+    forme_rectangulaire_livre: 'Rectangle',
+    forme_carree_vinyle: 'Carré',
+    objet_cylindrique: 'Cylindre',
     ecran_allume: 'Écran allumé',
     motifs_rayures: 'Rayures',
-    touches_clavier: 'Clavier touches',
+    touches_clavier: 'Touches',
     double_cercle_optique: 'Double cercle',
-    forme_cube: 'Boîte cubique',
+    forme_cube: 'Forme cube',
     ocr_mer: 'OCR Mer',
     ocr_prix: 'OCR Prix (,99 €)',
     ocr_fnac: 'OCR Fnac',
     ocr_format: 'OCR Vinyle/CD/DVD',
     ocr_espace: 'OCR Espace / SF',
     ocr_tome: 'OCR Tome / Vol',
-    ocr_audio: 'OCR Son / Audio',
-    ocr_tech: 'OCR Tech / Sans fil',
-    ocr_age_pegi: 'OCR Âge / PEGI',
+    ocr_audio: 'OCR Sound / Audio',
+    ocr_tech: 'OCR WiFi / Tech',
+    ocr_age_pegi: 'OCR PEGI / Âge',
     ocr_destination: 'OCR Destination',
     ocr_mot: 'OCR Mot Mystère'
   };
@@ -1300,7 +1300,7 @@
       + '    <div class="photo-defi-kicker">CIBLE ACTUELLE — ÉCHANTILLON <span id="defiNum">1</span>/5</div>'
       + '    <h3 class="photo-defi-title" id="defiTitle">Chargement…</h3>'
       + '    <p class="photo-defi-desc" id="defiDesc"></p>'
-      + '    <div class="photo-defi-rayon">📍 Rayon conseillé : <b id="defiRayon">…</b></div>'
+      + '    <div class="photo-defi-rayon">📍 Rayon : <b id="defiRayon">…</b></div>'
       + '  </div>'
 
       + '  <div class="photo-viewfinder" id="photoViewfinder">'
