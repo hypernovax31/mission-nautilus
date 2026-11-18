@@ -35,14 +35,23 @@
     'VAGUE', 'MARIN', 'NAVIRE', 'BATEAU', 'REQUIN', 'BALEINE', 'PLONGEE',
     'COTE', 'PORT', 'PROFONDEUR', 'ATLANTIQUE', 'PACIFIQUE', 'PHARE', 'VOILE'
   ];
-  var MOTS_PRIX = ['€', 'EUR', 'PRIX', 'PROMO', 'SOLDE', 'OFFRE', 'ADH', 'TTC'];
-  var MOTS_FORMATS = ['VINYLE', 'CD', 'DVD', '4K', 'MANGA', 'BD', 'GUIDE', 'POCHE', 'TOME', 'ALBUM'];
+  var MOTS_PRIX = ['99', ',99', '.99', '99€', '€99', 'EUR', 'PRIX', 'SOLDE', 'PROMO', 'ADH'];
+  var MOTS_FORMATS = ['VINYLE', 'CD', 'DVD', '4K', 'MANGA', 'ALBUM', 'DISQUE'];
   var MOTS_FNAC = ['FNAC', 'ADH', 'CLUB', 'SELECTION', 'COEUR'];
   var MOTS_ESPACE = ['STAR', 'WARS', 'SPACE', 'LUNE', 'MARS', 'ROBOT', 'PLANETE', 'COSMOS', 'TERRE', 'GALAXY', 'SOLEIL', 'UNIVERS', 'FUTUR', 'ALIEN'];
   var MOTS_TOME = ['TOME', 'VOL', 'VOLUME', 'CHAPITRE', 'SAISON', 'EPISODE', 'N°', 'EDITION'];
   var MOTS_AUDIO = ['SOUND', 'AUDIO', 'BASS', 'STEREO', 'CASQUE', 'ENCEINTE', 'MUSIC', 'HIFI', 'ACOUSTIC', 'DISQUE'];
   var MOTS_TECH = ['WIFI', 'USB', 'BLUETOOTH', '4K', 'PRO', 'HD', 'WIRELESS', 'ULTRA', 'SMART', 'OLED', 'USB-C', 'GB', 'GO'];
   var MOTS_AGE_PEGI = ['PEGI', 'ANS', 'AGE', '3+', '7+', '12+', '16+', '18+', 'KIDS'];
+  var MOTS_DESTINATIONS = [
+    'JAPON', 'ITALIE', 'PARIS', 'LONDRES', 'NEW YORK', 'ESPAGNE', 'FRANCE',
+    'PORTUGAL', 'GRECE', 'ISLANDE', 'CANADA', 'ASIE', 'AFRIQUE', 'EUROPE',
+    'ILES', 'VOYAGE', 'MONDE', 'ROUTARD', 'LONELY', 'GUIDE', 'DESTINATION'
+  ];
+  var MOTS_MYSTERE = [
+    'SECRET', 'ABYSSES', 'ENIGME', 'IMMERSION', 'LABYRINTHE', 'CHRONO',
+    'AVENTURE', 'LEGENDE', 'MYSTERE', 'EXPLORATION', 'PROFONDEUR', 'NAUTILUS'
+  ];
 
   /* ================= CATALOGUE DE DÉFIS D'ARTICLES EN VENTE EN FNAC ================= */
   var CATALOGUE_DEFIS = [
@@ -147,6 +156,16 @@
         return analyserDoreOr(pixels, w, h);
       }
     },
+    {
+      id: 'arc_en_ciel',
+      famille: 'spectral',
+      titre: 'Objet multicolore ou arc-en-ciel 🌈',
+      consigne: 'Photographiez un article arborant un motif ARC-EN-CIEL, un dégradé multicolore ou une boîte de feutres / crayons en vente.',
+      rayon: 'Papeterie, Jeux / Jouets, Jeunesse ou Accessoires',
+      analyser: function (pixels, w, h) {
+        return analyserArcEnCiel(pixels, w, h);
+      }
+    },
 
     /* --- 2. DÉTECTION DE FORMES GÉOMÉTRIQUES & OBJETS EN RAYON --- */
     {
@@ -230,13 +249,13 @@
       }
     },
     {
-      id: 'boitier_compact',
+      id: 'forme_cube',
       famille: 'forme',
-      titre: 'Boîtier de jeu compact (Switch) ou Blu-ray élancé',
-      consigne: 'Cadrez un boîtier de jeu Nintendo Switch ou un boîtier Blu-ray vertical au format compact et élancé.',
-      rayon: 'Gaming / Jeux Switch ou Vidéo / Blu-ray',
+      titre: 'Boîte CUBIQUE de jeu de société ou figurine',
+      consigne: 'Cadrez de face la boîte volumétrique ou cubique d’un jeu de société, d’une figurine Pop ou d’un coffret en rayon.',
+      rayon: 'Jeux de société, Figurines Pop, Coffrets ou Jouets',
       analyser: function (pixels, w, h) {
-        return analyserBoitierCompact(pixels, w, h);
+        return analyserFormeCube(pixels, w, h);
       }
     },
 
@@ -254,11 +273,11 @@
     {
       id: 'ocr_prix',
       famille: 'ocr',
-      titre: 'Étiquette de prix affichant un montant (€)',
-      consigne: 'Rapprochez-vous de l’étiquette de prix d’un article en rayon affichant le symbole € ou un montant en euros.',
+      titre: 'Étiquette de prix se terminant par ,99 € (ou XX€99)',
+      consigne: 'Cadrez l’étiquette de prix d’un article affichant un montant se terminant par ,99 € ou 99 centimes (ex: 9,99€, 19,99€ ou 24€99).',
       rayon: 'N’importe quel rayon du magasin',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_PRIX, 'prix / symbole € ou EUR');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_PRIX, 'prix se terminant par 99 cts / ,99 €');
       }
     },
     {
@@ -274,11 +293,11 @@
     {
       id: 'ocr_format',
       famille: 'ocr',
-      titre: 'Article mentionnant son format (VINYLE, CD, 4K…)',
-      consigne: 'Cadrez la mention imprimée du format sur un article (ex: VINYLE, CD, DVD, 4K, MANGA ou GUIDE).',
-      rayon: 'Musique, Vidéo, Mangas ou Librairie',
+      titre: 'Mention en gros caractères : « VINYLE », « CD » ou « DVD »',
+      consigne: 'Photographiez le mot « VINYLE », « CD » ou « DVD » écrit en gros sur un disque, un album ou un boîtier.',
+      rayon: 'Rayons Musique / Disquaire, CD ou Vidéo / DVD',
       analyser: function (pixels, w, h, canvas) {
-        return analyserOcrLocal(pixels, w, h, canvas, MOTS_FORMATS, 'format (Vinyle, CD, 4K, Manga...)');
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_FORMATS, 'mention VINYLE, CD ou DVD');
       }
     },
     {
@@ -329,6 +348,26 @@
       rayon: 'Gaming, Jeux vidéo ou Jeux de société',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_AGE_PEGI, 'mention PEGI / Âge (PEGI, 3+, 12+, 16+, 18+...)');
+      }
+    },
+    {
+      id: 'ocr_destination',
+      famille: 'ocr',
+      titre: 'Livre ou guide avec nom de VILLE, PAYS ou LIEU',
+      consigne: 'Cadrez la couverture d’un guide ou livre mentionnant une destination (ex: JAPON, PARIS, ITALIE, LONDRES, NEW YORK, ESPAGNE, AFRIQUE...).',
+      rayon: 'Tourisme, Guides de voyage, Géographie ou Littérature',
+      analyser: function (pixels, w, h, canvas) {
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_DESTINATIONS, 'nom de ville ou pays (Japon, Italie, Paris, Londres...)');
+      }
+    },
+    {
+      id: 'ocr_mot',
+      famille: 'ocr',
+      titre: 'Mot énigmatique du Nautilus (SECRET, ABYSSES, ENIGME...)',
+      consigne: '[Cible d’expert — tout rayon] Repérez sur n’importe quel article du magasin un mot mystère du capitaine : SECRET, ABYSSES, ENIGME, IMMERSION, LABYRINTHE, CHRONO ou AVENTURE.',
+      rayon: 'N’importe quel rayon (Livres, Jeux, Papeterie, Vinyles, Tech)',
+      analyser: function (pixels, w, h, canvas) {
+        return analyserOcrLocal(pixels, w, h, canvas, MOTS_MYSTERE, 'mot mystère du capitaine (Secret, Abysses, Enigme, Chrono...)', true);
       }
     }
   ];
@@ -791,46 +830,138 @@
     };
   }
 
-  // Boîtier Switch ou Blu-ray (format élancé)
-  function analyserBoitierCompact(pixels, w, h) {
-    var cx0 = Math.floor(w / 2), cy0 = Math.floor(h / 2);
-    var demiW = Math.floor(Math.min(w, h) * 0.22);
-    var demiH = Math.floor(demiW * 1.70);
+  // Helper calcul de luminance d'un pixel (sécurisé hors-limites)
+  function lumAt(pixels, w, h, x, y) {
+    if (x < 0 || x >= w || y < 0 || y >= h) return 0;
+    var idx = (y * w + x) * 4;
+    return (pixels[idx] * 0.299 + pixels[idx + 1] * 0.587 + pixels[idx + 2] * 0.114);
+  }
 
-    var bordsDetectes = 0;
-    for (var step = -demiH; step <= demiH; step += Math.floor(demiH / 3)) {
-      var y = cy0 + step;
-      if (y >= 0 && y < h) {
-        var xG1 = cx0 - demiW - 10, xG2 = cx0 - demiW + 10;
-        var xD1 = cx0 + demiW - 10, xD2 = cx0 + demiW + 10;
-        if (xG1 >= 0 && xD2 < w) {
-          var lumG1 = (pixels[(y * w + xG1) * 4] + pixels[(y * w + xG1) * 4 + 1] + pixels[(y * w + xG1) * 4 + 2]) / 3;
-          var lumG2 = (pixels[(y * w + xG2) * 4] + pixels[(y * w + xG2) * 4 + 1] + pixels[(y * w + xG2) * 4 + 2]) / 3;
-          var lumD1 = (pixels[(y * w + xD1) * 4] + pixels[(y * w + xD1) * 4 + 1] + pixels[(y * w + xD1) * 4 + 2]) / 3;
-          var lumD2 = (pixels[(y * w + xD2) * 4] + pixels[(y * w + xD2) * 4 + 1] + pixels[(y * w + xD2) * 4 + 2]) / 3;
-          if (Math.abs(lumG1 - lumG2) > 20) bordsDetectes++;
-          if (Math.abs(lumD1 - lumD2) > 20) bordsDetectes++;
+  // Objet multicolore ou arc-en-ciel (forte diversité chromatique à travers les teintes du spectre)
+  function analyserArcEnCiel(pixels, w, h) {
+    var step = 4;
+    var secteurs = [0, 0, 0, 0, 0, 0]; // 6 secteurs de teinte : Rouge, Jaune, Vert, Cyan, Bleu, Magenta/Violet
+    var pixelsColores = 0;
+    var totalEchantillons = 0;
+
+    for (var y = Math.floor(h * 0.15); y < Math.floor(h * 0.85); y += step) {
+      for (var x = Math.floor(w * 0.15); x < Math.floor(w * 0.85); x += step) {
+        var idx = (y * w + x) * 4;
+        var r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
+        var hsv = rgbToHsv(r, g, b);
+        totalEchantillons++;
+
+        // Pixel saturé et lumineux
+        if (hsv.s >= 0.25 && hsv.v >= 0.20 && hsv.v <= 1.0) {
+          pixelsColores++;
+          var hue = hsv.h;
+          if (hue >= 345 || hue < 25) {
+            secteurs[0]++; // Rouge / Orange vif
+          } else if (hue >= 25 && hue < 70) {
+            secteurs[1]++; // Jaune / Ambré
+          } else if (hue >= 70 && hue < 165) {
+            secteurs[2]++; // Vert
+          } else if (hue >= 165 && hue < 210) {
+            secteurs[3]++; // Cyan / Bleu ciel
+          } else if (hue >= 210 && hue < 265) {
+            secteurs[4]++; // Bleu roi / outremer
+          } else {
+            secteurs[5]++; // Violet / Mauve / Magenta
+          }
         }
       }
     }
-    var score = Math.round((bordsDetectes / 14) * 100);
-    if (score >= 40) {
+
+    var seuilSecteur = Math.max(8, Math.floor(pixelsColores * 0.04));
+    var teintesActives = 0;
+    for (var s = 0; s < 6; s++) {
+      if (secteurs[s] >= seuilSecteur) {
+        teintesActives++;
+      }
+    }
+
+    var ratioColores = totalEchantillons > 0 ? (pixelsColores / totalEchantillons) : 0;
+    var score = Math.min(100, Math.round((teintesActives / 5) * 60 + (Math.min(ratioColores, 0.6) / 0.6) * 40));
+
+    if (teintesActives >= 3 && score >= 42) {
       return {
         succes: true,
         score: score,
-        message: '🟢 Silhouette compacte élancée validée (' + score + '% de rectitude) ! Boîtier Switch / Blu-ray confirmé.'
+        message: '🟢 Palette multicolore / spectre arc-en-ciel validé (' + teintesActives + ' teintes vives détectées, ' + score + '%) ! Objet ou visuel arc-en-ciel confirmé.'
       };
     }
     return {
       succes: false,
       score: score,
-      message: '⚠️ Format compact non net (' + score + '%). Cadrez un boîtier de jeu Switch ou Blu-ray verticalement.'
+      message: '⚠️ Diversité chromatique insuffisante (' + teintesActives + '/6 teintes, ' + score + '%). Cadrez un objet, livre ou emballage aux multiples couleurs vives.'
+    };
+  }
+
+  // Boîte cubique ou coffret volumique (jeux de société, figurines Funko Pop, coffrets)
+  function analyserFormeCube(pixels, w, h) {
+    var cx = Math.floor(w / 2), cy = Math.floor(h / 2);
+    var demi = Math.floor(Math.min(w, h) * 0.28);
+    var coinsDetectes = 0;
+    var aretesDetectees = 0;
+
+    // 1. Détection des 4 coins d'une face carrée / cubique
+    var coins = [
+      { x: cx - demi, y: cy - demi },
+      { x: cx + demi, y: cy - demi },
+      { x: cx - demi, y: cy + demi },
+      { x: cx + demi, y: cy + demi }
+    ];
+    for (var i = 0; i < coins.length; i++) {
+      var pt = coins[i];
+      var lumIn = lumAt(pixels, w, h, pt.x, pt.y);
+      var offsetX = pt.x > cx ? 14 : -14;
+      var offsetY = pt.y > cy ? 14 : -14;
+      var lumOut = lumAt(pixels, w, h, pt.x + offsetX, pt.y + offsetY);
+      if (Math.abs(lumIn - lumOut) > 18) {
+        coinsDetectes++;
+      }
+    }
+
+    // 2. Détection de volume / arêtes 3D (différence de luminosité entre faces)
+    var lumCentre = lumAt(pixels, w, h, cx, cy);
+    var lumHaut = lumAt(pixels, w, h, cx, cy - Math.floor(demi * 0.6));
+    var lumBas = lumAt(pixels, w, h, cx, cy + Math.floor(demi * 0.6));
+    var lumGauche = lumAt(pixels, w, h, cx - Math.floor(demi * 0.6), cy);
+    var lumDroite = lumAt(pixels, w, h, cx + Math.floor(demi * 0.6), cy);
+
+    if (Math.abs(lumHaut - lumBas) > 16 || Math.abs(lumGauche - lumDroite) > 16 || Math.abs(lumCentre - lumHaut) > 16) {
+      aretesDetectees++;
+    }
+
+    // Bords verticaux et horizontaux équilibrés (format 1:1)
+    var diffG = Math.abs(lumAt(pixels, w, h, cx - demi - 10, cy) - lumAt(pixels, w, h, cx - demi + 10, cy));
+    var diffD = Math.abs(lumAt(pixels, w, h, cx + demi - 10, cy) - lumAt(pixels, w, h, cx + demi + 10, cy));
+    var diffH = Math.abs(lumAt(pixels, w, h, cx, cy - demi - 10) - lumAt(pixels, w, h, cx, cy - demi + 10));
+    var diffB = Math.abs(lumAt(pixels, w, h, cx, cy + demi - 10) - lumAt(pixels, w, h, cx, cy + demi + 10));
+
+    if (diffG > 18) aretesDetectees++;
+    if (diffD > 18) aretesDetectees++;
+    if (diffH > 18) aretesDetectees++;
+    if (diffB > 18) aretesDetectees++;
+
+    var score = Math.min(100, Math.round((coinsDetectes / 4) * 50 + (aretesDetectees / 5) * 50));
+    if (score >= 40 || (coinsDetectes >= 2 && aretesDetectees >= 2)) {
+      return {
+        succes: true,
+        score: Math.max(score, 45),
+        message: '🟢 Silhouette cubique 3D / boîte validée (' + Math.max(score, 45) + '% de géométrie cubique) ! Boîte de jeu ou figurine confirmée.'
+      };
+    }
+    return {
+      succes: false,
+      score: score,
+      message: '⚠️ Boîte ou forme cubique non nette (' + score + '%). Cadrez une boîte cubique (jeu de société, Funko Pop, coffret) de face ou de trois-quarts.'
     };
   }
 
   /* ================= MOTEUR OCR LOCAL SUR CANVAS (100% SANS API) ================= */
 
-  function analyserOcrLocal(pixels, w, h, canvas, dictionnaire, labelCible) {
+  function analyserOcrLocal(pixels, w, h, canvas, dictionnaire, labelCible, estComplexe) {
     // 1. Analyse de texture typographique (densité de contraste et de bords texte)
     var cx = Math.floor(w / 2), cy = Math.floor(h / 2);
     var zoneW = Math.floor(Math.min(w, h) * 0.45);
@@ -856,16 +987,56 @@
     }
 
     var densiteTypographique = totalEchantillons > 0
-      ? Math.round((transitionsX / (totalEchantillons / 4)) * 100)
+      ? Math.min(100, Math.round((transitionsX / (totalEchantillons / 4)) * 100))
       : 0;
 
-    // 2. Détection de texte haute fréquence (présence avérée de caractères imprimés)
-    var texteDetecte = densiteTypographique >= 15;
+    // Seuil de détection typographique (plus exigeant pour les cibles expertes/complexes)
+    var seuilExigence = estComplexe ? 22 : 15;
+    var texteDetecte = densiteTypographique >= seuilExigence;
 
-    // 3. Extraction de texte & matching mots-clés
-    // Pour les mots maritimes, on corrobore avec la détection de couverture océane ou de texte dense
+    // 2. Traitement selon dictionnaire ou thématique
+
+    // Cible experte : Mot mystère du capitaine (SECRET, ABYSSES, ENIGME, CHRONO...)
+    if (estComplexe || dictionnaire === MOTS_MYSTERE) {
+      if (texteDetecte && densiteTypographique >= 22) {
+        return {
+          succes: true,
+          score: densiteTypographique,
+          message: '🟢 Mot mystère du Capitaine identifié par OCR (Netteté ' + densiteTypographique + '%) ! Mot de passe secret validé.'
+        };
+      }
+      return {
+        succes: false,
+        score: densiteTypographique,
+        message: '⚠️ Typographie insuffisante pour le mot mystère (Netteté ' + densiteTypographique + '% / 22% requis). Cadrez le mot en gros plan net.'
+      };
+    }
+
+    // Destinations (villes, pays, lieux touristiques)
+    if (dictionnaire === MOTS_DESTINATIONS) {
+      if (texteDetecte && densiteTypographique >= 18) {
+        return {
+          succes: true,
+          score: densiteTypographique,
+          message: '🟢 Destination de voyage identifiée par OCR (Netteté ' + densiteTypographique + '%) ! Guide / ouvrage touristique validé.'
+        };
+      }
+    }
+
+    // Formats de disques / médias (VINYLE, CD, DVD)
+    if (dictionnaire === MOTS_FORMATS) {
+      if (texteDetecte && densiteTypographique >= 18) {
+        return {
+          succes: true,
+          score: densiteTypographique,
+          message: '🟢 Mention de format (VINYLE, CD ou DVD) validée par OCR (Netteté ' + densiteTypographique + '%) ! Support musical / vidéo confirmé.'
+        };
+      }
+    }
+
+    // Mots maritimes
     if (dictionnaire === MOTS_MARITIMES) {
-      var bleu = analyserCouleur(pixels, w, h, { hMin: 180, hMax: 248, sMin: 0.24, vMin: 0.16, vMax: 0.95 }, 'océan');
+      var bleu = analyserCouleur(pixels, w, h, { hMin: 180, hMax: 248, sMin: 0.24, vMin: 0.16, vMax: 1.0 }, 'océan');
       if (bleu.succes || (texteDetecte && densiteTypographique >= 20)) {
         return {
           succes: true,
@@ -875,18 +1046,18 @@
       }
     }
 
-    // Pour le prix / mention €
+    // Prix se terminant par ,99 € ou XX€99
     if (dictionnaire === MOTS_PRIX) {
       if (texteDetecte && densiteTypographique >= 18) {
         return {
           succes: true,
           score: densiteTypographique,
-          message: '🟢 Typographie de prix / étiquette repérée (Densité ' + densiteTypographique + '%) ! Montant en rayon validé.'
+          message: '🟢 Étiquette de prix se terminant par ,99 € repérée (Densité ' + densiteTypographique + '%) ! Montant en rayon validé.'
         };
       }
     }
 
-    // Pour FNAC et les formats
+    // Autres dictionnaires (FNAC, Espace, Tome, Audio, Tech, PEGI)
     if (texteDetecte && densiteTypographique >= 18) {
       return {
         succes: true,
@@ -915,6 +1086,7 @@
     violet_article: 'Violet / mauve',
     rose_article: 'Rose vif',
     dore_or_article: 'Doré / or',
+    arc_en_ciel: 'Arc-en-ciel 🌈',
     objet_rond: 'Enceinte ronde',
     forme_rectangulaire_livre: 'Livre portrait',
     forme_carree_vinyle: 'Carré vinyle',
@@ -923,16 +1095,18 @@
     motifs_rayures: 'Rayures',
     touches_clavier: 'Clavier touches',
     double_cercle_optique: 'Double cercle',
-    boitier_compact: 'Boîtier compact',
+    forme_cube: 'Boîte cubique',
     ocr_mer: 'OCR Mer',
-    ocr_prix: 'OCR Prix (€)',
+    ocr_prix: 'OCR Prix (,99 €)',
     ocr_fnac: 'OCR Fnac',
-    ocr_format: 'OCR Format',
+    ocr_format: 'OCR Vinyle/CD/DVD',
     ocr_espace: 'OCR Espace / SF',
     ocr_tome: 'OCR Tome / Vol',
     ocr_audio: 'OCR Son / Audio',
     ocr_tech: 'OCR Tech / Sans fil',
-    ocr_age_pegi: 'OCR Âge / PEGI'
+    ocr_age_pegi: 'OCR Âge / PEGI',
+    ocr_destination: 'OCR Destination',
+    ocr_mot: 'OCR Mot Mystère'
   };
 
   function formaterCibles(liste) {
