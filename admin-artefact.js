@@ -190,6 +190,12 @@
   }
   function lireTeamDoc(code){
     try{
+      if(window.NautilusAdminDb && window.NautilusAdminDb.getTeamDoc) return window.NautilusAdminDb.getTeamDoc(code);
+      if(window.NautilusBlocages && window.NautilusBlocages.db) {
+        return window.NautilusBlocages.db().then(function(x){
+          return x.fs.getDoc(x.fs.doc(x.db, 'teams', code));
+        });
+      }
       if(S() && S().stockage) return S().stockage().lire('teams/'+code);
       if(window.Nautilus && window.Nautilus.getTeam) return window.Nautilus.getTeam(code);
     }catch(e){}
@@ -234,6 +240,34 @@
     if (_unsubP2) return;
     var getDb = null;
     try{
+      if (window.NautilusAdminDb && window.NautilusAdminDb.db) {
+        var adb = window.NautilusAdminDb;
+        import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js').then(function(fs){
+          var refCol = fs.collection(adb.db, 'teams');
+          _unsubP2 = fs.onSnapshot(refCol, function(snap){
+            snap.forEach(function(d){
+              var data = d.data()||{};
+              var equipe = d.id;
+              if (EQUIPES.indexOf(equipe) < 0) return;
+              var mc = data.motsCroises || data.palier2 || data.grilleMotsCroises || null;
+              var liste = null;
+              if (mc && Array.isArray(mc.motsJustes)) liste = mc.motsJustes;
+              else if (mc && mc.motsJustes && typeof mc.motsJustes === 'object' && !Array.isArray(mc.motsJustes)) liste = Object.keys(mc.motsJustes).filter(function(k){ return mc.motsJustes[k]; });
+              else if (Array.isArray(data.motsJustes)) liste = data.motsJustes;
+              if (liste) majP2Chips(equipe, liste);
+
+              // P3 : Photo Défi en direct
+              var pd = data.photoDefi || data.palier3 || null;
+              if (pd && pd.cibles && Array.isArray(pd.cibles)){
+                majP3Chips(equipe, pd.cibles, pd.indexActuel);
+              } else {
+                majCarteP3Auto(equipe);
+              }
+            });
+          }, function(){});
+        }).catch(function(){});
+        return;
+      }
       if (window.NautilusBlocages && window.NautilusBlocages.db) getDb = window.NautilusBlocages.db;
       else if (S() && S().stockage && S().stockage()._base) return; // memoire, pas de live
     }catch(e){}
