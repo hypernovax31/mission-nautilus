@@ -270,12 +270,19 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
   }
   function afficherVueBriefing() {
-    montrerCarte('gateHero', false);
-    montrerCarte('teamCard', true);
-    montrerCarte('logCard', true);
-    montrerCarte('briefCard', true);
-    montrerCarte('gateUnlocked', false);
-    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+    var basculer = function () {
+      montrerCarte('gateHero', false);
+      montrerCarte('teamCard', true);
+      montrerCarte('logCard', true);
+      montrerCarte('briefCard', true);
+      montrerCarte('gateUnlocked', false);
+      var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+    };
+    if (window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
+      window.NautilusBriefing.transitionVersBriefing(basculer);
+    } else {
+      basculer();
+    }
   }
   function afficherVueEpreuve() {
     montrerCarte('gateHero', false);

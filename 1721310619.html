@@ -361,12 +361,19 @@
   function afficherVueBriefing() {
     /* Sas ouvert : la scène scellée se retire, et l'équipage actif +
        le journal de bord reviennent avec le briefing du capitaine. */
-    montrerCarte('gateHero', false);
-    montrerCarte('teamCard', true);
-    montrerCarte('logCard', true);
-    montrerCarte('briefCard', true);
-    montrerCarte('gateUnlocked', false);
-    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+    var basculer = function () {
+      montrerCarte('gateHero', false);
+      montrerCarte('teamCard', true);
+      montrerCarte('logCard', true);
+      montrerCarte('briefCard', true);
+      montrerCarte('gateUnlocked', false);
+      var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+    };
+    if (window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
+      window.NautilusBriefing.transitionVersBriefing(basculer);
+    } else {
+      basculer();
+    }
   }
   function afficherVueEpreuve() {
     montrerCarte('gateHero', false);

@@ -114,5 +114,62 @@
     return btn;
   }
 
-  window.NautilusBriefing = { afficher: afficher };
+  var _transitionEnCours = false;
+
+  function transitionVersBriefing(callback) {
+    if (_transitionEnCours) {
+      if (typeof callback === 'function') callback();
+      return;
+    }
+    _transitionEnCours = true;
+
+    var overlay = document.getElementById('collimateurOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'collimateurOverlay';
+      overlay.className = 'collimateur-overlay';
+      overlay.innerHTML = ''
+        + '<div class="collimateur-box">'
+        +   '<div class="collimateur-viseur" aria-hidden="true">'
+        +     '<div class="collimateur-cercle-ext"></div>'
+        +     '<div class="collimateur-cercle-int"></div>'
+        +     '<div class="collimateur-reticule-h"></div>'
+        +     '<div class="collimateur-reticule-v"></div>'
+        +     '<div class="collimateur-point"></div>'
+        +     '<div class="collimateur-scan"></div>'
+        +   '</div>'
+        +   '<p class="collimateur-titre">📸 Initialisation du collimateur optique<span class="collimateur-dots">...</span></p>'
+        +   '<p class="collimateur-sub">Calibrage du viseur sous-marin en cours</p>'
+        + '</div>';
+      document.body.appendChild(overlay);
+    }
+
+    overlay.style.transition = '';
+    overlay.style.opacity = '1';
+    overlay.style.display = 'flex';
+
+    // Masquer immédiatement les cartes de sas et de jeu pendant le calibrage
+    var hero = document.getElementById('gateHero') || document.getElementById('gateCard');
+    if (hero) hero.hidden = true;
+    var unlock = document.getElementById('gateUnlocked');
+    if (unlock) unlock.hidden = true;
+
+    setTimeout(function () {
+      overlay.style.transition = 'opacity 0.35s ease';
+      overlay.style.opacity = '0';
+      setTimeout(function () {
+        overlay.style.display = 'none';
+        _transitionEnCours = false;
+        if (typeof callback === 'function') {
+          callback();
+        }
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
+      }, 350);
+    }, 1250);
+  }
+
+  window.NautilusBriefing = {
+    afficher: afficher,
+    transitionVersBriefing: transitionVersBriefing
+  };
 })();

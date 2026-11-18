@@ -176,11 +176,18 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     montrerCarte('gateUnlocked', false);
   }
   function vueBriefing() {
-    montrerCarte('gateHero', false);
-    montrerCarte('teamCard', true);
-    montrerCarte('logCard', true);
-    montrerCarte('briefCard', true);
-    montrerCarte('gateUnlocked', false);
+    var basculer = function () {
+      montrerCarte('gateHero', false);
+      montrerCarte('teamCard', true);
+      montrerCarte('logCard', true);
+      montrerCarte('briefCard', true);
+      montrerCarte('gateUnlocked', false);
+    };
+    if (window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
+      window.NautilusBriefing.transitionVersBriefing(basculer);
+    } else {
+      basculer();
+    }
   }
   function vueEpreuve() {
     montrerCarte('gateHero', false);

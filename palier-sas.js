@@ -128,8 +128,7 @@
     function showUnlocked(propager) {
       persistUnlock();
       stopCamera();
-      var carte = $('gateCard'); if (carte) carte.hidden = true;
-      var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
+      var carte = $('gateCard') || $('gateHero'); if (carte) carte.hidden = true;
       revelerContenuProtege();
       window.scrollTo({ top: 0, behavior: 'smooth' });
       /* Signal unique pour TOUTES les pages de palier : la page fait
@@ -443,7 +442,7 @@
       /* Concepteur : le portail se montre SCELLÉ même si le sas est déjà
          ouvert sur cet appareil — tout est en place pour viser le vrai
          QR Code (le scan lève alors le scellé normalement). */
-      var carteF = $('gateCard'); if (carteF) carteF.hidden = false;
+      var carteF = $('gateCard') || $('gateHero'); if (carteF) carteF.hidden = false;
       var ouvertF = $('gateUnlocked'); if (ouvertF) ouvertF.hidden = true;
       cacherContenuProtege();
       journal('🧪 Mode concepteur : page scellée affichée pour tester le QR Code (le déverrouillage mémorisé est ignoré sur cette vue).', 'info');
@@ -452,13 +451,12 @@
          se montre SCELLÉ même si le sas est déjà ouvert sur cet appareil
          (cas du concepteur, ou d'un retour après coup) — le scan reste le
          geste attendu. */
-      var carteS = $('gateCard'); if (carteS) carteS.hidden = false;
+      var carteS = $('gateCard') || $('gateHero'); if (carteS) carteS.hidden = false;
       var ouvertS = $('gateUnlocked'); if (ouvertS) ouvertS.hidden = true;
       cacherContenuProtege();
       journal('📷 ' + LABEL + ' : sas prêt à scanner le QR Code.', 'info');
     } else if (isUnlocked()) {
-      var carte = $('gateCard'); if (carte) carte.hidden = true;
-      var ouvert = $('gateUnlocked'); if (ouvert) ouvert.hidden = false;
+      var carte = $('gateCard') || $('gateHero'); if (carte) carte.hidden = true;
       revelerContenuProtege();
       journal('🔓 Sas déjà ouvert sur cet appareil : le briefing du capitaine s’affiche directement.', 'success');
     } else {
