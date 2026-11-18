@@ -55,11 +55,11 @@
 
   /* ================= CATALOGUE DE DÉFIS D'ARTICLES EN VENTE EN FNAC ================= */
   var CATALOGUE_DEFIS = [
-    /* --- 1. DÉTECTION SPECTRALE (COULEURS FRANCHES EN RAYON) --- */
+    /* --- 1. DÉTECTION CHROMATIQUE & TEINTES EN RAYON --- */
     {
       id: 'jaune_article',
       famille: 'spectral',
-      titre: 'Élément JAUNE vif',
+      titre: 'Trouve un élément jaune vif',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 36, hMax: 68, sMin: 0.25, vMin: 0.18, vMax: 1.0 }, 'jaune');
       }
@@ -67,7 +67,7 @@
     {
       id: 'rouge_article',
       famille: 'spectral',
-      titre: 'Élément ROUGE vif',
+      titre: 'Trouve un élément rouge vif',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 345, hMax: 16, sMin: 0.30, vMin: 0.18, vMax: 1.0, wraps: true }, 'rouge');
       }
@@ -75,7 +75,7 @@
     {
       id: 'bleu_article',
       famille: 'spectral',
-      titre: 'Élément BLEU océan',
+      titre: 'Trouve un élément bleu océan',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 180, hMax: 248, sMin: 0.26, vMin: 0.16, vMax: 1.0 }, 'bleu');
       }
@@ -83,7 +83,7 @@
     {
       id: 'vert_article',
       famille: 'spectral',
-      titre: 'Élément VERT émeraude',
+      titre: 'Trouve un élément vert émeraude',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 75, hMax: 160, sMin: 0.25, vMin: 0.16, vMax: 1.0 }, 'vert');
       }
@@ -91,7 +91,7 @@
     {
       id: 'orange_article',
       famille: 'spectral',
-      titre: 'Élément ORANGE éclatant',
+      titre: 'Trouve un élément orange éclatant',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 16, hMax: 38, sMin: 0.35, vMin: 0.18, vMax: 1.0 }, 'orange');
       }
@@ -99,7 +99,7 @@
     {
       id: 'noir_profond',
       famille: 'spectral',
-      titre: 'Élément NOIR profond',
+      titre: 'Trouve un élément noir profond',
       analyser: function (pixels, w, h) {
         return analyserNoirProfond(pixels, w, h);
       }
@@ -107,7 +107,7 @@
     {
       id: 'blanc_argent',
       famille: 'spectral',
-      titre: 'Élément BLANC ou argenté',
+      titre: 'Trouve un élément blanc ou argenté',
       analyser: function (pixels, w, h) {
         return analyserBlancArgent(pixels, w, h);
       }
@@ -115,7 +115,7 @@
     {
       id: 'violet_article',
       famille: 'spectral',
-      titre: 'Élément VIOLET ou mauve',
+      titre: 'Trouve un élément violet ou mauve',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 265, hMax: 325, sMin: 0.28, vMin: 0.18, vMax: 1.0 }, 'violet');
       }
@@ -123,7 +123,7 @@
     {
       id: 'rose_article',
       famille: 'spectral',
-      titre: 'Élément ROSE vif',
+      titre: 'Trouve un élément rose vif',
       analyser: function (pixels, w, h) {
         return analyserCouleur(pixels, w, h, { hMin: 325, hMax: 348, sMin: 0.30, vMin: 0.22, vMax: 1.0 }, 'rose');
       }
@@ -131,7 +131,7 @@
     {
       id: 'dore_or_article',
       famille: 'spectral',
-      titre: 'Élément aux reflets DORÉS / or',
+      titre: 'Trouve un élément aux reflets dorés / or',
       analyser: function (pixels, w, h) {
         return analyserDoreOr(pixels, w, h);
       }
@@ -139,7 +139,7 @@
     {
       id: 'arc_en_ciel',
       famille: 'spectral',
-      titre: 'Élément MULTICOLORE ou arc-en-ciel 🌈',
+      titre: 'Trouve un élément multicolore ou arc-en-ciel',
       analyser: function (pixels, w, h) {
         return analyserArcEnCiel(pixels, w, h);
       }
@@ -149,7 +149,7 @@
     {
       id: 'objet_rond',
       famille: 'forme',
-      titre: 'Forme RONDE ou circulaire',
+      titre: 'Cherche un objet rond ou circulaire',
       analyser: function (pixels, w, h) {
         return analyserObjetRond(pixels, w, h);
       }
@@ -157,7 +157,7 @@
     {
       id: 'forme_rectangulaire_livre',
       famille: 'forme',
-      titre: 'Forme RECTANGULAIRE portrait',
+      titre: 'Cherche un format rectangulaire vertical',
       analyser: function (pixels, w, h) {
         return analyserFormeRectanglePortrait(pixels, w, h);
       }
@@ -165,7 +165,7 @@
     {
       id: 'forme_carree_vinyle',
       famille: 'forme',
-      titre: 'Forme CARRÉE',
+      titre: 'Cherche un objet ou format carré',
       analyser: function (pixels, w, h) {
         return analyserFormeCarree(pixels, w, h);
       }
@@ -173,7 +173,7 @@
     {
       id: 'objet_cylindrique',
       famille: 'forme',
-      titre: 'Forme CYLINDRIQUE',
+      titre: 'Cherche un objet cylindrique',
       analyser: function (pixels, w, h) {
         return analyserObjetCylindrique(pixels, w, h);
       }
@@ -181,7 +181,7 @@
     {
       id: 'ecran_allume',
       famille: 'forme',
-      titre: 'ÉCRAN allumé',
+      titre: 'Trouve un écran allumé',
       analyser: function (pixels, w, h) {
         return analyserEcranAllume(pixels, w, h);
       }
@@ -189,7 +189,7 @@
     {
       id: 'motifs_rayures',
       famille: 'forme',
-      titre: 'Motif à RAYURES',
+      titre: 'Cherche un motif à rayures',
       analyser: function (pixels, w, h) {
         return analyserMotifRayures(pixels, w, h);
       }
@@ -197,7 +197,7 @@
     {
       id: 'touches_clavier',
       famille: 'forme',
-      titre: 'Grille de TOUCHES alignées',
+      titre: 'Trouve un clavier ou des touches alignées',
       analyser: function (pixels, w, h) {
         return analyserTouchesClavier(pixels, w, h);
       }
@@ -205,7 +205,7 @@
     {
       id: 'double_cercle_optique',
       famille: 'forme',
-      titre: 'DOUBLE CERCLE symétrique',
+      titre: 'Cherche deux cercles côte à côte',
       analyser: function (pixels, w, h) {
         return analyserDoubleCercle(pixels, w, h);
       }
@@ -213,17 +213,17 @@
     {
       id: 'forme_cube',
       famille: 'forme',
-      titre: 'Forme CUBIQUE',
+      titre: 'Cherche une boîte ou un objet cubique',
       analyser: function (pixels, w, h) {
         return analyserFormeCube(pixels, w, h);
       }
     },
 
-    /* --- 3. LECTURE PAR OCR LOCAL (TEXTES & MENTIONS SUR ARTICLES) --- */
+    /* --- 3. LECTURE OPTIQUE (TEXTES, PRIX & MENTIONS SUR ARTICLES) --- */
     {
       id: 'ocr_mer',
       famille: 'ocr',
-      titre: 'Mot évoquant la MER',
+      titre: 'Trouve un mot lié à la mer ou à l’océan',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_MARITIMES, 'mot lié à la mer');
       }
@@ -231,7 +231,7 @@
     {
       id: 'ocr_prix',
       famille: 'ocr',
-      titre: 'Prix se terminant par ,99 €',
+      titre: 'Cherche un prix se terminant par ,99 €',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_PRIX, 'prix se terminant par ,99 €');
       }
@@ -239,7 +239,7 @@
     {
       id: 'ocr_fnac',
       famille: 'ocr',
-      titre: 'Mention ou logo FNAC',
+      titre: 'Trouve le logo ou la mention FNAC',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_FNAC, 'mention FNAC');
       }
@@ -247,7 +247,7 @@
     {
       id: 'ocr_format',
       famille: 'ocr',
-      titre: 'Mention de FORMAT média',
+      titre: 'Trouve une mention de format média (CD, DVD, vinyle...)',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_FORMATS, 'mention de format');
       }
@@ -255,7 +255,7 @@
     {
       id: 'ocr_espace',
       famille: 'ocr',
-      titre: 'Mot évoquant l’ESPACE',
+      titre: 'Trouve un mot lié à l’espace ou aux étoiles',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_ESPACE, 'mot lié à l’espace');
       }
@@ -263,7 +263,7 @@
     {
       id: 'ocr_tome',
       famille: 'ocr',
-      titre: 'Mention de NUMÉRO ou tome',
+      titre: 'Cherche une mention de tome, volume ou saison',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_TOME, 'mention de tome ou volume');
       }
@@ -271,7 +271,7 @@
     {
       id: 'ocr_audio',
       famille: 'ocr',
-      titre: 'Mention AUDIO ou sonore',
+      titre: 'Trouve une mention audio, son ou casque',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_AUDIO, 'mention audio');
       }
@@ -279,7 +279,7 @@
     {
       id: 'ocr_tech',
       famille: 'ocr',
-      titre: 'Mention TECHNOLOGIE ou sans-fil',
+      titre: 'Trouve une mention sans-fil, Wi-Fi ou Bluetooth',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_TECH, 'mention technologique');
       }
@@ -287,7 +287,7 @@
     {
       id: 'ocr_age_pegi',
       famille: 'ocr',
-      titre: 'Indication d’ÂGE ou classification',
+      titre: 'Cherche un logo d’âge ou de classification PEGI',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_AGE_PEGI, 'indication d’âge');
       }
@@ -295,7 +295,7 @@
     {
       id: 'ocr_destination',
       famille: 'ocr',
-      titre: 'Nom de DESTINATION ou lieu',
+      titre: 'Trouve un nom de ville, pays ou voyage',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_DESTINATIONS, 'nom de lieu');
       }
@@ -303,7 +303,7 @@
     {
       id: 'ocr_mot',
       famille: 'ocr',
-      titre: 'Mot MYSTÈRE du Nautilus',
+      titre: 'Trouve le mot secret : NAUTILUS, NEMO ou JULES VERNE',
       analyser: function (pixels, w, h, canvas) {
         return analyserOcrLocal(pixels, w, h, canvas, MOTS_MYSTERE, 'mot mystère', true);
       }
@@ -367,13 +367,13 @@
       return {
         succes: true,
         score: pct,
-        message: '🟢 Spectre ' + nomCouleur.toUpperCase() + ' validé (' + pct + '% dans le viseur) ! Cible confirmée.'
+        message: '🟢 Couleur ' + nomCouleur.toUpperCase() + ' validée (' + pct + '% dans le viseur) ! Cible confirmée.'
       };
     } else {
       return {
         succes: false,
         score: pct,
-        message: '⚠️ Spectre ' + nomCouleur + ' insuffisant (' + pct + '% repéré, minimum requis ' + seuil + '%). Cadrez l’objet en plein centre.'
+        message: '⚠️ Couleur ' + nomCouleur + ' insuffisante (' + pct + '% repéré, minimum requis ' + seuil + '%). Cadrez l’objet en plein centre.'
       };
     }
   }
@@ -668,7 +668,7 @@
       return {
         succes: true,
         score: score,
-        message: '🟢 Spectre doré / reflets or validés (Couverture dorée : ' + score + '%) ! Reflets dorés confirmés.'
+        message: '🟢 Reflets dorés / or validés (Couverture dorée : ' + score + '%) ! Cible confirmée.'
       };
     }
     return {
@@ -825,7 +825,7 @@
       return {
         succes: true,
         score: score,
-        message: '🟢 Palette multicolore / spectre arc-en-ciel validé (' + teintesActives + ' teintes vives détectées, ' + score + '%) ! Objet ou visuel arc-en-ciel confirmé.'
+        message: '🟢 Palette multicolore / arc-en-ciel validée (' + teintesActives + ' teintes vives détectées, ' + score + '%) ! Cible confirmée.'
       };
     }
     return {
@@ -940,13 +940,13 @@
         return {
           succes: true,
           score: densiteTypographique,
-          message: '🟢 Mot mystère identifié par OCR (Netteté ' + densiteTypographique + '%) ! Mot de passe secret validé.'
+          message: '🟢 Mot secret identifié (Netteté ' + densiteTypographique + '%) ! Mot de passe validé.'
         };
       }
       return {
         succes: false,
         score: densiteTypographique,
-        message: '⚠️ Typographie insuffisante pour le mot mystère (Netteté ' + densiteTypographique + '% / 22% requis). Cadrez le mot en gros plan net.'
+        message: '⚠️ Typographie insuffisante pour le mot secret (Netteté ' + densiteTypographique + '% / 22% requis). Cadrez le mot en gros plan net.'
       };
     }
 
@@ -956,7 +956,7 @@
         return {
           succes: true,
           score: densiteTypographique,
-          message: '🟢 Destination identifiée par OCR (Netteté ' + densiteTypographique + '%) ! Destination validée.'
+          message: '🟢 Destination identifiée (Netteté ' + densiteTypographique + '%) ! Cible validée.'
         };
       }
     }
@@ -967,7 +967,7 @@
         return {
           succes: true,
           score: densiteTypographique,
-          message: '🟢 Mention de format validée par OCR (Netteté ' + densiteTypographique + '%) ! Format média confirmé.'
+          message: '🟢 Mention de format validée (Netteté ' + densiteTypographique + '%) ! Format média confirmé.'
         };
       }
     }
@@ -1000,7 +1000,7 @@
       return {
         succes: true,
         score: densiteTypographique,
-        message: '🟢 Texte net identifié par OCR pour : ' + labelCible + ' (Netteté ' + densiteTypographique + '%) ! Article validé.'
+        message: '🟢 Texte net identifié pour : ' + labelCible + ' (Netteté ' + densiteTypographique + '%) ! Cible validée.'
       };
     }
 
@@ -1017,34 +1017,34 @@
     jaune_article: 'Jaune',
     rouge_article: 'Rouge',
     bleu_article: 'Bleu océan',
-    vert_article: 'Vert',
-    orange_article: 'Orange',
-    noir_profond: 'Noir',
-    blanc_argent: 'Blanc / argent',
+    vert_article: 'Vert émeraude',
+    orange_article: 'Orange éclatant',
+    noir_profond: 'Noir profond',
+    blanc_argent: 'Blanc / argenté',
     violet_article: 'Violet / mauve',
     rose_article: 'Rose vif',
     dore_or_article: 'Doré / or',
-    arc_en_ciel: 'Multicolore 🌈',
-    objet_rond: 'Forme ronde',
-    forme_rectangulaire_livre: 'Rectangle',
-    forme_carree_vinyle: 'Carré',
-    objet_cylindrique: 'Cylindre',
+    arc_en_ciel: 'Multicolore / arc-en-ciel',
+    objet_rond: 'Objet rond',
+    forme_rectangulaire_livre: 'Format rectangle',
+    forme_carree_vinyle: 'Format carré',
+    objet_cylindrique: 'Objet cylindrique',
     ecran_allume: 'Écran allumé',
     motifs_rayures: 'Rayures',
-    touches_clavier: 'Touches',
-    double_cercle_optique: 'Double cercle',
-    forme_cube: 'Forme cube',
-    ocr_mer: 'OCR Mer',
-    ocr_prix: 'OCR Prix (,99 €)',
-    ocr_fnac: 'OCR Fnac',
-    ocr_format: 'OCR Vinyle/CD/DVD',
-    ocr_espace: 'OCR Espace / SF',
-    ocr_tome: 'OCR Tome / Vol',
-    ocr_audio: 'OCR Sound / Audio',
-    ocr_tech: 'OCR WiFi / Tech',
-    ocr_age_pegi: 'OCR PEGI / Âge',
-    ocr_destination: 'OCR Destination',
-    ocr_mot: 'OCR Mot Mystère'
+    touches_clavier: 'Clavier / touches',
+    double_cercle_optique: 'Deux cercles',
+    forme_cube: 'Objet cubique',
+    ocr_mer: 'Mot mer / océan',
+    ocr_prix: 'Prix en ,99 €',
+    ocr_fnac: 'Mention / logo Fnac',
+    ocr_format: 'Format média',
+    ocr_espace: 'Mot espace',
+    ocr_tome: 'Tome / volume',
+    ocr_audio: 'Mention audio',
+    ocr_tech: 'Mention tech / sans-fil',
+    ocr_age_pegi: 'Âge / PEGI',
+    ocr_destination: 'Destination / lieu',
+    ocr_mot: 'Mot secret'
   };
 
   function formaterCibles(liste) {
@@ -1248,7 +1248,7 @@
       + '      <div class="reticle-corner reticle-br"></div>'
       + '      <div class="reticle-center" id="reticleCenter"></div>'
       + '      <div class="reticle-scanline"></div>'
-      + '      <div class="reticle-tag">COLLIMATEUR OPTIQUE DU NAUTILUS — OCR & SPECTRE</div>'
+      + '      <div class="reticle-tag">COLLIMATEUR OPTIQUE DU NAUTILUS</div>'
       + '    </div>'
       + '    <div class="photo-flash-fx" id="photoFlashFx"></div>'
       + '  </div>'
@@ -1401,7 +1401,7 @@
       flashFxEl.classList.add('is-active');
       setTimeout(function () { flashFxEl.classList.remove('is-active'); }, 140);
 
-      feedbackEl.innerHTML = '⚡ <b>Analyse spectrale & lecture OCR en cours…</b>';
+      feedbackEl.innerHTML = '⚡ <b>Analyse optique en cours…</b>';
       feedbackEl.className = 'photo-feedback is-analyzing';
 
       var w = videoEl.videoWidth;
