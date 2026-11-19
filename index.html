@@ -3212,7 +3212,7 @@
       </button>
     </h2>
     <div class="body">
-      <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l'équipe d'organisation. Accès par code uniquement.</p>
+      <p class="small" style="color:#ff8579;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l'équipe d'organisation. Accès par code uniquement.</p>
       <div class="hr"></div>
       <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>
@@ -3220,11 +3220,11 @@
       </div>
       <div id="adminWorkspace" style="display:none">
         <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">
-          <span class="small" style="color:#075c39;font-weight:900">✅ Session admin active</span>
+          <span class="small" style="color:#5be09b;font-weight:900">✅ Session admin active</span>
         </div>
 
-        <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:linear-gradient(135deg,rgba(11,52,78,.08),rgba(245,176,39,.08));">
-          <div style="font-weight:900;color:#163f58;margin-bottom:4px">🧪 ACCÈS CONCEPTEUR</div>
+        <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:rgba(8,30,48,.85);color:#eaf8ff">
+          <div style="font-weight:900;color:#8ee7ff;margin-bottom:4px">🧪 ACCÈS CONCEPTEUR</div>
           <div class="small" style="margin-bottom:9px">Ouvre chaque page du jeu dans un onglet isolé : l’aperçu organisateur n’écrit <b>aucun blocage ni aucune progression réelle</b>. Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>
           <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>
           <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>
@@ -3303,10 +3303,10 @@
 
         <!-- TAB: DANGER -->
         <div class="admin-pane" data-pane="danger" style="display:none">
-          <p style="margin:0 0 12px;font-weight:900;color:#9b1111">⚠️ Zone sensible — actions irréversibles</p>
+          <p style="margin:0 0 12px;font-weight:900;color:#ff8579">⚠️ Zone sensible — actions irréversibles</p>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>
-            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>
+            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:rgba(255,75,62,.2);color:#ff8579;border:1px solid rgba(255,75,62,.5)">🔄 Reset progression (toutes équipes)</button>
             <button class="secondary" id="cleanupTestSessionsBtn" type="button" style="margin:0">🧪 Purger les traces du compte test</button>
             <button class="secondary" id="cleanupFieldsBtn" type="button" style="margin:0">🧹 Nettoyer les champs obsolètes</button>
           </div>
@@ -6196,11 +6196,11 @@ function qrDataUri(text, opts){
        passent à la ligne en dessous sur écran étroit — jamais de chevauchement
        ni de déplacement vertical entre le libellé et ses boutons/liens. */
     const ligne = (titre, note, actionHtml, dispo) =>
-      `<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:${dispo ? 'rgba(91,224,155,.12)' : 'rgba(0,0,0,.04)'};border:1px solid ${dispo ? 'rgba(91,224,155,.45)' : '#dfe8ee'};\">
+      `<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:${dispo ? 'rgba(91,224,155,.18)' : 'rgba(142,231,255,.08)'};border:1px solid ${dispo ? 'rgba(91,224,155,.5)' : 'rgba(142,231,255,.25)'};color:#f2f8fc;\">
         <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">${titre}${note ? ' <span class=\"small\">' + note + '</span>' : ''}</span><span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\">${actionHtml}</span>
       </div>`;
     const sectionHtml = (titre) =>
-      `<div class=\"small\" style=\"font-weight:900;color:#163f58;margin:10px 0 0\">${titre}</div>`;
+      `<div class=\"small\" style=\"font-weight:900;color:#8ee7ff;margin:10px 0 0\">${titre}</div>`;
     const k = apercuAdminCle();
     const lignes = [
       sectionHtml('🧭 TESTER TOUTES LES PAGES'),
@@ -9548,7 +9548,7 @@ function qrDataUri(text, opts){
       }
       const teamOptions = effectiveTeams.map(t => `<option value="${esc(t.code)}">${esc(t.name)}</option>`).join('');
       const serviceOptions = SERVICES.map(s => `<option value="${s}">${s}</option>`).join('');
-      box.innerHTML = `<div class="team" style="background:#fff">
+      box.innerHTML = `<div class="team">
         <h3>${allMembers.length} matelot(s) inscrit(s)</h3>
         <div class="hr"></div>
         ${allMembers.map((m, idx) => `
@@ -9869,8 +9869,8 @@ function qrDataUri(text, opts){
            equipage : il contredisait la regle et n'avait plus lieu
            d'etre. Cet onglet ne gere donc que les blocages PERSONNELS,
            avec le compteur d'echecs pour information. */
-        return `<div class="team" style="background:#fff" data-team="${esc(t.teamCode)}">
-          <h3>${esc(t.teamName)} <span class="small" style="color:var(--muted)">(${esc(t.teamCode)})</span></h3>
+        return `<div class="team" data-team="${esc(t.teamCode)}">
+          <h3>${esc(t.teamName)} <span class="small" style="color:#9bc4d4">(${esc(t.teamCode)})</span></h3>
           <div class="small" style="margin-bottom:10px">Échecs cumulés de l'équipage : <b>${Number(t.failCount||0)}</b></div>
           ${renderMatelotLocksHtml(t)}
         </div>`;
@@ -9896,7 +9896,7 @@ function qrDataUri(text, opts){
     const actifs = Object.entries(locks)
       .filter(([,l]) => l && l.lockedUntil && new Date(l.lockedUntil).getTime() > now);
     if(!actifs.length){
-      return '<div class="small" style="margin-bottom:10px;color:#075c39">Aucun matelot bloqué individuellement.</div>';
+      return '<div class="small" style="margin-bottom:10px;color:#5be09b">Aucun matelot bloqué individuellement.</div>';
     }
     const lignes = actifs.map(([key, l]) =>
       `<li style="margin:4px 0">🔒 <b>${esc(l.name || key)}</b> — jusqu'au ${esc(formatDate(l.lockedUntil))}
@@ -10139,8 +10139,8 @@ function qrDataUri(text, opts){
       }
       box.innerHTML = effectiveTeams.map(t => {
         const isCustom = !TEAM_DEFS.some(d => d.code === t.code);
-        return `<div class="team" style="background:#fff" data-team="${esc(t.code)}">
-          <h3>${esc(t.name)}${isCustom ? ' <span class="small" style="color:#075c39">[custom]</span>' : ''}</h3>
+        return `<div class="team" data-team="${esc(t.code)}">
+          <h3>${esc(t.name)}${isCustom ? ' <span class="small" style="color:#5be09b">[custom]</span>' : ''}</h3>
           <div class="hr"></div>
           <div class="team-edit-row">
             <input type="text" class="tt-name" value="${esc(t.name)}" maxlength="32" placeholder="Nom de l'équipe">
@@ -10150,8 +10150,8 @@ function qrDataUri(text, opts){
             </div>
           </div>
           ${Number(t.memberCount) > 0
-            ? `<div class="small" style="color:#9b1111;margin-top:6px;font-weight:800">⚠️ ${t.memberCount} matelot(s) à bord — les supprimer effacera aussi leurs Codes Matelot</div>`
-            : '<div class="small" style="color:var(--muted);margin-top:6px">Aucun matelot à bord</div>'}
+            ? `<div class="small" style="color:#ff8579;margin-top:6px;font-weight:800">⚠️ ${t.memberCount} matelot(s) à bord — les supprimer effacera aussi leurs Codes Matelot</div>`
+            : '<div class="small" style="color:#9bc4d4;margin-top:6px">Aucun matelot à bord</div>'}
         </div>`;
       }).join('');
       box.querySelectorAll('.team').forEach(teamEl => {

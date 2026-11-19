@@ -31,11 +31,45 @@ main{ max-width:1720px; }
    l'encart : calque absolu occupant toute la zone de scan. */
 .gate-cam-placeholder{
   position:absolute; inset:0; margin:auto;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
   color:#9bc4d4; font-size:13.5px; font-weight:700; text-align:center;
-  padding:26px 18px; line-height:1.5;
+  padding:20px 18px; line-height:1.5;
+  cursor:pointer;
+  transition:background .18s ease;
 }
-.gate-cam-icon{ font-size:40px; }
+.gate-cam-placeholder:hover{
+  background:rgba(142,231,255,.05);
+}
+.gate-cam-icon{
+  font-size:42px;
+  filter:drop-shadow(0 0 10px rgba(245,176,39,.5));
+  animation:gateCamPulse 2s infinite ease-in-out;
+}
+@keyframes gateCamPulse{
+  0%, 100%{ transform:scale(1); opacity:.9; }
+  50%{ transform:scale(1.08); opacity:1; filter:drop-shadow(0 0 16px rgba(245,176,39,.8)); }
+}
+.gate-placeholder-btn{
+  background:linear-gradient(135deg,#f5b027,#d48b13);
+  color:#04101d;
+  border:2px solid #ffe2a0;
+  border-radius:12px;
+  padding:10px 20px;
+  font-weight:1000;
+  font-size:13.5px;
+  letter-spacing:.04em;
+  cursor:pointer;
+  box-shadow:0 4px 16px rgba(245,176,39,.4);
+  transition:all .18s ease;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.gate-placeholder-btn:hover{
+  filter:brightness(1.12);
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(245,176,39,.6);
+}
 .gate-scan-status{
   position:absolute; left:0; right:0; bottom:0;
   padding:8px 12px; font-size:12px; font-weight:900;
@@ -54,6 +88,17 @@ main{ max-width:1720px; }
 }
 .gate-btn--cam{ background:rgba(142,231,255,.12); border-color:rgba(142,231,255,.55); color:#8ee7ff; }
 .gate-btn--cam:hover{ background:rgba(142,231,255,.24); color:#fff; }
+.gate-btn--cam.is-cam-off{
+  background:rgba(245,176,39,.2);
+  border-color:#f5b027;
+  color:#ffd36c;
+  box-shadow:0 0 12px rgba(245,176,39,.25);
+}
+.gate-btn--cam.is-cam-active{
+  background:rgba(255,75,62,.18);
+  border-color:rgba(255,75,62,.55);
+  color:#ff8579;
+}
 .gate-btn--import{ background:var(--fnac); color:#111; border-color:transparent; }
 .gate-btn--import:hover{ filter:brightness(1.08); }
 .gate-msg{
@@ -65,6 +110,33 @@ main{ max-width:1720px; }
 .gate-msg.is-warning{ color:#ffe2a0; background:rgba(245,176,39,.12); border:1px solid rgba(245,176,39,.45); padding:10px 12px; }
 .gate-msg.is-danger{ color:#ffd0cd; background:rgba(255,75,62,.14); border:1px solid rgba(255,75,62,.5); padding:10px 12px; }
 .gate-msg.is-success{ color:#dfffe8; background:rgba(91,255,156,.10); border:1px solid rgba(91,255,156,.5); padding:10px 12px; }
+.gate-msg-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.gate-btn-retry-cam{
+  background:#f5b027;
+  color:#04101d;
+  border:0;
+  border-radius:8px;
+  padding:6px 14px;
+  font-weight:1000;
+  font-size:12.5px;
+  letter-spacing:.03em;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+  transition:.15s;
+}
+.gate-btn-retry-cam:hover{
+  filter:brightness(1.15);
+  transform:scale(1.03);
+}
 
 
 /* L'encart de saisie manuscrite du numéro secret (.gate-manual) a été

@@ -118,11 +118,22 @@
       try { localStorage.setItem(UNLOCK_KEY, 'ok'); } catch (e) {}
     }
 
-    function message(texte, kind) {
+    function message(texte, kind, avecBoutonCam) {
       var el = $('gateMsg');
       if (!el) return;
-      el.textContent = texte || '';
-      el.className = 'gate-msg' + (texte ? ' is-' + (kind || 'info') : '');
+      if (!texte) {
+        el.innerHTML = '';
+        el.className = 'gate-msg';
+        return;
+      }
+      if (avecBoutonCam) {
+        el.innerHTML = '<div class="gate-msg-row"><span>' + texte + '</span><button type="button" class="gate-btn-retry-cam" id="gateRetryCamBtn">📸 Réactiver la caméra</button></div>';
+        var retryBtn = $('gateRetryCamBtn');
+        if (retryBtn) retryBtn.addEventListener('click', startCamera);
+      } else {
+        el.textContent = texte;
+      }
+      el.className = 'gate-msg' + ' is-' + (kind || 'info');
     }
 
     function showUnlocked(propager) {
@@ -225,7 +236,13 @@
 
     function majBoutonCamera(actif) {
       var btn = $('gateCamBtn');
-      if (btn) btn.textContent = actif ? '⏹ ARRÊTER LA CAMÉRA' : '📸 ACTIVER LA CAMÉRA';
+      if (btn) {
+        btn.textContent = actif ? '⏹ ARRÊTER LA CAMÉRA' : '📸 ACTIVER LA CAMÉRA';
+        btn.classList.toggle('is-cam-active', !!actif);
+        btn.classList.toggle('is-cam-off', !actif);
+      }
+      var phBtn = $('gatePlaceholderBtn');
+      if (phBtn) phBtn.textContent = '📸 ACTIVER LA CAMÉRA';
     }
 
     function startCamera() {
@@ -246,8 +263,10 @@
           var video = $('gateCam');
           video.srcObject = s;
           video.hidden = false;
-          $('gateCamPlaceholder').hidden = true;
-          $('gateScanStatus').textContent = 'Vise le QR Code…';
+          var ph = $('gateCamPlaceholder');
+          if (ph) ph.hidden = true;
+          var st = $('gateScanStatus');
+          if (st) st.textContent = 'Vise le QR Code…';
           video.play().catch(function () {});
           scanning = true;
           majBoutonCamera(true);
@@ -255,7 +274,7 @@
           tick();
         })
         .catch(function () {
-          message('📷 Caméra refusée. Autorise l’accès, ou importe la PHOTO du QR Code.', 'warning');
+          message('📷 Caméra refusée ou désactivée. Autorise l’accès, ou réessaie :', 'warning', true);
           journal('📷 Accès caméra refusé.', 'warning');
         });
     }
@@ -357,6 +376,29 @@
       if (scanning) { stopCamera(); journal('⏹ Caméra arrêtée.', 'info'); }
       else startCamera();
     });
+    var ph = $('gateCamPlaceholder');
+    if (ph) {
+      ph.addEventListener('click', function () {
+        if (!scanning) startCamera();
+      });
+      ph.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (!scanning) startCamera();
+        }
+      });
+    }
+    var phBtn = $('gatePlaceholderBtn');
+    if (phBtn) {
+      phBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!scanning) startCamera();
+      });
+    }
+    majBoutonCamera(false);
+    window.NautilusSas = window.NautilusSas || {};
+    window.NautilusSas.startCamera = startCamera;
+    window.NautilusSas.stopCamera = stopCamera;
     var importBtn = $('gateImportBtn');
     if (importBtn) importBtn.addEventListener('click', function () { $('gateFile').click(); });
     var fileInput = $('gateFile');

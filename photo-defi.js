@@ -1241,6 +1241,11 @@
       + '  <div class="photo-viewfinder" id="photoViewfinder">'
       + '    <video id="photoVideo" class="photo-video" playsinline autoplay muted></video>'
       + '    <canvas id="photoCanvas" class="photo-canvas" hidden></canvas>'
+      + '    <div class="photo-cam-off-overlay" id="photoCamOffOverlay" hidden>'
+      + '      <span class="photo-cam-off-icon">📷</span>'
+      + '      <span class="photo-cam-off-text">Objectif en veille ou désactivé</span>'
+      + '      <button type="button" class="photo-btn-reactivate-cam" id="btnReactivateCam">📸 ACTIVER LA CAMÉRA</button>'
+      + '    </div>'
       + '    <div class="photo-reticle" id="photoReticle">'
       + '      <div class="reticle-corner reticle-tl"></div>'
       + '      <div class="reticle-corner reticle-tr"></div>'
@@ -1255,6 +1260,7 @@
 
       + '  <div class="photo-controls">'
       + '    <div class="photo-tools-bar">'
+      + '      <button type="button" class="photo-tool-btn is-cam-btn" id="btnCamToggle" title="Activer / réactiver la caméra">📸 Caméra</button>'
       + '      <button type="button" class="photo-tool-btn" id="btnZoom" title="Changer le grossissement">🔍 1×</button>'
       + '      <button type="button" class="photo-tool-btn" id="btnMacro" title="Activer le mode macro">🔬 Macro : OFF</button>'
       + '      <button type="button" class="photo-tool-btn" id="btnTorche" title="Activer la torche">⚡ Flash : OFF</button>'
@@ -1279,10 +1285,13 @@
     var defiTitleEl = host.querySelector('#defiTitle');
     var videoEl = host.querySelector('#photoVideo');
     var canvasEl = host.querySelector('#photoCanvas');
+    var camOverlayEl = host.querySelector('#photoCamOffOverlay');
     var reticleCenterEl = host.querySelector('#reticleCenter');
     var flashFxEl = host.querySelector('#photoFlashFx');
     var feedbackEl = host.querySelector('#photoFeedback');
     var btnTrigger = host.querySelector('#btnTrigger');
+    var btnCamToggle = host.querySelector('#btnCamToggle');
+    var btnReactivateCam = host.querySelector('#btnReactivateCam');
     var btnZoom = host.querySelector('#btnZoom');
     var btnMacro = host.querySelector('#btnMacro');
     var btnTorche = host.querySelector('#btnTorche');
@@ -1308,6 +1317,8 @@
     /* ---------------- DÉMARRAGE CAMÉRA WEBRTC ---------------- */
     async function demarrerCamera() {
       try {
+        feedbackEl.innerHTML = '⚡ <b>Initialisation de l’objectif…</b>';
+        feedbackEl.className = 'photo-feedback is-analyzing';
         var constraints = {
           video: {
             facingMode: { ideal: 'environment' },
@@ -1320,9 +1331,23 @@
         videoEl.srcObject = videoStream;
         await videoEl.play();
         videoTrack = videoStream.getVideoTracks()[0];
+        if (camOverlayEl) camOverlayEl.hidden = true;
+        if (btnCamToggle) {
+          btnCamToggle.textContent = '📸 Caméra : ON';
+          btnCamToggle.classList.add('is-active');
+        }
+        feedbackEl.innerHTML = 'Cadrez l’article au centre du collimateur et appuyez sur Analyser.';
+        feedbackEl.className = 'photo-feedback';
       } catch (err) {
-        feedbackEl.innerHTML = '⚠️ <b>Accès caméra requis</b> : autorisez la caméra pour utiliser le viseur optique du Nautilus.';
+        if (camOverlayEl) camOverlayEl.hidden = false;
+        if (btnCamToggle) {
+          btnCamToggle.textContent = '📸 ACTIVER LA CAMÉRA';
+          btnCamToggle.classList.remove('is-active');
+        }
+        feedbackEl.innerHTML = '⚠️ <b>Accès caméra requis</b> : autorisez la caméra pour utiliser le viseur optique du Nautilus. <button type="button" class="photo-btn-inline-reactivate" id="btnInlineCam">📸 Activer la caméra</button>';
         feedbackEl.className = 'photo-feedback is-danger';
+        var inlineBtn = host.querySelector('#btnInlineCam');
+        if (inlineBtn) inlineBtn.addEventListener('click', demarrerCamera);
       }
     }
 
@@ -1337,6 +1362,11 @@
       }
       videoTrack = null;
       videoStream = null;
+      if (camOverlayEl) camOverlayEl.hidden = false;
+      if (btnCamToggle) {
+        btnCamToggle.textContent = '📸 ACTIVER LA CAMÉRA';
+        btnCamToggle.classList.remove('is-active');
+      }
     }
 
     /* ---------------- CONTRÔLES OBJECTIF (ZOOM, MACRO, FLASH) ---------------- */
@@ -1388,10 +1418,39 @@
       }
     });
 
+    if (btnCamToggle) {
+      btnCamToggle.addEventListener('click', function () {
+        if (videoStream) {
+          arreterCamera();
+          feedbackEl.innerHTML = '⏹ Objectif désactivé. <button type="button" class="photo-btn-inline-reactivate" id="btnInlineCam">📸 Réactiver</button>';
+          feedbackEl.className = 'photo-feedback is-warning';
+          var inlineBtn = host.querySelector('#btnInlineCam');
+          if (inlineBtn) inlineBtn.addEventListener('click', demarrerCamera);
+        } else {
+          demarrerCamera();
+        }
+      });
+    }
+
+    if (btnReactivateCam) {
+      btnReactivateCam.addEventListener('click', function (e) {
+        e.stopPropagation();
+        demarrerCamera();
+      });
+    }
+
+    if (camOverlayEl) {
+      camOverlayEl.addEventListener('click', function () {
+        demarrerCamera();
+      });
+    }
+
     /* ---------------- DÉCLENCHEMENT & ANALYSE DE L'ÉCHANTILLON ---------------- */
     btnTrigger.addEventListener('click', async function () {
-      if (!videoEl || videoEl.videoWidth === 0) {
-        feedbackEl.textContent = '⏳ En attente de l’image de la caméra…';
+      if (!videoEl || videoEl.videoWidth === 0 || !videoStream) {
+        feedbackEl.innerHTML = '⏳ <b>Objectif désactivé</b> : réactivation de la caméra en cours…';
+        feedbackEl.className = 'photo-feedback is-analyzing';
+        await demarrerCamera();
         return;
       }
 

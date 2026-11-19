@@ -219,6 +219,94 @@ main{ max-width:1720px; }
 }
 .photo-flash-fx.is-active{ opacity:0.85; }
 
+/* Calque d'activation / réactivation de la caméra */
+.photo-cam-off-overlay{
+  position:absolute;
+  inset:0;
+  z-index:20;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:rgba(2,10,20,.88);
+  backdrop-filter:blur(6px);
+  gap:12px;
+  padding:20px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.photo-cam-off-overlay[hidden]{ display:none !important; }
+.photo-cam-off-icon{
+  font-size:44px;
+  filter:drop-shadow(0 0 12px rgba(245,176,39,.6));
+  animation:camIconPulse 1.8s infinite ease-in-out;
+}
+@keyframes camIconPulse{
+  0%, 100%{ transform:scale(1); opacity:.9; }
+  50%{ transform:scale(1.1); opacity:1; filter:drop-shadow(0 0 18px rgba(245,176,39,.9)); }
+}
+.photo-cam-off-text{
+  font-size:13.5px;
+  font-weight:800;
+  color:#eaf8ff;
+  letter-spacing:.03em;
+  text-shadow:0 1px 4px rgba(0,0,0,.8);
+}
+.photo-btn-reactivate-cam{
+  background:linear-gradient(135deg,#f5b027,#d48b13);
+  color:#04101d;
+  border:2px solid #ffe2a0;
+  border-radius:12px;
+  padding:12px 22px;
+  font-weight:1000;
+  font-size:14px;
+  letter-spacing:.04em;
+  cursor:pointer;
+  box-shadow:0 4px 18px rgba(245,176,39,.5);
+  transition:all .18s ease;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.photo-btn-reactivate-cam:hover{
+  filter:brightness(1.12);
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(245,176,39,.7);
+}
+.photo-btn-inline-reactivate{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  background:#f5b027;
+  color:#04101d;
+  border:0;
+  border-radius:6px;
+  padding:4px 9px;
+  margin-left:6px;
+  font-weight:900;
+  font-size:12px;
+  cursor:pointer;
+  vertical-align:middle;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+  transition:.15s;
+}
+.photo-btn-inline-reactivate:hover{
+  filter:brightness(1.15);
+  transform:scale(1.04);
+}
+.photo-tool-btn.is-cam-btn{
+  background:rgba(245,176,39,.18);
+  border-color:#f5b027;
+  color:#ffd36c;
+}
+.photo-tool-btn.is-cam-btn.is-active{
+  background:rgba(46,213,115,.2);
+  border-color:#2ed573;
+  color:#a8ffcc;
+}
+
 /* ---------- Barre de Contrôles : Zoom, Macro, Flash & Déclencheur ---------- */
 .photo-controls{
   display:flex;

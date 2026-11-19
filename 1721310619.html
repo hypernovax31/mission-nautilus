@@ -62,9 +62,10 @@
         <div class="gate-scanbox sas-scanbox" id="gateScanbox">
           <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
           <canvas id="gateCanvas" hidden></canvas>
-          <div class="gate-cam-placeholder" id="gateCamPlaceholder" aria-hidden="true">
+          <div class="gate-cam-placeholder" id="gateCamPlaceholder" role="button" tabindex="0" aria-label="Activer la caméra pour scanner le QR Code">
             <span class="gate-cam-icon">📷</span>
-            <span>Caméra en veille — vise le QR Code pour ouvrir le sas.</span>
+            <span>Objectif en veille — vise le QR Code pour ouvrir le sas.</span>
+            <button type="button" class="gate-placeholder-btn" id="gatePlaceholderBtn">📸 ACTIVER LA CAMÉRA</button>
           </div>
           <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
         </div>

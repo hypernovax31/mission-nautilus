@@ -7,25 +7,29 @@
       --fs-tiny:max(0.75rem, calc(var(--fs-base) * .70));
     }
     /* ===== Classes generiques du panneau (absentes des pages hors index) ===== */
-    #adminPanel{font-family:Arial,Helvetica,sans-serif;color:#13202b}
+    #adminPanel{font-family:Arial,Helvetica,sans-serif;color:#eaf8ff}
     #adminPanel *{box-sizing:border-box}
     #adminPanel button{cursor:pointer}
-    #adminPanel .small{font-size:12px;color:#6e7a84;line-height:1.38}
-    #adminPanel .hr{height:1px;background:#e8eef2;margin:14px 0}
+    #adminPanel .small{font-size:12px;color:#b0d4e3;line-height:1.38}
+    #adminPanel .hr{height:1px;background:rgba(142,231,255,0.2);margin:14px 0}
     #adminPanel .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    #adminPanel .notice{background:#fff4d8;border:1px solid #e8c05f;border-radius:12px;padding:10px 12px;line-height:1.4;font-size:12px}
-    #adminPanel .notice.success{background:#effff7;border-color:#aee5ca;color:#075c39}
-    #adminPanel .notice.warning{background:#fff0ee;border-color:#efb2ac;color:#5d130e}
-    #adminPanel .team{border:1px solid #dfe8ee;border-radius:12px;padding:12px;background:#fff;margin-bottom:10px}
-    #adminPanel .team h3{margin:0 0 8px;font-size:14px;color:#13202b}
+    #adminPanel .notice{background:rgba(245,176,39,0.15);border:1px solid rgba(245,176,39,0.45);border-radius:12px;padding:10px 12px;line-height:1.4;font-size:12px;color:#ffd36c}
+    #adminPanel .notice.success{background:rgba(91,255,156,0.15);border-color:rgba(91,255,156,0.45);color:#7ce6ad}
+    #adminPanel .notice.warning{background:rgba(255,75,62,0.15);border-color:rgba(255,75,62,0.45);color:#ff8579}
+    #adminPanel .team{border:1px solid rgba(142,231,255,0.3) !important;border-radius:12px;padding:12px;background:rgba(7,26,43,0.95) !important;margin-bottom:10px;color:#eaf8ff !important;box-shadow:0 4px 16px rgba(0,0,0,0.4)}
+    #adminPanel .team h3{margin:0 0 8px;font-size:14px;color:#ffd36c !important;font-weight:900}
     #adminPanel .teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}
-    #adminPanel .code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111;color:#f5b027;border:2px solid #f5b027;border-radius:10px;padding:6px 10px;display:inline-block;user-select:all;font-size:15px}
-    #adminPanel .primary{background:#f5b027;color:#111;border:0}
-    #adminPanel .secondary{background:#eaf0f4;color:#111;border:0}
-    #adminPanel .danger{background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac}
-    #adminPanel input,#adminPanel select{font:inherit;color:#111;background:#fff;border:2px solid #d8e0e6;border-radius:8px;padding:8px 10px}
-    #adminPanel input:focus,#adminPanel select:focus{outline:none;border-color:#f5b027}
-    #adminPanel label{display:block;font-weight:900;margin:0 0 4px;color:#1a2834;font-size:12px}
+    #adminPanel .code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111 !important;color:#f5b027 !important;border:2px solid #f5b027 !important;border-radius:10px;padding:6px 10px;display:inline-block;user-select:all;font-size:15px}
+    #adminPanel .primary{background:#f5b027 !important;color:#04101d !important;border:0;font-weight:900}
+    #adminPanel .secondary{background:rgba(142,231,255,0.15) !important;color:#8ee7ff !important;border:1px solid rgba(142,231,255,0.4) !important}
+    #adminPanel .secondary:hover{background:rgba(142,231,255,0.25) !important;color:#fff !important}
+    #adminPanel .danger{background:rgba(255,75,62,0.2) !important;color:#ff8579 !important;border:1px solid rgba(255,75,62,0.5) !important}
+    #adminPanel .danger:hover{background:rgba(255,75,62,0.35) !important;color:#fff !important}
+    #adminPanel input,#adminPanel select,#adminPanel textarea{font:inherit;color:#ffffff !important;background:#03111f !important;border:1.5px solid rgba(142,231,255,0.35) !important;border-radius:8px;padding:8px 10px}
+    #adminPanel input:focus,#adminPanel select:focus,#adminPanel textarea:focus{outline:none;border-color:#8ee7ff !important;box-shadow:0 0 0 3px rgba(142,231,255,0.25) !important}
+    #adminPanel input::placeholder{color:#7b9eb3 !important;opacity:1}
+    #adminPanel select option{background:#071a2b !important;color:#ffffff !important}
+    #adminPanel label{display:block;font-weight:900;margin:0 0 4px;color:#8ee7ff !important;font-size:12px}
     /* Panneau admin, onglet O2 : affichage sobre.
        Ce bloc reutilisait .oxygen-meter, concu pour le joueur : polices
        enormes (jusqu'a 72px) et halos lumineux, inadaptes a un panneau
@@ -135,27 +139,27 @@
       width:100%;max-width:900px;box-sizing:border-box;
       max-height:calc(100vh - 150px);max-height:calc(100dvh - 150px);
       overflow-y:auto;padding:14px 16px;
-      background:linear-gradient(180deg,#f2f8fc,#fff);color:#13202b;
+      background:linear-gradient(180deg,#071a2b 0%,#03111f 100%) !important;color:#eaf8ff !important;
       border:1px solid rgba(245,176,39,.5);border-top:0;
-      border-radius:0 0 16px 16px;box-shadow:0 26px 80px rgba(0,0,0,.6);
+      border-radius:0 0 16px 16px;box-shadow:0 26px 80px rgba(0,0,0,.7);
     }
     @media(max-width:640px){
       #adminPanel{padding:8px}
       #adminPanel>h2, #adminPanel h2{border-radius:12px 12px 0 0;padding:11px 12px !important}
       #adminPanel>div.body, #adminPanel .body{border-radius:0 0 12px 12px;padding:10px 12px;max-height:calc(100dvh - 96px)}
     }
-    #adminPanel p.small{font-size:var(--fs-small);line-height:1.35;margin:0 0 10px}
-    #adminPanel .hr{margin:12px 0}
+    #adminPanel p.small{font-size:var(--fs-small);line-height:1.35;margin:0 0 10px;color:#b0d4e3}
+    #adminPanel .hr{margin:12px 0;background:rgba(142,231,255,0.2)}
     #adminPanel .notice{padding:10px 12px;margin:0 0 12px;line-height:1.4;font-size:12px}
-    #adminPanel label{font-size:12px;margin:0 0 4px}
+    #adminPanel label{font-size:12px;margin:0 0 4px;color:#8ee7ff}
     #adminPanel input,#adminPanel select{height:38px !important;min-height:38px;padding:8px 10px !important;border-radius:8px;font-size:13px}
     #adminPanel button{font-size:12px;padding:8px 12px !important;min-height:34px;border-radius:8px;letter-spacing:.02em}
 
     /* Tabs : icônes seules sur mobile, libellé + icône sur desktop */
-    .admin-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
-    .admin-tab{background:#eef0f4;color:#1a2834;border:1px solid #cbd7df;border-radius:8px;padding:6px 10px;font-weight:900;font-size:12px;letter-spacing:.02em;text-transform:uppercase;cursor:pointer;margin:0;min-height:30px;width:auto;transition:.15s}
-    .admin-tab:hover{filter:brightness(1.05)}
-    .admin-tab.active{background:linear-gradient(135deg,#1a2834,#2a4258);color:var(--fnac);border-color:rgba(245,176,39,.6);box-shadow:inset 0 0 0 1px rgba(245,176,39,.35)}
+    .admin-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;background:rgba(2,10,20,.7);border-bottom:1px solid rgba(142,231,255,.2);padding:4px;border-radius:10px}
+    .admin-tab{background:rgba(142,231,255,.08);color:#b0d4e3;border:1px solid rgba(142,231,255,.25);border-radius:8px;padding:6px 10px;font-weight:900;font-size:12px;letter-spacing:.02em;text-transform:uppercase;cursor:pointer;margin:0;min-height:30px;width:auto;transition:.15s}
+    .admin-tab:hover{background:rgba(142,231,255,.18);color:#fff}
+    .admin-tab.active{background:linear-gradient(135deg,#f5b027,#d48b13) !important;color:#04101d !important;border-color:#ffd36c !important;box-shadow:0 2px 8px rgba(245,176,39,.35)}
     .admin-tab .lbl-desktop{display:inline}
     .admin-tab .lbl-mobile{display:none}
     @media(max-width:560px){
@@ -165,10 +169,10 @@
     }
 
     /* Panes */
-    .admin-pane{background:rgba(255,255,255,.7);border:1px solid #dfe8ee;border-radius:10px;padding:12px}
+    .admin-pane{background:rgba(4,18,30,.8) !important;border:1px solid rgba(142,231,255,.25) !important;border-radius:10px;padding:12px;color:#eaf8ff !important}
 
     /* Rows compactes — grille flexible qui s'adapte à la largeur du panneau */
-    .member-edit-row,.team-edit-row{display:grid;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #e8eef2}
+    .member-edit-row,.team-edit-row{display:grid;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(142,231,255,.15);color:#eaf8ff}
     /* Desktop large (>=1200px) : 5 colonnes larges [Nom | Svc | Equipe | Vide | Actions] */
     @media(min-width:1200px){
       /* [Nom | Service+Equipe | Code Matelot | Actions] */
@@ -192,7 +196,7 @@
       text-transform:uppercase;letter-spacing:.04em;font-weight:900;
     }
     .member-edit-row .me-code.me-code-bad{
-      border-color:#efb2ac !important;background:#ffe7e3 !important;
+      border-color:#ff8579 !important;background:rgba(255,75,62,.2) !important;
     }
     /* Sous-grille 2 colonnes (service + team) — optimisée pour tablette/mobile */
     .me-sub{display:grid;grid-template-columns:1fr 1fr;gap:6px;min-width:0}
@@ -214,20 +218,20 @@
     }
     /* Stack horizontal pour les boutons */
     .me-actions,.tt-actions{display:flex;flex-direction:row;gap:6px;align-items:center;justify-content:flex-end}
-    .admin-pane .team{border:1px solid #dfe8ee;border-radius:12px;padding:12px;background:#fff;margin-bottom:10px}
+    .admin-pane .team{border:1px solid rgba(142,231,255,.3) !important;border-radius:12px;padding:12px;background:rgba(7,26,43,.95) !important;margin-bottom:10px;color:#eaf8ff !important;box-shadow:0 4px 16px rgba(0,0,0,.4)}
     .admin-pane .team:last-child{margin-bottom:0}
-    .admin-pane .team h3{font-size:14px;margin:0 0 8px}
-    .admin-pane .team h3 .small{font-size:var(--fs-tiny);font-weight:600}
+    .admin-pane .team h3{font-size:14px;margin:0 0 8px;color:#ffd36c !important;font-weight:900}
+    .admin-pane .team h3 .small{font-size:var(--fs-tiny);font-weight:600;color:#9bc4d4 !important}
 
     /* Tab O2 : champs alignés compact */
     #adminO2Days,#adminO2Hours{height:34px !important;min-height:34px;padding:6px 8px !important;font-size:12px !important}
     /* Grille 4 colonnes (Statut | Reprise | Échecs | Vide) sur Blocages,
        s'adapte à la largeur du panneau */
     .admin-form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.4fr);gap:8px 14px;align-items:center}
-    .admin-form-grid>label{margin:0;font-size:12px !important;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#52606a;text-align:right;padding-right:4px;white-space:nowrap}
+    .admin-form-grid>label{margin:0;font-size:12px !important;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#8ee7ff !important;text-align:right;padding-right:4px;white-space:nowrap}
     .admin-form-grid>input,.admin-form-grid>select{height:36px !important;min-height:36px;max-height:36px;padding:6px 10px !important;font-size:13px !important;line-height:1.2;border-radius:8px;min-width:0;width:100%;max-width:100%;box-sizing:border-box;margin:0 !important;appearance:none;-webkit-appearance:none}
     /* Le selecteur natif a besoin d'une fleche : on la remet. */
-    .admin-form-grid>select{background-image:linear-gradient(45deg,transparent 50%,#52606a 50%),linear-gradient(135deg,#52606a 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:28px !important}
+    .admin-form-grid>select{background-image:linear-gradient(45deg,transparent 50%,#8ee7ff 50%),linear-gradient(135deg,#8ee7ff 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:28px !important}
     /* Safari iOS agrandit les champs date : on force la meme hauteur. */
     .admin-form-grid>input[type="datetime-local"],.admin-form-grid>input[type="number"]{min-width:0;font-variant-numeric:tabular-nums}
     .admin-form-grid>.full{grid-column:1 / -1}
@@ -294,115 +298,172 @@ img,video,svg,canvas,iframe{max-width:100%;height:auto;}
 button,input,select,textarea{max-width:100%;box-sizing:border-box;}
 body{overflow-wrap:break-word;}
 
-/* ===== MODE SOMBRE — PANNEAU ADMIN ===== */
-@media (prefers-color-scheme: dark) {
-  #adminPanel > div.body,
-  #adminPanel .body {
-    background: linear-gradient(180deg, #071a2b 0%, #03111f 100%) !important;
-    color: #eaf8ff !important;
-    border: 1px solid rgba(245, 176, 39, 0.35) !important;
-    border-top: 0 !important;
-    box-shadow: 0 26px 80px rgba(0, 0, 0, 0.75) !important;
-  }
+/* ===== THEME CONSOLE SUBMARINE UNIFORME — PANNEAU ADMIN (WCAG AAA) ===== */
+#adminPanel > div.body,
+#adminPanel .body {
+  background: linear-gradient(180deg, #071a2b 0%, #03111f 100%) !important;
+  color: #eaf8ff !important;
+  border: 1px solid rgba(245, 176, 39, 0.45) !important;
+  border-top: 0 !important;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.75) !important;
+}
 
-  #adminPanel p.small,
-  #adminPanel .small {
-    color: #9bc4d4 !important;
-  }
+#adminPanel p.small,
+#adminPanel .small {
+  color: #b0d4e3 !important;
+}
 
-  #adminPanel label {
-    color: #cfe6f4 !important;
-  }
+#adminPanel label {
+  color: #8ee7ff !important;
+}
 
-  #adminPanel .body p.small[style*="9b1111"] {
-    color: #ff8579 !important;
-  }
+#adminPanel .body p.small[style*="9b1111"],
+#adminPanel p[style*="9b1111"] {
+  color: #ff8579 !important;
+}
 
-  #adminWorkspace span.small[style*="075c39"] {
-    color: #5be09b !important;
-  }
+#adminWorkspace span.small[style*="075c39"] {
+  color: #5be09b !important;
+}
 
-  #adminWorkspace div[style*="163f58"] {
-    color: #8ee7ff !important;
-  }
+#adminWorkspace div[style*="163f58"] {
+  color: #8ee7ff !important;
+}
 
-  .admin-designer-box {
-    background: rgba(11, 52, 78, 0.35) !important;
-    border-color: rgba(142, 231, 255, 0.3) !important;
-  }
+.admin-designer-box {
+  background: rgba(8, 30, 48, 0.85) !important;
+  border: 1px solid rgba(142, 231, 255, 0.35) !important;
+  border-radius: 10px;
+  color: #eaf8ff !important;
+}
 
-  .admin-tabs {
-    background: rgba(2, 10, 20, 0.7) !important;
-    border-bottom: 1px solid rgba(142, 231, 255, 0.2) !important;
-  }
+.admin-designer-box div {
+  color: #eaf8ff !important;
+}
 
-  .admin-tab {
-    background: rgba(142, 231, 255, 0.08) !important;
-    color: #9bc4d4 !important;
-    border: 1px solid rgba(142, 231, 255, 0.2) !important;
-  }
+.admin-designer-box .small {
+  color: #b0d4e3 !important;
+}
 
-  .admin-tab.active {
-    background: linear-gradient(135deg, #f5b027, #d48b13) !important;
-    color: #04101d !important;
-    border-color: #ffd36c !important;
-  }
+.ds-row {
+  background: rgba(4, 18, 30, 0.8) !important;
+  border: 1px solid rgba(142, 231, 255, 0.25) !important;
+  color: #f2f8fc !important;
+}
 
-  .admin-add-member {
-    background: rgba(6, 24, 40, 0.75) !important;
-    border: 1px solid rgba(142, 231, 255, 0.22) !important;
-  }
+.ds-row-main {
+  color: #eaf8ff !important;
+}
 
-  .admin-add-title {
-    color: #8ee7ff !important;
-  }
+.ds-row-main .small {
+  color: #9bc4d4 !important;
+}
 
-  .admin-o2-status {
-    background: rgba(255, 75, 62, 0.10) !important;
-    border-color: rgba(255, 75, 62, 0.35) !important;
-  }
+.admin-tabs {
+  background: rgba(2, 10, 20, 0.7) !important;
+  border-bottom: 1px solid rgba(142, 231, 255, 0.2) !important;
+}
 
-  .admin-o2-row > span:first-child {
-    color: #9bc4d4 !important;
-  }
+.admin-tab {
+  background: rgba(142, 231, 255, 0.08) !important;
+  color: #b0d4e3 !important;
+  border: 1px solid rgba(142, 231, 255, 0.25) !important;
+}
 
-  .admin-o2-row > strong {
-    color: #ff7b72 !important;
-  }
+.admin-tab:hover {
+  background: rgba(142, 231, 255, 0.18) !important;
+  color: #fff !important;
+}
 
-  .admin-o2-badge {
-    color: #5be09b !important;
-    background: rgba(91, 255, 156, 0.14) !important;
-    border-color: rgba(91, 255, 156, 0.4) !important;
-  }
+.admin-tab.active {
+  background: linear-gradient(135deg, #f5b027, #d48b13) !important;
+  color: #04101d !important;
+  border-color: #ffd36c !important;
+  box-shadow: 0 2px 8px rgba(245, 176, 39, 0.35) !important;
+}
 
-  .admin-o2-badge.warning {
-    color: #ffd36c !important;
-    background: rgba(245, 176, 39, 0.18) !important;
-    border-color: rgba(245, 176, 39, 0.45) !important;
-  }
+.admin-add-member {
+  background: rgba(6, 24, 40, 0.85) !important;
+  border: 1px solid rgba(142, 231, 255, 0.3) !important;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  color: #eaf8ff !important;
+}
 
-  .admin-o2-badge.critical {
-    color: #ff8579 !important;
-    background: rgba(255, 75, 62, 0.18) !important;
-    border-color: rgba(255, 75, 62, 0.45) !important;
-  }
+.admin-add-title {
+  color: #8ee7ff !important;
+  font-weight: 900 !important;
+}
 
-  #adminPanel input,
-  #adminPanel select {
-    background: rgba(3, 17, 31, 0.88) !important;
-    color: #f2f8fc !important;
-    border: 1px solid rgba(142, 231, 255, 0.3) !important;
-  }
+.admin-o2-status {
+  background: rgba(255, 75, 62, 0.12) !important;
+  border: 1px solid rgba(255, 75, 62, 0.38) !important;
+}
 
-  #adminPanel .team {
-    background: rgba(6, 22, 36, 0.85) !important;
-    border: 1px solid rgba(142, 231, 255, 0.2) !important;
-    color: #eaf8ff !important;
-  }
+.admin-o2-row > span:first-child {
+  color: #b0d4e3 !important;
+}
 
-  #adminPanel .team h3 {
-    color: #eaf8ff !important;
-  }
+.admin-o2-row > strong {
+  color: #ff8579 !important;
+}
+
+.admin-o2-badge {
+  color: #5be09b !important;
+  background: rgba(91, 255, 156, 0.15) !important;
+  border: 1px solid rgba(91, 255, 156, 0.45) !important;
+}
+
+.admin-o2-badge.warning {
+  color: #ffd36c !important;
+  background: rgba(245, 176, 39, 0.18) !important;
+  border: 1px solid rgba(245, 176, 39, 0.45) !important;
+}
+
+.admin-o2-badge.critical {
+  color: #ff8579 !important;
+  background: rgba(255, 75, 62, 0.18) !important;
+  border: 1px solid rgba(255, 75, 62, 0.45) !important;
+}
+
+#adminPanel input,
+#adminPanel select,
+#adminPanel textarea {
+  background: #03111f !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(142, 231, 255, 0.35) !important;
+}
+
+#adminPanel input:focus,
+#adminPanel select:focus,
+#adminPanel textarea:focus {
+  border-color: #8ee7ff !important;
+  box-shadow: 0 0 0 3px rgba(142, 231, 255, 0.25) !important;
+}
+
+#adminPanel input::placeholder {
+  color: #7b9eb3 !important;
+  opacity: 1 !important;
+}
+
+#adminPanel select option {
+  background: #071a2b !important;
+  color: #ffffff !important;
+}
+
+#adminPanel .team {
+  background: rgba(7, 26, 43, 0.95) !important;
+  border: 1px solid rgba(142, 231, 255, 0.3) !important;
+  color: #eaf8ff !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+#adminPanel .team h3 {
+  color: #ffd36c !important;
+}
+
+#adminPanel .team h3 .small {
+  color: #9bc4d4 !important;
 }
 

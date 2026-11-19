@@ -98,7 +98,7 @@
     + '<p class="small" style="margin-bottom:10px">Liste des <b>magasins Fnac</b>. Source : <code>data/magasins-fnac.json</code> (ou Firestore si publiée plus récemment).</p>'
     + '<div class="adm-af-sec">'
     +   '<h4>📍 Magasins — mise à jour</h4>'
-    +   '<div id="afMagLast" class="adm-af-note" style="background:#f6f8fb;border:1px solid #dfe8ee;border-radius:8px;padding:8px 10px;margin-bottom:8px">Chargement…</div>'
+    +   '<div id="afMagLast" class="adm-af-note" style="background:rgba(4,18,32,0.85);border:1px solid rgba(142,231,255,0.25);border-radius:8px;padding:8px 10px;margin-bottom:8px">Chargement…</div>'
     +   '<div class="adm-af-ligne">'
     +     '<button id="afMagReload" class="secondary" type="button">↻ Recharger</button>'
     +     '<button id="afMagVerifier" class="secondary" type="button">🧪 Vérifier</button>'
@@ -111,7 +111,7 @@
     +     '<input id="afMagSearch" class="adm-af-input" placeholder="🔍 Filtrer (nom, ville, CP, id)" style="flex:1">'
     +     '<span class="small" id="afMagCount"></span>'
     +   '</div>'
-    +   '<div id="afMagTable" style="margin-top:8px;max-height:360px;overflow:auto;border:1px solid #dfe8ee;border-radius:8px"></div>'
+    +   '<div id="afMagTable" style="margin-top:8px;max-height:360px;overflow:auto;border:1px solid rgba(142,231,255,0.25);border-radius:8px;background:rgba(3,17,31,0.9)"></div>'
     + '</div>'
     + '<div class="adm-af-sec">'
     +   '<h4>➕ Ajouter / éditer un magasin</h4>'
@@ -309,7 +309,7 @@
     }
     if (!wrap) return;
     if (!cibles || !cibles.length){
-      wrap.innerHTML = '<span class="small" style="color:#6e7a84">en attente</span>';
+      wrap.innerHTML = '<span class="small" style="color:#9bc4d4">en attente</span>';
       return;
     }
     var idx = typeof indexActuel === 'number' ? indexActuel : 0;
@@ -351,12 +351,12 @@
     + '<div class="adm-af-sec" id="afEquipesSec">'
     +   '<h4 style="margin:0 0 8px;font-size:13px">BONNES RÉPONSES — TOUTES ÉQUIPES</h4>'
     +   '<div id="afTeamCards" class="adm-af-cards">'
-    +     '<div class="adm-af-teamcard" id="afSingleCard" data-team="ALL" style="border:1px solid #0b1a2e;background:#fff">'
-    +       '<div class="adm-af-teamhead"><span>🔑 RÉPONSES</span><span class="small" id="afGlobalPill" style="color:#6e7a84">chargement…</span></div>'
+    +     '<div class="adm-af-teamcard" id="afSingleCard" data-team="ALL" style="border:1px solid rgba(142,231,255,0.3);background:rgba(4,18,32,0.9)">'
+    +       '<div class="adm-af-teamhead"><span>🔑 RÉPONSES</span><span class="small" id="afGlobalPill" style="color:#9bc4d4">chargement…</span></div>'
     +       EQUIPES.map(function(eq){
             var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'">'+esc(w)+'</span>'; }).join('');
-            return '<div class="adm-af-teamcard" data-team="'+eq+'" style="margin:10px 0 0;padding:10px 10px 8px;background:#f7fafc;border:1px solid #e3eaf0;border-radius:10px;box-shadow:none">'
-              + '<div class="adm-af-teamhead" style="font-size:12px"><span>'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#6e7a84">…</span></div>'
+            return '<div class="adm-af-teamcard" data-team="'+eq+'" style="margin:10px 0 0;padding:10px 10px 8px;background:rgba(4,18,32,0.85);border:1px solid rgba(142,231,255,0.25);border-radius:10px;box-shadow:none">'
+              + '<div class="adm-af-teamhead" style="font-size:12px"><span>'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#9bc4d4">…</span></div>'
               + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eq+'">—</span></div>'
               + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+eq+'">'+p2+'</div></div>'
               + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+eq+'"></div></div>'
@@ -365,8 +365,8 @@
     +       (function(){
             var eqT='TEST';
             var p2t = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eqT+'-'+w+'">'+esc(w)+'</span>'; }).join('');
-            return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:10px 0 0;padding:10px 10px 8px;background:linear-gradient(180deg,#fffef4 0%,#fff8db 100%);border:1px solid #e8c05f;border-radius:10px;box-shadow:0 4px 14px rgba(232,192,95,.18)">'
-              + '<div class="adm-af-teamhead" style="font-size:12px"><span>🧪 zzzz-0000 <span class="small" style="background:#fff4d8;border:1px solid #e8c05f;border-radius:999px;padding:1px 6px;font-size:10px">TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#6e7a84">test</span></div>'
+            return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:10px 0 0;padding:10px 10px 8px;background:rgba(245,176,39,0.12);border:1px solid rgba(245,176,39,0.4);border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.3)">'
+              + '<div class="adm-af-teamhead" style="font-size:12px"><span>🧪 zzzz-0000 <span class="small" style="background:rgba(245,176,39,0.25);border:1px solid rgba(245,176,39,0.5);color:#ffd36c;border-radius:999px;padding:1px 6px;font-size:10px">TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#9bc4d4">test</span></div>'
               + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eqT+'">—</span></div>'
               + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'">'+p2t+'</div></div>'
               + '<div class="adm-af-row" id="afP3-'+eqT+'"><span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+eqT+'"></div></div>'
@@ -395,8 +395,8 @@
     var card = document.createElement('div');
     card.className = 'adm-af-teamcard';
     card.dataset.team = equipe;
-    card.style.cssText = 'margin:10px 0 0;padding:10px 10px 8px;background:#f0faf6;border:1px solid #bfe7d2;border-radius:10px;box-shadow:none';
-    card.innerHTML = '<div class="adm-af-teamhead" style="font-size:12px"><span>'+esc(equipe)+' <span class="small" style="background:#e8fff4;border:1px solid #bfe7d2;border-radius:999px;padding:1px 6px;font-size:10px">SESSION LIVE</span></span><span class="small" id="afTeamPill-'+equipe+'" style="color:#6e7a84">auto</span></div>'
+    card.style.cssText = 'margin:10px 0 0;padding:10px 10px 8px;background:rgba(91,255,156,0.1);border:1px solid rgba(91,255,156,0.35);border-radius:10px;box-shadow:none';
+    card.innerHTML = '<div class="adm-af-teamhead" style="font-size:12px"><span>'+esc(equipe)+' <span class="small" style="background:rgba(91,255,156,0.2);border:1px solid rgba(91,255,156,0.5);color:#7ce6ad;border-radius:999px;padding:1px 6px;font-size:10px">SESSION LIVE</span></span><span class="small" id="afTeamPill-'+equipe+'" style="color:#9bc4d4">auto</span></div>'
       + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+equipe+'">—</span></div>'
       + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+equipe+'">'+p2+'</div></div>'
       + '<div class="adm-af-row" id="afP3-'+equipe+'"><span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'"></div></div>';
@@ -554,7 +554,7 @@
       } else {
         var row = $('afP3-'+equipe);
         if (row && !$('afP3wrap-'+equipe)){
-          row.innerHTML = '<span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'"><span class="small" style="color:#6e7a84">en attente</span></div>';
+          row.innerHTML = '<span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'"><span class="small" style="color:#9bc4d4">en attente</span></div>';
         }
       }
     }catch(e){}
@@ -579,8 +579,8 @@
     + '<p class="small" style="margin-bottom:10px">QR Codes de déverrouillage des <b>Zones Scellées</b> (paliers 2 → 7). Chaque code encode le <b>numéro du palier</b> (ex. <code>1721310619</code>) — le logo <b>Nautilus</b> est intégré au centre. Imprime la variante <b>noir sur blanc</b> pour une compatibilité maximale, ou <b>jaune sur noir</b> pour l’ambiance Nautilus. Tous les QR sont scannables avec la caméra ou l’import photo du sas.</p>'
     + '<div class="adm-af-sec">'
     +   '<h4>📋 Planche complète — 6 paliers × 2 variantes</h4>'
-    +   '<p class="small" style="margin-bottom:8px"><a href="'+planche+'" download="planche-qr-nautilus.png" style="background:#0b1a2e;color:#fff;border-radius:999px;padding:6px 14px;text-decoration:none;font-weight:700;display:inline-block">⬇️ Télécharger la planche (2020×6600 px)</a> <span style="margin-left:8px;color:#6e7a84">12 QR étiquetés</span></p>'
-    +   '<a href="'+planche+'" download="planche-qr-nautilus.png" style="display:block;max-width:720px;border:1px solid #dfe8ee;border-radius:10px;overflow:hidden"><img src="'+planche+'" alt="Planche QR Nautilus" style="width:100%;height:auto;display:block" loading="lazy"></a>'
+    +   '<p class="small" style="margin-bottom:8px"><a href="'+planche+'" download="planche-qr-nautilus.png" style="background:#f5b027;color:#04101d;border-radius:999px;padding:6px 14px;text-decoration:none;font-weight:900;display:inline-block">⬇️ Télécharger la planche (2020×6600 px)</a> <span style="margin-left:8px;color:#9bc4d4">12 QR étiquetés</span></p>'
+    +   '<a href="'+planche+'" download="planche-qr-nautilus.png" style="display:block;max-width:720px;border:1px solid rgba(142,231,255,0.3);border-radius:10px;overflow:hidden"><img src="'+planche+'" alt="Planche QR Nautilus" style="width:100%;height:auto;display:block" loading="lazy"></a>'
     + '</div>'
     + '<div class="adm-qr-grid">';
     QR_PALIERS.forEach(function(p){
@@ -588,20 +588,20 @@
       var jaune = 'assets/qr/QR-palier-'+p.n+'_jaune-sur-noir.png';
       html += ''
       + '<div class="adm-qr-card">'
-      +   '<h5>Palier '+p.n+' — <code>'+esc(p.code)+'</code> <span style="font-weight:400;color:#6e7a84">→ '+esc(p.page)+'</span></h5>'
+      +   '<h5>Palier '+p.n+' — <code>'+esc(p.code)+'</code> <span style="font-weight:400;color:#9bc4d4">→ '+esc(p.page)+'</span></h5>'
       +   '<div class="adm-qr-imgs">'
-      +     '<div class="adm-qr-imgbox"><div class="small" style="font-weight:700;margin-bottom:4px">Noir sur blanc</div><img src="'+noir+'" alt="QR palier '+p.n+' noir" loading="lazy"><div class="small" style="color:#6e7a84;margin-top:4px">Impression standard</div></div>'
+      +     '<div class="adm-qr-imgbox" style="background:rgba(4,18,30,0.85);border:1px solid rgba(142,231,255,0.25)"><div class="small" style="font-weight:700;margin-bottom:4px;color:#eaf8ff">Noir sur blanc</div><img src="'+noir+'" alt="QR palier '+p.n+' noir" loading="lazy"><div class="small" style="color:#9bc4d4;margin-top:4px">Impression standard</div></div>'
       +     '<div class="adm-qr-imgbox" style="background:#020812;border-color:#1a2a3a"><div class="small" style="font-weight:700;margin-bottom:4px;color:#f5b027">Jaune sur noir</div><img src="'+jaune+'" alt="QR palier '+p.n+' jaune" loading="lazy"><div class="small" style="color:#8ee7ff;margin-top:4px">Ambiance Nautilus</div></div>'
       +   '</div>'
       +   '<div class="adm-qr-dl">'
       +     '<a href="'+noir+'" download="QR-palier-'+p.n+'_noir-sur-blanc.png">⬇️ Noir / blanc</a>'
       +     '<a href="'+jaune+'" download="QR-palier-'+p.n+'_jaune-sur-noir.png">⬇️ Jaune / noir</a>'
       +   '</div>'
-      +   '<p class="small" style="color:#6e7a84;margin-top:6px">Logo Nautilus au centre · correction H (30 %) · testé jsQR</p>'
+      +   '<p class="small" style="color:#9bc4d4;margin-top:6px">Logo Nautilus au centre · correction H (30 %) · testé jsQR</p>'
       + '</div>';
     });
     html += '</div>'
-    + '<p class="small" style="margin-top:12px;color:#6e7a84">Taille conseillée ≥ 6×6 cm, ne pas rogner la zone de silence. La variante jaune est un QR inversé — testée avec l’app (jsQR <code>inversionAttempts:both</code>). En cas de doute, imprime la variante noire. Régénération : <code>python3 tools/generate_qr.py</code>.</p>';
+    + '<p class="small" style="margin-top:12px;color:#9bc4d4">Taille conseillée ≥ 6×6 cm, ne pas rogner la zone de silence. La variante jaune est un QR inversé — testée avec l’app (jsQR <code>inversionAttempts:both</code>). En cas de doute, imprime la variante noire. Régénération : <code>python3 tools/generate_qr.py</code>.</p>';
     return html;
   }
 
@@ -714,8 +714,8 @@
     if (!el || !_liste) return;
     var dt = fmtDate(_liste.syncedAt);
     var badge = fmtSource(_liste.source, _liste.sourceType);
-    var note = _liste.note ? '<br><span class="small" style="color:#6e7a84">' + esc(_liste.note) + '</span>' : '';
-    el.innerHTML = '<b>Dernière mise à jour :</b> ' + dt + ' ' + badge + ' <span class="small" style="color:#6e7a84">(' + esc(age(_liste.syncedAt)) + ')</span><br>'
+    var note = _liste.note ? '<br><span class="small" style="color:#9bc4d4">' + esc(_liste.note) + '</span>' : '';
+    el.innerHTML = '<b>Dernière mise à jour :</b> ' + dt + ' ' + badge + ' <span class="small" style="color:#9bc4d4">(' + esc(age(_liste.syncedAt)) + ')</span><br>'
       + '<span class="small">Version <code>' + esc(_liste.version||'?') + '</code> — <b>' + (_liste.magasins ? _liste.magasins.length : 0) + '</b> magasins actifs · Source : <code>' + esc(_liste.source||'?') + '</code></span>' + note;
   }
 

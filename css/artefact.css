@@ -282,59 +282,93 @@
 
 /* ------------------------------------------------------------------ */
 /* Panneau admin de l'artefact                                         */
-/* Le panneau admin (admin.css) est CLAIR : on suit sa charte, pas celle */
-/* du jeu. Ces règles ne s'appliquent qu'à l'onglet « Artefact ».        */
+/* Console sous-marine haute lisibilité (WCAG AAA)                     */
 /* ------------------------------------------------------------------ */
 #adminPanel .adm-af-sec {
-  border: 1px solid #dfe8ee;
+  border: 1px solid rgba(142, 231, 255, 0.25) !important;
   border-radius: 12px;
   padding: 12px;
   margin: 0 0 12px;
-  background: #fff;
-  color: #13202b;
+  background: rgba(6, 24, 40, 0.92) !important;
+  color: #eaf8ff !important;
 }
 #adminPanel .adm-af-sec > h4 {
   margin: 0 0 8px;
   font-size: 13px;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: #163f58;
+  color: #8ee7ff !important;
+  font-weight: 900;
 }
 #adminPanel .adm-af-ligne {
   display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 8px;
 }
 #adminPanel .adm-af-note {
-  margin: 6px 0 0; font-size: 12px; line-height: 1.55; color: #6e7a84;
+  margin: 6px 0 0; font-size: 12px; line-height: 1.55; color: #b0d4e3 !important;
 }
-#adminPanel .adm-af-note code { background: #eef3f7; padding: 1px 5px; border-radius: 4px; color: #13202b; }
-#adminPanel .adm-af-msg { margin: 6px 0 0; font-size: 12.5px; line-height: 1.5; }
+#adminPanel .adm-af-note code {
+  background: rgba(142, 231, 255, 0.15) !important;
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: #8ee7ff !important;
+}
+#adminPanel .adm-af-msg { margin: 6px 0 0; font-size: 12.5px; line-height: 1.5; color: #eaf8ff; }
 #adminPanel .adm-af-input,
 #adminPanel .adm-af-select,
-#adminPanel .adm-af-textarea { flex: 1 1 200px; min-width: 0; }
+#adminPanel .adm-af-textarea {
+  flex: 1 1 200px;
+  min-width: 0;
+  background: #03111f !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(142, 231, 255, 0.35) !important;
+}
 #adminPanel .adm-af-textarea {
   width: 100%; min-height: 92px;
   font-family: Consolas, "Courier New", monospace; font-size: 12px;
 }
-#adminPanel .adm-af-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; }
+#adminPanel .adm-af-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin-top: 6px;
+  color: #eaf8ff !important;
+}
 #adminPanel .adm-af-table th,
 #adminPanel .adm-af-table td {
   text-align: left; padding: 6px 8px;
-  border-bottom: 1px solid #e8eef2; vertical-align: top;
+  border-bottom: 1px solid rgba(142, 231, 255, 0.18) !important;
+  vertical-align: top;
 }
 #adminPanel .adm-af-table th {
-  color: #6e7a84; font-weight: 900; font-size: 11px;
+  color: #8ee7ff !important; font-weight: 900; font-size: 11px;
   letter-spacing: .06em; text-transform: uppercase;
 }
-#adminPanel .adm-af-table code { font-family: Consolas, monospace; color: #13202b; }
+#adminPanel .adm-af-table td {
+  color: #f2f8fc !important;
+}
+#adminPanel .adm-af-table code {
+  font-family: Consolas, monospace;
+  color: #ffd36c !important;
+  background: rgba(245, 176, 39, 0.12) !important;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
 #adminPanel .adm-af-mini { font-size: 11.5px; padding: 5px 8px; border-radius: 6px; }
 #adminPanel .adm-af-badge {
   display: inline-block; padding: 2px 7px; border-radius: 999px;
   font-size: 11px; font-weight: 900; letter-spacing: .02em;
 }
-#adminPanel .adm-af-badge--ok { background: #effff7; color: #075c39; border: 1px solid #aee5ca; }
-#adminPanel .adm-af-badge--warn { background: #fff4d8; color: #8a5b00; border: 1px solid #e8c05f; }
-#adminPanel .adm-af-badge--danger { background: #ffe7e3; color: #8f1b14; border: 1px solid #efb2ac; }
-#adminPanel .adm-af-hist { margin: 6px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.7; color: #4a5a68; }
+#adminPanel .adm-af-badge--ok { background: rgba(91, 255, 156, 0.18) !important; color: #5be09b !important; border: 1px solid rgba(91, 255, 156, 0.45) !important; }
+#adminPanel .adm-af-badge--warn { background: rgba(245, 176, 39, 0.18) !important; color: #ffd36c !important; border: 1px solid rgba(245, 176, 39, 0.45) !important; }
+#adminPanel .adm-af-badge--danger { background: rgba(255, 75, 62, 0.18) !important; color: #ff8579 !important; border: 1px solid rgba(255, 75, 62, 0.45) !important; }
+#adminPanel .adm-af-hist { margin: 6px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.7; color: #b0d4e3 !important; }
+
+#adminPanel .adm-af-teamcard {
+  background: rgba(4, 18, 32, 0.85) !important;
+  border: 1px solid rgba(142, 231, 255, 0.25) !important;
+  border-radius: 10px;
+  color: #eaf8ff !important;
+}
 
 /* ------------------------------------------------------------------ */
 /* Lien de retour à l'accueil (même rôle que .puzzle-home avant)         */
