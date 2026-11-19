@@ -30,24 +30,28 @@
     st.id='nautilusAdminTabsFix';
     st.textContent='.admin-tabs{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}.admin-tabs::-webkit-scrollbar{display:none}.admin-tab{flex:0 0 auto;white-space:nowrap;min-width:36px;justify-content:center}.admin-pane{min-width:0;overflow-wrap:anywhere;max-width:100%}#adminPanel .body{overflow-x:hidden}'
       + '.adm-af-cards{display:flex;flex-direction:column;gap:12px;padding:6px 2px 8px;overflow:visible}'
-      + '.adm-af-teamcard{flex:0 0 auto;width:100%;max-width:none;min-width:0;background:#fff;border:1px solid #dfe8ee;border-radius:12px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}'
-      + '.adm-af-teamhead{font-weight:900;font-size:13px;letter-spacing:.04em;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}'
-      + '.adm-af-row{display:flex;align-items:center;gap:6px;margin:6px 0;min-width:0}'
-      + '.adm-af-lbl{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:#eef2f6;color:#33414d;border-radius:999px;padding:3px 8px;flex:0 0 auto}'
-      + '.adm-af-chip{font-size:12px;font-weight:700;background:#f7fafc;border:1px solid #dfe8ee;border-radius:999px;padding:4px 8px;white-space:nowrap;flex:0 0 auto}'
-      + '.adm-af-chip--hl{background:linear-gradient(135deg,#e8fff4,#f0faf6);border-color:#bfe7d2;color:#0b4a3a}'
-      + '.adm-af-chips{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;padding-bottom:2px}.adm-af-chips::-webkit-scrollbar{display:none}'
-      + '.adm-af-ean{font-family:Consolas,monospace;font-size:12px;background:#0b1a2e;color:#c8f0d8;border-radius:6px;padding:3px 6px;letter-spacing:.02em}'
+      + '.adm-af-teamcard{flex:0 0 auto;width:100%;max-width:none;min-width:0;background:rgba(4,18,32,0.92);border:1px solid rgba(142,231,255,0.3);border-radius:12px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,.4);color:#eaf8ff;box-sizing:border-box}'
+      + '.adm-af-teamhead{font-weight:900;font-size:13px;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c}'
+      + '.adm-af-teamhead span:first-child{color:#ffd36c;font-weight:900}'
+      + '.adm-af-teamhead .small{color:#9bc4d4;font-weight:600}'
+      + '.adm-af-row{display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0}'
+      + '.adm-af-lbl{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;background:rgba(142,231,255,0.18);color:#8ee7ff;border:1px solid rgba(142,231,255,0.45);border-radius:999px;padding:3px 9px;flex:0 0 auto;box-shadow:0 1px 4px rgba(0,0,0,.3);line-height:1.3}'
+      + '.adm-af-chip{font-size:12px;font-weight:800;background:#03111f;border:1.5px solid rgba(142,231,255,0.38);border-radius:999px;padding:4px 10px;white-space:nowrap;flex:0 0 auto;color:#ffffff;box-shadow:0 2px 6px rgba(0,0,0,.4);letter-spacing:.02em;transition:all .15s ease;line-height:1.3}'
+      + '.adm-af-chip:hover{background:rgba(142,231,255,0.18);border-color:#8ee7ff;color:#ffffff}'
+      + '.adm-af-chip--hl{background:rgba(46,213,115,0.22);border-color:#2ed573;color:#a8ffcc;font-weight:900;box-shadow:0 0 10px rgba(46,213,115,0.45)}'
+      + '.adm-af-chip--hl:hover{background:rgba(46,213,115,0.32);border-color:#5be09b;color:#ffffff}'
+      + '.adm-af-chips{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(142,231,255,0.3) transparent;flex:1;min-width:0;padding:2px 2px 4px}.adm-af-chips::-webkit-scrollbar{height:4px}.adm-af-chips::-webkit-scrollbar-thumb{background:rgba(142,231,255,0.3);border-radius:4px}'
+      + '.adm-af-ean{font-family:Consolas,monospace;font-size:12px;background:#03111f;color:#ffd36c;border:1px solid rgba(142,231,255,0.3);border-radius:6px;padding:3px 6px;letter-spacing:.02em}'
       + '@media(min-width:720px){.adm-af-cards{gap:14px}.adm-af-teamcard{padding:12px}}'
       + '.adm-qr-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:10px}'
-      + '.adm-qr-card{background:#fff;border:1px solid #dfe8ee;border-radius:12px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}'
-      + '.adm-qr-card h5{margin:0 0 6px;font-size:13px;font-weight:900}'
+      + '.adm-qr-card{background:rgba(4,18,32,0.92);border:1px solid rgba(142,231,255,0.3);border-radius:12px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,.4);color:#eaf8ff}'
+      + '.adm-qr-card h5{margin:0 0 6px;font-size:13px;font-weight:900;color:#ffd36c}'
       + '.adm-qr-imgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}'
-      + '.adm-qr-imgbox{background:#f6f8fb;border:1px solid #dfe8ee;border-radius:8px;padding:6px;text-align:center}'
-      + '.adm-qr-imgbox img{width:100%;height:auto;display:block;border-radius:6px}'
+      + '.adm-qr-imgbox{background:#03111f;border:1px solid rgba(142,231,255,0.25);border-radius:8px;padding:6px;text-align:center;color:#eaf8ff}'
+      + '.adm-qr-imgbox img{width:100%;height:auto;display:block;border-radius:6px;background:#fff;padding:4px}'
       + '.adm-qr-dl{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}'
-      + '.adm-qr-dl a{flex:1;min-width:110px;text-align:center;background:#0b1a2e;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;text-decoration:none}'
-      + '.adm-qr-dl a:nth-child(2){background:#f5b027;color:#0b1a2e}'
+      + '.adm-qr-dl a{flex:1;min-width:110px;text-align:center;background:rgba(142,231,255,0.18);color:#8ee7ff;border:1px solid rgba(142,231,255,0.4);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;text-decoration:none}'
+      + '.adm-qr-dl a:nth-child(2){background:#f5b027;color:#0b1a2e;border:1px solid #f5b027}'
       + '@media(min-width:720px){.adm-qr-grid{grid-template-columns:1fr 1fr}}';
     (document.head||document.documentElement).appendChild(st);
   }
@@ -67,7 +71,7 @@
     if (!el) return;
     el.innerHTML = html;
     el.className = 'adm-af-msg ' + (kind || '');
-    el.style.color = kind === 'ok' ? '#075c39' : kind === 'danger' ? '#9b1111' : kind === 'warn' ? '#8a5b00' : '';
+    el.style.color = kind === 'ok' ? '#5be09b' : kind === 'danger' ? '#ff8579' : kind === 'warn' ? '#ffd36c' : '#eaf8ff';
   }
   function fmtDate(iso) {
     if (!iso) return '—';
@@ -428,7 +432,10 @@
         if(!mot){
           mot = lireP1DepuisLocal(eq) || '';
         }
-        if(p1) p1.textContent = mot || '—';
+        if(p1) {
+          p1.textContent = mot || '—';
+          p1.classList.toggle('adm-af-chip--hl', !!mot);
+        }
         if(pill){
           if(payload){
             var members = payload.members ? payload.members.length : (payload.data && payload.data.members ? payload.data.members.length : 0);
@@ -470,7 +477,11 @@
         // Firestore erreur → fallback local
         try{
           var mLocal = lireP1DepuisLocal(eq);
-          var p1b=$('afP1-'+eq); if(p1b) p1b.textContent = mLocal || '—';
+          var p1b=$('afP1-'+eq);
+          if(p1b) {
+            p1b.textContent = mLocal || '—';
+            p1b.classList.toggle('adm-af-chip--hl', !!mLocal);
+          }
           var l2 = lireP2DepuisLocal(eq);
           if(l2) majP2Chips(eq, l2); else majP2Chips(eq, []);
         }catch(e){ try{ majP2Chips(eq, []);}catch(e2){} }
@@ -485,7 +496,11 @@
           var motTest = lireP1DepuisLocal('TEST') || lireP1DepuisLocal('APERCU') || lireP1DepuisLocal('ANON') || lireP1DepuisLocal('MODE_TEST') || lireP1DepuisLocal('ZZZZ-0000') || '';
           if(!motTest){ try{ var g=localStorage.getItem('nautilusP1TestWord'); if(g){ try{ var jg=JSON.parse(g); motTest=jg.w||jg.word||''; }catch(e){ motTest=g; }} }catch(e){} }
           if(!motTest){ try{ var g2=localStorage.getItem('nautilusP1TestWord:TEST'); if(g2){ try{ var jg2=JSON.parse(g2); motTest=jg2.w||jg2.word||jg2; }catch(e){ motTest=g2; }} }catch(e){} }
-          var p1m=$('afP1-'+eq); if(p1m) p1m.textContent = motTest || '—';
+          var p1m=$('afP1-'+eq);
+          if(p1m) {
+            p1m.textContent = motTest || '—';
+            p1m.classList.toggle('adm-af-chip--hl', !!motTest);
+          }
           var pillM=$('afTeamPill-'+eq); if(pillM) pillM.textContent = motTest ? 'donnée test trouvée' : 'test — zzzz-0000';
           var listeM = lireP2DepuisLocal('TEST') || lireP2DepuisLocal('APERCU') || lireP2DepuisLocal('ANON') || lireP2DepuisLocal('MODE_TEST') || null;
           if(listeM && listeM.length){ majP2Chips(eq, listeM); } else { majP2Chips(eq, []); }
