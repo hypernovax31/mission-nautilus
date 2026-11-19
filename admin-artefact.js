@@ -24,36 +24,44 @@
   var _monte = false;
   var _liste = null;
   var _filtre = '';
+
+  var CHIP_STYLE_DEFAULT = 'display:inline-flex;align-items:center;font-size:12px;font-weight:800;background:#03111f;color:#ffffff;border:1.5px solid rgba(142,231,255,0.38);border-radius:999px;padding:4px 10px;white-space:nowrap;flex:0 0 auto;box-shadow:0 2px 6px rgba(0,0,0,0.4);letter-spacing:.02em;line-height:1.3';
+  var LBL_STYLE = 'display:inline-flex;align-items:center;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;background:rgba(142,231,255,0.18);color:#8ee7ff;border:1px solid rgba(142,231,255,0.45);border-radius:999px;padding:3px 9px;flex:0 0 auto;line-height:1.3';
+
   function ensureTabsCss(){
-    if(document.getElementById('nautilusAdminTabsFix')) return;
-    var st=document.createElement('style');
-    st.id='nautilusAdminTabsFix';
+    var st = document.getElementById('nautilusAdminTabsFix');
+    if(!st){
+      st = document.createElement('style');
+      st.id = 'nautilusAdminTabsFix';
+      (document.head||document.documentElement).appendChild(st);
+    }
     st.textContent='.admin-tabs{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}.admin-tabs::-webkit-scrollbar{display:none}.admin-tab{flex:0 0 auto;white-space:nowrap;min-width:36px;justify-content:center}.admin-pane{min-width:0;overflow-wrap:anywhere;max-width:100%}#adminPanel .body{overflow-x:hidden}'
       + '.adm-af-cards{display:flex;flex-direction:column;gap:12px;padding:6px 2px 8px;overflow:visible}'
-      + '.adm-af-teamcard{flex:0 0 auto;width:100%;max-width:none;min-width:0;background:rgba(4,18,32,0.92);border:1px solid rgba(142,231,255,0.3);border-radius:12px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,.4);color:#eaf8ff;box-sizing:border-box}'
-      + '.adm-af-teamhead{font-weight:900;font-size:13px;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c}'
-      + '.adm-af-teamhead span:first-child{color:#ffd36c;font-weight:900}'
-      + '.adm-af-teamhead .small{color:#9bc4d4;font-weight:600}'
-      + '.adm-af-row{display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0}'
-      + '.adm-af-lbl{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;background:rgba(142,231,255,0.18);color:#8ee7ff;border:1px solid rgba(142,231,255,0.45);border-radius:999px;padding:3px 9px;flex:0 0 auto;box-shadow:0 1px 4px rgba(0,0,0,.3);line-height:1.3}'
-      + '.adm-af-chip{font-size:12px;font-weight:800;background:#03111f;border:1.5px solid rgba(142,231,255,0.38);border-radius:999px;padding:4px 10px;white-space:nowrap;flex:0 0 auto;color:#ffffff;box-shadow:0 2px 6px rgba(0,0,0,.4);letter-spacing:.02em;transition:all .15s ease;line-height:1.3}'
-      + '.adm-af-chip:hover{background:rgba(142,231,255,0.18);border-color:#8ee7ff;color:#ffffff}'
-      + '.adm-af-chip--hl{background:rgba(46,213,115,0.22);border-color:#2ed573;color:#a8ffcc;font-weight:900;box-shadow:0 0 10px rgba(46,213,115,0.45)}'
-      + '.adm-af-chip--hl:hover{background:rgba(46,213,115,0.32);border-color:#5be09b;color:#ffffff}'
-      + '.adm-af-chips{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(142,231,255,0.3) transparent;flex:1;min-width:0;padding:2px 2px 4px}.adm-af-chips::-webkit-scrollbar{height:4px}.adm-af-chips::-webkit-scrollbar-thumb{background:rgba(142,231,255,0.3);border-radius:4px}'
-      + '.adm-af-ean{font-family:Consolas,monospace;font-size:12px;background:#03111f;color:#ffd36c;border:1px solid rgba(142,231,255,0.3);border-radius:6px;padding:3px 6px;letter-spacing:.02em}'
+      + '#adminPanel .adm-af-teamcard,.adm-af-teamcard{flex:0 0 auto !important;width:100% !important;max-width:none !important;min-width:0 !important;background:rgba(4,18,32,0.92) !important;border:1px solid rgba(142,231,255,0.3) !important;border-radius:12px !important;padding:12px 14px !important;box-shadow:0 4px 16px rgba(0,0,0,.4) !important;color:#eaf8ff !important;box-sizing:border-box !important}'
+      + '#adminPanel .adm-af-teamhead,.adm-af-teamhead{font-weight:900 !important;font-size:13px !important;letter-spacing:.05em !important;display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:8px !important;color:#ffd36c !important}'
+      + '#adminPanel .adm-af-teamhead span:first-child,.adm-af-teamhead span:first-child{color:#ffd36c !important;font-weight:900 !important}'
+      + '#adminPanel .adm-af-teamhead .small,.adm-af-teamhead .small{color:#9bc4d4 !important;font-weight:600 !important}'
+      + '#adminPanel .adm-af-row,.adm-af-row{display:flex !important;align-items:center !important;gap:8px !important;margin:8px 0 !important;min-width:0 !important}'
+      + '#adminPanel .adm-af-lbl,.adm-af-lbl{display:inline-flex !important;align-items:center !important;font-size:11px !important;font-weight:900 !important;letter-spacing:.08em !important;text-transform:uppercase !important;background:rgba(142,231,255,0.18) !important;color:#8ee7ff !important;border:1px solid rgba(142,231,255,0.45) !important;border-radius:999px !important;padding:3px 9px !important;flex:0 0 auto !important;box-shadow:0 1px 4px rgba(0,0,0,.3) !important;line-height:1.3 !important}'
+      + '#adminPanel .adm-af-chip,.adm-af-chip{display:inline-flex !important;align-items:center !important;font-size:12px !important;font-weight:800 !important;background:#03111f !important;border:1.5px solid rgba(142,231,255,0.38) !important;border-radius:999px !important;padding:4px 10px !important;white-space:nowrap !important;flex:0 0 auto !important;color:#ffffff !important;box-shadow:0 2px 6px rgba(0,0,0,.4) !important;letter-spacing:.02em !important;transition:all .15s ease !important;line-height:1.3 !important}'
+      + '#adminPanel .adm-af-chip:hover,.adm-af-chip:hover{background:rgba(142,231,255,0.18) !important;border-color:#8ee7ff !important;color:#ffffff !important}'
+      + '#adminPanel .adm-af-chip--hl,.adm-af-chip--hl{background:rgba(46,213,115,0.22) !important;border-color:#2ed573 !important;color:#a8ffcc !important;font-weight:900 !important;box-shadow:0 0 10px rgba(46,213,115,0.45) !important}'
+      + '#adminPanel .adm-af-chip--hl:hover,.adm-af-chip--hl:hover{background:rgba(46,213,115,0.32) !important;border-color:#5be09b !important;color:#ffffff !important}'
+      + '#adminPanel .adm-af-chips,.adm-af-chips{display:flex !important;gap:6px !important;overflow-x:auto !important;overflow-y:hidden !important;align-items:center !important;-webkit-overflow-scrolling:touch !important;scrollbar-width:thin !important;scrollbar-color:rgba(142,231,255,0.3) transparent !important;flex:1 !important;min-width:0 !important;padding:2px 2px 4px !important}'
+      + '#adminPanel .adm-af-chips::-webkit-scrollbar,.adm-af-chips::-webkit-scrollbar{height:4px !important}'
+      + '#adminPanel .adm-af-chips::-webkit-scrollbar-thumb,.adm-af-chips::-webkit-scrollbar-thumb{background:rgba(142,231,255,0.3) !important;border-radius:4px !important}'
+      + '#adminPanel .adm-af-ean,.adm-af-ean{font-family:Consolas,monospace !important;font-size:12px !important;background:#03111f !important;color:#ffd36c !important;border:1px solid rgba(142,231,255,0.3) !important;border-radius:6px !important;padding:3px 6px !important;letter-spacing:.02em !important}'
       + '@media(min-width:720px){.adm-af-cards{gap:14px}.adm-af-teamcard{padding:12px}}'
       + '.adm-qr-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:10px}'
-      + '.adm-qr-card{background:rgba(4,18,32,0.92);border:1px solid rgba(142,231,255,0.3);border-radius:12px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,.4);color:#eaf8ff}'
-      + '.adm-qr-card h5{margin:0 0 6px;font-size:13px;font-weight:900;color:#ffd36c}'
+      + '#adminPanel .adm-qr-card,.adm-qr-card{background:rgba(4,18,32,0.92) !important;border:1px solid rgba(142,231,255,0.3) !important;border-radius:12px !important;padding:12px !important;box-shadow:0 4px 16px rgba(0,0,0,.4) !important;color:#eaf8ff !important}'
+      + '#adminPanel .adm-qr-card h5,.adm-qr-card h5{margin:0 0 6px !important;font-size:13px !important;font-weight:900 !important;color:#ffd36c !important}'
       + '.adm-qr-imgs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}'
-      + '.adm-qr-imgbox{background:#03111f;border:1px solid rgba(142,231,255,0.25);border-radius:8px;padding:6px;text-align:center;color:#eaf8ff}'
+      + '#adminPanel .adm-qr-imgbox,.adm-qr-imgbox{background:#03111f !important;border:1px solid rgba(142,231,255,0.25) !important;border-radius:8px !important;padding:6px !important;text-align:center !important;color:#eaf8ff !important}'
       + '.adm-qr-imgbox img{width:100%;height:auto;display:block;border-radius:6px;background:#fff;padding:4px}'
       + '.adm-qr-dl{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}'
       + '.adm-qr-dl a{flex:1;min-width:110px;text-align:center;background:rgba(142,231,255,0.18);color:#8ee7ff;border:1px solid rgba(142,231,255,0.4);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;text-decoration:none}'
       + '.adm-qr-dl a:nth-child(2){background:#f5b027;color:#0b1a2e;border:1px solid #f5b027}'
       + '@media(min-width:720px){.adm-qr-grid{grid-template-columns:1fr 1fr}}';
-    (document.head||document.documentElement).appendChild(st);
   }
 
   function $(id) { return document.getElementById(id); }
@@ -230,7 +238,21 @@
       if (!el) return;
       var ok = !!set[normaliserP2(w)];
       el.classList.toggle('adm-af-chip--hl', ok);
-      el.title = ok ? 'Découvert par l\'équipage' : '';
+      if (ok) {
+        el.style.background = 'rgba(46, 213, 115, 0.22)';
+        el.style.borderColor = '#2ed573';
+        el.style.color = '#a8ffcc';
+        el.style.boxShadow = '0 0 10px rgba(46, 213, 115, 0.45)';
+        el.style.fontWeight = '900';
+        el.title = 'Découvert par l\'équipage';
+      } else {
+        el.style.background = '#03111f';
+        el.style.borderColor = 'rgba(142, 231, 255, 0.38)';
+        el.style.color = '#ffffff';
+        el.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.4)';
+        el.style.fontWeight = '800';
+        el.title = '';
+      }
     });
     // compteur dans le wrap title ? on peut ajouter nb verts dans pill ?
     var wrap = $('afP2wrap-'+equipe);
@@ -321,7 +343,12 @@
       var valide = i < idx;
       var label = (i + 1) + '. ' + (c.court || c.titre || c.id || ('Cible ' + (i + 1)));
       var titreComplet = (c.titre || c.id) + (c.rayon ? ' (' + c.rayon + ')' : '');
-      return '<span class="adm-af-chip' + (valide ? ' adm-af-chip--hl' : '') + '" title="' + esc(titreComplet) + '" style="font-size:11px">'
+      var bg = valide ? 'rgba(46, 213, 115, 0.22)' : '#03111f';
+      var border = valide ? '#2ed573' : 'rgba(142, 231, 255, 0.38)';
+      var col = valide ? '#a8ffcc' : '#ffffff';
+      var fw = valide ? '900' : '800';
+      var shadow = valide ? '0 0 10px rgba(46, 213, 115, 0.45)' : '0 2px 6px rgba(0, 0, 0, 0.4)';
+      return '<span class="adm-af-chip' + (valide ? ' adm-af-chip--hl' : '') + '" title="' + esc(titreComplet) + '" style="display:inline-flex;align-items:center;font-size:11px;font-weight:' + fw + ';background:' + bg + ';color:' + col + ';border:1.5px solid ' + border + ';border-radius:999px;padding:4px 10px;white-space:nowrap;flex:0 0 auto;box-shadow:' + shadow + ';letter-spacing:.02em;line-height:1.3">'
         + (valide ? '✓ ' : '') + esc(label)
         + '</span>';
     }).join('');
@@ -352,28 +379,28 @@
   function htmlToutesReponses(){
     // UN SEUL CARD — toutes les équipes regroupées
     return ''
-    + '<div class="adm-af-sec" id="afEquipesSec">'
-    +   '<h4 style="margin:0 0 8px;font-size:13px">BONNES RÉPONSES — TOUTES ÉQUIPES</h4>'
-    +   '<div id="afTeamCards" class="adm-af-cards">'
-    +     '<div class="adm-af-teamcard" id="afSingleCard" data-team="ALL" style="border:1px solid rgba(142,231,255,0.3);background:rgba(4,18,32,0.9)">'
-    +       '<div class="adm-af-teamhead"><span>🔑 RÉPONSES</span><span class="small" id="afGlobalPill" style="color:#9bc4d4">chargement…</span></div>'
+    + '<div class="adm-af-sec" id="afEquipesSec" style="border:1px solid rgba(142,231,255,0.25);border-radius:12px;padding:12px;margin:0 0 12px;background:rgba(6,24,40,0.92);color:#eaf8ff">'
+    +   '<h4 style="margin:0 0 8px;font-size:13px;color:#8ee7ff;font-weight:900;letter-spacing:.06em;text-transform:uppercase">BONNES RÉPONSES — TOUTES ÉQUIPES</h4>'
+    +   '<div id="afTeamCards" class="adm-af-cards" style="display:flex;flex-direction:column;gap:12px;padding:6px 2px 8px">'
+    +     '<div class="adm-af-teamcard" id="afSingleCard" data-team="ALL" style="border:1px solid rgba(142,231,255,0.3);background:rgba(4,18,32,0.95);border-radius:12px;padding:12px;color:#eaf8ff;box-shadow:0 4px 16px rgba(0,0,0,0.4)">'
+    +       '<div class="adm-af-teamhead" style="font-weight:900;font-size:13px;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span>🔑 RÉPONSES</span><span class="small" id="afGlobalPill" style="color:#9bc4d4;font-weight:600">chargement…</span></div>'
     +       EQUIPES.map(function(eq){
-            var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'">'+esc(w)+'</span>'; }).join('');
-            return '<div class="adm-af-teamcard" data-team="'+eq+'" style="margin:10px 0 0;padding:10px 10px 8px;background:rgba(4,18,32,0.85);border:1px solid rgba(142,231,255,0.25);border-radius:10px;box-shadow:none">'
-              + '<div class="adm-af-teamhead" style="font-size:12px"><span>'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#9bc4d4">…</span></div>'
-              + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eq+'">—</span></div>'
-              + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+eq+'">'+p2+'</div></div>'
-              + '<div class="adm-af-row" id="afP3-'+eq+'"><span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+eq+'"></div></div>'
+            var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
+            return '<div class="adm-af-teamcard" data-team="'+eq+'" style="margin:10px 0 0;padding:12px 14px;background:rgba(4,18,32,0.92);border:1px solid rgba(142,231,255,0.3);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.4);color:#eaf8ff">'
+              + '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#9bc4d4;font-weight:600">…</span></div>'
+              + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eq+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
+              + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2+'</div></div>'
+              + '<div class="adm-af-row" id="afP3-'+eq+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
               + '</div>';
           }).join('')
     +       (function(){
             var eqT='TEST';
-            var p2t = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eqT+'-'+w+'">'+esc(w)+'</span>'; }).join('');
-            return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:10px 0 0;padding:10px 10px 8px;background:rgba(245,176,39,0.12);border:1px solid rgba(245,176,39,0.4);border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.3)">'
-              + '<div class="adm-af-teamhead" style="font-size:12px"><span>🧪 zzzz-0000 <span class="small" style="background:rgba(245,176,39,0.25);border:1px solid rgba(245,176,39,0.5);color:#ffd36c;border-radius:999px;padding:1px 6px;font-size:10px">TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#9bc4d4">test</span></div>'
-              + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eqT+'">—</span></div>'
-              + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'">'+p2t+'</div></div>'
-              + '<div class="adm-af-row" id="afP3-'+eqT+'"><span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+eqT+'"></div></div>'
+            var p2t = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eqT+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
+            return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:10px 0 0;padding:12px 14px;background:rgba(245,176,39,0.12);border:1px solid rgba(245,176,39,0.45);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#eaf8ff">'
+              + '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">🧪 zzzz-0000 <span class="small" style="background:rgba(245,176,39,0.25);border:1px solid rgba(245,176,39,0.5);color:#ffd36c;border-radius:999px;padding:2px 7px;font-size:10px">TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#9bc4d4;font-weight:600">test</span></div>'
+              + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eqT+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
+              + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2t+'</div></div>'
+              + '<div class="adm-af-row" id="afP3-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
               + '</div>';
           })()
     +     '</div>'
@@ -395,15 +422,15 @@
     var targetHost = host || container;
     if(!targetHost) return null;
     // Construit une carte similaire aux fixes
-    var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+equipe+'-'+w+'">'+esc(w)+'</span>'; }).join('');
+    var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+equipe+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
     var card = document.createElement('div');
     card.className = 'adm-af-teamcard';
     card.dataset.team = equipe;
-    card.style.cssText = 'margin:10px 0 0;padding:10px 10px 8px;background:rgba(91,255,156,0.1);border:1px solid rgba(91,255,156,0.35);border-radius:10px;box-shadow:none';
-    card.innerHTML = '<div class="adm-af-teamhead" style="font-size:12px"><span>'+esc(equipe)+' <span class="small" style="background:rgba(91,255,156,0.2);border:1px solid rgba(91,255,156,0.5);color:#7ce6ad;border-radius:999px;padding:1px 6px;font-size:10px">SESSION LIVE</span></span><span class="small" id="afTeamPill-'+equipe+'" style="color:#9bc4d4">auto</span></div>'
-      + '<div class="adm-af-row"><span class="adm-af-lbl">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+equipe+'">—</span></div>'
-      + '<div class="adm-af-row"><span class="adm-af-lbl">P2</span><div class="adm-af-chips" id="afP2wrap-'+equipe+'">'+p2+'</div></div>'
-      + '<div class="adm-af-row" id="afP3-'+equipe+'"><span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'"></div></div>';
+    card.style.cssText = 'margin:10px 0 0;padding:12px 14px;background:rgba(91,255,156,0.1);border:1px solid rgba(91,255,156,0.35);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#eaf8ff';
+    card.innerHTML = '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">'+esc(equipe)+' <span class="small" style="background:rgba(91,255,156,0.2);border:1px solid rgba(91,255,156,0.5);color:#7ce6ad;border-radius:999px;padding:2px 7px;font-size:10px">SESSION LIVE</span></span><span class="small" id="afTeamPill-'+equipe+'" style="color:#9bc4d4;font-weight:600">auto</span></div>'
+      + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+equipe+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
+      + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2+'</div></div>'
+      + '<div class="adm-af-row" id="afP3-'+equipe+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>';
     // insère avant la carte TEST si elle existe, sinon à la fin
     var testCard = targetHost.querySelector('[data-team="TEST"]');
     if(testCard) targetHost.insertBefore(card, testCard);
@@ -435,6 +462,19 @@
         if(p1) {
           p1.textContent = mot || '—';
           p1.classList.toggle('adm-af-chip--hl', !!mot);
+          if (mot) {
+            p1.style.background = 'rgba(46, 213, 115, 0.22)';
+            p1.style.borderColor = '#2ed573';
+            p1.style.color = '#a8ffcc';
+            p1.style.boxShadow = '0 0 10px rgba(46, 213, 115, 0.45)';
+            p1.style.fontWeight = '900';
+          } else {
+            p1.style.background = '#03111f';
+            p1.style.borderColor = 'rgba(142, 231, 255, 0.38)';
+            p1.style.color = '#ffffff';
+            p1.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.4)';
+            p1.style.fontWeight = '800';
+          }
         }
         if(pill){
           if(payload){
@@ -481,6 +521,19 @@
           if(p1b) {
             p1b.textContent = mLocal || '—';
             p1b.classList.toggle('adm-af-chip--hl', !!mLocal);
+            if (mLocal) {
+              p1b.style.background = 'rgba(46, 213, 115, 0.22)';
+              p1b.style.borderColor = '#2ed573';
+              p1b.style.color = '#a8ffcc';
+              p1b.style.boxShadow = '0 0 10px rgba(46, 213, 115, 0.45)';
+              p1b.style.fontWeight = '900';
+            } else {
+              p1b.style.background = '#03111f';
+              p1b.style.borderColor = 'rgba(142, 231, 255, 0.38)';
+              p1b.style.color = '#ffffff';
+              p1b.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.4)';
+              p1b.style.fontWeight = '800';
+            }
           }
           var l2 = lireP2DepuisLocal(eq);
           if(l2) majP2Chips(eq, l2); else majP2Chips(eq, []);
@@ -500,6 +553,19 @@
           if(p1m) {
             p1m.textContent = motTest || '—';
             p1m.classList.toggle('adm-af-chip--hl', !!motTest);
+            if (motTest) {
+              p1m.style.background = 'rgba(46, 213, 115, 0.22)';
+              p1m.style.borderColor = '#2ed573';
+              p1m.style.color = '#a8ffcc';
+              p1m.style.boxShadow = '0 0 10px rgba(46, 213, 115, 0.45)';
+              p1m.style.fontWeight = '900';
+            } else {
+              p1m.style.background = '#03111f';
+              p1m.style.borderColor = 'rgba(142, 231, 255, 0.38)';
+              p1m.style.color = '#ffffff';
+              p1m.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.4)';
+              p1m.style.fontWeight = '800';
+            }
           }
           var pillM=$('afTeamPill-'+eq); if(pillM) pillM.textContent = motTest ? 'donnée test trouvée' : 'test — zzzz-0000';
           var listeM = lireP2DepuisLocal('TEST') || lireP2DepuisLocal('APERCU') || lireP2DepuisLocal('ANON') || lireP2DepuisLocal('MODE_TEST') || null;
@@ -569,7 +635,7 @@
       } else {
         var row = $('afP3-'+equipe);
         if (row && !$('afP3wrap-'+equipe)){
-          row.innerHTML = '<span class="adm-af-lbl">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'"><span class="small" style="color:#9bc4d4">en attente</span></div>';
+          row.innerHTML = '<span class="adm-af-lbl" style="' + LBL_STYLE + '">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"><span class="small" style="color:#9bc4d4">en attente</span></div>';
         }
       }
     }catch(e){}
