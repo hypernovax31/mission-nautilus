@@ -2,8 +2,7 @@
    PALIER 4 — « LE RELEVÉ DU SONAR »
    Moteur de l'épreuve (palier4-marqueurs.js)
 
-   PRINCIPE (même famille de jeu que le puzzle du Palier 3, mais autre
-   geste) : le sonar a relevé plusieurs ÉCHOS dans la zone. Chaque écho
+   PRINCIPE : le sonar a relevé plusieurs ÉCHOS dans la zone. Chaque écho
    est un MARQUEUR portant un SIGLE (deux lettres) et une POSITION.
    L'équipage doit POSER chaque marqueur sur son emplacement du relevé.
 

@@ -123,9 +123,9 @@
     </div>
   </section>
 
-  <!-- ÉPREUVE : PHOTO DÉFI EN MAGASIN FNAC. -->
+  <!-- ÉPREUVE : CHASSE AUX ARTEFACTS EN MAGASIN FNAC. -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 3 — PHOTO DÉFI</h2>
+    <h2 id="sasUnlockedTitle">PALIER 3 — CHASSE AUX ARTEFACTS</h2>
     <div class="body">
       <div id="puzzleStatut" class="status-banner info">📸 <b>Initialisation du collimateur optique…</b></div>
       <div id="puzzleHost"></div>
@@ -149,55 +149,28 @@
 <!-- Équipage actif en plongée, commun à tous les paliers. -->
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<!-- Moteur de l'épreuve PHOTO DÉFI EN MAGASIN FNAC (Palier 3). -->
-<script src="photo-defi.js?v=4"></script>
+<!-- Moteur de l'épreuve CHASSE AUX ARTEFACTS EN MAGASIN FNAC (Palier 3). -->
+<script src="photo-defi.js?v=5"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
 <script src="victoire-palier.js?v=13"></script>
 <script src="records-palier.js?v=2"></script>
 
 <!-- ================= RÉGLAGES ADMIN (Palier 3) =================
-     PUZZLE_IMAGE  : la photo du lieu où se cache le QR du Palier 4.
-                     Place ta photo dans assets/ (même nom de fichier,
-                     même format .jpg) ou change ce chemin.
-                     ⚠️ Le puzzle est un HUBLOT ROND : la photo est
-                     centrée et remplie le cercle (les bords gauche et
-                     droite sont rognés si elle est plus large que
-                     haute). Cadre donc le sujet au centre.
-     PUZZLE_GRILLE : DENSITÉ du puzzle (difficulté). Nombre d'éclats
-                     obtenu :  6 → 37   |   7 → 55   |   8 → 61
-                                9 → 85   |  10 → 97
-                     (valeur actuelle : très corsé, on ne voit rien
-                     avant d'avoir remonté une bonne partie du hublot.)
-     PUZZLE_CADRAGE_X / Y : partie de la photo gardée dans le hublot
-                     rond (0 → 1), pour cadrer le sujet au centre.
-     LIEU_DESCRIPTION : le lieu affiché à l'écran de victoire, une fois
-                     la photo reconstituée (et l'indication du sas). -->
+     Configuration du Palier 3 : Chasse aux artefacts en magasin Fnac.
+     LIEU_DESCRIPTION : indication de la zone suivante (Palier 4). -->
 <script>
-const PUZZLE_IMAGE = 'assets/palier3-lieu.jpg';
-const PUZZLE_GRILLE = 8;                       /* 8 → 51 éclats ronds */
-const NB_PIECES = window.NautilusPuzzle
-  ? window.NautilusPuzzle.compterPieces(PUZZLE_GRILLE)
-  : 51;
-/* CADRAGE du hublot (photo paysage rognée en cercle) :
-   0 = bord gauche/haut · 0.5 = centré · 1 = bord droit/bas.
-   Passe à 1 si le sujet est sur la droite de la photo, 0 s'il est à
-   gauche, 0.75 / 0.25 pour un cadrage intermédiaire. */
-const PUZZLE_CADRAGE_X = 0.5;
-const PUZZLE_CADRAGE_Y = 0.5;
 const LIEU_DESCRIPTION = "…… (en attente d’indication par l’admin)";
 const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
 const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 </script>
 
 <script>
-/* ================= ÉPREUVE DU PALIER 3 — « PUZZLE CIRCULAIRE DU LIEU » =================
-   Le sonar a fragmenté la photo de la prochaine zone : reconstituer l'image
-   pour découvrir OÙ chercher le QR Code. La photo est enfermée dans un
-   HUBLOT ROND et découpée en une soixantaine d'ÉCLATS RONDS mélangés —
-   impossible de la lire d'un coup d'œil tant qu'elle n'est pas remontée.
-   Un éclat bien posé se verrouille ; un éclat mal posé revient (sans
-   pénalité). « 🔎 Révéler un éclat » coûte 1 erreur :
-   3 erreurs = remontée PERSONNELLE (matelot-blocages.js, règle globale).
+/* ================= ÉPREUVE DU PALIER 3 — « CHASSE AUX ARTEFACTS » =================
+   Durant l’immersion secrète du Nautilus au sein des coursives de la Fnac,
+   5 artefacts précis ont été disséminés dans les rayons. L’équipage dispose
+   de 3 minutes chrono pour identifier et capturer au collimateur optique
+   chaque artefact. La victoire inscrit « son » dans completedSteps et lève
+   les blocages personnels actifs. */
    Joueur SANS Code Matelot : repli local anonyme. La victoire inscrit
    « son » dans completedSteps et lève les blocages personnels actifs. */
 (function () {
@@ -429,13 +402,12 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
     window.NautilusVictoire.afficher(host, {
       palier: 3,
-      mission: 'Le Puzzle Circulaire du Sonar',
+      mission: 'Chasse aux artefacts',
       equipe: equipe,
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [
         { valeur: mm + ':' + ss, label: 'Temps utilisé' },
-        { valeur: NB_PIECES + '/' + NB_PIECES, label: 'Éclats placés' },
-        { valeur: String(nbErreurs), label: nbErreurs > 1 ? 'Révélations' : 'Révélation' }
+        { valeur: '5/5', label: 'Artefacts capturés' }
       ],
       indication: LIEU_DESCRIPTION,
       labelSuivant: 'Palier 4',
@@ -458,8 +430,8 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     partieEnCours = false;
     var duree = res && res.duree ? res.duree : 0;
     afficherJournalDeBord(false);
-    statut('🏆 <b>Palier 3 franchi !</b> Les 5 cibles ont été identifiées dans les rayons de la Fnac.', 'success');
-    acte('valide les 5 défis photo en magasin' + (duree ? ' en ' + duree + ' s' : ''), 'success');
+    statut('🏆 <b>Palier 3 franchi !</b> Les 5 artefacts ont été identifiés dans les rayons de la Fnac.', 'success');
+    acte('valide les 5 artefacts de la chasse en magasin' + (duree ? ' en ' + duree + ' s' : ''), 'success');
     propagerVictoire();
     afficherEcranVictoire();
   }
@@ -493,7 +465,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     afficherVueEpreuve();
     t0Partie = Date.now();
     partieEnCours = true;
-    statut('📸 <b>Viseur optique activé.</b> 3 minutes chrono pour capturer vos 5 cibles en rayon Fnac !', 'info');
+    statut('📸 <b>Viseur optique activé.</b> 3 minutes chrono pour capturer vos 5 artefacts en rayon Fnac !', 'info');
 
     var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
 
@@ -552,11 +524,11 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============ */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "<b>Capitaine Nemo :</b><br>« Bienvenue à bord, matelot. Durant l’immersion secrète du Nautilus au sein des coursives de la Fnac, certains objets ont été laissés sur place. Votre équipe est chargée de photographier 5 cibles précises. »",
+    intro: "<b>Capitaine Nemo :</b><br>« Bienvenue à bord, matelot. Durant l’immersion secrète du Nautilus au sein des coursives de la Fnac, des reliques ont été disséminées. Votre équipe est lancée dans une chasse aux artefacts : retrouvez et capturez au collimateur 5 cibles précises. »",
     consignes: [
-      { ico: '⏱️', warn: true, html: "<b>3 minutes chrono</b> pour photographier les objets dans le magasin." },
-      { ico: '🎯', html: "<b>5 cibles uniques par équipe</b> — révélées une à une." },
-      { ico: '📸', html: "<b>Visée en direct uniquement</b> : utilisez le viseur optique (zoom, macro et torche disponibles) — aucun import autorisé." },
+      { ico: '⏱️', warn: true, html: "<b>3 minutes chrono</b> pour la chasse aux artefacts dans le magasin." },
+      { ico: '🎯', html: "<b>5 artefacts uniques par équipe</b> — révélés un à un." },
+      { ico: '📸', html: "<b>Visée en direct uniquement</b> : utilisez le viseur optique (zoom, macro / gros plan et torche disponibles) — aucun import autorisé." },
       { ico: '🔄', html: "<b>1 seul changement de cible</b> autorisé en cas de difficulté." },
       { ico: '🚨', warn: true, html: "<b>Remontée immédiate en surface</b> en cas d’abandon, de sortie du mini-jeu ou de temps écoulé !" }
     ],

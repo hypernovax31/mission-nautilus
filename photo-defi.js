@@ -1174,6 +1174,9 @@
     var videoTrack = null;
     var zoomNiveau = 1;
     var macroActive = false;
+    var estMacroOptique = false;
+    var cameraDeviceIdDefaut = null;
+    var cameraDeviceIdMacro = null;
     var torcheActive = false;
     var audioCtx = null;
 
@@ -1234,7 +1237,7 @@
       + '  </div>'
 
       + '  <div class="photo-defi-card" id="photoDefiCard">'
-      + '    <div class="photo-defi-kicker">CIBLE ACTUELLE — ÉCHANTILLON <span id="defiNum">1</span>/5</div>'
+      + '    <div class="photo-defi-kicker">CIBLE ACTUELLE — ARTEFACT <span id="defiNum">1</span>/5</div>'
       + '    <h3 class="photo-defi-title" id="defiTitle">Chargement…</h3>'
       + '  </div>'
 
@@ -1262,15 +1265,15 @@
       + '    <div class="photo-tools-bar">'
       + '      <button type="button" class="photo-tool-btn is-cam-btn" id="btnCamToggle" title="Activer / réactiver la caméra">📸 Caméra</button>'
       + '      <button type="button" class="photo-tool-btn" id="btnZoom" title="Changer le grossissement">🔍 1×</button>'
-      + '      <button type="button" class="photo-tool-btn" id="btnMacro" title="Activer le mode macro">🔬 Macro : OFF</button>'
+      + '      <button type="button" class="photo-tool-btn" id="btnMacro" title="Activer l’objectif macro ou le gros plan net">🔬 Macro : OFF</button>'
       + '      <button type="button" class="photo-tool-btn" id="btnTorche" title="Activer la torche">⚡ Flash : OFF</button>'
       + '    </div>'
       + '    <button type="button" class="photo-trigger-btn" id="btnTrigger">'
-      + '      <span class="trigger-core">📸 ANALYSER L’ÉCHANTILLON</span>'
+      + '      <span class="trigger-core">📸 CAPTURER L’ARTEFACT</span>'
       + '    </button>'
       + '  </div>'
 
-      + '  <div class="photo-feedback" id="photoFeedback" role="status">Cadrez l’article au centre du collimateur et appuyez sur Analyser.</div>'
+      + '  <div class="photo-feedback" id="photoFeedback" role="status">Cadrez l’artefact au centre du collimateur et appuyez sur Capturer.</div>'
 
       + '  <div class="photo-emergency-sec">'
       + '    <button type="button" class="photo-btn-emergency" id="btnUrgence">'
@@ -1331,12 +1334,13 @@
         videoEl.srcObject = videoStream;
         await videoEl.play();
         videoTrack = videoStream.getVideoTracks()[0];
+        await identifierCapteurs();
         if (camOverlayEl) camOverlayEl.hidden = true;
         if (btnCamToggle) {
           btnCamToggle.textContent = '📸 Caméra : ON';
           btnCamToggle.classList.add('is-active');
         }
-        feedbackEl.innerHTML = 'Cadrez l’article au centre du collimateur et appuyez sur Analyser.';
+        feedbackEl.innerHTML = 'Cadrez l’artefact au centre du collimateur et appuyez sur Capturer.';
         feedbackEl.className = 'photo-feedback';
       } catch (err) {
         if (camOverlayEl) camOverlayEl.hidden = false;
@@ -1381,25 +1385,169 @@
           await videoTrack.applyConstraints({ advanced: [{ zoom: zoomNiveau }] });
         } catch (e) {}
       }
-      videoEl.style.transform = 'scale(' + zoomNiveau + ')';
+      if (!macroActive || estMacroOptique) {
+        videoEl.style.transform = zoomNiveau > 1 ? 'scale(' + zoomNiveau + ')' : '';
+      }
     });
+
+    async function identifierCapteurs() {
+      cameraDeviceIdMacro = null;
+      estMacroOptique = false;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+      try {
+        var devices = await navigator.mediaDevices.enumerateDevices();
+        var videoInputs = devices.filter(function (d) { return d.kind === 'videoinput'; });
+        if (videoTrack && videoTrack.getSettings) {
+          var s = videoTrack.getSettings();
+          if (s && s.deviceId) cameraDeviceIdDefaut = s.deviceId;
+        }
+        var macroDev = videoInputs.find(function (d) {
+          var lbl = (d.label || '').toLowerCase();
+          return lbl.indexOf('macro') >= 0 ||
+                 lbl.indexOf('ultra wide') >= 0 ||
+                 lbl.indexOf('ultrawide') >= 0 ||
+                 lbl.indexOf('grand angle') >= 0 ||
+                 lbl.indexOf('0.5') >= 0 ||
+                 /(back|rear).*([2-4]|macro)/i.test(lbl);
+        });
+        if (macroDev && macroDev.deviceId && macroDev.deviceId !== cameraDeviceIdDefaut) {
+          cameraDeviceIdMacro = macroDev.deviceId;
+        }
+      } catch (e) {}
+      majLibelleBoutonMacro();
+    }
+
+    function testerSupportFocusMacro(track) {
+      if (!track || !track.getCapabilities) return null;
+      try {
+        var caps = track.getCapabilities();
+        if (caps.focusDistance && typeof caps.focusDistance.min === 'number') {
+          return { type: 'distance', min: caps.focusDistance.min };
+        }
+        if (caps.focusMode && Array.isArray(caps.focusMode) && caps.focusMode.indexOf('macro') >= 0) {
+          return { type: 'mode' };
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function aMacroMateriel() {
+      return !!cameraDeviceIdMacro || !!testerSupportFocusMacro(videoTrack);
+    }
+
+    function majLibelleBoutonMacro() {
+      if (!btnMacro) return;
+      var dispo = aMacroMateriel();
+      if (macroActive) {
+        btnMacro.textContent = dispo ? '🔬 Macro : ACTIVE' : '🔬 Gros plan : ACTIF';
+        btnMacro.classList.add('is-active');
+      } else {
+        btnMacro.textContent = dispo ? '🔬 Macro : OFF' : '🔬 Gros plan : OFF';
+        btnMacro.classList.remove('is-active');
+      }
+      btnMacro.title = dispo
+        ? 'Forcer l’objectif macro de l’appareil'
+        : 'Mode Gros plan net (télé-macro numérique) : agrandit et isole le centre';
+    }
 
     btnMacro.addEventListener('click', async function () {
       macroActive = !macroActive;
-      btnMacro.textContent = macroActive ? '🔬 Macro : ACTIVE' : '🔬 Macro : OFF';
       btnMacro.classList.toggle('is-active', macroActive);
       reticleCenterEl.classList.toggle('is-macro', macroActive);
 
-      if (videoTrack && videoTrack.applyConstraints) {
-        try {
-          await videoTrack.applyConstraints({
-            advanced: [{ focusMode: macroActive ? 'macro' : 'continuous' }]
-          });
-        } catch (e) {}
+      if (macroActive) {
+        var optiqueOk = false;
+        var focusCaps = testerSupportFocusMacro(videoTrack);
+
+        // 1. Essai de forcer la mise au point macro matérielle si supportée
+        if (focusCaps) {
+          try {
+            if (focusCaps.type === 'distance') {
+              await videoTrack.applyConstraints({
+                advanced: [{ focusMode: 'manual', focusDistance: focusCaps.min }]
+              });
+              optiqueOk = true;
+            } else if (focusCaps.type === 'mode') {
+              await videoTrack.applyConstraints({
+                advanced: [{ focusMode: 'macro' }]
+              });
+              optiqueOk = true;
+            }
+          } catch (e) {}
+        }
+
+        // 2. Si pas de focus macro direct, essai de basculer sur le capteur physique macro / ultra-wide
+        if (!optiqueOk && cameraDeviceIdMacro && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          try {
+            var streamMacro = await navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId: { exact: cameraDeviceIdMacro },
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+              },
+              audio: false
+            });
+            if (videoStream) {
+              videoStream.getTracks().forEach(function (t) { try { t.stop(); } catch (_) {} });
+            }
+            videoStream = streamMacro;
+            videoEl.srcObject = videoStream;
+            await videoEl.play();
+            videoTrack = videoStream.getVideoTracks()[0];
+            optiqueOk = true;
+          } catch (e) {}
+        }
+
+        estMacroOptique = optiqueOk;
+
+        if (estMacroOptique) {
+          btnMacro.textContent = '🔬 Macro : ACTIVE';
+          feedbackEl.innerHTML = '🔬 <b>Objectif Macro optique enclenché</b> : approchez le capteur pour capturer les détails nets.';
+          feedbackEl.className = 'photo-feedback is-analyzing';
+        } else {
+          // 3. Meilleure utilité de repli : GROS PLAN NET / TÉLÉ-MACRO NUMÉRIQUE
+          // Agrandit le centre à 2.2x pour que le joueur puisse rester à distance de netteté (~15 cm)
+          // sans projeter d'ombre avec son téléphone et sans flou de mise au point trop proche.
+          btnMacro.textContent = '🔬 Gros plan : ACTIF';
+          videoEl.style.transform = 'scale(2.2)';
+          feedbackEl.innerHTML = '🔬 <b>Gros plan net actif</b> : restez à ~15 cm de l’objet pour une netteté maximale (évite le flou trop proche).';
+          feedbackEl.className = 'photo-feedback is-analyzing';
+        }
+      } else {
+        // Désactivation du mode macro / gros plan
+        if (estMacroOptique) {
+          if (cameraDeviceIdDefaut && cameraDeviceIdMacro && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+              var streamDefaut = await navigator.mediaDevices.getUserMedia({
+                video: {
+                  deviceId: { exact: cameraDeviceIdDefaut },
+                  width: { ideal: 1280 },
+                  height: { ideal: 720 }
+                },
+                audio: false
+              });
+              if (videoStream) {
+                videoStream.getTracks().forEach(function (t) { try { t.stop(); } catch (_) {} });
+              }
+              videoStream = streamDefaut;
+              videoEl.srcObject = videoStream;
+              await videoEl.play();
+              videoTrack = videoStream.getVideoTracks()[0];
+            } catch (e) {}
+          } else if (videoTrack && videoTrack.applyConstraints) {
+            try {
+              await videoTrack.applyConstraints({
+                advanced: [{ focusMode: 'continuous' }]
+              });
+            } catch (e) {}
+          }
+        }
+        estMacroOptique = false;
+        videoEl.style.transform = zoomNiveau > 1 ? 'scale(' + zoomNiveau + ')' : '';
+        majLibelleBoutonMacro();
+        feedbackEl.innerHTML = 'Cadrez l’artefact au centre du collimateur et appuyez sur Capturer.';
+        feedbackEl.className = 'photo-feedback';
       }
-      feedbackEl.textContent = macroActive
-        ? '🔬 Mode Macro activé : rapprochez-vous pour lire les textes ou étiquettes.'
-        : '🔬 Mode Macro désactivé.';
     });
 
     btnTorche.addEventListener('click', async function () {
@@ -1468,7 +1616,19 @@
       canvasEl.width = w;
       canvasEl.height = h;
       var ctx = canvasEl.getContext('2d');
-      ctx.drawImage(videoEl, 0, 0, w, h);
+
+      // Si le mode gros plan ou le zoom numérique est actif, on extrait
+      // la région centrale cadrée dans le collimateur au lieu de tout le cadre magasin
+      var facteurZoom = (macroActive && !estMacroOptique) ? 2.2 : (zoomNiveau > 1 ? zoomNiveau : 1);
+      if (facteurZoom > 1) {
+        var cropW = w / facteurZoom;
+        var cropH = h / facteurZoom;
+        var cropX = (w - cropW) / 2;
+        var cropY = (h - cropH) / 2;
+        ctx.drawImage(videoEl, cropX, cropY, cropW, cropH, 0, 0, w, h);
+      } else {
+        ctx.drawImage(videoEl, 0, 0, w, h);
+      }
 
       var imgData = ctx.getImageData(0, 0, w, h);
       var currentDefi = serieDefis[indexDefi];

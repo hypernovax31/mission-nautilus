@@ -378,7 +378,7 @@
 
   function htmlToutesReponses(){
     return ''
-    + '<p class="small" style="margin-bottom:10px">Bonnes réponses attendues par palier pour chaque équipage (P1 mot de passe, P2 mots croisés, P3 photo-défi).</p>'
+    + '<p class="small" style="margin-bottom:10px">Bonnes réponses attendues par palier pour chaque équipage (P1 mot de passe, P2 mots croisés, P3 chasse aux artefacts).</p>'
     + '<div id="afTeamCards" class="adm-af-cards teamlist" style="display:flex;flex-direction:column;gap:12px;padding:4px 0 8px">'
     +   EQUIPES.map(function(eq){
           var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
@@ -757,7 +757,7 @@
     var a = $('afMagAjouter'); if (a) a.addEventListener('click', ajouterOuMaj);
     var cl = $('afMagVider'); if (cl) cl.addEventListener('click', viderForm);
 
-    // Réponses des deux premiers paliers ; le troisième est un puzzle photo.
+    // Réponses des deux premiers paliers ; le troisième est une chasse aux artefacts.
   }
 
   // ===================== MAGASINS =====================
