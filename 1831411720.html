@@ -169,7 +169,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
    5 artefacts précis ont été disséminés dans les rayons. L’équipage dispose
    de 3 minutes chrono pour identifier et capturer au collimateur optique
    chaque artefact. La victoire inscrit « son » dans completedSteps et lève
-   les blocages personnels actifs. */
+   les blocages personnels actifs.
    Joueur SANS Code Matelot : repli local anonyme. La victoire inscrit
    « son » dans completedSteps et lève les blocages personnels actifs. */
 (function () {
@@ -451,6 +451,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       if (ident && !ident.isTest) {
         var bloc = await window.NautilusBlocages.blocageActif(ident);
         if (bloc) {
+          lance = false;
           afficherBlocage(bloc.lockedUntil, ident.name, bloc.reason);
           journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
             + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
@@ -458,7 +459,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
         }
       } else if (!ident) {
         var jusqua = blocageAnonymeJusqua();
-        if (jusqua > Date.now()) { afficherBlocage(jusqua, null, 'anonyme'); return; }
+        if (jusqua > Date.now()) { lance = false; afficherBlocage(jusqua, null, 'anonyme'); return; }
       }
     }
     afficherVueEpreuve();
