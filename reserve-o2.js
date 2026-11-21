@@ -369,9 +369,34 @@
     }
   }
 
+  /* ===== GESTION DE LA VISIBILITÉ DE L'ÉCRAN & ANIMATIONS =====
+     Les bulles de la jauge d'O₂ ne s'animent que quand l'écran est visible.
+     Si le joueur masque l'onglet ou passe hors champ, les animations sont
+     mises en pause pour économiser la batterie. */
+  function gererVisibiliteAnimations() {
+    function majVisibiliteDoc() {
+      document.body.classList.toggle('page-hidden', document.hidden);
+    }
+    document.addEventListener('visibilitychange', majVisibiliteDoc);
+    majVisibiliteDoc();
+
+    if (typeof IntersectionObserver === 'function') {
+      var bar = document.getElementById('o2Bar');
+      if (bar) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            bar.classList.toggle('offscreen', !en.isIntersecting);
+          });
+        }, { rootMargin: '40px 0px' });
+        io.observe(bar);
+      }
+    }
+  }
+
   /* ===== BOOT ===== */
   function boot() {
     injecterHtml();
+    gererVisibiliteAnimations();
     /* Affichage IMMÉDIAT depuis la mémoire, avant toute lecture réseau. */
     _o2Config = configDepuisMemoire();
     if (_o2Config) majReserveO2();

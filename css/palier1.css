@@ -653,19 +653,50 @@
       box-shadow:0 0 12px rgba(142,231,255,.45),inset 0 0 10px rgba(255,255,255,.22);
       transition:width .6s ease,background .6s ease}
     .o2-fill::before{
-      content:"";position:absolute;top:0;bottom:0;left:-140px;right:0;
+      content:"";position:absolute;top:0;bottom:0;left:-160px;right:0;
       background:
-        radial-gradient(circle at 20% 45%,rgba(255,255,255,.5) 0 1.5px,rgba(142,231,255,.2) 3px,transparent 4px),
-        radial-gradient(circle at 55% 55%,rgba(255,255,255,.45) 0 2px,rgba(142,231,255,.18) 3.5px,transparent 4.5px),
-        radial-gradient(circle at 85% 40%,rgba(255,255,255,.5) 0 1.5px,rgba(142,231,255,.2) 3px,transparent 4px);
-      background-size:140px 100%;
-      animation:bubblesMove 10s linear infinite;
-      opacity:.38;
+        radial-gradient(circle at 18% 42%,rgba(255,255,255,.9) 0 1.5px,rgba(142,231,255,.45) 2.8px,transparent 4.5px),
+        radial-gradient(circle at 45% 62%,rgba(255,255,255,.8) 0 2px,rgba(142,231,255,.38) 3.5px,transparent 5px),
+        radial-gradient(circle at 72% 38%,rgba(255,255,255,.85) 0 1.8px,rgba(142,231,255,.4) 3.2px,transparent 4.8px),
+        radial-gradient(circle at 90% 55%,rgba(255,255,255,.75) 0 1.2px,rgba(142,231,255,.3) 2.4px,transparent 3.8px);
+      background-size:160px 100%;
+      animation:bubblesMove 12s linear infinite;
+      opacity:.65;
       will-change:transform;
       pointer-events:none;
     }
-    @keyframes bubblesMove{0%{transform:translateX(0) translateY(0)}50%{transform:translateX(70px) translateY(-1px)}100%{transform:translateX(140px) translateY(0)}}
-    @media(prefers-reduced-motion:reduce){.o2-fill::before{animation:none}}
+    .o2-fill::after{
+      content:"";position:absolute;top:0;bottom:0;left:-220px;right:0;
+      background:
+        radial-gradient(circle at 15% 58%,rgba(255,255,255,.75) 0 1.2px,rgba(142,231,255,.32) 2.5px,transparent 3.8px),
+        radial-gradient(circle at 55% 32%,rgba(255,255,255,.85) 0 2px,rgba(142,231,255,.38) 3.5px,transparent 5px),
+        radial-gradient(circle at 82% 48%,rgba(255,255,255,.7) 0 1.5px,rgba(142,231,255,.28) 3px,transparent 4.2px);
+      background-size:220px 100%;
+      animation:bubblesCross 18s linear infinite;
+      opacity:.5;
+      will-change:transform;
+      pointer-events:none;
+    }
+    @keyframes bubblesMove{
+      0%{transform:translateX(0) translateY(0)}
+      25%{transform:translateX(40px) translateY(-1.2px)}
+      50%{transform:translateX(80px) translateY(0.5px)}
+      75%{transform:translateX(120px) translateY(-0.8px)}
+      100%{transform:translateX(160px) translateY(0)}
+    }
+    @keyframes bubblesCross{
+      0%{transform:translateX(0) translateY(0)}
+      33%{transform:translateX(73px) translateY(1px)}
+      66%{transform:translateX(146px) translateY(-1px)}
+      100%{transform:translateX(220px) translateY(0)}
+    }
+    body.page-hidden .o2-fill::before,
+    body.page-hidden .o2-fill::after,
+    .o2-bar.offscreen .o2-fill::before,
+    .o2-bar.offscreen .o2-fill::after{
+      animation-play-state:paused !important;
+    }
+    @media(prefers-reduced-motion:reduce){.o2-fill::before,.o2-fill::after{animation:none !important}}
     /* Le pourcentage est ECRIT DANS la jauge, centre, avec un lisere noir
        pour rester lisible aussi bien sur le vert que sur le fond sombre. */
     .o2-pct{position:absolute;inset:0;display:flex;align-items:center;
