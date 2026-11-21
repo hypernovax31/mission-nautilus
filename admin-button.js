@@ -63,7 +63,7 @@
     if(!window.NautilusMagasin) loadScript('magasin-fnac.js?v=3', 'scriptMagasinFnac');
     if(!window.FnacLecteur) loadScript('fnac-lecteur.js?v=1', 'scriptFnacLecteur');
     if(!window.NautilusPhotoDefi) loadScript('photo-defi.js?v=4', 'scriptPhotoDefi');
-    if(!window.NautilusAdminArtefact) loadScript('admin-artefact.js?v=28', 'scriptAdminArtefact');
+    if(!window.NautilusAdminArtefact) loadScript('admin-artefact.js?v=29', 'scriptAdminArtefact');
   }
 
 

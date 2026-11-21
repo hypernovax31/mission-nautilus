@@ -377,34 +377,28 @@
   }
 
   function htmlToutesReponses(){
-    // UN SEUL CARD — toutes les équipes regroupées
     return ''
-    + '<div class="adm-af-sec" id="afEquipesSec" style="border:1px solid rgba(142,231,255,0.25);border-radius:12px;padding:12px;margin:0 0 12px;background:rgba(6,24,40,0.92);color:#eaf8ff">'
-    +   '<h4 style="margin:0 0 8px;font-size:13px;color:#8ee7ff;font-weight:900;letter-spacing:.06em;text-transform:uppercase">BONNES RÉPONSES — TOUTES ÉQUIPES</h4>'
-    +   '<div id="afTeamCards" class="adm-af-cards" style="display:flex;flex-direction:column;gap:12px;padding:6px 2px 8px">'
-    +     '<div class="adm-af-teamcard" id="afSingleCard" data-team="ALL" style="border:1px solid rgba(142,231,255,0.3);background:rgba(4,18,32,0.95);border-radius:12px;padding:12px;color:#eaf8ff;box-shadow:0 4px 16px rgba(0,0,0,0.4)">'
-    +       '<div class="adm-af-teamhead" style="font-weight:900;font-size:13px;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span>🔑 RÉPONSES</span><span class="small" id="afGlobalPill" style="color:#9bc4d4;font-weight:600">chargement…</span></div>'
-    +       EQUIPES.map(function(eq){
-            var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
-            return '<div class="adm-af-teamcard" data-team="'+eq+'" style="margin:10px 0 0;padding:12px 14px;background:rgba(4,18,32,0.92);border:1px solid rgba(142,231,255,0.3);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.4);color:#eaf8ff">'
-              + '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#9bc4d4;font-weight:600">…</span></div>'
-              + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eq+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
-              + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2+'</div></div>'
-              + '<div class="adm-af-row" id="afP3-'+eq+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
-              + '</div>';
-          }).join('')
-    +       (function(){
-            var eqT='TEST';
-            var p2t = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eqT+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
-            return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:10px 0 0;padding:12px 14px;background:rgba(245,176,39,0.12);border:1px solid rgba(245,176,39,0.45);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#eaf8ff">'
-              + '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">🧪 zzzz-0000 <span class="small" style="background:rgba(245,176,39,0.25);border:1px solid rgba(245,176,39,0.5);color:#ffd36c;border-radius:999px;padding:2px 7px;font-size:10px">TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#9bc4d4;font-weight:600">test</span></div>'
-              + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eqT+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
-              + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2t+'</div></div>'
-              + '<div class="adm-af-row" id="afP3-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
-              + '</div>';
-          })()
-    +     '</div>'
-    +   '</div>'
+    + '<p class="small" style="margin-bottom:10px">Bonnes réponses attendues par palier pour chaque équipage (P1 mot de passe, P2 mots croisés, P3 photo-défi).</p>'
+    + '<div id="afTeamCards" class="adm-af-cards teamlist" style="display:flex;flex-direction:column;gap:12px;padding:4px 0 8px">'
+    +   EQUIPES.map(function(eq){
+          var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
+          return '<div class="adm-af-teamcard" data-team="'+eq+'" style="margin:0;padding:12px 14px;background:rgba(4,18,32,0.92);border:1px solid rgba(142,231,255,0.3);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.4);color:#eaf8ff">'
+            + '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#9bc4d4;font-weight:600">…</span></div>'
+            + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eq+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
+            + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2+'</div></div>'
+            + '<div class="adm-af-row" id="afP3-'+eq+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
+            + '</div>';
+        }).join('')
+    +   (function(){
+          var eqT='TEST';
+          var p2t = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eqT+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
+          return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:0;padding:12px 14px;background:rgba(245,176,39,0.12);border:1px solid rgba(245,176,39,0.45);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#eaf8ff">'
+            + '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">🧪 zzzz-0000 <span class="small" style="background:rgba(245,176,39,0.25);border:1px solid rgba(245,176,39,0.5);color:#ffd36c;border-radius:999px;padding:2px 7px;font-size:10px">TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#9bc4d4;font-weight:600">test</span></div>'
+            + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eqT+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
+            + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2t+'</div></div>'
+            + '<div class="adm-af-row" id="afP3-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
+            + '</div>';
+        })()
     + '</div>';
   }
   function assurerCarteEquipeDynamique(equipe){
@@ -416,27 +410,21 @@
     // Ne pas dupliquer les 4 fixes déjà créées
     if(EQUIPES.indexOf(equipe)>=0 || equipe==='TEST') return document.getElementById('afP3-'+equipe);
     var host = document.getElementById('afTeamCards');
-    var single = document.getElementById('afSingleCard');
-    var container = single ? single : host;
-    // fallback host
-    var targetHost = host || container;
-    if(!targetHost) return null;
+    if(!host) return null;
     // Construit une carte similaire aux fixes
     var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+equipe+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
     var card = document.createElement('div');
     card.className = 'adm-af-teamcard';
     card.dataset.team = equipe;
-    card.style.cssText = 'margin:10px 0 0;padding:12px 14px;background:rgba(91,255,156,0.1);border:1px solid rgba(91,255,156,0.35);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#eaf8ff';
+    card.style.cssText = 'margin:0;padding:12px 14px;background:rgba(91,255,156,0.1);border:1px solid rgba(91,255,156,0.35);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#eaf8ff';
     card.innerHTML = '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">'+esc(equipe)+' <span class="small" style="background:rgba(91,255,156,0.2);border:1px solid rgba(91,255,156,0.5);color:#7ce6ad;border-radius:999px;padding:2px 7px;font-size:10px">SESSION LIVE</span></span><span class="small" id="afTeamPill-'+equipe+'" style="color:#9bc4d4;font-weight:600">auto</span></div>'
       + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+equipe+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
       + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2+'</div></div>'
       + '<div class="adm-af-row" id="afP3-'+equipe+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>';
     // insère avant la carte TEST si elle existe, sinon à la fin
-    var testCard = targetHost.querySelector('[data-team="TEST"]');
-    if(testCard) targetHost.insertBefore(card, testCard);
-    else targetHost.appendChild(card);
-    // met à jour le compteur global
-    try{ var gp=document.getElementById('afGlobalPill'); if(gp) gp.textContent = (document.querySelectorAll('[data-team]').length-1)+' équipes détectées'; }catch(e){}
+    var testCard = host.querySelector('[data-team="TEST"]');
+    if(testCard) host.insertBefore(card, testCard);
+    else host.appendChild(card);
     return document.getElementById('afP3-'+equipe);
   }
 
@@ -593,23 +581,6 @@
             });
           }).catch(function(){});
         }).catch(function(){});
-      }
-    }catch(e){}
-    // mise à jour du compteur global du card unique
-    try{
-      var gp=$('afGlobalPill');
-      if(gp){
-        var done=0;
-        EQUIPES.forEach(function(eq){
-          var p1e=$('afP1-'+eq);
-          if(p1e && p1e.textContent && p1e.textContent.trim()!=='—' && p1e.textContent.trim()!=='') done++;
-        });
-        var p1test=$('afP1-TEST');
-        var testDone = (p1test && p1test.textContent && p1test.textContent.trim()!=='—' && p1test.textContent.trim()!=='' ) ? 1 : 0;
-        gp.textContent = done + '/' + EQUIPES.length + ' équipes' + (testDone ? ' + test zzzz-0000' : '') + ' renseignées';
-        // ajoute le nombre de sessions live dynamiques si présentes
-        var dyn = document.querySelectorAll('[data-team]:not([data-team="ALL"])').length - EQUIPES.length -1;
-        if(dyn>0) gp.textContent += ' (+'+dyn+' live)';
       }
     }catch(e){}
     try{ ecouterP2Live(); }catch(e){}
