@@ -22,8 +22,16 @@
   var MAX_PERTES_AUTORISEES = 2; // 3 pertes = défaite
   var SEUIL_VICTOIRE_MIN = 8;    // ≥ 80% (8 sur 10)
 
+  var instanceCourante = null;
+
   /* Décodage anti-triche du prix masqué */
-  function decoderPrix(hex, id) {
+  function decoderPrix(hexOrProd, optId) {
+    var hex = hexOrProd;
+    var id = optId;
+    if (hexOrProd && typeof hexOrProd === 'object') {
+      hex = hexOrProd.sec;
+      id = hexOrProd.id;
+    }
     if (!hex || typeof hex !== 'string') return 0;
     var bytes = [];
     for (var i = 0; i < hex.length; i += 2) {
@@ -35,6 +43,21 @@
       out.push(String.fromCharCode(bytes[j] ^ key.charCodeAt(j % key.length)));
     }
     return parseFloat(out.join(''));
+  }
+
+  /* Test d'une proposition avec tolérance ±5% */
+  function testerProposition(p, val) {
+    var vraiPrix = decoderPrix(p);
+    var tolerance = vraiPrix * 0.05;
+    var borneBasse = vraiPrix - tolerance;
+    var borneHaute = vraiPrix + tolerance;
+    if (val >= borneBasse && val <= borneHaute) {
+      return { valide: true, message: "C'est le juste prix !", prixVrai: vraiPrix };
+    }
+    if (val < borneBasse) {
+      return { valide: false, tropBas: true, message: "C'est plus ! 👆", prixVrai: vraiPrix };
+    }
+    return { valide: false, tropHaut: true, message: "C'est moins ! 👇", prixVrai: vraiPrix };
   }
 
   function formaterEuros(val) {
@@ -89,55 +112,63 @@
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      if (type === 'more') {
+      if (type === 'up') {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(320, now);
         osc.frequency.exponentialRampToValueAtTime(640, now + 0.18);
-        gain.gain.setValueAtTime(0.24, now);
-        gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
         osc.start(now);
-        osc.stop(now + 0.2);
-      } else if (type === 'less') {
+        osc.stop(now + 0.24);
+      } else if (type === 'down') {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(640, now);
-        osc.frequency.exponentialRampToValueAtTime(320, now + 0.18);
-        gain.gain.setValueAtTime(0.24, now);
-        gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+        osc.frequency.setValueAtTime(540, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.18);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
         osc.start(now);
-        osc.stop(now + 0.2);
+        osc.stop(now + 0.24);
       } else if (type === 'win') {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(523.25, now);
-        osc.frequency.setValueAtTime(659.25, now + 0.1);
-        osc.frequency.setValueAtTime(783.99, now + 0.2);
-        osc.frequency.setValueAtTime(1046.50, now + 0.3);
-        gain.gain.setValueAtTime(0.28, now);
-        gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+        osc.frequency.setValueAtTime(659.25, now + 0.08);
+        osc.frequency.setValueAtTime(783.99, now + 0.16);
+        osc.frequency.setValueAtTime(1046.50, now + 0.24);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
         osc.start(now);
-        osc.stop(now + 0.5);
+        osc.stop(now + 0.48);
       } else if (type === 'lost') {
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(280, now);
-        osc.frequency.setValueAtTime(160, now + 0.22);
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(90, now + 0.35);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.40);
         osc.start(now);
-        osc.stop(now + 0.3);
+        osc.stop(now + 0.42);
+      } else if (type === 'click') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.start(now);
+        osc.stop(now + 0.05);
       }
     } catch (_) {}
   }
 
   function speak(text) {
     if (!sonEstActif()) return;
-    if ('speechSynthesis' in window) {
-      try {
+    try {
+      if (window.speechSynthesis && typeof window.SpeechSynthesisUtterance !== 'undefined') {
         window.speechSynthesis.cancel();
-        var u = new SpeechSynthesisUtterance(text);
+        var u = new window.SpeechSynthesisUtterance(text);
         u.lang = 'fr-FR';
-        u.rate = 1.12;
+        u.rate = 1.1;
+        u.pitch = 1.0;
         window.speechSynthesis.speak(u);
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
   }
 
   /* Sauvegarde de session mid-game */
@@ -149,27 +180,31 @@
     try {
       if (!etat) {
         sessionStorage.removeItem(cleSession(equipe));
+        sessionStorage.removeItem('nautilusJustePrixSession');
       } else {
-        sessionStorage.setItem(cleSession(equipe), JSON.stringify(etat));
+        var str = JSON.stringify(etat);
+        sessionStorage.setItem(cleSession(equipe), str);
+        sessionStorage.setItem('nautilusJustePrixSession', str);
       }
     } catch (_) {}
   }
 
   function chargerEtat(equipe) {
     try {
-      var brut = sessionStorage.getItem(cleSession(equipe));
+      var brut = sessionStorage.getItem(cleSession(equipe)) || sessionStorage.getItem('nautilusJustePrixSession');
       return brut ? JSON.parse(brut) : null;
     } catch (_) { return null; }
   }
 
   /* Initialisation du moteur de jeu */
   function init(host, options) {
-    if (!host) return;
+    if (!host) return Promise.resolve(null);
     options = options || {};
     var equipeCode = options.equipe || 'NEMO';
     var onVictoire = options.onVictoire || function () {};
     var onEchec = options.onEchec || function () {};
     var onAbandon = options.onAbandon || function () {};
+    var delaiTransitionMs = options.delaiTransitionMs || 1800;
 
     host.innerHTML =
       '<div class="jp-mission">'
@@ -179,72 +214,60 @@
       + '      <span class="jp-hud-val is-gold" id="jpHudIndex">1 / 10</span>'
       + '    </div>'
       + '    <div class="jp-hud-stat">'
-      + '      <span class="jp-hud-label">Trouvés</span>'
-      + '      <span class="jp-hud-val is-success" id="jpHudFound">0 / 10</span>'
-      + '    </div>'
-      + '    <div class="jp-hud-stat">'
-      + '      <span class="jp-hud-label">Objectif</span>'
-      + '      <span class="jp-hud-val">≥ 80% (8)</span>'
+      + '      <span class="jp-hud-label">Succès</span>'
+      + '      <span class="jp-hud-val is-cyan" id="jpHudScore">0</span>'
       + '    </div>'
       + '    <div class="jp-hud-stat">'
       + '      <span class="jp-hud-label">Pertes</span>'
-      + '      <span class="jp-hud-val is-danger" id="jpHudLost">0 / 3 max</span>'
+      + '      <span class="jp-hud-val is-red" id="jpHudPertes">0 / 2 max</span>'
       + '    </div>'
       + '  </div>'
-
-      + '  <div class="jp-card" id="jpCard">'
-      + '    <div class="jp-category-badge" id="jpProdCat">Rayon Fnac</div>'
-      + '    <div class="jp-image-box">'
-      + '      <img src="assets/icon.svg" alt="Produit Fnac" class="jp-image" id="jpProdImg" />'
+      + '  <div class="jp-card">'
+      + '    <div class="jp-badge-ray" id="jpProdCat">Rayon Fnac</div>'
+      + '    <div class="jp-photo-box">'
+      + '      <img class="jp-photo" id="jpProdImg" src="assets/icon.svg" alt="Article Fnac à estimer">'
       + '    </div>'
-      + '    <h3 class="jp-title" id="jpProdTitle">Chargement de l’article…</h3>'
-      + '    <div class="jp-attempts-box">'
-      + '      <span class="jp-attempts-label" id="jpAttemptLabel">Essai 1 sur 3</span>'
-      + '      <div class="jp-dots" id="jpDotsContainer">'
-      + '        <span class="jp-dot is-current" id="jpDot0"></span>'
-      + '        <span class="jp-dot" id="jpDot1"></span>'
-      + '        <span class="jp-dot" id="jpDot2"></span>'
+      + '    <div class="jp-title" id="jpProdTitle">Chargement du produit...</div>'
+      + '    <div class="jp-tries">'
+      + '      <span class="jp-tries-label">Essais restants :</span>'
+      + '      <div class="jp-dots" id="jpDots">'
+      + '        <span class="jp-dot active" title="Essai 1"></span>'
+      + '        <span class="jp-dot active" title="Essai 2"></span>'
+      + '        <span class="jp-dot active" title="Essai 3"></span>'
       + '      </div>'
       + '    </div>'
-      + '    <div class="jp-input-group">'
-      + '      <div class="jp-price-input-row">'
-      + '        <div class="jp-input-wrap">'
-      + '          <input type="number" class="jp-input" id="jpPriceInput" placeholder="0" min="0" max="9999" step="1" inputmode="numeric" aria-label="Prix estimé en euros" />'
-      + '          <span class="jp-input-unit">€</span>'
-      + '        </div>'
-      + '        <button type="button" class="jp-btn-clear" id="jpBtnClear" title="Effacer la saisie">⌫</button>'
-      + '      </div>'
-      + '      <div class="jp-chips-row">'
-      + '        <button type="button" class="jp-chip" data-add="1">+1 €</button>'
-      + '        <button type="button" class="jp-chip" data-add="5">+5 €</button>'
-      + '        <button type="button" class="jp-chip" data-add="10">+10 €</button>'
-      + '        <button type="button" class="jp-chip" data-add="50">+50 €</button>'
-      + '        <button type="button" class="jp-chip" data-add="100">+100 €</button>'
-      + '      </div>'
-      + '      <button type="button" class="jp-submit-btn" id="jpBtnSubmit">'
-      + '        <span>🎯 PROPOSER MON PRIX</span>'
-      + '      </button>'
-      + '    </div>'
-      + '    <div class="jp-feedback is-neutral" id="jpFeedback" role="status">'
+      + '    <div class="jp-feedback is-neutral" id="jpFeedback" role="status" aria-live="polite">'
       + '      Estimez le prix régulier de ce produit Fnac (tolérance de ±5%).'
       + '    </div>'
+      + '    <form class="jp-form" id="jpForm" onsubmit="return false;">'
+      + '      <div class="jp-input-group">'
+      + '        <input class="jp-input" id="jpInputPrix" type="number" step="0.01" min="0" placeholder="Ex: 49.99" inputmode="decimal" autocomplete="off" required>'
+      + '        <span class="jp-currency">€</span>'
+      + '      </div>'
+      + '      <div class="jp-chips" role="group" aria-label="Ajustements rapides du prix">'
+      + '        <button type="button" class="jp-chip" data-add="-50">-50€</button>'
+      + '        <button type="button" class="jp-chip" data-add="-10">-10€</button>'
+      + '        <button type="button" class="jp-chip" data-add="-1">-1€</button>'
+      + '        <button type="button" class="jp-chip" data-add="1">+1€</button>'
+      + '        <button type="button" class="jp-chip" data-add="10">+10€</button>'
+      + '        <button type="button" class="jp-chip" data-add="50">+50€</button>'
+      + '      </div>'
+      + '      <button class="jp-btn-submit" id="jpBtnValider" type="submit">VALIDER LE PRIX ⚓</button>'
+      + '    </form>'
       + '  </div>'
       + '</div>';
 
     var hudIndex = host.querySelector('#jpHudIndex');
-    var hudFound = host.querySelector('#jpHudFound');
-    var hudLost = host.querySelector('#jpHudLost');
+    var hudScore = host.querySelector('#jpHudScore');
+    var hudPertes = host.querySelector('#jpHudPertes');
     var prodCat = host.querySelector('#jpProdCat');
     var prodImg = host.querySelector('#jpProdImg');
     var prodTitle = host.querySelector('#jpProdTitle');
-    var attemptLabel = host.querySelector('#jpAttemptLabel');
-    var dot0 = host.querySelector('#jpDot0');
-    var dot1 = host.querySelector('#jpDot1');
-    var dot2 = host.querySelector('#jpDot2');
-    var priceInput = host.querySelector('#jpPriceInput');
-    var btnClear = host.querySelector('#jpBtnClear');
-    var btnSubmit = host.querySelector('#jpBtnSubmit');
+    var dotsContainer = host.querySelector('#jpDots');
     var feedbackBox = host.querySelector('#jpFeedback');
+    var form = host.querySelector('#jpForm');
+    var priceInput = host.querySelector('#jpInputPrix');
+    var btnSubmit = host.querySelector('#jpBtnValider');
 
     var catalogueComplet = [];
     var serieProduits = [];
@@ -252,36 +275,25 @@
     var essaiCourant = 0;
     var produitsTrouves = 0;
     var produitsPerdus = 0;
+    var t0Partie = null;
     var verrouTransition = false;
-    var t0Partie = Date.now();
 
     function majHUD() {
-      if (hudIndex) hudIndex.textContent = (indexProduit + 1) + ' / ' + NB_PRODUITS_PARTIE;
-      if (hudFound) hudFound.textContent = produitsTrouves + ' / ' + NB_PRODUITS_PARTIE;
-      if (hudLost) hudLost.textContent = produitsPerdus + ' / 3 max';
+      if (hudIndex) hudIndex.textContent = (Math.min(indexProduit + 1, NB_PRODUITS_PARTIE)) + ' / ' + NB_PRODUITS_PARTIE;
+      if (hudScore) hudScore.textContent = String(produitsTrouves);
+      if (hudPertes) hudPertes.textContent = produitsPerdus + ' / ' + MAX_PERTES_AUTORISEES + ' max';
     }
 
     function majPointsEssais() {
-      if (attemptLabel) attemptLabel.textContent = 'Essai ' + (essaiCourant + 1) + ' sur ' + ESSAIS_PAR_PRODUIT;
-      var dots = [dot0, dot1, dot2];
-      for (var i = 0; i < 3; i++) {
-        if (dots[i]) {
-          dots[i].className = 'jp-dot'
-            + (i < essaiCourant ? ' is-used' : '')
-            + (i === essaiCourant ? ' is-current' : '');
+      if (!dotsContainer) return;
+      var restants = Math.max(0, ESSAIS_PAR_PRODUIT - essaiCourant);
+      var dots = dotsContainer.querySelectorAll('.jp-dot');
+      dots.forEach(function (d, idx) {
+        if (idx < restants) {
+          d.className = 'jp-dot active';
+        } else {
+          d.className = 'jp-dot used';
         }
-      }
-    }
-
-    function enregistrerEtatCourant() {
-      var ids = serieProduits.map(function (p) { return p.id; });
-      sauverEtat(equipeCode, {
-        ids: ids,
-        indexProduit: indexProduit,
-        produitsTrouves: produitsTrouves,
-        produitsPerdus: produitsPerdus,
-        essaiCourant: essaiCourant,
-        t0Partie: t0Partie
       });
     }
 
@@ -318,6 +330,19 @@
       enregistrerEtatCourant();
     }
 
+    function enregistrerEtatCourant() {
+      sauverEtat(equipeCode, {
+        ids: serieProduits.map(function (p) { return p.id; }),
+        indexProduit: indexProduit,
+        indexCourant: indexProduit,
+        produitsTrouves: produitsTrouves,
+        score: produitsTrouves,
+        produitsPerdus: produitsPerdus,
+        essaiCourant: essaiCourant,
+        t0Partie: t0Partie
+      });
+    }
+
     function conclurePartie() {
       sauverEtat(equipeCode, null); // Partie terminée
       var dureeSec = Math.max(0, Math.round((Date.now() - t0Partie) / 1000));
@@ -330,12 +355,15 @@
         // Au moins 8 sur 10 -> victoire
         playTone('win');
         onVictoire({
-          duree: dureeSec,
-          score: produitsTrouves + '/' + NB_PRODUITS_PARTIE,
-          trouves: produitsTrouves
+          reussite: true,
+          articlesTrouves: produitsTrouves,
+          articlesTotal: serieProduits.length,
+          score: produitsTrouves + ' / ' + serieProduits.length,
+          pourcentage: Math.round((produitsTrouves / serieProduits.length) * 100),
+          duree: dureeSec
         });
       } else {
-        // Moins de 8 trouvés
+        // N'a pas atteint les 80%
         playTone('lost');
         onEchec('erreurs');
       }
@@ -356,7 +384,7 @@
       var p = serieProduits[indexProduit];
       if (!p) return;
 
-      var vraiPrix = decoderPrix(p.sec, p.id);
+      var vraiPrix = decoderPrix(p);
       var tolerance = vraiPrix * 0.05;
       var borneBasse = vraiPrix - tolerance;
       var borneHaute = vraiPrix + tolerance;
@@ -379,32 +407,26 @@
         setTimeout(function () {
           indexProduit++;
           essaiCourant = 0;
-          if (indexProduit < serieProduits.length && produitsPerdus <= MAX_PERTES_AUTORISEES) {
-            afficherProduit();
-          } else {
+          if (indexProduit >= serieProduits.length) {
             conclurePartie();
+          } else {
+            afficherProduit();
           }
-        }, 1800);
-
+        }, delaiTransitionMs);
       } else {
         // Erreur
         essaiCourant++;
         majPointsEssais();
 
-        if (val < borneBasse) {
-          playTone('more');
-          speak("C'est plus !");
-          if (feedbackBox) {
-            feedbackBox.className = 'jp-feedback is-more';
-            feedbackBox.innerHTML = '👆 <b>C’est plus !</b> (' + formaterEuros(val) + ' est trop bas)';
-          }
-        } else {
-          playTone('less');
-          speak("C'est moins !");
-          if (feedbackBox) {
-            feedbackBox.className = 'jp-feedback is-less';
-            feedbackBox.innerHTML = '👇 <b>C’est moins !</b> (' + formaterEuros(val) + ' est trop élevé)';
-          }
+        var estMoins = val > borneHaute;
+        playTone(estMoins ? 'down' : 'up');
+        speak(estMoins ? "C'est moins !" : "C'est plus !");
+
+        if (feedbackBox) {
+          feedbackBox.className = 'jp-feedback ' + (estMoins ? 'is-down' : 'is-up');
+          feedbackBox.innerHTML = estMoins
+            ? '👇 <b>C’est moins !</b> Votre estimation (' + formaterEuros(val) + ') est trop haute.'
+            : '👆 <b>C’est plus !</b> Votre estimation (' + formaterEuros(val) + ') est trop basse.';
         }
 
         if (essaiCourant >= ESSAIS_PAR_PRODUIT) {
@@ -429,10 +451,10 @@
             } else {
               afficherProduit();
             }
-          }, 2200);
+          }, delaiTransitionMs);
         } else {
           enregistrerEtatCourant();
-          priceInput.select();
+          if (priceInput && priceInput.select) priceInput.select();
         }
       }
     }
@@ -441,46 +463,62 @@
     host.querySelectorAll('.jp-chip').forEach(function (btn) {
       btn.addEventListener('click', function () {
         if (verrouTransition) return;
-        var add = parseFloat(this.dataset.add || '0');
+        var add = parseFloat(btn.dataset.add || '0');
         var cur = parseFloat(priceInput.value || '0');
         if (isNaN(cur)) cur = 0;
-        priceInput.value = Math.max(0, Math.round(cur + add));
+        var next = Math.max(0, cur + add);
+        priceInput.value = next.toFixed(2);
+        playTone('click');
         priceInput.focus();
       });
     });
 
-    if (btnClear) {
-      btnClear.addEventListener('click', function () {
-        if (verrouTransition) return;
-        priceInput.value = '';
-        priceInput.focus();
-      });
-    }
-
     if (btnSubmit) {
-      btnSubmit.addEventListener('click', evaluerPrix);
-    }
-
-    if (priceInput) {
-      priceInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          evaluerPrix();
-        }
+      btnSubmit.addEventListener('click', function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        evaluerPrix();
       });
     }
 
-    // Chargement du catalogue et reprise / démarrage
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        evaluerPrix();
+      });
+    }
+
+    var instance = {
+      arreter: function () {
+        sauverEtat(equipeCode, null);
+      },
+      getEtat: function () {
+        return {
+          score: produitsTrouves,
+          produitsPerdus: produitsPerdus,
+          indexCourant: indexProduit,
+          essaisRestants: Math.max(0, ESSAIS_PAR_PRODUIT - essaiCourant),
+          total: serieProduits ? serieProduits.length : NB_PRODUITS_PARTIE
+        };
+      },
+      getProduitCourant: function () {
+        return (serieProduits && serieProduits[indexProduit]) || null;
+      },
+      getEssaisRestants: function () {
+        return Math.max(0, ESSAIS_PAR_PRODUIT - essaiCourant);
+      }
+    };
+    instanceCourante = instance;
+
     function demarrerAvecCatalogue(catalogue) {
       if (!Array.isArray(catalogue) || catalogue.length === 0) {
         host.innerHTML =
-          '<div class="status-banner warning" style="margin:20px 0;padding:16px;">'
-          + '⚠️ <b>Catalogue indisponible.</b> La liste des produits du Juste Prix est vide ou n’a pas pu être chargée.<br><br>'
-          + '<button type="button" class="btn" id="btnJpRetry" style="padding:10px 18px;border-radius:10px;background:var(--fnac,#f5b027);color:#111;font-weight:900;cursor:pointer;">🔄 Réessayer le chargement</button>'
+          '<div class="status-banner warning jp-vide" style="margin:20px 0;">'
+          + '  ⚠️ <b>Catalogue indisponible :</b> Aucun article disponible pour l’épreuve du Juste Prix. Veuillez contacter l’organisation.'
+          + '  <div style="margin-top:10px;"><button class="jp-btn-submit" type="button" id="btnJpRetry">🔄 Réessayer</button></div>'
           + '</div>';
         var b = host.querySelector('#btnJpRetry');
         if (b) b.addEventListener('click', function () { init(host, options); });
-        return;
+        return instance;
       }
 
       catalogueComplet = catalogue;
@@ -493,13 +531,13 @@
         }).filter(Boolean);
 
         if (serieProduits.length === NB_PRODUITS_PARTIE) {
-          indexProduit = etatSauve.indexProduit || 0;
-          produitsTrouves = etatSauve.produitsTrouves || 0;
+          indexProduit = etatSauve.indexProduit || etatSauve.indexCourant || 0;
+          produitsTrouves = etatSauve.produitsTrouves || etatSauve.score || 0;
           produitsPerdus = etatSauve.produitsPerdus || 0;
           essaiCourant = etatSauve.essaiCourant || 0;
           t0Partie = etatSauve.t0Partie || Date.now();
           afficherProduit();
-          return;
+          return instance;
         }
       }
 
@@ -511,30 +549,35 @@
       essaiCourant = 0;
       t0Partie = Date.now();
       afficherProduit();
+      return instance;
     }
 
-    fetch('produits.json')
+    return fetch('produits.json')
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
       })
       .then(function (data) {
-        demarrerAvecCatalogue(data);
+        return demarrerAvecCatalogue(data);
       })
       .catch(function (_) {
-        // Fallback si fetch échoue
-        demarrerAvecCatalogue([]);
+        return demarrerAvecCatalogue([]);
       });
-
-    return {
-      arreter: function () {
-        sauverEtat(equipeCode, null);
-      }
-    };
   }
 
   window.NautilusJustePrix = {
     init: init,
-    decoderPrix: decoderPrix
+    decoderPrix: decoderPrix,
+    decrypterPrix: decoderPrix,
+    verifierProposition: testerProposition,
+    getEtatPartie: function () {
+      return instanceCourante ? instanceCourante.getEtat() : null;
+    },
+    getProduitCourant: function () {
+      return instanceCourante ? instanceCourante.getProduitCourant() : null;
+    },
+    getEssaisRestants: function () {
+      return instanceCourante ? instanceCourante.getEssaisRestants() : 0;
+    }
   };
 })();
