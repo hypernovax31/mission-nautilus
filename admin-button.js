@@ -478,8 +478,11 @@
     const box = $('adminDesignerBox');
     const btn = $('adminDesignerBtn');
     if(!box) return;
-    const lien = (href, label) =>
-      `<a href=\"${href}\" target=\"_blank\" rel=\"noopener\" style=\"background:var(--fnac);color:#111;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap\">${label}</a>`;
+    const lien = (href, label) => {
+      const sep = href.indexOf('?') >= 0 ? '&' : '?';
+      const urlFrais = href + sep + '_v=' + Date.now();
+      return `<a href=\"${urlFrais}\" target=\"_blank\" rel=\"noopener\" style=\"background:var(--fnac);color:#111;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap\">${label}</a>`;
+    };
     const ligne = (titre, note, actionHtml, dispo) =>
       `<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:${dispo ? 'rgba(91,224,155,.18)' : 'rgba(142,231,255,.08)'};border:1px solid ${dispo ? 'rgba(91,224,155,.5)' : 'rgba(142,231,255,.25)'};color:#f2f8fc;\">
         <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">${titre}${note ? ' <span class=\"small\">' + note + '</span>' : ''}</span><span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\">${actionHtml}</span>
@@ -489,6 +492,7 @@
     const k = apercuAdminCle();
     const lignes = [
       sectionHtml('🧭 TESTER TOUTES LES PAGES'),
+      ligne('🔄 <b>Vider le cache PWA</b>', 'force la dernière version', `<button id=\"adminPurgePwaBtn\" type=\"button\" style=\"background:#ffd36c;color:#111;border:none;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap\">Purger & Recharger</button>`, true),
       ligne('🏠 <b>Accueil</b>', 'page de lancement', lien('index.html', 'Ouvrir'), true),
       ligne('🏁 <b>Classement</b>', 'podium de fin de mission', lien('classement.html', 'Ouvrir'), true),
       sectionHtml('PALIERS — pages de jeu')
@@ -529,6 +533,21 @@
       <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\"><button class=\"secondary\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap\">Tester</button></span>
     </div>`);
     box.innerHTML = lignes.join('');
+    box.querySelector('#adminPurgePwaBtn')?.addEventListener('click', async (e) => {
+      const btn = e.target;
+      btn.textContent = 'Purge…';
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const r of regs) await r.unregister();
+        }
+      } catch (_) {}
+      location.reload(true);
+    });
     box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', () => {
       const NA = window.NautilusAnnonces;
       if(!NA || !NA.showPalierAnnouncement){

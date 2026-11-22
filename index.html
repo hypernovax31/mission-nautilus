@@ -6203,8 +6203,11 @@ function qrDataUri(text, opts){
     const box = $('adminDesignerBox');
     const btn = $('adminDesignerBtn');
     if(!box) return;
-    const lien = (href, label) =>
-      `<a href=\"${href}\" target=\"_blank\" rel=\"noopener\" style=\"background:var(--fnac);color:#111;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap\">${label}</a>`;
+    const lien = (href, label) => {
+      const sep = href.indexOf('?') >= 0 ? '&' : '?';
+      const urlFrais = href + sep + '_v=' + Date.now();
+      return `<a href=\"${urlFrais}\" target=\"_blank\" rel=\"noopener\" style=\"background:var(--fnac);color:#111;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap\">${label}</a>`;
+    };
     /* ds-row : ligne responsive du « mode concepteur ». Le titre (ds-row-main)
        peut se replier sur plusieurs lignes, et les actions (ds-row-actions)
        passent à la ligne en dessous sur écran étroit — jamais de chevauchement
@@ -6218,6 +6221,7 @@ function qrDataUri(text, opts){
     const k = apercuAdminCle();
     const lignes = [
       sectionHtml('🧭 TESTER TOUTES LES PAGES'),
+      ligne('🔄 <b>Vider le cache PWA</b>', 'force la dernière version', `<button id=\"adminPurgePwaBtnHome\" type=\"button\" style=\"background:#ffd36c;color:#111;border:none;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap\">Purger & Recharger</button>`, true),
       ligne('🏠 <b>Accueil</b>', 'page de lancement', lien('index.html', 'Ouvrir'), true),
       ligne('🏁 <b>Classement</b>', 'podium de fin de mission', lien('classement.html', 'Ouvrir'), true),
       sectionHtml('PALIERS — pages de jeu')
@@ -6259,6 +6263,21 @@ function qrDataUri(text, opts){
       <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\"><button class=\"secondary\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap\">Tester</button></span>
     </div>`);
     box.innerHTML = lignes.join('');
+    box.querySelector('#adminPurgePwaBtnHome')?.addEventListener('click', async (e) => {
+      const btn = e.target;
+      btn.textContent = 'Purge…';
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const r of regs) await r.unregister();
+        }
+      } catch (_) {}
+      location.reload(true);
+    });
     box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', () => {
       const NA = window.NautilusAnnonces;
       if(!NA || !NA.showPalierAnnouncement){
@@ -11128,7 +11147,7 @@ window.PWAInstall = {
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=2" defer></script>
 <script src="admin-artefact.js?v=29" defer></script>
-<script src="admin-button.js?v=28" type="module"></script>
+<script src="admin-button.js?v=29" type="module"></script>
 </body>
 </html>
 

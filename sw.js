@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Pages : network-first ; code et styles : cache avec revalidation en fond.
-const CACHE_NAME = 'nautilus-v426';
+const CACHE_NAME = 'nautilus-v427';
 const PRECACHE = [
   './',
   './index.html',
@@ -24,7 +24,7 @@ const PRECACHE = [
   './anti-zoom.js?v=2',
   './son-partage.js?v=2',
   './sonar-button.js?v=4',
-  './admin-button.js?v=28',
+  './admin-button.js?v=29',
   './palier-annonces.js?v=3',
   './journal-bord.js?v=6',
   './palier-sas.js?v=13',
@@ -207,15 +207,12 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    const presents = await Promise.all(PRECACHE.map((adresse) => cache.match(adresse)));
-    if (presents.every(Boolean)) {
-      const keys = await caches.keys();
-      // Ne jamais supprimer les caches d'une autre application du domaine.
-      await Promise.all(keys.filter((k) => k.startsWith('nautilus-v') && k !== CACHE_NAME)
-        .map((k) => caches.delete(k)));
-    }
-    // Si le precache est incomplet, l'ancien reste disponible hors connexion.
+    const keys = await caches.keys();
+    // Supprimer impérativement tous les anciens caches nautilus périmés
+    await Promise.all(
+      keys.filter((k) => k.startsWith('nautilus-v') && k !== CACHE_NAME)
+        .map((k) => caches.delete(k))
+    );
     await self.clients.claim();
   })());
 });
@@ -270,14 +267,16 @@ self.addEventListener('fetch', (event) => {
     if (url.pathname.endsWith('/assets/alerte-open.mp3')) event.respondWith(plageAlerte(req));
     return;
   }
-  // Pages HTML : network-first, fallback cache
+  // Pages HTML : network-first forcé (bypasse le cache local du navigateur), fallback cache
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+      fetch(req, { cache: 'no-cache' }).then((res) => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        }
         return res;
-      }).catch(() => caches.match(req).then((r) => r || caches.match('./index.html')))
+      }).catch(() => caches.open(CACHE_NAME).then((c) => c.match(req)).then((r) => r || caches.open(CACHE_NAME).then((c) => c.match('./index.html'))))
     );
     return;
   }
