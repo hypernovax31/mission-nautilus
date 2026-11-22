@@ -39,7 +39,7 @@
     "nom": "Écouteurs sans fil Apple AirPods 3 avec boîtier MagSafe",
     "categorie": "Son & Casques",
     "image": "assets/produits/fnac-audio-06.svg",
-    "sec": "7c5145"
+    "sec": "7f584c"
   },
   {
     "id": "fnac-audio-07",
@@ -102,7 +102,7 @@
     "nom": "Tablette Apple iPad 10.9 pouces Wi-Fi 64 Go Argent",
     "categorie": "Informatique & Tablettes",
     "image": "assets/produits/fnac-info-03.svg",
-    "sec": "7a5545"
+    "sec": "7a524c"
   },
   {
     "id": "fnac-info-04",
@@ -116,7 +116,7 @@
     "nom": "Stylet tactile Apple Pencil 2e génération Blanc",
     "categorie": "Informatique & Tablettes",
     "image": "assets/produits/fnac-info-05.svg",
-    "sec": "7f5445"
+    "sec": "7f554c"
   },
   {
     "id": "fnac-info-06",
@@ -179,7 +179,7 @@
     "nom": "Montre connectée Apple Watch SE GPS 40 mm Boîtier Aluminium",
     "categorie": "Objets connectés & Montres",
     "image": "assets/produits/fnac-tel-02.svg",
-    "sec": "7c5945"
+    "sec": "7c564c"
   },
   {
     "id": "fnac-tel-03",
@@ -200,14 +200,14 @@
     "nom": "Coque de protection Apple iPhone 15 Silicone Noir avec MagSafe",
     "categorie": "Téléphonie & Accessoires",
     "image": "assets/produits/fnac-tel-05.svg",
-    "sec": "7851"
+    "sec": "7b58"
   },
   {
     "id": "fnac-tel-06",
     "nom": "Localisateur d'objets Apple AirTag (Pack de 1 unité)",
     "categorie": "Objets connectés & Sécurité",
     "image": "assets/produits/fnac-tel-06.svg",
-    "sec": "7a51"
+    "sec": "7d58"
   },
   {
     "id": "fnac-tel-07",

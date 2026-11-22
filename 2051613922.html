@@ -165,10 +165,10 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
 <script>
 /* ================= ÉPREUVE DU PALIER 5 — « LE JUSTE PRIX » =================
-   Les articles découverts dans les rayons de la Fnac doivent être correctement
+   Les articles découverts dans les rayons de la Fnac Labège doivent être correctement
    évalués. L'équipage doit estimer le prix de 10 articles successifs.
    Chaque article dispose de 3 essais (retour C'est plus / C'est moins).
-   Validation acceptée à ±5%.
+   Prix exact requis en euros entiers selon la règle de l'arrondi (aucune tolérance).
    3 produits non trouvés provoquent la défaite (remontée en surface).
    Objectif de réussite : au moins 8 produits trouvés sur 10 (≥ 80%).
    La victoire inscrit « occasion » dans completedSteps et débloque le Palier 6. */
@@ -449,7 +449,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     afficherVueEpreuve();
     t0Partie = Date.now();
     partieEnCours = true;
-    statut('🎯 <b>Épreuve en cours :</b> estimez la valeur de chaque article Fnac à ±5%. Objectif : au moins 8 réussites sur 10.', 'info');
+    statut('🎯 <b>Épreuve en cours :</b> trouvez le prix exact arrondi à l’euro près pour chaque article Fnac Labège. Objectif : au moins 8 réussites sur 10.', 'info');
 
     var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
 
@@ -509,12 +509,13 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
   /* ============ BRIEFING DU CAPITAINE ============ */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "<b>Capitaine Nemo :</b><br>« Bienvenue dans la soute aux reliques du Nautilus, matelot. Les articles découverts dans les rayons de la Fnac doivent être correctement inventoriés avant notre prochaine immersion. Votre équipage doit évaluer la valeur marchande de 10 articles. »",
+    intro: "<b>Capitaine Nemo :</b><br>« Bienvenue dans la soute aux reliques du Nautilus, matelot. Les articles neufs découverts dans les rayons de la Fnac Labège (stock magasin retrait 1h, hors vendeurs partenaires et hors occasion) doivent être correctement inventoriés avant notre prochaine immersion. Votre équipage doit évaluer la valeur marchande exacte de 10 articles. »",
     consignes: [
-      { ico: '🎯', html: "<b>10 articles Fnac</b> à évaluer successivement au cours de la mission." },
+      { ico: '🎯', html: "<b>10 articles Fnac Labège</b> (neufs officiels en rayon retrait 1h) à évaluer successivement." },
       { ico: '⏱️', html: "<b>10 secondes par réponse</b> : un chronomètre égrène le temps pour chaque proposition." },
       { ico: '🚨', html: "<b>3 voyants rouges d’erreurs</b> : chaque estimation incorrecte allume un voyant d’alerte." },
-      { ico: '⚖️', html: "<b>Prix exact exigé</b> : aucune tolérance d’approximation n’est accordée." },
+      { ico: '⚖️', html: "<b>Prix exact exigé</b> : l'euro exact est requis. Aucune marge d’erreur ou approximation n’est accordée." },
+      { ico: '💶', html: "<b>Règle de l’arrondi à l’euro près :</b> entrez uniquement un nombre entier (pas de centimes). À partir de 50 centimes, on arrondit à l’euro supérieur ; en dessous de 50 centimes, on arrondit à l’euro inférieur.<br><i>Exemples officiels : <b>87,98 € = 88 €</b> · <b>112,90 € = 113 €</b> · <b>34,50 € = 35 €</b> · <b>11,49 € = 11 €</b>.</i>" },
       { ico: '📊', html: "<b>Objectif de réussite ≥ 80%</b> : vous devez obligatoirement trouver au moins 8 articles sur 10." },
       { ico: '⚠️', warn: true, html: "<b>Moins de 8 articles trouvés = DÉFAITE !</b> Remontée immédiate en surface (blocage matelot)." }
     ],
