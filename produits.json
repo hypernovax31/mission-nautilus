@@ -35,74 +35,305 @@
     "sec": "7d5145"
   },
   {
-    "id": "fnac-livre-01",
-    "nom": "Jules Verne - Vingt mille lieues sous les mers (Édition Hetzel)",
-    "categorie": "Livres & Romans",
-    "image": "assets/produits/fnac-livre-01.svg",
-    "sec": "7d51"
+    "id": "fnac-audio-06",
+    "nom": "Écouteurs sans fil Apple AirPods 3 avec boîtier MagSafe",
+    "categorie": "Son & Casques",
+    "image": "assets/produits/fnac-audio-06.svg",
+    "sec": "7c5145"
   },
   {
-    "id": "fnac-livre-02",
-    "nom": "Coffret Manga One Piece Tomes 1 à 12 - Édition Glénat",
-    "categorie": "BD & Mangas",
-    "image": "assets/produits/fnac-livre-02.svg",
-    "sec": "7652"
+    "id": "fnac-audio-07",
+    "nom": "Casque sans fil réducteur de bruit Sony WH-1000XM5 Noir",
+    "categorie": "Son & Casques",
+    "image": "assets/produits/fnac-audio-07.svg",
+    "sec": "7a5345"
   },
   {
-    "id": "fnac-livre-03",
-    "nom": "Astérix Tome 40 - L'Iris Blanc (Édition Classique Albert René)",
-    "categorie": "BD & Mangas",
-    "image": "assets/produits/fnac-livre-03.svg",
-    "sec": "7f50"
+    "id": "fnac-audio-08",
+    "nom": "Enceinte sans fil connectée Marshall Acton III Bluetooth Noir",
+    "categorie": "Son & Casques",
+    "image": "assets/produits/fnac-audio-08.svg",
+    "sec": "7c5945"
   },
   {
-    "id": "fnac-livre-04",
-    "nom": "J.R.R. Tolkien - Le Seigneur des Anneaux (Illustré Alan Lee)",
-    "categorie": "Livres & Fantasy",
-    "image": "assets/produits/fnac-livre-04.svg",
-    "sec": "7658"
+    "id": "fnac-audio-09",
+    "nom": "Enceinte nomade ultra-portable JBL Go 3 Étanche Bleu",
+    "categorie": "Son & Casques",
+    "image": "assets/produits/fnac-audio-09.svg",
+    "sec": "7a54"
   },
   {
-    "id": "fnac-livre-05",
-    "nom": "Dictionnaire Le Petit Robert de la langue française 2026",
-    "categorie": "Livres & Référence",
-    "image": "assets/produits/fnac-livre-05.svg",
-    "sec": "7858"
+    "id": "fnac-audio-10",
+    "nom": "Écouteurs sans fil Bose QuietComfort Earbuds II Noir",
+    "categorie": "Son & Casques",
+    "image": "assets/produits/fnac-audio-10.svg",
+    "sec": "7c5445"
   },
   {
-    "id": "fnac-gaming-01",
-    "nom": "Manette sans fil Microsoft Xbox Series Robot White",
-    "categorie": "Gaming & Consoles",
-    "image": "assets/produits/fnac-gaming-01.svg",
-    "sec": "7851"
+    "id": "fnac-audio-11",
+    "nom": "Barre de son compacte TV JBL Bar 2.0 All-In-One MK2",
+    "categorie": "Son & Casques",
+    "image": "assets/produits/fnac-audio-11.svg",
+    "sec": "7f5945"
   },
   {
-    "id": "fnac-gaming-02",
+    "id": "fnac-audio-12",
+    "nom": "Casque arceau filaire haute fidélité Sennheiser HD 560S",
+    "categorie": "Son & Casques",
+    "image": "assets/produits/fnac-audio-12.svg",
+    "sec": "7f5645"
+  },
+  {
+    "id": "fnac-info-01",
     "nom": "Souris gamer filaire Logitech G502 HERO Noir haute précision",
     "categorie": "Informatique & Gaming",
-    "image": "assets/produits/fnac-gaming-02.svg",
+    "image": "assets/produits/fnac-info-01.svg",
     "sec": "7751"
   },
   {
-    "id": "fnac-gaming-03",
+    "id": "fnac-info-02",
     "nom": "Clavier mécanique sans fil Logitech G915 LIGHTSPEED TKL Tactile",
     "categorie": "Informatique & Gaming",
-    "image": "assets/produits/fnac-gaming-03.svg",
+    "image": "assets/produits/fnac-info-02.svg",
     "sec": "7c5245"
   },
   {
-    "id": "fnac-gaming-04",
+    "id": "fnac-info-03",
+    "nom": "Tablette Apple iPad 10.9 pouces Wi-Fi 64 Go Argent",
+    "categorie": "Informatique & Tablettes",
+    "image": "assets/produits/fnac-info-03.svg",
+    "sec": "7a5545"
+  },
+  {
+    "id": "fnac-info-04",
+    "nom": "Souris bureautique sans fil Logitech MX Master 3S Graphite",
+    "categorie": "Informatique & Bureautique",
+    "image": "assets/produits/fnac-info-04.svg",
+    "sec": "7f5245"
+  },
+  {
+    "id": "fnac-info-05",
+    "nom": "Stylet tactile Apple Pencil 2e génération Blanc",
+    "categorie": "Informatique & Tablettes",
+    "image": "assets/produits/fnac-info-05.svg",
+    "sec": "7f5445"
+  },
+  {
+    "id": "fnac-info-06",
+    "nom": "Clavier sans fil compact multi-dispositifs Logitech MX Keys Mini",
+    "categorie": "Informatique & Bureautique",
+    "image": "assets/produits/fnac-info-06.svg",
+    "sec": "7f5045"
+  },
+  {
+    "id": "fnac-info-07",
+    "nom": "Disque dur externe portable Seagate One Touch 2 To USB 3.0 Noir",
+    "categorie": "Informatique & Stockage",
+    "image": "assets/produits/fnac-info-07.svg",
+    "sec": "7654"
+  },
+  {
+    "id": "fnac-info-08",
+    "nom": "Clé USB 3.2 SanDisk Ultra Flair 128 Go finition métal",
+    "categorie": "Informatique & Stockage",
+    "image": "assets/produits/fnac-info-08.svg",
+    "sec": "7c51"
+  },
+  {
+    "id": "fnac-info-09",
+    "nom": "Disque SSD externe ultra-rapide Samsung Portable T7 1 To Bleu",
+    "categorie": "Informatique & Stockage",
+    "image": "assets/produits/fnac-info-09.svg",
+    "sec": "7f5345"
+  },
+  {
+    "id": "fnac-info-10",
+    "nom": "Casque télétravail filaire Jabra Evolve 20 Stereo USB",
+    "categorie": "Informatique & Bureautique",
+    "image": "assets/produits/fnac-info-10.svg",
+    "sec": "7b51"
+  },
+  {
+    "id": "fnac-info-11",
+    "nom": "Écran PC bureautique 24 pouces Dell SE2422HX Full HD",
+    "categorie": "Informatique & Écrans",
+    "image": "assets/produits/fnac-info-11.svg",
+    "sec": "7f5245"
+  },
+  {
+    "id": "fnac-info-12",
+    "nom": "Imprimante multifonction jet d'encre Canon PIXMA TS5350a Noire",
+    "categorie": "Informatique & Bureautique",
+    "image": "assets/produits/fnac-info-12.svg",
+    "sec": "7651"
+  },
+  {
+    "id": "fnac-tel-01",
+    "nom": "Montre de sport GPS Garmin Forerunner 55 Noire",
+    "categorie": "Objets connectés & Sport",
+    "image": "assets/produits/fnac-tel-01.svg",
+    "sec": "7c5145"
+  },
+  {
+    "id": "fnac-tel-02",
+    "nom": "Montre connectée Apple Watch SE GPS 40 mm Boîtier Aluminium",
+    "categorie": "Objets connectés & Montres",
+    "image": "assets/produits/fnac-tel-02.svg",
+    "sec": "7c5945"
+  },
+  {
+    "id": "fnac-tel-03",
+    "nom": "Batterie externe nomade Anker PowerCore 10000 mAh USB-C",
+    "categorie": "Téléphonie & Accessoires",
+    "image": "assets/produits/fnac-tel-03.svg",
+    "sec": "7d51"
+  },
+  {
+    "id": "fnac-tel-04",
+    "nom": "Chargeur induction rapide sans fil Belkin BoostCharge 15W",
+    "categorie": "Téléphonie & Accessoires",
+    "image": "assets/produits/fnac-tel-04.svg",
+    "sec": "7d54"
+  },
+  {
+    "id": "fnac-tel-05",
+    "nom": "Coque de protection Apple iPhone 15 Silicone Noir avec MagSafe",
+    "categorie": "Téléphonie & Accessoires",
+    "image": "assets/produits/fnac-tel-05.svg",
+    "sec": "7851"
+  },
+  {
+    "id": "fnac-tel-06",
+    "nom": "Localisateur d'objets Apple AirTag (Pack de 1 unité)",
+    "categorie": "Objets connectés & Sécurité",
+    "image": "assets/produits/fnac-tel-06.svg",
+    "sec": "7a51"
+  },
+  {
+    "id": "fnac-tel-07",
+    "nom": "Montre connectée Samsung Galaxy Watch 6 40 mm Bluetooth",
+    "categorie": "Objets connectés & Montres",
+    "image": "assets/produits/fnac-tel-07.svg",
+    "sec": "7d5345"
+  },
+  {
+    "id": "fnac-tel-08",
+    "nom": "Câble USB-C vers Lightning officiel Apple 1 mètre Blanc",
+    "categorie": "Téléphonie & Accessoires",
+    "image": "assets/produits/fnac-tel-08.svg",
+    "sec": "7c54"
+  },
+  {
+    "id": "fnac-tel-09",
+    "nom": "Bracelet connecté de suivi d'activité Xiaomi Smart Band 8",
+    "categorie": "Objets connectés & Sport",
+    "image": "assets/produits/fnac-tel-09.svg",
+    "sec": "7a51"
+  },
+  {
+    "id": "fnac-tel-10",
+    "nom": "Trépied perche à selfie Bluetooth avec télécommande Joby",
+    "categorie": "Téléphonie & Photo mobile",
+    "image": "assets/produits/fnac-tel-10.svg",
+    "sec": "7d54"
+  },
+  {
+    "id": "fnac-game-01",
+    "nom": "Manette sans fil Microsoft Xbox Series Robot White",
+    "categorie": "Gaming & Consoles",
+    "image": "assets/produits/fnac-game-01.svg",
+    "sec": "7851"
+  },
+  {
+    "id": "fnac-game-02",
     "nom": "Casque-micro gaming HyperX Cloud II Rouge filaire",
     "categorie": "Gaming & Accessoires",
-    "image": "assets/produits/fnac-gaming-04.svg",
+    "image": "assets/produits/fnac-game-02.svg",
     "sec": "7f5145"
   },
   {
-    "id": "fnac-gaming-05",
+    "id": "fnac-game-03",
     "nom": "Manette sans fil Sony DualSense PlayStation 5 Midnight Black",
     "categorie": "Gaming & Consoles",
-    "image": "assets/produits/fnac-gaming-05.svg",
+    "image": "assets/produits/fnac-game-03.svg",
     "sec": "7954"
+  },
+  {
+    "id": "fnac-game-04",
+    "nom": "Console de jeux Nintendo Switch Modèle OLED Blanc",
+    "categorie": "Gaming & Consoles",
+    "image": "assets/produits/fnac-game-04.svg",
+    "sec": "7d5345"
+  },
+  {
+    "id": "fnac-game-05",
+    "nom": "Jeu Nintendo Switch The Legend of Zelda: Tears of the Kingdom",
+    "categorie": "Gaming & Jeux vidéo",
+    "image": "assets/produits/fnac-game-05.svg",
+    "sec": "7951"
+  },
+  {
+    "id": "fnac-game-06",
+    "nom": "Jeu Nintendo Switch Super Mario Bros. Wonder",
+    "categorie": "Gaming & Jeux vidéo",
+    "image": "assets/produits/fnac-game-06.svg",
+    "sec": "7851"
+  },
+  {
+    "id": "fnac-game-07",
+    "nom": "Jeu PS5 Marvel's Spider-Man 2",
+    "categorie": "Gaming & Jeux vidéo",
+    "image": "assets/produits/fnac-game-07.svg",
+    "sec": "7651"
+  },
+  {
+    "id": "fnac-game-08",
+    "nom": "Jeu PS5 EA SPORTS FC 24",
+    "categorie": "Gaming & Jeux vidéo",
+    "image": "assets/produits/fnac-game-08.svg",
+    "sec": "7651"
+  },
+  {
+    "id": "fnac-game-09",
+    "nom": "Manette Nintendo Switch Pro Controller Noir",
+    "categorie": "Gaming & Consoles",
+    "image": "assets/produits/fnac-game-09.svg",
+    "sec": "7951"
+  },
+  {
+    "id": "fnac-game-10",
+    "nom": "Volant de course à retour de force Logitech G29 Driving Force",
+    "categorie": "Gaming & Accessoires",
+    "image": "assets/produits/fnac-game-10.svg",
+    "sec": "7d5145"
+  },
+  {
+    "id": "fnac-game-11",
+    "nom": "Casque audio gaming sans fil Sony Pulse 3D PS5 Blanc",
+    "categorie": "Gaming & Accessoires",
+    "image": "assets/produits/fnac-game-11.svg",
+    "sec": "7f5145"
+  },
+  {
+    "id": "fnac-game-12",
+    "nom": "Station de rechargement pour 2 manettes DualSense PS5",
+    "categorie": "Gaming & Accessoires",
+    "image": "assets/produits/fnac-game-12.svg",
+    "sec": "7d51"
+  },
+  {
+    "id": "fnac-game-13",
+    "nom": "Carte d'extension mémoire officielle Seagate 1 To pour Xbox Series",
+    "categorie": "Gaming & Accessoires",
+    "image": "assets/produits/fnac-game-13.svg",
+    "sec": "7f5745"
+  },
+  {
+    "id": "fnac-game-14",
+    "nom": "Jeu PS5 Gran Turismo 7 Édition Standard",
+    "categorie": "Gaming & Jeux vidéo",
+    "image": "assets/produits/fnac-game-14.svg",
+    "sec": "7651"
   },
   {
     "id": "fnac-photo-01",
@@ -133,32 +364,256 @@
     "sec": "7f5445"
   },
   {
-    "id": "fnac-tech-01",
-    "nom": "Liseuse numérique Kobo Clara Colour 16 Go écran couleur 6 pouces",
-    "categorie": "Objets connectés & Liseuses",
-    "image": "assets/produits/fnac-tech-01.svg",
+    "id": "fnac-photo-05",
+    "nom": "Carte mémoire SanDisk Extreme PRO SDXC 128 Go 200 Mo/s",
+    "categorie": "Photo & Cartes mémoire",
+    "image": "assets/produits/fnac-photo-05.svg",
+    "sec": "7a54"
+  },
+  {
+    "id": "fnac-photo-06",
+    "nom": "Caméra d'action étanche GoPro HERO12 Black 5.3K",
+    "categorie": "Photo & Caméras de sport",
+    "image": "assets/produits/fnac-photo-06.svg",
+    "sec": "7a5145"
+  },
+  {
+    "id": "fnac-photo-07",
+    "nom": "Appareil photo instantané Polaroid Now Génération 2 Noir & Blanc",
+    "categorie": "Photo & Caméscopes",
+    "image": "assets/produits/fnac-photo-07.svg",
+    "sec": "7f5245"
+  },
+  {
+    "id": "fnac-photo-08",
+    "nom": "Bague lumineuse LED Ring Light 10 pouces avec trépied de table",
+    "categorie": "Photo & Éclairage",
+    "image": "assets/produits/fnac-photo-08.svg",
+    "sec": "7d51"
+  },
+  {
+    "id": "fnac-photo-09",
+    "nom": "Stabilisateur motorisé 3 axes pour smartphone DJI Osmo Mobile 6",
+    "categorie": "Photo & Stabilisateurs",
+    "image": "assets/produits/fnac-photo-09.svg",
     "sec": "7f5745"
   },
   {
-    "id": "fnac-tech-02",
-    "nom": "Montre de sport GPS Garmin Forerunner 55 Noire",
-    "categorie": "Objets connectés & Sport",
-    "image": "assets/produits/fnac-tech-02.svg",
-    "sec": "7c5145"
+    "id": "fnac-photo-10",
+    "nom": "Kit de nettoyage complet optique et capteur photo Hama",
+    "categorie": "Photo & Entretien",
+    "image": "assets/produits/fnac-photo-10.svg",
+    "sec": "7f54"
   },
   {
-    "id": "fnac-tech-03",
-    "nom": "Disque dur externe portable Seagate One Touch 2 To USB 3.0 Noir",
-    "categorie": "Informatique & Stockage",
-    "image": "assets/produits/fnac-tech-03.svg",
-    "sec": "7654"
+    "id": "fnac-livre-01",
+    "nom": "Jules Verne - Vingt mille lieues sous les mers (Édition Hetzel)",
+    "categorie": "Livres & Romans",
+    "image": "assets/produits/fnac-livre-01.svg",
+    "sec": "7d51"
   },
   {
-    "id": "fnac-tech-04",
-    "nom": "Clé USB 3.2 SanDisk Ultra Flair 128 Go finition métal",
-    "categorie": "Informatique & Stockage",
-    "image": "assets/produits/fnac-tech-04.svg",
-    "sec": "7c51"
+    "id": "fnac-livre-02",
+    "nom": "J.R.R. Tolkien - Le Seigneur des Anneaux (Illustré Alan Lee)",
+    "categorie": "Livres & Fantasy",
+    "image": "assets/produits/fnac-livre-02.svg",
+    "sec": "7658"
+  },
+  {
+    "id": "fnac-livre-03",
+    "nom": "Dictionnaire Le Petit Robert de la langue française 2026",
+    "categorie": "Livres & Référence",
+    "image": "assets/produits/fnac-livre-03.svg",
+    "sec": "7858"
+  },
+  {
+    "id": "fnac-livre-04",
+    "nom": "Jean-Baptiste Andrea - Veiller sur elle (Prix Goncourt)",
+    "categorie": "Livres & Romans",
+    "image": "assets/produits/fnac-livre-04.svg",
+    "sec": "7c52"
+  },
+  {
+    "id": "fnac-livre-05",
+    "nom": "Pierre Lemaitre - Le Silence et la Colère (Grand Format)",
+    "categorie": "Livres & Romans",
+    "image": "assets/produits/fnac-livre-05.svg",
+    "sec": "7c55"
+  },
+  {
+    "id": "fnac-livre-06",
+    "nom": "Sylvain Tesson - Blanc (Récit illustré Gallimard)",
+    "categorie": "Livres & Récits",
+    "image": "assets/produits/fnac-livre-06.svg",
+    "sec": "7c50"
+  },
+  {
+    "id": "fnac-livre-07",
+    "nom": "Cédric Sapin-Defour - Son odeur après la pluie (Stock)",
+    "categorie": "Livres & Romans",
+    "image": "assets/produits/fnac-livre-07.svg",
+    "sec": "7f58"
+  },
+  {
+    "id": "fnac-livre-08",
+    "nom": "Yuval Noah Harari - Sapiens : Une brève histoire de l'humanité",
+    "categorie": "Livres & Essais",
+    "image": "assets/produits/fnac-livre-08.svg",
+    "sec": "7c55"
+  },
+  {
+    "id": "fnac-livre-09",
+    "nom": "Albert Camus - L'Étranger (Édition Folio Classique)",
+    "categorie": "Livres & Poches",
+    "image": "assets/produits/fnac-livre-09.svg",
+    "sec": "76"
+  },
+  {
+    "id": "fnac-livre-10",
+    "nom": "Antoine de Saint-Exupéry - Le Petit Prince (Grand Format Couleur)",
+    "categorie": "Livres & Jeunesse",
+    "image": "assets/produits/fnac-livre-10.svg",
+    "sec": "7f55"
+  },
+  {
+    "id": "fnac-livre-11",
+    "nom": "Franck Thilliez - La Faille (Thriller Fleuve Noir)",
+    "categorie": "Livres & Polars",
+    "image": "assets/produits/fnac-livre-11.svg",
+    "sec": "7c52"
+  },
+  {
+    "id": "fnac-livre-12",
+    "nom": "Guide du Routard Toulouse et ses environs 2026",
+    "categorie": "Livres & Tourisme",
+    "image": "assets/produits/fnac-livre-12.svg",
+    "sec": "7f50"
+  },
+  {
+    "id": "fnac-manga-01",
+    "nom": "Coffret Manga One Piece Tomes 1 à 12 - Édition Glénat",
+    "categorie": "BD & Mangas",
+    "image": "assets/produits/fnac-manga-01.svg",
+    "sec": "7652"
+  },
+  {
+    "id": "fnac-manga-02",
+    "nom": "Astérix Tome 40 - L'Iris Blanc (Édition Classique Albert René)",
+    "categorie": "BD & Mangas",
+    "image": "assets/produits/fnac-manga-02.svg",
+    "sec": "7f50"
+  },
+  {
+    "id": "fnac-manga-03",
+    "nom": "Manga Naruto Tome 1 - Édition Kana",
+    "categorie": "BD & Mangas",
+    "image": "assets/produits/fnac-manga-03.svg",
+    "sec": "79"
+  },
+  {
+    "id": "fnac-manga-04",
+    "nom": "Manga Demon Slayer Tome 1 - Panini Manga",
+    "categorie": "BD & Mangas",
+    "image": "assets/produits/fnac-manga-04.svg",
+    "sec": "79"
+  },
+  {
+    "id": "fnac-manga-05",
+    "nom": "Manga Jujutsu Kaisen Tome 1 - Ki-oon",
+    "categorie": "BD & Mangas",
+    "image": "assets/produits/fnac-manga-05.svg",
+    "sec": "79"
+  },
+  {
+    "id": "fnac-manga-06",
+    "nom": "BD Hergé - Les Aventures de Tintin : Le Trésor de Rackham le Rouge",
+    "categorie": "BD & Jeunesse",
+    "image": "assets/produits/fnac-manga-06.svg",
+    "sec": "7f52"
+  },
+  {
+    "id": "fnac-manga-07",
+    "nom": "BD Blacksad Tome 7 - Alors, tout tombe (Première Partie)",
+    "categorie": "BD & Polar",
+    "image": "assets/produits/fnac-manga-07.svg",
+    "sec": "7f57"
+  },
+  {
+    "id": "fnac-manga-08",
+    "nom": "Comics Batman - The Dark Knight Returns (Édition Urban Comics)",
+    "categorie": "Comics & Super-héros",
+    "image": "assets/produits/fnac-manga-08.svg",
+    "sec": "7c54"
+  },
+  {
+    "id": "fnac-manga-09",
+    "nom": "Manga Dragon Ball Super Tome 1 - Glénat Manga",
+    "categorie": "BD & Mangas",
+    "image": "assets/produits/fnac-manga-09.svg",
+    "sec": "79"
+  },
+  {
+    "id": "fnac-manga-10",
+    "nom": "BD L'Arabe du futur Tome 6 - Riad Sattouf (Allary Éditions)",
+    "categorie": "BD & Romans graphiques",
+    "image": "assets/produits/fnac-manga-10.svg",
+    "sec": "7c54"
+  },
+  {
+    "id": "fnac-vinyle-01",
+    "nom": "Vinyle Double Album Daft Punk - Random Access Memories (180g)",
+    "categorie": "Son & Vinyles",
+    "image": "assets/produits/fnac-vinyle-01.svg",
+    "sec": "7d54"
+  },
+  {
+    "id": "fnac-vinyle-02",
+    "nom": "Vinyle Album Pink Floyd - The Dark Side of the Moon (180g)",
+    "categorie": "Son & Vinyles",
+    "image": "assets/produits/fnac-vinyle-02.svg",
+    "sec": "7d51"
+  },
+  {
+    "id": "fnac-vinyle-03",
+    "nom": "Vinyle Double Album Michael Jackson - Thriller 40th Anniversary",
+    "categorie": "Son & Vinyles",
+    "image": "assets/produits/fnac-vinyle-03.svg",
+    "sec": "7d53"
+  },
+  {
+    "id": "fnac-vinyle-04",
+    "nom": "Vinyle Album Queen - Greatest Hits I (Double Vinyle Rouge/Blanc)",
+    "categorie": "Son & Vinyles",
+    "image": "assets/produits/fnac-vinyle-04.svg",
+    "sec": "7d59"
+  },
+  {
+    "id": "fnac-vinyle-05",
+    "nom": "Vinyle Album Nirvana - Nevermind (Édition Vinyle Remaster)",
+    "categorie": "Son & Vinyles",
+    "image": "assets/produits/fnac-vinyle-05.svg",
+    "sec": "7c59"
+  },
+  {
+    "id": "fnac-vinyle-06",
+    "nom": "Vinyle Album Orelsan - Civilisation Édition Vinyle Original",
+    "categorie": "Son & Vinyles",
+    "image": "assets/produits/fnac-vinyle-06.svg",
+    "sec": "7d51"
+  },
+  {
+    "id": "fnac-vinyle-07",
+    "nom": "Vinyle Album Miles Davis - Kind of Blue (Vinyle Bleu 180g)",
+    "categorie": "Son & Vinyles",
+    "image": "assets/produits/fnac-vinyle-07.svg",
+    "sec": "7c57"
+  },
+  {
+    "id": "fnac-vinyle-08",
+    "nom": "Brosse de nettoyage carbone antistatique pour disques vinyles",
+    "categorie": "Son & Accessoires vinyles",
+    "image": "assets/produits/fnac-vinyle-08.svg",
+    "sec": "7f59"
   },
   {
     "id": "fnac-pape-01",
@@ -182,17 +637,66 @@
     "sec": "7854"
   },
   {
-    "id": "fnac-musique-01",
-    "nom": "Vinyle Double Album Daft Punk - Random Access Memories (180g)",
-    "categorie": "Son & Vinyles",
-    "image": "assets/produits/fnac-musique-01.svg",
+    "id": "fnac-pape-04",
+    "nom": "Bloc de cours Rhodia N°18 A4 petits carreaux agrafé Orange",
+    "categorie": "Papeterie & Bureautique",
+    "image": "assets/produits/fnac-pape-04.svg",
+    "sec": "78"
+  },
+  {
+    "id": "fnac-pape-05",
+    "nom": "Pochette de 8 marqueurs peinture Posca PC-5M pointe moyenne",
+    "categorie": "Papeterie & Beaux-Arts",
+    "image": "assets/produits/fnac-pape-05.svg",
+    "sec": "7d53"
+  },
+  {
+    "id": "fnac-pape-06",
+    "nom": "Coffret de 12 crayons de couleur aquarellables Caran d'Ache Supracolor",
+    "categorie": "Papeterie & Beaux-Arts",
+    "image": "assets/produits/fnac-pape-06.svg",
     "sec": "7d54"
   },
   {
-    "id": "fnac-musique-02",
-    "nom": "Vinyle Album Pink Floyd - The Dark Side of the Moon (180g)",
-    "categorie": "Son & Vinyles",
-    "image": "assets/produits/fnac-musique-02.svg",
-    "sec": "7d51"
+    "id": "fnac-jeu-01",
+    "nom": "Boîte de briques LEGO Star Wars - Le Casque de Dark Vador 75304",
+    "categorie": "Jeux & Jouets",
+    "image": "assets/produits/fnac-jeu-01.svg",
+    "sec": "7651"
+  },
+  {
+    "id": "fnac-jeu-02",
+    "nom": "Boîte de briques LEGO Icons - Les Fleurs Sauvages Botanical 10313",
+    "categorie": "Jeux & Jouets",
+    "image": "assets/produits/fnac-jeu-02.svg",
+    "sec": "7851"
+  },
+  {
+    "id": "fnac-jeu-03",
+    "nom": "Jeu de société Les Colons de Catan - Édition Asmodee",
+    "categorie": "Jeux de société",
+    "image": "assets/produits/fnac-jeu-03.svg",
+    "sec": "7a54"
+  },
+  {
+    "id": "fnac-jeu-04",
+    "nom": "Jeu de société familial Dixit - Nouvelle Édition Libellud",
+    "categorie": "Jeux de société",
+    "image": "assets/produits/fnac-jeu-04.svg",
+    "sec": "7d54"
+  },
+  {
+    "id": "fnac-jeu-05",
+    "nom": "Jeu de cartes d'ambiance et de réflexes Dobble Classique",
+    "categorie": "Jeux de société",
+    "image": "assets/produits/fnac-jeu-05.svg",
+    "sec": "7f57"
+  },
+  {
+    "id": "fnac-jeu-06",
+    "nom": "Coffret Dresseur d'Élite JCC Pokémon (ETB Boîte de cartes)",
+    "categorie": "Jeux & Cartes à collectionner",
+    "image": "assets/produits/fnac-jeu-06.svg",
+    "sec": "7851"
   }
 ]

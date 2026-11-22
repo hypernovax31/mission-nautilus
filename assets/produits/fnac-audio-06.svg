@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="320" height="320">
+  <defs>
+    <radialGradient id="studioGlow" cx="50%" cy="42%" r="65%">
+      <stop offset="0%" stop-color="#e2e8f0" stop-opacity="0.22"/>
+      <stop offset="55%" stop-color="#081e31" stop-opacity="0.96"/>
+      <stop offset="100%" stop-color="#020813" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="cardFrame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e2e8f0" stop-opacity="0.85"/>
+      <stop offset="45%" stop-color="#8ee7ff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0a2a44" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="metalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="dropBlur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+
+  <!-- Fond marin studio Nautilus -->
+  <rect width="320" height="320" rx="20" fill="url(#studioGlow)"/>
+  <rect x="4" y="4" width="312" height="312" rx="16" fill="none" stroke="url(#cardFrame)" stroke-width="2"/>
+
+  <!-- Halo lumineux d'exposition du produit -->
+  <circle cx="160" cy="160" r="78" fill="#e2e8f0" opacity="0.10" filter="url(#softGlow)"/>
+
+  <!-- En-tête : Badge Fnac Labège Retrait 1h en haut à droite -->
+  <rect x="178" y="14" width="128" height="22" rx="6" fill="#f5b027"/>
+  <text x="242" y="29" font-family="'Helvetica Neue', Arial, sans-serif" font-size="9.5" font-weight="900" fill="#111" text-anchor="middle" letter-spacing="0.5">FNAC LABÈGE · 1H</text>
+
+  <!-- Marque en haut à gauche -->
+  <text x="18" y="30" font-family="'Helvetica Neue', Arial, sans-serif" font-size="10.5" font-weight="800" fill="#e2e8f0" letter-spacing="1.2">APPLE</text>
+
+  <!-- Rayon de magasin -->
+  <text x="18" y="43" font-family="'Helvetica Neue', Arial, sans-serif" font-size="8" font-weight="600" fill="#94a3b8" letter-spacing="0.8">UNIVERS APPLE</text>
+
+  <!-- Illustration vectorielle réaliste de l'article -->
+  <g id="productArtwork">
+    
+        <!-- Ombre de contact au sol -->
+        <ellipse cx="160" cy="206" rx="52" ry="10" fill="#000" opacity="0.6" filter="url(#dropBlur)"/>
+        <!-- Boîtier de charge blanc / noir glossy -->
+        <rect x="122" y="128" width="76" height="66" rx="22" fill="url(#metalGrad)" stroke="#cbd5e1" stroke-width="2"/>
+        <path d="M 122 148 L 198 148" stroke="#64748b" stroke-width="1.5" opacity="0.6"/>
+        <!-- Encoche d'ouverture -->
+        <rect x="152" y="146" width="16" height="4" rx="2" fill="#475569"/>
+        <!-- Témoin lumineux de charge LED -->
+        <circle cx="160" cy="162" r="2.5" fill="#22c55e" filter="url(#softGlow)"/>
+        <!-- Écouteur sans fil gauche flottant -->
+        <g transform="translate(98, 114)">
+          <ellipse cx="14" cy="16" rx="12" ry="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+          <rect x="10" y="24" width="8" height="22" rx="4" fill="#e2e8f0"/>
+          <circle cx="14" cy="14" r="5" fill="#0284c7" opacity="0.4"/>
+        </g>
+        <!-- Écouteur sans fil droit flottant -->
+        <g transform="translate(194, 114)">
+          <ellipse cx="14" cy="16" rx="12" ry="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+          <rect x="10" y="24" width="8" height="22" rx="4" fill="#e2e8f0"/>
+          <circle cx="14" cy="14" r="5" fill="#0284c7" opacity="0.4"/>
+        </g>
+      
+  </g>
+
+  <!-- Ligne séparatrice néon -->
+  <line x1="26" y1="234" x2="294" y2="234" stroke="#e2e8f0" stroke-width="1.5" opacity="0.45"/>
+
+  <!-- Intitulé officiel Fnac de l'article -->
+  <text x="160" y="258" font-family="'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="700" fill="#eaf8ff" text-anchor="middle">Écouteurs sans fil Apple AirPods…</text>
+
+  <!-- Détail / Caractéristiques en rayon -->
+  <text x="160" y="280" font-family="'Helvetica Neue', Arial, sans-serif" font-size="10" font-weight="500" fill="#8ee7ff" opacity="0.85" text-anchor="middle">Audio spatial personnalisé · Boîtier MagSafe · IPX4</text>
+
+  <!-- Pastille officielle Fnac Labege -->
+  <rect x="95" y="294" width="130" height="16" rx="8" fill="rgba(142,231,255,0.12)" stroke="rgba(142,231,255,0.3)" stroke-width="1"/>
+  <text x="160" y="306" font-family="'Helvetica Neue', Arial, sans-serif" font-size="8.5" font-weight="800" fill="#bbf2ff" text-anchor="middle" letter-spacing="0.8">EN STOCK RETRAIT 1H</text>
+</svg>
