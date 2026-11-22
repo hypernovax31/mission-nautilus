@@ -685,4 +685,11 @@ body{overflow-wrap:break-word;}
   border: 1px solid #f5b027 !important;
 }
 
+/* Annonces de palier et alertes : doivent TOUJOURS apparaître au-dessus
+   de l'ensemble des pages, modales, overlays et du panneau admin. */
+#naAnnounceStack {
+  z-index: 999999 !important;
+}
+
+
 

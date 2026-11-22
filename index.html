@@ -2587,7 +2587,7 @@
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Styles du sélecteur de magasin et des onglets d'administration. -->
   <link rel="stylesheet" href="css/artefact.css?v=3">
-  <link rel="stylesheet" href="css/admin.css?v=12">
+  <link rel="stylesheet" href="css/admin.css?v=13">
   <!-- Commandes de secours, visibles uniquement si le mouvement est bloqué. -->
   <link rel="stylesheet" href="css/animations-accueil.css?v=2">
   <!-- Page de garde « ÉCOUTILLE » : son style est écrit DANS la page (voir
@@ -2597,7 +2597,7 @@
        principal : les scripts différés s'exécutent dans l'ordre du
        document, et le module l'utilise dès son démarrage. -->
   <script src="son-partage.js?v=2" defer></script>
-  <script src="palier-annonces.js?v=4" defer></script>
+  <script src="palier-annonces.js?v=5" defer></script>
   <!-- La promo d'installation attend la FIN de la machine à écrire :
        ce drapeau est posé avant son chargement (deferred), et l'ordre
        de mission émet 'nautilus:fin-typewriter' à sa dernière lettre. -->
@@ -3240,6 +3240,10 @@
         <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:rgba(8,30,48,.85);color:#eaf8ff">
           <div style="font-weight:900;color:#8ee7ff;margin-bottom:4px">🧪 ACCÈS CONCEPTEUR</div>
           <div class="small" style="margin-bottom:9px">Ouvre chaque page du jeu dans un onglet isolé : l’aperçu organisateur n’écrit <b>aucun blocage ni aucune progression réelle</b>. Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;margin:0 0 10px;border-radius:9px;background:rgba(91,224,155,.22);border:1.5px solid rgba(91,224,155,.65);box-shadow:0 0 18px rgba(91,224,155,.3);color:#eafff3">
+            <span style="flex:1 1 auto;min-width:0;overflow-wrap:anywhere">🏆 <b>Annonce verte « palier franchi »</b> <span class="small" style="color:#5be09b;font-weight:700">message + Victoire.mp3</span></span>
+            <span style="display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto"><button class="secondary admin-test-annonce-btn" id="adminQuickTestAnnonceBtn" type="button" style="margin:0;white-space:nowrap;background:#5be09b;color:#032010;font-weight:900;border:none;padding:6px 14px;border-radius:7px;cursor:pointer">Tester</button></span>
+          </div>
           <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>
           <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>
 
@@ -6222,7 +6226,12 @@ function qrDataUri(text, opts){
       `<div class=\"small\" style=\"font-weight:900;color:#8ee7ff;margin:10px 0 0\">${titre}</div>`;
     const k = apercuAdminCle();
     const lignes = [
-      sectionHtml('🧭 TESTER TOUTES LES PAGES'),
+      sectionHtml('🏆 ANNONCE SPÉCIALE & SON (AU-DESSUS DE TOUTES LES PAGES)'),
+      `<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:rgba(91,224,155,.22);border:1px solid rgba(91,224,155,.6);box-shadow:0 0 16px rgba(91,224,155,.28);color:#eafff3;\">
+        <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">🏆 <b>Annonce verte « palier franchi »</b> <span class=\"small\" style=\"color:#5be09b;font-weight:700\">message + Victoire.mp3</span></span>
+        <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\"><button class=\"secondary admin-test-annonce-btn\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap;background:#5be09b;color:#032010;font-weight:900;border:none;padding:6px 14px;border-radius:7px;cursor:pointer\">Tester</button></span>
+      </div>`,
+      sectionHtml('🧭 TESTER TOUTES LES PAGES DU SITE'),
       ligne('🔄 <b>Vider le cache PWA</b>', 'force la dernière version', `<button id=\"adminPurgePwaBtnHome\" type=\"button\" style=\"background:#ffd36c;color:#111;border:none;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap\">Purger & Recharger</button>`, true),
       ligne('🏠 <b>Accueil</b>', 'page de lancement', lien('index.html', 'Ouvrir'), true),
       ligne('🏁 <b>Classement</b>', 'podium de fin de mission', lien('classement.html', 'Ouvrir'), true),
@@ -6259,11 +6268,6 @@ function qrDataUri(text, opts){
        d'ecran intermediaire a previsualiser. */.forEach(([mode, titre]) => {
       lignes.push(ligne(titre, 'aperçu', lien(`palier1.html?apercu=${mode}&k=${k}`, 'Aperçu'), true));
     });
-    lignes.push(sectionHtml('EFFETS (sur cette page)'));
-    lignes.push(`<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);\">
-      <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">🏆 <b>Annonce verte « palier franchi »</b> <span class=\"small\">message + Victoire.mp3</span></span>
-      <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\"><button class=\"secondary\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap\">Tester</button></span>
-    </div>`);
     box.innerHTML = lignes.join('');
     box.querySelector('#adminPurgePwaBtnHome')?.addEventListener('click', async (e) => {
       const btn = e.target;
@@ -6280,21 +6284,39 @@ function qrDataUri(text, opts){
       } catch (_) {}
       location.reload(true);
     });
-    box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', () => {
-      const NA = window.NautilusAnnonces;
-      if(!NA || !NA.showPalierAnnouncement){
-        alert('Module d’annonces absent de cette page (disponible sur l’accueil et les paliers).');
-        return;
-      }
+    box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', testerAnnonceVerte);
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if(btn) btn.textContent = box.style.display === 'none' ? '🧪 Tester toutes les pages' : '🔽 Masquer les tests de pages';
+  }
+
+  async function testerAnnonceVerte(){
+    let NA = window.NautilusAnnonces;
+    if(!NA || !NA.showPalierAnnouncement){
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'palier-annonces.js?v=5';
+          s.onload = res;
+          s.onerror = rej;
+          document.head.appendChild(s);
+        });
+        NA = window.NautilusAnnonces;
+      } catch(e) {}
+    }
+    if(NA && NA.showPalierAnnouncement){
       NA.showPalierAnnouncement({
         teamName: 'Équipage démo',
         palierLabel: 'Palier 1',
         encouragement: '💪 À vous de jouer : votre équipage franchira le sien !'
       });
-      if(NA.playVictorySound) NA.playVictorySound();
-    });
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    if(btn) btn.textContent = box.style.display === 'none' ? '🧪 Tester toutes les pages' : '🔽 Masquer les tests de pages';
+      if(NA.playVictorySound) NA.playVictorySound(true);
+    } else {
+      try {
+        const a = new Audio('assets/Victoire.mp3');
+        a.volume = 0.85;
+        a.play().catch(() => {});
+      } catch(e) {}
+    }
   }
 
   /* Vérification non destructive du panneau admin.
@@ -9293,6 +9315,7 @@ function qrDataUri(text, opts){
       if(atEnd) el.setSelectionRange(next.length, next.length);
     }
   });
+  $('adminQuickTestAnnonceBtn')?.addEventListener('click', testerAnnonceVerte);
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
   $('adminDesignerBtn')?.addEventListener('click', renderDesignerAccess);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
@@ -11149,7 +11172,7 @@ window.PWAInstall = {
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=2" defer></script>
 <script src="admin-artefact.js?v=29" defer></script>
-<script src="admin-button.js?v=29" type="module"></script>
+<script src="admin-button.js?v=30" type="module"></script>
 </body>
 </html>
 

@@ -97,6 +97,7 @@
   _GESTES.forEach((t) => {
     document.addEventListener(t, _onFirstGesture, { capture: true, passive: true });
   });
+  try { _pisteVictoire.prime(); _pisteDefaite.prime(); } catch(e) {}
 
   /* ---------- Pistes MP3 : Victoire.mp3 & Perdu.mp3 -----------------
      Même recette pour les deux sons : préparation SILENCIEUSE au
@@ -129,9 +130,9 @@
         .then((d) => { buf = d; })
         .catch(() => { loading = null; });
     }
-    function play() {
-      if (!_sonAutorise()) return false;
-      if (playing) return false;
+    function play(force) {
+      if (!_sonAutorise(force)) return false;
+      if (playing && !force) return false;
       playing = true;
       const fin = () => { playing = false; };
       /* Web Audio d'abord : le contexte a été débloqué DANS le premier
@@ -173,21 +174,23 @@
   const _pisteVictoire = _creerPiste('assets/Victoire.mp3', 0.85);
   const _pisteDefaite = _creerPiste('assets/Perdu.mp3', 0.85);
 
-  function _sonAutorise() {
-    try { if (localStorage.getItem('nautilusSoundOn') === '0') return false; } catch (e) {}
-    if (!_gestureOk) return false;                       // aucun geste sur la page : silence
-    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
+  function _sonAutorise(force) {
+    if (!force) {
+      try { if (localStorage.getItem('nautilusSoundOn') === '0') return false; } catch (e) {}
+    }
+    if (!_gestureOk && !force) return false;             // aucun geste sur la page : silence
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible' && !force) return false;
     return true;
   }
 
-  /* Joue Victoire.mp3 si (et seulement si) les règles le permettent.
+  /* Joue Victoire.mp3 si (et seulement si) les règles le permettent (ou si forcé par un test admin).
      Renvoie true si une lecture a été demandée. */
-  function playVictorySound() { return _pisteVictoire.play(); }
+  function playVictorySound(force) { return _pisteVictoire.play(force); }
 
   /* Joue Perdu.mp3 à l'éjection d'un mini-jeu — mêmes règles que le
      son de victoire : JAMAIS si le site est en sourdine (sonar éteint),
      jamais sans geste, jamais fenêtre masquée. */
-  function playDefeatSound() { return _pisteDefaite.play(); }
+  function playDefeatSound(force) { return _pisteDefaite.play(force); }
 
   /* ---------- Habillage (injecté une fois) ---------- */
   function _injectStyles() {
@@ -196,17 +199,19 @@
     st.id = 'na-annonces-style';
     st.textContent = `
       #naAnnounceStack{
-        position:fixed;left:12px;bottom:12px;z-index:10060;
+        position:fixed;left:14px;bottom:14px;z-index:999999 !important;
         display:flex;flex-direction:column;gap:10px;
-        max-width:min(390px,94vw);
+        max-width:min(440px,94vw);
+        pointer-events:none;
       }
       .na-palier-announce{
+        pointer-events:auto;
         position:relative;
-        background:linear-gradient(145deg,rgba(9,72,42,.97),rgba(6,38,24,.97));
-        border:2px solid rgba(91,224,155,.85);
+        background:linear-gradient(145deg,rgba(9,72,42,.98),rgba(6,38,24,.98));
+        border:2px solid rgba(91,224,155,.92);
         border-radius:16px;color:#eafff3;
         padding:12px 40px 12px 14px;
-        box-shadow:0 14px 34px rgba(0,0,0,.5);
+        box-shadow:0 18px 42px rgba(0,0,0,.7),0 0 28px rgba(91,224,155,.5);
         font-family:Arial,Helvetica,sans-serif;
         animation:naAnnounceIn .35s ease both,
                   naAnnounceHalo 1.7s ease-in-out .4s infinite;
