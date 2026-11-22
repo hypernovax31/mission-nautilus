@@ -148,7 +148,7 @@
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
     son:{label:"Palier 3",next:"zone51",time:180,errors:1,description:"Chasse aux artefacts : identifiez et capturez au collimateur optique les 5 artefacts dissimulés dans les rayons de la Fnac."},
     zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"Le relevé du sonar est sens dessus dessous : recalez chaque écho sur la grille pour retrouver la cache du prochain palier."},
-    occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Le Juste Prix : évaluez avec précision la valeur marchande de 10 articles des rayons Fnac à ±5% près."},
+    occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Le Juste Prix : estimez le prix exact arrondi à l’euro près de 10 articles officiels des rayons Fnac Labège."},
     papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
     drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol."},
     final:{label:"Palier final",next:null,time:0,errors:1,description:"Dernier sas. Si vous êtes ici, le Nautilus n’est plus très loin de refaire surface."}

@@ -3628,3 +3628,26 @@ body > header .hero-actions .hero-cta {
   .o2-bubble { animation: none !important; }
 }
 
+/* Mise en garde d'alerte renforcée (paliers 6, 7, 8 et urgence) */
+.final-cta.is-high-alert {
+  border-color: rgba(255, 75, 62, 0.7) !important;
+  box-shadow: 0 0 30px rgba(255, 75, 62, 0.35), inset 0 0 40px rgba(255, 0, 0, 0.2) !important;
+  animation: abyssPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes abyssPulse {
+  0%, 100% {
+    border-color: rgba(255, 75, 62, 0.5);
+    box-shadow: 0 0 20px rgba(255, 75, 62, 0.25), inset 0 0 30px rgba(255, 0, 0, 0.15);
+  }
+  50% {
+    border-color: rgba(255, 75, 62, 0.95);
+    box-shadow: 0 0 45px rgba(255, 75, 62, 0.55), inset 0 0 50px rgba(255, 0, 0, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .final-cta.is-high-alert { animation: none !important; }
+}
+
+

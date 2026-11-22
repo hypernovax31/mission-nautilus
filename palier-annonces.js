@@ -292,12 +292,27 @@
   }
 
   /* Message d'encouragement pour les équipages en retard — court. */
+  /* Messages de mise en garde et d'encouragement selon l'avancement dans les 8 paliers */
+  const MISES_EN_GARDE_PAR_ETAPE = {
+    start: '📖 Un équipage s’enfonce vers le Palier 2 ! Plus que 7 paliers avant la surface, ne laissez personne prendre le large !',
+    livres: '🎧 Un équipage ouvre le Palier 3 ! Plus que 6 paliers : les artefacts acoustiques sont détectés !',
+    son: '📡 Un équipage franchit le Palier 4 ! Plus que 5 paliers : le relevé du sonar en Zone 51 commence !',
+    zone51: '⚖️ Un équipage atteint le Palier 5 ! Plus que 4 paliers : le Juste Prix Fnac Labège vous attend !',
+    occasion: '🚨 Un équipage frôle la surface — le Nautilus va remonter ! Plus que deux paliers, matelots, chaque seconde compte !',
+    papeterie: '🚨 ALERTE COQUE : Un équipage prend de la hauteur au Palier 7 ! Plus qu’un seul palier avant l’écoutille de surface !',
+    drone: '🚨 ALARME GÉNÉRALE : Un équipage force le Palier Final ! L’écoutille de surface est en vue, foncez !',
+    final: '🏆 ÉMERGENCE DU NAUTILUS : Un équipage a ramené le submersible à la surface ! Mission accomplie !'
+  };
+
   const ENCOURAGEMENTS = [
     '💪 À vous de jouer : votre équipage franchira le sien !',
     '💪 Courage, plongez : la suite de la mission vous attend !',
     '💪 Tout l’océan croit en vous — à votre tour maintenant !'
   ];
-  function encouragementPour(index) {
+  function encouragementPour(stepId, index) {
+    if (stepId && MISES_EN_GARDE_PAR_ETAPE[stepId]) {
+      return MISES_EN_GARDE_PAR_ETAPE[stepId];
+    }
     return ENCOURAGEMENTS[Math.abs(index || 0) % ENCOURAGEMENTS.length];
   }
 
@@ -332,7 +347,7 @@
       const payload = {
         teamName: resolveName(t),
         palierLabel: t.lastStepCompletedLabel || t.lastStepCompleted,
-        encouragement: enRetard ? encouragementPour(i) : null
+        encouragement: enRetard ? encouragementPour(t.lastStepCompleted, i) : null
       };
       setTimeout(() => {
         showPalierAnnouncement(payload);

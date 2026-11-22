@@ -2597,7 +2597,7 @@
        principal : les scripts différés s'exécutent dans l'ordre du
        document, et le module l'utilise dès son démarrage. -->
   <script src="son-partage.js?v=2" defer></script>
-  <script src="palier-annonces.js?v=3" defer></script>
+  <script src="palier-annonces.js?v=4" defer></script>
   <!-- La promo d'installation attend la FIN de la machine à écrire :
        ce drapeau est posé avant son chargement (deferred), et l'ordre
        de mission émet 'nautilus:fin-typewriter' à sa dernière lettre. -->
@@ -3400,7 +3400,7 @@
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
     son:{label:"Palier 3",next:"zone51",time:180,errors:1,description:"Chasse aux artefacts : identifiez et capturez au collimateur optique les 5 artefacts dissimulés dans les rayons de la Fnac."},
     zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"Le relevé du sonar est sens dessus dessous : recalez chaque écho sur la grille pour retrouver la cache du prochain palier."},
-    occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Le Juste Prix : évaluez avec précision la valeur marchande de 10 articles des rayons Fnac à ±5% près."},
+    occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Le Juste Prix : estimez le prix exact arrondi à l’euro près de 10 articles officiels des rayons Fnac Labège."},
     papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
     drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol."},
     final:{label:"Palier final",next:null,time:0,errors:1,description:"Dernier sas. Si vous êtes ici, le Nautilus n’est plus très loin de refaire surface."}
@@ -4190,6 +4190,8 @@
       }
     });
     _lastTeams = active;
+    window._lastTeams = active;
+    if (window.updateAbyssWarning) window.updateAbyssWarning();
     renderSonarReadout();        // effectifs a jour, equipes retirees, etc.
     processRevealQueue();
   }
@@ -11213,47 +11215,123 @@ window.PWAInstall = {
 })();
 </script>
 <script>
-// LES ABYSSES — 3 phases dynamiques
+// LES ABYSSES — Textes de mise en garde des équipages selon le meilleur niveau de palier atteint (8 paliers)
 (function(){
-  var PHRASES = {
-    preparation: "Préparation des équipements — Le Nautilus s'apprête à plonger.",
-    course: "La course est lancée.",
-    urgence: "🚨 Un équipage frôle la surface — le Nautilus va remonter ! Plus que deux paliers, matelots, chaque seconde compte !"
+  var STEP_KEYS = ['start', 'livres', 'son', 'zone51', 'occasion', 'papeterie', 'drone', 'final'];
+
+  var MISES_EN_GARDE = {
+    // Phase 0 : Avant le départ / En attente
+    preparation: "⚓ Préparation des équipements — Le Nautilus est paré à plonger. En attente du premier appareillage !",
+
+    // Palier 1 : Signal Morse / Sas de départ
+    palier1: "🧭 Un équipage vient d’ouvrir le premier sas — la plongée commence ! 8 paliers vous séparent de la surface, cap sur les grands fonds !",
+
+    // Palier 2 : Bibliothèque de Nemo / Mots croisés
+    palier2: "📖 Un équipage s’enfonce dans la bibliothèque secrète de Nemo ! Plus que 7 paliers avant la surface, ne laissez personne prendre le large !",
+
+    // Palier 3 : Rayon Son / Chasse aux artefacts
+    palier3: "🎧 Un équipage fouille le secteur acoustique et traque les artefacts ! Plus que 6 paliers, matelots : restez à l'écoute des fonds marins !",
+
+    // Palier 4 : Zone 51 / Relevé du sonar
+    palier4: "📡 Un équipage décrypte les échos du sonar en Zone 51 ! Plus que 5 paliers : la mi-parcours approche, gardez le cap !",
+
+    // Palier 5 : Rayon Occasion / Le Juste Prix
+    palier5: "⚖️ Un équipage négocie les reliques au Juste Prix Fnac Labège ! Plus que 4 paliers avant la surface, la pression monte d’un cran !",
+
+    // Palier 6 : Rayon Papeterie / Code de l'encre
+    palier6: "🚨 Un équipage frôle la surface — le Nautilus va remonter ! Plus que deux paliers, matelots, chaque seconde compte !",
+
+    // Palier 7 : Rayon Drone & Photo / Vue aérienne
+    palier7: "🚨 ALERTE COQUE : Un équipage prend de la hauteur au Palier 7 ! Plus qu’un seul palier avant l’écoutille de surface, accélérez la cadence !",
+
+    // Palier 8 : Palier Final / Sas de surface
+    palier8: "🚨 ALARME GÉNÉRALE : Un équipage force le Palier Final ! L’écoutille de surface est en vue — foncez, la victoire se joue maintenant !",
+
+    // Surface : Le Nautilus a refait surface
+    surface: "🏆 ÉMERGENCE DU NAUTILUS : Un équipage a ramené le submersible à la surface ! Le carnet de bord est scellé, mission accomplie !",
+
+    // Alerte critique d'oxygène
+    urgence_o2: "⚠️ OXYGÈNE CRITIQUE : Les réserves du bord s'épuisent rapidement ! Tous les équipages doivent remonter vers la surface sans tarder !"
   };
+
   var el = null;
   function getEl(){ if(!el) el = document.getElementById('abyssPhase'); return el; }
+
   function getMissionCfg(){
-    try{
+    try {
       var brut = localStorage.getItem('nautilusMissionConfig');
-      if(brut) return JSON.parse(brut);
-    }catch(e){}
+      if (brut) return JSON.parse(brut);
+    } catch(e){}
     return null;
   }
-  function getPhase(){
-    var cfg = getMissionCfg();
-    if(!cfg || !cfg.missionStartedAt) return 'preparation';
-    var started = new Date(cfg.missionStartedAt).getTime();
-    if(isNaN(started) || Date.now() < started) return 'preparation';
-    var dur = (cfg && cfg.missionDurationMs) ? Number(cfg.missionDurationMs) : 7*24*60*60*1000;
-    var remaining = started + dur - Date.now();
-    if(remaining > 0 && remaining < 2*60*60*1000) return 'urgence';
-    var pctEl = document.getElementById('oxygenPercent');
-    if(pctEl){
-      var pct = parseInt((pctEl.textContent||'').replace(/[^0-9]/g,''),10);
-      if(!isNaN(pct) && pct > 0 && pct < 15) return 'urgence';
+
+  function getMeilleurPalierAtteint(){
+    var teams = window._lastTeams || [];
+    if (!teams.length) {
+      try {
+        var local = JSON.parse(localStorage.getItem('nautilusTeamsCache') || '[]');
+        if (Array.isArray(local) && local.length) teams = local;
+      } catch (e) {}
     }
-    var statusEl = document.getElementById('oxygenStatus');
-    if(statusEl){
-      var txt = (statusEl.textContent||'').toLowerCase();
-      if(txt.indexOf('épuis') !== -1 || txt.indexOf('remont') !== -1) return 'urgence';
-      if(txt.indexOf('attente') !== -1 || txt.indexOf('préparation') !== -1) return 'preparation';
-    }
-    return 'course';
+
+    var maxRank = 0;
+
+    teams.forEach(function (t) {
+      if (!t) return;
+      var members = t.members || [];
+      if (!members.length) return;
+
+      // Si mission terminée pour cet équipage
+      if (t.status === 'finished' || (t.completedSteps && t.completedSteps.includes('final'))) {
+        if (maxRank < 9) maxRank = 9;
+        return;
+      }
+
+      var completed = t.completedSteps || [];
+      var currIdx = STEP_KEYS.indexOf(t.currentStep);
+      var r = currIdx >= 0 ? (currIdx + 1) : 1;
+
+      if (completed.length > 0) {
+        var compRank = completed.length + 1;
+        if (compRank > r) r = compRank;
+      }
+
+      if (r > maxRank) maxRank = r;
+    });
+
+    return maxRank;
   }
+
+  function getPhase(){
+    // 1. Contrôle oxygène critique
+    var statusEl = document.getElementById('oxygenStatus');
+    if (statusEl) {
+      var txt = (statusEl.textContent || '').toLowerCase();
+      if (txt.indexOf('épuis') !== -1 || txt.indexOf('remontée générale') !== -1) return 'urgence_o2';
+      if (txt.indexOf('attente') !== -1 || txt.indexOf('préparation') !== -1) return 'preparation';
+    }
+
+    var pctEl = document.getElementById('oxygenPercent');
+    if (pctEl) {
+      var pct = parseInt((pctEl.textContent || '').replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(pct) && pct > 0 && pct < 12) return 'urgence_o2';
+    }
+
+    // 2. Meilleur palier atteint parmi toutes les équipes
+    var rank = getMeilleurPalierAtteint();
+    if (rank >= 9) return 'surface';
+    if (rank >= 1 && rank <= 8) return 'palier' + rank;
+
+    // 3. Repli configuration mission
+    var cfg = getMissionCfg();
+    if (!cfg || !cfg.missionStartedAt) return 'preparation';
+    return 'palier1';
+  }
+
   function appliquer(phase){
     var target = getEl(); if(!target) return;
     var ph = phase || getPhase();
-    var txt = PHRASES[ph] || PHRASES.course;
+    var txt = MISES_EN_GARDE[ph] || MISES_EN_GARDE.palier1;
     if(target.textContent !== txt){
       target.textContent = txt;
       target.style.transition = 'opacity .3s';
@@ -11262,15 +11340,22 @@ window.PWAInstall = {
     }
     target.dataset.phase = ph;
     var card = document.getElementById('bottomAlertMessage');
-    if(card){ card.dataset.phase = ph; }
+    if(card){
+      card.dataset.phase = ph;
+      var isHighAlert = (ph === 'palier6' || ph === 'palier7' || ph === 'palier8' || ph === 'urgence_o2');
+      card.classList.toggle('is-high-alert', isHighAlert);
+    }
   }
+
   function init(){
-    window.setAbyssPhase = function(p){ if(PHRASES[p]) appliquer(p); };
+    window.setAbyssPhase = function(p){ if(MISES_EN_GARDE[p]) appliquer(p); };
     window.getAbyssPhase = getPhase;
+    window.updateAbyssWarning = function(){ appliquer(); };
+    window.NautilusMisesEnGarde = MISES_EN_GARDE;
     appliquer();
-    setInterval(appliquer, 5000);
+    setInterval(appliquer, 4000);
     window.addEventListener('storage', function(e){
-      if(e.key==='nautilusMissionConfig' || e.key==='nautilusOxygen') appliquer();
+      if(e.key==='nautilusMissionConfig' || e.key==='nautilusOxygen' || e.key==='nautilusTeamsCache') appliquer();
     });
     window.addEventListener('nautilus:ecoutille-ouverte', function(){ setTimeout(appliquer, 400); });
     var obsTarget = document.getElementById('oxygenStatus') || document.getElementById('oxygenPercent');
