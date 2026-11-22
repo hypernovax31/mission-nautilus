@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="anti-zoom.js?v=1"></script>
+  <script src="anti-zoom.js?v=2"></script>
   <script src="magasin-fnac.js?v=3" defer></script>
   <script>
   // Sollicitation des notifications et de la géolocalisation au premier lancement seulement
@@ -2583,7 +2583,7 @@
     }catch(e){}
   })();
   </script>
-  <link rel="stylesheet" href="css/index.css?v=83">
+  <link rel="stylesheet" href="css/index.css?v=84">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Styles du sélecteur de magasin et des onglets d'administration. -->
   <link rel="stylesheet" href="css/artefact.css?v=3">
@@ -3132,7 +3132,20 @@
         </div>
         <p class="oxygen-status" id="oxygenStatus">En attente du premier départ…</p>
         <div class="oxygen-tube" aria-label="Jauge d’oxygène restante">
-          <div class="oxygen-liquid o2-attente" id="oxygenBar"></div>
+          <div class="oxygen-liquid o2-attente" id="oxygenBar">
+            <div class="o2-bubbles" aria-hidden="true">
+              <span class="o2-bubble b1"></span>
+              <span class="o2-bubble b2"></span>
+              <span class="o2-bubble b3"></span>
+              <span class="o2-bubble b4"></span>
+              <span class="o2-bubble b5"></span>
+              <span class="o2-bubble b6"></span>
+              <span class="o2-bubble b7"></span>
+              <span class="o2-bubble b8"></span>
+              <span class="o2-bubble b9"></span>
+              <span class="o2-bubble b10"></span>
+            </div>
+          </div>
         </div>
         <div class="oxygen-scale"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
         <div class="oxygen-bottom">

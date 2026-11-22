@@ -35,6 +35,13 @@
       --gutter-inner: var(--space-md);
     }
     *{box-sizing:border-box}
+    html, body{
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+    }
+    button, a, input, select, textarea, .card, main{
+      touch-action: manipulation;
+    }
     /* PROTECTION-COPIE (desactivee) : selection de texte libre.
        Pour la reactiver au dernier palier, decommenter la ligne ci-dessous.
     body, button, .card, .notice, .team, .stepbox{user-select:none;-webkit-user-select:none;-ms-user-select:none} */
@@ -3561,5 +3568,63 @@ body > header .hero-actions .hero-cta {
     border: 1px solid rgba(245, 176, 39, 0.3) !important;
     color: #eaf8ff !important;
   }
+}
+
+/* Bulles dynamiques actives dans la jauge O2 de l'accueil */
+.o2-bubbles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.o2-bubble {
+  position: absolute;
+  bottom: -12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95) 0%, rgba(142, 231, 255, 0.6) 40%, rgba(24, 200, 255, 0.2) 70%, transparent 100%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 6px rgba(142, 231, 255, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.8);
+  animation: o2BubbleRise linear infinite;
+  opacity: 0.85;
+  will-change: transform, opacity;
+}
+
+.o2-bubble.b1  { left: 8%;  width: 7px; height: 7px; animation-duration: 3.2s; animation-delay: 0s; }
+.o2-bubble.b2  { left: 18%; width: 5px; height: 5px; animation-duration: 4.1s; animation-delay: 0.8s; }
+.o2-bubble.b3  { left: 28%; width: 9px; height: 9px; animation-duration: 3.6s; animation-delay: 1.5s; }
+.o2-bubble.b4  { left: 38%; width: 6px; height: 6px; animation-duration: 4.5s; animation-delay: 0.3s; }
+.o2-bubble.b5  { left: 48%; width: 8px; height: 8px; animation-duration: 3.4s; animation-delay: 2.1s; }
+.o2-bubble.b6  { left: 58%; width: 5px; height: 5px; animation-duration: 4.2s; animation-delay: 1.1s; }
+.o2-bubble.b7  { left: 68%; width: 9px; height: 9px; animation-duration: 3.8s; animation-delay: 2.7s; }
+.o2-bubble.b8  { left: 78%; width: 6px; height: 6px; animation-duration: 4.4s; animation-delay: 0.6s; }
+.o2-bubble.b9  { left: 88%; width: 8px; height: 8px; animation-duration: 3.5s; animation-delay: 1.9s; }
+.o2-bubble.b10 { left: 95%; width: 5px; height: 5px; animation-duration: 4.0s; animation-delay: 2.4s; }
+
+@keyframes o2BubbleRise {
+  0% {
+    transform: translateY(0) translateX(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+    transform: translateY(-8px) translateX(3px) scale(0.9);
+  }
+  50% {
+    transform: translateY(-20px) translateX(-4px) scale(1);
+  }
+  85% {
+    opacity: 0.85;
+    transform: translateY(-34px) translateX(3px) scale(1.05);
+  }
+  100% {
+    transform: translateY(-46px) translateX(-2px) scale(1.15);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .o2-bubble { animation: none !important; }
 }
 

@@ -14,6 +14,13 @@
       --dangerb:#efb2ac;
     }
     *{box-sizing:border-box}
+    html, body{
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+    }
+    button, a, input, select, textarea, .card, main{
+      touch-action: manipulation;
+    }
     /* PROTECTION-COPIE (desactivee) : selection de texte libre.
        Pour la reactiver au dernier palier, decommenter la ligne ci-dessous.
     body, button, .card, .notice, .stepbox, .morse-stepbox, .morse-log{user-select:none;-webkit-user-select:none} */

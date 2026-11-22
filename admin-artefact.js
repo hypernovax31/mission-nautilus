@@ -153,6 +153,46 @@
     {w:'NAUTILE'},{w:'ABYSSES'},{w:'EPAVES'},{w:'EQUATEUR'},{w:'OCEANES'},{w:'RECIFAL'},{w:'SOUSMARIN'},{w:'BARQUES'},{w:'PHOQUES'},{w:'CETACES'},{w:'CORAIL'},{w:'MEDUSES'},{w:'OURSINS'},{w:'CRUSTACE'},{w:'BALEINES'},{w:'DAUPHINS'},{w:'REQUINS'},{w:'ANCHOIS'},{w:'SARDINES'},{w:'MOULES'},{w:'HUITRES'},{w:'CREVETTES'},{w:'LANGOUSTE'},{w:'MAREEES'},{w:'COURANTS'},{w:'VAGUES'},{w:'ECUMES'},{w:'ALGUES'},{w:'MANGROVE'},{w:'PROMENADE'},{w:'PHARE'},{w:'MARINIER'},{w:'PIRATES'},{w:'FLIBUSTIER'},{w:'EQUIPAGES'},{w:'MATELOTS'},{w:'CAPITAINE'},{w:'AMIRAUTE'},{w:'CHALUTIER'},{w:'SOUSMARINE'}
   ];
   var REF_P2 = ['STEELBOOK','ECOTAXE','PICKING','ANTISKATING','NEURONAL','RAYTRACING','REASSORT','REPRISE','PLEIADE','DEFROISSEUR','DIAPHRAGME'];
+  var REF_P4 = [
+    { s: 'NR', nom: 'Nautilus', c: 'G9' },
+    { s: 'AB', nom: 'Abysses', c: 'I1' },
+    { s: 'CR', nom: 'Corail', c: 'I5' },
+    { s: 'KT', nom: 'Kraken', c: 'B3' },
+    { s: 'PH', nom: 'Phare', c: 'A4' },
+    { s: 'SN', nom: 'Sonar', c: 'E7' },
+    { s: 'TR', nom: 'Trésor', c: 'I2' },
+    { s: 'VL', nom: 'Voilier', c: 'C3' }
+  ];
+  var REF_P5 = [
+    { nom: 'Marshall IV', p: '150 €' },
+    { nom: 'JBL Flip 6', p: '140 €' },
+    { nom: 'Platine AT', p: '180 €' },
+    { nom: 'Sony WF-C500', p: '80 €' },
+    { nom: 'Bose QC SC', p: '300 €' },
+    { nom: '20 000 Lieues', p: '30 €' },
+    { nom: 'One Piece', p: '83 €' },
+    { nom: 'Astérix 40', p: '11 €' },
+    { nom: 'Tolkien SDA', p: '89 €' },
+    { nom: 'Petit Robert', p: '69 €' },
+    { nom: 'Manette Xbox', p: '60 €' },
+    { nom: 'Souris G502', p: '90 €' },
+    { nom: 'Clavier G915', p: '230 €' },
+    { nom: 'HyperX Cloud', p: '100 €' },
+    { nom: 'DualSense PS5', p: '75 €' },
+    { nom: 'Instax 12', p: '90 €' },
+    { nom: 'Films Instax', p: '20 €' },
+    { nom: 'Trépied', p: '190 €' },
+    { nom: 'Sac Lowepro', p: '150 €' },
+    { nom: 'Kobo Clara', p: '160 €' },
+    { nom: 'Garmin 55', p: '200 €' },
+    { nom: 'Seagate 2To', p: '85 €' },
+    { nom: 'Clé 128Go', p: '20 €' },
+    { nom: 'Moleskine', p: '25 €' },
+    { nom: 'Caran d’Ache', p: '42 €' },
+    { nom: 'Feutres Faber', p: '65 €' },
+    { nom: 'Daft Punk', p: '35 €' },
+    { nom: 'Pink Floyd', p: '30 €' }
+  ];
   var EQUIPES = ['NEMO','NAUTILUS','ARONNAX','NEDLAND'];
   var EQUIPES_TEST = ['APERCU','TEST','ANON','ANON-TEST'];
   function hashString(s){ var h=0; for(var i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
@@ -377,8 +417,10 @@
   }
 
   function htmlToutesReponses(){
+    var p4 = REF_P4.map(function(m){ return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'" title="'+esc(m.nom)+'"><b>'+esc(m.s)+'</b> : '+esc(m.c)+'</span>'; }).join('');
+    var p5 = REF_P5.map(function(item){ return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'">'+esc(item.nom)+' : <b style="color:#ffd36c">'+esc(item.p)+'</b></span>'; }).join('');
     return ''
-    + '<p class="small" style="margin-bottom:10px">Bonnes réponses attendues par palier pour chaque équipage (P1 mot de passe, P2 mots croisés, P3 chasse aux artefacts).</p>'
+    + '<p class="small" style="margin-bottom:10px">Bonnes réponses attendues par palier pour chaque équipage (P1 mot de passe, P2 mots croisés, P3 chasse aux artefacts, P4 relevé du sonar, P5 le juste prix Fnac).</p>'
     + '<div id="afTeamCards" class="adm-af-cards teamlist" style="display:flex;flex-direction:column;gap:12px;padding:4px 0 8px">'
     +   EQUIPES.map(function(eq){
           var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
@@ -387,6 +429,8 @@
             + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eq+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
             + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2+'</div></div>'
             + '<div class="adm-af-row" id="afP3-'+eq+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
+            + '<div class="adm-af-row" id="afP4-'+eq+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P4</span><div class="adm-af-chips" id="afP4wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p4+'</div></div>'
+            + '<div class="adm-af-row" id="afP5-'+eq+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P5</span><div class="adm-af-chips" id="afP5wrap-'+eq+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p5+'</div></div>'
             + '</div>';
         }).join('')
     +   (function(){
@@ -397,6 +441,8 @@
             + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eqT+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
             + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2t+'</div></div>'
             + '<div class="adm-af-row" id="afP3-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
+            + '<div class="adm-af-row" id="afP4-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P4</span><div class="adm-af-chips" id="afP4wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p4+'</div></div>'
+            + '<div class="adm-af-row" id="afP5-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P5</span><div class="adm-af-chips" id="afP5wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p5+'</div></div>'
             + '</div>';
         })()
     + '</div>';
@@ -413,6 +459,8 @@
     if(!host) return null;
     // Construit une carte similaire aux fixes
     var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+equipe+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
+    var p4 = REF_P4.map(function(m){ return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'" title="'+esc(m.nom)+'"><b>'+esc(m.s)+'</b> : '+esc(m.c)+'</span>'; }).join('');
+    var p5 = REF_P5.map(function(item){ return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'">'+esc(item.nom)+' : <b style="color:#ffd36c">'+esc(item.p)+'</b></span>'; }).join('');
     var card = document.createElement('div');
     card.className = 'adm-af-teamcard';
     card.dataset.team = equipe;
@@ -420,7 +468,9 @@
     card.innerHTML = '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">'+esc(equipe)+' <span class="small" style="background:rgba(91,255,156,0.2);border:1px solid rgba(91,255,156,0.5);color:#7ce6ad;border-radius:999px;padding:2px 7px;font-size:10px">SESSION LIVE</span></span><span class="small" id="afTeamPill-'+equipe+'" style="color:#9bc4d4;font-weight:600">auto</span></div>'
       + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+equipe+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
       + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2+'</div></div>'
-      + '<div class="adm-af-row" id="afP3-'+equipe+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>';
+      + '<div class="adm-af-row" id="afP3-'+equipe+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
+      + '<div class="adm-af-row" id="afP4-'+equipe+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P4</span><div class="adm-af-chips" id="afP4wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p4+'</div></div>'
+      + '<div class="adm-af-row" id="afP5-'+equipe+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P5</span><div class="adm-af-chips" id="afP5wrap-'+equipe+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p5+'</div></div>';
     // insère avant la carte TEST si elle existe, sinon à la fin
     var testCard = host.querySelector('[data-team="TEST"]');
     if(testCard) host.insertBefore(card, testCard);

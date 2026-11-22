@@ -1,9 +1,9 @@
 /* =============================================================
    PALIER 5 — « LE JUSTE PRIX »
    Moteur de l'épreuve du Palier 5 (css/palier5.css).
-   Ambiance pupitre sous-marin Nautilus / Rayon Occasion Fnac.
+   Ambiance pupitre sous-marin Nautilus / Rayon Fnac.
    S'ajoute à palier1.css et palier2.css : liseré d'or, teintes cyan,
-   boutons tactiles ≥ 44px, contrastes WCAG AAA.
+   voyants rouges vifs, chronomètre 10s et contrastes WCAG AAA.
    ============================================================= */
 
 /* Page pleine largeur comme les Paliers 2, 3 et 4 */
@@ -15,7 +15,7 @@ main { max-width: 1720px; }
   flex-direction: column;
   gap: 14px;
   width: 100%;
-  max-width: 600px;
+  max-width: 620px;
   margin: 0 auto;
 }
 
@@ -26,7 +26,7 @@ main { max-width: 1720px; }
   border-radius: 16px;
   padding: 12px 14px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
 }
@@ -56,14 +56,14 @@ main { max-width: 1720px; }
 
 .jp-hud-val.is-gold { color: #f5b027; }
 .jp-hud-val.is-danger { color: #ff4b3e; }
-.jp-hud-val.is-success { color: #5bff9c; }
+.jp-hud-val.is-cyan { color: #5bff9c; }
 
 /* Carte produit */
 .jp-card {
-  background: rgba(4, 18, 32, 0.94);
+  background: rgba(4, 18, 32, 0.95);
   border: 1px solid rgba(142, 231, 255, 0.28);
   border-radius: 20px;
-  padding: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -77,7 +77,107 @@ main { max-width: 1720px; }
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: linear-gradient(90deg, transparent, #f5b027, transparent);
+  background: linear-gradient(90deg, transparent, #f5b027 30%, #8ee7ff 70%, transparent);
+}
+
+/* En-tête produit associant image principale et intitulé */
+.jp-product-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jp-image-box {
+  width: 100%;
+  height: 240px;
+  background: linear-gradient(180deg, rgba(3, 14, 26, 0.95), rgba(1, 8, 16, 0.98));
+  border: 2px solid rgba(142, 231, 255, 0.3);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.8), 0 4px 18px rgba(0, 0, 0, 0.5);
+}
+
+.jp-image {
+  width: 100%;
+  height: 100%;
+  max-width: 280px;
+  max-height: 280px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.7));
+  transition: transform 0.25s ease;
+}
+
+.jp-image:hover {
+  transform: scale(1.03);
+}
+
+/* Animation des pouces 👍 vert (succès) et 👎🏻 rouge (échec) */
+.jp-thumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+}
+
+.jp-thumb-ico {
+  font-size: 50px;
+  line-height: 1;
+}
+
+.jp-thumb.is-win {
+  background: radial-gradient(circle, rgba(91, 255, 156, 0.4) 0%, rgba(10, 48, 30, 0.85) 70%, rgba(4, 18, 32, 0.95) 100%);
+  border: 3px solid #5bff9c;
+  box-shadow: 0 0 35px rgba(91, 255, 156, 0.85), inset 0 0 15px rgba(255, 255, 255, 0.6);
+}
+
+.jp-thumb.is-loss {
+  background: radial-gradient(circle, rgba(255, 75, 62, 0.4) 0%, rgba(60, 10, 10, 0.85) 70%, rgba(4, 18, 32, 0.95) 100%);
+  border: 3px solid #ff4b3e;
+  box-shadow: 0 0 35px rgba(255, 75, 62, 0.85), inset 0 0 15px rgba(255, 255, 255, 0.6);
+}
+
+.jp-thumb.is-win.animate {
+  animation: thumbPopWin 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+.jp-thumb.is-loss.animate {
+  animation: thumbPopLoss 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes thumbPopWin {
+  0% { transform: translate(-50%, -50%) scale(0.2) rotate(-15deg); opacity: 0; }
+  25% { transform: translate(-50%, -50%) scale(1.15) rotate(5deg); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+  80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(1.25); opacity: 0; }
+}
+
+@keyframes thumbPopLoss {
+  0% { transform: translate(-50%, -50%) scale(0.2) rotate(15deg); opacity: 0; }
+  20% { transform: translate(-50%, -50%) scale(1.15) rotate(-10deg); opacity: 1; }
+  40% { transform: translate(-50%, -50%) scale(1) rotate(8deg); opacity: 1; }
+  60% { transform: translate(-50%, -50%) scale(1) rotate(-6deg); opacity: 1; }
+  80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(1.25); opacity: 0; }
+}
+
+.jp-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .jp-category-badge {
@@ -93,81 +193,137 @@ main { max-width: 1720px; }
   border: 1px solid rgba(142, 231, 255, 0.3);
 }
 
-.jp-image-box {
-  width: 100%;
-  height: 220px;
-  background: rgba(1, 8, 16, 0.85);
-  border: 1px solid rgba(142, 231, 255, 0.2);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  position: relative;
-}
-
-.jp-image {
-  max-width: 90%;
-  max-height: 90%;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
-  transition: transform 0.25s ease;
-}
-
-.jp-image:hover {
-  transform: scale(1.04);
-}
-
 .jp-title {
   margin: 0;
-  font-size: clamp(15px, 3.8vw, 18px);
+  font-size: clamp(16px, 4vw, 20px);
   font-weight: 900;
   line-height: 1.35;
   color: #fff;
 }
 
-/* Jauge d'essais */
-.jp-attempts-box {
+/* Barre de statut d'essais & chronomètre 10s */
+.jp-status-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Voyants d'erreurs (3 voyants rouges s'allumant à chaque erreur) */
+.jp-voyants-box {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.45);
   padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(142, 231, 255, 0.15);
+  border-radius: 12px;
+  border: 1px solid rgba(142, 231, 255, 0.2);
 }
 
-.jp-attempts-label {
-  font-size: 12px;
+.jp-voyants-label {
+  font-size: 11px;
   font-weight: 900;
   color: #b7d9e8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.jp-dots {
+.jp-voyants {
   display: flex;
   gap: 8px;
 }
 
-.jp-dot {
-  width: 14px;
-  height: 14px;
+.jp-voyant {
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: rgba(142, 231, 255, 0.2);
-  border: 1px solid rgba(142, 231, 255, 0.3);
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(142, 231, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  font-weight: 1000;
+  color: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  position: relative;
 }
 
-.jp-dot.is-used {
-  background: #ff4b3e;
-  border-color: #ff4b3e;
-  box-shadow: 0 0 8px rgba(255, 75, 62, 0.6);
-}
-
-.jp-dot.is-current {
-  background: #f5b027;
-  border-color: #fff;
-  box-shadow: 0 0 10px rgba(245, 176, 39, 0.8);
+/* Voyant allumé en rouge vif lors d'une erreur */
+.jp-voyant.is-error {
+  background: radial-gradient(circle at 35% 35%, #ff8585 0%, #ff1a1a 60%, #990000 100%);
+  border-color: #ff9999;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(255, 30, 30, 0.95), inset 0 0 6px rgba(255, 255, 255, 0.8);
   transform: scale(1.15);
+  animation: voyantPulse 1.2s infinite alternate;
+}
+
+@keyframes voyantPulse {
+  0% { box-shadow: 0 0 10px rgba(255, 30, 30, 0.85), inset 0 0 4px rgba(255, 255, 255, 0.6); }
+  100% { box-shadow: 0 0 20px rgba(255, 40, 40, 1), inset 0 0 8px rgba(255, 255, 255, 0.9); }
+}
+
+/* Chronomètre 10s par réponse */
+.jp-timer-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(142, 231, 255, 0.2);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.jp-timer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8ee7ff;
+}
+
+.jp-timer-val {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  font-weight: 1000;
+  color: #5bff9c;
+  transition: color 0.3s ease;
+}
+
+.jp-timer-val.is-warning { color: #ffd36c; }
+.jp-timer-val.is-critical { color: #ff4b3e; }
+
+.jp-timer-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+
+.jp-timer-bar {
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #18c8ff, #5bff9c);
+  box-shadow: 0 0 10px rgba(91, 255, 156, 0.5);
+  transition: width 0.1s linear, background 0.3s ease;
+}
+
+.jp-timer-bar.is-warning {
+  background: linear-gradient(90deg, #f5b027, #ffd36c);
+  box-shadow: 0 0 10px rgba(245, 176, 39, 0.6);
+}
+
+.jp-timer-bar.is-critical {
+  background: linear-gradient(90deg, #ff4b3e, #ff7b72);
+  box-shadow: 0 0 12px rgba(255, 75, 62, 0.8);
 }
 
 /* Zone de saisie du prix */
@@ -379,7 +535,7 @@ main { max-width: 1720px; }
 
 /* Réduction des mouvements système */
 @media (prefers-reduced-motion: reduce) {
-  .jp-feedback, .jp-dot, .jp-submit-btn, .jp-chip, .jp-image {
+  .jp-feedback, .jp-voyant, .jp-submit-btn, .jp-chip, .jp-image, .jp-timer-bar {
     animation: none !important;
     transition: none !important;
     transform: none !important;
