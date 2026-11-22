@@ -477,13 +477,14 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
         if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
       }
     }
+    var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
     afficherVueEpreuve();
     t0Partie = Date.now();
     statut('📡 <b>Reconstitue le relevé.</b> Sélectionne un marqueur, puis touche sa case. <b>3 révélations demandées</b> et tu remontes en surface.', 'info');
     window.NautilusMarqueurs.init($('epreuveHost'), {
       grille: MARQUEUR_GRILLE,
       marqueurs: MARQUEURS,
-      graine: 'palier4',
+      graine: 'palier4_' + String(equipageCode).toUpperCase(),
       maxErreurs: 3,
       onErreur: onErreur,
       onVictoire: onVictoire

@@ -81,11 +81,16 @@
     }
     #adminPanel.nautilus-admin-modal.open{display:flex !important}
     #adminPanel.nautilus-admin-modal > h2{
-      width:100%; max-width:900px; margin:0; padding:13px 16px;
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      width:100%; max-width:900px; margin:0; padding:13px 16px; padding-right:52px !important;
+      position:relative !important; display:flex; align-items:center; gap:10px;
       color:#ffb4ad; background:linear-gradient(90deg,#3a0a08,#7a1812);
       border:1px solid rgba(245,176,39,.5); border-bottom:0;
       border-radius:16px 16px 0 0; box-sizing:border-box;
+    }
+    #adminCloseBtn{
+      position:absolute !important; top:10px !important; right:14px !important;
+      width:28px !important; height:28px !important; min-height:28px !important;
+      border-radius:50% !important; z-index:10 !important;
     }
     #adminPanel.nautilus-admin-modal > .body{
       width:100%; max-width:900px; max-height:calc(100dvh - 150px);
@@ -104,7 +109,7 @@
     document.head.appendChild(style);
   }
 
-  const ADMIN_PANEL_HTML = '<section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">\n    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">\n      <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>\n      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">\n        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>\n      </button>\n    </h2>\n    <div class="body">\n      <p class="small" style="color:#ff8579;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l\'équipe d\'organisation. Accès par code uniquement.</p>\n      <div class="hr"></div>\n      <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">\n        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d\'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d\'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>\n        <span id="adminUnlockMsg" class="small" style="width:100%"></span>\n      </div>\n      <div id="adminWorkspace" style="display:none">\n        <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">\n          <span class="small" style="color:#5be09b;font-weight:900">✅ Session admin active</span>\n        </div>\n\n        <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:rgba(8,30,48,.85);color:#eaf8ff">\n          <div style="font-weight:900;color:#8ee7ff;margin-bottom:4px">🧪 ACCÈS CONCEPTEUR</div>\n          <div class="small" style="margin-bottom:9px">Ouvre chaque page du jeu dans un onglet isolé : l’aperçu organisateur n’écrit <b>aucun blocage ni aucune progression réelle</b>. Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>\n          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;margin:0 0 10px;border-radius:9px;background:rgba(91,224,155,.22);border:1.5px solid rgba(91,224,155,.65);box-shadow:0 0 18px rgba(91,224,155,.3);color:#eafff3">\n            <span style="flex:1 1 auto;min-width:0;overflow-wrap:anywhere">🏆 <b>Annonce verte « palier franchi »</b> <span class="small" style="color:#5be09b;font-weight:700">message + Victoire.mp3</span></span>\n            <span style="display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto"><button class="secondary admin-test-annonce-btn" id="adminQuickTestAnnonceBtn" type="button" style="margin:0;white-space:nowrap;background:#5be09b;color:#032010;font-weight:900;border:none;padding:6px 14px;border-radius:7px;cursor:pointer">Tester</button></span>\n          </div>\n          <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>\n          <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>\n        </div>\n\n        <div class="admin-tabs" role="tablist">\n          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Membres</span><span class="lbl-mobile" aria-label="Membres">👥</span></button>\n          <button class="admin-tab" data-tab="teams" type="button" role="tab"><span class="lbl-desktop">🚢 Équipes</span><span class="lbl-mobile" aria-label="Équipes">🚢</span></button>\n          <button class="admin-tab" data-tab="locks" type="button" role="tab"><span class="lbl-desktop">🔒 Blocages</span><span class="lbl-mobile" aria-label="Blocages">🔒</span></button>\n          <button class="admin-tab" data-tab="oxygen" type="button" role="tab"><span class="lbl-desktop">⏱️ O₂</span><span class="lbl-mobile" aria-label="O₂">⏱️</span></button>\n          <button class="admin-tab" data-tab="danger" type="button" role="tab"><span class="lbl-desktop">⚠️ Danger</span><span class="lbl-mobile" aria-label="Danger">⚠️</span></button>\n        </div>\n\n        <!-- TAB: MEMBRES -->\n        <div class="admin-pane" data-pane="members">\n          <div class="row" style="margin-bottom:10px;align-items:center">\n            <span class="small" style="flex:1">Modifie le nom, le service ou l\'équipage d\'un matelot, ou supprime-le.</span>\n            <button class="secondary" id="adminReloadBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">↻ Recharger</button>\n          </div>\n          <div class="admin-add-member">\n            <div class="admin-add-title">➕ Ajouter un matelot</div>\n            <div class="admin-form-grid">\n              <label for="adminNewMemberName">Nom</label>\n              <input id="adminNewMemberName" type="text" maxlength="32" placeholder="Ex. JULES VERNE" autocomplete="off">\n              <label for="adminNewMemberSvc">Service</label>\n              <select id="adminNewMemberSvc"><option value="" selected disabled>Ex. PE</option></select>\n              <label for="adminNewMemberTeam">Équipage</label>\n              <select id="adminNewMemberTeam"><option value="" selected disabled>Choisir…</option></select>\n            </div>\n            <div class="admin-actions-row">\n              <button class="primary" id="adminAddMemberBtn" type="button">➕ Ajouter le matelot</button>\n            </div>\n            <div id="adminAddMemberMsg"></div>\n          </div>\n          <div id="adminMembersBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: BLOCAGES -->\n        <div class="admin-pane" data-pane="locks" style="display:none">\n          <p class="small" style="margin-bottom:10px">Pour chaque équipe : activer/désactiver le blocage, ou modifier la date/heure de reprise autorisée.</p>\n          <div id="adminLocksBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: O2 -->\n        <div class="admin-pane" data-pane="oxygen" style="display:none">\n          <p class="small" style="margin-bottom:10px">Le compte à rebours de la réserve O₂ (durée de la mission) peut être réinitialisé, ou décalé en modifiant la date/heure de départ.</p>\n          <div class="admin-o2-status">\n            <div class="admin-o2-row"><span>État actuel</span><strong id="adminO2Now">—</strong></div>\n            <div class="admin-o2-row"><span>Statut</span><span class="admin-o2-badge" id="adminO2State">—</span></div>\n            <div class="admin-o2-row"><span>Temps restant</span><strong id="adminO2Countdown">—</strong></div>\n          </div>\n          <div class="admin-form-grid admin-o2-form">\n            <label for="adminO2Days">Durée (jours)</label>\n            <input id="adminO2Days" type="number" min="0" step="1" value="7">\n            <label for="adminO2Hours">Durée (heures)</label>\n            <input id="adminO2Hours" type="number" min="0" max="23" step="1" value="0">\n          </div>\n          <div class="admin-actions-row">\n            <button class="primary" id="adminO2Apply" type="button">💾 Appliquer la modification</button>\n            <button class="secondary" id="adminO2Reset" type="button">♻️ Reset à maintenant (durée initiale)</button>\n            <button class="danger" id="adminO2Clear" type="button">🛑 Arrêter la mission</button>\n          </div>\n        </div>\n\n        <!-- TAB: EQUIPES -->\n        <div class="admin-pane" data-pane="teams" style="display:none">\n          <p class="small" style="margin-bottom:10px">Ajoute, renomme ou supprime une équipe. La suppression purge le doc Firestore correspondant et l\'ajoute à la liste des codes obsolètes (nettoyés à chaque init).</p>\n          <div id="adminTeamsBox" class="teamlist"></div>\n          <div class="hr"></div>\n          <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">\n            <div style="flex:1;min-width:220px"><label for="adminNewTeamName">Nom de la nouvelle équipe</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" maxlength="24" autocomplete="off"></div>\n            <button class="primary" id="adminAddTeamBtn" type="button" style="margin:0">➕ Ajouter</button>\n          </div>\n        </div>\n\n        <!-- TAB: DANGER -->\n        <div class="admin-pane" data-pane="danger" style="display:none">\n          <p style="margin:0 0 12px;font-weight:900;color:#ff8579">⚠️ Zone sensible — actions irréversibles</p>\n          <div style="display:flex;gap:10px;flex-wrap:wrap">\n            <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>\n            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:rgba(255,75,62,.2);color:#ff8579;border:1px solid rgba(255,75,62,.5)">🔄 Reset progression (toutes équipes)</button>\n            <button class="secondary" id="cleanupTestSessionsBtn" type="button" style="margin:0">🧪 Purger les traces du compte test</button>\n            <button class="secondary" id="cleanupFieldsBtn" type="button" style="margin:0">🧹 Nettoyer les champs obsolètes</button>\n          </div>\n          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>La purge retire toute trace du compte de test ZZZZ-0000 (parties fantômes, membre, blocage ou présence TEST) : le compte de test ne fait jamais partie d\'un équipage.<br>Le nettoyage retire « migratedFrom », un reste de l\'ancienne migration des identifiants d\'équipe : sans effet sur le jeu.</p>\n        </div>\n      </div>\n    </div>\n  </section>';
+  const ADMIN_PANEL_HTML = '<section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">\n    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;position:relative;display:flex;align-items:center;gap:12px;padding-right:52px">\n      <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>\n      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="position:absolute;top:10px;right:14px;background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">\n        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>\n      </button>\n    </h2>\n    <div class="body">\n      <p class="small" style="color:#ff8579;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l\'équipe d\'organisation. Accès par code uniquement.</p>\n      <div class="hr"></div>\n      <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">\n        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d\'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d\'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>\n        <span id="adminUnlockMsg" class="small" style="width:100%"></span>\n      </div>\n      <div id="adminWorkspace" style="display:none">\n        <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">\n          <span class="small" style="color:#5be09b;font-weight:900">✅ Session admin active</span>\n        </div>\n\n        <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:rgba(8,30,48,.85);color:#eaf8ff">\n          <div style="font-weight:900;color:#8ee7ff;margin-bottom:4px">🧪 ACCÈS CONCEPTEUR</div>\n          <div class="small" style="margin-bottom:9px">Ouvre chaque page du jeu dans un onglet isolé : l’aperçu organisateur n’écrit <b>aucun blocage ni aucune progression réelle</b>. Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>\n          <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>\n          <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>\n        </div>\n\n        <div class="admin-tabs" role="tablist">\n          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Membres</span><span class="lbl-mobile" aria-label="Membres">👥</span></button>\n          <button class="admin-tab" data-tab="teams" type="button" role="tab"><span class="lbl-desktop">🚢 Équipes</span><span class="lbl-mobile" aria-label="Équipes">🚢</span></button>\n          <button class="admin-tab" data-tab="locks" type="button" role="tab"><span class="lbl-desktop">🔒 Blocages</span><span class="lbl-mobile" aria-label="Blocages">🔒</span></button>\n          <button class="admin-tab" data-tab="oxygen" type="button" role="tab"><span class="lbl-desktop">⏱️ O₂</span><span class="lbl-mobile" aria-label="O₂">⏱️</span></button>\n          <button class="admin-tab" data-tab="danger" type="button" role="tab"><span class="lbl-desktop">⚠️ Danger</span><span class="lbl-mobile" aria-label="Danger">⚠️</span></button>\n        </div>\n\n        <!-- TAB: MEMBRES -->\n        <div class="admin-pane" data-pane="members">\n          <div class="row" style="margin-bottom:10px;align-items:center">\n            <span class="small" style="flex:1">Modifie le nom, le service ou l\'équipage d\'un matelot, ou supprime-le.</span>\n            <button class="secondary" id="adminReloadBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">↻ Recharger</button>\n          </div>\n          <div class="admin-add-member">\n            <div class="admin-add-title">➕ Ajouter un matelot</div>\n            <div class="admin-form-grid">\n              <label for="adminNewMemberName">Nom</label>\n              <input id="adminNewMemberName" type="text" maxlength="32" placeholder="Ex. JULES VERNE" autocomplete="off">\n              <label for="adminNewMemberSvc">Service</label>\n              <select id="adminNewMemberSvc"><option value="" selected disabled>Ex. PE</option></select>\n              <label for="adminNewMemberTeam">Équipage</label>\n              <select id="adminNewMemberTeam"><option value="" selected disabled>Choisir…</option></select>\n            </div>\n            <div class="admin-actions-row">\n              <button class="primary" id="adminAddMemberBtn" type="button">➕ Ajouter le matelot</button>\n            </div>\n            <div id="adminAddMemberMsg"></div>\n          </div>\n          <div id="adminMembersBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: BLOCAGES -->\n        <div class="admin-pane" data-pane="locks" style="display:none">\n          <p class="small" style="margin-bottom:10px">Pour chaque équipe : activer/désactiver le blocage, ou modifier la date/heure de reprise autorisée.</p>\n          <div id="adminLocksBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: O2 -->\n        <div class="admin-pane" data-pane="oxygen" style="display:none">\n          <p class="small" style="margin-bottom:10px">Le compte à rebours de la réserve O₂ (durée de la mission) peut être réinitialisé, ou décalé en modifiant la date/heure de départ.</p>\n          <div class="admin-o2-status">\n            <div class="admin-o2-row"><span>État actuel</span><strong id="adminO2Now">—</strong></div>\n            <div class="admin-o2-row"><span>Statut</span><span class="admin-o2-badge" id="adminO2State">—</span></div>\n            <div class="admin-o2-row"><span>Temps restant</span><strong id="adminO2Countdown">—</strong></div>\n          </div>\n          <div class="admin-form-grid admin-o2-form">\n            <label for="adminO2Days">Durée (jours)</label>\n            <input id="adminO2Days" type="number" min="0" step="1" value="7">\n            <label for="adminO2Hours">Durée (heures)</label>\n            <input id="adminO2Hours" type="number" min="0" max="23" step="1" value="0">\n          </div>\n          <div class="admin-actions-row">\n            <button class="primary" id="adminO2Apply" type="button">💾 Appliquer la modification</button>\n            <button class="secondary" id="adminO2Reset" type="button">♻️ Reset à maintenant (durée initiale)</button>\n            <button class="danger" id="adminO2Clear" type="button">🛑 Arrêter la mission</button>\n          </div>\n        </div>\n\n        <!-- TAB: EQUIPES -->\n        <div class="admin-pane" data-pane="teams" style="display:none">\n          <p class="small" style="margin-bottom:10px">Ajoute, renomme ou supprime une équipe. La suppression purge le doc Firestore correspondant et l\'ajoute à la liste des codes obsolètes (nettoyés à chaque init).</p>\n          <div id="adminTeamsBox" class="teamlist"></div>\n          <div class="hr"></div>\n          <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">\n            <div style="flex:1;min-width:220px"><label for="adminNewTeamName">Nom de la nouvelle équipe</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" maxlength="24" autocomplete="off"></div>\n            <button class="primary" id="adminAddTeamBtn" type="button" style="margin:0">➕ Ajouter</button>\n          </div>\n        </div>\n\n        <!-- TAB: DANGER -->\n        <div class="admin-pane" data-pane="danger" style="display:none">\n          <p style="margin:0 0 12px;font-weight:900;color:#ff8579">⚠️ Zone sensible — actions irréversibles</p>\n          <div style="display:flex;gap:10px;flex-wrap:wrap">\n            <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>\n            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:rgba(255,75,62,.2);color:#ff8579;border:1px solid rgba(255,75,62,.5)">🔄 Reset progression (toutes équipes)</button>\n            <button class="secondary" id="cleanupTestSessionsBtn" type="button" style="margin:0">🧪 Purger les traces du compte test</button>\n            <button class="secondary" id="cleanupFieldsBtn" type="button" style="margin:0">🧹 Nettoyer les champs obsolètes</button>\n          </div>\n          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>La purge retire toute trace du compte de test ZZZZ-0000 (parties fantômes, membre, blocage ou présence TEST) : le compte de test ne fait jamais partie d\'un équipage.<br>Le nettoyage retire « migratedFrom », un reste de l\'ancienne migration des identifiants d\'équipe : sans effet sur le jeu.</p>\n        </div>\n      </div>\n    </div>\n  </section>';
   function injectAdminPanel(){
     ensureAdminModalFallbackStyles();
     if(!document.getElementById('nautilusAdminCss')){
@@ -470,9 +475,64 @@
     return 'k' + Math.abs(h).toString(36);
   }
 
-  /* « TESTER TOUTES LES PAGES » : chaque page du jeu + aperçus d'écrans
-     du Palier 1, ouverts dans un onglet isolé (aucune progression réelle
-     n'est modifiée). Les paliers non construits restent listés « bientôt ». */
+  /* Calcul automatique de l'URL de page pour chacun des 8 paliers.
+     Convention mathématique : [16,1,12,9,5,18] + idx.
+     Palier 1 = palier1.html ; Paliers 2..8 = 1721310619.html, etc. */
+  function palierPageUrl(stepId){
+    const idx = Object.keys(STEPS).indexOf(stepId);
+    if(idx < 0) return null;
+    if(idx === 0) return 'palier1.html?code=NEMO&m=ZZZZ-0000';
+    return [16,1,12,9,5,18].map(n => String(n + idx)).join('') + '.html';
+  }
+
+  function getMeilleurPalierAtteintAdmin(){
+    if (typeof window.getMeilleurPalierAtteint === 'function') {
+      try {
+        const r = window.getMeilleurPalierAtteint();
+        if (typeof r === 'number' && r >= 1) return r;
+      } catch (e) {}
+    }
+    let teams = window._lastTeams || [];
+    if (!teams.length) {
+      try {
+        const local = JSON.parse(localStorage.getItem('nautilusTeamsCache') || '[]');
+        if (Array.isArray(local) && local.length) teams = local;
+      } catch (e) {}
+    }
+    let maxRank = 1;
+    const stepKeys = Object.keys(STEPS);
+    teams.forEach(t => {
+      if (!t) return;
+      if (t.status === 'finished' || (t.completedSteps && t.completedSteps.includes('final'))) {
+        maxRank = 8;
+        return;
+      }
+      const completed = t.completedSteps || [];
+      const currIdx = stepKeys.indexOf(t.currentStep);
+      let r = currIdx >= 0 ? (currIdx + 1) : 1;
+      if (completed.length > 0) {
+        const compRank = completed.length + 1;
+        if (compRank > r) r = compRank;
+      }
+      if (r > maxRank) maxRank = Math.min(8, r);
+    });
+    return maxRank;
+  }
+
+  function syncAdminTestPalierBadge(){
+    const rank = getMeilleurPalierAtteintAdmin();
+    const stepKeys = Object.keys(STEPS);
+    const key = stepKeys[Math.max(0, Math.min(stepKeys.length - 1, rank - 1))];
+    const label = STEPS[key]?.label || `Palier ${rank}`;
+    const b1 = $('adminActivePalierBadge');
+    if(b1) b1.textContent = label;
+    const b2 = $('adminQuickActivePalierBadge');
+    if(b2) b2.textContent = label;
+  }
+
+  /* « TESTER TOUTES LES PAGES » : chaque page du jeu (génération automatique
+     des 8 paliers) + aperçus d'écrans du Palier 1, ouverts dans un onglet isolé.
+     Chaque palier dispose de son bouton direct de test de notification. */
   function renderDesignerAccess(){
     if(!isAdminUnlocked()) { alert('Déverrouille d’abord le panneau admin.'); return; }
     const box = $('adminDesignerBox');
@@ -490,48 +550,71 @@
     const sectionHtml = (titre) =>
       `<div class=\"small\" style=\"font-weight:900;color:#8ee7ff;margin:10px 0 0\">${titre}</div>`;
     const k = apercuAdminCle();
+
+    const activeRank = getMeilleurPalierAtteintAdmin();
+    const stepKeys = Object.keys(STEPS);
+    const activeKey = stepKeys[Math.max(0, Math.min(stepKeys.length - 1, activeRank - 1))];
+    const activeLabel = STEPS[activeKey]?.label || `Palier ${activeRank}`;
+
+    const notesParPalier = {
+      start: 'épreuve morse — compte de test',
+      livres: 'mots croisés',
+      son: 'chasse aux artefacts',
+      zone51: 'relevé du sonar',
+      occasion: 'le juste prix',
+      papeterie: 'code de l’encre',
+      drone: 'vue aérienne',
+      final: 'sas final de surface'
+    };
+
+    const optionsPaliersHtml = stepKeys.map(id =>
+      `<option value=\"${id}\">${STEPS[id].label}</option>`
+    ).join('');
+
     const lignes = [
-      sectionHtml('🏆 ANNONCE SPÉCIALE & SON (AU-DESSUS DE TOUTES LES PAGES)'),
-      `<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:rgba(91,224,155,.22);border:1px solid rgba(91,224,155,.6);box-shadow:0 0 16px rgba(91,224,155,.28);color:#eafff3;\">
-        <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">🏆 <b>Annonce verte « palier franchi »</b> <span class=\"small\" style=\"color:#5be09b;font-weight:700\">message + Victoire.mp3</span></span>
-        <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\"><button class=\"secondary admin-test-annonce-btn\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap;background:#5be09b;color:#032010;font-weight:900;border:none;padding:6px 14px;border-radius:7px;cursor:pointer\">Tester</button></span>
-      </div>`,
       sectionHtml('🧭 TESTER TOUTES LES PAGES DU SITE'),
       ligne('🔄 <b>Vider le cache PWA</b>', 'force la dernière version', `<button id=\"adminPurgePwaBtn\" type=\"button\" style=\"background:#ffd36c;color:#111;border:none;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap\">Purger & Recharger</button>`, true),
       ligne('🏠 <b>Accueil</b>', 'page de lancement', lien('index.html', 'Ouvrir'), true),
       ligne('🏁 <b>Classement</b>', 'podium de fin de mission', lien('classement.html', 'Ouvrir'), true),
-      sectionHtml('PALIERS — pages de jeu')
+      sectionHtml('PALIERS — pages de jeu (génération automatique 1 à 8)')
     ];
-    /* Page connue par palier : start = l'épreuve (compte de test),
-       livres = le portail QR scellé. Le nom de fichier du portail EST le
-       code du palier. */
-    const pageParPalier = { start: 'palier1.html?code=NEMO&m=ZZZZ-0000', livres: '1721310619.html', son: '1831411720.html', zone51: '1941512821.html', occasion: '2051613922.html' };
+
     Object.entries(STEPS).forEach(([id, step], index) => {
-      const href = pageParPalier[id] || null;
-      const note = id === 'start' ? 'épreuve morse — compte de test'
-        : id === 'livres' ? 'mots croisés'
-        : id === 'son' ? 'chasse aux artefacts'
-        : id === 'zone51' ? 'relevé du sonar'
-        : id === 'occasion' ? 'le juste prix'
-        : 'en construction';
-      lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
-        href ? ((id === 'livres' || id === 'son' || id === 'zone51' || id === 'occasion')
-          ? lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve')
-          : lien(href, '🕹️ Jouer l’épreuve'))
-        : '<span class=\"small\" style=\"white-space:nowrap\">Bientôt</span>', !!href));
+      const href = palierPageUrl(id);
+      const isStart = id === 'start';
+      const actions = isStart
+        ? lien(href, '🕹️ Jouer l’épreuve')
+        : (lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve'));
+      const testBtn = `<button class=\"secondary admin-test-step-btn\" data-step=\"${id}\" data-palier=\"${step.label}\" type=\"button\" style=\"margin:0;white-space:nowrap;background:rgba(91,224,155,.2);color:#8ff0b8;border:1px solid rgba(91,224,155,.45);border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;cursor:pointer\" title=\"Tester l’annonce de ce palier\">📢 Annonce</button>`;
+      lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, notesParPalier[id] || '', actions + ' ' + testBtn, true));
     });
+
     lignes.push(sectionHtml('PALIER 1 — aperçus d’écrans (factice, aucune écriture)'));
     [
       ['victoire', '🏆 Épreuve validée (victoire)'],
       ['defaite', '↟ Retour en surface (défaite)'],
       ['blocage', '🔒 Blocage personnel d’un matelot']
-    ]
-    /* L'apercu « transition vers le palier suivant » a ete supprime avec
-       l'ecran : un matelot dont l'equipage a valide le palier est desormais
-       RENVOYE directement sur la page du palier courant, il n'y a plus
-       d'ecran intermediaire a previsualiser. */.forEach(([mode, titre]) => {
+    ].forEach(([mode, titre]) => {
       lignes.push(ligne(titre, 'aperçu', lien(`palier1.html?apercu=${mode}&k=${k}`, 'Aperçu'), true));
     });
+
+    /* Bloc annonce verte « palier franchi » placé sous « Blocage personnel d’un matelot - aperçu » */
+    lignes.push(sectionHtml('🏆 ANNONCE SPÉCIALE & SON (AU-DESSUS DE TOUTES LES PAGES)'));
+    lignes.push(`<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;margin-top:5px;border-radius:8px;background:rgba(91,224,155,.22);border:1.5px solid rgba(91,224,155,.6);box-shadow:0 0 16px rgba(91,224,155,.28);color:#eafff3;\">
+      <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">
+        🏆 <b>Annonce verte « palier franchi »</b>
+        <span id=\"adminActivePalierBadge\" class=\"small\" style=\"color:#032010;background:#5be09b;font-weight:900;padding:2px 7px;border-radius:6px;margin:0 4px\">${activeLabel}</span>
+        <span class=\"small\" style=\"color:#8ee7ff\">message + Victoire.mp3</span>
+      </span>
+      <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\">
+        <select id=\"adminSelectPalierTest\" style=\"background:#071c2b;color:#eaf8ff;border:1px solid rgba(142,231,255,.4);border-radius:7px;padding:5px 7px;font-size:12px;font-weight:700\">
+          <option value=\"auto\">⚡ Auto (${activeLabel})</option>
+          ${optionsPaliersHtml}
+        </select>
+        <button class=\"secondary admin-test-annonce-btn\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap;background:#5be09b;color:#032010;font-weight:900;border:none;padding:6px 14px;border-radius:7px;cursor:pointer\">Tester</button>
+      </span>
+    </div>`);
+
     box.innerHTML = lignes.join('');
     box.querySelector('#adminPurgePwaBtn')?.addEventListener('click', async (e) => {
       const btn = e.target;
@@ -548,12 +631,18 @@
       } catch (_) {}
       location.reload(true);
     });
-    box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', testerAnnonceVerte);
+
+    box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', () => testerAnnonceVerte());
+    box.querySelectorAll('.admin-test-step-btn').forEach(btnEl => {
+      btnEl.addEventListener('click', () => testerAnnonceVerte(btnEl.dataset.step, btnEl.dataset.palier));
+    });
+
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
     if(btn) btn.textContent = box.style.display === 'none' ? '🧪 Tester toutes les pages' : '🔽 Masquer les tests de pages';
   }
 
-  async function testerAnnonceVerte(){
+  let _adminCycleIndex = 0;
+  async function testerAnnonceVerte(explicitStepId, explicitPalierLabel){
     let NA = window.NautilusAnnonces;
     if(!NA || !NA.showPalierAnnouncement){
       try {
@@ -567,11 +656,44 @@
         NA = window.NautilusAnnonces;
       } catch(e) {}
     }
+
+    const stepKeys = Object.keys(STEPS);
+    let targetStep = explicitStepId;
+    let targetLabel = explicitPalierLabel;
+
+    if(!targetStep){
+      const sel = $('adminSelectPalierTest');
+      const val = sel ? sel.value : 'auto';
+      if(val && val !== 'auto' && stepKeys.includes(val)){
+        targetStep = val;
+        targetLabel = STEPS[val]?.label || val;
+      } else {
+        const leaderRank = getMeilleurPalierAtteintAdmin();
+        const baseIdx = Math.max(0, Math.min(stepKeys.length - 1, leaderRank - 1));
+        const idx = (_adminCycleIndex === 0 ? baseIdx : (_adminCycleIndex % stepKeys.length));
+        _adminCycleIndex = (idx + 1) % stepKeys.length;
+        targetStep = stepKeys[idx];
+        targetLabel = STEPS[targetStep]?.label || `Palier ${idx + 1}`;
+      }
+    }
+
+    const b1 = $('adminActivePalierBadge');
+    if(b1) b1.textContent = targetLabel;
+    const b2 = $('adminQuickActivePalierBadge');
+    if(b2) b2.textContent = targetLabel;
+
+    let cheer = '⚡ Les circuits du submersible tressaillent au fond de la fosse : la machinerie s’éveille !';
+    if(NA && NA.misesEnGardeParEtape && NA.misesEnGardeParEtape[targetStep]){
+      cheer = NA.misesEnGardeParEtape[targetStep];
+    } else if(NA && typeof NA.encouragementPour === 'function'){
+      cheer = NA.encouragementPour(targetStep, 0);
+    }
+
     if(NA && NA.showPalierAnnouncement){
       NA.showPalierAnnouncement({
         teamName: 'Équipage démo',
-        palierLabel: 'Palier 1',
-        encouragement: '💪 À vous de jouer : votre équipage franchira le sien !'
+        palierLabel: targetLabel,
+        encouragement: cheer
       });
       if(NA.playVictorySound) NA.playVictorySound(true);
     } else {
@@ -717,6 +839,7 @@
   function showAdminWorkspace(){
     $('adminLocked').style.display = 'none';
     $('adminWorkspace').style.display = '';
+    syncAdminTestPalierBadge();
     switchAdminTab('members');
     refreshAdminTeams();
     renderAdminMembers();

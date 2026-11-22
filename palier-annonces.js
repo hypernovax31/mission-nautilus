@@ -297,16 +297,20 @@
   }
 
   /* Message d'encouragement pour les équipages en retard — court. */
-  /* Messages de mise en garde et d'encouragement selon l'avancement dans les 8 paliers */
+  /* Messages de mise en garde et de suspense selon l'avancement dans les 8 paliers
+     RÈGLE : Aucun décompte de paliers restants (pour ne pas induire en erreur les équipages
+     qui ont leur propre palier), aucun indice ni nom de zone/rayon, suspense et tension
+     crescendo centrés sur la découverte et la remontée du Nautilus depuis les abysses. */
   const MISES_EN_GARDE_PAR_ETAPE = {
-    start: '📖 Un équipage s’enfonce vers le Palier 2 ! Plus que 7 paliers avant la surface, ne laissez personne prendre le large !',
-    livres: '🎧 Un équipage ouvre le Palier 3 ! Plus que 6 paliers : les artefacts acoustiques sont détectés !',
-    son: '📡 Un équipage franchit le Palier 4 ! Plus que 5 paliers : le relevé du sonar en Zone 51 commence !',
-    zone51: '⚖️ Un équipage atteint le Palier 5 ! Plus que 4 paliers : le Juste Prix Fnac Labège vous attend !',
-    occasion: '🚨 Un équipage frôle la surface — le Nautilus va remonter ! Plus que deux paliers, matelots, chaque seconde compte !',
-    papeterie: '🚨 ALERTE COQUE : Un équipage prend de la hauteur au Palier 7 ! Plus qu’un seul palier avant l’écoutille de surface !',
-    drone: '🚨 ALARME GÉNÉRALE : Un équipage force le Palier Final ! L’écoutille de surface est en vue, foncez !',
-    final: '🏆 ÉMERGENCE DU NAUTILUS : Un équipage a ramené le submersible à la surface ! Mission accomplie !'
+    start: '⚡ Les circuits du submersible tressaillent au fond de la fosse : la machinerie s’éveille, la tension monte d’un cran !',
+    livres: '🌊 Les ballasts commencent à vibrer sous la pression : le géant d’acier frémit, l’étau se resserre entre les équipages !',
+    son: '⚙️ Le Nautilus s’arrache au plancher océanique : les flots grondent dans les ténèbres, la remontée se prépare !',
+    zone51: '🚨 Le submersible prend de la vitesse dans les courants profonds : chaque seconde devient décisive pour tous les équipages !',
+    occasion: '🚨 Un équipage enclenche la remontée — le Nautilus émerge des grandes profondeurs ! La pression monte en flèche, matelots, le temps presse !',
+    papeterie: '🚨 ALERTE COQUE : Le Nautilus fend les eaux à pleine puissance ! Les lueurs percent l’obscurité, l’accélération est générale !',
+    drone: '🚨 ALARME GÉNÉRALE : Immersion périscopique imminente ! La coque va crever la surface des flots, la victoire se joue à cet instant !',
+    final: '🏆 ÉMERGENCE : Le Nautilus a percé la surface des flots ! L’écoutille s’ouvre sur l’océan, la mission est accomplie !',
+    urgence_o2: "⚠️ OXYGÈNE CRITIQUE : Les réserves du bord s'épuisent rapidement ! Tous les équipages doivent passer les paliers vers la surface sans tarder !"
   };
 
   const ENCOURAGEMENTS = [
@@ -368,6 +372,7 @@
     showPalierAnnouncement,
     playVictorySound,
     playDefeatSound,          // Perdu.mp3 à l'éjection d'un mini-jeu
-    encouragementPour
+    encouragementPour,
+    misesEnGardeParEtape: MISES_EN_GARDE_PAR_ETAPE
   };
 })();

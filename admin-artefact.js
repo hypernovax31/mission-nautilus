@@ -488,14 +488,69 @@
     });
   }
 
+  function aleaSeed(graine) {
+    var h = 2166136261;
+    var s = String(graine);
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return function () {
+      h ^= h << 13; h ^= h >>> 17; h ^= h << 5;
+      return ((h >>> 0) % 100000) / 100000;
+    };
+  }
+
+  function getP4PourEquipe(equipeCode) {
+    var rnd = aleaSeed('palier4_' + String(equipeCode || 'NEMO').toUpperCase());
+    var n = 9, N = n * n;
+    var libres = [];
+    for (var c = 0; c < N; c++) libres.push(c);
+    var res = [];
+    for (var m = 0; m < REF_P4.length; m++) {
+      var k = Math.floor(rnd() * libres.length);
+      var cell = libres[k];
+      libres.splice(k, 1);
+      var lig = String.fromCharCode(65 + Math.floor(cell / n));
+      var col = (cell % n) + 1;
+      res.push({ s: REF_P4[m].s, nom: REF_P4[m].nom, c: lig + col });
+    }
+    return res;
+  }
+
+  function getP5PourEquipe(equipeCode) {
+    var rnd = aleaSeed('palier5_' + String(equipeCode || 'NEMO').toUpperCase());
+    var pool = REF_P5.slice();
+    var res = [];
+    for (var i = 0; i < 10 && pool.length > 0; i++) {
+      var k = Math.floor(rnd() * pool.length);
+      res.push(pool.splice(k, 1)[0]);
+    }
+    return res;
+  }
+
+  function renderP4Chips(equipeCode) {
+    var p4 = getP4PourEquipe(equipeCode);
+    return p4.map(function(m){
+      return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'" title="'+esc(m.nom)+'"><b>'+esc(m.s)+'</b> : <b style="color:#8ee7ff">'+esc(m.c)+'</b></span>';
+    }).join('');
+  }
+
+  function renderP5Chips(equipeCode) {
+    var p5 = getP5PourEquipe(equipeCode);
+    return p5.map(function(item, idx){
+      return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'" title="'+esc(item.nom)+'"><b>'+(idx + 1)+'.</b> '+esc(item.nom)+' : <b style="color:#ffd36c">'+esc(item.p)+'</b></span>';
+    }).join('');
+  }
+
   function htmlToutesReponses(){
-    var p4 = REF_P4.map(function(m){ return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'" title="'+esc(m.nom)+'"><b>'+esc(m.s)+'</b> : '+esc(m.c)+'</span>'; }).join('');
-    var p5 = REF_P5.map(function(item){ return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'">'+esc(item.nom)+' : <b style="color:#ffd36c">'+esc(item.p)+'</b></span>'; }).join('');
     return ''
-    + '<p class="small" style="margin-bottom:10px">Bonnes réponses attendues par palier pour chaque équipage (P1 mot de passe, P2 mots croisés, P3 chasse aux artefacts, P4 relevé du sonar, P5 le juste prix Fnac).</p>'
+    + '<p class="small" style="margin-bottom:10px">Bonnes réponses attendues par palier pour chaque équipage (P1 mot de passe, P2 mots croisés, P3 chasse aux artefacts, P4 relevé du sonar avec coordonnées, P5 les 10 articles sélectionnés avec leurs prix respectifs Fnac).</p>'
     + '<div id="afTeamCards" class="adm-af-cards teamlist" style="display:flex;flex-direction:column;gap:12px;padding:4px 0 8px">'
     +   EQUIPES.map(function(eq){
           var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
+          var p4 = renderP4Chips(eq);
+          var p5 = renderP5Chips(eq);
           return '<div class="adm-af-teamcard" data-team="'+eq+'" style="margin:0;padding:12px 14px;background:rgba(4,18,32,0.92);border:1px solid rgba(142,231,255,0.3);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.4);color:#eaf8ff">'
             + '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">'+eq+'</span><span class="small" id="afTeamPill-'+eq+'" style="color:#9bc4d4;font-weight:600">…</span></div>'
             + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eq+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
@@ -508,13 +563,15 @@
     +   (function(){
           var eqT='TEST';
           var p2t = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eqT+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
+          var p4t = renderP4Chips(eqT);
+          var p5t = renderP5Chips(eqT);
           return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:0;padding:12px 14px;background:rgba(245,176,39,0.12);border:1px solid rgba(245,176,39,0.45);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#eaf8ff">'
             + '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">🧪 zzzz-0000 <span class="small" style="background:rgba(245,176,39,0.25);border:1px solid rgba(245,176,39,0.5);color:#ffd36c;border-radius:999px;padding:2px 7px;font-size:10px">TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#9bc4d4;font-weight:600">test</span></div>'
             + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eqT+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
             + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2t+'</div></div>'
             + '<div class="adm-af-row" id="afP3-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
-            + '<div class="adm-af-row" id="afP4-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P4</span><div class="adm-af-chips" id="afP4wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p4+'</div></div>'
-            + '<div class="adm-af-row" id="afP5-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P5</span><div class="adm-af-chips" id="afP5wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p5+'</div></div>'
+            + '<div class="adm-af-row" id="afP4-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P4</span><div class="adm-af-chips" id="afP4wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p4t+'</div></div>'
+            + '<div class="adm-af-row" id="afP5-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P5</span><div class="adm-af-chips" id="afP5wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p5t+'</div></div>'
             + '</div>';
         })()
     + '</div>';
@@ -531,8 +588,8 @@
     if(!host) return null;
     // Construit une carte similaire aux fixes
     var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+equipe+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');
-    var p4 = REF_P4.map(function(m){ return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'" title="'+esc(m.nom)+'"><b>'+esc(m.s)+'</b> : '+esc(m.c)+'</span>'; }).join('');
-    var p5 = REF_P5.map(function(item){ return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'">'+esc(item.nom)+' : <b style="color:#ffd36c">'+esc(item.p)+'</b></span>'; }).join('');
+    var p4 = renderP4Chips(equipe);
+    var p5 = renderP5Chips(equipe);
     var card = document.createElement('div');
     card.className = 'adm-af-teamcard';
     card.dataset.team = equipe;
@@ -620,6 +677,12 @@
             majCarteP3Auto(eq);
           }
         }catch(e){ majCarteP3Auto(eq); }
+        try {
+          var w4 = $('afP4wrap-' + eq);
+          if (w4 && !w4.children.length) w4.innerHTML = renderP4Chips(eq);
+          var w5 = $('afP5wrap-' + eq);
+          if (w5 && !w5.children.length) w5.innerHTML = renderP5Chips(eq);
+        } catch(e) {}
         if(!doc && !mot){
            // même sans doc, on tente quand même P2 via local déjà fait
         }
@@ -649,6 +712,12 @@
           if(l2) majP2Chips(eq, l2); else majP2Chips(eq, []);
         }catch(e){ try{ majP2Chips(eq, []);}catch(e2){} }
         majCarteP3Auto(eq);
+        try {
+          var w4b = $('afP4wrap-' + eq);
+          if (w4b && !w4b.children.length) w4b.innerHTML = renderP4Chips(eq);
+          var w5b = $('afP5wrap-' + eq);
+          if (w5b && !w5b.children.length) w5b.innerHTML = renderP5Chips(eq);
+        } catch(e) {}
       });
     });
     // Card test admin zzzz-0000 — alimente le sous-bloc TEST à l'intérieur du card unique
@@ -805,7 +874,7 @@
     btnRep.type = 'button';
     btnRep.setAttribute('role', 'tab');
     btnRep.dataset.tab = ONGLET_REP;
-    btnRep.innerHTML = '<span class="lbl-desktop">🔑 Réponses</span><span class="lbl-mobile" aria-label="Réponses">🔑</span>';
+    btnRep.innerHTML = '<span class="lbl-desktop">🔑 Bonnes réponses attendues</span><span class="lbl-mobile" aria-label="Réponses">🔑</span>';
     // --- bouton QR Codes
     var btnQR = document.createElement('button');
     btnQR.className = 'admin-tab';

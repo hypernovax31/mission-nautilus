@@ -3219,9 +3219,9 @@
 
 </main>
 <section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">
-    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">
+    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;position:relative;display:flex;align-items:center;gap:12px;padding-right:52px">
       <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>
-      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">
+      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="position:absolute;top:10px;right:14px;background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
       </button>
     </h2>
@@ -3240,10 +3240,6 @@
         <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:rgba(8,30,48,.85);color:#eaf8ff">
           <div style="font-weight:900;color:#8ee7ff;margin-bottom:4px">🧪 ACCÈS CONCEPTEUR</div>
           <div class="small" style="margin-bottom:9px">Ouvre chaque page du jeu dans un onglet isolé : l’aperçu organisateur n’écrit <b>aucun blocage ni aucune progression réelle</b>. Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;margin:0 0 10px;border-radius:9px;background:rgba(91,224,155,.22);border:1.5px solid rgba(91,224,155,.65);box-shadow:0 0 18px rgba(91,224,155,.3);color:#eafff3">
-            <span style="flex:1 1 auto;min-width:0;overflow-wrap:anywhere">🏆 <b>Annonce verte « palier franchi »</b> <span class="small" style="color:#5be09b;font-weight:700">message + Victoire.mp3</span></span>
-            <span style="display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto"><button class="secondary admin-test-annonce-btn" id="adminQuickTestAnnonceBtn" type="button" style="margin:0;white-space:nowrap;background:#5be09b;color:#032010;font-weight:900;border:none;padding:6px 14px;border-radius:7px;cursor:pointer">Tester</button></span>
-          </div>
           <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>
           <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>
 
@@ -6201,9 +6197,40 @@ function qrDataUri(text, opts){
     return 'k' + Math.abs(h).toString(36);
   }
 
-  /* « TESTER TOUTES LES PAGES » : chaque page du jeu + aperçus d'écrans
-     du Palier 1, ouverts dans un onglet isolé (aucune progression réelle
-     n'est modifiée). Les paliers non construits restent listés « bientôt ». */
+  /* Calcul automatique de l'URL de page pour chacun des 8 paliers en mode admin.
+     Convention mathématique : [16,1,12,9,5,18] + idx.
+     Palier 1 = palier1.html ; Paliers 2..8 = 1721310619.html, etc. */
+  function adminPalierPageUrl(stepId){
+    const idx = Object.keys(STEPS).indexOf(stepId);
+    if(idx < 0) return null;
+    if(idx === 0) return 'palier1.html?code=NEMO&m=ZZZZ-0000';
+    return [16,1,12,9,5,18].map(n => String(n + idx)).join('') + '.html';
+  }
+
+  function getMeilleurPalierAtteintAdmin(){
+    if (typeof getMeilleurPalierAtteint === 'function') {
+      try {
+        const r = getMeilleurPalierAtteint();
+        if (typeof r === 'number' && r >= 1) return Math.min(8, r);
+      } catch (e) {}
+    }
+    return 1;
+  }
+
+  function syncAdminTestPalierBadge(){
+    const rank = getMeilleurPalierAtteintAdmin();
+    const stepKeys = Object.keys(STEPS);
+    const key = stepKeys[Math.max(0, Math.min(stepKeys.length - 1, rank - 1))];
+    const label = STEPS[key]?.label || `Palier ${rank}`;
+    const b1 = $('adminActivePalierBadge');
+    if(b1) b1.textContent = label;
+    const b2 = $('adminQuickActivePalierBadge');
+    if(b2) b2.textContent = label;
+  }
+
+  /* « TESTER TOUTES LES PAGES » : chaque page du jeu (génération automatique
+     des 8 paliers) + aperçus d'écrans du Palier 1, ouverts dans un onglet isolé.
+     Chaque palier dispose de son bouton direct de test de notification. */
   function renderDesignerAccess(){
     if(!isAdminUnlocked()) { alert('Déverrouille d’abord le panneau admin.'); return; }
     const box = $('adminDesignerBox');
@@ -6225,49 +6252,71 @@ function qrDataUri(text, opts){
     const sectionHtml = (titre) =>
       `<div class=\"small\" style=\"font-weight:900;color:#8ee7ff;margin:10px 0 0\">${titre}</div>`;
     const k = apercuAdminCle();
+
+    const activeRank = getMeilleurPalierAtteintAdmin();
+    const stepKeys = Object.keys(STEPS);
+    const activeKey = stepKeys[Math.max(0, Math.min(stepKeys.length - 1, activeRank - 1))];
+    const activeLabel = STEPS[activeKey]?.label || `Palier ${activeRank}`;
+
+    const notesParPalier = {
+      start: 'épreuve morse — compte de test',
+      livres: 'mots croisés',
+      son: 'chasse aux artefacts',
+      zone51: 'relevé du sonar',
+      occasion: 'le juste prix',
+      papeterie: 'code de l’encre',
+      drone: 'vue aérienne',
+      final: 'sas final de surface'
+    };
+
+    const optionsPaliersHtml = stepKeys.map(id =>
+      `<option value=\"${id}\">${STEPS[id].label}</option>`
+    ).join('');
+
     const lignes = [
-      sectionHtml('🏆 ANNONCE SPÉCIALE & SON (AU-DESSUS DE TOUTES LES PAGES)'),
-      `<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:rgba(91,224,155,.22);border:1px solid rgba(91,224,155,.6);box-shadow:0 0 16px rgba(91,224,155,.28);color:#eafff3;\">
-        <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">🏆 <b>Annonce verte « palier franchi »</b> <span class=\"small\" style=\"color:#5be09b;font-weight:700\">message + Victoire.mp3</span></span>
-        <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\"><button class=\"secondary admin-test-annonce-btn\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap;background:#5be09b;color:#032010;font-weight:900;border:none;padding:6px 14px;border-radius:7px;cursor:pointer\">Tester</button></span>
-      </div>`,
       sectionHtml('🧭 TESTER TOUTES LES PAGES DU SITE'),
       ligne('🔄 <b>Vider le cache PWA</b>', 'force la dernière version', `<button id=\"adminPurgePwaBtnHome\" type=\"button\" style=\"background:#ffd36c;color:#111;border:none;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap\">Purger & Recharger</button>`, true),
       ligne('🏠 <b>Accueil</b>', 'page de lancement', lien('index.html', 'Ouvrir'), true),
       ligne('🏁 <b>Classement</b>', 'podium de fin de mission', lien('classement.html', 'Ouvrir'), true),
-      sectionHtml('PALIERS — pages de jeu')
+      sectionHtml('PALIERS — pages de jeu (génération automatique 1 à 8)')
     ];
-    /* Page connue par palier : start = l'épreuve (compte de test),
-       livres = le portail QR. « Page scellée » = portail volontairement
-       verrouillé (?sas=ferme) pour TESTER le vrai QR Code imprimé ;
-       « Jouer l'épreuve » = l'aperçu qui saute le sas. */
-    const pageParPalier = { start: 'palier1.html?code=NEMO&m=ZZZZ-0000', livres: '1721310619.html', son: '1831411720.html', zone51: '1941512821.html', occasion: '2051613922.html' };
+
     Object.entries(STEPS).forEach(([id, step], index) => {
-      const href = pageParPalier[id] || null;
-      const note = id === 'start' ? 'épreuve — compte de test'
-        : id === 'livres' ? 'mots croisés'
-        : id === 'son' ? 'chasse aux artefacts'
-        : id === 'zone51' ? 'relevé du sonar'
-        : id === 'occasion' ? 'le juste prix'
-        : 'en construction';
-      lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, note,
-        href ? ((id === 'livres' || id === 'son' || id === 'zone51' || id === 'occasion')
-          ? lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve')
-          : lien(href, '🕹️ Jouer l’épreuve'))
-        : '<span class=\"small\" style=\"white-space:nowrap\">Bientôt</span>', !!href));
+      const href = adminPalierPageUrl(id);
+      const isStart = id === 'start';
+      const actions = isStart
+        ? lien(href, '🕹️ Jouer l’épreuve')
+        : (lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve'));
+      const testBtn = `<button class=\"secondary admin-test-step-btn\" data-step=\"${id}\" data-palier=\"${step.label}\" type=\"button\" style=\"margin:0;white-space:nowrap;background:rgba(91,224,155,.2);color:#8ff0b8;border:1px solid rgba(91,224,155,.45);border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;cursor:pointer\" title=\"Tester l’annonce de ce palier\">📢 Annonce</button>`;
+      lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, notesParPalier[id] || '', actions + ' ' + testBtn, true));
     });
+
     lignes.push(sectionHtml('PALIER 1 — aperçus d’écrans (factice, aucune écriture)'));
     [
       ['victoire', '🏆 Épreuve validée (victoire)'],
       ['defaite', '↟ Retour en surface (défaite)'],
       ['blocage', '🔒 Blocage personnel d’un matelot']
-    ]
-    /* L'apercu « transition vers le palier suivant » a ete supprime avec
-       l'ecran : un matelot dont l'equipage a valide le palier est desormais
-       RENVOYE directement sur la page du palier courant, il n'y a plus
-       d'ecran intermediaire a previsualiser. */.forEach(([mode, titre]) => {
+    ].forEach(([mode, titre]) => {
       lignes.push(ligne(titre, 'aperçu', lien(`palier1.html?apercu=${mode}&k=${k}`, 'Aperçu'), true));
     });
+
+    /* Bloc annonce verte « palier franchi » placé sous « Blocage personnel d’un matelot - aperçu » */
+    lignes.push(sectionHtml('🏆 ANNONCE SPÉCIALE & SON (AU-DESSUS DE TOUTES LES PAGES)'));
+    lignes.push(`<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;margin-top:5px;border-radius:8px;background:rgba(91,224,155,.22);border:1.5px solid rgba(91,224,155,.6);box-shadow:0 0 16px rgba(91,224,155,.28);color:#eafff3;\">
+      <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">
+        🏆 <b>Annonce verte « palier franchi »</b>
+        <span id=\"adminActivePalierBadge\" class=\"small\" style=\"color:#032010;background:#5be09b;font-weight:900;padding:2px 7px;border-radius:6px;margin:0 4px\">${activeLabel}</span>
+        <span class=\"small\" style=\"color:#8ee7ff\">message + Victoire.mp3</span>
+      </span>
+      <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\">
+        <select id=\"adminSelectPalierTest\" style=\"background:#071c2b;color:#eaf8ff;border:1px solid rgba(142,231,255,.4);border-radius:7px;padding:5px 7px;font-size:12px;font-weight:700\">
+          <option value=\"auto\">⚡ Auto (${activeLabel})</option>
+          ${optionsPaliersHtml}
+        </select>
+        <button class=\"secondary admin-test-annonce-btn\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap;background:#5be09b;color:#032010;font-weight:900;border:none;padding:6px 14px;border-radius:7px;cursor:pointer\">Tester</button>
+      </span>
+    </div>`);
+
     box.innerHTML = lignes.join('');
     box.querySelector('#adminPurgePwaBtnHome')?.addEventListener('click', async (e) => {
       const btn = e.target;
@@ -6284,12 +6333,18 @@ function qrDataUri(text, opts){
       } catch (_) {}
       location.reload(true);
     });
-    box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', testerAnnonceVerte);
+
+    box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', () => testerAnnonceVerte());
+    box.querySelectorAll('.admin-test-step-btn').forEach(btnEl => {
+      btnEl.addEventListener('click', () => testerAnnonceVerte(btnEl.dataset.step, btnEl.dataset.palier));
+    });
+
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
     if(btn) btn.textContent = box.style.display === 'none' ? '🧪 Tester toutes les pages' : '🔽 Masquer les tests de pages';
   }
 
-  async function testerAnnonceVerte(){
+  let _adminCycleIndex = 0;
+  async function testerAnnonceVerte(explicitStepId, explicitPalierLabel){
     let NA = window.NautilusAnnonces;
     if(!NA || !NA.showPalierAnnouncement){
       try {
@@ -6303,11 +6358,44 @@ function qrDataUri(text, opts){
         NA = window.NautilusAnnonces;
       } catch(e) {}
     }
+
+    const stepKeys = Object.keys(STEPS);
+    let targetStep = explicitStepId;
+    let targetLabel = explicitPalierLabel;
+
+    if(!targetStep){
+      const sel = $('adminSelectPalierTest');
+      const val = sel ? sel.value : 'auto';
+      if(val && val !== 'auto' && stepKeys.includes(val)){
+        targetStep = val;
+        targetLabel = STEPS[val]?.label || val;
+      } else {
+        const leaderRank = getMeilleurPalierAtteintAdmin();
+        const baseIdx = Math.max(0, Math.min(stepKeys.length - 1, leaderRank - 1));
+        const idx = (_adminCycleIndex === 0 ? baseIdx : (_adminCycleIndex % stepKeys.length));
+        _adminCycleIndex = (idx + 1) % stepKeys.length;
+        targetStep = stepKeys[idx];
+        targetLabel = STEPS[targetStep]?.label || `Palier ${idx + 1}`;
+      }
+    }
+
+    const b1 = $('adminActivePalierBadge');
+    if(b1) b1.textContent = targetLabel;
+    const b2 = $('adminQuickActivePalierBadge');
+    if(b2) b2.textContent = targetLabel;
+
+    let cheer = '⚡ Les circuits du submersible tressaillent au fond de la fosse : la machinerie s’éveille !';
+    if(NA && NA.misesEnGardeParEtape && NA.misesEnGardeParEtape[targetStep]){
+      cheer = NA.misesEnGardeParEtape[targetStep];
+    } else if(NA && typeof NA.encouragementPour === 'function'){
+      cheer = NA.encouragementPour(targetStep, 0);
+    }
+
     if(NA && NA.showPalierAnnouncement){
       NA.showPalierAnnouncement({
         teamName: 'Équipage démo',
-        palierLabel: 'Palier 1',
-        encouragement: '💪 À vous de jouer : votre équipage franchira le sien !'
+        palierLabel: targetLabel,
+        encouragement: cheer
       });
       if(NA.playVictorySound) NA.playVictorySound(true);
     } else {
@@ -9454,6 +9542,7 @@ function qrDataUri(text, opts){
   function showAdminWorkspace(){
     $('adminLocked').style.display = 'none';
     $('adminWorkspace').style.display = '';
+    syncAdminTestPalierBadge();
     switchAdminTab('members');
     refreshAdminTeams();
     renderAdminMembers();
@@ -10759,6 +10848,7 @@ function showInstallInstructions(){
   overlay.className = 'pwa-modal';
   overlay.innerHTML =
     '<div class="pwa-modal-card">' +
+      '<button type="button" class="pwa-modal-close" data-close aria-label="Fermer" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;cursor:pointer;line-height:1;margin:0;padding:0;z-index:2">✕</button>' +
       '<div class="pwa-modal-emoji">' + PWA_SUBMARINE_HTML + '</div>' +
       '<h2 class="pwa-modal-title">' + c.title + '</h2>' +
       '<p class="pwa-modal-subtitle">' + c.subtitle + '</p>' +
@@ -11244,37 +11334,37 @@ window.PWAInstall = {
 
   var MISES_EN_GARDE = {
     // Phase 0 : Avant le départ / En attente
-    preparation: "⚓ Préparation des équipements — Le Nautilus est paré à plonger. En attente du premier appareillage !",
+    preparation: "⚓ Le Nautilus repose silencieux dans la fosse abyssale. Les équipages se préparent à plonger dans l’obscurité.",
 
-    // Palier 1 : Signal Morse / Sas de départ
-    palier1: "🧭 Un équipage vient d’ouvrir le premier sas — la plongée commence ! 8 paliers vous séparent de la surface, cap sur les grands fonds !",
+    // Palier 1 : Premier sas franchi / Écho dans les abysses
+    palier1: "🧭 Un écho lointain résonne dans les abysses : un équipage a localisé le Nautilus ! Les ténèbres s’animent, la traque est ouverte !",
 
-    // Palier 2 : Bibliothèque de Nemo / Mots croisés
-    palier2: "📖 Un équipage s’enfonce dans la bibliothèque secrète de Nemo ! Plus que 7 paliers avant la surface, ne laissez personne prendre le large !",
+    // Palier 2 : Le sous-marin s'éveille
+    palier2: "⚡ Les circuits du submersible tressaillent au fond de la fosse ! Un équipage a réveillé la machinerie endormie, la tension monte d’un cran !",
 
-    // Palier 3 : Rayon Son / Chasse aux artefacts
-    palier3: "🎧 Un équipage fouille le secteur acoustique et traque les artefacts ! Plus que 6 paliers, matelots : restez à l'écoute des fonds marins !",
+    // Palier 3 : Turbines et ballasts
+    palier3: "🌊 Les ballasts commencent à vibrer sous la pression des profondeurs ! Le géant d'acier frémit, l'étau se resserre entre les équipages !",
 
-    // Palier 4 : Zone 51 / Relevé du sonar
-    palier4: "📡 Un équipage décrypte les échos du sonar en Zone 51 ! Plus que 5 paliers : la mi-parcours approche, gardez le cap !",
+    // Palier 4 : Arrachement du plancher océanique
+    palier4: "⚙️ Le Nautilus s'arrache au plancher océanique ! Les flots grondent dans les ténèbres, la remontée du sous-marin se prépare !",
 
-    // Palier 5 : Rayon Occasion / Le Juste Prix
-    palier5: "⚖️ Un équipage négocie les reliques au Juste Prix Fnac Labège ! Plus que 4 paliers avant la surface, la pression monte d’un cran !",
+    // Palier 5 : Ascension des courants profonds
+    palier5: "🚨 Le submersible prend de la vitesse dans les courants profonds ! La coque fend l'obscurité, chaque seconde devient décisive pour tous les équipages !",
 
-    // Palier 6 : Rayon Papeterie / Code de l'encre
-    palier6: "🚨 Un équipage frôle la surface — le Nautilus va remonter ! Plus que deux paliers, matelots, chaque seconde compte !",
+    // Palier 6 : Zone critique de remontée
+    palier6: "🚨 Un équipage enclenche la remontée — le Nautilus émerge des grandes profondeurs ! La pression monte en flèche, matelots, le temps presse !",
 
-    // Palier 7 : Rayon Drone & Photo / Vue aérienne
-    palier7: "🚨 ALERTE COQUE : Un équipage prend de la hauteur au Palier 7 ! Plus qu’un seul palier avant l’écoutille de surface, accélérez la cadence !",
+    // Palier 7 : Haute alerte sous la surface
+    palier7: "🚨 ALERTE COQUE : Le Nautilus fend les eaux à pleine puissance ! Les lueurs de la surface percent l'obscurité, l'accélération est générale !",
 
-    // Palier 8 : Palier Final / Sas de surface
-    palier8: "🚨 ALARME GÉNÉRALE : Un équipage force le Palier Final ! L’écoutille de surface est en vue — foncez, la victoire se joue maintenant !",
+    // Palier 8 : Palier Final / Immersion périscopique
+    palier8: "🚨 ALARME GÉNÉRALE : Immersion périscopique imminente ! La coque du Nautilus va crever la surface des flots, la victoire se joue à cet instant !",
 
     // Surface : Le Nautilus a refait surface
-    surface: "🏆 ÉMERGENCE DU NAUTILUS : Un équipage a ramené le submersible à la surface ! Le carnet de bord est scellé, mission accomplie !",
+    surface: "🏆 ÉMERGENCE : Le Nautilus a percé la surface des flots ! L’écoutille s’ouvre sur l’océan, la mission est accomplie !",
 
     // Alerte critique d'oxygène
-    urgence_o2: "⚠️ OXYGÈNE CRITIQUE : Les réserves du bord s'épuisent rapidement ! Tous les équipages doivent remonter vers la surface sans tarder !"
+    urgence_o2: "⚠️ OXYGÈNE CRITIQUE : Les réserves du bord s'épuisent rapidement ! Tous les équipages doivent passer les paliers vers la surface sans tarder !"
   };
 
   var el = null;
@@ -11337,7 +11427,7 @@ window.PWAInstall = {
     var pctEl = document.getElementById('oxygenPercent');
     if (pctEl) {
       var pct = parseInt((pctEl.textContent || '').replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(pct) && pct > 0 && pct < 12) return 'urgence_o2';
+      if (!isNaN(pct) && pct > 0 && pct <= 5) return 'urgence_o2';
     }
 
     // 2. Meilleur palier atteint parmi toutes les équipes

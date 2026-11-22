@@ -50,6 +50,31 @@
     return Math.round(parseFloat(out.join('')));
   }
 
+  function aleaSeed(graine) {
+    var h = 2166136261;
+    var s = String(graine);
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return function () {
+      h ^= h << 13; h ^= h >>> 17; h ^= h << 5;
+      return ((h >>> 0) % 100000) / 100000;
+    };
+  }
+
+  function tirerProduitsEquipe(catalogue, equipeCode) {
+    if (!catalogue || !catalogue.length) return [];
+    var rnd = aleaSeed('palier5_' + String(equipeCode || 'NEMO').toUpperCase());
+    var pool = catalogue.slice();
+    var selection = [];
+    for (var i = 0; i < NB_PRODUITS_PARTIE && pool.length > 0; i++) {
+      var idx = Math.floor(rnd() * pool.length);
+      selection.push(pool.splice(idx, 1)[0]);
+    }
+    return selection;
+  }
+
   /* Test d'une proposition : prix EXACT (aucune tolérance) */
   function testerProposition(p, val) {
     var vraiPrix = decoderPrix(p);
@@ -724,8 +749,11 @@
         }
       }
 
-      // Nouvelle partie : tirage de 10 produits aléatoires
-      serieProduits = melanger(catalogueComplet).slice(0, NB_PRODUITS_PARTIE);
+      // Nouvelle partie : tirage des 10 produits déterminés pour l'équipage
+      serieProduits = tirerProduitsEquipe(catalogueComplet, equipeCode);
+      if (!serieProduits || serieProduits.length !== NB_PRODUITS_PARTIE) {
+        serieProduits = melanger(catalogueComplet).slice(0, NB_PRODUITS_PARTIE);
+      }
       indexProduit = 0;
       produitsTrouves = 0;
       produitsPerdus = 0;
@@ -753,6 +781,7 @@
     init: init,
     decoderPrix: decoderPrix,
     decrypterPrix: decoderPrix,
+    tirerProduitsEquipe: tirerProduitsEquipe,
     verifierProposition: testerProposition,
     getEtatPartie: function () {
       return instanceCourante ? instanceCourante.getEtat() : null;
