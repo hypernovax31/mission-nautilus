@@ -3246,7 +3246,7 @@
         </div>
 
         <div class="admin-tabs" role="tablist">
-          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Membres</span><span class="lbl-mobile" aria-label="Membres">👥</span></button>
+          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Inscriptions</span><span class="lbl-mobile" aria-label="Inscriptions">👥</span></button>
           <button class="admin-tab" data-tab="teams" type="button" role="tab"><span class="lbl-desktop">🚢 Équipes</span><span class="lbl-mobile" aria-label="Équipes">🚢</span></button>
           <button class="admin-tab" data-tab="locks" type="button" role="tab"><span class="lbl-desktop">🔒 Blocages</span><span class="lbl-mobile" aria-label="Blocages">🔒</span></button>
           <button class="admin-tab" data-tab="oxygen" type="button" role="tab"><span class="lbl-desktop">⏱️ O₂</span><span class="lbl-mobile" aria-label="O₂">⏱️</span></button>
@@ -3322,9 +3322,9 @@
             <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>
             <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:rgba(255,75,62,.2);color:#ff8579;border:1px solid rgba(255,75,62,.5)">🔄 Reset progression (toutes équipes)</button>
             <button class="secondary" id="cleanupTestSessionsBtn" type="button" style="margin:0">🧪 Purger les traces du compte test</button>
-            <button class="secondary" id="cleanupFieldsBtn" type="button" style="margin:0">🧹 Nettoyer les champs obsolètes</button>
+            <button class="secondary" id="adminPurgePwaBtn" type="button" style="margin:0;background:rgba(255,211,108,.2);color:#ffd36c;border:1px solid rgba(255,211,108,.5)">🔄 Vider le cache PWA</button>
           </div>
-          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>La purge retire toute trace du compte de test ZZZZ-0000 (parties fantômes, membre, blocage ou présence TEST) : le compte de test ne fait jamais partie d'un équipage.<br>Le nettoyage retire « migratedFrom », un reste de l'ancienne migration des identifiants d'équipe : sans effet sur le jeu.</p>
+          <p class="small" style="margin-top:12px"><b>Reset des membres</b> : vide la liste des matelots inscrits de tous les équipages sans toucher à la progression de la mission.<br><b>Reset progression</b> : remet toutes les équipes au Palier 1 avec scores et blocages réinitialisés.<br><b>Purger le compte test</b> : retire toute trace du compte de test ZZZZ-0000 (blocages, parties ou présence TEST).<br><b>Vider le cache PWA</b> : supprime les caches du Service Worker et force le rechargement immédiat de la toute dernière version des pages.</p>
         </div>
       </div>
     </div>
@@ -3396,14 +3396,14 @@
   const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
 
   const STEPS = {
-    start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le signal du Nautilus réapparaît enfin. Votre équipage attend le feu vert pour appareiller vers le Palier 1."},
-    livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Dans la bibliothèque de Nemo, des milliers de récits sommeillent au creux des rayonnages, bercés par le silence des profondeurs."},
-    son:{label:"Palier 3",next:"zone51",time:180,errors:1,description:"Chasse aux artefacts : identifiez et capturez au collimateur optique les 5 artefacts dissimulés dans les rayons de la Fnac."},
-    zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"Le relevé du sonar est sens dessus dessous : recalez chaque écho sur la grille pour retrouver la cache du prochain palier."},
-    occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Le Juste Prix : estimez le prix exact arrondi à l’euro près de 10 articles officiels des rayons Fnac Labège."},
-    papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
-    drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol."},
-    final:{label:"Palier final",next:null,time:0,errors:1,description:"Dernier sas. Si vous êtes ici, le Nautilus n’est plus très loin de refaire surface."}
+    start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Les sous-marins des équipages s'immergent depuis la surface. Votre équipage attend le feu vert pour plonger vers le Palier 1."},
+    livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Plongée dans la pénombre des grandes profondeurs : les récits anciens guident les sous-marins sur la trace du submersible disparu."},
+    son:{label:"Palier 3",next:"zone51",time:180,errors:1,description:"Chasse acoustique dans les abysses : identifiez et capturez au collimateur optique les 5 artefacts du secteur."},
+    zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"Cartographie de la fosse : le relevé du sonar est sens dessus dessous, recalez chaque écho pour localiser le gouffre où gît le Nautilus."},
+    occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Approche du plancher sous-marin : estimez le prix exact de 10 articles pour déverrouiller les propulseurs d'exploration."},
+    papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Contact avec l'épave : la silhouette du Nautilus se profile dans le noir, déchiffrez le code pour amorcer la procédure de sauvetage."},
+    drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Manœuvres d'amarrage : inspectez la carcasse du géant échoué et déverrouillez le sas de secours."},
+    final:{label:"Palier final",next:null,time:0,errors:1,description:"Le Nautilus est sauvé ! Réamorcez ses ballasts et escortez le submersible dans sa remontée triomphale vers la surface."}
   };
 
   let currentTeam=null;
@@ -6275,7 +6275,6 @@ function qrDataUri(text, opts){
 
     const lignes = [
       sectionHtml('🧭 TESTER TOUTES LES PAGES DU SITE'),
-      ligne('🔄 <b>Vider le cache PWA</b>', 'force la dernière version', `<button id=\"adminPurgePwaBtnHome\" type=\"button\" style=\"background:#ffd36c;color:#111;border:none;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap\">Purger & Recharger</button>`, true),
       ligne('🏠 <b>Accueil</b>', 'page de lancement', lien('index.html', 'Ouvrir'), true),
       ligne('🏁 <b>Classement</b>', 'podium de fin de mission', lien('classement.html', 'Ouvrir'), true),
       sectionHtml('PALIERS — pages de jeu (génération automatique 1 à 8)')
@@ -6318,22 +6317,6 @@ function qrDataUri(text, opts){
     </div>`);
 
     box.innerHTML = lignes.join('');
-    box.querySelector('#adminPurgePwaBtnHome')?.addEventListener('click', async (e) => {
-      const btn = e.target;
-      btn.textContent = 'Purge…';
-      try {
-        if ('caches' in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map(k => caches.delete(k)));
-        }
-        if ('serviceWorker' in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          for (const r of regs) await r.unregister();
-        }
-      } catch (_) {}
-      location.reload(true);
-    });
-
     box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', () => testerAnnonceVerte());
     box.querySelectorAll('.admin-test-step-btn').forEach(btnEl => {
       btnEl.addEventListener('click', () => testerAnnonceVerte(btnEl.dataset.step, btnEl.dataset.palier));
@@ -6420,7 +6403,7 @@ function qrDataUri(text, opts){
       `${document.querySelectorAll('.admin-tab').length} trouvé(s)`);
     check('Panneaux admin présents', document.querySelectorAll('.admin-pane').length >= 5,
       `${document.querySelectorAll('.admin-pane').length} trouvé(s)`);
-    check('Commandes sensibles présentes', ['resetAllMembersBtn','resetAllProgressBtn','cleanupFieldsBtn','cleanupTestSessionsBtn']
+    check('Commandes sensibles présentes', ['resetAllMembersBtn','resetAllProgressBtn','cleanupTestSessionsBtn','adminPurgePwaBtn']
       .every(id => !!$(id)));
     try {
       const snap = await getDocs(collection(db, 'teams'));
@@ -9403,12 +9386,33 @@ function qrDataUri(text, opts){
       if(atEnd) el.setSelectionRange(next.length, next.length);
     }
   });
+  async function adminPurgePwa(e){
+    const btn = e && e.target ? e.target : $('adminPurgePwaBtn');
+    if(!confirm("⚠️ Forcer la dernière version en vidant le cache PWA de cet appareil ?\n\nLe cache local et le Service Worker seront purgés, puis la page rechargera avec la version la plus récente.")) return;
+    const oldText = btn ? btn.textContent : '';
+    if(btn) btn.textContent = 'Purge…';
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) await r.unregister();
+      }
+      location.href = location.pathname + '?_fresh=' + Date.now();
+    } catch(err) {
+      alert('Erreur lors de la purge : ' + (err.message || err));
+      if(btn) btn.textContent = oldText;
+    }
+  }
+
   $('adminQuickTestAnnonceBtn')?.addEventListener('click', testerAnnonceVerte);
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
   $('adminDesignerBtn')?.addEventListener('click', renderDesignerAccess);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
   $('cleanupTestSessionsBtn')?.addEventListener('click', cleanupTestSessions);
-  $('cleanupFieldsBtn')?.addEventListener('click', cleanupObsoleteFields);
+  $('adminPurgePwaBtn')?.addEventListener('click', adminPurgePwa);
 
   /* =====================================================================
      PANNEAU ADMIN — bouton engrenage en bas-gauche
@@ -11334,34 +11338,34 @@ window.PWAInstall = {
 
   var MISES_EN_GARDE = {
     // Phase 0 : Avant le départ / En attente
-    preparation: "⚓ Le Nautilus repose silencieux dans la fosse abyssale. Les équipages se préparent à plonger dans l’obscurité.",
+    preparation: "⚓ Les équipages vérifient leurs sous-marins en surface. Dans les abysses, le Nautilus reste introuvable : la plongée d'exploration va débuter !",
 
-    // Palier 1 : Premier sas franchi / Écho dans les abysses
-    palier1: "🧭 Un écho lointain résonne dans les abysses : un équipage a localisé le Nautilus ! Les ténèbres s’animent, la traque est ouverte !",
+    // Palier 1 : Immersion initiale des sous-marins
+    palier1: "🌊 Immersion immédiate ! Les sous-marins des équipages quittent la surface et plongent dans les premières couches océaniques à la recherche du Nautilus !",
 
-    // Palier 2 : Le sous-marin s'éveille
-    palier2: "⚡ Les circuits du submersible tressaillent au fond de la fosse ! Un équipage a réveillé la machinerie endormie, la tension monte d’un cran !",
+    // Palier 2 : Descente dans la pénombre
+    palier2: "🧭 La descente s'accélère vers les grandes profondeurs. Les coques des submersibles grincent sous la pression, la traque du sous-marin perdu s'intensifie !",
 
-    // Palier 3 : Turbines et ballasts
-    palier3: "🌊 Les ballasts commencent à vibrer sous la pression des profondeurs ! Le géant d'acier frémit, l'étau se resserre entre les équipages !",
+    // Palier 3 : Détection acoustique lointaine
+    palier3: "🎧 Les hydrophones des sous-marins captent un premier écho lointain ! Une carcasse d'acier repose plus bas dans les fosses : le Nautilus est dans le secteur !",
 
-    // Palier 4 : Arrachement du plancher océanique
-    palier4: "⚙️ Le Nautilus s'arrache au plancher océanique ! Les flots grondent dans les ténèbres, la remontée du sous-marin se prépare !",
+    // Palier 4 : Repérage sonar au seuil des fosses
+    palier4: "📡 Obscurité totale ! Les sonars de bord isolent un signal d'épave au fond de la faille sous-marine : les équipages plongent au plus près du plancher océanique !",
 
-    // Palier 5 : Ascension des courants profonds
-    palier5: "🚨 Le submersible prend de la vitesse dans les courants profonds ! La coque fend l'obscurité, chaque seconde devient décisive pour tous les équipages !",
+    // Palier 5 : Approche de la fosse abyssale
+    palier5: "🚨 Plongée extrême aux portes du gouffre abyssal ! Les puissants projecteurs des sous-marins balayent la fosse : un équipage approche de la carcasse du Nautilus !",
 
-    // Palier 6 : Zone critique de remontée
-    palier6: "🚨 Un équipage enclenche la remontée — le Nautilus émerge des grandes profondeurs ! La pression monte en flèche, matelots, le temps presse !",
+    // Palier 6 : Contact visuel avec le géant d'acier échoué
+    palier6: "🚨 Contact visuel dans les abysses ! La gigantesque silhouette du Nautilus échoué émerge des ténèbres : les sous-marins manœuvrent pour amorcer le sauvetage !",
 
-    // Palier 7 : Haute alerte sous la surface
-    palier7: "🚨 ALERTE COQUE : Le Nautilus fend les eaux à pleine puissance ! Les lueurs de la surface percent l'obscurité, l'accélération est générale !",
+    // Palier 7 : Amarrage d'urgence et ranimation
+    palier7: "🚨 Amarrage d'urgence sur l'épave ! Les équipages forcent les sas scellés et tentent de ranimer la machinerie du Nautilus pour le sauver des profondeurs !",
 
-    // Palier 8 : Palier Final / Immersion périscopique
-    palier8: "🚨 ALARME GÉNÉRALE : Immersion périscopique imminente ! La coque du Nautilus va crever la surface des flots, la victoire se joue à cet instant !",
+    // Palier 8 : Palier Final / Le Nautilus est sauvé — Remontée générale vers la surface
+    palier8: "🚨 ALARME GÉNÉRALE : Le Nautilus est sauvé ! Ses ballasts réamorcés rugissent dans la fosse : tous les sous-marins l'escortent dans une fulgurante remontée vers la surface !",
 
     // Surface : Le Nautilus a refait surface
-    surface: "🏆 ÉMERGENCE : Le Nautilus a percé la surface des flots ! L’écoutille s’ouvre sur l’océan, la mission est accomplie !",
+    surface: "🏆 ÉMERGENCE : Les sous-marins et le Nautilus sauvé crèvent la surface des flots ! L’écoutille s’ouvre sur l’océan, la mission est accomplie !",
 
     // Alerte critique d'oxygène
     urgence_o2: "⚠️ OXYGÈNE CRITIQUE : Les réserves du bord s'épuisent rapidement ! Tous les équipages doivent passer les paliers vers la surface sans tarder !"

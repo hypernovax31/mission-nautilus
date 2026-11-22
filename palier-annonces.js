@@ -302,14 +302,14 @@
      qui ont leur propre palier), aucun indice ni nom de zone/rayon, suspense et tension
      crescendo centrés sur la découverte et la remontée du Nautilus depuis les abysses. */
   const MISES_EN_GARDE_PAR_ETAPE = {
-    start: '⚡ Les circuits du submersible tressaillent au fond de la fosse : la machinerie s’éveille, la tension monte d’un cran !',
-    livres: '🌊 Les ballasts commencent à vibrer sous la pression : le géant d’acier frémit, l’étau se resserre entre les équipages !',
-    son: '⚙️ Le Nautilus s’arrache au plancher océanique : les flots grondent dans les ténèbres, la remontée se prépare !',
-    zone51: '🚨 Le submersible prend de la vitesse dans les courants profonds : chaque seconde devient décisive pour tous les équipages !',
-    occasion: '🚨 Un équipage enclenche la remontée — le Nautilus émerge des grandes profondeurs ! La pression monte en flèche, matelots, le temps presse !',
-    papeterie: '🚨 ALERTE COQUE : Le Nautilus fend les eaux à pleine puissance ! Les lueurs percent l’obscurité, l’accélération est générale !',
-    drone: '🚨 ALARME GÉNÉRALE : Immersion périscopique imminente ! La coque va crever la surface des flots, la victoire se joue à cet instant !',
-    final: '🏆 ÉMERGENCE : Le Nautilus a percé la surface des flots ! L’écoutille s’ouvre sur l’océan, la mission est accomplie !',
+    start: '🌊 Immersion immédiate ! Les sous-marins des équipages quittent la surface et plongent dans les premières couches océaniques à la recherche du Nautilus !',
+    livres: '🧭 La descente s’accélère vers les grandes profondeurs. Les coques des submersibles grincent sous la pression, la traque du sous-marin perdu s’intensifie !',
+    son: '🎧 Les hydrophones des sous-marins captent un premier écho lointain ! Une carcasse d’acier repose plus bas dans les fosses : le Nautilus est dans le secteur !',
+    zone51: '📡 Obscurité totale ! Les sonars de bord isolent un signal d’épave au fond de la faille sous-marine : les équipages plongent au plus près du plancher océanique !',
+    occasion: '🚨 Plongée extrême aux portes du gouffre abyssal ! Les puissants projecteurs des sous-marins balayent la fosse : un équipage approche de la carcasse du Nautilus !',
+    papeterie: '🚨 Contact visuel dans les abysses ! La gigantesque silhouette du Nautilus échoué émerge des ténèbres : les sous-marins manœuvrent pour amorcer le sauvetage !',
+    drone: '🚨 Amarrage d’urgence sur l’épave ! Les équipages forcent les sas scellés et tentent de ranimer la machinerie du Nautilus pour le sauver des profondeurs !',
+    final: '🚨 ALARME GÉNÉRALE : Le Nautilus est sauvé ! Ses ballasts réamorcés rugissent dans la fosse : tous les sous-marins l’escortent dans une fulgurante remontée vers la surface !',
     urgence_o2: "⚠️ OXYGÈNE CRITIQUE : Les réserves du bord s'épuisent rapidement ! Tous les équipages doivent passer les paliers vers la surface sans tarder !"
   };
 
