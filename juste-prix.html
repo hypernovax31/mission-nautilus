@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#020812" />
+  <title>Mission Nautilus — Le Juste Prix (Prototype Palier 5)</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier2.css?v=26">
+  <style>
+    /* Styles spécifiques au prototype Juste Prix */
+    :root {
+      --gold: #f5b027;
+      --gold-light: #ffe2a0;
+      --cyan: #8ee7ff;
+      --cyan-bright: #18c8ff;
+      --danger: #ff4b3e;
+      --success: #5bff9c;
+      --bg-dark: #020812;
+      --card-bg: rgba(4, 18, 32, 0.94);
+      --border-cyan: rgba(142, 231, 255, 0.28);
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: #eaf8ff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .jp-container {
+      width: 100%;
+      max-width: 580px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* En-tête HUD */
+    .jp-hud {
+      background: linear-gradient(135deg, rgba(5, 18, 32, 0.95), rgba(8, 42, 64, 0.9));
+      border: 1px solid var(--border-cyan);
+      border-radius: 16px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    }
+
+    .jp-hud-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .jp-hud-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    .jp-hud-val {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 18px;
+      font-weight: 1000;
+      color: #fff;
+    }
+
+    .jp-hud-val.is-gold { color: var(--gold); }
+    .jp-hud-val.is-danger { color: var(--danger); }
+    .jp-hud-val.is-success { color: var(--success); }
+
+    /* Carte produit */
+    .jp-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-cyan);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(142, 231, 255, 0.04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .jp-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .jp-category-badge {
+      align-self: flex-start;
+      font-size: 11px;
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(142, 231, 255, 0.12);
+      color: var(--cyan);
+      border: 1px solid rgba(142, 231, 255, 0.3);
+    }
+
+    .jp-image-box {
+      width: 100%;
+      height: 220px;
+      background: rgba(1, 8, 16, 0.85);
+      border: 1px solid rgba(142, 231, 255, 0.2);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .jp-image {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+      transition: transform 0.25s ease;
+    }
+
+    .jp-image:hover {
+      transform: scale(1.04);
+    }
+
+    .jp-title {
+      margin: 0;
+      font-size: clamp(16px, 3.8vw, 19px);
+      font-weight: 900;
+      line-height: 1.35;
+      color: #fff;
+    }
+
+    /* Indicateur d'essais */
+    .jp-attempts-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(142, 231, 255, 0.15);
+    }
+
+    .jp-attempts-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: #b7d9e8;
+    }
+
+    .jp-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .jp-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(142, 231, 255, 0.2);
+      border: 1px solid var(--border-cyan);
+      transition: all 0.2s ease;
+    }
+
+    .jp-dot.is-used {
+      background: var(--danger);
+      border-color: var(--danger);
+      box-shadow: 0 0 8px rgba(255, 75, 62, 0.6);
+    }
+
+    .jp-dot.is-current {
+      background: var(--gold);
+      border-color: #fff;
+      box-shadow: 0 0 10px rgba(245, 176, 39, 0.8);
+      transform: scale(1.15);
+    }
+
+    /* Saisie du prix */
+    .jp-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .jp-price-input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .jp-input-wrap {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .jp-input {
+      width: 100%;
+      height: 52px;
+      box-sizing: border-box;
+      background: rgba(1, 10, 20, 0.9);
+      border: 2px solid var(--border-cyan);
+      border-radius: 12px;
+      color: #fff;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 24px;
+      font-weight: 1000;
+      padding: 0 45px 0 16px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .jp-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(245, 176, 39, 0.3);
+    }
+
+    .jp-input-unit {
+      position: absolute;
+      right: 14px;
+      font-size: 22px;
+      font-weight: 1000;
+      color: var(--gold);
+      pointer-events: none;
+    }
+
+    .jp-btn-clear {
+      min-width: 48px;
+      height: 52px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-cyan);
+      border-radius: 12px;
+      color: #cfe6ef;
+      font-size: 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .jp-btn-clear:hover {
+      background: rgba(255, 75, 62, 0.25);
+      border-color: var(--danger);
+      color: #fff;
+    }
+
+    /* Boutons de modification rapide */
+    .jp-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .jp-chip {
+      flex: 1 1 calc(20% - 6px);
+      min-height: 44px;
+      background: rgba(142, 231, 255, 0.08);
+      border: 1px solid rgba(142, 231, 255, 0.28);
+      border-radius: 10px;
+      color: #e2f4ff;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .jp-chip:hover {
+      background: rgba(245, 176, 39, 0.2);
+      border-color: var(--gold);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .jp-chip:active {
+      transform: translateY(1px);
+    }
+
+    /* Bouton principal de soumission */
+    .jp-submit-btn {
+      min-height: 52px;
+      background: linear-gradient(135deg, #f5b027, #d48b13);
+      border: 2px solid #ffe2a0;
+      border-radius: 14px;
+      color: #04101d;
+      font-size: 16px;
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(245, 176, 39, 0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.18s ease;
+    }
+
+    .jp-submit-btn:hover {
+      filter: brightness(1.12);
+      box-shadow: 0 6px 24px rgba(245, 176, 39, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .jp-submit-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: grayscale(0.8);
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* Bandeau de feedback */
+    .jp-feedback {
+      min-height: 48px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.35;
+      transition: all 0.2s ease;
+    }
+
+    .jp-feedback.is-neutral {
+      background: rgba(142, 231, 255, 0.08);
+      border: 1px solid rgba(142, 231, 255, 0.22);
+      color: #cfe6ef;
+    }
+
+    .jp-feedback.is-more {
+      background: rgba(245, 176, 39, 0.16);
+      border: 1px solid var(--gold);
+      color: #ffe2a0;
+      animation: pulseMore 0.4s ease;
+    }
+
+    .jp-feedback.is-less {
+      background: rgba(24, 200, 255, 0.16);
+      border: 1px solid var(--cyan-bright);
+      color: #dff8ff;
+      animation: pulseLess 0.4s ease;
+    }
+
+    .jp-feedback.is-won {
+      background: rgba(91, 255, 156, 0.18);
+      border: 1px solid var(--success);
+      color: #dfffe8;
+      box-shadow: 0 0 20px rgba(91, 255, 156, 0.3);
+    }
+
+    .jp-feedback.is-lost {
+      background: rgba(255, 75, 62, 0.2);
+      border: 1px solid var(--danger);
+      color: #ffd0cd;
+    }
+
+    @keyframes pulseMore {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes pulseLess {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(4px); }
+      100% { transform: translateY(0); }
+    }
+
+    /* Écran de fin de partie */
+    .jp-end-card {
+      background: var(--card-bg);
+      border: 2px solid var(--border-cyan);
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .jp-end-card.is-victory {
+      border-color: var(--success);
+      box-shadow: 0 0 30px rgba(91, 255, 156, 0.35);
+    }
+
+    .jp-end-card.is-defeat {
+      border-color: var(--danger);
+      box-shadow: 0 0 30px rgba(255, 75, 62, 0.35);
+    }
+
+    .jp-end-title {
+      font-size: 26px;
+      font-weight: 1000;
+      margin: 0;
+    }
+
+    .jp-end-btn {
+      min-height: 48px;
+      border-radius: 12px;
+      font-weight: 1000;
+      font-size: 15px;
+      cursor: pointer;
+      border: 0;
+      padding: 0 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .jp-feedback, .jp-dot, .jp-submit-btn, .jp-chip {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="jp-container">
+  <div class="jp-hud">
+    <div class="jp-hud-stat">
+      <span class="jp-hud-label">Produit</span>
+      <span class="jp-hud-val is-gold" id="hudIndex">1 / 10</span>
+    </div>
+    <div class="jp-hud-stat">
+      <span class="jp-hud-label">Trouvés</span>
+      <span class="jp-hud-val is-success" id="hudFound">0 / 10</span>
+    </div>
+    <div class="jp-hud-stat">
+      <span class="jp-hud-label">Objectif</span>
+      <span class="jp-hud-val">≥ 80% (8)</span>
+    </div>
+    <div class="jp-hud-stat">
+      <span class="jp-hud-label">Pertes</span>
+      <span class="jp-hud-val is-danger" id="hudLost">0 / 3 max</span>
+    </div>
+  </div>
+
+  <div class="jp-card" id="gameCard">
+    <div class="jp-category-badge" id="prodCat">Rayon Fnac</div>
+    
+    <div class="jp-image-box">
+      <img src="" alt="Produit Fnac" class="jp-image" id="prodImg" />
+    </div>
+
+    <h2 class="jp-title" id="prodTitle">Chargement du produit…</h2>
+
+    <div class="jp-attempts-box">
+      <span class="jp-attempts-label" id="attemptLabel">Essai 1 sur 3</span>
+      <div class="jp-dots" id="dotsContainer">
+        <span class="jp-dot is-current" id="dot0"></span>
+        <span class="jp-dot" id="dot1"></span>
+        <span class="jp-dot" id="dot2"></span>
+      </div>
+    </div>
+
+    <div class="jp-input-group">
+      <div class="jp-price-input-row">
+        <div class="jp-input-wrap">
+          <input
+            type="number"
+            class="jp-input"
+            id="priceInput"
+            placeholder="0"
+            min="0"
+            max="9999"
+            step="1"
+            inputmode="numeric"
+            aria-label="Prix estimé en euros"
+          />
+          <span class="jp-input-unit">€</span>
+        </div>
+        <button type="button" class="jp-btn-clear" id="btnClear" title="Effacer la saisie">⌫</button>
+      </div>
+
+      <div class="jp-chips-row">
+        <button type="button" class="jp-chip" data-add="1">+1 €</button>
+        <button type="button" class="jp-chip" data-add="5">+5 €</button>
+        <button type="button" class="jp-chip" data-add="10">+10 €</button>
+        <button type="button" class="jp-chip" data-add="50">+50 €</button>
+        <button type="button" class="jp-chip" data-add="100">+100 €</button>
+      </div>
+
+      <button type="button" class="jp-submit-btn" id="btnSubmit">
+        <span>🎯 VALIDER MON PRIX</span>
+      </button>
+    </div>
+
+    <div class="jp-feedback is-neutral" id="feedbackBox" role="status">
+      Estimez le prix régulier de ce produit Fnac (tolérance de ±5%).
+    </div>
+  </div>
+
+  <div class="jp-end-card" id="endCard" style="display:none;">
+    <h2 class="jp-end-title" id="endTitle">Fin de mission</h2>
+    <p id="endDesc">Description du résultat</p>
+    <button type="button" class="jp-end-btn" id="btnRestart">🔄 Recommencer la partie</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var SALT_ANTI_TRICHE = 'Nautilus_Fnac_JustePrix_2026';
+
+  function decoderPrix(hex, id) {
+    var bytes = [];
+    for (var i = 0; i < hex.length; i += 2) {
+      bytes.push(parseInt(hex.slice(i, i + 2), 16));
+    }
+    var key = SALT_ANTI_TRICHE + id;
+    var out = [];
+    for (var j = 0; j < bytes.length; j++) {
+      out.push(String.fromCharCode(bytes[j] ^ key.charCodeAt(j % key.length)));
+    }
+    return parseFloat(out.join(''));
+  }
+
+  // Audio Web Audio API synthétisé
+  var audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playTone(type) {
+    try {
+      var ctx = getAudioCtx();
+      var now = ctx.currentTime;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'more') {
+        // Son ascendant : C'est plus
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.18);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'less') {
+        // Son descendant : C'est moins
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(640, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.18);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'win') {
+        // Accord victorieux
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.55);
+        osc.start(now);
+        osc.stop(now + 0.55);
+      } else if (type === 'lost') {
+        // Alerte défaite produit
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.setValueAtTime(180, now + 0.2);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+    } catch (_) {}
+  }
+
+  function speakFeedback(text) {
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = 'fr-FR';
+        u.rate = 1.1;
+        window.speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+  }
+
+  // Éléments du DOM
+  var hudIndex = document.getElementById('hudIndex');
+  var hudFound = document.getElementById('hudFound');
+  var hudLost = document.getElementById('hudLost');
+  var gameCard = document.getElementById('gameCard');
+  var prodCat = document.getElementById('prodCat');
+  var prodImg = document.getElementById('prodImg');
+  var prodTitle = document.getElementById('prodTitle');
+  var attemptLabel = document.getElementById('attemptLabel');
+  var dot0 = document.getElementById('dot0');
+  var dot1 = document.getElementById('dot1');
+  var dot2 = document.getElementById('dot2');
+  var priceInput = document.getElementById('priceInput');
+  var btnClear = document.getElementById('btnClear');
+  var btnSubmit = document.getElementById('btnSubmit');
+  var feedbackBox = document.getElementById('feedbackBox');
+  var endCard = document.getElementById('endCard');
+  var endTitle = document.getElementById('endTitle');
+  var endDesc = document.getElementById('endDesc');
+  var btnRestart = document.getElementById('btnRestart');
+
+  // État du jeu
+  var catalogueComplet = [];
+  var serieProduits = [];
+  var indexProduit = 0;
+  var essaiCourant = 0; // 0, 1, 2
+  var produitsTrouves = 0;
+  var produitsPerdus = 0;
+  var verrouTransition = false;
+
+  function formaterEuros(val) {
+    return Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  }
+
+  function melanger(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function majHUD() {
+    hudIndex.textContent = (indexProduit + 1) + ' / 10';
+    hudFound.textContent = produitsTrouves + ' / 10';
+    hudLost.textContent = produitsPerdus + ' / 3 max';
+  }
+
+  function majPointsEssais() {
+    attemptLabel.textContent = 'Essai ' + (essaiCourant + 1) + ' sur 3';
+    var dots = [dot0, dot1, dot2];
+    for (var i = 0; i < 3; i++) {
+      dots[i].className = 'jp-dot'
+        + (i < essaiCourant ? ' is-used' : '')
+        + (i === essaiCourant ? ' is-current' : '');
+    }
+  }
+
+  function afficherProduitCourant() {
+    verrouTransition = false;
+    btnSubmit.disabled = false;
+    priceInput.disabled = false;
+    priceInput.value = '';
+    priceInput.focus();
+
+    var p = serieProduits[indexProduit];
+    if (!p) {
+      verifierFinPartie();
+      return;
+    }
+
+    prodCat.textContent = p.categorie || 'Rayon Fnac';
+    prodTitle.textContent = p.nom;
+    prodImg.src = p.image || 'assets/icon.svg';
+    prodImg.onerror = function () { this.src = 'assets/icon.svg'; };
+
+    essaiCourant = 0;
+    majHUD();
+    majPointsEssais();
+
+    feedbackBox.className = 'jp-feedback is-neutral';
+    feedbackBox.textContent = 'Estimez le prix régulier de ce produit Fnac (tolérance de ±5%).';
+  }
+
+  function verifierFinPartie() {
+    gameCard.style.display = 'none';
+    endCard.style.display = 'flex';
+
+    if (produitsPerdus >= 3) {
+      // Défaite : 3 produits perdus
+      endCard.className = 'jp-end-card is-defeat';
+      endTitle.textContent = '🚨 ÉCHEC DU PALIER 5';
+      endTitle.style.color = '#ff4b3e';
+      endDesc.innerHTML = '<b>3 produits ont été perdus</b> dans l’évaluation des prix.<br>Votre réserve de tentatives est épuisée : remontée forcée en surface !';
+      btnRestart.style.background = '#ff4b3e';
+      btnRestart.style.color = '#fff';
+      playTone('lost');
+    } else if (produitsTrouves >= 8) {
+      // Victoire : ≥ 80% (au moins 8 sur 10)
+      endCard.className = 'jp-end-card is-victory';
+      endTitle.textContent = '🏆 PALIER 5 FRANCHI !';
+      endTitle.style.color = '#5bff9c';
+      endDesc.innerHTML = '<b>Bravo matelot !</b> Vous avez validé <b>' + produitsTrouves + ' / 10 produits</b> (objectif ≥ 80% atteint).<br>L’accès au Palier 6 est déverrouillé !';
+      btnRestart.style.background = '#5bff9c';
+      btnRestart.style.color = '#020812';
+      playTone('win');
+    } else {
+      // Échec au score final
+      endCard.className = 'jp-end-card is-defeat';
+      endTitle.textContent = '⛔ OBJECTIF NON ATTEINT';
+      endTitle.style.color = '#ff4b3e';
+      endDesc.innerHTML = 'Score final : <b>' + produitsTrouves + ' / 10</b> (80% requis, soit 8 produits).<br>Vous devez recommencer pour franchir le palier.';
+      btnRestart.style.background = '#ff4b3e';
+      btnRestart.style.color = '#fff';
+      playTone('lost');
+    }
+  }
+
+  function soumettreProposition() {
+    if (verrouTransition) return;
+    var valeurSaisie = parseFloat(priceInput.value);
+    if (isNaN(valeurSaisie) || valeurSaisie <= 0) {
+      feedbackBox.className = 'jp-feedback is-neutral';
+      feedbackBox.textContent = '⚠️ Veuillez entrer un prix supérieur à 0 €.';
+      priceInput.focus();
+      return;
+    }
+
+    var produit = serieProduits[indexProduit];
+    if (!produit) return;
+
+    // Décodage sécurisé du prix cible
+    var vraiPrix = decoderPrix(produit.sec, produit.id);
+    var tolerance = vraiPrix * 0.05;
+    var borneBasse = vraiPrix - tolerance;
+    var borneHaute = vraiPrix + tolerance;
+
+    if (valeurSaisie >= borneBasse && valeurSaisie <= borneHaute) {
+      // VICTOIRE SUR CE PRODUIT
+      verrouTransition = true;
+      btnSubmit.disabled = true;
+      priceInput.disabled = true;
+      produitsTrouves++;
+      majHUD();
+
+      playTone('win');
+      speakFeedback("C'est gagné !");
+      feedbackBox.className = 'jp-feedback is-won';
+      feedbackBox.innerHTML = '🎯 <b>C’est gagné !</b> Le juste prix était de <b>' + formaterEuros(vraiPrix) + '</b> (estimé ' + formaterEuros(valeurSaisie) + ').';
+
+      setTimeout(function () {
+        indexProduit++;
+        if (indexProduit < serieProduits.length && produitsPerdus < 3) {
+          afficherProduitCourant();
+        } else {
+          verifierFinPartie();
+        }
+      }, 1800);
+
+    } else {
+      // ERREUR SUR CET ESSAI
+      essaiCourant++;
+      majPointsEssais();
+
+      if (valeurSaisie < borneBasse) {
+        // C'EST PLUS !
+        playTone('more');
+        speakFeedback("C'est plus !");
+        feedbackBox.className = 'jp-feedback is-more';
+        feedbackBox.innerHTML = '👆 <b>C’est plus !</b> (' + formaterEuros(valeurSaisie) + ' est trop bas)';
+      } else {
+        // C'EST MOINS !
+        playTone('less');
+        speakFeedback("C'est moins !");
+        feedbackBox.className = 'jp-feedback is-less';
+        feedbackBox.innerHTML = '👇 <b>C’est moins !</b> (' + formaterEuros(valeurSaisie) + ' est trop élevé)';
+      }
+
+      if (essaiCourant >= 3) {
+        // 3 ERREURS : PRODUIT PERDU !
+        verrouTransition = true;
+        btnSubmit.disabled = true;
+        priceInput.disabled = true;
+        produitsPerdus++;
+        majHUD();
+
+        playTone('lost');
+        feedbackBox.className = 'jp-feedback is-lost';
+        feedbackBox.innerHTML = '❌ <b>Produit perdu !</b> Le juste prix Fnac était de <b>' + formaterEuros(vraiPrix) + '</b>.';
+
+        setTimeout(function () {
+          indexProduit++;
+          if (produitsPerdus >= 3 || indexProduit >= serieProduits.length) {
+            verifierFinPartie();
+          } else {
+            afficherProduitCourant();
+          }
+        }, 2200);
+      } else {
+        priceInput.select();
+      }
+    }
+  }
+
+  // Clics sur les chips de modification rapide
+  document.querySelectorAll('.jp-chip').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (verrouTransition) return;
+      var addVal = parseFloat(this.dataset.add || '0');
+      var curVal = parseFloat(priceInput.value || '0');
+      if (isNaN(curVal)) curVal = 0;
+      priceInput.value = Math.max(0, Math.round(curVal + addVal));
+      priceInput.focus();
+    });
+  });
+
+  btnClear.addEventListener('click', function () {
+    if (verrouTransition) return;
+    priceInput.value = '';
+    priceInput.focus();
+  });
+
+  btnSubmit.addEventListener('click', soumettreProposition);
+
+  priceInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      soumettreProposition();
+    }
+  });
+
+  btnRestart.addEventListener('click', function () {
+    demarrerNouvellePartie();
+  });
+
+  function demarrerNouvellePartie() {
+    indexProduit = 0;
+    produitsTrouves = 0;
+    produitsPerdus = 0;
+    verrouTransition = false;
+    endCard.style.display = 'none';
+    gameCard.style.display = 'flex';
+
+    serieProduits = melanger(catalogueComplet).slice(0, 10);
+    afficherProduitCourant();
+  }
+
+  // Chargement du catalogue
+  fetch('produits.json')
+    .then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function (data) {
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('Catalogue vide');
+      }
+      catalogueComplet = data;
+      demarrerNouvellePartie();
+    })
+    .catch(function (err) {
+      feedbackBox.className = 'jp-feedback is-lost';
+      feedbackBox.innerHTML = '⚠️ <b>Erreur de chargement du catalogue</b> : ' + err.message;
+    });
+
+})();
+</script>
+
+</body>
+</html>
