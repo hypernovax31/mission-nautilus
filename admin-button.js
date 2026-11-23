@@ -65,7 +65,7 @@
     if(!window.NautilusPhotoDefi) loadScript('photo-defi.js?v=4', 'scriptPhotoDefi');
     if(!window.NautilusBataille) loadScript('palier4-bataille.js?v=2', 'scriptPalier4Bataille');
     if(!window.NautilusQuiz) loadScript('quiz-palier6.js?v=3', 'scriptQuizPalier6');
-    if(!window.NautilusAdminArtefact) loadScript('admin-artefact.js?v=32', 'scriptAdminArtefact');
+    if(!window.NautilusAdminArtefact) loadScript('admin-artefact.js?v=33', 'scriptAdminArtefact');
   }
 
 

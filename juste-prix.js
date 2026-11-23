@@ -307,7 +307,7 @@
       + '      </div>'
       + '    </div>'
       + '    <div class="jp-feedback is-neutral" id="jpFeedback" role="status" aria-live="polite">'
-      + '      Estimez le juste prix exact (10s par réponse).<br><span style="font-size:11px;color:#9bc4d4;font-weight:600">Arrondi à l’euro : 87,98 € = 88 € · 112,90 € = 113 € · 34,50 € = 35 € · 11,49 € = 11 €</span>'
+      + '      🎯 Saisissez votre estimation (nombre entier en €)'
       + '    </div>'
       + '    <form class="jp-form" id="jpForm" onsubmit="return false;">'
       + '      <div class="jp-input-group">'
@@ -514,7 +514,7 @@
 
       if (feedbackBox) {
         feedbackBox.className = 'jp-feedback is-neutral';
-        feedbackBox.textContent = 'Estimez le juste prix exact de ce produit Fnac (10s par réponse).';
+        feedbackBox.textContent = '🎯 Saisissez votre estimation (nombre entier en €)';
       }
 
       enregistrerEtatCourant();

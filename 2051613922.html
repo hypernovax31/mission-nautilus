@@ -11,11 +11,11 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=52">
+  <link rel="stylesheet" href="css/palier1.css?v=53">
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier5.css?v=2">
+  <link rel="stylesheet" href="css/palier5.css?v=3">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <script>
@@ -147,7 +147,7 @@
       <span>PALIER 5</span>
     </h2>
     <div class="body">
-      <div id="epreuveStatut" class="status-banner info">🎯 <b>Palier 5 en cours :</b> estimez le prix exact de 10 articles Fnac (10s par réponse). Objectif : au moins 8 réussites sur 10.</div>
+      <div id="epreuveStatut" class="status-banner info" hidden></div>
       <div id="justePrixHost" class="game-stage"></div>
       <div class="game-footer-actions">
         <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
@@ -175,7 +175,7 @@
 <script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 <!-- Moteur de l'épreuve LE JUSTE PRIX (Palier 5). -->
-<script src="juste-prix.js?v=2"></script>
+<script src="juste-prix.js?v=3"></script>
 
 <!-- Réglages du Palier 5 : indication de la zone de recherche. -->
 <script>
@@ -248,7 +248,8 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   function statut(html, kind) {
     var el = $('epreuveStatut');
     if (!el) return;
-    el.innerHTML = html;
+    el.hidden = !html;
+    el.innerHTML = html || '';
     el.className = 'status-banner ' + (kind || 'info');
   }
 
@@ -268,20 +269,13 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
   }
-  function afficherVueBriefing(avecTransition) {
-    var basculer = function () {
-      montrerCarte('gateHero', false);
-      montrerCarte('teamCard', true);
-      montrerCarte('logCard', true);
-      montrerCarte('briefCard', true);
-      montrerCarte('gateUnlocked', false);
-      var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
-    };
-    if (avecTransition && window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
-      window.NautilusBriefing.transitionVersBriefing(basculer);
-    } else {
-      basculer();
-    }
+  function afficherVueBriefing() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', true);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
   }
   function afficherVueEpreuve() {
     montrerCarte('gateHero', false);
@@ -527,14 +521,12 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
   /* ============ BRIEFING DU CAPITAINE ============ */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "« Bienvenue dans la soute aux reliques du Nautilus ». Les dix articles proposés, issus des rayons de la Fnac, doivent être correctement estimés au juste prix avant la fin du temps imparti.",
+    intro: "« Bienvenue dans la soute aux reliques du Nautilus ». Estimez le juste prix de 10 articles Fnac avant la fin du temps imparti.",
     consignes: [
-      { ico: '🎯', html: "<b>10 articles Fnac</b> à évaluer successivement." },
-      { ico: '⏱️', html: "<b>10 secondes par réponse</b> : si le temps est écoulé, l’article suivant apparaît." },
-      { ico: '🚨', warn: true, html: "<b>3 erreurs maximum par article</b> : chaque estimation incorrecte allume un voyant d’alerte." },
-      { ico: '⚖️', html: "<b>Règle de l’arrondi à l’euro près :</b> entrez uniquement un <b>nombre entier</b>.<br><i>Exemples : 87,98 € = 88 € · 112,90 € = 113 € · 34,50 € = 35 € · 11,49 € = 11 €</i>" },
-      { ico: '📊', html: "<b>Objectif de réussite ≥ 80%</b> : vous devez trouver au moins 8 articles sur 10." },
-      { ico: '⚠️', warn: true, html: "<b>Moins de 8 articles trouvés = DÉFAITE !</b> Remontée immédiate en surface (blocage matelot)." }
+      { ico: '🎯', html: "<b>10 articles à évaluer</b> : saisissez un <b>nombre entier</b> à l’euro près." },
+      { ico: '⏱️', html: "<b>10 secondes par réponse</b> : au-delà, l’article est perdu." },
+      { ico: '🚨', warn: true, html: "<b>3 erreurs max par article</b> : chaque tentative ratée allume un voyant." },
+      { ico: '🏆', html: "<b>Objectif de réussite</b> : au moins <b>8 articles trouvés sur 10</b>." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
@@ -571,7 +563,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     }
   }
   window.addEventListener('nautilus:sas-ouvert', function () {
-    afficherVueBriefing(true);
+    afficherVueBriefing();
   });
 
   var _btn = $('sasIndicationBtn'), _panel = $('sasIndicationPanel');
@@ -596,7 +588,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 <script src="magasin-fnac.js?v=1"></script>
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=5" defer></script>
-<script src="admin-artefact.js?v=30" defer></script>
+<script src="admin-artefact.js?v=33" defer></script>
 <script src="admin-button.js?v=31" type="module"></script>
 </body>
 </html>

@@ -587,9 +587,10 @@
           var p4t = renderP4Chips(eqT);
           var p5t = renderP5Chips(eqT);
           var p6t = renderP6Chips(eqT);
+          var p1StyleTest = 'background:rgba(46,213,115,0.22);border:1px solid #2ed573;color:#a8ffcc;box-shadow:0 0 10px rgba(46,213,115,0.45);font-weight:900;border-radius:8px;padding:3px 8px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;';
           return '<div class="adm-af-teamcard" data-team="'+eqT+'" style="margin:0;padding:12px 14px;background:rgba(245,176,39,0.12);border:1px solid rgba(245,176,39,0.45);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#eaf8ff">'
             + '<div class="adm-af-teamhead" style="font-size:13px;font-weight:900;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:#ffd36c"><span style="color:#ffd36c;font-weight:900">🧪 zzzz-0000 <span class="small" style="background:rgba(245,176,39,0.25);border:1px solid rgba(245,176,39,0.5);color:#ffd36c;border-radius:999px;padding:2px 7px;font-size:10px">TEST ADMIN</span></span><span class="small" id="afTeamPill-'+eqT+'" style="color:#9bc4d4;font-weight:600">test</span></div>'
-            + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip" id="afP1-'+eqT+'" style="'+CHIP_STYLE_DEFAULT+'">—</span></div>'
+            + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P1</span><span class="adm-af-chip adm-af-chip--hl" id="afP1-'+eqT+'" style="'+p1StyleTest+'">NAUTILE</span></div>'
             + '<div class="adm-af-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P2</span><div class="adm-af-chips" id="afP2wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p2t+'</div></div>'
             + '<div class="adm-af-row" id="afP3-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P3</span><div class="adm-af-chips" id="afP3wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px"></div></div>'
             + '<div class="adm-af-row" id="afP4-'+eqT+'" style="display:flex;align-items:center;gap:8px;margin:8px 0;min-width:0"><span class="adm-af-lbl" style="'+LBL_STYLE+'">P4</span><div class="adm-af-chips" id="afP4wrap-'+eqT+'" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex:1;min-width:0;padding:2px 2px 4px">'+p4t+'</div></div>'
@@ -757,25 +758,18 @@
           var motTest = lireP1DepuisLocal('TEST') || lireP1DepuisLocal('APERCU') || lireP1DepuisLocal('ANON') || lireP1DepuisLocal('MODE_TEST') || lireP1DepuisLocal('ZZZZ-0000') || '';
           if(!motTest){ try{ var g=localStorage.getItem('nautilusP1TestWord'); if(g){ try{ var jg=JSON.parse(g); motTest=jg.w||jg.word||''; }catch(e){ motTest=g; }} }catch(e){} }
           if(!motTest){ try{ var g2=localStorage.getItem('nautilusP1TestWord:TEST'); if(g2){ try{ var jg2=JSON.parse(g2); motTest=jg2.w||jg2.word||jg2; }catch(e){ motTest=g2; }} }catch(e){} }
+          if(!motTest){ motTest = 'NAUTILE'; }
           var p1m=$('afP1-'+eq);
           if(p1m) {
-            p1m.textContent = motTest || '—';
-            p1m.classList.toggle('adm-af-chip--hl', !!motTest);
-            if (motTest) {
-              p1m.style.background = 'rgba(46, 213, 115, 0.22)';
-              p1m.style.borderColor = '#2ed573';
-              p1m.style.color = '#a8ffcc';
-              p1m.style.boxShadow = '0 0 10px rgba(46, 213, 115, 0.45)';
-              p1m.style.fontWeight = '900';
-            } else {
-              p1m.style.background = '#03111f';
-              p1m.style.borderColor = 'rgba(142, 231, 255, 0.38)';
-              p1m.style.color = '#ffffff';
-              p1m.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.4)';
-              p1m.style.fontWeight = '800';
-            }
+            p1m.textContent = motTest;
+            p1m.classList.add('adm-af-chip--hl');
+            p1m.style.background = 'rgba(46, 213, 115, 0.22)';
+            p1m.style.borderColor = '#2ed573';
+            p1m.style.color = '#a8ffcc';
+            p1m.style.boxShadow = '0 0 10px rgba(46, 213, 115, 0.45)';
+            p1m.style.fontWeight = '900';
           }
-          var pillM=$('afTeamPill-'+eq); if(pillM) pillM.textContent = motTest ? 'donnée test trouvée' : 'test — zzzz-0000';
+          var pillM=$('afTeamPill-'+eq); if(pillM) pillM.textContent = 'test — zzzz-0000';
           var listeM = lireP2DepuisLocal('TEST') || lireP2DepuisLocal('APERCU') || lireP2DepuisLocal('ANON') || lireP2DepuisLocal('MODE_TEST') || null;
           if(listeM && listeM.length){ majP2Chips(eq, listeM); } else { majP2Chips(eq, []); }
           majCarteP3Auto(eq);

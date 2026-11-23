@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=52">
+  <link rel="stylesheet" href="css/palier1.css?v=53">
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <link rel="stylesheet" href="css/palier4.css?v=3">
   <script src="anti-zoom.js?v=2"></script>
@@ -250,20 +250,13 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
   }
-  function afficherVueBriefing(avecTransition) {
-    var basculer = function () {
-      montrerCarte('gateHero', false);
-      montrerCarte('teamCard', true);
-      montrerCarte('logCard', true);
-      montrerCarte('briefCard', true);
-      montrerCarte('gateUnlocked', false);
-      var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
-    };
-    if (avecTransition && window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
-      window.NautilusBriefing.transitionVersBriefing(basculer);
-    } else {
-      basculer();
-    }
+  function afficherVueBriefing() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', true);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
   }
   function afficherVueEpreuve() {
     montrerCarte('gateHero', false);
@@ -550,7 +543,7 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
     }
   }
   window.addEventListener('nautilus:sas-ouvert', function () {
-    afficherVueBriefing(true);
+    afficherVueBriefing();
   });
 
   var _btn = $('sasIndicationBtn'), _panel = $('sasIndicationPanel');
@@ -574,7 +567,7 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
 <script src="magasin-fnac.js?v=1"></script>
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=5" defer></script>
-<script src="admin-artefact.js?v=32" defer></script>
+<script src="admin-artefact.js?v=33" defer></script>
 <script src="admin-button.js?v=33" type="module"></script>
 </body>
 </html>

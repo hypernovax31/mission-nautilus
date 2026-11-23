@@ -13,7 +13,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=52">
+  <link rel="stylesheet" href="css/palier1.css?v=53">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
@@ -2008,6 +2008,8 @@ window.Nautilus = {
       }
       montrerCarte('briefCard', true);
       montrerCarte('gameCard', false);
+      montrerCarte('teamCard', false);
+      montrerCarte('logCard', false);
       $('briefHost').innerHTML = renderIdleScreen(t, me, null);
       bindIdleEvents();
       return;
@@ -2039,6 +2041,8 @@ window.Nautilus = {
       if (cestMoi) { body.innerHTML = renderLostScreen(s, t); return; }
       montrerCarte('briefCard', true);
       montrerCarte('gameCard', false);
+      montrerCarte('teamCard', false);
+      montrerCarte('logCard', false);
       $('briefHost').innerHTML = renderIdleScreen(t, me, s);
       bindIdleEvents();
       return;
@@ -2218,9 +2222,21 @@ window.Nautilus = {
        conservé dans le document de l'équipe (morseWordHash). En mode test
        (aucune écriture), on garde un simple tirage local. */
     const entry = state.isTest
-      ? N.pickWord()
+      ? (function() {
+          var saved = '';
+          try { saved = localStorage.getItem('nautilusP1TestWord:TEST') || localStorage.getItem('nautilusP1TestWord') || ''; } catch (_) {}
+          if (saved) {
+            try { var j = JSON.parse(saved); if (j && (j.w || j.word)) return motEntry(j.w || j.word) || motEntry('NAUTILE') || N.pickWord(); } catch (_) {}
+            var e = motEntry(saved.trim().toUpperCase());
+            if (e) return e;
+          }
+          return motEntry('NAUTILE') || N.pickWord();
+        })()
       : await N.getMotEquipage(state.team);
     state.word = entry.w;
+    if (state.isTest) {
+      try { localStorage.setItem('nautilusP1TestWord:TEST', entry.w); } catch (_) {}
+    }
     state.typed = '';        // repart d'une reponse vide
 
     /* MODE TEST : rien n'est ecrit dans Firestore, donc l'ecoute temps reel
@@ -2352,16 +2368,21 @@ window.Nautilus = {
         <div class="nautilus-hints-rack">
           <div class="nautilus-hints-head">
             <div class="nautilus-hints-title">🧭 INDICES DE L'ÉQUIPAGE</div>
-            <div class="nautilus-hints-note">
+            <p class="nautilus-hints-note">
               Demander un indice coûte <b>1 h de blocage personnel</b> (l'indice reste acquis à l'équipage).
+            </p>
+            <div class="nautilus-hints-action">
+              <button class="nautilus-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '✅ Tous les indices révélés' : '🆘 Demander un indice'}</button>
             </div>
-            <button class="nautilus-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '✅ Tous les indices révélés' : '🆘 Demander un indice'}</button>
           </div>
-          <div class="nautilus-hints-row">
+          <div class="nautilus-hints-grid">
             ${hintCards.map((h, i) => `
-              <div class="nautilus-hint-card ${s.hintsRevealed[i] ? 'is-revealed' : ''}">
-                <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed[i] ? '✓' : '🔒'}</div>
-                <div>${s.hintsRevealed[i] ? h.body : '— non révélé —'}</div>
+              <div class="nautilus-hint-card ${s.hintsRevealed[i] ? 'is-revealed' : 'is-locked'}">
+                <div class="nautilus-hint-badge">
+                  <span class="nautilus-hint-num">${h.label}</span>
+                  <span class="nautilus-hint-status">${s.hintsRevealed[i] ? '✨ Révélé' : '🔒 Scellé'}</span>
+                </div>
+                <div class="nautilus-hint-body">${s.hintsRevealed[i] ? h.body : '<i>Secret sous scellé</i>'}</div>
               </div>
             `).join('')}
           </div>
@@ -2934,19 +2955,22 @@ window.Nautilus = {
         <div class="nautilus-hints-rack">
           <div class="nautilus-hints-head">
             <div class="nautilus-hints-title">🧭 INDICES DE L’ÉQUIPAGE</div>
-            <div class="nautilus-hints-note">
+            <p class="nautilus-hints-note">
               Les indices débloqués s’affichent ici (acquis à tout l’équipage).
-            </div>
+            </p>
           </div>
-          <div class="nautilus-hints-row">
+          <div class="nautilus-hints-grid">
             ${[
-              { label: '🧭 Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' : '— non révélé —' },
-              { label: '🧭 Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${s.wordLength || '?'} caractères</b>.` : '— non révélé —' },
-              { label: '🧭 Indice nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '— non révélé —' }
+              { label: 'Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' : '' },
+              { label: 'Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot compte <b>${s.wordLength || '?'} lettres</b>.` : '' },
+              { label: 'Indice nº3', body: s.hintsRevealed?.[2] ? `Il commence par <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '' }
             ].map((h, i) => `
-              <div class="nautilus-hint-card ${s.hintsRevealed?.[i] ? 'is-revealed' : ''}">
-                <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed?.[i] ? '✓' : ''}</div>
-                <div>${h.body}</div>
+              <div class="nautilus-hint-card ${s.hintsRevealed?.[i] ? 'is-revealed' : 'is-locked'}">
+                <div class="nautilus-hint-badge">
+                  <span class="nautilus-hint-num">${h.label}</span>
+                  <span class="nautilus-hint-status">${s.hintsRevealed?.[i] ? '✨ Révélé' : '🔒 Scellé'}</span>
+                </div>
+                <div class="nautilus-hint-body">${s.hintsRevealed?.[i] ? h.body : '<i>Secret sous scellé</i>'}</div>
               </div>
             `).join('')}
           </div>
@@ -3367,7 +3391,7 @@ window.Nautilus = {
 <script src="magasin-fnac.js?v=1"></script>
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=2" defer></script>
-<script src="admin-artefact.js?v=30" defer></script>
+<script src="admin-artefact.js?v=33" defer></script>
 <script src="admin-button.js?v=31" type="module"></script>
 </body>
 </html>
