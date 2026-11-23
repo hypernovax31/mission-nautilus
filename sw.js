@@ -144,7 +144,7 @@ const PRECACHE = [
   './assets/produits/fnac-jeu-04.svg',
   './assets/produits/fnac-jeu-05.svg',
   './assets/produits/fnac-jeu-06.svg',
-  './victoire-palier.js?v=13',
+  './victoire-palier.js?v=15',
   './records-palier.js?v=2',
   './typewriter-secours.js?v=1',
   './install-promo.js?v=6',

@@ -217,7 +217,7 @@
 <!-- Écran de VICTOIRE commun à TOUS les paliers (même page de victoire
      que le Palier 1) : badge, stats, panneau pliable « DIRECTION VERS
      LA ZONE DE RECHERCHE ». -->
-<script src="victoire-palier.js?v=13"></script>
+<script src="victoire-palier.js?v=15"></script>
 <script src="records-palier.js?v=2"></script>
 <script>
 /* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS » =================
@@ -415,24 +415,17 @@
   }
 
   function afficherBlocage(jusqua, nom) {
-    /* Verdict lu DEPUIS le briefing (clic « PRENDRE LES COMMANDES »
-       d'un matelot encore en surface) : on entre d'abord dans la vue
-       épreuve, qui porte ce message — appel sans effet quand on y est
-       déjà (éjection en pleine partie). */
     afficherVueEpreuve();
-    afficherJournalDeBord(true);   /* plus personne ne joue : le journal revient */
-    /* Formules reprises du PALIER 1 (renderLostScreen) : « 3 erreurs
-       sur cette tentative », « Remontée forcée ! » — message immersif
-       demandé par l'organisation (remplace « tu passes la barre »). */
-    statut(nom
-      ? "🔒 <b>3 erreurs sur cette tentative — remontée forcée !</b> " + esc(nom) + " regagne la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
-        + "avec son Code Matelot — <b>chacun ses erreurs</b>."
-      : "🔒 <b>3 erreurs sur cette tentative — remontée forcée !</b> Tu regagnes la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
-        + "pour que tes erreurs restent les tiennes.", 'danger');
     var host = $('mcHost');
-    if (host) host.innerHTML = '';
+    if (host && window.NautilusDefaite) {
+      window.NautilusDefaite.afficher(host, {
+        palier: 2,
+        motif: 'erreurs',
+        nom: nom,
+        jusqua: jusqua,
+        details: '3 erreurs aux mots croisés'
+      });
+    }
   }
 
   function onErreur(n, max) {
@@ -462,23 +455,20 @@
      identifié (Code Matelot) — sinon repli historique LOCAL à
      l'appareil, réservé aux joueurs anonymes. */
   function declencherBlocage() {
+    jouerSonDefaite();
     if (apercuAdminAutorise()) {
-      journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
+      var jusquaApercu = Date.now() + 3600000;
+      afficherBlocage(jusquaApercu, 'Matelot Concepteur');
+      journal('ℹ️ Aperçu organisateur : écran de défaite affiché (aucun blocage réel enregistré).', 'info');
       return;
     }
     monIdentite().then(function (ident) {
       if (ident && ident.isTest) {
-        /* MODE CONCEPTEUR : jamais de blocage — le testeur vérifie
-           chaque palier sans bride (erreurs, demandes d'indice…) et
-           rien n'est enregistré. La grille reste jouable. */
-        statut('🧪 <b>Mode concepteur : 3 erreurs sur cette tentative.</b> Aucun blocage en test — la grille reste jouable, rien n’est enregistré.', 'warning');
-        journal('🧪 Mode concepteur : 3 erreurs aux Mots Croisés — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
+        var jusquaTest = Date.now() + 3600000;
+        afficherBlocage(jusquaTest, ident.name);
+        journal('🧪 Mode concepteur : écran de défaite affiché pour ' + ident.name + ' (aucun blocage en test).', 'info');
         return;
       }
-      /* ÉJECTION RÉELLE (anonyme ou matelot identifié) : Perdu.mp3
-         retentit — demande explicite — sauf si le site est en
-         sourdine (règle absolue, appliquée par palier-annonces.js). */
-      jouerSonDefaite();
       if (ident) {
         window.NautilusBlocages.poserBlocage(ident, 'mots_croises_too_many_errors')
           .then(function (r) {
@@ -486,15 +476,12 @@
             acte('3 erreurs — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
           })
           .catch(function () {
-            /* Réseau en rade : le blocage vaut pour CETTE session et rien
-               n’est posé sur l’appareil — un collègue identifié reste libre. */
             _blocageSession = Date.now() + BLOCAGE_MS;
             afficherBlocage(_blocageSession, ident.name);
             journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
           });
         return;
       }
-      /* Joueur anonyme : repli historique, local à cet appareil. */
       var jusqua = Date.now() + BLOCAGE_MS;
       try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
       afficherBlocage(jusqua, null);

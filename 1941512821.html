@@ -156,7 +156,7 @@
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
 <script src="palier4-bataille.js?v=1"></script>
-<script src="victoire-palier.js?v=14"></script>
+<script src="victoire-palier.js?v=15"></script>
 <script src="records-palier.js?v=2"></script>
 
 <script>
@@ -281,48 +281,15 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
   function afficherBlocage(jusqua, nom, motif) {
     partieEnCours = false;
     afficherVueEpreuve();
-    afficherJournalDeBord(true);
-    var cause = "🔒 <b>Remontée en surface (relais requis) !</b> ";
-    if (motif === '3_erreurs' || motif === 'erreurs') {
-      cause = "❌ <b>3 torpilles perdues dans l’eau — brèche de pression !</b> ";
-    } else if (motif === 'temps_ecoule') {
-      cause = "⏱️ <b>Réserve d’oxygène épuisée !</b> ";
-    } else if (motif === 'abandon') {
-      cause = "🚨 <b>Abandon de la traque — remontée forcée en surface !</b> ";
-    } else if (motif === 'sortie_jeu') {
-      cause = "🚪 <b>Sortie non autorisée du radar — remontée forcée !</b> ";
-    }
-
-    statut(nom
-      ? cause + esc(nom) + " regagne la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b>. L’avancée du radar est sauvegardée : <b>un coéquipier peut continuer la traque dès maintenant</b> avec son Code Matelot !"
-      : cause + "Tu regagnes la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b>. L’avancée du radar est sauvegardée.", 'danger');
-
     var host = $('epreuveHost');
-    if (host) {
-      host.innerHTML = '<section class="lock-screen lock-screen--lost" aria-live="polite" style="padding:16px 8px">'
-        + '<div class="lock-heading">'
-        + '  <span class="lock-heading-icon" aria-hidden="true">↟</span>'
-        + '  <div>'
-        + '    <p class="lock-kicker">RETOUR EN SURFACE</p>'
-        + '    <h2>Remontée forcée !</h2>'
-        + '  </div>'
-        + '</div>'
-        + '<p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la traque.</p>'
-        + '<div class="lock-attempt"><span aria-hidden="true">❌</span> 3 torpilles perdues dans l’eau — brèche de coque !</div>'
-        + '<div class="lock-lignes">'
-        + '  <div class="lock-ligne lock-ligne--pause">'
-        + '    <span class="lock-ligne-ico">⏱</span>'
-        + '    <span><b>Reprise autorisée à ' + heureLisible(jusqua) + '</b></span>'
-        + '  </div>'
-        + '  <div class="lock-ligne lock-ligne--relais">'
-        + '    <span class="lock-ligne-ico">🤝</span>'
-        + '    <span>Grille préservée : un coéquipier peut reprendre la barre <b>dès maintenant</b></span>'
-        + '  </div>'
-        + '</div>'
-        + '<div style="margin-top:24px;text-align:center"><a class="lock-home-link gate-home puzzle-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem(\'nautilusEcoutille\',\'1\');}catch(_){}">🏠 Retour à l’accueil</a></div>'
-        + '</section>';
+    if (host && window.NautilusDefaite) {
+      window.NautilusDefaite.afficher(host, {
+        palier: 4,
+        motif: motif,
+        nom: nom,
+        jusqua: jusqua,
+        details: '3 torpilles perdues dans l’eau'
+      });
     }
   }
 

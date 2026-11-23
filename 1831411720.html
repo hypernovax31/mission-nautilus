@@ -147,7 +147,9 @@
     <div class="body">
       <div id="puzzleStatut" class="status-banner info">📸 <b>Initialisation du collimateur optique…</b></div>
       <div id="puzzleHost"></div>
-      <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <div style="text-align:center;margin-top:18px">
+        <a class="gate-home puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      </div>
     </div>
   </section>
 </main>
@@ -170,7 +172,7 @@
 <!-- Moteur de l'épreuve CHASSE AUX ARTEFACTS EN MAGASIN FNAC (Palier 3). -->
 <script src="photo-defi.js?v=5"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
-<script src="victoire-palier.js?v=13"></script>
+<script src="victoire-palier.js?v=15"></script>
 <script src="records-palier.js?v=2"></script>
 
 <!-- ================= RÉGLAGES ADMIN (Palier 3) =================
@@ -301,24 +303,16 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   function afficherBlocage(jusqua, nom, motif) {
     partieEnCours = false;
     afficherVueEpreuve();
-    afficherJournalDeBord(true);
-    var cause = "🔒 <b>Remontée immédiate en surface !</b> ";
-    if (motif === 'temps_ecoule') {
-      cause = "⏱️ <b>Temps écoulé (3 min) — réserve d’oxygène épuisée !</b> ";
-    } else if (motif === 'abandon') {
-      cause = "🚨 <b>Abandon de la mission — remontée forcée en surface !</b> ";
-    } else if (motif === 'sortie_jeu') {
-      cause = "🚪 <b>Sortie non autorisée du mini-jeu — remontée forcée en surface !</b> ";
-    }
-
-    statut(nom
-      ? cause + esc(nom) + " regagne la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
-        + "avec son Code Matelot (nouvelle série de 5 cibles assignée)."
-      : cause + "Tu regagnes la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b> sur cet appareil (nouvelle série de 5 cibles assignée).", 'danger');
     var host = $('puzzleHost');
-    if (host) host.innerHTML = '';
+    if (host && window.NautilusDefaite) {
+      window.NautilusDefaite.afficher(host, {
+        palier: 3,
+        motif: motif,
+        nom: nom,
+        jusqua: jusqua,
+        details: motif === 'temps_ecoule' ? 'Temps écoulé (3 min)' : 'Chasse interrompue'
+      });
+    }
   }
 
   /* Son de défaite (module partagé), JAMAIS si le sonar est éteint. */
@@ -333,17 +327,20 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   /* Échec au Photo Défi : abandon, sortie précoce ou temps imparti écoulé. */
   function declencherBlocage(motif) {
     partieEnCours = false;
+    jouerSonDefaite();
     if (apercuAdminAutorise()) {
-      journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
+      var jusquaApercu = Date.now() + 3600000;
+      afficherBlocage(jusquaApercu, 'Matelot Concepteur', motif);
+      journal('ℹ️ Aperçu organisateur : écran de défaite affiché (aucun blocage réel enregistré).', 'info');
       return;
     }
     monIdentite().then(function (ident) {
       if (ident && ident.isTest) {
-        statut('🧪 <b>Mode concepteur.</b> Aucun blocage en test — reprise libre.', 'warning');
-        journal('🧪 Mode concepteur : sanction Photo Défi (' + motif + ') ignorée, aucune écriture.', 'info');
+        var jusquaTest = Date.now() + 3600000;
+        afficherBlocage(jusquaTest, ident.name, motif);
+        journal('🧪 Mode concepteur : écran de défaite affiché pour ' + ident.name + ' (aucun blocage en test).', 'info');
         return;
       }
-      jouerSonDefaite();
       var raison = 'photo_defi_' + (motif || 'fail');
       var texteActe = 'remonte en surface';
       if (motif === 'temps_ecoule') texteActe = 'temps écoulé (3 min) — remonte en surface';

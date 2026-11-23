@@ -155,7 +155,7 @@
 <script src="reserve-o2.js?v=5"></script>
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<script src="victoire-palier.js?v=13"></script>
+<script src="victoire-palier.js?v=15"></script>
 <script src="records-palier.js?v=2"></script>
 <script src="quiz-palier6.js?v=2"></script>
 
@@ -285,53 +285,14 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
   function afficherBlocage(jusqua, nom, motif) {
     partieEnCours = false;
     afficherVueEpreuve();
-    afficherJournalDeBord(true);
-    var cause = "🔒 <b>Remontée immédiate en surface !</b> ";
-    if (motif === '3_erreurs' || motif === 'erreurs') {
-      cause = "❌ <b>3 erreurs commises — Le Grand Quiz des Abysses a échoué !</b> ";
-    } else if (motif === 'score_insuffisant') {
-      cause = "❌ <b>Score inférieur à 80% — Moins de 8 réponses correctes sur 10 !</b> ";
-    } else if (motif === 'temps_ecoule') {
-      cause = "⏱️ <b>Temps écoulé — réserve d’oxygène épuisée !</b> ";
-    } else if (motif === 'abandon') {
-      cause = "🚨 <b>Abandon de la mission — remontée forcée en surface !</b> ";
-    } else if (motif === 'sortie_jeu') {
-      cause = "🚪 <b>Sortie non autorisée du mini-jeu — remontée forcée en surface !</b> ";
-    }
-
-    statut(nom
-      ? cause + esc(nom) + " regagne la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
-        + "avec son Code Matelot (nouvelle série de questions assignée)."
-      : cause + "Tu regagnes la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b> sur cet appareil (nouvelle série de questions assignée).", 'danger');
-
     var host = $('quizHost');
-    if (host) {
-      host.innerHTML = '<section class="lock-screen lock-screen--lost" aria-live="polite" style="padding:16px 8px">'
-        + '<div class="lock-heading">'
-        + '  <span class="lock-heading-icon" aria-hidden="true">↟</span>'
-        + '  <div>'
-        + '    <p class="lock-kicker">RETOUR EN SURFACE</p>'
-        + '    <h2>Remontée forcée !</h2>'
-        + '  </div>'
-        + '</div>'
-        + '<p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la plongée.</p>'
-        + '<div class="lock-attempt"><span aria-hidden="true">❌</span> '
-        + (motif === 'score_insuffisant' ? 'Score inférieur à 80% (au moins 8/10 requis)' : '3 erreurs commises au Grand Quiz')
-        + '</div>'
-        + '<div class="lock-lignes">'
-        + '  <div class="lock-ligne lock-ligne--pause">'
-        + '    <span class="lock-ligne-ico">⏱</span>'
-        + '    <span><b>Reprise autorisée à ' + heureLisible(jusqua) + '</b></span>'
-        + '  </div>'
-        + '  <div class="lock-ligne lock-ligne--relais">'
-        + '    <span class="lock-ligne-ico">🤝</span>'
-        + '    <span>Un coéquipier peut reprendre la barre <b>dès maintenant</b> avec son Code Matelot</span>'
-        + '  </div>'
-        + '</div>'
-        + '<div style="margin-top:24px;text-align:center"><a class="lock-home-link gate-home puzzle-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem(\'nautilusEcoutille\',\'1\');}catch(_){}">🏠 Retour à l’accueil</a></div>'
-        + '</section>';
+    if (host && window.NautilusDefaite) {
+      window.NautilusDefaite.afficher(host, {
+        palier: 6,
+        motif: motif,
+        nom: nom,
+        jusqua: jusqua
+      });
     }
   }
 

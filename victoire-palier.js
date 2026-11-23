@@ -132,5 +132,89 @@
       + '</div>';
   }
 
+  function formatHeure(v) {
+    if (!v) return '';
+    try {
+      var d = new Date(typeof v === 'number' ? v : String(v));
+      if (isNaN(d.getTime())) return String(v);
+      return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    } catch (_) { return String(v); }
+  }
+
+  /* Écran de défaite unifié & minimaliste (NautilusDefaite) :
+     - Élimine toute redondance (bandeaux supérieurs, boutons orphelins).
+     - Remplacé par une carte épurée et directe avec une seule action retour. */
+  function afficherDefaite(hote, opts) {
+    if (!hote) return;
+    var o = opts || {};
+    var motif = o.motif || 'erreurs';
+    var heureStr = formatHeure(o.jusqua);
+
+    // 1. Nettoyage radical des doublons visuels et bandeaux parasites
+    try {
+      if (hote.parentNode) {
+        var bannieres = hote.parentNode.querySelectorAll('.status-banner, .mc-statut, #epreuveStatut, #mcStatut');
+        bannieres.forEach(function (b) { b.style.display = 'none'; });
+        var vieuxBoutons = hote.parentNode.querySelectorAll('#btnSortieJeu, .gate-home, .puzzle-home, .lost-home-btn');
+        vieuxBoutons.forEach(function (btn) { btn.style.display = 'none'; });
+      }
+      var sasTitle = document.getElementById('sasUnlockedTitle');
+      if (sasTitle) {
+        sasTitle.textContent = '🔒 ' + (o.palier ? 'PALIER ' + o.palier : 'ÉPREUVE INTERROMPUE');
+      }
+      var logCard = document.getElementById('logCard');
+      if (logCard) logCard.style.display = 'none';
+      var teamCard = document.getElementById('teamCard');
+      if (teamCard) teamCard.style.display = 'none';
+      var briefCard = document.getElementById('briefCard');
+      if (briefCard) briefCard.style.display = 'none';
+      var gateHero = document.getElementById('gateHero');
+      if (gateHero) gateHero.style.display = 'none';
+    } catch (_) {}
+
+    // 2. Cause concise
+    var causeTexte = o.details || '3 erreurs commises';
+    if (motif === 'score_insuffisant') {
+      causeTexte = 'Score insuffisant (< 80%)';
+    } else if (motif === 'temps_ecoule') {
+      causeTexte = 'Temps imparti écoulé';
+    } else if (motif === 'abandon') {
+      causeTexte = 'Abandon de la plongée';
+    } else if (motif === 'sortie_jeu') {
+      causeTexte = 'Sortie de poste en plongée';
+    } else if (motif === '3_erreurs' || motif === 'erreurs') {
+      causeTexte = '3 erreurs commises';
+    }
+
+    var repriseLigne = heureStr
+      ? 'Reprise autorisée à <b>' + esc(heureStr) + '</b>'
+      : 'Reprise autorisée après la période de surface';
+
+    var relaisLigne = (o.relais !== false)
+      ? 'Relais d’équipe : un coéquipier peut replonger <b>dès maintenant</b>'
+      : 'Un coéquipier peut prendre le relais';
+
+    hote.innerHTML = ''
+      + '<div class="lost-screen">'
+      +   '<div class="lost-badge" aria-hidden="true">↟</div>'
+      +   '<h2>Remontée en surface</h2>'
+      +   '<div class="lost-cause">❌ ' + esc(causeTexte) + '</div>'
+      +   '<div class="lost-info-grid">'
+      +     '<div class="lost-info-row">'
+      +       '<span class="lost-info-ico">⏱️</span>'
+      +       '<span>' + repriseLigne + '</span>'
+      +     '</div>'
+      +     '<div class="lost-info-row">'
+      +       '<span class="lost-info-ico">🤝</span>'
+      +       '<span>' + relaisLigne + '</span>'
+      +     '</div>'
+      +   '</div>'
+      +   '<div class="lost-action">'
+      +     '<a class="lost-home-btn" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem(\'nautilusEcoutille\',\'1\');}catch(_){}">🏠 Retour à l’accueil</a>'
+      +   '</div>'
+      + '</div>';
+  }
+
   window.NautilusVictoire = { afficher: afficher };
+  window.NautilusDefaite = { afficher: afficherDefaite };
 })();

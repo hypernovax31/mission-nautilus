@@ -635,6 +635,111 @@
     .won-screen{text-align:center;padding:30px 20px;}
     .won-screen h2{color:#5be09b;font-size:clamp(26px,5vw,40px);margin:0 0 12px;}
 
+    /* === Lost screen (Défaite unifiée et minimaliste pour tous les paliers) === */
+    .lost-screen {
+      text-align: center;
+      padding: 24px 16px;
+      color: #eaf8ff;
+      max-width: 500px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    .lost-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: rgba(255, 75, 62, 0.16);
+      border: 1.5px solid rgba(255, 75, 62, 0.45);
+      color: #ff8579;
+      font-size: 26px;
+      line-height: 1;
+      margin: 0 auto 12px;
+      box-shadow: 0 0 20px rgba(255, 75, 62, 0.25);
+    }
+    .lost-screen h2 {
+      margin: 0 0 10px;
+      font-size: clamp(20px, 4vw, 26px);
+      color: #ffffff;
+      font-weight: 900;
+      letter-spacing: .02em;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .lost-cause {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 75, 62, 0.18);
+      border: 1px solid rgba(255, 75, 62, 0.4);
+      color: #ffd0cd;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+    .lost-info-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(4, 20, 34, 0.85);
+      border: 1px solid rgba(142, 231, 255, 0.25);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+      text-align: left;
+    }
+    .lost-info-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13.5px;
+      color: #cde6f2;
+    }
+    .lost-info-row b {
+      color: #ffffff;
+    }
+    .lost-info-ico {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .lost-action {
+      margin-top: 6px;
+    }
+    .lost-home-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--fnac);
+      color: #03111f !important;
+      font-weight: 1000;
+      font-size: 14px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      padding: 12px 26px;
+      border-radius: 12px;
+      text-decoration: none !important;
+      box-shadow: 0 6px 18px rgba(245, 176, 39, 0.3);
+      transition: transform 0.15s ease, filter 0.15s ease;
+      cursor: pointer;
+    }
+    .lost-home-btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+    @media (max-width: 520px) {
+      .lost-home-btn {
+        display: flex;
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
     /* === Status banner === */
     .status-banner{
       padding:10px 14px;border-radius:12px;margin-bottom:12px;
