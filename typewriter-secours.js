@@ -14,7 +14,13 @@
     setTimeout(function () {
       if (ordre.dataset.typed === 'true') return;
       ordre.dataset.typed = 'true';
+      var anneeDisparition = 1870;
+      var annees = Math.max(0, (new Date()).getFullYear() - anneeDisparition);
       var complet = ordre.dataset.text || '';
+      if (complet.indexOf('1870') !== -1) {
+        complet = complet.replace(/\b\d+\s+ans plus tard\b/, annees + ' ans plus tard');
+        ordre.dataset.text = complet;
+      }
       var mouvementReduit = window.matchMedia &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

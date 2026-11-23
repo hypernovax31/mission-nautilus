@@ -3073,6 +3073,26 @@
     <h2>ORDRE DE MISSION</h2>
     <div class="body">
       <p class="intro-text typewriter" id="missionOrderText" data-text="En 1870, le Nautilus disparaît au large des îles Lofoten. 156 ans plus tard, son signal réapparaît sous les rayons de la Fnac de Labège. Le premier équipage à le remonter en surface entrera dans la légende du magasin. Sonar allumé, matelot. À vous de jouer !"><span id="missionOrderTyping"></span><span id="missionOrderCaret" class="typewriter-caret">▌</span></p>
+      <script>
+        (function(){
+          try {
+            var el = document.getElementById('missionOrderText');
+            if (el) {
+              var anneeDisparition = 1870;
+              var annees = Math.max(0, (new Date()).getFullYear() - anneeDisparition);
+              var txt = el.getAttribute('data-text') || '';
+              if (txt && txt.indexOf('1870') !== -1) {
+                el.setAttribute('data-text', txt.replace(/\b\d+\s+ans plus tard\b/, annees + ' ans plus tard'));
+              }
+            }
+            var sig = document.querySelector('.ec-signal');
+            if (sig) {
+              var ansSig = Math.max(0, (new Date()).getFullYear() - 1870);
+              sig.textContent = 'Signal détecté après ' + ansSig + ' ans';
+            }
+          } catch (_) {}
+        })();
+      </script>
       <div class="rule-invite">
         <h2 class="rule-invite-eyebrow">Consignes de plongée</h2>
         <span class="rule-invite-main">Cliquez sur les 4 hublots du <i>Nautilus</i> pour prendre connaissance de votre feuille de route.</span>
@@ -7690,7 +7710,13 @@ function qrDataUri(text, opts){
     if(!el || el.dataset.typed === 'true') return;
     el.dataset.typed = 'true';
 
-    const fullText = el.dataset.text || el.textContent || '';
+    const anneeDisparition = 1870;
+    const anneesDisparition = Math.max(0, (new Date()).getFullYear() - anneeDisparition);
+    let fullText = el.dataset.text || el.textContent || '';
+    if(fullText.indexOf('1870') !== -1){
+      fullText = fullText.replace(/\b\d+\s+ans plus tard\b/, anneesDisparition + ' ans plus tard');
+      el.dataset.text = fullText;
+    }
 
     const typingSpan = $('missionOrderTyping');
     const caretSpan = $('missionOrderCaret');
@@ -11204,11 +11230,15 @@ window.PWAInstall = {
     return 'Plongez dans les <span>20 000 lieues</span> de la Fnac ' + designationHero(m);
   }
   function missionText(m){
-    return 'En 1870, le Nautilus disparaît au large des îles Lofoten. 156 ans plus tard, son signal réapparaît sous les rayons de la Fnac ' + designationHero(m) + '. Le premier équipage à le remonter en surface entrera dans la légende du magasin. Sonar allumé, matelot. À vous de jouer !';
+    var anneeDisparition = 1870;
+    var annees = Math.max(0, (new Date()).getFullYear() - anneeDisparition);
+    return 'En 1870, le Nautilus disparaît au large des îles Lofoten. ' + annees + ' ans plus tard, son signal réapparaît sous les rayons de la Fnac ' + designationHero(m) + '. Le premier équipage à le remonter en surface entrera dans la légende du magasin. Sonar allumé, matelot. À vous de jouer !';
   }
   function ecLuText(m){
     var desig = designationHero(m);
-    return 'Expédition dans le Nautilus — grand jeu interne de la Fnac ' + desig + ', d\'après Jules Verne. Cent cinquante-six ans après sa disparition, dans les 1 500 mètres carrés du magasin ' + desig + ', le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d\'oxygène indique la réserve d\'air du bord. Appuie sur START pour ouvrir le sas et recevoir l\'ordre de mission.';
+    var anneeDisparition = 1870;
+    var annees = Math.max(0, (new Date()).getFullYear() - anneeDisparition);
+    return 'Expédition dans le Nautilus — grand jeu interne de la Fnac ' + desig + ', d\'après Jules Verne. ' + annees + ' ans après sa disparition, dans les 1 500 mètres carrés du magasin ' + desig + ', le signal du Nautilus réapparaît sous les rayons. Des Livres au Son, de la Zone 51 à l’Occasion, de la Papeterie au Drone, huit paliers séparent les équipages de la surface : le premier à remonter le Nautilus entrera dans la légende du magasin. La jauge d\'oxygène indique la réserve d\'air du bord. Appuie sur START pour ouvrir le sas et recevoir l\'ordre de mission.';
   }
   function appliquer(m){
     var mag = m || (window.NautilusMagasin && window.NautilusMagasin.courant && window.NautilusMagasin.courant()) || null;
