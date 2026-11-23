@@ -117,12 +117,14 @@
       }
     } catch (_) {}
 
+    var missionTexte = o.palier ? ('le <b><em>Palier ' + esc(o.palier) + '</em></b>') : 'cette épreuve';
+
     hote.innerHTML = ''
       + '<div class="won-screen celebration">'
       +   '<div class="won-badge" aria-hidden="true">🏆</div>'
       +   '<h2>Épreuve validée !</h2>'
       +   '<p class="won-line">' + ligneEquipage + '</p>'
-      +   '<p class="won-line won-line--bravo">Bravo à <b><em>' + esc(bravo) + '</em></b> pour « ' + esc(o.mission) + ' ».</p>'
+      +   '<p class="won-line won-line--bravo">Bravo à <b><em>' + esc(bravo) + '</em></b> pour ' + missionTexte + '.</p>'
       +   '<div class="won-stats" aria-label="Bilan de l’épreuve">' + statsHtml + '</div>'
       +   '<div class="won-records" id="wonRecordsHost" aria-live="polite"></div>'
       +   '<div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —'

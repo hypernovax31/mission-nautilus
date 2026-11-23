@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#020812" />
-  <title>Mission Nautilus — Palier 5 (Le Juste Prix)</title>
-  <meta name="description" content="Accès scellé et épreuve du Palier 5 de la Mission Nautilus : Le Juste Prix du rayon Occasion Fnac." />
+  <title>Mission Nautilus — Palier 5</title>
+  <meta name="description" content="Accès scellé et épreuve du Palier 5 de la Mission Nautilus." />
   <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil). -->
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -45,7 +45,7 @@
 <div class="topbar">
   <div class="topbar-left">
     <button class="topbar-back" id="backBtn" type="button">🏠 Retour à l'accueil</button>
-    <div class="topbar-title" id="topPalierTitle">Palier 5 — Le Juste Prix</div>
+    <div class="topbar-title" id="topPalierTitle">Palier 5</div>
   </div>
   <div class="topbar-info">
     <span>Équipage : <b id="topTeam">—</b></span>
@@ -141,11 +141,11 @@
     </div>
   </section>
 
-  <!-- ÉPREUVE DU PALIER 5 : LE JUSTE PRIX -->
+  <!-- ÉPREUVE DU PALIER 5 -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 5 — LE JUSTE PRIX</h2>
+    <h2 id="sasUnlockedTitle">PALIER 5</h2>
     <div class="body">
-      <div id="epreuveStatut" class="status-banner info">🎯 <b>Épreuve du Juste Prix :</b> estimez le prix exact de 10 articles Fnac (10s par réponse). Objectif : au moins 8 réussites sur 10.</div>
+      <div id="epreuveStatut" class="status-banner info">🎯 <b>Palier 5 en cours :</b> estimez le prix exact de 10 articles Fnac (10s par réponse). Objectif : au moins 8 réussites sur 10.</div>
       <div id="justePrixHost"></div>
       <div style="text-align:center;margin-top:18px">
         <a class="gate-home puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
@@ -170,7 +170,7 @@
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
-<script src="victoire-palier.js?v=15"></script>
+<script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 <!-- Moteur de l'épreuve LE JUSTE PRIX (Palier 5). -->
 <script src="juste-prix.js?v=2"></script>
@@ -402,7 +402,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
     window.NautilusVictoire.afficher(host, {
       palier: 5,
-      mission: 'Le Juste Prix',
+      mission: 'Palier 5',
       equipe: equipe,
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [
@@ -431,8 +431,8 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     partieEnCours = false;
     var duree = res && res.duree ? res.duree : 0;
     afficherJournalDeBord(false);
-    statut('🏆 <b>Palier 5 franchi !</b> Vous avez validé ' + ((res && res.score) ? res.score : '80% des articles') + ' au Juste Prix Fnac.', 'success');
-    acte('valide le Palier 5 (Le Juste Prix)' + (duree ? ' en ' + duree + ' s' : ''), 'success');
+    statut('🏆 <b>Palier 5 franchi !</b> Vous avez validé ' + ((res && res.score) ? res.score : 'au moins 80% des articles') + '.', 'success');
+    acte('valide le Palier 5' + (duree ? ' en ' + duree + ' s' : ''), 'success');
     propagerVictoire();
     afficherEcranVictoire(res);
   }

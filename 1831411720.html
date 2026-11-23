@@ -141,9 +141,9 @@
     </div>
   </section>
 
-  <!-- ÉPREUVE : CHASSE AUX ARTEFACTS EN MAGASIN FNAC. -->
+  <!-- ÉPREUVE DU PALIER 3 -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 3 — CHASSE AUX ARTEFACTS</h2>
+    <h2 id="sasUnlockedTitle">PALIER 3</h2>
     <div class="body">
       <div id="puzzleStatut" class="status-banner info">📸 <b>Initialisation du collimateur optique…</b></div>
       <div id="puzzleHost"></div>
@@ -172,7 +172,7 @@
 <!-- Moteur de l'épreuve CHASSE AUX ARTEFACTS EN MAGASIN FNAC (Palier 3). -->
 <script src="photo-defi.js?v=5"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
-<script src="victoire-palier.js?v=15"></script>
+<script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 
 <!-- ================= RÉGLAGES ADMIN (Palier 3) =================
@@ -417,7 +417,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
     window.NautilusVictoire.afficher(host, {
       palier: 3,
-      mission: 'Chasse aux artefacts',
+      mission: 'Palier 3',
       equipe: equipe,
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [

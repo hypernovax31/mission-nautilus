@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#020812" />
-  <title>Mission Nautilus — Palier 6 (Le Grand Quiz des Abysses)</title>
-  <meta name="description" content="Accès scellé et épreuve du Palier 6 de la Mission Nautilus : Le Grand Quiz des Abysses." />
+  <title>Mission Nautilus — Palier 6</title>
+  <meta name="description" content="Accès scellé et épreuve du Palier 6 de la Mission Nautilus." />
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
@@ -40,7 +40,7 @@
 <div class="topbar">
   <div class="topbar-left">
     <button class="topbar-back" id="backBtn" type="button">🏠 Retour à l'accueil</button>
-    <div class="topbar-title" id="topPalierTitle">Palier 6 — Le Grand Quiz des Abysses</div>
+    <div class="topbar-title" id="topPalierTitle">Palier 6</div>
   </div>
   <div class="topbar-info">
     <span>Équipage : <b id="topTeam">—</b></span>
@@ -135,7 +135,7 @@
 
   <!-- ÉPREUVE DU PALIER 6 -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 6 — LE GRAND QUIZ DES ABYSSES</h2>
+    <h2 id="sasUnlockedTitle">PALIER 6</h2>
     <div class="body">
       <div id="epreuveStatut" class="status-banner info">🌊 <b>Palier 6 :</b> 10 questions abyssales, 6 secondes par question (après écriture). Seuil de réussite : au moins 80% (8/10).</div>
       <div id="quizHost"></div>
@@ -155,7 +155,7 @@
 <script src="reserve-o2.js?v=5"></script>
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<script src="victoire-palier.js?v=15"></script>
+<script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 <script src="quiz-palier6.js?v=2"></script>
 
@@ -389,7 +389,7 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
     var pct = (res && typeof res.pourcentage === 'number') ? res.pourcentage : Math.round((score / 10) * 100);
     window.NautilusVictoire.afficher(host, {
       palier: 6,
-      mission: 'Le Grand Quiz des Abysses',
+      mission: 'Palier 6',
       equipe: equipe,
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [
@@ -418,8 +418,8 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
     partieEnCours = false;
     var duree = res && res.duree ? res.duree : 0;
     afficherJournalDeBord(false);
-    statut('🏆 <b>Palier 6 franchi !</b> Vous avez triomphé du Grand Quiz des Abysses avec ' + (res && res.score ? res.score : '8') + '/10 réponses exactes.', 'success');
-    acte('valide le Palier 6 (Le Grand Quiz des Abysses)' + (duree ? ' en ' + duree + ' s' : ''), 'success');
+    statut('🏆 <b>Palier 6 franchi !</b> Vous avez obtenu ' + (res && res.score ? res.score : '8') + '/10 réponses exactes.', 'success');
+    acte('valide le Palier 6' + (duree ? ' en ' + duree + ' s' : ''), 'success');
     propagerVictoire(res);
     afficherEcranVictoire(res);
   }
