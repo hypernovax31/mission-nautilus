@@ -63,7 +63,8 @@
     if(!window.NautilusMagasin) loadScript('magasin-fnac.js?v=3', 'scriptMagasinFnac');
     if(!window.FnacLecteur) loadScript('fnac-lecteur.js?v=1', 'scriptFnacLecteur');
     if(!window.NautilusPhotoDefi) loadScript('photo-defi.js?v=4', 'scriptPhotoDefi');
-    if(!window.NautilusAdminArtefact) loadScript('admin-artefact.js?v=30', 'scriptAdminArtefact');
+    if(!window.NautilusQuiz) loadScript('quiz-palier6.js?v=1', 'scriptQuizPalier6');
+    if(!window.NautilusAdminArtefact) loadScript('admin-artefact.js?v=31', 'scriptAdminArtefact');
   }
 
 
@@ -154,7 +155,7 @@
     son:{label:"Palier 3",next:"zone51",time:180,errors:1,description:"Chasse acoustique dans les abysses : identifiez et capturez au collimateur optique les 5 artefacts du secteur."},
     zone51:{label:"Palier 4 — Le Relevé Sonar",next:"occasion",time:300,errors:2,description:"Cartographie de la fosse : le relevé du sonar est sens dessus dessous, recalez chaque écho pour localiser le gouffre où gît le Nautilus."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Approche du plancher sous-marin : estimez le prix exact de 10 articles pour déverrouiller les propulseurs d'exploration."},
-    papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Contact avec l'épave : la silhouette du Nautilus se profile dans le noir, déchiffrez le code pour amorcer la procédure de sauvetage."},
+    papeterie:{label:"Palier 6 — Le Grand Quiz des Abysses",next:"drone",time:100,errors:3,description:"Épreuve de culture et de sciences sous-marines : 10 questions pointues sur Nemo, le Nautilus et les fonds océaniques."},
     drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Manœuvres d'amarrage : inspectez la carcasse du géant échoué et déverrouillez le sas de secours."},
     final:{label:"Palier final",next:null,time:0,errors:1,description:"Le Nautilus est sauvé ! Réamorcez ses ballasts et escortez le submersible dans sa remontée triomphale vers la surface."}
   };
@@ -562,7 +563,7 @@
       son: 'chasse aux artefacts',
       zone51: 'relevé du sonar',
       occasion: 'le juste prix',
-      papeterie: 'code de l’encre',
+      papeterie: 'le grand quiz des abysses',
       drone: 'vue aérienne',
       final: 'sas final de surface'
     };

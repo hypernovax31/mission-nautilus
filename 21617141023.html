@@ -5,15 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#020812" />
-  <title>Mission Nautilus — Palier 6 (Papeterie & Beaux-Arts)</title>
-  <meta name="description" content="Accès scellé et briefing du Palier 6 de la Mission Nautilus : Le Code de l'encre." />
+  <title>Mission Nautilus — Palier 6 (Le Grand Quiz des Abysses)</title>
+  <meta name="description" content="Accès scellé et épreuve du Palier 6 de la Mission Nautilus : Le Grand Quiz des Abysses." />
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=50">
   <link rel="stylesheet" href="css/palier2.css?v=26">
+  <link rel="stylesheet" href="css/palier6.css?v=1">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+  <script>
+    (function(){
+      try {
+        var base = [16,1,12,9,5,18];
+        var code = base.map(function(x){ return String(x + 5); }).join('');
+        var forceFerme = /[?&]sas=ferme\b/.test(location.search) || /[?&]scan=1\b/.test(location.search);
+        var isUnlocked = localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok';
+        var isApercu = /[?&]apercu=admin\b/.test(location.search) || sessionStorage.getItem('nautilusAdminApercu') === '1';
+        if (!forceFerme && (isUnlocked || isApercu)) {
+          document.documentElement.classList.add('sas-skip-flash');
+        }
+      } catch(_) {}
+    })();
+  </script>
+  <style>
+    html.sas-skip-flash #gateHero { display: none !important; }
+    html.sas-skip-flash #briefCard { display: block !important; }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 </head>
 <body>
@@ -116,13 +135,11 @@
 
   <!-- ÉPREUVE DU PALIER 6 -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 6 — LE CODE DE L'ENCRE</h2>
+    <h2 id="sasUnlockedTitle">PALIER 6 — LE GRAND QUIZ DES ABYSSES</h2>
     <div class="body">
-      <div id="epreuveStatut" class="status-banner info">🎨 <b>Palier 6 :</b> Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs. Épreuve en cours d'ajustement par le Capitaine.</div>
-      <div style="text-align:center;padding:24px 12px">
-        <p style="font-size:16px;color:#8ee7ff;font-weight:700">Le sas d'accès du Palier 6 est fonctionnel et vérifié.</p>
-        <p class="small" style="color:#cfe6f4">Les coordonnées du sas (Code QR <code>21617141023</code>) ont été validées avec succès.</p>
-      </div>
+      <div id="epreuveStatut" class="status-banner info">🌊 <b>Palier 6 :</b> 10 questions abyssales, 10 secondes par question. Seuil de réussite : au moins 80% (8/10).</div>
+      <div id="quizHost"></div>
+      <div id="wonRecordsHost" style="margin-top:14px"></div>
       <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
@@ -139,18 +156,67 @@
 <script>window.EquipageActif.init();</script>
 <script src="victoire-palier.js?v=13"></script>
 <script src="records-palier.js?v=2"></script>
+<script src="quiz-palier6.js?v=1"></script>
 
 <script>
-const LIEU_DESCRIPTION = "Rayon Papeterie & Beaux-Arts";
+const LIEU_DESCRIPTION = "Rayon Photo & Drone";
 const QR_LOCATION_HINT = "Rayon Papeterie & Beaux-Arts";
 const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
 </script>
 
 <script>
+/* ================= ÉPREUVE DU PALIER 6 — « LE GRAND QUIZ DES ABYSSES » =================
+   10 questions pointues anti-IA tirées d'une banque de 30 questions couvrant :
+   géographie vernienne, mathématiques nautiques, physique sous-marine, sciences de la terre,
+   biologie abyssale, sciences humaines et histoire du roman.
+   • Chrono : 10 secondes par question + 6 secondes de pause/transition.
+   • 4 choix très proches thématiquement par question.
+   • 3 indices uniques par tentative : 50/50 (retirer 2 fausses), +10s (temps), Passe (sauter sans faute).
+   • Règle des 3 erreurs max : éjection du matelot (remontée en surface avec blocage personnel).
+   • Seuil de réussite à 80% : au moins 8 bonnes réponses sur 10 requises (sinon éjection).
+   La victoire inscrit « papeterie » dans completedSteps et débloque le Palier 7. */
 (function () {
   'use strict';
-  var $ = function (id) { return document.getElementById(id); };
 
+  var CLE_BLOCAGE_ANONYME = 'nautilusEpreuve6BloqueJusqua';
+  var BLOCAGE_MS  = 60 * 60 * 1000;          /* repli anonyme : 1 h */
+  var _blocageSession = 0;                   /* mode test : volatil */
+
+  var t0Partie = null;
+  var partieEnCours = false;
+  var moteurQuiz = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
+  function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
+
+  function enModeTest() {
+    try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
+  }
+  function blocageAnonymeJusqua() {
+    try { return Number(localStorage.getItem(CLE_BLOCAGE_ANONYME) || 0); } catch (e) { return 0; }
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function heureLisible(v) {
+    var d = new Date(typeof v === 'number' ? v : String(v));
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* QUI joue sur cet appareil ? */
+  var _ident = null, _identLue = false;
+  function monIdentite() {
+    if (_identLue) return Promise.resolve(_ident);
+    _identLue = true;
+    return window.NautilusBlocages.identiteCourante()
+      .then(function (i) { _ident = i; return _ident; })
+      .catch(function () { _ident = null; return null; });
+  }
+
+  /* Aperçu organisateur : ?apercu=jeu&k=… */
   function apercuAdminAutorise() {
     try {
       if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
@@ -162,78 +228,375 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
     } catch (e) { return false; }
   }
 
+  function statut(html, kind) {
+    var el = $('epreuveStatut');
+    if (!el) return;
+    el.innerHTML = html;
+    el.className = 'status-banner ' + (kind || 'info');
+  }
+
+  /* ================= TROIS VUES EN SÉQUENCE =================
+     ZONE SCELLÉE → BRIEFING DU CAPITAINE → ÉPREUVE (architecture standard). */
   function montrerCarte(id, visible) {
     var el = $(id);
     if (!el) return;
     el.hidden = !visible;
     el.style.display = visible ? '' : 'none';
   }
-
   function afficherVueScellee() {
     montrerCarte('gateHero', true);
-    montrerCarte('teamCard', true);
-    montrerCarte('logCard', true);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
     montrerCarte('briefCard', false);
     montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
   }
-
-  function afficherVueBriefing() {
-    montrerCarte('gateHero', false);
-    montrerCarte('teamCard', true);
-    montrerCarte('logCard', true);
-    montrerCarte('briefCard', true);
-    montrerCarte('gateUnlocked', false);
-    window.NautilusBriefing.afficher($('briefHost'), {
-      intro: 'Les carafes d’encre et les pigments du bord renferment un code scellé dans les profondeurs. Seuls les regards les plus méthodiques sauront extraire la combinaison.',
-      consignes: [
-        { ico: '🖋️', html: 'Observez les nuances et les tracés avec la plus grande rigueur.' },
-        { ico: '⏱️', html: 'Chaque seconde d’analyse compte dans la pénombre des fonds marins.' }
-      ],
-      cta: '⚓ PRENDRE LES COMMANDES',
-      onDepart: function () {
-        afficherVueEpreuve();
-      }
-    });
+  function afficherVueBriefing(avecTransition) {
+    var basculer = function () {
+      montrerCarte('gateHero', false);
+      montrerCarte('teamCard', true);
+      montrerCarte('logCard', true);
+      montrerCarte('briefCard', true);
+      montrerCarte('gateUnlocked', false);
+      var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+    };
+    if (avecTransition && window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
+      window.NautilusBriefing.transitionVersBriefing(basculer);
+    } else {
+      basculer();
+    }
   }
-
   function afficherVueEpreuve() {
     montrerCarte('gateHero', false);
     montrerCarte('teamCard', false);
     montrerCarte('logCard', false);
     montrerCarte('briefCard', false);
     montrerCarte('gateUnlocked', true);
+    var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
+  }
+  function afficherJournalDeBord(visible) {
+    montrerCarte('teamCard', visible);
+    montrerCarte('logCard', visible);
+    var carte = $('gateUnlocked');
+    if (carte) carte.classList.toggle('epreuve-focus', !visible);
   }
 
-  window.addEventListener('nautilus:sas-ouvert', function (ev) {
-    var source = ev && ev.detail && ev.detail.source;
-    if (source === 'scan' || source === 'manuel') {
-      window.NautilusBriefing.transitionVersBriefing(afficherVueBriefing);
-    } else {
-      afficherVueBriefing();
+  function afficherBlocage(jusqua, nom, motif) {
+    partieEnCours = false;
+    afficherVueEpreuve();
+    afficherJournalDeBord(true);
+    var cause = "🔒 <b>Remontée immédiate en surface !</b> ";
+    if (motif === '3_erreurs' || motif === 'erreurs') {
+      cause = "❌ <b>3 erreurs commises — Le Grand Quiz des Abysses a échoué !</b> ";
+    } else if (motif === 'score_insuffisant') {
+      cause = "❌ <b>Score inférieur à 80% — Moins de 8 réponses correctes sur 10 !</b> ";
+    } else if (motif === 'temps_ecoule') {
+      cause = "⏱️ <b>Temps écoulé — réserve d’oxygène épuisée !</b> ";
+    } else if (motif === 'abandon') {
+      cause = "🚨 <b>Abandon de la mission — remontée forcée en surface !</b> ";
+    } else if (motif === 'sortie_jeu') {
+      cause = "🚪 <b>Sortie non autorisée du mini-jeu — remontée forcée en surface !</b> ";
+    }
+
+    statut(nom
+      ? cause + esc(nom) + " regagne la surface ; reprise possible à <b>"
+        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
+        + "avec son Code Matelot (nouvelle série de questions assignée)."
+      : cause + "Tu regagnes la surface ; reprise possible à <b>"
+        + heureLisible(jusqua) + "</b> sur cet appareil (nouvelle série de questions assignée).", 'danger');
+
+    var host = $('quizHost');
+    if (host) {
+      host.innerHTML = '<div style="text-align:center;padding:28px 12px;background:rgba(4,18,32,0.85);border:1.5px solid rgba(255,75,62,0.4);border-radius:14px;margin-top:14px">'
+        + '<div style="font-size:36px;margin-bottom:8px">🔒</div>'
+        + '<p style="font-size:16px;font-weight:900;color:#ff8579;margin:0 0 6px">ÉPREUVE EN PAUSE POUR CE MATELOT</p>'
+        + '<p class="small" style="color:#cfe6f4;max-width:440px;margin:0 auto 14px">En cas d’échec, le matelot remonte en surface pour sécurité. Un autre membre d’équipage peut se connecter sur cet appareil ou le sien pour tenter une nouvelle série.</p>'
+        + '<a class="puzzle-home" href="index.html?ecoutille=0" style="display:inline-block;text-decoration:none">🏠 Revenir au sas d\'accueil</a>'
+        + '</div>';
+    }
+  }
+
+  function jouerSonDefaite() {
+    try {
+      if (window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound) {
+        window.NautilusAnnonces.playDefeatSound();
+      }
+    } catch (e) {}
+  }
+
+  function declencherBlocage(motif) {
+    motif = motif || 'erreurs';
+    if (apercuAdminAutorise()) {
+      journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
+      return;
+    }
+    monIdentite().then(function (ident) {
+      if (ident && ident.isTest) {
+        statut('🧪 <b>Mode concepteur : échec détecté (' + motif + ').</b> Aucun blocage en test — le jeu reste jouable, rien n’est enregistré.', 'warning');
+        journal('🧪 Mode concepteur : échec Quiz (' + motif + ') — blocage ignoré, aucune écriture.', 'info');
+        return;
+      }
+      jouerSonDefaite();
+      if (ident) {
+        window.NautilusBlocages.poserBlocage(ident, motif)
+          .then(function (r) {
+            afficherBlocage(r.lockedUntil, ident.name, motif);
+            acte('échec au Grand Quiz (' + motif + ') — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
+          })
+          .catch(function () {
+            _blocageSession = Date.now() + BLOCAGE_MS;
+            afficherBlocage(_blocageSession, ident.name, motif);
+            journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
+          });
+        return;
+      }
+      var jusqua = Date.now() + BLOCAGE_MS;
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
+      afficherBlocage(jusqua, null, motif);
+    });
+  }
+
+  async function propagerVictoire(res) {
+    var ident = await monIdentite();
+    var equipage = (ident && !ident.isTest && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || null;
+    if (!equipage || enModeTest() || apercuAdminAutorise()) {
+      journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
+      return;
+    }
+    try {
+      var x = await window.NautilusBlocages.db();
+      await x.fs.updateDoc(x.fs.doc(x.db, 'teams', equipage), {
+        completedSteps: x.fs.arrayUnion('papeterie'),
+        currentStep: 'drone',
+        lastEvent: 'step_advanced',
+        lastStepCompleted: 'papeterie',
+        lastStepCompletedAt: new Date().toISOString(),
+        lastStepCompletedLabel: 'Palier 6',
+        lastStepCompletedBy: (ident && !ident.isTest) ? ident.name : 'Un matelot'
+      });
+      if (typeof window.NautilusRecords !== 'undefined') {
+        var NOMS_EQUIPES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+        var dureeSec = (res && res.duree) ? res.duree : (t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0);
+        window.NautilusRecords.enregistrer({
+          stepId: 'papeterie',
+          seconds: dureeSec,
+          matelot: (ident && !ident.isTest) ? ident.name : 'Un matelot',
+          equipage: NOMS_EQUIPES[ident.teamCode] || ident.teamCode
+        }).then(chargerRecords);
+      }
+      var leves = await window.NautilusBlocages.leverBlocages(equipage, 'papeterie');
+      journal('📈 Victoire inscrite au tableau de bord — direction le Palier 7 !'
+        + (leves > 0 ? ' ' + leves + ' matelot' + (leves > 1 ? 's' : '') + ' débloqué' + (leves > 1 ? 's' : '') + '.' : ''), 'success');
+    } catch (e) {
+      journal("⚠️ Victoire non inscrite (connexion ?). Préviens l'organisation.", 'warning');
+    }
+  }
+
+  async function afficherEcranVictoire(res) {
+    var host = $('quizHost');
+    if (!host || !window.NautilusVictoire) return;
+    var ident = await monIdentite();
+    var duree = (res && res.duree) ? res.duree : (t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0);
+    var mm = Math.floor(duree / 60), ss = ('0' + (duree % 60)).slice(-2);
+    var NOMS = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+    var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
+    window.NautilusVictoire.afficher(host, {
+      palier: 6,
+      mission: 'Le Grand Quiz des Abysses',
+      equipe: equipe,
+      bravo: (ident && !ident.isTest) ? ident.name : null,
+      stats: [
+        { valeur: mm + ':' + ss, label: 'Temps total' },
+        { valeur: (res && res.score ? res.score : 8) + '/10', label: 'Réponses exactes' },
+        { valeur: (res && res.pourcentage ? res.pourcentage : 80) + '%', label: 'Taux de réussite' }
+      ],
+      indication: LIEU_DESCRIPTION,
+      labelSuivant: 'Palier 7',
+      urlSuivante: '22718151124.html'
+    });
+    chargerRecords();
+  }
+
+  function chargerRecords() {
+    if (typeof window.NautilusRecords === 'undefined') return;
+    monIdentite().then(function (ident) {
+      window.NautilusRecords.chargerEtRendre($('wonRecordsHost'), {
+        stepId: 'papeterie',
+        moi: (ident && !ident.isTest) ? ident.name : ''
+      });
+    });
+  }
+
+  function onVictoire(res) {
+    partieEnCours = false;
+    var duree = res && res.duree ? res.duree : 0;
+    afficherJournalDeBord(false);
+    statut('🏆 <b>Palier 6 franchi !</b> Vous avez triomphé du Grand Quiz des Abysses avec ' + (res && res.score ? res.score : '8') + '/10 réponses exactes.', 'success');
+    acte('valide le Palier 6 (Le Grand Quiz des Abysses)' + (duree ? ' en ' + duree + ' s' : ''), 'success');
+    propagerVictoire(res);
+    afficherEcranVictoire(res);
+  }
+
+  var lance = false;
+  function lancer() {
+    if (lance) return;
+    lance = true;
+    demarrer();
+  }
+
+  async function demarrer() {
+    var ident = null;
+    if (!apercuAdminAutorise()) {
+      ident = await monIdentite();
+      if (ident && !ident.isTest) {
+        var bloc = await window.NautilusBlocages.blocageActif(ident);
+        if (bloc) {
+          lance = false;
+          afficherBlocage(bloc.lockedUntil, ident.name, bloc.reason);
+          journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
+            + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
+          return;
+        }
+      } else if (!ident) {
+        var jusqua = blocageAnonymeJusqua();
+        if (jusqua > Date.now()) { lance = false; afficherBlocage(jusqua, null, 'anonyme'); return; }
+      }
+    }
+    afficherVueEpreuve();
+    t0Partie = Date.now();
+    partieEnCours = true;
+    statut('🌊 <b>Grand Quiz des Abysses en cours :</b> 10 secondes par question. Objectif : au moins 8 réponses exactes sur 10. 3 erreurs = défaite.', 'info');
+
+    var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
+
+    moteurQuiz = window.NautilusQuiz.init($('quizHost'), {
+      equipe: equipageCode,
+      onVictoire: function (res) {
+        partieEnCours = false;
+        onVictoire(res);
+      },
+      onEchec: function (motif) {
+        partieEnCours = false;
+        declencherBlocage(motif || '3_erreurs');
+      },
+      onAbandon: function () {
+        partieEnCours = false;
+        declencherBlocage('abandon');
+      }
+    });
+  }
+
+  function intercepterSortie(e) {
+    if (partieEnCours) {
+      var conf = confirm("⚠️ Quitter le quiz en cours entraîne la remontée immédiate en surface (blocage matelot). Confirmez-vous l’abandon ?");
+      if (conf) {
+        declencherBlocage('sortie_jeu');
+      } else {
+        if (e) e.preventDefault();
+        return false;
+      }
+    }
+  }
+
+  var btnAccueilTop = $('backBtn');
+  if (btnAccueilTop) {
+    btnAccueilTop.addEventListener('click', function (e) {
+      if (partieEnCours) {
+        if (!intercepterSortie(e)) return;
+      }
+      location.href = 'index.html?ecoutille=0';
+    });
+  }
+
+  var btnAccueilBas = $('btnSortieJeu');
+  if (btnAccueilBas) {
+    btnAccueilBas.addEventListener('click', function (e) {
+      if (partieEnCours) {
+        if (!intercepterSortie(e)) return;
+      }
+    });
+  }
+
+  window.addEventListener('beforeunload', function () {
+    if (partieEnCours && !apercuAdminAutorise()) {
+      declencherBlocage('sortie_jeu');
     }
   });
 
-  window.addEventListener('DOMContentLoaded', function () {
-    $('backBtn')?.addEventListener('click', function () {
-      location.href = 'index.html?ecoutille=0';
-    });
-    if (apercuAdminAutorise()) {
-      afficherVueEpreuve();
-    } else {
-      afficherVueScellee();
+  /* ============ BRIEFING DU CAPITAINE ============ */
+  window.NautilusBriefing.afficher($('briefHost'), {
+    intro: "« Bienvenue au cœur de la bibliothèque secrète du Capitaine Nemo ». Vous devez prouver votre maîtrise absolue des abysses, de l'histoire du Nautilus et des sciences sous-marines avant d'atteindre le sas du drone d'exploration.",
+    consignes: [
+      { ico: '🌊', html: "<b>10 questions abyssales</b> sélectionnées parmi les archives secrètes du Nautilus." },
+      { ico: '⏱️', html: "<b>10 secondes par question</b> pour choisir la bonne réponse parmi 4 propositions très proches." },
+      { ico: '⏳', html: "<b>6 secondes de transition</b> entre chaque question pour analyser la solution et son explication (ou passer immédiatement)." },
+      { ico: '💡', html: "<b>3 indices uniques</b> utilisables une seule fois chacun : <b>50/50</b> (retire 2 fausses), <b>+10s</b> (ajoute du temps), <b>Passe</b> (remplace la question sans faute)." },
+      { ico: '🚨', html: "<b>3 erreurs maximum</b> autorisées au total : la 3ème erreur allume tous les voyants et provoque l’éjection immédiate du matelot." },
+      { ico: '🎯', html: "<b>Objectif de réussite ≥ 80%</b> : au moins 8 réponses exactes sur 10 obligatoires pour déverrouiller le Palier 7." },
+      { ico: '⚠️', warn: true, html: "<b>Moins de 8/10 ou 3 erreurs = DÉFAITE !</b> Remontée immédiate en surface (blocage matelot)." }
+    ],
+    cta: '⚓ PRENDRE LES COMMANDES',
+    onDepart: function () {
+      glisserEnHaut();
+      lancer();
+      setTimeout(glisserEnHaut, 350);
+      setTimeout(glisserEnHaut, 900);
     }
   });
+
+  function glisserEnHaut() {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    catch (e) { try { window.scrollTo(0, 0); } catch (_) {} }
+  }
+
+  /* Démarrage : choix de la VUE */
+  if (apercuAdminAutorise()) {
+    var banniereModeTest = function () {
+      if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+    };
+    banniereModeTest();
+    setTimeout(banniereModeTest, 150);
+    afficherVueBriefing(false);
+  } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.estDeverrouille(6)) {
+    afficherVueBriefing(false);
+  } else {
+    afficherVueScellee();
+    if (window.NautilusSas.observerDeverrouillageEquipe) {
+      window.NautilusSas.observerDeverrouillageEquipe();
+    }
+  }
+  window.addEventListener('nautilus:sas-ouvert', function () {
+    afficherVueBriefing(true);
+  });
+
+  var _btn = $('sasIndicationBtn'), _panel = $('sasIndicationPanel');
+  var _txt = $('sasIndicationTexte');
+  if (_txt) _txt.textContent = ZONE_RECHERCHE_HINT;
+  if (_btn && _panel) {
+    _btn.addEventListener('click', function () {
+      var ouvert = !_panel.hidden;
+      _panel.hidden = ouvert;
+      _btn.textContent = ouvert ? '📍 Voir l’indication de la zone de recherche' : '📍 Masquer l’indication';
+      _btn.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
+    });
+  }
 })();
 </script>
 
+<!-- Bouton d'ambiance sonore, commun à toutes les pages du jeu. -->
 <script src="sonar-button.js?v=4" defer></script>
 <script src="palier-annonces.js?v=5" defer></script>
+<!-- Modules d'administration : magasins, réponses et codes QR. -->
 <script src="artefact-moteur.js?v=8"></script>
 <script src="artefact-service.js?v=8"></script>
 <script src="magasin-fnac.js?v=1"></script>
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=5" defer></script>
-<script src="admin-artefact.js?v=30" defer></script>
-<script src="admin-button.js?v=31" type="module"></script>
+<script src="admin-artefact.js?v=31" defer></script>
+<script src="admin-button.js?v=32" type="module"></script>
 </body>
 </html>

@@ -1,0 +1,433 @@
+/* =============================================================
+   PALIER 6 — « LE GRAND QUIZ DES ABYSSES »
+   Feuille de styles épurée & esthétique du Quiz sous-marin (css/palier6.css)
+   ============================================================= */
+
+main { max-width: 920px; margin: 0 auto; }
+
+.qz-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #eaf8ff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ================= 1. EN-TÊTE / HUD ================= */
+.qz-hud {
+  background: linear-gradient(135deg, rgba(3, 20, 36, 0.95), rgba(2, 10, 20, 0.98));
+  border: 1.5px solid rgba(142, 231, 255, 0.35);
+  border-radius: 14px;
+  padding: 12px 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qz-hud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.qz-step-badge {
+  font-size: 13.5px;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  color: #8ee7ff;
+  text-transform: uppercase;
+}
+.qz-step-badge b { color: #ffd36c; font-size: 16px; }
+
+.qz-voyants {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 75, 62, 0.3);
+}
+
+.qz-voyants-lbl {
+  font-size: 10px;
+  font-weight: 900;
+  color: #ff8579;
+  letter-spacing: .08em;
+  margin-left: 2px;
+}
+
+.qz-voyant {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #2a1111;
+  border: 1.5px solid #ff4b3e;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qz-voyant.active {
+  background: #ff2211;
+  box-shadow: 0 0 12px #ff2211, 0 0 4px #fff;
+  animation: voyantFlash 0.8s infinite alternate;
+}
+@keyframes voyantFlash {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
+.qz-score-badge {
+  font-size: 13px;
+  font-weight: 900;
+  color: #eaf8ff;
+}
+.qz-score-badge b { color: #5be09b; font-size: 15px; }
+.qz-target-sub { font-size: 10.5px; color: #a4dcff; font-weight: 700; margin-left: 4px; }
+
+.qz-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(142, 231, 255, 0.25);
+}
+
+.qz-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1aa3ff, #5be09b);
+  box-shadow: 0 0 10px rgba(91, 224, 155, 0.5);
+  transition: width 0.35s ease;
+}
+
+/* ================= 2. CHRONOMÈTRE ================= */
+.qz-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qz-timer-badge {
+  background: rgba(3, 20, 36, 0.95);
+  border: 1.5px solid rgba(142, 231, 255, 0.4);
+  border-radius: 12px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 1000;
+  color: #8ee7ff;
+  min-width: 72px;
+  justify-content: center;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+}
+
+.qz-timer-badge.is-alert {
+  border-color: #ff4b3e;
+  background: rgba(80, 10, 10, 0.9);
+  color: #ffb4ad;
+  box-shadow: 0 0 14px rgba(255, 75, 62, 0.5);
+  animation: timerPulse 0.6s infinite alternate;
+}
+@keyframes timerPulse {
+  0% { transform: scale(0.98); }
+  100% { transform: scale(1.04); }
+}
+
+.qz-timer-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(142, 231, 255, 0.25);
+}
+
+.qz-timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #5be09b, #1aa3ff);
+  box-shadow: 0 0 8px rgba(142, 231, 255, 0.5);
+  transition: width 0.25s linear;
+}
+
+.qz-timer-bar.is-alert {
+  background: linear-gradient(90deg, #ff8579, #ff2211);
+  box-shadow: 0 0 10px rgba(255, 75, 62, 0.8);
+}
+
+/* ================= 3. CARTE DE LA QUESTION ================= */
+.qz-card {
+  background: linear-gradient(135deg, rgba(8, 32, 52, 0.95), rgba(4, 18, 30, 0.98));
+  border: 2px solid rgba(142, 231, 255, 0.45);
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qz-domaine {
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: .08em;
+  color: #ffd36c;
+  text-transform: uppercase;
+}
+
+.qz-question-text {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: #ffffff;
+  letter-spacing: .01em;
+}
+
+/* ================= 4. GRILLE DES 4 RÉPONSES ================= */
+.qz-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.qz-rep-btn {
+  background: linear-gradient(180deg, rgba(8, 28, 46, 0.9), rgba(4, 16, 28, 0.95));
+  border: 1.5px solid rgba(142, 231, 255, 0.35);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: #eaf8ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  transition: transform .14s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease, opacity .2s ease;
+}
+
+.qz-rep-btn:hover:not(:disabled) {
+  border-color: #8ee7ff;
+  background: rgba(14, 52, 84, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.qz-rep-letter {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(142, 231, 255, 0.15);
+  border: 1.5px solid rgba(142, 231, 255, 0.4);
+  color: #8ee7ff;
+  font-size: 14px;
+  font-weight: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .14s, border-color .14s, color .14s;
+}
+
+.qz-rep-btn:hover:not(:disabled) .qz-rep-letter {
+  background: #8ee7ff;
+  color: #031422;
+}
+
+.qz-rep-label {
+  flex: 1;
+}
+
+/* Réponse correcte (Vert triomphant) */
+.qz-rep-btn.is-correct {
+  border-color: #5be09b;
+  background: rgba(91, 224, 155, 0.22);
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(91, 224, 155, 0.45);
+}
+.qz-rep-btn.is-correct .qz-rep-letter {
+  background: #5be09b;
+  border-color: #5be09b;
+  color: #032010;
+}
+
+/* Réponse fausse (Rouge vif) */
+.qz-rep-btn.is-wrong {
+  border-color: #ff4b3e;
+  background: rgba(255, 75, 62, 0.22);
+  color: #ffd2d2;
+  box-shadow: 0 0 16px rgba(255, 75, 62, 0.4);
+}
+.qz-rep-btn.is-wrong .qz-rep-letter {
+  background: #ff4b3e;
+  border-color: #ff4b3e;
+  color: #fff;
+}
+
+/* Réponse éliminée par le 50/50 */
+.qz-rep-btn.is-eliminated {
+  opacity: 0.25;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(0.8);
+}
+
+/* ================= 5. RACK DES 3 INDICES ================= */
+.qz-indices-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(3, 16, 28, 0.7);
+  border: 1px solid rgba(142, 231, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.qz-indices-title {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  color: #8ee7ff;
+  text-transform: uppercase;
+}
+
+.qz-indices-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.qz-btn-joker {
+  flex: 1 1 140px;
+  background: linear-gradient(135deg, rgba(8, 36, 58, 0.9), rgba(4, 20, 32, 0.95));
+  border: 1.5px solid rgba(142, 231, 255, 0.35);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: #eaf8ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: inherit;
+  transition: transform .14s ease, border-color .14s ease, background .14s ease;
+}
+
+.qz-btn-joker:hover:not(:disabled) {
+  border-color: #ffd36c;
+  background: rgba(245, 176, 39, 0.18);
+  transform: translateY(-1px);
+}
+
+.qz-btn-joker:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.qz-btn-joker.is-used {
+  border-color: rgba(142, 231, 255, 0.15);
+  background: rgba(2, 10, 18, 0.6);
+  opacity: 0.5;
+}
+
+.qz-joker-ico {
+  font-size: 18px;
+}
+
+.qz-joker-lbl {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.qz-joker-sub {
+  font-size: 10px;
+  color: #8ea8b8;
+  font-weight: 700;
+}
+
+/* ================= 6. PANNEAU DE PAUSE & EXPLICATION ================= */
+.qz-pause-box {
+  background: linear-gradient(135deg, rgba(4, 20, 34, 0.98), rgba(2, 10, 18, 0.98));
+  border: 1.5px solid rgba(142, 231, 255, 0.4);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  animation: fadeIn 0.25s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.qz-pause-status {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+.qz-pause-status.is-ok { color: #5be09b; }
+.qz-pause-status.is-wrong { color: #ff8579; }
+
+.qz-pause-expl {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #cde6f2;
+}
+
+.qz-pause-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.qz-btn-next {
+  background: linear-gradient(135deg, #09476b, #052a40);
+  border: 1.5px solid #8ee7ff;
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  transition: transform .14s, background .14s, box-shadow .14s;
+}
+
+.qz-btn-next:hover {
+  background: linear-gradient(135deg, #0d5e8f, #073a5a);
+  transform: translateY(-1px);
+  box-shadow: 0 0 14px rgba(142, 231, 255, 0.35);
+}
+
+/* ================= 7. RESPONSIVE MOBILE ================= */
+@media (max-width: 600px) {
+  .qz-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .qz-rep-btn {
+    padding: 12px 14px;
+    font-size: 13.5px;
+  }
+  .qz-question-text {
+    font-size: 15px;
+  }
+  .qz-btn-joker {
+    flex: 1 1 100%;
+  }
+}
