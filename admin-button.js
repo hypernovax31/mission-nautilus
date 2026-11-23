@@ -152,7 +152,7 @@
     start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Les sous-marins des équipages s'immergent depuis la surface. Votre équipage attend le feu vert pour plonger vers le Palier 1."},
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Plongée dans la pénombre des grandes profondeurs : les récits anciens guident les sous-marins sur la trace du submersible disparu."},
     son:{label:"Palier 3",next:"zone51",time:180,errors:1,description:"Chasse acoustique dans les abysses : identifiez et capturez au collimateur optique les 5 artefacts du secteur."},
-    zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"Cartographie de la fosse : le relevé du sonar est sens dessus dessous, recalez chaque écho pour localiser le gouffre où gît le Nautilus."},
+    zone51:{label:"Palier 4 — Le Relevé Sonar",next:"occasion",time:300,errors:2,description:"Cartographie de la fosse : le relevé du sonar est sens dessus dessous, recalez chaque écho pour localiser le gouffre où gît le Nautilus."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Approche du plancher sous-marin : estimez le prix exact de 10 articles pour déverrouiller les propulseurs d'exploration."},
     papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Contact avec l'épave : la silhouette du Nautilus se profile dans le noir, déchiffrez le code pour amorcer la procédure de sauvetage."},
     drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Manœuvres d'amarrage : inspectez la carcasse du géant échoué et déverrouillez le sas de secours."},

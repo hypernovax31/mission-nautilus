@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#020812" />
-  <title>Mission Nautilus — Palier 4</title>
-  <meta name="description" content="Accès scellé du Palier 4 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
+  <title>Mission Nautilus — Palier 4 : Le Relevé Sonar</title>
+  <meta name="description" content="Accès scellé du Palier 4 de la Mission Nautilus : le relevé sonar et la cartographie des abysses." />
   <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil). -->
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -15,7 +15,7 @@
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier4.css?v=1">
+  <link rel="stylesheet" href="css/palier4.css?v=2">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
@@ -27,7 +27,7 @@
 <div class="topbar">
   <div class="topbar-left">
     <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
-    <div class="topbar-title" id="topPalierTitle">Palier 4</div>
+    <div class="topbar-title" id="topPalierTitle">Palier 4 — Le Relevé Sonar</div>
   </div>
   <div class="topbar-info">
     <span>Équipage : <b id="topTeam">—</b></span>
@@ -39,7 +39,7 @@
        commune à tous les paliers ≥ 2 : tant que le QR Code n'est pas
        scanné, c'est la seule chose à l'écran. -->
   <section class="card gate-hero" id="gateHero">
-    <h2 id="sasHeroTitle">PALIER 4 — ZONE SCELLÉE</h2>
+    <h2 id="sasHeroTitle">PALIER 4 — SAS SCELLÉ : LE RELEVÉ DU SONAR</h2>
     <div class="body">
       <div class="sas-scene">
         <div class="sas-head">
@@ -125,9 +125,9 @@
 
   <!-- ÉPREUVE : LE RELEVÉ DU SONAR. -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 4</h2>
+    <h2 id="sasUnlockedTitle">PALIER 4 — LE RELEVÉ DU SONAR</h2>
     <div class="body">
-      <div id="epreuveStatut" class="status-banner info">⏳ <b>Relevé du sonar en cours…</b></div>
+      <div id="epreuveStatut" class="status-banner info">⏳ <b>Initialisation du radar sonar…</b></div>
       <div id="epreuveHost"></div>
       <a class="marq-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
@@ -480,7 +480,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
     afficherVueEpreuve();
     t0Partie = Date.now();
-    statut('📡 <b>Reconstitue le relevé.</b> Sélectionne un marqueur, puis touche sa case. <b>3 révélations demandées</b> et tu remontes en surface.', 'info');
+    statut('📡 <b>Relevé Sonar actif.</b> Choisissez un écho ci-dessous, lancez le Ping pour évaluer la distance, puis touchez sa case sur la grille.', 'info');
     window.NautilusMarqueurs.init($('epreuveHost'), {
       grille: MARQUEUR_GRILLE,
       marqueurs: MARQUEURS,
@@ -494,12 +494,12 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
      Explication claire et nuancée du thème avec avertissement de remise à zéro. */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue à bord, matelot. Le <b>sonar du Nautilus</b> a cartographié la cache du prochain palier, mais les marqueurs d'échos se sont dispersés. Replace chaque écho pour révéler la zone de recherche.",
+    intro: "Bienvenue aux commandes, matelot. Le <b>sonar des abysses</b> a détecté 8 échos métalliques au fond de la fosse. Reconstituez le relevé en positionnant chaque écho sur la grille pour tracer la route de notre sous-marin vers les profondeurs.",
     consignes: [
-      { ico: '📡', html: "<b>" + NB_MARQUEURS + " échos</b> à repositionner sur la grille de détection." },
-      { ico: '🎯', html: "Sélectionne un marqueur et <b>valide sa case</b>. Une mauvaise case est définitivement écartée." },
-      { ico: '🛰️', html: "<b>Ping sonar gratuit</b> pour évaluer la distance de l'écho et trianguler sa position." },
-      { ico: '🔎', warn: true, html: "Révéler un marqueur coûte <b>1 erreur</b> (3 erreurs = remontée en surface)." },
+      { ico: '📡', html: "<b>" + NB_MARQUEURS + " échos sonar</b> à repositionner sur la grille de détection." },
+      { ico: '🎯', html: "Sélectionnez un écho puis <b>touchez sa coordonnée</b> sur la grille (A–I / 1–9)." },
+      { ico: '🛰️', html: "<b>Ping Sonar gratuit & illimité</b> : évalue la distance en cases pour trianguler la cible." },
+      { ico: '🔎', warn: true, html: "L'aide du Capitaine peut révéler une case (3 révélations maximum avant remontée)." },
       { ico: '⚠️', warn: true, html: "<b>Quitter ce palier remet les compteurs à zéro</b> : toute progression en cours sera réinitialisée." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
