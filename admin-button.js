@@ -64,7 +64,7 @@
     if(!window.FnacLecteur) loadScript('fnac-lecteur.js?v=1', 'scriptFnacLecteur');
     if(!window.NautilusPhotoDefi) loadScript('photo-defi.js?v=4', 'scriptPhotoDefi');
     if(!window.NautilusBataille) loadScript('palier4-bataille.js?v=1', 'scriptPalier4Bataille');
-    if(!window.NautilusQuiz) loadScript('quiz-palier6.js?v=1', 'scriptQuizPalier6');
+    if(!window.NautilusQuiz) loadScript('quiz-palier6.js?v=2', 'scriptQuizPalier6');
     if(!window.NautilusAdminArtefact) loadScript('admin-artefact.js?v=32', 'scriptAdminArtefact');
   }
 
@@ -156,7 +156,7 @@
     son:{label:"Palier 3",next:"zone51",time:180,errors:1,description:"Chasse acoustique dans les abysses : identifiez et capturez au collimateur optique les 5 artefacts du secteur."},
     zone51:{label:"Palier 4 — Traque Sonar : Les Monstres des Abysses",next:"occasion",time:300,errors:3,description:"Traque acoustique dans la fosse : le Nautilus est encerclé par 4 léviathans abyssaux. Localisez et neutralisez le Kraken, le Calmar, l'Anguille et la Manta."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Approche du plancher sous-marin : estimez le prix exact de 10 articles pour déverrouiller les propulseurs d'exploration."},
-    papeterie:{label:"Palier 6 — Le Grand Quiz des Abysses",next:"drone",time:100,errors:3,description:"Épreuve de culture et de sciences sous-marines : 10 questions pointues sur Nemo, le Nautilus et les fonds océaniques."},
+    papeterie:{label:"Palier 6 — Le Grand Quiz des Abysses",next:"drone",time:100,errors:3,description:"Épreuve de culture et de sciences sous-marines : 10 questions pointues sur Nemo, le Nautilus et les fonds océaniques (6s de réflexion après écriture)."},
     drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Manœuvres d'amarrage : inspectez la carcasse du géant échoué et déverrouillez le sas de secours."},
     final:{label:"Palier final",next:null,time:0,errors:1,description:"Le Nautilus est sauvé ! Réamorcez ses ballasts et escortez le submersible dans sa remontée triomphale vers la surface."}
   };
