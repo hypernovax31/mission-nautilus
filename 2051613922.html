@@ -18,6 +18,24 @@
   <link rel="stylesheet" href="css/palier5.css?v=2">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+  <script>
+    (function(){
+      try {
+        var base = [16,1,12,9,5,18];
+        var code = base.map(function(x){ return String(x + 4); }).join('');
+        var forceFerme = /[?&]sas=ferme\b/.test(location.search) || /[?&]scan=1\b/.test(location.search);
+        var isUnlocked = localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok';
+        var isApercu = /[?&]apercu=admin\b/.test(location.search) || sessionStorage.getItem('nautilusAdminApercu') === '1';
+        if (!forceFerme && (isUnlocked || isApercu)) {
+          document.documentElement.classList.add('sas-skip-flash');
+        }
+      } catch(_) {}
+    })();
+  </script>
+  <style>
+    html.sas-skip-flash #gateHero { display: none !important; }
+    html.sas-skip-flash #briefCard { display: block !important; }
+  </style>
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
@@ -247,7 +265,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
   }
-  function afficherVueBriefing() {
+  function afficherVueBriefing(avecTransition) {
     var basculer = function () {
       montrerCarte('gateHero', false);
       montrerCarte('teamCard', true);
@@ -256,7 +274,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       montrerCarte('gateUnlocked', false);
       var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
     };
-    if (window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
+    if (avecTransition && window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
       window.NautilusBriefing.transitionVersBriefing(basculer);
     } else {
       basculer();
@@ -539,20 +557,22 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     };
     banniereModeTest();
     setTimeout(banniereModeTest, 150);
-    afficherVueBriefing();
+    afficherVueBriefing(false);
   } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
     afficherVueScellee();
   } else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) {
     afficherVueScellee();
   } else if (window.NautilusSas.estDeverrouille(5)) {
-    afficherVueBriefing();
+    afficherVueBriefing(false);
   } else {
     afficherVueScellee();
     if (window.NautilusSas.observerDeverrouillageEquipe) {
       window.NautilusSas.observerDeverrouillageEquipe();
     }
   }
-  window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
+  window.addEventListener('nautilus:sas-ouvert', function () {
+    afficherVueBriefing(true);
+  });
 
   var _btn = $('sasIndicationBtn'), _panel = $('sasIndicationPanel');
   var _txt = $('sasIndicationTexte');

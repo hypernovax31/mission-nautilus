@@ -17,6 +17,24 @@
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+  <script>
+    (function(){
+      try {
+        var base = [16,1,12,9,5,18];
+        var code = base.map(function(x){ return String(x + 1); }).join('');
+        var forceFerme = /[?&]sas=ferme\b/.test(location.search) || /[?&]scan=1\b/.test(location.search);
+        var isUnlocked = localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok';
+        var isApercu = /[?&]apercu=admin\b/.test(location.search) || sessionStorage.getItem('nautilusAdminApercu') === '1';
+        if (!forceFerme && (isUnlocked || isApercu)) {
+          document.documentElement.classList.add('sas-skip-flash');
+        }
+      } catch(_) {}
+    })();
+  </script>
+  <style>
+    html.sas-skip-flash #gateHero { display: none !important; }
+    html.sas-skip-flash #briefCard { display: block !important; }
+  </style>
   <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
        connexion : l'import de la PHOTO du QR Code prend alors le
        relais. -->
@@ -361,7 +379,7 @@
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
   }
-  function afficherVueBriefing() {
+  function afficherVueBriefing(avecTransition) {
     /* Sas ouvert : la scène scellée se retire, et l'équipage actif +
        le journal de bord reviennent avec le briefing du capitaine. */
     var basculer = function () {
@@ -372,7 +390,7 @@
       montrerCarte('gateUnlocked', false);
       var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
     };
-    if (window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
+    if (avecTransition && window.NautilusBriefing && window.NautilusBriefing.transitionVersBriefing) {
       window.NautilusBriefing.transitionVersBriefing(basculer);
     } else {
       basculer();
@@ -697,7 +715,7 @@
     };
     banniereModeTest();
     setTimeout(banniereModeTest, 150);
-    afficherVueBriefing();
+    afficherVueBriefing(false);
   } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
     /* Concepteur : la page reste scellée, on attend le vrai scan du QR. */
     afficherVueScellee();
@@ -706,7 +724,7 @@
        l'écran de victoire) : on présente le sas, même déjà ouvert ici. */
     afficherVueScellee();
   } else if (window.NautilusSas.estDeverrouille(2)) {
-    afficherVueBriefing();
+    afficherVueBriefing(false);
   } else {
     afficherVueScellee();
     /* DÉVERROUILLAGE D'ÉQUIPE EN DIRECT : tant que la zone est scellée,
@@ -718,7 +736,9 @@
       window.NautilusSas.observerDeverrouillageEquipe();
     }
   }
-  window.addEventListener('nautilus:sas-ouvert', afficherVueBriefing);
+  window.addEventListener('nautilus:sas-ouvert', function () {
+    afficherVueBriefing(true);
+  });
 
   /* --- Indication de la zone de recherche : dépliable SUR PLACE ---
      Le bouton « 📍 Voir l'indication… » déplie/replie l'encart

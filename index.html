@@ -11450,18 +11450,18 @@ window.PWAInstall = {
   }
 
   function getPhase(){
-    // 1. Contrôle oxygène critique
+    // 1. Contrôle oxygène critique (seuil <= 5% ou réserve entièrement épuisée)
     var statusEl = document.getElementById('oxygenStatus');
     if (statusEl) {
       var txt = (statusEl.textContent || '').toLowerCase();
-      if (txt.indexOf('épuis') !== -1 || txt.indexOf('remontée générale') !== -1) return 'urgence_o2';
+      if (txt.indexOf('réserves épuisées') !== -1 || txt.indexOf('réserve épuisée') !== -1 || txt.indexOf('remontée générale') !== -1) return 'urgence_o2';
       if (txt.indexOf('attente') !== -1 || txt.indexOf('préparation') !== -1) return 'preparation';
     }
 
     var pctEl = document.getElementById('oxygenPercent');
     if (pctEl) {
       var pct = parseInt((pctEl.textContent || '').replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(pct) && pct > 0 && pct <= 5) return 'urgence_o2';
+      if (!isNaN(pct) && pct >= 0 && pct <= 5) return 'urgence_o2';
     }
 
     // 2. Meilleur palier atteint parmi toutes les équipes
