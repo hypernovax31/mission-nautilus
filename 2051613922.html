@@ -509,13 +509,12 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
   /* ============ BRIEFING DU CAPITAINE ============ */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "<b>Capitaine Nemo :</b><br>« Bienvenue dans la soute aux reliques du Nautilus, matelot. Les articles neufs découverts dans les rayons de la Fnac Labège (stock magasin retrait 1h, hors vendeurs partenaires et hors occasion) doivent être correctement inventoriés avant notre prochaine immersion. Votre équipage doit évaluer la valeur marchande exacte de 10 articles. »",
+    intro: "« Bienvenue dans la soute aux reliques du Nautilus ». Les dix articles proposés, issus des rayons de la Fnac, doivent être correctement estimés au juste prix avant la fin du temps imparti.",
     consignes: [
-      { ico: '🎯', html: "<b>10 articles Fnac Labège</b> (neufs officiels en rayon retrait 1h) à évaluer successivement." },
-      { ico: '⏱️', html: "<b>10 secondes par réponse</b> : un chronomètre égrène le temps pour chaque proposition." },
-      { ico: '🚨', html: "<b>3 voyants rouges d’erreurs</b> : chaque estimation incorrecte allume un voyant d’alerte." },
-      { ico: '⚖️', html: "<b>Prix exact exigé</b> : l'euro exact est requis. Aucune marge d’erreur ou approximation n’est accordée." },
-      { ico: '💶', html: "<b>Règle de l’arrondi à l’euro près :</b> entrez uniquement un nombre entier (pas de centimes). À partir de 50 centimes, on arrondit à l’euro supérieur ; en dessous de 50 centimes, on arrondit à l’euro inférieur.<br><i>Exemples officiels : <b>87,98 € = 88 €</b> · <b>112,90 € = 113 €</b> · <b>34,50 € = 35 €</b> · <b>11,49 € = 11 €</b>.</i>" },
+      { ico: '🎯', html: "<b>10 articles Fnac Labège</b> à évaluer successivement." },
+      { ico: '⏱️', html: "<b>10 secondes par réponse</b> si le temps est égrené alors l’article suivant apparaît" },
+      { ico: '🚨', html: "<b>3 erreurs maximum par article</b> : chaque estimation incorrecte allume un voyant d’alerte." },
+      { ico: '⚖️', html: "<b>Règle de l’arrondi à l’euro près :</b> entrez uniquement un <b>nombre entier</b> (pas de centimes). Au dessus de 50 centimes, on arrondit à l’euro supérieur ; en dessous de 50 centimes, on arrondit à l’euro inférieur.<br><i>Exemples officiels : <b>87,98 € = 88 €</b> · <b>112,90 € = 113 €</b> · <b>34,50 € = 35 €</b> · <b>11,49 € = 11 €</b>.</i>" },
       { ico: '📊', html: "<b>Objectif de réussite ≥ 80%</b> : vous devez obligatoirement trouver au moins 8 articles sur 10." },
       { ico: '⚠️', warn: true, html: "<b>Moins de 8 articles trouvés = DÉFAITE !</b> Remontée immédiate en surface (blocage matelot)." }
     ],
