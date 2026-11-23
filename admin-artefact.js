@@ -679,9 +679,9 @@
         }catch(e){ majCarteP3Auto(eq); }
         try {
           var w4 = $('afP4wrap-' + eq);
-          if (w4 && !w4.children.length) w4.innerHTML = renderP4Chips(eq);
+          if (w4) w4.innerHTML = renderP4Chips(eq);
           var w5 = $('afP5wrap-' + eq);
-          if (w5 && !w5.children.length) w5.innerHTML = renderP5Chips(eq);
+          if (w5) w5.innerHTML = renderP5Chips(eq);
         } catch(e) {}
         if(!doc && !mot){
            // même sans doc, on tente quand même P2 via local déjà fait
@@ -714,9 +714,9 @@
         majCarteP3Auto(eq);
         try {
           var w4b = $('afP4wrap-' + eq);
-          if (w4b && !w4b.children.length) w4b.innerHTML = renderP4Chips(eq);
+          if (w4b) w4b.innerHTML = renderP4Chips(eq);
           var w5b = $('afP5wrap-' + eq);
-          if (w5b && !w5b.children.length) w5b.innerHTML = renderP5Chips(eq);
+          if (w5b) w5b.innerHTML = renderP5Chips(eq);
         } catch(e) {}
       });
     });
@@ -750,6 +750,12 @@
           var listeM = lireP2DepuisLocal('TEST') || lireP2DepuisLocal('APERCU') || lireP2DepuisLocal('ANON') || lireP2DepuisLocal('MODE_TEST') || null;
           if(listeM && listeM.length){ majP2Chips(eq, listeM); } else { majP2Chips(eq, []); }
           majCarteP3Auto(eq);
+          try {
+            var w4t = $('afP4wrap-' + eq);
+            if (w4t) w4t.innerHTML = renderP4Chips(eq);
+            var w5t = $('afP5wrap-' + eq);
+            if (w5t) w5t.innerHTML = renderP5Chips(eq);
+          } catch(e) {}
           // sync also IDs with zzzz-0000 alias if used
           var eqAlias='ZZZZ-0000';
           // no UI for alias, but ensure localStorage alias is mirrored

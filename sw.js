@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Pages : network-first ; code et styles : cache avec revalidation en fond.
-const CACHE_NAME = 'nautilus-v428';
+const CACHE_NAME = 'nautilus-v429';
 const PRECACHE = [
   './',
   './index.html',
@@ -21,13 +21,13 @@ const PRECACHE = [
   './css/palier1.css?v=50',
   './css/palier2.css?v=26',
   './css/palier3.css?v=8',
-  './css/palier4.css?v=1',
+  './css/palier4.css?v=2',
   './css/palier5.css?v=2',
   './css/admin.css?v=13',
   './anti-zoom.js?v=2',
   './son-partage.js?v=2',
   './sonar-button.js?v=4',
-  './admin-button.js?v=30',
+  './admin-button.js?v=31',
   './palier-annonces.js?v=5',
   './journal-bord.js?v=6',
   './palier-sas.js?v=13',
@@ -38,7 +38,7 @@ const PRECACHE = [
   './mots-croises.js?v=9',
   './puzzle-palier3.js?v=4',
   './photo-defi.js?v=5',
-  './palier4-marqueurs.js?v=1',
+  './palier4-marqueurs.js?v=2',
   './juste-prix.js?v=2',
   './produits.json',
   './assets/produits/fnac-audio-01.svg',
@@ -154,7 +154,7 @@ const PRECACHE = [
   './magasin-fnac.js?v=3',
   './magasin-guard.js?v=3',
   './fnac-lecteur.js?v=1',
-  './admin-artefact.js?v=29',
+  './admin-artefact.js?v=30',
   './data/magasins-fnac.json',
   './data/magasins-fnac.json?v=1',
   './assets/fond-nautilus.jpg',
