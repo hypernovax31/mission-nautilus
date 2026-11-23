@@ -850,10 +850,11 @@
       if (indexCourant >= NB_QUESTIONS_PARTIE - 1) {
         fini = true;
         var dureeTotale = Math.round((Date.now() - t0) / 1000);
+        var pct = Math.round((score / NB_QUESTIONS_PARTIE) * 100);
         setTimeout(function () {
           if (score >= SEUIL_REUSSITE && erreurs < MAX_ERREURS) {
             jouerSon('ok');
-            onVictoire({ score: score, erreurs: erreurs, duree: dureeTotale });
+            onVictoire({ score: score, pourcentage: pct, erreurs: erreurs, duree: dureeTotale });
           } else {
             jouerSon('faux');
             onEchec('score_insuffisant');
@@ -884,11 +885,12 @@
       if (progressFillEl) progressFillEl.style.width = '100%';
 
       var dureeTotale = Math.round((Date.now() - t0) / 1000);
+      var pct = Math.round((score / NB_QUESTIONS_PARTIE) * 100);
 
       if (score >= SEUIL_REUSSITE && erreurs < MAX_ERREURS) {
         jouerSon('ok');
         setTimeout(function () {
-          onVictoire({ score: score, erreurs: erreurs, duree: dureeTotale });
+          onVictoire({ score: score, pourcentage: pct, erreurs: erreurs, duree: dureeTotale });
         }, 900);
       } else {
         jouerSon('faux');

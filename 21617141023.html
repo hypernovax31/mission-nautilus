@@ -399,6 +399,8 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
     var mm = Math.floor(duree / 60), ss = ('0' + (duree % 60)).slice(-2);
     var NOMS = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
     var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
+    var score = (res && typeof res.score === 'number') ? res.score : 10;
+    var pct = (res && typeof res.pourcentage === 'number') ? res.pourcentage : Math.round((score / 10) * 100);
     window.NautilusVictoire.afficher(host, {
       palier: 6,
       mission: 'Le Grand Quiz des Abysses',
@@ -406,8 +408,8 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [
         { valeur: mm + ':' + ss, label: 'Temps total' },
-        { valeur: (res && res.score ? res.score : 8) + '/10', label: 'Réponses exactes' },
-        { valeur: (res && res.pourcentage ? res.pourcentage : 80) + '%', label: 'Taux de réussite' }
+        { valeur: score + '/10', label: 'Réponses exactes' },
+        { valeur: pct + '%', label: 'Taux de réussite' }
       ],
       indication: LIEU_DESCRIPTION,
       labelSuivant: 'Palier 7',
