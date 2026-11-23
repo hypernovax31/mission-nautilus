@@ -107,6 +107,16 @@
     var statsHtml = stats.map(function (s) {
       return '<div class="won-stat"><strong>' + esc(s.valeur) + '</strong><span>' + esc(s.label) + '</span></div>';
     }).join('');
+    /* Masque les bandeaux de statut intermédiaires et boutons de sortie orphelins */
+    try {
+      if (hote.parentNode) {
+        var banniere = hote.parentNode.querySelector('.status-banner') || hote.parentNode.querySelector('.mc-statut') || hote.parentNode.querySelector('#epreuveStatut') || hote.parentNode.querySelector('#mcStatut');
+        if (banniere) banniere.style.display = 'none';
+        var vieuxBoutons = hote.parentNode.querySelectorAll('#btnSortieJeu, .gate-home');
+        vieuxBoutons.forEach(function (btn) { btn.style.display = 'none'; });
+      }
+    } catch (_) {}
+
     hote.innerHTML = ''
       + '<div class="won-screen celebration">'
       +   '<div class="won-badge" aria-hidden="true">🏆</div>'
@@ -118,6 +128,7 @@
       +   '<div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —'
       +   ' tout l’équipage replonge !</div>'
       +   directionHtml(o)
+      +   '<p style="margin-top:20px;text-align:center"><a class="puzzle-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem(\'nautilusEcoutille\',\'1\');}catch(_){}">🏠 Retour à l’accueil</a></p>'
       + '</div>';
   }
 

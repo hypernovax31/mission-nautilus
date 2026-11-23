@@ -1,613 +1,348 @@
 /* =============================================================
-   PALIER 4 — « LE RELEVÉ DU SONAR »
-   Styles & Ergonomie intuitive du Radar sous-marin (css/palier4.css)
+   PALIER 4 — « TRAQUE SONAR : LE DUEL DES ABYSSES »
+   Feuille de styles radar moderne & cinématographique (css/palier4.css)
    ============================================================= */
 
-main { max-width: 960px; margin: 0 auto; }
+main { max-width: 900px; margin: 0 auto; }
 
-.marq-container {
+.bt-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
   color: #eaf8ff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-/* ================= 1. EN-TÊTE & PROGRESSION ================= */
-.marq-mission-card {
+/* ================= 1. EN-TÊTE / HUD ================= */
+.bt-hud {
   background: linear-gradient(135deg, rgba(3, 20, 36, 0.95), rgba(2, 10, 20, 0.98));
   border: 1.5px solid rgba(142, 231, 255, 0.35);
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 12px 16px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-.marq-mission-header {
+.bt-hud-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.marq-mission-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
+.bt-step-badge {
+  font-size: 13.5px;
   font-weight: 1000;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   color: #8ee7ff;
   text-transform: uppercase;
 }
+.bt-step-badge b { color: #ffd36c; font-size: 15px; }
 
-.marq-pulse-radar {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #5be09b;
-  box-shadow: 0 0 10px #5be09b;
-  display: inline-block;
-  animation: radarBlip 1.6s infinite ease-out;
-}
-@keyframes radarBlip {
-  0% { transform: scale(0.9); opacity: 1; }
-  50% { transform: scale(1.4); opacity: 0.5; box-shadow: 0 0 16px #5be09b; }
-  100% { transform: scale(0.9); opacity: 1; }
-}
-
-.marq-aides-badge {
-  background: rgba(245, 176, 39, 0.15);
-  border: 1px solid rgba(245, 176, 39, 0.45);
-  color: #ffd98a;
-  border-radius: 999px;
-  padding: 3px 10px;
-  font-size: 12px;
-  font-weight: 800;
+.bt-voyants {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 75, 62, 0.3);
 }
 
-.marq-progression-box {
+.bt-voyants-lbl {
+  font-size: 10px;
+  font-weight: 900;
+  color: #ff8579;
+  letter-spacing: .08em;
+  margin-left: 2px;
+}
+
+.bt-voyant {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #2a1111;
+  border: 1.5px solid #ff4b3e;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bt-voyant.active {
+  background: #ff2211;
+  box-shadow: 0 0 12px #ff2211, 0 0 4px #fff;
+  animation: btFlash 0.8s infinite alternate;
+}
+@keyframes btFlash {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  100% { transform: scale(1.18); opacity: 1; }
+}
+
+.bt-relais-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #a4dcff;
+  font-weight: 700;
+}
+.bt-relais-info b { color: #5be09b; }
+
+/* ================= 2. ÉTAT DE LA FLOTTE ================= */
+.bt-fleet-box {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.bt-ship-card {
+  background: linear-gradient(135deg, rgba(8, 30, 50, 0.85), rgba(4, 16, 28, 0.95));
+  border: 1.5px solid rgba(142, 231, 255, 0.25);
+  border-radius: 12px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.25s, opacity 0.25s, background 0.25s;
+}
+
+.bt-ship-card.is-sunk {
+  border-color: #ff4b3e;
+  background: linear-gradient(135deg, rgba(60, 10, 10, 0.85), rgba(30, 4, 4, 0.95));
+  box-shadow: 0 0 14px rgba(255, 75, 62, 0.35);
+}
+
+.bt-ship-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bt-ship-ico {
+  font-size: 18px;
+}
+
+.bt-ship-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.bt-ship-nom {
+  font-size: 13px;
+  font-weight: 900;
+  color: #eaf8ff;
+}
+.bt-ship-card.is-sunk .bt-ship-nom {
+  color: #ff8579;
+  text-decoration: line-through;
+}
+
+.bt-ship-desc {
+  font-size: 10.5px;
+  color: #8ea8b8;
+  font-weight: 700;
+}
+
+.bt-ship-pips {
+  display: flex;
   gap: 5px;
 }
 
-.marq-progression-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 800;
-  color: #a8e5ff;
-}
-
-.marq-progression-bar {
-  width: 100%;
-  height: 9px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid rgba(142, 231, 255, 0.25);
-}
-
-.marq-progression-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #1aa3ff, #5be09b);
-  box-shadow: 0 0 12px rgba(91, 224, 155, 0.65);
-  transition: width 0.35s ease;
-}
-
-/* Guide en 3 étapes évidentes */
-.marq-guide-steps {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(142, 231, 255, 0.12);
-  border-radius: 10px;
-  padding: 8px 10px;
-  margin-top: 2px;
-  overflow-x: auto;
-}
-
-.marq-step-item {
-  display: flex;
-  align-items: center;
-  gap: 7px;
+.bt-ship-pip {
   flex: 1;
-  min-width: 130px;
-}
-
-.marq-step-badge,
-.marq-step-num {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  height: 8px;
+  border-radius: 4px;
   background: rgba(142, 231, 255, 0.2);
-  color: #8ee7ff;
   border: 1px solid rgba(142, 231, 255, 0.4);
-  font-weight: 900;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
-.marq-step-text {
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
-  line-height: 1.25;
-  color: #eaf8ff;
+.bt-ship-pip.hit {
+  background: #ff4b3e;
+  border-color: #ff2211;
+  box-shadow: 0 0 8px #ff4b3e;
 }
 
-.marq-step-sub {
-  font-size: 10px;
-  color: #8ea8b8;
+/* ================= 3. RADAR TACTIQUE 8X8 ================= */
+.bt-radar-wrap {
+  position: relative;
+  background: radial-gradient(circle at center, rgba(6, 28, 48, 0.95), rgba(2, 12, 22, 0.98));
+  border: 2px solid rgba(142, 231, 255, 0.4);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(142, 231, 255, 0.08);
+  overflow: hidden;
 }
 
-.marq-step-arrow {
-  color: rgba(142, 231, 255, 0.35);
-  font-size: 12px;
-  font-weight: 900;
+.bt-radar-sweep {
+  position: absolute;
+  inset: -100%;
+  pointer-events: none;
+  background: conic-gradient(from 0deg, rgba(142, 231, 255, 0) 0deg, rgba(91, 224, 155, 0.12) 320deg, rgba(91, 224, 155, 0.35) 360deg);
+  border-radius: 50%;
+  animation: radarSweep 8s linear infinite;
+  z-index: 1;
+}
+@keyframes radarSweep {
+  to { transform: rotate(360deg); }
 }
 
-/* ================= 2. CONSOLE CIBLE ACTIVE ================= */
-.marq-active-card {
-  background: linear-gradient(135deg, rgba(8, 38, 60, 0.95), rgba(4, 20, 32, 0.98));
-  border: 2px solid #f5b027;
-  border-radius: 14px;
-  padding: 12px 16px;
-  box-shadow: 0 0 20px rgba(245, 176, 39, 0.25), 0 8px 24px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.marq-active-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.marq-active-badge {
-  background: #f5b027;
-  color: #1a0f00;
-  font-size: 11px;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  padding: 3px 8px;
-  border-radius: 6px;
-  text-transform: uppercase;
-}
-
-.marq-active-help {
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffd98a;
-}
-
-.marq-active-body {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.marq-active-sigle {
-  font-size: 26px;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  color: #fff;
-  background: rgba(245, 176, 39, 0.25);
-  border: 1.5px solid #f5b027;
-  border-radius: 10px;
-  width: 54px;
-  height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 0 14px rgba(245, 176, 39, 0.4);
-}
-
-.marq-active-details {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-  min-width: 0;
-}
-
-.marq-active-nom {
-  font-size: 16px;
-  font-weight: 900;
-  color: #ffffff;
-  letter-spacing: .02em;
-}
-
-.marq-active-hint {
-  font-size: 13px;
-  line-height: 1.35;
-  color: #a4e5ff;
-}
-
-/* ================= 3. RACK DES ÉCHOS ================= */
-.marq-rack-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.marq-rack-title {
-  font-size: 11.5px;
-  font-weight: 900;
-  letter-spacing: .06em;
-  color: #8ee7ff;
-  text-transform: uppercase;
-}
-
-.marq-rack {
+.bt-radar-grid {
+  position: relative;
+  z-index: 2;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 8px;
+  grid-template-columns: 28px repeat(8, 1fr);
+  grid-template-rows: 28px repeat(8, 1fr);
+  gap: 4px;
+  aspect-ratio: 1 / 1;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
-.marq-jeton {
-  background: linear-gradient(180deg, rgba(8, 30, 48, 0.9), rgba(4, 16, 28, 0.95));
-  border: 1.5px solid rgba(142, 231, 255, 0.35);
-  border-radius: 10px;
-  padding: 8px 10px;
-  color: #eaf8ff;
+.bt-corner-cell, .bt-header-col, .bt-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 1000;
+  color: #ffd36c;
+  letter-spacing: .04em;
+  opacity: 0.9;
+}
+
+.bt-cell {
+  position: relative;
+  background: rgba(4, 20, 34, 0.75);
+  border: 1px solid rgba(142, 231, 255, 0.25);
+  border-radius: 8px;
+  padding: 0;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  text-align: left;
-  transition: transform .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
-  user-select: none;
-  -webkit-user-select: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: transform 0.12s, border-color 0.12s, background 0.12s, box-shadow 0.12s;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
 }
 
-.marq-jeton:hover:not(.is-ok) {
+.bt-cell:hover:not(:disabled) {
   border-color: #8ee7ff;
   background: rgba(14, 52, 84, 0.95);
-  transform: translateY(-2px);
+  transform: scale(1.06);
+  box-shadow: 0 0 12px rgba(142, 231, 255, 0.4);
 }
 
-.marq-jeton.is-sel {
-  border-color: #f5b027;
-  background: rgba(245, 176, 39, 0.18);
-  box-shadow: 0 0 16px rgba(245, 176, 39, 0.35);
-  transform: translateY(-2px);
-}
-
-.marq-jeton.is-ok {
-  border-color: rgba(91, 224, 155, 0.65);
-  background: rgba(91, 224, 155, 0.12);
-  cursor: default;
-  opacity: 0.75;
-}
-
-.marq-jeton-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.marq-sigle {
-  font-size: 16px;
-  font-weight: 1000;
-  letter-spacing: .06em;
-  color: #ffffff;
-}
-
-.marq-jeton-badge {
-  font-size: 9.5px;
-  font-weight: 900;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(142, 231, 255, 0.15);
-  color: #8ee7ff;
-}
-
-.marq-jeton-badge.is-active {
-  background: #f5b027;
-  color: #1a0f00;
-}
-
-.marq-jeton-badge.is-ok {
-  background: #5be09b;
-  color: #032010;
-}
-
-.marq-nom {
-  font-size: 11px;
-  font-weight: 700;
-  color: #b5dfee;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ================= 4. ACTIONS & FEEDBACK ================= */
-.marq-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.marq-btn {
-  flex: 1 1 200px;
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 8px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: transform .14s ease, filter .14s ease, background .14s ease;
-}
-
-.marq-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.marq-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.marq-btn--ping {
-  background: linear-gradient(135deg, #09476b, #052a40);
-  border: 1.5px solid #8ee7ff;
-  color: #eaf8ff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-}
-.marq-btn--ping:hover:not(:disabled) {
-  background: linear-gradient(135deg, #0d5e8f, #073a5a);
-  box-shadow: 0 0 16px rgba(142, 231, 255, 0.35);
-}
-
-.marq-btn--aide {
-  background: linear-gradient(135deg, rgba(245, 176, 39, 0.22), rgba(180, 120, 20, 0.22));
-  border: 1.5px solid #f5b027;
-  color: #ffd98a;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-}
-.marq-btn--aide:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(245, 176, 39, 0.32), rgba(180, 120, 20, 0.32));
-  box-shadow: 0 0 16px rgba(245, 176, 39, 0.35);
-}
-
-.marq-btn-ico {
-  font-size: 20px;
-}
-
-.marq-btn-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.25;
-  font-size: 13px;
-}
-
-.marq-btn-sub {
-  font-size: 10.5px;
-  font-weight: 700;
-  opacity: 0.85;
-}
-
-.marq-feedback {
-  min-height: 38px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(4, 18, 30, 0.9);
-  border: 1px solid rgba(142, 231, 255, 0.25);
-  font-size: 13.5px;
-  font-weight: 800;
-  line-height: 1.4;
-  color: #eaf8ff;
-  display: flex;
-  align-items: center;
-}
-
-.marq-feedback.is-ok {
-  background: rgba(91, 224, 155, 0.15);
-  border-color: #5be09b;
-  color: #a8ffcc;
-}
-
-.marq-feedback.is-warn {
-  background: rgba(255, 110, 110, 0.15);
-  border-color: #ff6e6e;
-  color: #ffd2d2;
-}
-
-/* ================= 5. LE RELEVÉ SONAR (GRILLE & AXES) ================= */
-.marq-board-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  max-width: 580px;
-  margin: 0 auto;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.marq-axis-cols {
-  display: grid;
-  grid-template-columns: 24px repeat(9, 1fr);
-  width: 100%;
-  gap: 3px;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 900;
-  color: #f5b027;
-  padding: 0 6px;
-  box-sizing: border-box;
-}
-
-.marq-axis-corner {
-  color: rgba(245, 176, 39, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.marq-board-grid-wrap {
-  display: flex;
-  gap: 3px;
-  width: 100%;
-}
-
-.marq-axis-rows {
-  display: grid;
-  grid-template-rows: repeat(9, 1fr);
-  width: 24px;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 900;
-  color: #f5b027;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.marq-board {
-  --n: 9;
-  display: grid;
-  grid-template-columns: repeat(var(--n), 1fr);
-  gap: 3px;
-  width: 100%;
-  padding: 6px;
-  box-sizing: border-box;
-  background: linear-gradient(135deg, rgba(2, 10, 20, 0.95), rgba(1, 6, 12, 0.98));
-  border: 1.5px solid rgba(142, 231, 255, 0.4);
-  border-radius: 12px;
-  box-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.7), 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-
-.marq-case {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  background: rgba(8, 26, 42, 0.65);
-  border: 1px solid rgba(142, 231, 255, 0.18);
-  border-radius: 6px;
-  color: #eaf8ff;
-  font-family: inherit;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .12s ease, border-color .12s ease, transform .1s ease;
-}
-
-.marq-case:hover:not(.is-ok) {
-  background: rgba(142, 231, 255, 0.25);
-  border-color: #8ee7ff;
-  transform: scale(1.05);
-  z-index: 2;
-}
-
-.marq-case-coord {
-  font-size: 9px;
-  font-weight: 700;
-  color: rgba(142, 231, 255, 0.35);
-  letter-spacing: .02em;
-}
-
-/* Case trouvée et verrouillée (Vert triomphant) */
-.marq-case.is-ok {
-  background: linear-gradient(135deg, rgba(91, 224, 155, 0.35), rgba(46, 180, 100, 0.5));
-  border-color: #5be09b;
-  box-shadow: 0 0 14px rgba(91, 224, 155, 0.5), inset 0 0 8px rgba(91, 224, 155, 0.3);
+.bt-cell:disabled {
   cursor: default;
   transform: none;
 }
 
-.marq-pose {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+/* Tir dans l'eau */
+.bt-cell.is-miss {
+  background: rgba(2, 10, 18, 0.85);
+  border-color: rgba(142, 231, 255, 0.15);
+  opacity: 0.65;
+}
+
+/* Touché (Flamme / explosion) */
+.bt-cell.is-hit {
+  background: rgba(255, 75, 62, 0.35);
+  border-color: #ff4b3e;
+  box-shadow: 0 0 14px rgba(255, 75, 62, 0.55);
+  animation: hitPulse 1.2s infinite alternate;
+}
+@keyframes hitPulse {
+  0% { transform: scale(0.98); }
+  100% { transform: scale(1.04); }
+}
+
+/* Coulé (Carcasse) */
+.bt-cell.is-sunk {
+  background: rgba(180, 20, 10, 0.6);
+  border-color: #ff2211;
+  box-shadow: 0 0 16px rgba(255, 34, 17, 0.7);
+}
+
+.bt-cell-ico {
+  font-size: 14px;
   line-height: 1;
 }
 
-.marq-pose-sigle {
+/* ================= 4. JOURNAL TACTIQUE ================= */
+.bt-log-status {
+  background: rgba(3, 16, 28, 0.85);
+  border: 1px solid rgba(142, 231, 255, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
   font-size: 13px;
-  font-weight: 1000;
-  letter-spacing: .06em;
-  color: #ffffff;
-  text-shadow: 0 0 8px #5be09b;
+  font-weight: 700;
+  text-align: center;
+  color: #cde6f2;
+  line-height: 1.4;
+  min-height: 20px;
 }
 
-.marq-pose-sub {
-  font-size: 7.5px;
-  font-weight: 800;
-  color: #a8ffcc;
-  margin-top: 1px;
+.bt-log-status.is-hit {
+  border-color: #ff4b3e;
+  color: #ffb4ad;
+  background: rgba(60, 12, 12, 0.85);
 }
 
-/* Case écartée : Feedback Chaud / Froid dynamique */
-.marq-case.is-faux {
-  cursor: not-allowed;
-  transform: none;
+.bt-log-status.is-miss {
+  border-color: #8ee7ff;
+  color: #a4dcff;
 }
 
-.marq-case.is-hot {
-  background: rgba(255, 110, 40, 0.28);
-  border-color: #ff6e28;
-  box-shadow: inset 0 0 8px rgba(255, 110, 40, 0.35);
+.bt-log-status.is-danger {
+  border-color: #ff2211;
+  color: #ffd2d2;
+  background: rgba(80, 10, 10, 0.9);
 }
 
-.marq-case.is-warm {
-  background: rgba(245, 176, 39, 0.22);
-  border-color: #f5b027;
-  box-shadow: inset 0 0 6px rgba(245, 176, 39, 0.25);
+.bt-log-status.is-win {
+  border-color: #5be09b;
+  color: #b9f5d5;
+  background: rgba(10, 60, 30, 0.85);
 }
 
-.marq-case.is-cold {
-  background: rgba(50, 120, 180, 0.18);
-  border-color: rgba(142, 231, 255, 0.25);
+/* ================= 5. SECOUSSES HOLLYWOODIENNES ================= */
+.bt-shake-soft {
+  animation: shakeSoft 0.35s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shakeSoft {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
+  40%, 60% { transform: translate3d(2px, 0, 0); }
 }
 
-.marq-dist-badge {
-  font-size: 10px;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.bt-shake-hard {
+  animation: shakeHard 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shakeHard {
+  10%, 90% { transform: translate3d(-3px, -2px, 0); }
+  20%, 80% { transform: translate3d(4px, 2px, 0); }
+  30%, 50%, 70% { transform: translate3d(-5px, -3px, 0); }
+  40%, 60% { transform: translate3d(5px, 3px, 0); }
 }
 
-.marq-dist-badge.is-hot { color: #ffb888; text-shadow: 0 0 6px #ff6e28; }
-.marq-dist-badge.is-warm { color: #ffe2a0; }
-.marq-dist-badge.is-cold { color: #a4dcff; }
-
-/* Responsive mobile */
-@media (max-width: 460px) {
-  .marq-axis-cols { grid-template-columns: 20px repeat(9, 1fr); font-size: 10.5px; }
-  .marq-axis-rows { width: 20px; font-size: 10.5px; }
-  .marq-case-coord { font-size: 7.5px; }
-  .marq-pose-sigle { font-size: 11px; }
-  .marq-pose-sub { display: none; }
-  .marq-active-sigle { width: 44px; height: 44px; font-size: 20px; }
-  .marq-active-nom { font-size: 14px; }
-  .marq-rack { grid-template-columns: repeat(2, 1fr); }
-  .marq-btn { min-height: 44px; }
+/* Responsive */
+@media (max-width: 600px) {
+  .bt-fleet-box {
+    grid-template-columns: 1fr;
+  }
+  .bt-radar-grid {
+    grid-template-columns: 22px repeat(8, 1fr);
+    grid-template-rows: 22px repeat(8, 1fr);
+    gap: 3px;
+  }
+  .bt-cell {
+    border-radius: 6px;
+  }
+  .bt-cell-ico {
+    font-size: 11px;
+  }
 }

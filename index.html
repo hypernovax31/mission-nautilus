@@ -3241,7 +3241,7 @@
 <section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">
     <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;position:relative;display:flex;align-items:center;gap:12px;padding-right:52px">
       <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>
-      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="position:absolute;top:10px;right:14px;background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">
+      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="position:absolute;top:50%;transform:translateY(-50%);right:14px;background:rgba(255,75,62,.22);color:#ffb4ad;border:1px solid rgba(255,75,62,.48);border-radius:50%;width:32px;height:32px;min-height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
       </button>
     </h2>
@@ -3419,7 +3419,7 @@
     start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Les sous-marins des équipages s'immergent depuis la surface. Votre équipage attend le feu vert pour plonger vers le Palier 1."},
     livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Plongée dans la pénombre des grandes profondeurs : les récits anciens guident les sous-marins sur la trace du submersible disparu."},
     son:{label:"Palier 3",next:"zone51",time:180,errors:1,description:"Chasse acoustique dans les abysses : identifiez et capturez au collimateur optique les 5 artefacts du secteur."},
-    zone51:{label:"Palier 4 — Le Relevé Sonar",next:"occasion",time:300,errors:2,description:"Cartographie de la fosse : le relevé du sonar est sens dessus dessous, recalez chaque écho pour localiser le gouffre où gît le Nautilus."},
+    zone51:{label:"Palier 4 — Traque Sonar : Les Monstres des Abysses",next:"occasion",time:300,errors:3,description:"Traque acoustique dans la fosse : le Nautilus est encerclé par 4 léviathans abyssaux. Localisez et neutralisez le Kraken, le Calmar, l'Anguille et la Manta."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Approche du plancher sous-marin : estimez le prix exact de 10 articles pour déverrouiller les propulseurs d'exploration."},
     papeterie:{label:"Palier 6 — Le Grand Quiz des Abysses",next:"drone",time:100,errors:3,description:"Épreuve de culture et de sciences sous-marines : 10 questions pointues sur Nemo, le Nautilus et les fonds océaniques."},
     drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Manœuvres d'amarrage : inspectez la carcasse du géant échoué et déverrouillez le sas de secours."},
@@ -6282,7 +6282,7 @@ function qrDataUri(text, opts){
       start: 'épreuve morse — compte de test',
       livres: 'mots croisés',
       son: 'chasse aux artefacts',
-      zone51: 'relevé du sonar',
+      zone51: 'traque sonar (monstres des abysses)',
       occasion: 'le juste prix',
       papeterie: 'le grand quiz des abysses',
       drone: 'vue aérienne',
@@ -6306,8 +6306,7 @@ function qrDataUri(text, opts){
       const actions = isStart
         ? lien(href, '🕹️ Jouer l’épreuve')
         : (lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve'));
-      const testBtn = `<button class=\"secondary admin-test-step-btn\" data-step=\"${id}\" data-palier=\"${step.label}\" type=\"button\" style=\"margin:0;white-space:nowrap;background:rgba(91,224,155,.2);color:#8ff0b8;border:1px solid rgba(91,224,155,.45);border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;cursor:pointer\" title=\"Tester l’annonce de ce palier\">📢 Annonce</button>`;
-      lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, notesParPalier[id] || '', actions + ' ' + testBtn, true));
+      lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, notesParPalier[id] || '', actions, true));
     });
 
     lignes.push(sectionHtml('PALIER 1 — aperçus d’écrans (factice, aucune écriture)'));
@@ -6319,28 +6318,7 @@ function qrDataUri(text, opts){
       lignes.push(ligne(titre, 'aperçu', lien(`palier1.html?apercu=${mode}&k=${k}`, 'Aperçu'), true));
     });
 
-    /* Bloc annonce verte « palier franchi » placé sous « Blocage personnel d’un matelot - aperçu » */
-    lignes.push(sectionHtml('🏆 ANNONCE SPÉCIALE & SON (AU-DESSUS DE TOUTES LES PAGES)'));
-    lignes.push(`<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;margin-top:5px;border-radius:8px;background:rgba(91,224,155,.22);border:1.5px solid rgba(91,224,155,.6);box-shadow:0 0 16px rgba(91,224,155,.28);color:#eafff3;\">
-      <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">
-        🏆 <b>Annonce verte « palier franchi »</b>
-        <span id=\"adminActivePalierBadge\" class=\"small\" style=\"color:#032010;background:#5be09b;font-weight:900;padding:2px 7px;border-radius:6px;margin:0 4px\">${activeLabel}</span>
-        <span class=\"small\" style=\"color:#8ee7ff\">message + Victoire.mp3</span>
-      </span>
-      <span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\">
-        <select id=\"adminSelectPalierTest\" style=\"background:#071c2b;color:#eaf8ff;border:1px solid rgba(142,231,255,.4);border-radius:7px;padding:5px 7px;font-size:12px;font-weight:700\">
-          <option value=\"auto\">⚡ Auto (${activeLabel})</option>
-          ${optionsPaliersHtml}
-        </select>
-        <button class=\"secondary admin-test-annonce-btn\" id=\"adminTestAnnonceBtn\" type=\"button\" style=\"margin:0;white-space:nowrap;background:#5be09b;color:#032010;font-weight:900;border:none;padding:6px 14px;border-radius:7px;cursor:pointer\">Tester</button>
-      </span>
-    </div>`);
-
     box.innerHTML = lignes.join('');
-    box.querySelector('#adminTestAnnonceBtn')?.addEventListener('click', () => testerAnnonceVerte());
-    box.querySelectorAll('.admin-test-step-btn').forEach(btnEl => {
-      btnEl.addEventListener('click', () => testerAnnonceVerte(btnEl.dataset.step, btnEl.dataset.palier));
-    });
 
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
     if(btn) btn.textContent = box.style.display === 'none' ? '🧪 Tester toutes les pages' : '🔽 Masquer les tests de pages';
@@ -11295,9 +11273,10 @@ window.PWAInstall = {
 <!-- Modules d'administration : magasins, réponses et codes QR. -->
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=2" defer></script>
+<script src="palier4-bataille.js?v=1" defer></script>
 <script src="quiz-palier6.js?v=1" defer></script>
-<script src="admin-artefact.js?v=31" defer></script>
-<script src="admin-button.js?v=32" type="module"></script>
+<script src="admin-artefact.js?v=32" defer></script>
+<script src="admin-button.js?v=33" type="module"></script>
 </body>
 </html>
 

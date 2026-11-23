@@ -5,17 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#020812" />
-  <title>Mission Nautilus — Palier 4 : Le Relevé Sonar</title>
-  <meta name="description" content="Accès scellé du Palier 4 de la Mission Nautilus : le relevé sonar et la cartographie des abysses." />
-  <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil). -->
+  <title>Mission Nautilus — Palier 4 (Traque Sonar : Le Duel des Abysses)</title>
+  <meta name="description" content="Accès scellé et épreuve du Palier 4 de la Mission Nautilus : Traque Sonar — Le Duel des Abysses." />
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=50">
-  <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
-       communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier4.css?v=2">
+  <link rel="stylesheet" href="css/palier4.css?v=3">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <script>
@@ -36,8 +33,6 @@
     html.sas-skip-flash #gateHero { display: none !important; }
     html.sas-skip-flash #briefCard { display: block !important; }
   </style>
-  <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
-       connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 </head>
 <body>
@@ -45,7 +40,7 @@
 <div class="topbar">
   <div class="topbar-left">
     <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
-    <div class="topbar-title" id="topPalierTitle">Palier 4 — Le Relevé Sonar</div>
+    <div class="topbar-title" id="topPalierTitle">Palier 4 — Traque Sonar : Les Monstres des Abysses</div>
   </div>
   <div class="topbar-info">
     <span>Équipage : <b id="topTeam">—</b></span>
@@ -53,11 +48,9 @@
 </div>
 
 <main>
-  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER. Vue unique et immersive,
-       commune à tous les paliers ≥ 2 : tant que le QR Code n'est pas
-       scanné, c'est la seule chose à l'écran. -->
+  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER 4. -->
   <section class="card gate-hero" id="gateHero">
-    <h2 id="sasHeroTitle">PALIER 4 — SAS SCELLÉ : LE RELEVÉ DU SONAR</h2>
+    <h2 id="sasHeroTitle">PALIER 4 — SAS SCELLÉ : TRAQUE DES LÉVIATHANS</h2>
     <div class="body">
       <div class="sas-scene">
         <div class="sas-head">
@@ -96,7 +89,7 @@
               <span class="won-radar-core">🧭</span>
             </div>
             <h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>
-            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">……</span> »</p>
+            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">Rayon Gaming, Pop Culture & Jouets</span> »</p>
             <div class="won-nextzone-steps">
               <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
               <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
@@ -108,7 +101,7 @@
     </div>
   </section>
 
-  <!-- ÉQUIPAGE ACTIF EN PLONGÉE : même bloc que le Palier 1 / 2. -->
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE -->
   <section class="card" id="teamCard" hidden>
     <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
     <div class="body">
@@ -127,13 +120,12 @@
           <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
           <span class="journal-titre-rule" aria-hidden="true"></span>
         </h3>
-        <ul id="morse-log-list"></ul>
+        <ol class="morse-log-list" id="logList"></ol>
       </div>
     </div>
   </section>
 
-  <!-- BRIEFING DU CAPITAINE — vue OBLIGATOIRE entre la ZONE SCELLÉE et
-       l'épreuve (même architecture que tous les paliers). -->
+  <!-- BRIEFING DU CAPITAINE -->
   <section class="card" id="briefCard" hidden>
     <h2>BRIEFING DU CAPITAINE</h2>
     <div class="body">
@@ -141,93 +133,62 @@
     </div>
   </section>
 
-  <!-- ÉPREUVE : LE RELEVÉ DU SONAR. -->
+  <!-- ÉPREUVE : TRAQUE SONAR — LES MONSTRES DES ABYSSES -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 4 — LE RELEVÉ DU SONAR</h2>
+    <h2 id="sasUnlockedTitle">PALIER 4 — TRAQUE SONAR : LES MONSTRES DES ABYSSES</h2>
     <div class="body">
-      <div id="epreuveStatut" class="status-banner info">⏳ <b>Initialisation du radar sonar…</b></div>
+      <div id="epreuveStatut" class="status-banner info">🧭 <b>Traque Sonar :</b> localisez et neutralisez les 4 créatures abyssales au radar tactique. 3 tirs dans l’eau = remontée en surface et passage de relais !</div>
       <div id="epreuveHost"></div>
-      <a class="marq-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
     </div>
   </section>
 </main>
 
-<!-- Journal de bord « Activité en direct », code COMMUN à tous les paliers. -->
 <script src="son-partage.js?v=2"></script>
 <script src="journal-bord.js?v=6"></script>
-<!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
 <script src="palier-sas.js?v=13"></script>
-<!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
 <script src="palier-briefing.js?v=3"></script>
 <script>window.NautilusSas.init(4);</script>
-<!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers. -->
 <script src="matelot-blocages.js?v=3"></script>
-<!-- Réserve d'oxygène (jauge du haut), commune à tous les paliers. -->
 <script src="reserve-o2.js?v=5"></script>
-<!-- Équipage actif en plongée, commun à tous les paliers. -->
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<!-- Moteur de l'épreuve RELEVÉ DU SONAR (Palier 4). -->
-<script src="palier4-marqueurs.js?v=2"></script>
-<!-- Écran de VICTOIRE commun à TOUS les paliers. -->
-<script src="victoire-palier.js?v=13"></script>
+<script src="palier4-bataille.js?v=1"></script>
+<script src="victoire-palier.js?v=14"></script>
 <script src="records-palier.js?v=2"></script>
 
-<!-- ================= RÉGLAGES ADMIN (Palier 4) =================
-     MARQUEURS     : les échos relevés par le sonar. « sigle » = 2 lettres
-                     affichées sur le jeton, « nom » = mot repère pour
-                     l'équipage (facultatif). 6 à 10 marqueurs rendent le
-                     relevé bien coriace. L'ORDRE de cette liste est
-                     mélangé à l'écran : aucun indice de position.
-     MARQUEUR_GRILLE : taille du relevé (9 → grille 9 × 9 = 81 cases).
-                     Valeurs utiles : 7 (49 cases) · 8 (64) · 9 (81)
-                     · 10 (100). Plus grand = plus long à balayer.
-     LIEU_DESCRIPTION : le lieu affiché à l'écran de victoire, une fois
-                     le relevé reconstitué (et l'indication du sas). -->
 <script>
-const MARQUEUR_GRILLE = 9;
-const MARQUEURS = [
-  { sigle: 'NR', nom: 'Nautilus' },
-  { sigle: 'AB', nom: 'Abysses' },
-  { sigle: 'CR', nom: 'Corail' },
-  { sigle: 'KT', nom: 'Kraken' },
-  { sigle: 'PH', nom: 'Phare' },
-  { sigle: 'SN', nom: 'Sonar' },
-  { sigle: 'TR', nom: 'Trésor' },
-  { sigle: 'VL', nom: 'Voilier' }
-];
-const NB_MARQUEURS = MARQUEURS.length;
-const LIEU_DESCRIPTION = "…… (en attente d’indication par l’admin)";
-const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
-const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
+const LIEU_DESCRIPTION = "Rayon Occasion & Espace Replay";
+const QR_LOCATION_HINT = "Rayon Gaming, Pop Culture & Jouets";
+const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
 </script>
 
 <script>
-/* ================= ÉPREUVE DU PALIER 4 — « LE RELEVÉ DU SONAR » =================
-   Le sonar a relevé plusieurs ÉCHOS dans la zone : chaque marqueur porte
-   un SIGLE et une POSITION. À l'écran, les marqueurs sont de simples
-   jetons mélangés (aucune image, aucun indice visuel) : seuls le ping du
-   sonar et les cases écartées permettent de les caler un par un sur le
-   relevé. Un marqueur bien posé se verrouille ; un marqueur mal posé
-   revient et la case est écartée (déduction). « 🔎 Révéler un marqueur »
-   coûte 1 erreur : 3 erreurs = remontée PERSONNELLE (matelot-blocages.js,
-   règle globale). Joueur SANS Code Matelot : repli local anonyme.
-   La victoire inscrit « zone51 » dans completedSteps et lève les
-   blocages personnels actifs. */
+/* ================= ÉPREUVE DU PALIER 4 — « TRAQUE SONAR : LE DUEL DES ABYSSES » =================
+   Bataille navale sous-marine moderne & sensationnelle.
+   • Radar tactique 8×8 (A-H / 1-8).
+   • 4 submersibles furtifs style Nautilus : Commandeur (4c), Croiseur (3c), Éclaireur (2c), Sonde (1c).
+   • Dispositions secrètes uniques par équipage.
+   • Relais d'équipage : l'avancée de la grille (tirs, touches, épaves) est partagée entre tous
+     les membres de l'équipage.
+   • Règle des 3 essais : à 3 tirs dans l'eau, le matelot est éjecté en surface (blocage individuel)
+     et laisse sa grille au prochain équipier.
+   La victoire débloque le Palier 5 (Rayon Occasion). */
 (function () {
   'use strict';
 
   var CLE_BLOCAGE_ANONYME = 'nautilusEpreuve4BloqueJusqua';
-  var BLOCAGE_MS  = 60 * 60 * 1000;          /* repli anonyme : 1 h */
-  var _blocageSession = 0;                   /* mode test : volatil */
+  var BLOCAGE_MS  = 60 * 60 * 1000;
+  var _blocageSession = 0;
 
   var t0Partie = null;
-  var nbErreurs = 0;
-  var statsMoteur = { erreurs: 0, pings: 0, temps: 0 };
+  var partieEnCours = false;
+  var moteurBataille = null;
 
   var $ = function (id) { return document.getElementById(id); };
   function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
   function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
+
   function enModeTest() {
     try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
   }
@@ -244,7 +205,6 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  /* QUI joue sur cet appareil ? (mêmes conventions que les autres paliers). */
   var _ident = null, _identLue = false;
   function monIdentite() {
     if (_identLue) return Promise.resolve(_ident);
@@ -254,8 +214,6 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       .catch(function () { _ident = null; return null; });
   }
 
-  /* Aperçu organisateur : ?apercu=jeu&k=… — même clé que les autres
-     paliers (djb2 salé initialisé à 0). */
   function apercuAdminAutorise() {
     try {
       if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
@@ -274,8 +232,6 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     el.className = 'status-banner ' + (kind || 'info');
   }
 
-  /* ================= TROIS VUES EN SÉQUENCE =================
-     ZONE SCELLÉE → BRIEFING DU CAPITAINE → ÉPREUVE (comme les Palier 2 et 3). */
   function montrerCarte(id, visible) {
     var el = $(id);
     if (!el) return;
@@ -320,31 +276,38 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     if (carte) carte.classList.toggle('epreuve-focus', !visible);
   }
 
-  function afficherBlocage(jusqua, nom) {
+  function afficherBlocage(jusqua, nom, motif) {
+    partieEnCours = false;
     afficherVueEpreuve();
     afficherJournalDeBord(true);
-    statut(nom
-      ? "🔒 <b>3 révélations demandées — remontée forcée !</b> " + esc(nom) + " regagne la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b>. Un coéquipier peut reprendre la barre <b>dès maintenant</b> "
-        + "avec son Code Matelot — <b>chacun ses erreurs</b>."
-      : "🔒 <b>3 révélations demandées — remontée forcée !</b> Tu regagnes la surface ; reprise possible à <b>"
-        + heureLisible(jusqua) + "</b> sur cet appareil. Joue avec ton Code Matelot "
-        + "pour que tes erreurs restent les tiennes.", 'danger');
-    var host = $('epreuveHost');
-    if (host) host.innerHTML = '';
-  }
+    var cause = "🔒 <b>Remontée en surface (relais requis) !</b> ";
+    if (motif === '3_erreurs' || motif === 'erreurs') {
+      cause = "❌ <b>3 torpilles perdues dans l’eau — brèche de pression !</b> ";
+    } else if (motif === 'temps_ecoule') {
+      cause = "⏱️ <b>Réserve d’oxygène épuisée !</b> ";
+    } else if (motif === 'abandon') {
+      cause = "🚨 <b>Abandon de la traque — remontée forcée en surface !</b> ";
+    } else if (motif === 'sortie_jeu') {
+      cause = "🚪 <b>Sortie non autorisée du radar — remontée forcée !</b> ";
+    }
 
-  function onErreur(n, max) {
-    nbErreurs = n;
-    if (n >= max) {
-      declencherBlocage();
-    } else {
-      statut('🔎 <b>Le sonar a calé un marqueur.</b> ' + (max - n) + ' aide(s) restante(s) avant la remontée en surface.', 'warning');
-      acte('demande un marqueur au sonar (' + n + '/' + max + ')', 'warning');
+    statut(nom
+      ? cause + esc(nom) + " regagne la surface ; reprise possible à <b>"
+        + heureLisible(jusqua) + "</b>. L’avancée du radar est sauvegardée : <b>un coéquipier peut continuer la traque dès maintenant</b> avec son Code Matelot !"
+      : cause + "Tu regagnes la surface ; reprise possible à <b>"
+        + heureLisible(jusqua) + "</b>. L’avancée du radar est sauvegardée.", 'danger');
+
+    var host = $('epreuveHost');
+    if (host) {
+      host.innerHTML = '<div style="text-align:center;padding:28px 12px;background:rgba(4,18,32,0.85);border:1.5px solid rgba(255,75,62,0.4);border-radius:14px;margin-top:14px">'
+        + '<div style="font-size:36px;margin-bottom:8px">🔒</div>'
+        + '<p style="font-size:16px;font-weight:900;color:#ff8579;margin:0 0 6px">ÉJECTION MATELOT — RELAIS D’ÉQUIPAGE REQUIS</p>'
+        + '<p class="small" style="color:#cfe6f4;max-width:440px;margin:0 auto 14px">3 torpilles ont manqué leur cible. Pour la sécurité du submersible, le matelot remonte en surface. Un coéquipier doit se connecter pour reprendre la barre du sonar (la grille et les navires touchés sont conservés intacts).</p>'
+        + '<a class="puzzle-home" href="index.html?ecoutille=0" style="display:inline-block;text-decoration:none">🏠 Revenir au sas d\'accueil</a>'
+        + '</div>';
     }
   }
 
-  /* Son de défaite (module partagé), JAMAIS si le sonar est éteint. */
   function jouerSonDefaite() {
     try {
       if (window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound) {
@@ -353,44 +316,41 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     } catch (e) {}
   }
 
-  /* 3 révélations demandées : blocage PERSONNEL (identifié) ou repli local. */
-  function declencherBlocage() {
+  function declencherBlocage(motif) {
+    motif = motif || '3_erreurs';
     if (apercuAdminAutorise()) {
       journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
       return;
     }
     monIdentite().then(function (ident) {
       if (ident && ident.isTest) {
-        statut('🧪 <b>Mode concepteur : 3 révélations demandées.</b> Aucun blocage en test — le relevé reste jouable, rien n’est enregistré.', 'warning');
-        journal('🧪 Mode concepteur : 3 révélations au relevé — blocage ignoré, jeu poursuivi, aucune écriture.', 'info');
+        statut('🧪 <b>Mode concepteur : échec détecté (' + motif + ').</b> Aucun blocage en test — le jeu reste jouable.', 'warning');
+        journal('🧪 Mode concepteur : échec Traque Sonar (' + motif + ') — blocage ignoré.', 'info');
         return;
       }
       jouerSonDefaite();
       if (ident) {
-        window.NautilusBlocages.poserBlocage(ident, 'marqueurs_too_many_reveals')
+        window.NautilusBlocages.poserBlocage(ident, motif)
           .then(function (r) {
-            afficherBlocage(r.lockedUntil, ident.name);
-            acte('3 révélations — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
+            afficherBlocage(r.lockedUntil, ident.name, motif);
+            acte('échec au Duel des Abysses (' + motif + ') — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
           })
           .catch(function () {
             _blocageSession = Date.now() + BLOCAGE_MS;
-            afficherBlocage(_blocageSession, ident.name);
-            journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
+            afficherBlocage(_blocageSession, ident.name, motif);
+            journal('⚠️ Blocage personnel non inscrit (connexion ?).', 'warning');
           });
         return;
       }
       var jusqua = Date.now() + BLOCAGE_MS;
       try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
-      afficherBlocage(jusqua, null);
-      acte('3 révélations — remonte en surface (1 h)', 'danger');
+      afficherBlocage(jusqua, null, motif);
     });
   }
 
-  /* Inscription Firestore : mêmes champs que les paliers précédents. */
-  async function propagerVictoire() {
+  async function propagerVictoire(res) {
     var ident = await monIdentite();
-    var equipage = (ident && !ident.isTest) ? ident.teamCode : null;
-    if (!equipage) { try { equipage = localStorage.getItem('nautilusCurrentTeam'); } catch (e) {} }
+    var equipage = (ident && !ident.isTest && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || null;
     if (!equipage || enModeTest() || apercuAdminAutorise()) {
       journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
       return;
@@ -424,9 +384,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     }
   }
 
-  /* ÉCRAN DE VICTOIRE — commun à tous les paliers. La destination affichée
-     est le LIEU que le relevé vient de révéler. */
-  async function afficherEcranVictoire() {
+  async function afficherEcranVictoire(res) {
     var host = $('epreuveHost');
     if (!host || !window.NautilusVictoire) return;
     var ident = await monIdentite();
@@ -436,13 +394,13 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
     window.NautilusVictoire.afficher(host, {
       palier: 4,
-      mission: 'Le Relevé du Sonar',
+      mission: 'Traque Sonar : Le Duel des Abysses',
       equipe: equipe,
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [
         { valeur: mm + ':' + ss, label: 'Temps utilisé' },
-        { valeur: NB_MARQUEURS + '/' + NB_MARQUEURS, label: 'Échos calés' },
-        { valeur: String(nbErreurs), label: nbErreurs > 1 ? 'Révélations' : 'Révélation' }
+        { valeur: '4/4', label: 'Submersibles coulés' },
+        { valeur: (res && res.tirsTotaux ? res.tirsTotaux : '—') + ' tirs', label: 'Torpilles lancées' }
       ],
       indication: LIEU_DESCRIPTION,
       labelSuivant: 'Palier 5',
@@ -461,13 +419,14 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     });
   }
 
-  function onVictoire(stats) {
-    statsMoteur = stats || statsMoteur;
+  function onVictoire(res) {
+    partieEnCours = false;
+    var duree = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
     afficherJournalDeBord(false);
-    statut('🏆 <b>Palier 4 franchi !</b> Le relevé est reconstitué — la zone est identifiée.', 'success');
-    acte('reconstitue le relevé du sonar', 'success');
-    propagerVictoire();
-    afficherEcranVictoire();
+    statut('🏆 <b>Palier 4 franchi !</b> Vous avez anéanti la flotte ennemie dans le Duel des Abysses.', 'success');
+    acte('anéantit la flotte ennemie au Duel des Abysses (Palier 4)' + (duree ? ' en ' + duree + ' s' : ''), 'success');
+    propagerVictoire(res);
+    afficherEcranVictoire(res);
   }
 
   var lance = false;
@@ -477,50 +436,95 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     demarrer();
   }
 
-  /* Démarrage protégé : blocage personnel du matelot identifié, sinon
-     repli local anonyme. Le moindre doute réseau laisse JOUER. */
   async function demarrer() {
+    var ident = null;
     if (!apercuAdminAutorise()) {
-      var ident = await monIdentite();
+      ident = await monIdentite();
       if (ident && !ident.isTest) {
         var bloc = await window.NautilusBlocages.blocageActif(ident);
         if (bloc) {
-          afficherBlocage(bloc.lockedUntil, ident.name);
+          lance = false;
+          afficherBlocage(bloc.lockedUntil, ident.name, bloc.reason);
           journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
-            + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
+            + ' : un coéquipier peut continuer la traque avec son Code Matelot.', 'warning');
           return;
         }
       } else if (!ident) {
         var jusqua = blocageAnonymeJusqua();
-        if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
+        if (jusqua > Date.now()) { lance = false; afficherBlocage(jusqua, null, 'anonyme'); return; }
       }
     }
-    var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
     afficherVueEpreuve();
     t0Partie = Date.now();
-    statut('📡 <b>Relevé Sonar actif.</b> Choisissez un écho ci-dessous, lancez le Ping pour évaluer la distance, puis touchez sa case sur la grille.', 'info');
-    window.NautilusMarqueurs.init($('epreuveHost'), {
-      grille: MARQUEUR_GRILLE,
-      marqueurs: MARQUEURS,
-      graine: 'palier4_' + String(equipageCode).toUpperCase(),
-      maxErreurs: 3,
-      onErreur: onErreur,
-      onVictoire: onVictoire
+    partieEnCours = true;
+    statut('🧭 <b>Traque des Abysses en cours :</b> touchez et neutralisez les 4 léviathans. 3 tirs dans l’eau = remontée en surface du matelot.', 'info');
+
+    var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
+    var matelotNom = (ident && !ident.isTest) ? ident.name : 'Matelot';
+
+    moteurBataille = window.NautilusBataille.init($('epreuveHost'), {
+      equipe: equipageCode,
+      matelot: matelotNom,
+      onVictoire: function (res) {
+        partieEnCours = false;
+        onVictoire(res);
+      },
+      onEchec: function (motif) {
+        partieEnCours = false;
+        declencherBlocage(motif || '3_erreurs');
+      }
     });
   }
 
-  /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
-     Explication claire et nuancée du thème avec avertissement de remise à zéro. */
+  function intercepterSortie(e) {
+    if (partieEnCours) {
+      var conf = confirm("⚠️ Quitter le duel en cours entraîne la remontée en surface (blocage matelot). Confirmez-vous l’abandon ?");
+      if (conf) {
+        declencherBlocage('sortie_jeu');
+      } else {
+        if (e) e.preventDefault();
+        return false;
+      }
+    }
+  }
+
+  var btnAccueilTop = $('backBtn');
+  if (btnAccueilTop) {
+    btnAccueilTop.addEventListener('click', function (e) {
+      if (partieEnCours) {
+        if (!intercepterSortie(e)) return;
+      }
+      location.href = 'index.html?ecoutille=0';
+    });
+  }
+
+  var btnAccueilBas = $('btnSortieJeu');
+  if (btnAccueilBas) {
+    btnAccueilBas.addEventListener('click', function (e) {
+      if (partieEnCours) {
+        if (!intercepterSortie(e)) return;
+      }
+    });
+  }
+
+  window.addEventListener('beforeunload', function () {
+    if (partieEnCours && !apercuAdminAutorise()) {
+      declencherBlocage('sortie_jeu');
+    }
+  });
+
+  /* ============ BRIEFING DU CAPITAINE ============ */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "Bienvenue aux commandes, matelot. Le <b>sonar des abysses</b> a détecté 8 échos métalliques au fond de la fosse. Reconstituez le relevé en positionnant chaque écho sur la grille pour tracer la route de notre sous-marin vers les profondeurs.",
+    intro: "« Matelots, aux postes de combat ! » Des turbulences titanesques agitent les grandes profondeurs : 4 créatures abyssales colossales encerclent le Nautilus dans la fosse. Activez le sonar acoustique, localisez leurs échos et terrassez ces léviathans avant qu’ils ne broient notre coque !",
     consignes: [
-      { ico: '📡', html: "<b>" + NB_MARQUEURS + " échos sonar</b> à repositionner sur la grille de détection." },
-      { ico: '🎯', html: "Sélectionnez un écho puis <b>touchez sa coordonnée</b> sur la grille (A–I / 1–9)." },
-      { ico: '🛰️', html: "<b>Ping Sonar gratuit & illimité</b> : évalue la distance en cases pour trianguler la cible." },
-      { ico: '🔎', warn: true, html: "L'aide du Capitaine peut révéler une case (3 révélations maximum avant remontée)." },
-      { ico: '⚠️', warn: true, html: "<b>Quitter ce palier remet les compteurs à zéro</b> : toute progression en cours sera réinitialisée." }
+      { ico: '🧭', html: "<b>Radar acoustique 8×8</b> : 64 secteurs océaniques (A1 à H8) balayés par le sonar du Nautilus." },
+      { ico: '🐙', html: "<b>4 léviathans abyssaux</b> à terrasser : Kraken Légendaire (4 cases), Calmar Géant (3 cases), Anguille Abyssale (2 cases) et Manta des Profondeurs (1 case)." },
+      { ico: '🔥', html: "<b>Torpilles d’assaut</b> : chaque coup au but blesse mortellement la créature et valide un impact sur le radar." },
+      { ico: '🚨', html: "<b>3 tirs manqués maximum par plongée</b> : à la 3ème torpille dans l’eau, la créature contre-attaque : le matelot remonte en surface !" },
+      { ico: '🤝', html: "<b>Travail d’équipe & Relais synchronisé</b> : la grille de tir reste intacte ! Un coéquipier prend le relais pour poursuivre la traque là où vous l’avez laissée." },
+      { ico: '🏆', html: "<b>Victoire totale</b> : neutralisez les 4 monstres pour libérer le passage et déverrouiller le sas du Palier 5." }
     ],
-    cta: '⚓ PRENDRE LES COMMANDES',
+    cta: '⚓ ENGAGER LA TRAQUE DES LÉVIATHANS',
     onDepart: function () {
       glisserEnHaut();
       lancer();
@@ -534,7 +538,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     catch (e) { try { window.scrollTo(0, 0); } catch (_) {} }
   }
 
-  /* Démarrage : choix de la VUE (identique aux Paliers 2 et 3). */
+  /* Démarrage : choix de la VUE */
   if (apercuAdminAutorise()) {
     var banniereModeTest = function () {
       if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
@@ -558,33 +562,28 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     afficherVueBriefing(true);
   });
 
-  /* --- Indication de la zone de recherche : dépliable SUR PLACE --- */
-  var _btnIndication = $('sasIndicationBtn');
-  var _panelIndication = $('sasIndicationPanel');
-  if (_btnIndication && _panelIndication) {
-    var _txtIndication = $('sasIndicationTexte');
-    if (_txtIndication) _txtIndication.textContent = ZONE_RECHERCHE_HINT;
-    _btnIndication.addEventListener('click', function () {
-      var estOuvert = !_panelIndication.hidden;
-      _panelIndication.hidden = estOuvert;
-      _btnIndication.textContent = estOuvert
-        ? '📍 Voir l’indication de la zone de recherche'
-        : '📍 Masquer l’indication';
-      _btnIndication.setAttribute('aria-expanded', estOuvert ? 'false' : 'true');
+  var _btn = $('sasIndicationBtn'), _panel = $('sasIndicationPanel');
+  var _txt = $('sasIndicationTexte');
+  if (_txt) _txt.textContent = ZONE_RECHERCHE_HINT;
+  if (_btn && _panel) {
+    _btn.addEventListener('click', function () {
+      var ouvert = !_panel.hidden;
+      _panel.hidden = ouvert;
+      _btn.textContent = ouvert ? '📍 Voir l’indication de la zone de recherche' : '📍 Masquer l’indication';
+      _btn.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
     });
   }
 })();
 </script>
-<!-- Bouton d'ambiance sonore, commun à toutes les pages du jeu. -->
+
 <script src="sonar-button.js?v=4" defer></script>
 <script src="palier-annonces.js?v=5" defer></script>
-<!-- Modules d'administration : magasins, réponses et codes QR. -->
 <script src="artefact-moteur.js?v=8"></script>
 <script src="artefact-service.js?v=8"></script>
 <script src="magasin-fnac.js?v=1"></script>
 <script src="fnac-lecteur.js?v=1"></script>
-<script src="photo-defi.js?v=2" defer></script>
-<script src="admin-artefact.js?v=30" defer></script>
-<script src="admin-button.js?v=31" type="module"></script>
+<script src="photo-defi.js?v=5" defer></script>
+<script src="admin-artefact.js?v=32" defer></script>
+<script src="admin-button.js?v=33" type="module"></script>
 </body>
 </html>

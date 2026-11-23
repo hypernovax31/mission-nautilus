@@ -530,6 +530,13 @@
   }
 
   function renderP4Chips(equipeCode) {
+    if (window.NautilusBataille && window.NautilusBataille.getFlottePourEquipe) {
+      var flotte = window.NautilusBataille.getFlottePourEquipe(equipeCode);
+      return flotte.map(function(nav){
+        return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'" title="'+esc(nav.nom)+' ('+nav.taille+' cases)">'
+          + '<b>'+nav.ico+' '+esc(nav.nom)+'</b> : <b style="color:#8ee7ff">'+esc(nav.coords.join(' · '))+'</b></span>';
+      }).join('');
+    }
     var p4 = getP4PourEquipe(equipeCode);
     return p4.map(function(m){
       return '<span class="adm-af-chip" style="'+CHIP_STYLE_DEFAULT+'" title="'+esc(m.nom)+'"><b>'+esc(m.s)+'</b> : <b style="color:#8ee7ff">'+esc(m.c)+'</b></span>';
@@ -557,7 +564,7 @@
 
   function htmlToutesReponses(){
     return ''
-    + '<p class="small" style="margin-bottom:10px">Bonnes réponses attendues par palier pour chaque équipage (P1 mot de passe, P2 mots croisés, P3 chasse aux artefacts, P4 relevé du sonar avec coordonnées, P5 les 10 articles sélectionnés avec leurs prix respectifs Fnac, P6 les 10 questions du Grand Quiz des Abysses avec leurs réponses exactes).</p>'
+    + '<p class="small" style="margin-bottom:10px">Bonnes réponses attendues par palier pour chaque équipage (P1 mot de passe, P2 mots croisés, P3 chasse aux artefacts, P4 traque sonar avec coordonnées des 4 créatures abyssales, P5 les 10 articles sélectionnés avec leurs prix respectifs Fnac, P6 les 10 questions du Grand Quiz des Abysses avec leurs réponses exactes).</p>'
     + '<div id="afTeamCards" class="adm-af-cards teamlist" style="display:flex;flex-direction:column;gap:12px;padding:4px 0 8px">'
     +   EQUIPES.map(function(eq){
           var p2 = REF_P2.map(function(w){ return '<span class="adm-af-chip" id="afP2-'+eq+'-'+w+'" style="'+CHIP_STYLE_DEFAULT+'">'+esc(w)+'</span>'; }).join('');

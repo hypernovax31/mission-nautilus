@@ -1089,8 +1089,8 @@
 
     /* Bouton ✕ en haut à droite */
     #adminPanel > h2, #adminPanel h2{position:relative !important;padding-right:52px !important}
-    #adminCloseBtn{position:absolute !important;top:10px !important;right:14px !important;width:28px;height:28px;min-height:28px;font-size:16px;border-radius:50%;background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;z-index:10;transition:.18s}
-    #adminCloseBtn:hover{background:rgba(255,75,62,.42);color:#fff;transform:rotate(90deg)}
+    #adminCloseBtn{position:absolute !important;top:50% !important;transform:translateY(-50%) !important;right:14px !important;width:32px;height:32px;min-height:32px;font-size:16px;border-radius:50%;background:rgba(255,75,62,.22) !important;color:#ffb4ad !important;border:1px solid rgba(255,75,62,.48) !important;padding:0;display:inline-flex !important;align-items:center !important;justify-content:center !important;cursor:pointer;margin:0;z-index:10;transition:background .18s, color .18s, transform .18s !important}
+    #adminCloseBtn:hover{background:rgba(255,75,62,.45) !important;color:#fff !important;transform:translateY(-50%) rotate(90deg) !important}
     #adminCloseBtn:focus-visible{outline:2px solid rgba(255,180,173,.7);outline-offset:2px}
 
     /* Responsive : < 640px → 2 colonnes pour les rows */
