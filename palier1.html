@@ -13,7 +13,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier1.css?v=52">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
@@ -27,6 +27,8 @@
   <!-- Records de résolution des paliers (écran de victoire) : écriture
        et lecture Firestore communes à tous les paliers. -->
   <script src="records-palier.js?v=2" defer></script>
+  <!-- Briefing commun à tous les paliers -->
+  <script src="palier-briefing.js?v=4" defer></script>
 
 </head>
 <body>
@@ -125,11 +127,11 @@
   </section>
 
   <!-- Zone de jeu -->
-  <section class="card" id="gameCard" style="display:none;">
-    <h2 class="card-h2-split">
-      <span>ÉPREUVE DU PALIER</span>
+  <section class="card gate-unlocked" id="gameCard" style="display:none;">
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 1</span>
       <span class="card-h2-timer" id="gameCardTimer">
-        <span class="lbl">Temps imparti</span>
+        <span class="lbl">Temps restant</span>
         <span class="val" id="gameCardTimerVal">03:30</span>
       </span>
     </h2>
@@ -2321,7 +2323,14 @@ window.Nautilus = {
               ${listensLeft > 0 ? '▶️ Écouter le signal' : '🔇 Plus d\'écoute'}
             </button>
             <div class="morse-counter">Écoutes restantes : <b id="morseCounter">${listensLeft}</b> / 3</div>
-            <div class="morse-counter">Erreurs : <b style="color:${errors >= maxErrors - 1 ? '#ff7b72' : '#8ee7ff'};">${errors}</b> / ${maxErrors}</div>
+            <div class="nautilus-voyants-rack" title="Erreurs : ${errors} / ${maxErrors} max">
+              <span class="nautilus-voyants-lbl">ERREURS</span>
+              <div class="nautilus-voyants">
+                <span class="nautilus-voyant ${errors >= 1 ? 'active' : ''}"></span>
+                <span class="nautilus-voyant ${errors >= 2 ? 'active' : ''}"></span>
+                <span class="nautilus-voyant ${errors >= 3 ? 'active' : ''}"></span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2340,22 +2349,23 @@ window.Nautilus = {
           <div id="morseFeedback"></div>
         </div>
 
-        <div class="morse-hint-target">
-            <div class="morse-hint-target-info">
-              🆘 <b>Besoin d'aide ?</b> Tu peux demander un indice,
-              mais cela te coûte <b>1 h de blocage personnel</b> et tu
-              remontes en surface. Un coéquipier prendra ta place.
+        <div class="nautilus-hints-rack">
+          <div class="nautilus-hints-head">
+            <div class="nautilus-hints-title">🧭 INDICES DE L'ÉQUIPAGE</div>
+            <div class="nautilus-hints-note">
+              Demander un indice coûte <b>1 h de blocage personnel</b> (l'indice reste acquis à l'équipage).
             </div>
-            <button class="morse-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '✅ Tous les indices révélés' : '🆘 Demander un indice'}</button>
+            <button class="nautilus-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '✅ Tous les indices révélés' : '🆘 Demander un indice'}</button>
           </div>
-          <div class="morse-hints-grid">
+          <div class="nautilus-hints-row">
             ${hintCards.map((h, i) => `
-              <div class="morse-hint-card ${s.hintsRevealed[i] ? 'morse-hint-revealed' : ''}">
+              <div class="nautilus-hint-card ${s.hintsRevealed[i] ? 'is-revealed' : ''}">
                 <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed[i] ? '✓' : '🔒'}</div>
                 <div>${s.hintsRevealed[i] ? h.body : '— non révélé —'}</div>
               </div>
             `).join('')}
           </div>
+        </div>
       </div>
     `;
   }
@@ -2903,8 +2913,15 @@ window.Nautilus = {
             <div class="morse-glass"></div>
           </div>
           <div class="morse-controls">
-            <div class="morse-counter">Écoutes restantes : <b>${s.listensLeft ?? 0}</b> / 3</div>
-            <div class="morse-counter">Erreurs : <b style="color:${(s.errors||0) >= (s.maxErrors||3) - 1 ? '#ff7b72' : '#8ee7ff'};">${s.errors || 0}</b> / ${s.maxErrors || 3}</div>
+            <div class="morse-counter">Écoutes : <b>${s.listensLeft ?? 0}</b> / 3</div>
+            <div class="nautilus-voyants-rack" title="Erreurs : ${s.errors || 0} / ${s.maxErrors || 3} max">
+              <span class="nautilus-voyants-lbl">ERREURS</span>
+              <div class="nautilus-voyants">
+                <span class="nautilus-voyant ${(s.errors||0) >= 1 ? 'active' : ''}"></span>
+                <span class="nautilus-voyant ${(s.errors||0) >= 2 ? 'active' : ''}"></span>
+                <span class="nautilus-voyant ${(s.errors||0) >= 3 ? 'active' : ''}"></span>
+              </div>
+            </div>
             <div class="morse-counter">Tentatives : ${s.attempts || 0}</div>
           </div>
         </div>
@@ -2914,30 +2931,26 @@ window.Nautilus = {
           </div>
         </div>
         
-          <div class="morse-hint-target">
-            <div class="morse-hint-target-info">
-              🧭 <b>Indices de l’équipage.</b> Les indices débloqués
-              s’affichent ici. Le matelot aux commandes peut en demander
-              un nouveau — cela lui coûte 1 h de blocage personnel.
+        <div class="nautilus-hints-rack">
+          <div class="nautilus-hints-head">
+            <div class="nautilus-hints-title">🧭 INDICES DE L’ÉQUIPAGE</div>
+            <div class="nautilus-hints-note">
+              Les indices débloqués s’affichent ici (acquis à tout l’équipage).
             </div>
           </div>
-          <div class="morse-hints-grid">
+          <div class="nautilus-hints-row">
             ${[
               { label: '🧭 Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' : '— non révélé —' },
-              /* BUG BLOQUANT CORRIGE : il manquait le "s." devant
-                 wordLength. La variable n'existait pas, donc TOUT l'ecran
-                 du spectateur plantait ("wordLength is not defined") des
-                 qu'un indice etait revele : le coequipier se retrouvait
-                 devant une zone de jeu vide, sans aucun message. */
               { label: '🧭 Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${s.wordLength || '?'} caractères</b>.` : '— non révélé —' },
               { label: '🧭 Indice nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '— non révélé —' }
             ].map((h, i) => `
-              <div class="morse-hint-card ${s.hintsRevealed?.[i] ? 'morse-hint-revealed' : ''}">
+              <div class="nautilus-hint-card ${s.hintsRevealed?.[i] ? 'is-revealed' : ''}">
                 <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed?.[i] ? '✓' : ''}</div>
                 <div>${h.body}</div>
               </div>
             `).join('')}
           </div>
+        </div>
       </div>
     `;
     /* Bind timer + bouton indice */

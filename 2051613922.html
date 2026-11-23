@@ -11,7 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier1.css?v=52">
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
@@ -143,12 +143,14 @@
 
   <!-- ÉPREUVE DU PALIER 5 -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 5</h2>
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 5</span>
+    </h2>
     <div class="body">
       <div id="epreuveStatut" class="status-banner info">🎯 <b>Palier 5 en cours :</b> estimez le prix exact de 10 articles Fnac (10s par réponse). Objectif : au moins 8 réussites sur 10.</div>
-      <div id="justePrixHost"></div>
-      <div style="text-align:center;margin-top:18px">
-        <a class="gate-home puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      <div id="justePrixHost" class="game-stage"></div>
+      <div class="game-footer-actions">
+        <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
       </div>
     </div>
   </section>
@@ -160,7 +162,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
 <script src="palier-sas.js?v=13"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
-<script src="palier-briefing.js?v=3"></script>
+<script src="palier-briefing.js?v=4"></script>
 <script>window.NautilusSas.init(5);</script>
 <!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers. -->
 <script src="matelot-blocages.js?v=3"></script>
@@ -527,11 +529,11 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   window.NautilusBriefing.afficher($('briefHost'), {
     intro: "« Bienvenue dans la soute aux reliques du Nautilus ». Les dix articles proposés, issus des rayons de la Fnac, doivent être correctement estimés au juste prix avant la fin du temps imparti.",
     consignes: [
-      { ico: '🎯', html: "<b>10 articles Fnac Labège</b> à évaluer successivement." },
-      { ico: '⏱️', html: "<b>10 secondes par réponse</b> si le temps est égrené alors l’article suivant apparaît" },
-      { ico: '🚨', html: "<b>3 erreurs maximum par article</b> : chaque estimation incorrecte allume un voyant d’alerte." },
-      { ico: '⚖️', html: "<b>Règle de l’arrondi à l’euro près :</b> entrez uniquement un <b>nombre entier</b> (pas de centimes). Au dessus de 50 centimes, on arrondit à l’euro supérieur ; en dessous de 50 centimes, on arrondit à l’euro inférieur.<br><i>Exemples officiels : <b>87,98 € = 88 €</b> · <b>112,90 € = 113 €</b> · <b>34,50 € = 35 €</b> · <b>11,49 € = 11 €</b>.</i>" },
-      { ico: '📊', html: "<b>Objectif de réussite ≥ 80%</b> : vous devez obligatoirement trouver au moins 8 articles sur 10." },
+      { ico: '🎯', html: "<b>10 articles Fnac</b> à évaluer successivement." },
+      { ico: '⏱️', html: "<b>10 secondes par réponse</b> : si le temps est écoulé, l’article suivant apparaît." },
+      { ico: '🚨', warn: true, html: "<b>3 erreurs maximum par article</b> : chaque estimation incorrecte allume un voyant d’alerte." },
+      { ico: '⚖️', html: "<b>Règle de l’arrondi à l’euro près :</b> entrez uniquement un <b>nombre entier</b>.<br><i>Exemples : 87,98 € = 88 € · 112,90 € = 113 € · 34,50 € = 35 € · 11,49 € = 11 €</i>" },
+      { ico: '📊', html: "<b>Objectif de réussite ≥ 80%</b> : vous devez trouver au moins 8 articles sur 10." },
       { ico: '⚠️', warn: true, html: "<b>Moins de 8 articles trouvés = DÉFAITE !</b> Remontée immédiate en surface (blocage matelot)." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',

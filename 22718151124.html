@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier1.css?v=52">
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
@@ -116,14 +116,20 @@
 
   <!-- ÉPREUVE DU PALIER 7 -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 7</h2>
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 7</span>
+    </h2>
     <div class="body">
-      <div id="epreuveStatut" class="status-banner info">🚁 <b>Palier 7 :</b> Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol. Épreuve en cours d'ajustement par le Capitaine.</div>
-      <div style="text-align:center;padding:24px 12px">
-        <p style="font-size:16px;color:#8ee7ff;font-weight:700">Le sas d'accès du Palier 7 est fonctionnel et vérifié.</p>
-        <p class="small" style="color:#cfe6f4">Les coordonnées du sas (Code QR <code>22718151124</code>) ont été validées avec succès.</p>
+      <div id="epreuveStatut" class="status-banner info">🚁 <b>Palier 7 :</b> Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol.</div>
+      <div id="droneHost" class="game-stage">
+        <div style="text-align:center;padding:24px 12px">
+          <p style="font-size:16px;color:#8ee7ff;font-weight:700">Le sas d'accès du Palier 7 est fonctionnel et vérifié.</p>
+          <p class="small" style="color:#cfe6f4">Les coordonnées du sas (Code QR <code>22718151124</code>) ont été validées avec succès.</p>
+        </div>
       </div>
-      <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <div class="game-footer-actions">
+        <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      </div>
     </div>
   </section>
 </main>
@@ -131,7 +137,7 @@
 <script src="son-partage.js?v=2"></script>
 <script src="journal-bord.js?v=6"></script>
 <script src="palier-sas.js?v=13"></script>
-<script src="palier-briefing.js?v=3"></script>
+<script src="palier-briefing.js?v=4"></script>
 <script>window.NautilusSas.init(7);</script>
 <script src="matelot-blocages.js?v=3"></script>
 <script src="reserve-o2.js?v=5"></script>
@@ -184,10 +190,10 @@ const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
     montrerCarte('briefCard', true);
     montrerCarte('gateUnlocked', false);
     window.NautilusBriefing.afficher($('briefHost'), {
-      intro: 'L’immensité se révèle lorsque le regard quitte le pont pour embrasser les courants supérieurs. Prenez de la hauteur pour déceler les tracés invisibles depuis le plancher marin.',
+      intro: "« L’immensité se révèle lorsque le regard quitte le pont ». Prenez de la hauteur pour déceler les tracés invisibles depuis le plancher marin.",
       consignes: [
-        { ico: '📷', html: 'Repérez les alignements et les perspectives dominantes.' },
-        { ico: '⏱️', html: 'L’oxygène se raréfie à mesure que le submersible gagne en altitude.' }
+        { ico: '📷', html: "<b>Repérage optique</b> : identifiez les alignements et les perspectives dominantes." },
+        { ico: '⏱️', html: "<b>Réserve d’oxygène</b> : l’air se raréfie à mesure que le submersible manœuvre." }
       ],
       cta: '⚓ PRENDRE LES COMMANDES',
       onDepart: function () {

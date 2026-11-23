@@ -13,7 +13,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier1.css?v=52">
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
@@ -176,11 +176,23 @@
   </section>
 
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 2</h2>
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 2</span>
+      <div class="nautilus-voyants-rack" id="mcVoyantsRack" title="3 erreurs maximum">
+        <span class="nautilus-voyants-lbl">ERREURS</span>
+        <div class="nautilus-voyants">
+          <span class="nautilus-voyant" id="mcVoyant1"></span>
+          <span class="nautilus-voyant" id="mcVoyant2"></span>
+          <span class="nautilus-voyant" id="mcVoyant3"></span>
+        </div>
+      </div>
+    </h2>
     <div class="body">
-      <div id="mcStatut" class="mc-statut">⏳ <b>Préparation de la grille…</b></div>
-      <div id="mcHost"></div>
-      <a class="gate-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <div id="epreuveStatut" class="status-banner info">⏳ <b>Préparation de la grille…</b></div>
+      <div id="mcHost" class="game-stage"></div>
+      <div class="game-footer-actions">
+        <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      </div>
     </div>
   </section>
 </main>
@@ -198,7 +210,7 @@
      la vue d'explication immersive du thème (SANS dévoiler le
      contenu) entre la ZONE SCELLÉE et le mini-jeu — mise en page du
      Palier 1. Toute la logique vit dans palier-briefing.js. -->
-<script src="palier-briefing.js?v=3"></script>
+<script src="palier-briefing.js?v=4"></script>
 <script>window.NautilusSas.init(2);</script>
 <!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers :
      3 erreurs = remise en surface de CE matelot, consignée dans le
@@ -332,11 +344,18 @@
     } catch (e) { return false; }
   }
 
+  function majVoyants(n) {
+    for (var i = 1; i <= 3; i++) {
+      var v = $('mcVoyant' + i);
+      if (v) v.classList.toggle('active', i <= n);
+    }
+  }
+
   function statut(html, kind) {
-    var el = $('mcStatut');
+    var el = $('epreuveStatut') || $('mcStatut');
     if (!el) return;
     el.innerHTML = html;
-    el.className = 'mc-statut' + (kind ? ' is-' + kind : '');
+    el.className = 'status-banner' + (kind ? ' ' + (kind === 'danger' ? 'danger is-danger' : (kind === 'warning' ? 'warning' : (kind === 'success' ? 'success is-success' : kind))) : ' info');
   }
 
   /* ================= TROIS VUES EN SÉQUENCE =================
@@ -430,13 +449,14 @@
 
   function onErreur(n, max) {
     nbErreurs = n;
+    majVoyants(n);
     if (n >= max) {
       declencherBlocage();
     } else {
     /* Code d'erreur repris du PALIER 1 (« ❌ Mauvaise réponse.
        X chance(s) restante(s). ») : même formule courte, sans jamais
        révéler quelles lettres sont fausses. */
-    statut('❌ <b>Mauvaise réponse. ' + (max - n) + ' chance(s) restante(s).</b> Toutes les cases passent au rouge puis le mot se vide tout seul — retape-le en entier.', 'danger');
+    statut('❌ <b>Mauvaise réponse (' + n + '/' + max + '). ' + (max - n) + ' chance(s) restante(s).</b> Toutes les cases passent au rouge puis le mot se vide tout seul — retape-le en entier.', 'danger');
     acte('mauvaise réponse (' + n + '/' + max + ')', 'warning');
     }
   }
@@ -632,7 +652,8 @@
     }
     afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas, ni briefing) */
     t0Partie = Date.now(); /* chrono du bilan de l'écran de victoire */
-    statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — lis une définition, écris la réponse dans la grille. <b>3 erreurs</b> et tu remontes en surface.");
+    majVoyants(0);
+    statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — lis une définition, écris la réponse dans la grille. <b>3 erreurs max</b>.");
     window.NautilusMotsCroises.init($('mcHost'), {
       mots: MOTS,
       maxErreurs: 3,
@@ -652,13 +673,11 @@
      arme réellement la partie (lancer() : blocage vérifié en réseau,
      vue épreuve, grille). */
   window.NautilusBriefing.afficher($('briefHost'), {
-    /* Briefing synthétique et nuancé avec avertissement de remise à zéro */
-    intro: "Bienvenue à bord, matelot. Le <b>Nautilus</b> consigne votre univers dans une langue d'un autre âge. Déchiffre chaque description rétro-futuriste pour identifier les articles correspondants <b>dans vos rayons</b>.",
+    intro: "« Bienvenue à bord, matelot ». Le <b>Nautilus</b> consigne votre univers dans une langue d'un autre âge. Déchiffrez chaque description rétro-futuriste pour identifier les articles correspondants dans vos rayons.",
     consignes: [
       { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b> — chaque définition cache un article de vos rayons." },
       { ico: '⏱️', html: "<b>Plongée en mer calme</b> : aucun chronomètre pour répondre." },
-      { ico: '❌', warn: true, html: "<b>3 erreurs</b> : remontée en surface — un équipier prend le relais." },
-      { ico: '⚠️', warn: true, html: "<b>Quitter ce palier remet les compteurs à zéro</b> : toute progression non validée sera réinitialisée." }
+      { ico: '🚨', warn: true, html: "<b>3 erreurs maximum</b> : la 3ème erreur allume tous les voyants et provoque la remontée en surface — un équipier prend le relais." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {

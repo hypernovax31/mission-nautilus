@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier1.css?v=52">
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <link rel="stylesheet" href="css/palier6.css?v=2">
   <script src="anti-zoom.js?v=2"></script>
@@ -135,12 +135,14 @@
 
   <!-- ÉPREUVE DU PALIER 6 -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 6</h2>
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 6</span>
+    </h2>
     <div class="body">
       <div id="epreuveStatut" class="status-banner info">🌊 <b>Palier 6 :</b> 10 questions abyssales, 6 secondes par question (après écriture). Seuil de réussite : au moins 80% (8/10).</div>
-      <div id="quizHost"></div>
-      <div style="text-align:center;margin-top:18px">
-        <a class="gate-home puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      <div id="quizHost" class="game-stage"></div>
+      <div class="game-footer-actions">
+        <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
       </div>
     </div>
   </section>
@@ -149,7 +151,7 @@
 <script src="son-partage.js?v=2"></script>
 <script src="journal-bord.js?v=6"></script>
 <script src="palier-sas.js?v=13"></script>
-<script src="palier-briefing.js?v=3"></script>
+<script src="palier-briefing.js?v=4"></script>
 <script>window.NautilusSas.init(6);</script>
 <script src="matelot-blocages.js?v=3"></script>
 <script src="reserve-o2.js?v=5"></script>
@@ -157,7 +159,7 @@
 <script>window.EquipageActif.init();</script>
 <script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
-<script src="quiz-palier6.js?v=2"></script>
+<script src="quiz-palier6.js?v=3"></script>
 
 <script>
 const LIEU_DESCRIPTION = "Rayon Photo & Drone";
@@ -514,11 +516,11 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
   window.NautilusBriefing.afficher($('briefHost'), {
     intro: "« Bienvenue au cœur de la bibliothèque secrète du Capitaine Nemo ». Vous devez prouver votre maîtrise absolue des abysses, de l'histoire du Nautilus et des sciences sous-marines avant d'atteindre le prochain sas.",
     consignes: [
-      { ico: '🌊', html: "<b>10 questions</b> : sélectionnées parmi les archives secrètes du Nautilus." },
-      { ico: '⏱️', html: "<b>6 secondes par question</b> pour choisir la bonne réponse parmi 4 propositions (après écriture de la question)." },
-      { ico: '💡', html: "<b>3 indices uniques</b> utilisables une seule fois chacun : <b>50/50</b> (retire 2 fausses), <b>+10s</b> (ajoute du temps), <b>Passe</b> (à la question suivante)." },
-      { ico: '🚨', html: "<b>3 erreurs maximum</b> autorisées au total : la 3ème erreur allume tous les voyants et provoque l’éjection immédiate du matelot." },
-      { ico: '🎯', html: "<b>Objectif de réussite ≥ 80%</b> : au moins 8 réponses exactes sur 10 obligatoires pour déverrouiller le prochain Palier." },
+      { ico: '🌊', html: "<b>10 questions</b> sélectionnées parmi les archives secrètes du Nautilus." },
+      { ico: '⏱️', html: "<b>6 secondes par question</b> pour choisir la bonne réponse parmi 4 propositions (après écriture)." },
+      { ico: '💡', html: "<b>3 aides de bord uniques</b> : 50/50, +10s et Passe." },
+      { ico: '🚨', warn: true, html: "<b>3 erreurs maximum</b> : la 3ème erreur allume tous les voyants et provoque l’éjection immédiate du matelot." },
+      { ico: '🎯', html: "<b>Objectif de réussite ≥ 80%</b> : au moins 8 réponses exactes sur 10 obligatoires." },
       { ico: '⚠️', warn: true, html: "<b>Moins de 8/10 ou 3 erreurs = DÉFAITE !</b> Remontée immédiate en surface (blocage matelot)." }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',

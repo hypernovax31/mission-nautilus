@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier1.css?v=52">
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <link rel="stylesheet" href="css/palier4.css?v=3">
   <script src="anti-zoom.js?v=2"></script>
@@ -135,12 +135,14 @@
 
   <!-- ÉPREUVE DU PALIER 4 -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER 4</h2>
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 4</span>
+    </h2>
     <div class="body">
       <div id="epreuveStatut" class="status-banner info">🧭 <b>Palier 4 en cours :</b> localisez et neutralisez les 4 créatures au radar tactique. 3 tirs dans l’eau = remontée en surface et passage de relais !</div>
-      <div id="epreuveHost"></div>
-      <div style="text-align:center;margin-top:18px">
-        <a class="gate-home puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      <div id="epreuveHost" class="game-stage"></div>
+      <div class="game-footer-actions">
+        <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
       </div>
     </div>
   </section>
@@ -149,13 +151,13 @@
 <script src="son-partage.js?v=2"></script>
 <script src="journal-bord.js?v=6"></script>
 <script src="palier-sas.js?v=13"></script>
-<script src="palier-briefing.js?v=3"></script>
+<script src="palier-briefing.js?v=4"></script>
 <script>window.NautilusSas.init(4);</script>
 <script src="matelot-blocages.js?v=3"></script>
 <script src="reserve-o2.js?v=5"></script>
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<script src="palier4-bataille.js?v=1"></script>
+<script src="palier4-bataille.js?v=2"></script>
 <script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 
@@ -505,16 +507,15 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
 
   /* ============ BRIEFING DU CAPITAINE ============ */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "« Matelots, aux postes de combat ! » Des turbulences titanesques agitent les grandes profondeurs : 4 créatures abyssales colossales encerclent le Nautilus dans la fosse. Activez le sonar acoustique, localisez leurs échos et terrassez ces léviathans avant qu’ils ne broient notre coque !",
+    intro: "« Matelots, aux postes de combat ! » Des turbulences titanesques agitent les grandes profondeurs : 4 créatures encerclent le Nautilus dans la fosse. Activez le sonar acoustique, localisez leurs échos et terrassez-les au radar tactique avant qu’elles ne broient notre coque !",
     consignes: [
-      { ico: '🧭', html: "<b>Radar acoustique 8×8</b> : 64 secteurs océaniques (A1 à H8) balayés par le sonar du Nautilus." },
-      { ico: '🐙', html: "<b>4 léviathans abyssaux</b> à terrasser : Kraken Légendaire (4 cases), Calmar Géant (3 cases), Anguille Abyssale (2 cases) et Manta des Profondeurs (1 case)." },
-      { ico: '🔥', html: "<b>Torpilles d’assaut</b> : chaque coup au but blesse mortellement la créature et valide un impact sur le radar." },
-      { ico: '🚨', html: "<b>3 tirs manqués maximum par plongée</b> : à la 3ème torpille dans l’eau, la créature contre-attaque : le matelot remonte en surface !" },
-      { ico: '🤝', html: "<b>Travail d’équipe & Relais synchronisé</b> : la grille de tir reste intacte ! Un coéquipier prend le relais pour poursuivre la traque là où vous l’avez laissée." },
-      { ico: '🏆', html: "<b>Victoire totale</b> : neutralisez les 4 monstres pour libérer le passage et déverrouiller le sas du Palier 5." }
+      { ico: '🧭', html: "<b>Radar tactique 8×8</b> : 64 secteurs océaniques (A1 à H8) balayés par le sonar." },
+      { ico: '🎯', html: "<b>4 créatures abyssales</b> à localiser et neutraliser." },
+      { ico: '🔥', html: "<b>Torpilles d’assaut</b> : chaque coup au but valide un impact sur le radar." },
+      { ico: '🚨', warn: true, html: "<b>3 tirs dans l’eau = DÉFAITE !</b> Remontée immédiate en surface — un équipier prend le relais." },
+      { ico: '🤝', html: "<b>Relais d’équipe synchronisé</b> : la grille de tir reste intacte pour vos coéquipiers." }
     ],
-    cta: '⚓ ENGAGER LA TRAQUE DES LÉVIATHANS',
+    cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
       glisserEnHaut();
       lancer();

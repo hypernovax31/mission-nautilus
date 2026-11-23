@@ -1,6 +1,6 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Pages : network-first ; code et styles : cache avec revalidation en fond.
-const CACHE_NAME = 'nautilus-v435';
+const CACHE_NAME = 'nautilus-v436';
 const PRECACHE = [
   './',
   './index.html',
@@ -18,7 +18,7 @@ const PRECACHE = [
   './css/animations-accueil.css?v=2',
   './css/classement.css?v=9',
   './css/hublots.css?v=15',
-  './css/palier1.css?v=51',
+  './css/palier1.css?v=52',
   './css/palier2.css?v=26',
   './css/palier3.css?v=8',
   './css/palier4.css?v=3',
@@ -32,7 +32,7 @@ const PRECACHE = [
   './palier-annonces.js?v=5',
   './journal-bord.js?v=6',
   './palier-sas.js?v=13',
-  './palier-briefing.js?v=3',
+  './palier-briefing.js?v=4',
   './matelot-blocages.js?v=3',
   './reserve-o2.js?v=5',
   './equipage-actif.js?v=10',
@@ -40,9 +40,9 @@ const PRECACHE = [
   './puzzle-palier3.js?v=4',
   './photo-defi.js?v=5',
   './palier4-marqueurs.js?v=2',
-  './palier4-bataille.js?v=1',
+  './palier4-bataille.js?v=2',
   './juste-prix.js?v=2',
-  './quiz-palier6.js?v=2',
+  './quiz-palier6.js?v=3',
   './produits.json',
   './assets/produits/fnac-audio-01.svg',
   './assets/produits/fnac-audio-02.svg',

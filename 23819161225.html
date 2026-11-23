@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=50">
+  <link rel="stylesheet" href="css/palier1.css?v=52">
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
@@ -116,14 +116,20 @@
 
   <!-- ÉPREUVE DU PALIER FINAL -->
   <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 id="sasUnlockedTitle">PALIER FINAL</h2>
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER FINAL</span>
+    </h2>
     <div class="body">
       <div id="epreuveStatut" class="status-banner info">🏆 <b>Palier Final :</b> Dernier sas. L’écoutille de surface est prête à être franchie pour sceller le carnet de bord.</div>
-      <div style="text-align:center;padding:24px 12px">
-        <p style="font-size:16px;color:#8ee7ff;font-weight:700">Le sas du Palier Final est fonctionnel et vérifié.</p>
-        <p class="small" style="color:#cfe6f4">Les coordonnées du sas (Code QR <code>23819161225</code>) ont été validées avec succès.</p>
+      <div id="finalHost" class="game-stage">
+        <div style="text-align:center;padding:24px 12px">
+          <p style="font-size:16px;color:#8ee7ff;font-weight:700">Le sas du Palier Final est fonctionnel et vérifié.</p>
+          <p class="small" style="color:#cfe6f4">Les coordonnées du sas (Code QR <code>23819161225</code>) ont été validées avec succès.</p>
+        </div>
       </div>
-      <a class="puzzle-home" href="classement.html" id="btnSortieJeu" style="margin-top:14px">🏁 Voir le classement final</a>
+      <div class="game-footer-actions">
+        <a class="puzzle-home" href="classement.html" id="btnSortieJeu">🏁 Voir le classement final</a>
+      </div>
     </div>
   </section>
 </main>
@@ -131,7 +137,7 @@
 <script src="son-partage.js?v=2"></script>
 <script src="journal-bord.js?v=6"></script>
 <script src="palier-sas.js?v=13"></script>
-<script src="palier-briefing.js?v=3"></script>
+<script src="palier-briefing.js?v=4"></script>
 <script>window.NautilusSas.init(8);</script>
 <script src="matelot-blocages.js?v=3"></script>
 <script src="reserve-o2.js?v=5"></script>
@@ -184,10 +190,10 @@ const ZONE_RECHERCHE_HINT = "Zone finale de surface";
     montrerCarte('briefCard', true);
     montrerCarte('gateUnlocked', false);
     window.NautilusBriefing.afficher($('briefHost'), {
-      intro: 'La surface n’est plus qu’à quelques brasses. L’océan s’ouvre au-dessus du kiosque, prêt à saluer l’équipage qui saura manœuvrer l’écoutille finale.',
+      intro: "« La surface n’est plus qu’à quelques brasses ». L’océan s’ouvre au-dessus du kiosque, prêt à saluer l’équipage qui saura manœuvrer l’écoutille finale.",
       consignes: [
-        { ico: '⚓', html: 'Franchissez l’ultime sas pour ramener le Nautilus à la surface.' },
-        { ico: '⏱️', html: 'Chaque seconde scelle votre rang définitif au classement des abysses.' }
+        { ico: '⚓', html: "<b>Franchissez l’ultime sas</b> pour ramener le Nautilus à la surface." },
+        { ico: '⏱️', html: "<b>Chronomètre final</b> : chaque seconde scelle votre rang définitif au classement." }
       ],
       cta: '⚓ ÉMERGER À LA SURFACE',
       onDepart: function () {

@@ -88,8 +88,12 @@
            + '</li>';
     }
     var ctaId = cfg.ctaId || 'briefCtaBtn';
+    var banniere = cfg.banniere ? ('<div class="status-banner warning">' + cfg.banniere + '</div>') : '';
+    var signature = cfg.signature ? ('<div class="brief-signature"><span>' + cfg.signature + '</span></div>') : '';
     hote.innerHTML = ''
+      + banniere
       + '<div class="brief">'
+      +   signature
       +   '<p class="brief-intro">' + (cfg.intro || '') + '</p>'
       +   '<ul class="brief-list">' + lis + '</ul>'
       +   '<button class="brief-cta" id="' + ctaId + '" type="button">'

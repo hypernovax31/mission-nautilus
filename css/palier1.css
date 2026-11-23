@@ -740,15 +740,197 @@
       }
     }
 
-    /* === Status banner === */
-    .status-banner{
+    /* === Status banner harmonisé (tous paliers) === */
+    .status-banner, .mc-statut{
       padding:10px 14px;border-radius:12px;margin-bottom:12px;
       font-size:13px;font-weight:800;line-height:1.45;
+      background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);color:#dff6ff;
     }
-    .status-banner.info{background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);color:#dff6ff;}
-    .status-banner.warning{background:rgba(245,176,39,.12);border:1px solid rgba(245,176,39,.45);color:#ffe2a0;}
-    .status-banner.danger{background:rgba(255,75,62,.14);border:1px solid rgba(255,75,62,.5);color:#ffd0cd;}
-    .status-banner.success{background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.45);color:#dfffe8;}
+    .status-banner.info, .mc-statut.info{background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);color:#dff6ff;}
+    .status-banner.warning, .mc-statut.warning{background:rgba(245,176,39,.12);border:1px solid rgba(245,176,39,.45);color:#ffe2a0;}
+    .status-banner.danger, .status-banner.is-danger, .mc-statut.danger, .mc-statut.is-danger{background:rgba(255,75,62,.14);border:1px solid rgba(255,75,62,.5);color:#ffd0cd;}
+    .status-banner.success, .status-banner.is-success, .mc-statut.success, .mc-statut.is-success{background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.45);color:#dfffe8;}
+
+    /* === En-tête et pied d'épreuve harmonisés (tous paliers) === */
+    .card-h2-split {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .game-stage {
+      position: relative;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 10px 0;
+    }
+    .game-footer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+      width: 100%;
+    }
+
+    /* === Rack de voyants d'erreurs harmonisé (tous paliers) === */
+    .nautilus-voyants-rack,
+    .bt-voyants,
+    .qz-voyants {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(3, 16, 28, 0.75);
+      border: 1.5px solid rgba(255, 75, 62, 0.35);
+      border-radius: 999px;
+      padding: 5px 14px;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .nautilus-voyants-lbl,
+    .bt-voyants-lbl,
+    .qz-voyants-lbl {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: #ff8e85;
+      text-transform: uppercase;
+    }
+    .nautilus-voyants {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nautilus-voyant,
+    .bt-voyant,
+    .qz-voyant {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid rgba(142, 231, 255, 0.3);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+      transition: all 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      display: inline-block;
+    }
+    .nautilus-voyant.active,
+    .nautilus-voyant.is-error,
+    .bt-voyant.active,
+    .qz-voyant.active {
+      background: radial-gradient(circle at 35% 35%, #ff8585 0%, #ff1a1a 60%, #990000 100%) !important;
+      border-color: #ff9999 !important;
+      box-shadow: 0 0 14px rgba(255, 40, 40, 0.95), inset 0 0 4px rgba(255, 255, 255, 0.8) !important;
+      transform: scale(1.15);
+      animation: nautilusVoyantPulse 1.2s infinite alternate !important;
+    }
+    @keyframes nautilusVoyantPulse {
+      0% { box-shadow: 0 0 8px rgba(255, 40, 40, 0.85); }
+      100% { box-shadow: 0 0 16px rgba(255, 40, 40, 1); }
+    }
+
+    /* === Rack des indices & aides de bord harmonisé (tous paliers) === */
+    .nautilus-hints-rack,
+    .qz-indices-box,
+    .morse-hints-rack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(3, 16, 28, 0.72);
+      border: 1px solid rgba(142, 231, 255, 0.22);
+      border-radius: 14px;
+      padding: 12px 16px;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+      margin-top: 14px;
+      box-sizing: border-box;
+    }
+    .nautilus-hints-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .nautilus-hints-title,
+    .qz-indices-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: #8ee7ff;
+      text-transform: uppercase;
+    }
+    .nautilus-hints-note {
+      font-size: 11.5px;
+      color: #9bc4d4;
+      line-height: 1.4;
+    }
+    .nautilus-hints-note b { color: var(--fnac); }
+    .nautilus-hints-row,
+    .qz-indices-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .nautilus-hint-btn,
+    .qz-btn-joker {
+      flex: 1 1 140px;
+      background: linear-gradient(135deg, rgba(8, 36, 58, 0.9), rgba(4, 20, 32, 0.95));
+      border: 1.5px solid rgba(142, 231, 255, 0.35);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #eaf8ff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      transition: all 0.2s ease;
+    }
+    .nautilus-hint-btn:hover:not(:disabled),
+    .qz-btn-joker:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(14, 52, 82, 0.95), rgba(8, 32, 52, 0.98));
+      border-color: #ffd36c;
+      color: #ffd36c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(245, 176, 39, 0.3);
+    }
+    .nautilus-hint-btn:disabled,
+    .nautilus-hint-btn.is-used,
+    .qz-btn-joker:disabled,
+    .qz-btn-joker.is-used {
+      opacity: 0.38;
+      cursor: not-allowed;
+      transform: none;
+      filter: grayscale(0.8);
+      border-color: rgba(142, 231, 255, 0.15);
+      box-shadow: none;
+    }
+    .nautilus-hint-card {
+      padding: 10px 12px;
+      background: rgba(0, 0, 0, 0.32);
+      border: 1.5px solid rgba(142, 231, 255, 0.22);
+      border-radius: 12px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #9bc4d4;
+      min-height: 64px;
+      transition: all 0.25s ease;
+    }
+    .nautilus-hint-card.is-revealed,
+    .nautilus-hint-card.morse-hint-revealed {
+      background: rgba(91, 255, 156, 0.10);
+      border-color: rgba(91, 255, 156, 0.55);
+      color: #dfffe8;
+      box-shadow: 0 0 12px rgba(91, 255, 156, 0.18);
+    }
 
     /* === Step access (code de palier) === */
 
