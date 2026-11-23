@@ -816,11 +816,12 @@
       var bonneIdx = questionPrete.bonneRepIndex;
       var estBon = !estTimeout && (idxChoisi === bonneIdx);
 
+      // En cas d'erreur ou timeout, AUCUNE révélation de la bonne réponse
       buttons.forEach(function (btn, i) {
         btn.disabled = true;
-        if (i === bonneIdx) {
+        if (estBon && i === bonneIdx) {
           btn.classList.add('is-correct');
-        } else if (i === idxChoisi && !estBon) {
+        } else if (!estBon && i === idxChoisi) {
           btn.classList.add('is-wrong');
         }
       });
