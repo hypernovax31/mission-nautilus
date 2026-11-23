@@ -39,7 +39,7 @@
 
 <div class="topbar">
   <div class="topbar-left">
-    <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
+    <button class="topbar-back" id="backBtn" type="button">🏠 Retour à l'accueil</button>
     <div class="topbar-title" id="topPalierTitle">Palier 4 — Traque Sonar : Les Monstres des Abysses</div>
   </div>
   <div class="topbar-info">
@@ -139,7 +139,9 @@
     <div class="body">
       <div id="epreuveStatut" class="status-banner info">🧭 <b>Traque Sonar :</b> localisez et neutralisez les 4 créatures abyssales au radar tactique. 3 tirs dans l’eau = remontée en surface et passage de relais !</div>
       <div id="epreuveHost"></div>
-      <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}" style="margin-top:14px">🏠 Retour à l'accueil</a>
+      <div style="text-align:center;margin-top:18px">
+        <a class="gate-home puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      </div>
     </div>
   </section>
 </main>
@@ -299,12 +301,28 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
 
     var host = $('epreuveHost');
     if (host) {
-      host.innerHTML = '<div style="text-align:center;padding:28px 12px;background:rgba(4,18,32,0.85);border:1.5px solid rgba(255,75,62,0.4);border-radius:14px;margin-top:14px">'
-        + '<div style="font-size:36px;margin-bottom:8px">🔒</div>'
-        + '<p style="font-size:16px;font-weight:900;color:#ff8579;margin:0 0 6px">ÉJECTION MATELOT — RELAIS D’ÉQUIPAGE REQUIS</p>'
-        + '<p class="small" style="color:#cfe6f4;max-width:440px;margin:0 auto 14px">3 torpilles ont manqué leur cible. Pour la sécurité du submersible, le matelot remonte en surface. Un coéquipier doit se connecter pour reprendre la barre du sonar (la grille et les navires touchés sont conservés intacts).</p>'
-        + '<a class="puzzle-home" href="index.html?ecoutille=0" style="display:inline-block;text-decoration:none">🏠 Revenir au sas d\'accueil</a>'
-        + '</div>';
+      host.innerHTML = '<section class="lock-screen lock-screen--lost" aria-live="polite" style="padding:16px 8px">'
+        + '<div class="lock-heading">'
+        + '  <span class="lock-heading-icon" aria-hidden="true">↟</span>'
+        + '  <div>'
+        + '    <p class="lock-kicker">RETOUR EN SURFACE</p>'
+        + '    <h2>Remontée forcée !</h2>'
+        + '  </div>'
+        + '</div>'
+        + '<p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la traque.</p>'
+        + '<div class="lock-attempt"><span aria-hidden="true">❌</span> 3 torpilles perdues dans l’eau — brèche de coque !</div>'
+        + '<div class="lock-lignes">'
+        + '  <div class="lock-ligne lock-ligne--pause">'
+        + '    <span class="lock-ligne-ico">⏱</span>'
+        + '    <span><b>Reprise autorisée à ' + heureLisible(jusqua) + '</b></span>'
+        + '  </div>'
+        + '  <div class="lock-ligne lock-ligne--relais">'
+        + '    <span class="lock-ligne-ico">🤝</span>'
+        + '    <span>Grille préservée : un coéquipier peut reprendre la barre <b>dès maintenant</b></span>'
+        + '  </div>'
+        + '</div>'
+        + '<div style="margin-top:24px;text-align:center"><a class="lock-home-link gate-home puzzle-home" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem(\'nautilusEcoutille\',\'1\');}catch(_){}">🏠 Retour à l’accueil</a></div>'
+        + '</section>';
     }
   }
 
@@ -318,17 +336,22 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
 
   function declencherBlocage(motif) {
     motif = motif || '3_erreurs';
+    jouerSonDefaite();
+
     if (apercuAdminAutorise()) {
-      journal('ℹ️ Aperçu organisateur : aucun blocage n’est enregistré.', 'info');
+      var jusquaApercu = Date.now() + 3600000;
+      afficherBlocage(jusquaApercu, 'Matelot Concepteur', motif);
+      journal('ℹ️ Aperçu organisateur : écran de défaite affiché (aucun blocage réel enregistré).', 'info');
       return;
     }
+
     monIdentite().then(function (ident) {
       if (ident && ident.isTest) {
-        statut('🧪 <b>Mode concepteur : échec détecté (' + motif + ').</b> Aucun blocage en test — le jeu reste jouable.', 'warning');
-        journal('🧪 Mode concepteur : échec Traque Sonar (' + motif + ') — blocage ignoré.', 'info');
+        var jusquaTest = Date.now() + 3600000;
+        afficherBlocage(jusquaTest, ident.name, motif);
+        journal('🧪 Mode concepteur : écran de défaite affiché pour ' + ident.name + ' (aucun blocage en test).', 'info');
         return;
       }
-      jouerSonDefaite();
       if (ident) {
         window.NautilusBlocages.poserBlocage(ident, motif)
           .then(function (r) {

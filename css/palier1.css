@@ -44,12 +44,30 @@
     }
     .topbar-left{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
     .topbar-back{
-      background:rgba(255,255,255,.08);color:#fff;
-      border:1px solid rgba(245,176,39,.5);border-radius:999px;
-      padding:8px 14px;font-weight:900;font-size:12px;
+      display:inline-flex;align-items:center;gap:6px;
+      background:rgba(255,255,255,.12);color:#fff;
+      border:1.5px solid rgba(245,176,39,.7);border-radius:999px;
+      padding:8px 16px;font-weight:900;font-size:12.5px;
       letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+      box-shadow:0 2px 8px rgba(0,0,0,.35);
+      transition:background .18s, color .18s, transform .14s, border-color .18s;
     }
-    .topbar-back:hover{background:rgba(245,176,39,.85);color:#111;}
+    .topbar-back:hover{background:rgba(245,176,39,.95);color:#03111f;border-color:#ffd36c;transform:translateY(-1px);}
+    .gate-home, .puzzle-home{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      margin-top:14px;
+      background:rgba(255,255,255,.1); color:#fff !important;
+      border:1.5px solid rgba(245,176,39,.65); border-radius:12px;
+      padding:11px 22px; font-weight:900; font-size:13.5px; text-decoration:none !important;
+      letter-spacing:.04em; text-transform:uppercase;
+      box-shadow:0 4px 14px rgba(0,0,0,.45);
+      cursor:pointer;
+      transition:background .18s ease, color .18s ease, transform .15s ease, border-color .18s ease;
+    }
+    .gate-home:hover, .puzzle-home:hover{
+      background:rgba(245,176,39,.95); color:#03111f !important;
+      border-color:#ffd36c; transform:translateY(-1px);
+    }
     .topbar-title{font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;font-size:clamp(20px,3vw,30px);color:#fff;letter-spacing:.04em;text-transform:uppercase;text-shadow:2px 2px 0 #000;}
     .topbar-info{display:flex;gap:14px;align-items:center;font-size:13px;color:#9bc4d4;flex-wrap:wrap;}
     .topbar-info b{color:var(--fnac);}
