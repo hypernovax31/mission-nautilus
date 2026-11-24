@@ -65,11 +65,39 @@
     animation-fill-mode:both!important;
   }
   html.nautilus-motion-enabled .radar-blip .blip-echo{display:block!important}
+  html.nautilus-motion-enabled .o2-bubble{
+    animation-name:o2BubbleDrift!important;
+    animation-play-state:running!important;
+  }
+  html.nautilus-motion-enabled .o2-bubble.b2,
+  html.nautilus-motion-enabled .o2-bubble.b6,
+  html.nautilus-motion-enabled .o2-bubble.b10{
+    animation-name:o2BubbleDriftAlt!important;
+  }
+  html.nautilus-motion-enabled .o2-bubble.b4,
+  html.nautilus-motion-enabled .o2-bubble.b8{
+    animation-name:o2BubbleRise!important;
+  }
+  html.nautilus-motion-enabled .oxygen-liquid::before,
+  html.nautilus-motion-enabled .o2-fill::before{
+    animation-name:bubblesMove!important;
+    animation-play-state:running!important;
+  }
+  html.nautilus-motion-enabled .oxygen-liquid::after,
+  html.nautilus-motion-enabled .o2-fill::after{
+    animation-name:bubblesCross!important;
+    animation-play-state:running!important;
+  }
   html.nautilus-motion-enabled body.page-hidden #ecoutille .m-rayons,
   html.nautilus-motion-enabled body.page-hidden #ecoutille .m-caustique,
   html.nautilus-motion-enabled body.page-hidden #ecoutille .m-neige,
   html.nautilus-motion-enabled body.page-hidden #ecoutille .m-bulles,
-  html.nautilus-motion-enabled body.page-hidden #ecoutille .ec-film{
+  html.nautilus-motion-enabled body.page-hidden #ecoutille .ec-film,
+  html.nautilus-motion-enabled body.page-hidden .o2-bubble,
+  html.nautilus-motion-enabled body.page-hidden .oxygen-liquid::before,
+  html.nautilus-motion-enabled body.page-hidden .oxygen-liquid::after,
+  html.nautilus-motion-enabled body.page-hidden .o2-fill::before,
+  html.nautilus-motion-enabled body.page-hidden .o2-fill::after{
     animation-play-state:paused!important;
   }
 }

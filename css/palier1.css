@@ -1089,53 +1089,102 @@
     .o2-fill::before{
       content:"";position:absolute;top:0;bottom:0;left:-160px;right:0;
       background:
-        radial-gradient(circle at 18% 42%,rgba(255,255,255,.9) 0 1.5px,rgba(142,231,255,.45) 2.8px,transparent 4.5px),
-        radial-gradient(circle at 45% 62%,rgba(255,255,255,.8) 0 2px,rgba(142,231,255,.38) 3.5px,transparent 5px),
-        radial-gradient(circle at 72% 38%,rgba(255,255,255,.85) 0 1.8px,rgba(142,231,255,.4) 3.2px,transparent 4.8px),
-        radial-gradient(circle at 90% 55%,rgba(255,255,255,.75) 0 1.2px,rgba(142,231,255,.3) 2.4px,transparent 3.8px);
+        radial-gradient(circle at 18% 42%,rgba(255,255,255,.95) 0 2.2px,rgba(142,231,255,.6) 3.8px,transparent 5.5px),
+        radial-gradient(circle at 45% 62%,rgba(255,255,255,.9) 0 2.8px,rgba(142,231,255,.55) 4.2px,transparent 6.2px),
+        radial-gradient(circle at 72% 38%,rgba(255,255,255,.95) 0 2.5px,rgba(142,231,255,.6) 4px,transparent 5.8px),
+        radial-gradient(circle at 90% 55%,rgba(255,255,255,.85) 0 1.8px,rgba(142,231,255,.5) 3.2px,transparent 4.8px);
       background-size:160px 100%;
-      animation:bubblesMove 12s linear infinite;
-      opacity:.65;
+      animation:bubblesMove 11s linear infinite;
+      opacity:.8;
       will-change:transform;
       pointer-events:none;
     }
     .o2-fill::after{
       content:"";position:absolute;top:0;bottom:0;left:-220px;right:0;
       background:
-        radial-gradient(circle at 15% 58%,rgba(255,255,255,.75) 0 1.2px,rgba(142,231,255,.32) 2.5px,transparent 3.8px),
-        radial-gradient(circle at 55% 32%,rgba(255,255,255,.85) 0 2px,rgba(142,231,255,.38) 3.5px,transparent 5px),
-        radial-gradient(circle at 82% 48%,rgba(255,255,255,.7) 0 1.5px,rgba(142,231,255,.28) 3px,transparent 4.2px);
+        radial-gradient(circle at 15% 58%,rgba(255,255,255,.9) 0 2px,rgba(142,231,255,.5) 3.5px,transparent 5px),
+        radial-gradient(circle at 55% 32%,rgba(255,255,255,.95) 0 2.6px,rgba(142,231,255,.55) 4.2px,transparent 6px),
+        radial-gradient(circle at 82% 48%,rgba(255,255,255,.85) 0 2.2px,rgba(142,231,255,.45) 3.6px,transparent 5.2px);
       background-size:220px 100%;
-      animation:bubblesCross 18s linear infinite;
-      opacity:.5;
+      animation:bubblesCross 16s linear infinite;
+      opacity:.65;
       will-change:transform;
       pointer-events:none;
     }
     @keyframes bubblesMove{
       0%{transform:translateX(0) translateY(0)}
-      25%{transform:translateX(40px) translateY(-1.2px)}
-      50%{transform:translateX(80px) translateY(0.5px)}
-      75%{transform:translateX(120px) translateY(-0.8px)}
+      25%{transform:translateX(40px) translateY(-2px)}
+      50%{transform:translateX(80px) translateY(1.5px)}
+      75%{transform:translateX(120px) translateY(-1.5px)}
       100%{transform:translateX(160px) translateY(0)}
     }
     @keyframes bubblesCross{
       0%{transform:translateX(0) translateY(0)}
-      33%{transform:translateX(73px) translateY(1px)}
-      66%{transform:translateX(146px) translateY(-1px)}
+      33%{transform:translateX(73px) translateY(2px)}
+      66%{transform:translateX(146px) translateY(-2px)}
       100%{transform:translateX(220px) translateY(0)}
     }
+
+    /* Bulles dynamiques dans la jauge O2 du bandeau des paliers */
+    .o2-bubbles{
+      position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2;
+    }
+    .o2-bubble{
+      position:absolute;border-radius:50%;
+      background:radial-gradient(circle at 35% 30%,#ffffff 0%,rgba(255,255,255,.95) 20%,rgba(142,231,255,.75) 55%,rgba(0,140,220,.35) 80%,rgba(255,255,255,.2) 100%);
+      box-shadow:0 0 5px rgba(255,255,255,.95),0 0 10px rgba(142,231,255,.8),inset 0 0 3px rgba(255,255,255,.9);
+      border:1px solid rgba(255,255,255,.85);
+      pointer-events:none;will-change:transform,opacity;opacity:.9;
+    }
+    .o2-bubble.b1{left:7%;top:3px;width:5.5px;height:5.5px;animation:o2BubbleDrift 6.5s ease-in-out infinite;animation-delay:0s}
+    .o2-bubble.b2{left:20%;top:8px;width:4px;height:4px;animation:o2BubbleDriftAlt 7.2s ease-in-out infinite;animation-delay:-1.5s}
+    .o2-bubble.b3{left:34%;top:4px;width:6.5px;height:6.5px;animation:o2BubbleDrift 5.8s ease-in-out infinite;animation-delay:-2.8s}
+    .o2-bubble.b4{left:48%;top:9px;width:4.5px;height:4.5px;animation:o2BubbleRise 4.6s ease-in-out infinite;animation-delay:-0.8s}
+    .o2-bubble.b5{left:61%;top:3px;width:6px;height:6px;animation:o2BubbleDrift 6.8s ease-in-out infinite;animation-delay:-3.5s}
+    .o2-bubble.b6{left:73%;top:8px;width:4px;height:4px;animation:o2BubbleDriftAlt 7.5s ease-in-out infinite;animation-delay:-2.1s}
+    .o2-bubble.b7{left:85%;top:4px;width:6.5px;height:6.5px;animation:o2BubbleRise 4.9s ease-in-out infinite;animation-delay:-1.2s}
+    .o2-bubble.b8{left:93%;top:8px;width:4.5px;height:4.5px;animation:o2BubbleDrift 6.2s ease-in-out infinite;animation-delay:-4.0s}
+
+    @keyframes o2BubbleDrift{
+      0%{transform:translateX(0) translateY(0) scale(0.9);opacity:.75}
+      25%{transform:translateX(12px) translateY(-3px) scale(1.05);opacity:.95}
+      50%{transform:translateX(24px) translateY(1.5px) scale(0.95);opacity:.9}
+      75%{transform:translateX(36px) translateY(-2px) scale(1.02);opacity:.95}
+      100%{transform:translateX(48px) translateY(0) scale(0.9);opacity:.75}
+    }
+    @keyframes o2BubbleDriftAlt{
+      0%{transform:translateX(0) translateY(0) scale(0.95);opacity:.8}
+      30%{transform:translateX(-12px) translateY(2.5px) scale(1.02);opacity:.95}
+      70%{transform:translateX(-24px) translateY(-2px) scale(0.9);opacity:.85}
+      100%{transform:translateX(-36px) translateY(0) scale(0.95);opacity:.8}
+    }
+    @keyframes o2BubbleRise{
+      0%{transform:translateY(6px) translateX(0) scale(0.7);opacity:0}
+      15%{transform:translateY(2px) translateX(4px) scale(0.95);opacity:.95}
+      50%{transform:translateY(-4px) translateX(-3px) scale(1.05);opacity:.95}
+      85%{transform:translateY(-10px) translateX(5px) scale(0.95);opacity:.9}
+      100%{transform:translateY(-16px) translateX(2px) scale(0.75);opacity:0}
+    }
+
+    .o2-bar:not(.offscreen) .o2-bubble,
+    .o2-bar:not(.offscreen) .o2-fill::before,
+    .o2-bar:not(.offscreen) .o2-fill::after{
+      animation-play-state:running !important;
+    }
+    body.page-hidden .o2-bubble,
     body.page-hidden .o2-fill::before,
     body.page-hidden .o2-fill::after,
+    .o2-bar.offscreen .o2-bubble,
     .o2-bar.offscreen .o2-fill::before,
     .o2-bar.offscreen .o2-fill::after{
       animation-play-state:paused !important;
     }
-    @media(prefers-reduced-motion:reduce){.o2-fill::before,.o2-fill::after{animation:none !important}}
+    @media(prefers-reduced-motion:reduce){.o2-bubble,.o2-fill::before,.o2-fill::after{animation:none !important}}
     /* Le pourcentage est ECRIT DANS la jauge, centre, avec un lisere noir
        pour rester lisible aussi bien sur le vert que sur le fond sombre. */
     .o2-pct{position:absolute;inset:0;display:flex;align-items:center;
       justify-content:center;font-size:12px;font-weight:1000;color:#fff;
-      letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+      letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.85);z-index:3;pointer-events:none}
     .o2-time{flex:0 0 auto;font-family:Consolas,"Courier New",monospace;
       font-size:12px;font-weight:900;color:#cfe6ef;white-space:nowrap}
     /* Alerte et niveau critique : memes degrades que sur l'accueil. */

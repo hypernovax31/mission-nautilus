@@ -294,6 +294,7 @@
     var s = Math.floor(reste / 1000);
 
     bar.hidden = false;
+    bar.classList.remove('offscreen');
     var fill = document.getElementById('o2Fill');
     fill.style.width = pctPrecis.toFixed(3) + '%';
     applyOxygenGradient(fill, pctPrecis);
@@ -346,7 +347,18 @@
       bar.innerHTML =
         '<div class="o2-label">Réserve O₂</div>' +
         '<div class="o2-tube">' +
-          '<div class="o2-fill" id="o2Fill"></div>' +
+          '<div class="o2-fill" id="o2Fill">' +
+            '<div class="o2-bubbles" aria-hidden="true">' +
+              '<span class="o2-bubble b1"></span>' +
+              '<span class="o2-bubble b2"></span>' +
+              '<span class="o2-bubble b3"></span>' +
+              '<span class="o2-bubble b4"></span>' +
+              '<span class="o2-bubble b5"></span>' +
+              '<span class="o2-bubble b6"></span>' +
+              '<span class="o2-bubble b7"></span>' +
+              '<span class="o2-bubble b8"></span>' +
+            '</div>' +
+          '</div>' +
           '<span class="o2-pct" id="o2Pct">—</span>' +
         '</div>' +
         '<div class="o2-time" id="o2Time">—</div>';
@@ -385,6 +397,7 @@
       if (bar) {
         var io = new IntersectionObserver(function (entries) {
           entries.forEach(function (en) {
+            if (bar.hidden) return;
             bar.classList.toggle('offscreen', !en.isIntersecting);
           });
         }, { rootMargin: '40px 0px' });
