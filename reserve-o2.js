@@ -357,6 +357,8 @@
               '<span class="o2-bubble b6"></span>' +
               '<span class="o2-bubble b7"></span>' +
               '<span class="o2-bubble b8"></span>' +
+              '<span class="o2-bubble b9"></span>' +
+              '<span class="o2-bubble b10"></span>' +
             '</div>' +
           '</div>' +
           '<span class="o2-pct" id="o2Pct">—</span>' +

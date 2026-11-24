@@ -1125,45 +1125,66 @@
       100%{transform:translateX(220px) translateY(0)}
     }
 
-    /* Bulles dynamiques dans la jauge O2 du bandeau des paliers */
+    /* Bulles dynamiques et légères qui circulent dans la jauge O2 du bandeau */
     .o2-bubbles{
       position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2;
     }
     .o2-bubble{
-      position:absolute;border-radius:50%;
-      background:radial-gradient(circle at 35% 30%,#ffffff 0%,rgba(255,255,255,.95) 20%,rgba(142,231,255,.75) 55%,rgba(0,140,220,.35) 80%,rgba(255,255,255,.2) 100%);
-      box-shadow:0 0 5px rgba(255,255,255,.95),0 0 10px rgba(142,231,255,.8),inset 0 0 3px rgba(255,255,255,.9);
-      border:1px solid rgba(255,255,255,.85);
-      pointer-events:none;will-change:transform,opacity;opacity:.9;
+      position:absolute;border-radius:50%;pointer-events:none;box-sizing:border-box;
+      /* Bulle fine, translucide et légère */
+      background:radial-gradient(circle at 32% 28%,
+        rgba(255,255,255,0.75) 0%,
+        rgba(255,255,255,0.28) 22%,
+        rgba(142,231,255,0.10) 48%,
+        rgba(255,255,255,0.02) 75%,
+        rgba(142,231,255,0.20) 100%
+      );
+      border:0.8px solid rgba(255,255,255,0.65);
+      box-shadow:inset 0 0 2px rgba(255,255,255,0.45),0 0 2.5px rgba(142,231,255,0.35);
+      will-change:transform,left,opacity;
     }
-    .o2-bubble.b1{left:7%;top:3px;width:5.5px;height:5.5px;animation:o2BubbleDrift 6.5s ease-in-out infinite;animation-delay:0s}
-    .o2-bubble.b2{left:20%;top:8px;width:4px;height:4px;animation:o2BubbleDriftAlt 7.2s ease-in-out infinite;animation-delay:-1.5s}
-    .o2-bubble.b3{left:34%;top:4px;width:6.5px;height:6.5px;animation:o2BubbleDrift 5.8s ease-in-out infinite;animation-delay:-2.8s}
-    .o2-bubble.b4{left:48%;top:9px;width:4.5px;height:4.5px;animation:o2BubbleRise 4.6s ease-in-out infinite;animation-delay:-0.8s}
-    .o2-bubble.b5{left:61%;top:3px;width:6px;height:6px;animation:o2BubbleDrift 6.8s ease-in-out infinite;animation-delay:-3.5s}
-    .o2-bubble.b6{left:73%;top:8px;width:4px;height:4px;animation:o2BubbleDriftAlt 7.5s ease-in-out infinite;animation-delay:-2.1s}
-    .o2-bubble.b7{left:85%;top:4px;width:6.5px;height:6.5px;animation:o2BubbleRise 4.9s ease-in-out infinite;animation-delay:-1.2s}
-    .o2-bubble.b8{left:93%;top:8px;width:4.5px;height:4.5px;animation:o2BubbleDrift 6.2s ease-in-out infinite;animation-delay:-4.0s}
+    .o2-bubble::after{
+      content:"";position:absolute;top:18%;left:22%;width:28%;height:28%;
+      border-radius:50%;background:rgba(255,255,255,0.85);pointer-events:none;
+    }
+    .o2-bubble.b1{top:22%;width:4.5px;height:4.5px;animation:o2BubblePass 10.0s linear infinite;animation-delay:0s}
+    .o2-bubble.b2{top:50%;width:3.0px;height:3.0px;animation:o2BubblePassAlt 8.5s linear infinite;animation-delay:-1.8s}
+    .o2-bubble.b3{top:28%;width:5.5px;height:5.5px;animation:o2BubblePassFloat 11.5s linear infinite;animation-delay:-3.8s}
+    .o2-bubble.b4{top:58%;width:3.5px;height:3.5px;animation:o2BubblePassAlt 9.2s linear infinite;animation-delay:-5.4s}
+    .o2-bubble.b5{top:34%;width:6.0px;height:6.0px;animation:o2BubblePass 12.2s linear infinite;animation-delay:-7.2s}
+    .o2-bubble.b6{top:18%;width:3.0px;height:3.0px;animation:o2BubblePassFloat 8.8s linear infinite;animation-delay:-2.7s}
+    .o2-bubble.b7{top:48%;width:5.0px;height:5.0px;animation:o2BubblePassAlt 10.5s linear infinite;animation-delay:-4.5s}
+    .o2-bubble.b8{top:38%;width:4.0px;height:4.0px;animation:o2BubblePass 9.8s linear infinite;animation-delay:-8.1s}
+    .o2-bubble.b9{top:25%;width:5.5px;height:5.5px;animation:o2BubblePassFloat 11.8s linear infinite;animation-delay:-6.2s}
+    .o2-bubble.b10{top:54%;width:3.5px;height:3.5px;animation:o2BubblePassAlt 9.0s linear infinite;animation-delay:-1.0s}
 
-    @keyframes o2BubbleDrift{
-      0%{transform:translateX(0) translateY(0) scale(0.9);opacity:.75}
-      25%{transform:translateX(12px) translateY(-3px) scale(1.05);opacity:.95}
-      50%{transform:translateX(24px) translateY(1.5px) scale(0.95);opacity:.9}
-      75%{transform:translateX(36px) translateY(-2px) scale(1.02);opacity:.95}
-      100%{transform:translateX(48px) translateY(0) scale(0.9);opacity:.75}
+    @keyframes o2BubblePass{
+      0%{left:-20px;transform:translateY(0) scale(0.88);opacity:0}
+      3%{opacity:.82}
+      20%{transform:translateY(-2px) scale(1.02);opacity:.88}
+      40%{transform:translateY(1.5px) scale(0.96);opacity:.82}
+      60%{transform:translateY(-1.5px) scale(1.02);opacity:.88}
+      80%{transform:translateY(1px) scale(0.98);opacity:.82}
+      97%{opacity:.82}
+      100%{left:calc(100% + 15px);transform:translateY(0) scale(0.88);opacity:0}
     }
-    @keyframes o2BubbleDriftAlt{
-      0%{transform:translateX(0) translateY(0) scale(0.95);opacity:.8}
-      30%{transform:translateX(-12px) translateY(2.5px) scale(1.02);opacity:.95}
-      70%{transform:translateX(-24px) translateY(-2px) scale(0.9);opacity:.85}
-      100%{transform:translateX(-36px) translateY(0) scale(0.95);opacity:.8}
+    @keyframes o2BubblePassAlt{
+      0%{left:-20px;transform:translateY(0) scale(0.92);opacity:0}
+      3%{opacity:.85}
+      25%{transform:translateY(2px) scale(0.96);opacity:.82}
+      50%{transform:translateY(-2px) scale(1.04);opacity:.88}
+      75%{transform:translateY(1.5px) scale(0.98);opacity:.82}
+      97%{opacity:.85}
+      100%{left:calc(100% + 15px);transform:translateY(0) scale(0.92);opacity:0}
     }
-    @keyframes o2BubbleRise{
-      0%{transform:translateY(6px) translateX(0) scale(0.7);opacity:0}
-      15%{transform:translateY(2px) translateX(4px) scale(0.95);opacity:.95}
-      50%{transform:translateY(-4px) translateX(-3px) scale(1.05);opacity:.95}
-      85%{transform:translateY(-10px) translateX(5px) scale(0.95);opacity:.9}
-      100%{transform:translateY(-16px) translateX(2px) scale(0.75);opacity:0}
+    @keyframes o2BubblePassFloat{
+      0%{left:-20px;transform:translateY(1.5px) scale(0.85);opacity:0}
+      4%{opacity:.82}
+      30%{transform:translateY(-1px) scale(1);opacity:.88}
+      65%{transform:translateY(-2.5px) scale(1.04);opacity:.9}
+      85%{transform:translateY(-1px) scale(0.98);opacity:.85}
+      97%{opacity:.82}
+      100%{left:calc(100% + 15px);transform:translateY(-1px) scale(0.85);opacity:0}
     }
 
     .o2-bar:not(.offscreen) .o2-bubble,
