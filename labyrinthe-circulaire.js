@@ -8,9 +8,12 @@
      de 53 étapes vers le Cœur central (1491 px de trajet direct).
    - Verrouillage de l'orientation portrait et compensation de rotation d'écran.
    - Priorité absolue au Gyroscope mobile : activation directe, demande d'autorisation
-     interactive (iOS) et masquage du joystick sur mobile.
+     interactive (iOS) et calibrage automatique sur l'inclinaison initiale naturelle.
+   - Rotation du labyrinthe de 180° tous les 20 impacts contre les parois.
    - Minuteur de 1 minute maximum (60s) — compte à rebours sans compteur qui monte.
    - Rendu de la bille en 3D sphérique texturée avec ombrage dynamique et traînée.
+   - Au centre : Cœur jaune vectoriel avec pulsations dégradé de rouge vers orange
+     (aucun mot textuel « cœur »).
    ============================================================================= */
 
 (function () {
@@ -188,9 +191,9 @@
 
   /* ================= MOTEUR DU LABYRINTHE ================= */
   function init(host, options) {
-    options = options || {};
-    var onVictoire = options.onVictoire || function () {};
-    var onDefaite = options.onDefaite || function () {};
+    var opts = options || {};
+    var onVictoire = opts.onVictoire || function () {};
+    var onDefaite = opts.onDefaite || function () {};
 
     tenterVerrouillagePortrait();
 
@@ -257,7 +260,7 @@
       + '      <span id="labySensorLabel">Commandes actives</span>'
       + '    </div>'
       + '    <div class="laby-actions">'
-      + '      <button type="button" class="laby-btn" id="btnCalibGyro" title="Calibrer l’inclinaison neutre">🎯 Calibrer</button>'
+      + '      <button type="button" class="laby-btn" id="btnCalibGyro" title="Calibrer le niveau 0 sur l’inclinaison actuelle">🎯 Recalibrer</button>'
       + '      <button type="button" class="laby-btn" id="btnToggleMode" title="Basculer entre Gyroscope et Joystick">🕹️ Joystick</button>'
       + '    </div>'
       + '  </div>'
@@ -273,7 +276,6 @@
       + '  <div class="laby-status" id="labyStatus" hidden></div>'
       + '</div>';
 
-    var container = host.querySelector('#labyContainer');
     var canvas = host.querySelector('#labyCanvas');
     var board = host.querySelector('#labyBoard');
     var timerEl = host.querySelector('#labyTimer');
@@ -306,12 +308,16 @@
     var animFrameId = null;
     var timerInterval = null;
 
-    /* Gyroscope / Accéléromètre calibré selon l'inclinaison initiale */
+    /* Gyroscope / Accéléromètre avec calibrage automatique stable du niveau 0 */
     var rawGamma = 0;
     var rawBeta = 0;
     var calibGamma = 0;
     var calibBeta = 0;
     var calibEffectuee = false;
+    var calibrant = false;
+    var calibSamples = [];
+    var CALIB_SAMPLE_COUNT = 6; // Nombre d'échantillons stables (~100ms) pour fixer le niveau 0
+
     var inputX = 0;
     var inputY = 0;
     var screenInputX = 0;
@@ -369,8 +375,7 @@
 
       canvas.width = Math.round(displayW * dpr);
       canvas.height = Math.round(displayH * dpr);
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       size = displayW;
       center = size / 2;
@@ -387,21 +392,78 @@
     redimensionner();
     window.addEventListener('resize', redimensionner);
 
-    /* ================= GESTION DU GYROSCOPE ET DU JOYSTICK ================= */
+    /* ================= GESTION DU GYROSCOPE ET CALIBRAGE NIVEAU 0 ================= */
+    function lancerCalibrageGyro() {
+      calibrant = true;
+      calibSamples = [];
+      calibEffectuee = false;
+      if (statusEl) {
+        statusEl.textContent = '🧭 Calibrage du niveau 0… Tenez votre appareil naturellement.';
+        statusEl.className = 'laby-status is-active';
+        statusEl.hidden = false;
+      }
+      // Sécurité : si aucun événement gyro n'arrive après 600ms, utiliser la dernière valeur disponible
+      setTimeout(function () {
+        if (calibrant) {
+          if (calibSamples.length > 0) {
+            finaliserCalibrage();
+          } else if (rawBeta !== 0 || rawGamma !== 0) {
+            calibBeta = rawBeta;
+            calibGamma = rawGamma;
+            calibrant = false;
+            calibEffectuee = true;
+            confirmerCalibrage();
+          }
+        }
+      }, 600);
+    }
+
+    function finaliserCalibrage() {
+      var sumBeta = 0;
+      var sumGamma = 0;
+      for (var i = 0; i < calibSamples.length; i++) {
+        sumBeta += calibSamples[i].beta;
+        sumGamma += calibSamples[i].gamma;
+      }
+      calibBeta = sumBeta / calibSamples.length;
+      calibGamma = sumGamma / calibSamples.length;
+      calibrant = false;
+      calibEffectuee = true;
+      confirmerCalibrage();
+    }
+
+    function confirmerCalibrage() {
+      if (statusEl && !estTermine) {
+        statusEl.textContent = '🎯 Niveau 0 calibré (' + Math.round(calibBeta) + '°). Inclinez pour diriger la bille.';
+        statusEl.className = 'laby-status is-active';
+        statusEl.hidden = false;
+        setTimeout(function () {
+          if (!estTermine && statusEl && statusEl.className.indexOf('is-danger') === -1) {
+            statusEl.textContent = 'Inclinez votre appareil pour diriger la bille dans le labyrinthe.';
+            statusEl.className = 'laby-status';
+          }
+        }, 1800);
+      }
+    }
+
     function onDeviceOrientation(ev) {
-      if (ev.gamma != null && ev.beta != null) {
-        if (!aRecuGyro) {
-          aRecuGyro = true;
-          activerModeGyro();
+      if (ev.gamma == null || ev.beta == null) return;
+      // Éliminer les zéros factices initiaux émis par certains navigateurs lors de l'activation
+      if (ev.beta === 0 && ev.gamma === 0 && ev.alpha == null) return;
+
+      if (!aRecuGyro) {
+        aRecuGyro = true;
+        activerModeGyro();
+      }
+
+      rawGamma = ev.gamma;
+      rawBeta = ev.beta;
+
+      if (calibrant) {
+        calibSamples.push({ beta: ev.beta, gamma: ev.gamma });
+        if (calibSamples.length >= CALIB_SAMPLE_COUNT) {
+          finaliserCalibrage();
         }
-        // Calibrage exact : le niveau 0 correspond à l'inclinaison de départ du mobile
-        if (!calibEffectuee && jeuDemarre) {
-          calibGamma = ev.gamma;
-          calibBeta = ev.beta;
-          calibEffectuee = true;
-        }
-        rawGamma = ev.gamma;
-        rawBeta = ev.beta;
       }
     }
 
@@ -411,7 +473,7 @@
       sensorLabelEl.textContent = '🧭 Gyroscope actif (inclinez le mobile)';
       btnToggleMode.textContent = '🕹️ Joystick';
       btnToggleMode.style.display = '';
-      if (jeuDemarre) {
+      if (jeuDemarre && calibEffectuee) {
         statusEl.textContent = 'Inclinez votre appareil pour diriger la bille dans le labyrinthe.';
         statusEl.className = 'laby-status is-active';
       }
@@ -436,6 +498,7 @@
             if (perm === 'granted') {
               window.addEventListener('deviceorientation', onDeviceOrientation, true);
               activerModeGyro();
+              lancerCalibrageGyro();
             } else {
               activerModeJoystick();
             }
@@ -446,9 +509,17 @@
       } else if ('ondeviceorientation' in window) {
         window.addEventListener('deviceorientation', onDeviceOrientation, true);
         activerModeGyro();
+        lancerCalibrageGyro();
       } else {
         activerModeJoystick();
       }
+    }
+
+    // Écoute précoce des capteurs si permission non requise
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+      try {
+        window.addEventListener('deviceorientation', onDeviceOrientation, true);
+      } catch (_) {}
     }
 
     /* Détection intelligente des capteurs & activation manuelle par le joueur */
@@ -476,13 +547,6 @@
       tenterVerrouillagePortrait();
 
       if (mode === 'gyro') {
-        if (rawGamma !== 0 || rawBeta !== 0) {
-          calibGamma = rawGamma;
-          calibBeta = rawBeta;
-          calibEffectuee = true;
-        } else {
-          calibEffectuee = false;
-        }
         demanderAutorisationGyro();
       } else {
         activerModeJoystick();
@@ -510,14 +574,8 @@
 
     /* Boutons de commande */
     btnCalibGyro.addEventListener('click', function () {
-      calibGamma = rawGamma;
-      calibBeta = rawBeta;
       tenterVerrouillagePortrait();
-      statusEl.textContent = '🎯 Horizon calibré sur la position actuelle.';
-      statusEl.className = 'laby-status';
-      setTimeout(function () {
-        statusEl.textContent = 'Inclinez votre appareil pour diriger la bille dans le labyrinthe.';
-      }, 1500);
+      lancerCalibrageGyro();
     });
 
     btnToggleMode.addEventListener('click', function () {
@@ -710,8 +768,11 @@
 
     function declencherRotationLabyrinthe() {
       targetMazeRotation += Math.PI;
+      // Amortir la vitesse de la bille lors du basculement pour éviter les franchissements de paroi
+      ballVx *= 0.35;
+      ballVy *= 0.35;
       if (statusEl) {
-        statusEl.textContent = '🌀 Alerte secousses : le labyrinthe pivote !';
+        statusEl.textContent = '🔄 Alerte secousses : le labyrinthe pivote !';
         statusEl.className = 'laby-status is-warning';
         statusEl.hidden = false;
         setTimeout(function () {
@@ -726,8 +787,14 @@
       } catch (_) {}
     }
 
+    var dernierImpactTemps = 0;
     function enregistrerImpact(v) {
+      var now = performance.now();
+      // Cooldown de 160ms entre deux impacts distincts pour éviter l'emballement sur frottement
+      if (now - dernierImpactTemps < 160) return;
+
       if (v > 12) {
+        dernierImpactTemps = now;
         collisionsCount++;
         collisionsEl.textContent = collisionsCount;
         jouerSonChoc(Math.min(3, v / 45));
@@ -749,20 +816,26 @@
     function updatePhysics(dt) {
       if (estTermine) return;
 
-      // 1. Calcul du vecteur d'entrée
-      if (modeActif === 'gyro') {
+      // Pendant la phase de calibrage initiale (quelques centièmes de seconde), la bille reste immobile
+      if (calibrant || !calibEffectuee) {
+        screenInputX = 0;
+        screenInputY = 0;
+        inputX = 0;
+        inputY = 0;
+      } else if (modeActif === 'gyro') {
+        // Calcul des écarts par rapport au niveau 0 calibré
         var dGamma = rawGamma - calibGamma;
         var dBeta = rawBeta - calibBeta;
 
-        // Zone morte fine (1.2°) pour une tenue de cap stable
-        if (Math.abs(dGamma) < 1.2) dGamma = 0;
-        else dGamma = (dGamma > 0 ? dGamma - 1.2 : dGamma + 1.2);
+        // Zone morte fine (1.0°) pour éviter les micro-tremblements au repos
+        if (Math.abs(dGamma) < 1.0) dGamma = 0;
+        else dGamma = (dGamma > 0 ? dGamma - 1.0 : dGamma + 1.0);
 
-        if (Math.abs(dBeta) < 1.2) dBeta = 0;
-        else dBeta = (dBeta > 0 ? dBeta - 1.2 : dBeta + 1.2);
+        if (Math.abs(dBeta) < 1.0) dBeta = 0;
+        else dBeta = (dBeta > 0 ? dBeta - 1.0 : dBeta + 1.0);
 
-        var rawX = Math.max(-1, Math.min(1, dGamma / 20));
-        var rawY = Math.max(-1, Math.min(1, dBeta / 20));
+        var rawX = Math.max(-1, Math.min(1, dGamma / 18));
+        var rawY = Math.max(-1, Math.min(1, dBeta / 18));
 
         // Compensation stricte de rotation d'écran si l'appareil bascule
         var angleDeg = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
@@ -775,10 +848,12 @@
           screenInputY = rawY;
         }
 
-        // Projection de la gravité dans le repère orienté du labyrinthe
+        // Projection de la gravité dans le repère orienté du labyrinthe (rotation inverse)
         var rotRad = -currentMazeRotation;
-        inputX = screenInputX * Math.cos(rotRad) - screenInputY * Math.sin(rotRad);
-        inputY = screenInputX * Math.sin(rotRad) + screenInputY * Math.cos(rotRad);
+        var cosRot = Math.cos(rotRad);
+        var sinRot = Math.sin(rotRad);
+        inputX = screenInputX * cosRot - screenInputY * sinRot;
+        inputY = screenInputX * sinRot + screenInputY * cosRot;
       } else {
         var jX = joyX;
         var jY = joyY;
@@ -792,11 +867,13 @@
         screenInputY = jY;
 
         var rotRadJoy = -currentMazeRotation;
-        inputX = screenInputX * Math.cos(rotRadJoy) - screenInputY * Math.sin(rotRadJoy);
-        inputY = screenInputX * Math.sin(rotRadJoy) + screenInputY * Math.cos(rotRadJoy);
+        var cosRotJoy = Math.cos(rotRadJoy);
+        var sinRotJoy = Math.sin(rotRadJoy);
+        inputX = screenInputX * cosRotJoy - screenInputY * sinRotJoy;
+        inputY = screenInputX * sinRotJoy + screenInputY * cosRotJoy;
       }
 
-      // 2. Inclinaison 3D du plateau face au joueur
+      // 2. Inclinaison 3D subtile du plateau face au joueur
       var tiltDegX = screenInputY * 7;
       var tiltDegY = -screenInputX * 7;
       board.style.transform = 'rotateX(' + tiltDegX.toFixed(2) + 'deg) rotateY(' + tiltDegY.toFixed(2) + 'deg)';
@@ -874,8 +951,52 @@
       }
     }
 
+    /* ================= DESSIN DU CŒUR JAUNE AU CENTRE ================= */
+    function dessinerCoeurJaune(cx, cy, hSize) {
+      var s = hSize / 30;
+      ctx.save();
+      // Centrage optique du cœur
+      ctx.translate(cx, cy - s * 3.5);
+
+      ctx.beginPath();
+      ctx.moveTo(0, s * 4);
+      // Lobe gauche
+      ctx.bezierCurveTo(-s * 10, -s * 9, -s * 18, s * 3, 0, s * 16);
+      // Lobe droit
+      ctx.bezierCurveTo(s * 18, s * 3, s * 10, -s * 9, 0, s * 4);
+      ctx.closePath();
+
+      // Remplissage jaune éclatant
+      var gradCoeur = ctx.createLinearGradient(0, -s * 9, 0, s * 16);
+      gradCoeur.addColorStop(0, '#ffffff');
+      gradCoeur.addColorStop(0.25, '#fff76a');
+      gradCoeur.addColorStop(0.65, '#ffd700');
+      gradCoeur.addColorStop(1, '#f59e0b');
+
+      ctx.fillStyle = gradCoeur;
+      ctx.shadowColor = 'rgba(255, 230, 0, 0.9)';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+
+      ctx.strokeStyle = '#fffbeb';
+      ctx.lineWidth = Math.max(1.2, s * 1.0);
+      ctx.shadowBlur = 0;
+      ctx.stroke();
+
+      // Reflet spéculaire éclatant
+      ctx.beginPath();
+      ctx.ellipse(-s * 5, -s * 1, s * 3.5, s * 1.8, -Math.PI / 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.fill();
+
+      ctx.restore();
+    }
+
     /* ================= RENDU DU LABYRINTHE ================= */
     function render() {
+      var dpr = window.devicePixelRatio || 1;
+      // Réinitialisation stricte du transform pour garantir l'absence totale de dérive matricielle
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, size, size);
 
       ctx.save();
@@ -884,7 +1005,6 @@
       ctx.translate(-center, -center);
 
       // 1. Fond du labyrinthe circulaire
-      ctx.save();
       var fondGrad = ctx.createRadialGradient(center, center, rInner * 0.4, center, center, rOuter);
       fondGrad.addColorStop(0, '#04172a');
       fondGrad.addColorStop(0.65, '#020b16');
@@ -904,30 +1024,47 @@
         ctx.stroke();
       }
 
-      // 2. Cœur central du Nautilus (Objectif final)
+      // 2. Cœur central du Nautilus : pulsations dégradé rouge vers orange + cœur jaune au centre (aucun mot "cœur")
       var tNow = performance.now() * 0.003;
-      var pulse = 0.85 + 0.15 * Math.sin(tNow * 3.5);
-      var coeurGrad = ctx.createRadialGradient(center, center, 2, center, center, rInner * pulse);
-      coeurGrad.addColorStop(0, '#ffffff');
-      coeurGrad.addColorStop(0.28, '#8ee7ff');
-      coeurGrad.addColorStop(0.65, '#0ea5e9');
-      coeurGrad.addColorStop(1, 'rgba(4, 20, 36, 0.95)');
-      ctx.fillStyle = coeurGrad;
+      var pulseCycle = (Math.sin(tNow * 3.8) + 1) / 2;
+      var auraR = rInner * (0.80 + 0.18 * pulseCycle);
+
+      // Pulsations dégradé de rouge vers orange
+      var auraGrad = ctx.createRadialGradient(center, center, rInner * 0.12, center, center, auraR);
+      auraGrad.addColorStop(0, 'rgba(255, 25, 20, 0.95)');    // Rouge intense au centre
+      auraGrad.addColorStop(0.35, 'rgba(255, 60, 0, 0.90)');   // Rouge vermillon
+      auraGrad.addColorStop(0.70, 'rgba(255, 140, 0, 0.75)');  // Orange flamboyant
+      auraGrad.addColorStop(0.92, 'rgba(255, 185, 0, 0.40)');  // Orange doré
+      auraGrad.addColorStop(1, 'rgba(255, 140, 0, 0.0)');     // Fondu translucide externe
+      ctx.fillStyle = auraGrad;
       ctx.beginPath();
-      ctx.arc(center, center, rInner * 0.85, 0, Math.PI * 2);
+      ctx.arc(center, center, auraR, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = '#ffd36c';
+      // Onde de pulsation secondaire rouge -> orange
+      var waveProgress = ((tNow * 0.8) % 1.0);
+      var waveR = rInner * (0.45 + 0.48 * waveProgress);
+      var waveAlpha = Math.max(0, 1.0 - waveProgress);
+      var waveGrad = ctx.createRadialGradient(center, center, waveR * 0.75, center, center, waveR);
+      waveGrad.addColorStop(0, 'rgba(255, 30, 0, 0)');
+      waveGrad.addColorStop(0.7, 'rgba(255, 75, 0, ' + (0.55 * waveAlpha).toFixed(2) + ')');
+      waveGrad.addColorStop(1, 'rgba(255, 160, 0, 0)');
+      ctx.fillStyle = waveGrad;
+      ctx.beginPath();
+      ctx.arc(center, center, waveR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Anneau du Cœur
+      ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.arc(center, center, rInner * 0.85, 0, Math.PI * 2);
+      ctx.arc(center, center, rInner * 0.86, 0, Math.PI * 2);
       ctx.stroke();
 
-      ctx.fillStyle = '#020b14';
-      ctx.font = 'bold ' + Math.round(rInner * 0.38) + 'px -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⚡ CŒUR', center, center);
+      // Cœur jaune au centre (forme vectorielle dorée éclatante)
+      var heartScale = 1.0 + 0.08 * Math.sin(tNow * 3.8);
+      var hSize = rInner * 0.52 * heartScale;
+      dessinerCoeurJaune(center, center, hSize);
 
       // Brèche lumineuse d'accès au Cœur (GOAL_SECTOR)
       var aGoalStart = GOAL_SECTOR * SECTOR_ANGLE;
@@ -1086,7 +1223,7 @@
       ctx.fill();
       ctx.restore();
 
-      ctx.restore();
+      ctx.restore(); // Restauration du contexte tourné
     }
 
     /* ================= BOUCLE DE JEU (GAME LOOP) ================= */
@@ -1096,8 +1233,9 @@
       lastTime = now;
 
       // Rotation fluide du labyrinthe de 180° tous les 20 impacts
-      if (Math.abs(targetMazeRotation - currentMazeRotation) > 0.001) {
-        currentMazeRotation += (targetMazeRotation - currentMazeRotation) * 0.12;
+      var diffRot = targetMazeRotation - currentMazeRotation;
+      if (Math.abs(diffRot) > 0.001) {
+        currentMazeRotation += diffRot * 0.08;
       } else {
         currentMazeRotation = targetMazeRotation;
       }

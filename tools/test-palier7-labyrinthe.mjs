@@ -174,7 +174,7 @@ const briefingRedirigeVersJeu = sasPalier7Html.includes("location.href = 'palier
 const jeuDedieIndependant = jeuPalier7Html.includes('id="gateUnlocked"') &&
                            jeuPalier7Html.includes('id="epreuveHost"') &&
                            jeuPalier7Html.includes('window.NautilusLabyrinthe.init') &&
-                           jeuPalier7Html.includes('labyrinthe-circulaire.js?v=14') &&
+                           jeuPalier7Html.includes('labyrinthe-circulaire.js?v=15') &&
                            jeuPalier7Html.includes('23819161225.html');
 
 if (sasScelleeMasqueTeamEtLog && briefingRedirigeVersJeu && jeuDedieIndependant) {
@@ -201,10 +201,22 @@ if (sansLigneCompteursZero && regle20ContactsBriefing && regle20ContactsCode && 
 
 // 10. Vérification du Service Worker
 const swContent = fs.readFileSync('sw.js', 'utf8');
-if (swContent.includes('./22718151124.html') && swContent.includes('./labyrinthe-circulaire.js?v=14') && swContent.includes('./css/palier7.css?v=13')) {
-  console.log(`✓ [Cache PWA] Tous les assets v14 et la page 22718151124.html du Palier 7 sont précachés dans sw.js.`);
+if (swContent.includes('./22718151124.html') && swContent.includes('./labyrinthe-circulaire.js?v=15') && swContent.includes('./css/palier7.css?v=13')) {
+  console.log(`✓ [Cache PWA] Tous les assets v15 et la page 22718151124.html du Palier 7 sont précachés dans sw.js.`);
 } else {
-  console.error(`✗ [Cache PWA] Assets v14 ou page manquants dans sw.js.`);
+  console.error(`✗ [Cache PWA] Assets v15 ou page manquants dans sw.js.`);
+  process.exit(1);
+}
+
+// 10b. Vérification du Cœur jaune, absence du mot "CŒUR" sur le canvas, pulsations dégradé rouge vers orange
+const sansMotCoeurCanvas = !code.includes("fillText('⚡ CŒUR'") && !code.includes("fillText('CŒUR'") && !code.includes("fillText(\"CŒUR\"");
+const coeurJaunePresent = code.includes('dessinerCoeurJaune') && code.includes('#ffd700');
+const pulsationRougeOrange = code.includes('rgba(255, 25, 20') || code.includes('rgba(255, 30, 20') || (code.includes('auraGrad') && code.includes('orange'));
+
+if (sansMotCoeurCanvas && coeurJaunePresent && pulsationRougeOrange) {
+  console.log(`✓ [Cœur central] Mot "CŒUR" retiré du canvas, cœur jaune vectoriel et pulsations dégradé rouge vers orange validés.`);
+} else {
+  console.error(`✗ [Cœur central] Erreur de rendu : sansMotCoeurCanvas=${sansMotCoeurCanvas}, coeurJaunePresent=${coeurJaunePresent}, pulsationRougeOrange=${pulsationRougeOrange}`);
   process.exit(1);
 }
 
