@@ -199,6 +199,25 @@
       animation-play-state:running !important;
     }
 
+    /* EXCEPTION : la circulation continue des bulles de la jauge O2.
+       La jauge d'oxygène et le flux horizontal de ses bulles ne doivent pas
+       être bloqués par la classe .offscreen (notamment sur Brave, Safari,
+       ou lors de l'ouverture du sas/écoutille). Les bulles doivent circuler
+       de manière fluide et ininterrompue. Seul l'arrière-plan de l'onglet
+       (body.page-hidden) suspend les bulles pour économiser la batterie. */
+    .o2-bubbles,
+    .o2-bubbles *,
+    .o2-bubble,
+    .offscreen .o2-bubbles,
+    .offscreen .o2-bubbles *,
+    .offscreen .o2-bubble,
+    .offscreen .oxygen-liquid::before,
+    .offscreen .oxygen-liquid::after,
+    .offscreen .o2-fill::before,
+    .offscreen .o2-fill::after{
+      animation-play-state:running !important;
+    }
+
     /* Onglet en arriere-plan : plus aucune animation decorative. */
     body.page-hidden *,
     body.page-hidden *::before,
@@ -3571,7 +3590,7 @@ body > header .hero-actions .hero-cta {
   }
 }
 
-/* Bulles dynamiques et légères qui circulent dans la jauge O2 de l'accueil */
+/* Bulles dynamiques et bien visibles qui circulent dans la jauge O2 de l'accueil */
 .o2-bubbles {
   position: absolute;
   inset: 0;
@@ -3585,152 +3604,155 @@ body > header .hero-actions .hero-cta {
   border-radius: 50%;
   pointer-events: none;
   box-sizing: border-box;
-  /* Bulle légère, translucide et fine : le liquide traverse le corps de la bulle */
+  /* Bulle aquatique lumineuse et bien contrastée : contour net et reflet sur tout dégradé (bleu, cyan, clair, ambre, rouge) */
   background: radial-gradient(circle at 32% 28%,
-    rgba(255, 255, 255, 0.75) 0%,
-    rgba(255, 255, 255, 0.28) 22%,
-    rgba(142, 231, 255, 0.10) 48%,
-    rgba(255, 255, 255, 0.02) 75%,
-    rgba(142, 231, 255, 0.20) 100%
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.65) 24%,
+    rgba(170, 240, 255, 0.28) 50%,
+    rgba(15, 125, 205, 0.18) 72%,
+    rgba(255, 255, 255, 0.60) 100%
   );
-  border: 0.8px solid rgba(255, 255, 255, 0.65);
+  border: 1.5px solid rgba(255, 255, 255, 0.92);
   box-shadow:
-    inset 0 0 2.5px rgba(255, 255, 255, 0.45),
-    0 0 3px rgba(142, 231, 255, 0.35);
+    inset 0 0 3px rgba(255, 255, 255, 0.9),
+    0 0 2px rgba(2, 28, 56, 0.65),
+    0 0 6px rgba(142, 231, 255, 0.8);
   will-change: transform, left, opacity;
 }
 
 .o2-bubble::after {
   content: "";
   position: absolute;
-  top: 18%;
-  left: 22%;
-  width: 28%;
-  height: 28%;
+  top: 15%;
+  left: 20%;
+  width: 32%;
+  height: 32%;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
+  background: #ffffff;
+  box-shadow: 0 0 2px #ffffff;
   pointer-events: none;
 }
 
-.o2-bubble.b1  { top: 22%; width: 6.5px; height: 6.5px; animation: o2BubblePass 12.5s linear infinite; animation-delay: 0s; }
-.o2-bubble.b2  { top: 48%; width: 4.0px; height: 4.0px; animation: o2BubblePassAlt 11.2s linear infinite; animation-delay: -2.3s; }
-.o2-bubble.b3  { top: 28%; width: 7.5px; height: 7.5px; animation: o2BubblePassFloat 15.0s linear infinite; animation-delay: -4.8s; }
-.o2-bubble.b4  { top: 62%; width: 5.0px; height: 5.0px; animation: o2BubblePassAlt 13.0s linear infinite; animation-delay: -7.1s; }
-.o2-bubble.b5  { top: 35%; width: 8.0px; height: 8.0px; animation: o2BubblePass 16.5s linear infinite; animation-delay: -9.6s; }
-.o2-bubble.b6  { top: 18%; width: 4.5px; height: 4.5px; animation: o2BubblePassFloat 11.8s linear infinite; animation-delay: -1.5s; }
-.o2-bubble.b7  { top: 52%; width: 7.0px; height: 7.0px; animation: o2BubblePassAlt 14.2s linear infinite; animation-delay: -6.0s; }
-.o2-bubble.b8  { top: 40%; width: 5.5px; height: 5.5px; animation: o2BubblePass 13.5s linear infinite; animation-delay: -10.8s; }
-.o2-bubble.b9  { top: 25%; width: 6.0px; height: 6.0px; animation: o2BubblePassFloat 12.8s linear infinite; animation-delay: -3.6s; }
-.o2-bubble.b10 { top: 58%; width: 4.5px; height: 4.5px; animation: o2BubblePassAlt 12.0s linear infinite; animation-delay: -8.4s; }
-.o2-bubble.b11 { top: 32%; width: 7.5px; height: 7.5px; animation: o2BubblePass 15.8s linear infinite; animation-delay: -12.2s; }
-.o2-bubble.b12 { top: 45%; width: 5.0px; height: 5.0px; animation: o2BubblePassFloat 13.2s linear infinite; animation-delay: -5.2s; }
+.o2-bubble.b1  { top: 20%; width: 11px;   height: 11px;   animation: o2BubblePass 6.8s linear infinite;      animation-delay: 0s; }
+.o2-bubble.b2  { top: 52%; width: 8px;    height: 8px;    animation: o2BubblePassAlt 6.1s linear infinite;   animation-delay: -1.2s; }
+.o2-bubble.b3  { top: 26%; width: 13px;   height: 13px;   animation: o2BubblePassFloat 7.8s linear infinite; animation-delay: -2.6s; }
+.o2-bubble.b4  { top: 58%; width: 9px;    height: 9px;    animation: o2BubblePassAlt 6.5s linear infinite;   animation-delay: -3.8s; }
+.o2-bubble.b5  { top: 18%; width: 14px;   height: 14px;   animation: o2BubblePass 8.4s linear infinite;      animation-delay: -5.0s; }
+.o2-bubble.b6  { top: 44%; width: 8.5px;  height: 8.5px;  animation: o2BubblePassFloat 6.3s linear infinite; animation-delay: -1.9s; }
+.o2-bubble.b7  { top: 54%; width: 12px;   height: 12px;   animation: o2BubblePassAlt 7.4s linear infinite;   animation-delay: -4.3s; }
+.o2-bubble.b8  { top: 24%; width: 10px;   height: 10px;   animation: o2BubblePass 7.0s linear infinite;      animation-delay: -5.7s; }
+.o2-bubble.b9  { top: 46%; width: 13.5px; height: 13.5px; animation: o2BubblePassFloat 8.0s linear infinite; animation-delay: -3.1s; }
+.o2-bubble.b10 { top: 62%; width: 8px;    height: 8px;    animation: o2BubblePassAlt 6.4s linear infinite;   animation-delay: -0.8s; }
+.o2-bubble.b11 { top: 32%; width: 12.5px; height: 12.5px; animation: o2BubblePass 7.6s linear infinite;      animation-delay: -4.9s; }
+.o2-bubble.b12 { top: 40%; width: 9.5px;  height: 9.5px;  animation: o2BubblePassFloat 6.9s linear infinite; animation-delay: -2.2s; }
 
 @keyframes o2BubblePass {
   0% {
-    left: -24px;
-    transform: translateY(0) scale(0.88);
+    left: -32px;
+    transform: translateY(0) scale(0.92);
     opacity: 0;
   }
   3% {
-    opacity: 0.85;
+    opacity: 0.96;
   }
-  20% {
+  25% {
     transform: translateY(-2.5px) scale(1.02);
-    opacity: 0.9;
+    opacity: 0.96;
   }
-  40% {
+  50% {
     transform: translateY(2px) scale(0.96);
-    opacity: 0.85;
+    opacity: 0.96;
   }
-  60% {
+  75% {
     transform: translateY(-2px) scale(1.02);
-    opacity: 0.9;
-  }
-  80% {
-    transform: translateY(1.5px) scale(0.98);
-    opacity: 0.85;
+    opacity: 0.96;
   }
   97% {
-    opacity: 0.85;
+    opacity: 0.96;
   }
   100% {
-    left: calc(100% + 20px);
-    transform: translateY(0) scale(0.88);
+    left: calc(100% + 25px);
+    transform: translateY(0) scale(0.92);
     opacity: 0;
   }
 }
 
 @keyframes o2BubblePassAlt {
   0% {
-    left: -24px;
-    transform: translateY(0) scale(0.92);
+    left: -32px;
+    transform: translateY(0) scale(0.94);
     opacity: 0;
   }
   3% {
-    opacity: 0.88;
+    opacity: 0.96;
   }
   25% {
     transform: translateY(2.5px) scale(0.96);
-    opacity: 0.85;
+    opacity: 0.96;
   }
   50% {
-    transform: translateY(-2.5px) scale(1.04);
-    opacity: 0.9;
+    transform: translateY(-2.5px) scale(1.03);
+    opacity: 0.96;
   }
   75% {
     transform: translateY(2px) scale(0.98);
-    opacity: 0.85;
+    opacity: 0.96;
   }
   97% {
-    opacity: 0.88;
+    opacity: 0.96;
   }
   100% {
-    left: calc(100% + 20px);
-    transform: translateY(0) scale(0.92);
+    left: calc(100% + 25px);
+    transform: translateY(0) scale(0.94);
     opacity: 0;
   }
 }
 
 @keyframes o2BubblePassFloat {
   0% {
-    left: -24px;
-    transform: translateY(2px) scale(0.85);
+    left: -32px;
+    transform: translateY(1.5px) scale(0.88);
     opacity: 0;
   }
   4% {
-    opacity: 0.85;
+    opacity: 0.96;
   }
   30% {
-    transform: translateY(-1px) scale(1);
-    opacity: 0.9;
+    transform: translateY(-2px) scale(1.02);
+    opacity: 0.96;
   }
   65% {
     transform: translateY(-3px) scale(1.04);
-    opacity: 0.92;
+    opacity: 0.96;
   }
   85% {
-    transform: translateY(-1.5px) scale(0.98);
-    opacity: 0.88;
+    transform: translateY(-1px) scale(0.98);
+    opacity: 0.96;
   }
   97% {
-    opacity: 0.85;
+    opacity: 0.96;
   }
   100% {
-    left: calc(100% + 20px);
-    transform: translateY(-1px) scale(0.85);
+    left: calc(100% + 25px);
+    transform: translateY(-1px) scale(0.88);
     opacity: 0;
   }
 }
 
-#oxygenPanel:not(.offscreen) .o2-bubble,
-#oxygenPanel:not(.offscreen) .oxygen-liquid::before,
-#oxygenPanel:not(.offscreen) .oxygen-liquid::after {
+.o2-bubbles,
+.o2-bubble,
+.oxygen-liquid::before,
+.oxygen-liquid::after,
+.o2-fill::before,
+.o2-fill::after {
   animation-play-state: running !important;
 }
 
 body.page-hidden .o2-bubble,
 body.page-hidden .oxygen-liquid::before,
-body.page-hidden .oxygen-liquid::after {
+body.page-hidden .oxygen-liquid::after,
+body.page-hidden .o2-fill::before,
+body.page-hidden .o2-fill::after {
   animation-play-state: paused !important;
 }
 

@@ -359,6 +359,8 @@
               '<span class="o2-bubble b8"></span>' +
               '<span class="o2-bubble b9"></span>' +
               '<span class="o2-bubble b10"></span>' +
+              '<span class="o2-bubble b11"></span>' +
+              '<span class="o2-bubble b12"></span>' +
             '</div>' +
           '</div>' +
           '<span class="o2-pct" id="o2Pct">—</span>' +
@@ -384,8 +386,8 @@
   }
 
   /* ===== GESTION DE LA VISIBILITÉ DE L'ÉCRAN & ANIMATIONS =====
-     Les bulles de la jauge d'O₂ ne s'animent que quand l'écran est visible.
-     Si le joueur masque l'onglet ou passe hors champ, les animations sont
+     Les bulles de la jauge d'O₂ s'animent en continu quand la page est active.
+     Si le joueur masque l'onglet (arrière-plan), les animations sont
      mises en pause pour économiser la batterie. */
   function gererVisibiliteAnimations() {
     function majVisibiliteDoc() {
@@ -393,19 +395,6 @@
     }
     document.addEventListener('visibilitychange', majVisibiliteDoc);
     majVisibiliteDoc();
-
-    if (typeof IntersectionObserver === 'function') {
-      var bar = document.getElementById('o2Bar');
-      if (bar) {
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (en) {
-            if (bar.hidden) return;
-            bar.classList.toggle('offscreen', !en.isIntersecting);
-          });
-        }, { rootMargin: '40px 0px' });
-        io.observe(bar);
-      }
-    }
   }
 
   /* ===== BOOT ===== */
