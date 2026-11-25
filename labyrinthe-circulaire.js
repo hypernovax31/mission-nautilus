@@ -146,6 +146,46 @@
     } catch (e) {}
   }
 
+  function jouerSonDepart() {
+    if (!sonEstActif()) return;
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') { ctx.resume().catch(function () {}); }
+    try {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } catch (e) {}
+  }
+
+  function jouerSonAlerteCompteRebours(sec) {
+    if (!sonEstActif()) return;
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') { ctx.resume().catch(function () {}); }
+    try {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'triangle';
+      var freq = 880 + Math.max(0, 5 - sec) * 90;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.16, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.085);
+    } catch (e) {}
+  }
+
   /* ================= MOTEUR DU LABYRINTHE ================= */
   function init(host, options) {
     options = options || {};
@@ -156,12 +196,26 @@
 
     var estMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+    // Overlay d'alerte des 5 dernières secondes (clignotement latéral de l'écran)
+    var edgeAlarmEl = document.getElementById('labyEdgeAlarm');
+    if (!edgeAlarmEl) {
+      edgeAlarmEl = document.createElement('div');
+      edgeAlarmEl.id = 'labyEdgeAlarm';
+      edgeAlarmEl.className = 'laby-edge-alarm';
+      edgeAlarmEl.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(edgeAlarmEl);
+    }
+
     host.innerHTML = ''
       + '<div class="laby-container" id="labyContainer">'
       + '  <div class="laby-hud">'
       + '    <div class="laby-hud-top">'
       + '      <div class="laby-badge">PALIER 7 — <b>LABYRINTHE SCELLÉ (10 ANNEAUX)</b></div>'
-      + '      <div class="laby-timer laby-minuteur" id="labyTimer" title="Minuteur : 1 min avant remontée du matelot">⏳ <span class="laby-timer-lbl">Minuteur :</span> <b id="labyTimerVal">01:00</b></div>'
+      + '      <div class="laby-timer laby-minuteur" id="labyTimer" title="Minuteur : 1 min avant remontée du matelot">'
+      + '        <span class="laby-timer-ico">⏳</span>'
+      + '        <span class="laby-timer-lbl">Minuteur :</span>'
+      + '        <b id="labyTimerVal">01:00</b>'
+      + '      </div>'
       + '    </div>'
       + '    <div class="laby-hud-stats">'
       + '      <div class="laby-stat-item laby-stat-depth">Profondeur : <b id="labyDepth">Anneau 10/10</b></div>'
@@ -170,23 +224,39 @@
       + '    </div>'
       + '  </div>'
 
-      + '  <div class="laby-gyro-prompt" id="labyGyroPrompt" hidden>'
-      + '    <button type="button" class="laby-btn-gyro-auth" id="btnAuthGyro">'
-      + '      🧭 <b>ACTIVER LE GYROSCOPE (INCLINAISON)</b>'
-      + '      <span>Touchez pour autoriser les capteurs de mouvement</span>'
-      + '    </button>'
-      + '  </div>'
-
       + '  <div class="laby-board-outer" id="labyBoardOuter">'
       + '    <div class="laby-board" id="labyBoard">'
       + '      <canvas class="laby-canvas" id="labyCanvas" width="440" height="440"></canvas>'
+      + '    </div>'
+      + '    <div class="laby-start-overlay laby-gyro-prompt" id="labyStartOverlay">'
+      + '      <div class="laby-start-card">'
+      + '        <div class="laby-start-badge">⏱️ CHRONO-MISSION · 1 MINUTE</div>'
+      + '        <div class="laby-start-title">Activez les commandes pour lancer le jeu</div>'
+      + '        <div class="laby-start-desc">Le minuteur d’<b>une minute</b> s’enclenche dès votre clic.<br>Atteignez le <b>Cœur central</b> avant la remontée en surface !</div>'
+      + '        <div class="laby-start-actions" id="labyStartActions">'
+      + '          <button type="button" class="laby-btn-start laby-btn-start-gyro" id="btnStartGyro">'
+      + '            <span class="laby-btn-start-ico">🧭</span>'
+      + '            <span class="laby-btn-start-txt">'
+      + '              <b>ACTIVER LE GYROSCOPE ET DÉMARRER</b>'
+      + '              <small>Inclinez le mobile pour diriger la bille (recommandé)</small>'
+      + '            </span>'
+      + '          </button>'
+      + '          <button type="button" class="laby-btn-start laby-btn-start-joy" id="btnStartJoy">'
+      + '            <span class="laby-btn-start-ico">🕹️</span>'
+      + '            <span class="laby-btn-start-txt">'
+      + '              <b>DÉMARRER AU JOYSTICK</b>'
+      + '              <small>Joystick virtuel tactile & touches fléchées du clavier</small>'
+      + '            </span>'
+      + '          </button>'
+      + '        </div>'
+      + '      </div>'
       + '    </div>'
       + '  </div>'
 
       + '  <div class="laby-controls-bar">'
       + '    <div class="laby-sensor-chip" id="labySensorChip">'
       + '      <span class="laby-sensor-dot" id="labySensorDot"></span>'
-      + '      <span id="labySensorLabel">Initialisation capteurs…</span>'
+      + '      <span id="labySensorLabel">En attente d’activation…</span>'
       + '    </div>'
       + '    <div class="laby-actions">'
       + '      <button type="button" class="laby-btn" id="btnCalibGyro" title="Calibrer l’inclinaison neutre">🎯 Calibrer</button>'
@@ -202,7 +272,7 @@
       + '    </div>'
       + '  </div>'
 
-      + '  <div class="laby-status" id="labyStatus">Inclinez votre appareil pour diriger la bille 3D vers le Cœur central (brèche unique dissimulée).</div>'
+      + '  <div class="laby-status" id="labyStatus">Appuyez sur le bouton du gyroscope (ou du joystick) pour activer le minuteur et lancer le mini-jeu.</div>'
       + '</div>';
 
     var container = host.querySelector('#labyContainer');
@@ -215,8 +285,9 @@
     var coreDistEl = host.querySelector('#labyCoreDist');
     var statusEl = host.querySelector('#labyStatus');
     var sensorLabelEl = host.querySelector('#labySensorLabel');
-    var gyroPromptEl = host.querySelector('#labyGyroPrompt');
-    var btnAuthGyro = host.querySelector('#btnAuthGyro');
+    var startOverlayEl = host.querySelector('#labyStartOverlay');
+    var btnStartGyro = host.querySelector('#btnStartGyro');
+    var btnStartJoy = host.querySelector('#btnStartJoy');
     var btnCalibGyro = host.querySelector('#btnCalibGyro');
     var btnToggleMode = host.querySelector('#btnToggleMode');
     var joystickZone = host.querySelector('#labyJoystickZone');
@@ -229,6 +300,7 @@
     var tempsRestant = DUREE_PARCOURS_SEC;
     var collisionsCount = 0;
     var estTermine = false;
+    var jeuDemarre = false;
     var modeActif = 'gyro'; // 'gyro' par défaut prioritaire
     var aRecuGyro = false;
     var animFrameId = null;
@@ -308,14 +380,14 @@
     redimensionner();
     window.addEventListener('resize', redimensionner);
 
-    /* ================= GESTION STRICTE DU GYROSCOPE ================= */
+    /* ================= GESTION DU GYROSCOPE ET DU JOYSTICK ================= */
     function onDeviceOrientation(ev) {
       if (ev.gamma != null && ev.beta != null) {
         if (!aRecuGyro) {
           aRecuGyro = true;
           calibGamma = ev.gamma;
           calibBeta = (ev.beta > 15 && ev.beta < 60) ? ev.beta : 30;
-          if (gyroPromptEl) gyroPromptEl.hidden = true;
+          if (startOverlayEl && jeuDemarre) startOverlayEl.hidden = true;
           activerModeGyro();
         }
         rawGamma = ev.gamma;
@@ -326,22 +398,24 @@
     function activerModeGyro() {
       modeActif = 'gyro';
       joystickZone.hidden = true;
-      if (gyroPromptEl) gyroPromptEl.hidden = true;
       sensorLabelEl.textContent = '🧭 Gyroscope actif (inclinez le mobile)';
       btnToggleMode.textContent = '🕹️ Joystick';
       btnToggleMode.style.display = '';
-      statusEl.textContent = 'Inclinez votre appareil pour diriger la bille dans le labyrinthe.';
-      statusEl.className = 'laby-status';
+      if (jeuDemarre) {
+        statusEl.textContent = 'Inclinez votre appareil pour diriger la bille dans le labyrinthe.';
+        statusEl.className = 'laby-status is-active';
+      }
     }
 
     function activerModeJoystick() {
       modeActif = 'joystick';
       joystickZone.hidden = false;
-      if (gyroPromptEl) gyroPromptEl.hidden = true;
       sensorLabelEl.textContent = '🕹️ Joystick tactile actif';
       btnToggleMode.textContent = '🧭 Gyroscope';
-      statusEl.textContent = 'Utilisez le joystick tactile (ou les flèches du clavier) pour manœuvrer.';
-      statusEl.className = 'laby-status is-warning';
+      if (jeuDemarre) {
+        statusEl.textContent = 'Utilisez le joystick tactile (ou les flèches du clavier) pour manœuvrer.';
+        statusEl.className = 'laby-status is-warning';
+      }
     }
 
     function demanderAutorisationGyro() {
@@ -367,31 +441,52 @@
       }
     }
 
-    /* Détection intelligente des capteurs */
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      // iOS Safari : nécessite une action utilisateur
-      if (gyroPromptEl) gyroPromptEl.hidden = false;
-      sensorLabelEl.textContent = '🧭 Touchez pour activer le gyroscope';
-      btnAuthGyro.addEventListener('click', demanderAutorisationGyro);
-      // Toute première interaction sur l'écran déclenche aussi la demande
-      container.addEventListener('click', function declic() {
-        demanderAutorisationGyro();
-        container.removeEventListener('click', declic);
-      });
-    } else if ('ondeviceorientation' in window) {
-      window.addEventListener('deviceorientation', onDeviceOrientation, true);
-      // Sur mobile, on reste résolument en mode Gyro
-      if (estMobile) {
-        activerModeGyro();
-      } else {
-        // Desktop sans capteurs
-        setTimeout(function () {
-          if (!aRecuGyro) activerModeJoystick();
-        }, 1200);
-      }
+    /* Détection intelligente des capteurs & activation manuelle par le joueur */
+    var supporteGyro = estMobile && (typeof DeviceOrientationEvent !== 'undefined' || 'ondeviceorientation' in window);
+
+    if (supporteGyro) {
+      btnStartGyro.hidden = false;
+      btnStartJoy.classList.add('is-secondary');
+      sensorLabelEl.textContent = '🧭 Prêt : appuyez sur le bouton Gyroscope';
     } else {
-      activerModeJoystick();
+      btnStartGyro.hidden = true;
+      btnStartJoy.hidden = false;
+      btnStartJoy.classList.add('is-primary');
+      sensorLabelEl.textContent = '🕹️ Prêt : appuyez sur le bouton Joystick';
     }
+
+    /* Activation du minuteur et démarrage du mini-jeu lors du clic joueur */
+    function demarrerPartie(mode) {
+      if (jeuDemarre || estTermine) return;
+      jeuDemarre = true;
+
+      if (startOverlayEl) startOverlayEl.hidden = true;
+      tenterVerrouillagePortrait();
+
+      if (mode === 'gyro') {
+        demanderAutorisationGyro();
+      } else {
+        activerModeJoystick();
+      }
+
+      lancerMinuteur();
+      jouerSonDepart();
+
+      statusEl.textContent = '⚡ Minuteur de 1 min enclenché ! Rejoignez le Cœur avant la remontée en surface.';
+      statusEl.className = 'laby-status is-active';
+    }
+
+    btnStartGyro.addEventListener('click', function () {
+      demarrerPartie('gyro');
+    });
+
+    btnStartJoy.addEventListener('click', function () {
+      demarrerPartie('joystick');
+    });
+
+    joyBase.addEventListener('pointerdown', function () {
+      if (!jeuDemarre) demarrerPartie('joystick');
+    });
 
     /* Boutons de commande */
     btnCalibGyro.addEventListener('click', function () {
@@ -928,7 +1023,9 @@
       var dt = Math.min(0.04, (now - lastTime) / 1000);
       lastTime = now;
 
-      updatePhysics(dt);
+      if (jeuDemarre) {
+        updatePhysics(dt);
+      }
       render();
 
       animFrameId = requestAnimationFrame(gameLoop);
@@ -936,26 +1033,40 @@
     animFrameId = requestAnimationFrame(gameLoop);
 
     /* ================= MINUTEUR DE 1 MINUTE AVANT REMONTÉE DU MATELOT ================= */
-    timerInterval = setInterval(function () {
-      if (estTermine) return;
-      tempsRestant--;
-      var mm = Math.floor(tempsRestant / 60);
-      var ss = tempsRestant % 60;
-      var str = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
-      if (timerValEl) {
-        timerValEl.textContent = str;
-      } else {
-        timerEl.textContent = '⏳ ' + str;
-      }
+    function lancerMinuteur() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(function () {
+        if (estTermine || !jeuDemarre) return;
+        tempsRestant--;
+        var mm = Math.floor(tempsRestant / 60);
+        var ss = tempsRestant % 60;
+        var str = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+        if (timerValEl) {
+          timerValEl.textContent = str;
+        } else {
+          timerEl.textContent = '⏳ ' + str;
+        }
 
-      if (tempsRestant <= 15) {
-        timerEl.classList.add('is-urgent');
-      }
+        // Urgence 15s : clignotement rouge du badge minuteur
+        if (tempsRestant <= 15) {
+          timerEl.classList.add('is-urgent');
+        }
 
-      if (tempsRestant <= 0) {
-        declencherDefaite('temps_ecoule');
-      }
-    }, 1000);
+        // Alerte critique 5 dernières secondes : écran qui clignote légèrement sur les côtés
+        if (tempsRestant <= 5 && tempsRestant > 0) {
+          timerEl.classList.add('is-critical');
+          if (edgeAlarmEl) edgeAlarmEl.classList.add('is-active');
+          jouerSonAlerteCompteRebours(tempsRestant);
+          statusEl.textContent = '🚨 ALERTE : Moins de ' + tempsRestant + ' s avant remontée en surface !';
+          statusEl.className = 'laby-status is-danger';
+        }
+
+        if (tempsRestant <= 0) {
+          if (edgeAlarmEl) edgeAlarmEl.classList.remove('is-active');
+          declencherDefaite('temps_ecoule');
+        }
+      }, 1000);
+    }
 
     /* ================= VICTOIRE ET DÉFAITE ================= */
     function declencherVictoire() {
@@ -963,6 +1074,7 @@
       estTermine = true;
       clearInterval(timerInterval);
       cancelAnimationFrame(animFrameId);
+      if (edgeAlarmEl) edgeAlarmEl.classList.remove('is-active');
 
       jouerSonVictoire();
       board.style.transform = 'scale(1.04)';
@@ -990,6 +1102,7 @@
       estTermine = true;
       clearInterval(timerInterval);
       cancelAnimationFrame(animFrameId);
+      if (edgeAlarmEl) edgeAlarmEl.classList.remove('is-active');
 
       statusEl.textContent = '🚨 Minuteur de 1 min écoulé ! Remontée en surface du matelot.';
       statusEl.className = 'laby-status is-danger';
@@ -1003,6 +1116,10 @@
       estTermine = true;
       clearInterval(timerInterval);
       cancelAnimationFrame(animFrameId);
+      if (edgeAlarmEl) {
+        edgeAlarmEl.classList.remove('is-active');
+        if (edgeAlarmEl.parentNode) edgeAlarmEl.parentNode.removeChild(edgeAlarmEl);
+      }
       window.removeEventListener('resize', redimensionner);
       window.removeEventListener('deviceorientation', onDeviceOrientation, true);
       window.removeEventListener('pointermove', handleJoyMove);

@@ -50,6 +50,37 @@ main { max-width: 960px; margin: 0 auto; }
 }
 .laby-badge b { color: #f5b027; font-size: 15px; }
 
+/* ================= ALERTE DES 5 DERNIÈRES SECONDES (CLIGNOTEMENT SUR LES CÔTÉS) ================= */
+.laby-edge-alarm {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.laby-edge-alarm.is-active {
+  opacity: 1;
+  animation: labySideFlash 0.65s infinite alternate ease-in-out;
+}
+
+@keyframes labySideFlash {
+  0% {
+    box-shadow:
+      inset 20px 0 26px -6px rgba(255, 40, 40, 0.25),
+      inset -20px 0 26px -6px rgba(255, 40, 40, 0.25);
+  }
+  100% {
+    box-shadow:
+      inset 50px 0 54px -8px rgba(255, 30, 30, 0.8),
+      inset -50px 0 54px -8px rgba(255, 30, 30, 0.8);
+  }
+}
+
 .laby-timer {
   display: flex;
   align-items: center;
@@ -64,28 +95,63 @@ main { max-width: 960px; margin: 0 auto; }
   color: #ffd36c;
 }
 .laby-minuteur {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(28, 18, 4, 0.92), rgba(12, 8, 2, 0.98));
+  border: 1.5px solid rgba(255, 211, 108, 0.65);
+  border-radius: 24px;
+  padding: 6px 16px;
+  font-size: 15px;
+  font-weight: 1000;
+  font-variant-numeric: tabular-nums;
   color: #ffd36c;
-  border-color: rgba(255, 211, 108, 0.45);
-  background: rgba(30, 20, 2, 0.65);
-  box-shadow: 0 0 10px rgba(255, 211, 108, 0.15);
+  box-shadow: 0 0 16px rgba(255, 211, 108, 0.28), inset 0 0 10px rgba(255, 211, 108, 0.12);
+  letter-spacing: .03em;
+  transition: all .25s ease;
+}
+.laby-timer-ico {
+  font-size: 17px;
+  filter: drop-shadow(0 0 4px #ffd36c);
 }
 .laby-timer-lbl {
   font-size: 11px;
-  letter-spacing: .05em;
+  letter-spacing: .08em;
   text-transform: uppercase;
   color: #8ee7ff;
-  font-weight: 800;
-  margin-right: 2px;
+  font-weight: 900;
 }
 .laby-minuteur b {
-  color: #ffd36c;
-  font-size: 15px;
+  font-size: 19px;
+  color: #fff2b8;
+  text-shadow: 0 0 8px rgba(255, 211, 108, 0.65);
+  font-variant-numeric: tabular-nums;
 }
 .laby-timer.is-urgent {
   color: #ff5f56;
   border-color: #ff5f56;
-  background: rgba(45, 10, 10, 0.7);
-  animation: labyTimerPulse 1s infinite alternate ease-in-out;
+  background: linear-gradient(135deg, rgba(50, 12, 12, 0.94), rgba(25, 4, 4, 0.98));
+  box-shadow: 0 0 20px rgba(255, 95, 86, 0.55);
+  animation: labyTimerPulse 0.9s infinite alternate ease-in-out;
+}
+.laby-timer.is-urgent b {
+  color: #ff9f96;
+  text-shadow: 0 0 10px rgba(255, 95, 86, 0.85);
+}
+.laby-timer.is-critical {
+  color: #ff2222;
+  border-color: #ff2222;
+  background: linear-gradient(135deg, rgba(75, 8, 8, 0.96), rgba(35, 2, 2, 0.98));
+  box-shadow: 0 0 28px rgba(255, 34, 34, 0.8);
+  animation: labyTimerCritical 0.45s infinite alternate ease-in-out;
+}
+.laby-timer.is-critical b {
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(255, 34, 34, 1);
+}
+@keyframes labyTimerCritical {
+  from { transform: scale(1.02); box-shadow: 0 0 8px rgba(255, 51, 51, 0.5); }
+  to { transform: scale(1.10); box-shadow: 0 0 22px rgba(255, 51, 51, 0.95); }
 }
 @keyframes labyTimerPulse {
   from { transform: scale(1); box-shadow: 0 0 4px rgba(255, 95, 86, 0.3); }
@@ -147,6 +213,156 @@ main { max-width: 960px; margin: 0 auto; }
   perspective-origin: 50% 50%;
   overflow: visible;
   padding: 6px 0;
+  position: relative;
+}
+
+/* Overlay de démarrage manuel (activation du minuteur et du jeu) */
+.laby-start-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(1, 6, 14, 0.76);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 30;
+  padding: 12px;
+  border-radius: 18px;
+}
+.laby-start-overlay[hidden] {
+  display: none !important;
+}
+
+.laby-start-card {
+  max-width: 380px;
+  width: 100%;
+  background: linear-gradient(180deg, #07192d 0%, #030d18 100%);
+  border: 1.5px solid rgba(142, 231, 255, 0.4);
+  border-radius: 16px;
+  padding: 22px 18px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.78), 0 0 25px rgba(14, 165, 233, 0.28);
+}
+
+.laby-start-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #ffd36c;
+  background: rgba(255, 211, 108, 0.12);
+  border: 1px solid rgba(255, 211, 108, 0.35);
+  border-radius: 12px;
+  padding: 3px 10px;
+  margin-bottom: 12px;
+}
+
+.laby-start-title {
+  font-size: 16.5px;
+  font-weight: 1000;
+  color: #ffffff;
+  margin-bottom: 8px;
+  letter-spacing: .02em;
+}
+
+.laby-start-desc {
+  font-size: 12.5px;
+  color: #a4c7e2;
+  line-height: 1.45;
+  margin-bottom: 18px;
+}
+.laby-start-desc b {
+  color: #ffd36c;
+}
+
+.laby-start-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.laby-btn-start {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all .2s ease;
+  text-align: left;
+}
+.laby-btn-start[hidden] {
+  display: none !important;
+}
+
+.laby-btn-start-gyro {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border-color: rgba(110, 231, 183, 0.7);
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45);
+  animation: labyStartGlow 1.8s infinite ease-in-out;
+}
+.laby-btn-start-gyro:hover, .laby-btn-start-gyro:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.7);
+}
+
+.laby-btn-start-joy {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: #ffffff;
+  border-color: rgba(125, 211, 252, 0.7);
+  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45);
+}
+.laby-btn-start-joy.is-primary {
+  animation: labyStartGlowJoy 1.8s infinite ease-in-out;
+}
+.laby-btn-start-joy.is-secondary {
+  background: rgba(14, 165, 233, 0.15);
+  border-color: rgba(14, 165, 233, 0.4);
+  box-shadow: none;
+  padding: 9px 12px;
+}
+.laby-btn-start-joy:hover, .laby-btn-start-joy:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(14, 165, 233, 0.6);
+}
+
+@keyframes labyStartGlow {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45); }
+  50% { transform: scale(1.02); box-shadow: 0 6px 26px rgba(16, 185, 129, 0.75); }
+}
+
+@keyframes labyStartGlowJoy {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45); }
+  50% { transform: scale(1.02); box-shadow: 0 6px 26px rgba(14, 165, 233, 0.75); }
+}
+
+.laby-btn-start-ico {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.laby-btn-start-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.laby-btn-start-txt b {
+  font-size: 13.5px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.laby-btn-start-txt small {
+  font-size: 11px;
+  opacity: 0.88;
+  font-weight: 500;
 }
 
 .laby-board {

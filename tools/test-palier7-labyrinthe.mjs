@@ -149,28 +149,28 @@ if (code.includes('angleDeg') && code.includes('screen.orientation.angle')) {
   process.exit(1);
 }
 
-// 6. Vérification du minuteur de 1 minute maximum et suppression du compteur
-if (code.includes('DUREE_PARCOURS_SEC = 60') && code.includes('labyTimer') && !code.includes('labyChrono') && !code.includes('t0Chrono')) {
-  console.log(`✓ [Minuteur] Minuteur de 1 minute maximum (60s) actif, compteur incrémental supprimé avec succès.`);
+// 6. Vérification du minuteur de 1 minute maximum, visibilité et clignotement latéral
+if (code.includes('DUREE_PARCOURS_SEC = 60') && code.includes('labyTimer') && code.includes('labyEdgeAlarm') && code.includes('is-critical') && !code.includes('labyChrono')) {
+  console.log(`✓ [Minuteur] Minuteur 1 min hautement visible avec alerte latérale (5 dernières secondes) validé.`);
 } else {
-  console.error(`✗ [Minuteur] Configuration du minuteur ou suppression du compteur non conforme.`);
+  console.error(`✗ [Minuteur] Configuration du minuteur ou de l'alerte latérale non conforme.`);
   process.exit(1);
 }
 
-// 7. Vérification de la priorité au gyroscope mobile
-if (code.includes('laby-gyro-prompt') && code.includes('DeviceOrientationEvent.requestPermission')) {
-  console.log(`✓ [Contrôles] Priorité absolue au gyroscope avec demande d'autorisation iOS interactive.`);
+// 7. Vérification du démarrage du jeu par bouton gyroscope ou joystick
+if (code.includes('btnStartGyro') && code.includes('btnStartJoy') && code.includes('demarrerPartie') && code.includes('DeviceOrientationEvent.requestPermission')) {
+  console.log(`✓ [Contrôles & Démarrage] Activation du minuteur et du jeu par bouton Gyroscope (ou Joystick si non dispo) validée.`);
 } else {
-  console.error(`✗ [Contrôles] Priorité gyroscope incomplète.`);
+  console.error(`✗ [Contrôles] Démarrage par bouton gyroscope/joystick incomplet.`);
   process.exit(1);
 }
 
 // 8. Vérification du Service Worker
 const swContent = fs.readFileSync('sw.js', 'utf8');
-if (swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=10') && swContent.includes('./css/palier7.css?v=10')) {
-  console.log(`✓ [Cache PWA] Tous les assets v10 du Palier 7 sont précachés dans sw.js.`);
+if (swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=11') && swContent.includes('./css/palier7.css?v=11')) {
+  console.log(`✓ [Cache PWA] Tous les assets v11 du Palier 7 sont précachés dans sw.js.`);
 } else {
-  console.error(`✗ [Cache PWA] Assets v10 manquants dans sw.js.`);
+  console.error(`✗ [Cache PWA] Assets v11 manquants dans sw.js.`);
   process.exit(1);
 }
 
