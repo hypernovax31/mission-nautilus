@@ -36,7 +36,10 @@
 
    REGLE DU SON, identique partout :
      - allume : ambiance + bruitages audibles
-     - eteint : silence total sur toute la page
+     - eteint : silence total sur toute la page — Y COMPRIS les sons Web
+       Audio deja en cours, suspendus via le registre NautilusSon
+       (son-partage.js). Seule exception : le signal morse du palier 1,
+       necessaire a l'epreuve, joue a la demande meme sonar coupe.
    Le choix est memorise dans localStorage sous 'nautilusSoundOn' et suit le
    joueur d'une page a l'autre.
 ============================================================================= */
@@ -53,6 +56,8 @@
   var btn = null;
   var primed = false;      // lecture muette lancee (deblocage anticipe)
   var audible = false;     // le son sort vraiment
+  var autoWakeTimer = null;
+  var autoWakeAttempt = 0;
 
   function soundAllowed() {
     // Autorise par defaut : seul un refus explicite coupe le son.
@@ -179,15 +184,42 @@
     audio.muted = true;
     audio.volume = 0;
     var p = audio.play();
-    if (p && p.then) p.then(function () { primed = true; }).catch(function () { primed = false; });
+    if (p && p.then) p.then(function () {
+      primed = true;
+      autoWakeAttempt = 0;
+      scheduleAutoWake();
+    }).catch(function () { primed = false; });
+  }
+
+  /* Le média muet est parfois autorisé avant l'audio audible. On profite de
+     cette fenêtre pour retenter automatiquement l'ambiance quelques fois,
+     sans attendre un scroll ou un clic. Les navigateurs stricts restent
+     silencieux jusqu'au prochain geste, conformément à leur politique. */
+  function scheduleAutoWake() {
+    if (!primed || audible || !soundAllowed() || document.visibilityState !== 'visible') return;
+    var delays = [650, 1800, 4200];
+    if (autoWakeAttempt >= delays.length) return;
+    clearTimeout(autoWakeTimer);
+    var delay = delays[autoWakeAttempt++];
+    autoWakeTimer = setTimeout(function () {
+      autoWakeTimer = null;
+      if (!primed || audible || !soundAllowed() || document.visibilityState !== 'visible') return;
+      start().then(function (ok) {
+        if (!ok) scheduleAutoWake();
+      });
+    }, delay);
   }
 
   function start() {
     if (!audio || !soundAllowed()) return Promise.resolve(false);
     audio.muted = false;
     audio.volume = VOLUME;
-    if (primed && !audio.paused) { paint(true); return Promise.resolve(true); }
+    if (primed && !audio.paused) {
+      clearTimeout(autoWakeTimer); autoWakeTimer = null;
+      paint(true); return Promise.resolve(true);
+    }
     return audio.play().then(function () {
+      clearTimeout(autoWakeTimer); autoWakeTimer = null;
       paint(true);
       return true;
     }).catch(function () {
@@ -200,11 +232,15 @@
   }
 
   function silence() {
-    // Coupe TOUS les sons de la page, pas seulement l'ambiance.
+    // Coupe TOUS les sons de la page, pas seulement l'ambiance : d'abord
+    // les <audio>, ensuite les contextes Web Audio (jingle, alarme ou
+    // ecoute morse deja en cours : suspendus nets, sans attente).
     var list = document.querySelectorAll('audio');
     for (var i = 0; i < list.length; i++) {
       try { list[i].pause(); list[i].muted = true; } catch (e) { /* pas pret */ }
     }
+    if (window.NautilusSon) window.NautilusSon.suspendreContextes();
+    clearTimeout(autoWakeTimer); autoWakeTimer = null;
     primed = false;
     paint(false);
   }
@@ -215,10 +251,22 @@
       silence();
     } else {
       remember(true);
+      if (window.NautilusSon) window.NautilusSon.relancerContextes();
       var list = document.querySelectorAll('audio');
       for (var i = 0; i < list.length; i++) list[i].muted = false;
       start();
     }
+  }
+
+  /* Reprend l'ambiance à chaque retour sur la page (chargement, retour du
+     cache navigateur, mise au premier plan). Un refus d'autoplay ne crée
+     jamais de bruit parasite : on amorce seulement la lecture muette puis
+     le scroll ou le clic suivant la rend audible. */
+  function wakeAmbiance() {
+    if (audible || !soundAllowed()) return;
+    start().then(function (ok) {
+      if (!ok) prime();
+    });
   }
 
   /* ---------- Demarrage ---------- */
@@ -226,6 +274,16 @@
     injectStyles();
     buildAudio();
     buildButton();
+
+    /* Tous les chemins de navigation doivent tenter l'ambiance : premier
+       chargement, retour depuis le cache, retour sur l'onglet et activité
+       réelle (scroll/clic, gérée plus bas). */
+    audio.addEventListener('pause', function () { paint(false); });
+    window.addEventListener('pageshow', wakeAmbiance, { passive: true });
+    window.addEventListener('focus', wakeAmbiance, { passive: true });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') wakeAmbiance();
+    });
 
     if (!soundAllowed()) { silence(); return; }
 

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#020812" />
+  <title>Mission Nautilus — Palier 5</title>
+  <meta name="description" content="Accès scellé et épreuve du Palier 5 de la Mission Nautilus." />
+  <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil). -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=61">
+  <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
+       communs à tous les paliers ≥ 2. -->
+  <link rel="stylesheet" href="css/palier2.css?v=27">
+  <link rel="stylesheet" href="css/palier5.css?v=5">
+  <script src="anti-zoom.js?v=2"></script>
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+  <script>
+    (function(){
+      try {
+        var base = [16,1,12,9,5,18];
+        var code = base.map(function(x){ return String(x + 4); }).join('');
+        var forceFerme = /[?&]sas=ferme\b/.test(location.search) || /[?&]scan=1\b/.test(location.search);
+        var isUnlocked = localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok';
+        var isApercu = /[?&]apercu=admin\b/.test(location.search) || sessionStorage.getItem('nautilusAdminApercu') === '1';
+        if (!forceFerme && (isUnlocked || isApercu)) {
+          document.documentElement.classList.add('sas-skip-flash');
+        }
+      } catch(_) {}
+    })();
+  </script>
+  <style>
+    html.sas-skip-flash #gateHero { display: none !important; }
+    html.sas-skip-flash #briefCard { display: block !important; }
+  </style>
+  <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
+       connexion : l'import de la PHOTO du QR Code prend alors le relais. -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">🏠 Retour à l'accueil</button>
+    <div class="topbar-title" id="topPalierTitle">Palier 5</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER. Vue unique et immersive,
+       commune à tous les paliers ≥ 2 : tant que le QR Code n'est pas
+       scanné, c'est la seule chose à l'écran. -->
+  <section class="card gate-hero" id="gateHero">
+    <h2 id="sasHeroTitle">PALIER 5 — ZONE SCELLÉE</h2>
+    <div class="body">
+      <div class="sas-scene">
+        <div class="sas-head">
+          <div class="sas-lock" aria-hidden="true">
+            <span class="sas-lock-ico">🔒</span>
+          </div>
+          <p class="sas-kicker">Profondeur — sas scellé</p>
+          <p class="sas-titre">⛔ Ce palier est verrouillé.</p>
+          <p class="sas-msg">Déverrouillez le palier suivant grâce au <b>QR Code de la zone de recherche</b>.</p>
+        </div>
+
+        <div class="gate-scanbox sas-scanbox" id="gateScanbox">
+          <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
+          <canvas id="gateCanvas" hidden></canvas>
+          <div class="gate-cam-placeholder" id="gateCamPlaceholder" role="button" tabindex="0" aria-label="Activer la caméra pour scanner le QR Code">
+            <span class="gate-cam-icon">📷</span>
+            <span>Objectif en veille — vise le QR Code pour ouvrir le sas.</span>
+          </div>
+          <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
+        </div>
+
+        <div class="gate-actions">
+          <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
+          <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
+          <input type="file" id="gateFile" accept="image/*" hidden>
+        </div>
+
+        <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
+
+        <button type="button" class="sas-indication" id="sasIndicationBtn" aria-expanded="false">📍 Voir l'indication de la zone de recherche</button>
+        <div class="sas-indication-panel" id="sasIndicationPanel" hidden>
+          <div class="won-nextzone">
+            <div class="won-radar" aria-hidden="true">
+              <span class="won-radar-ring"></span>
+              <span class="won-radar-ring won-radar-ring--2"></span>
+              <span class="won-radar-core">🧭</span>
+            </div>
+            <h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>
+            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">……</span> »</p>
+            <div class="won-nextzone-steps">
+              <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
+              <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
+              <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE : même bloc que les autres paliers. -->
+  <section class="card" id="teamCard" hidden>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- Journal de bord (live). -->
+  <section class="card" id="logCard" hidden>
+    <h2>JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
+        <ul id="morse-log-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING DU CAPITAINE — vue OBLIGATOIRE entre la ZONE SCELLÉE et
+       l'épreuve (même architecture que tous les paliers). -->
+  <section class="card" id="briefCard" hidden>
+    <h2>BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+
+  <!-- ÉPREUVE DU PALIER 5 -->
+  <section class="card gate-unlocked" id="gateUnlocked" hidden>
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 5</span>
+    </h2>
+    <div class="body">
+      <div id="epreuveStatut" class="status-banner info" hidden></div>
+      <div id="justePrixHost" class="game-stage"></div>
+      <div class="game-footer-actions">
+        <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Journal de bord « Activité en direct », code COMMUN à tous les paliers. -->
+<script src="son-partage.js?v=2"></script>
+<script src="journal-bord.js?v=6"></script>
+<!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
+<script src="palier-sas.js?v=13"></script>
+<!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
+<script src="palier-briefing.js?v=5"></script>
+<script>window.NautilusSas.init(5);</script>
+<!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers. -->
+<script src="matelot-blocages.js?v=3"></script>
+<!-- Réserve d'oxygène (jauge du haut), commune à tous les paliers. -->
+<script src="reserve-o2.js?v=9"></script>
+<!-- Équipage actif en plongée, commun à tous les paliers. -->
+<script src="equipage-actif.js?v=10"></script>
+<script>window.EquipageActif.init();</script>
+<!-- Écran de VICTOIRE commun à TOUS les paliers. -->
+<script src="victoire-palier.js?v=18"></script>
+<script src="records-palier.js?v=2"></script>
+<!-- Moteur de l'épreuve LE JUSTE PRIX (Palier 5). -->
+<script src="juste-prix.js?v=4"></script>
+
+<!-- Réglages du Palier 5 : indication de la zone de recherche. -->
+<script>
+const LIEU_DESCRIPTION = "…… (en attente d’indication par l’admin)";
+const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
+const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
+</script>
+
+<script>
+/* ================= ÉPREUVE DU PALIER 5 — « LE JUSTE PRIX » =================
+   Les articles découverts dans les rayons de la Fnac Labège doivent être correctement
+   évalués. L'équipage doit estimer le prix de 10 articles successifs.
+   Chaque article dispose de 3 essais (retour C'est plus / C'est moins).
+   Prix exact requis en euros entiers selon la règle de l'arrondi (aucune tolérance).
+   3 produits non trouvés provoquent la défaite (remontée en surface).
+   Objectif de réussite : au moins 8 produits trouvés sur 10 (≥ 80%).
+   La victoire inscrit « occasion » dans completedSteps et débloque le Palier 6. */
+(function () {
+  'use strict';
+
+  var CLE_BLOCAGE_ANONYME = 'nautilusEpreuve5BloqueJusqua';
+  var BLOCAGE_MS  = 60 * 60 * 1000;          /* repli anonyme : 1 h */
+  var _blocageSession = 0;                   /* mode test : volatil */
+
+  var t0Partie = null;
+  var partieEnCours = false;
+
+  var $ = function (id) { return document.getElementById(id); };
+  function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
+  function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
+
+  function enModeTest() {
+    try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
+  }
+  function blocageAnonymeJusqua() {
+    try { return Number(localStorage.getItem(CLE_BLOCAGE_ANONYME) || 0); } catch (e) { return 0; }
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function heureLisible(v) {
+    var d = new Date(typeof v === 'number' ? v : String(v));
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* QUI joue sur cet appareil ? */
+  var _ident = null, _identLue = false;
+  function monIdentite() {
+    if (_identLue) return Promise.resolve(_ident);
+    _identLue = true;
+    return window.NautilusBlocages.identiteCourante()
+      .then(function (i) { _ident = i; return _ident; })
+      .catch(function () { _ident = null; return null; });
+  }
+
+  /* Aperçu organisateur : ?apercu=jeu&k=… */
+  function apercuAdminAutorise() {
+    try {
+      if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
+      var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
+      if (!k) return false;
+      var h = 0, s = 'apercu-admin:NEMO2026';
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return k === ('k' + Math.abs(h).toString(36));
+    } catch (e) { return false; }
+  }
+
+  function statut(html, kind) {
+    var el = $('epreuveStatut');
+    if (!el) return;
+    el.hidden = !html;
+    el.innerHTML = html || '';
+    el.className = 'status-banner ' + (kind || 'info');
+  }
+
+  /* ================= TROIS VUES EN SÉQUENCE =================
+     ZONE SCELLÉE → BRIEFING DU CAPITAINE → ÉPREUVE (architecture standard). */
+  function montrerCarte(id, visible) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? '' : 'none';
+  }
+  function afficherVueScellee() {
+    montrerCarte('gateHero', true);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueBriefing() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
+    montrerCarte('briefCard', true);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueEpreuve() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', true);
+    var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
+  }
+  function afficherJournalDeBord(visible) {
+    montrerCarte('teamCard', visible);
+    montrerCarte('logCard', visible);
+    var carte = $('gateUnlocked');
+    if (carte) carte.classList.toggle('epreuve-focus', !visible);
+  }
+
+  function afficherBlocage(jusqua, nom, motif, hours, equipe) {
+    partieEnCours = false;
+    afficherVueEpreuve();
+    var host = $('justePrixHost');
+    if (host && window.NautilusDefaite) {
+      window.NautilusDefaite.afficher(host, {
+        palier: 5,
+        motif: motif,
+        nom: nom,
+        jusqua: jusqua,
+        hours: hours,
+        equipe: equipe,
+        details: '3 estimations erronées'
+      });
+    }
+  }
+
+  function jouerSonDefaite() {
+    try {
+      if (window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound) {
+        window.NautilusAnnonces.playDefeatSound();
+      }
+    } catch (e) {}
+  }
+
+  function declencherBlocage(motif) {
+    motif = motif || 'erreurs';
+    jouerSonDefaite();
+
+    var maintenant = Date.now();
+    var jusquaDefaut = maintenant + BLOCAGE_MS;
+    var nomLocal = (function () {
+      try { return localStorage.getItem('nautilusMatelotName') || localStorage.getItem('nautilusMatelotNom') || ''; }
+      catch (_) { return ''; }
+    })() || (_ident && _ident.name) || 'Matelot';
+    var equipeLocale = (_ident && _ident.teamCode) || (function () {
+      try { return localStorage.getItem('nautilusCurrentTeam') || ''; } catch (_) { return ''; }
+    })() || 'Nemo';
+
+    // Affichage IMMÉDIAT synchrone de la page de défaite
+    afficherBlocage(jusquaDefaut, nomLocal, motif, 1, equipeLocale);
+
+    if (apercuAdminAutorise()) {
+      journal('ℹ️ Aperçu organisateur : écran de défaite affiché (aucun blocage réel enregistré).', 'info');
+      return;
+    }
+
+    monIdentite().then(function (ident) {
+      if (ident && ident.isTest) {
+        journal('🧪 Mode concepteur : écran de défaite affiché pour ' + ident.name + ' (aucun blocage en test).', 'info');
+        return;
+      }
+      if (ident) {
+        window.NautilusBlocages.poserBlocage(ident, motif)
+          .then(function (r) {
+            afficherBlocage(r.lockedUntil, ident.name, motif, r.hours, ident.teamCode);
+            acte('échec au Juste Prix (' + motif + ') — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
+          })
+          .catch(function () {
+            _blocageSession = jusquaDefaut;
+            afficherBlocage(_blocageSession, ident.name, motif, 1, ident.teamCode);
+            journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
+          });
+        return;
+      }
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusquaDefaut)); } catch (e) {}
+    }).catch(function () {});
+  }
+
+  async function propagerVictoire() {
+    var ident = await monIdentite();
+    var equipage = (ident && !ident.isTest && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || null;
+    if (!equipage || enModeTest() || apercuAdminAutorise()) {
+      journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
+      return;
+    }
+    try {
+      var x = await window.NautilusBlocages.db();
+      await x.fs.updateDoc(x.fs.doc(x.db, 'teams', equipage), {
+        completedSteps: x.fs.arrayUnion('occasion'),
+        currentStep: 'papeterie',
+        lastEvent: 'step_advanced',
+        lastStepCompleted: 'occasion',
+        lastStepCompletedAt: new Date().toISOString(),
+        lastStepCompletedLabel: 'Palier 5',
+        lastStepCompletedBy: (ident && !ident.isTest) ? ident.name : 'Un matelot'
+      });
+      if (typeof window.NautilusRecords !== 'undefined') {
+        var NOMS_EQUIPES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+        var dureeSec = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
+        window.NautilusRecords.enregistrer({
+          stepId: 'occasion',
+          seconds: dureeSec,
+          matelot: (ident && !ident.isTest) ? ident.name : 'Un matelot',
+          equipage: NOMS_EQUIPES[ident.teamCode] || ident.teamCode
+        }).then(chargerRecords);
+      }
+      var leves = await window.NautilusBlocages.leverBlocages(equipage, 'occasion');
+      journal('📈 Victoire inscrite au tableau de bord — direction le Palier 6 !'
+        + (leves > 0 ? ' ' + leves + ' matelot' + (leves > 1 ? 's' : '') + ' débloqué' + (leves > 1 ? 's' : '') + '.' : ''), 'success');
+    } catch (e) {
+      journal("⚠️ Victoire non inscrite (connexion ?). Préviens l'organisation.", 'warning');
+    }
+  }
+
+  async function afficherEcranVictoire(res) {
+    var host = $('justePrixHost');
+    if (!host || !window.NautilusVictoire) return;
+    var ident = await monIdentite();
+    var duree = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : (res && res.duree ? res.duree : 0);
+    var mm = Math.floor(duree / 60), ss = ('0' + (duree % 60)).slice(-2);
+    var NOMS = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+    var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
+    window.NautilusVictoire.afficher(host, {
+      palier: 5,
+      mission: 'Palier 5',
+      equipe: equipe,
+      bravo: (ident && !ident.isTest) ? ident.name : null,
+      stats: [
+        { valeur: mm + ':' + ss, label: 'Temps utilisé' },
+        { valeur: (res && res.score) ? res.score : '8/10', label: 'Articles validés' },
+        { valeur: '≥ 80%', label: 'Objectif atteint' }
+      ],
+      indication: LIEU_DESCRIPTION,
+      labelSuivant: 'Palier 6',
+      urlSuivante: '21617141023.html'
+    });
+    chargerRecords();
+  }
+
+  function chargerRecords() {
+    if (typeof window.NautilusRecords === 'undefined') return;
+    monIdentite().then(function (ident) {
+      window.NautilusRecords.chargerEtRendre($('wonRecordsHost'), {
+        stepId: 'occasion',
+        moi: (ident && !ident.isTest) ? ident.name : ''
+      });
+    });
+  }
+
+  function onVictoire(res) {
+    partieEnCours = false;
+    var duree = res && res.duree ? res.duree : 0;
+    afficherJournalDeBord(false);
+    statut('🏆 <b>Palier 5 franchi !</b> Vous avez validé ' + ((res && res.score) ? res.score : 'au moins 80% des articles') + '.', 'success');
+    acte('valide le Palier 5' + (duree ? ' en ' + duree + ' s' : ''), 'success');
+    propagerVictoire();
+    afficherEcranVictoire(res);
+  }
+
+  var lance = false;
+  function lancer() {
+    if (lance) return;
+    lance = true;
+    demarrer();
+  }
+
+  async function demarrer() {
+    if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+      var nomApercu = (function () {
+        try { return localStorage.getItem('nautilusMatelotName') || ''; } catch (_) { return ''; }
+      })() || 'Matelot';
+      afficherBlocage(Date.now() + 3600000, nomApercu, 'erreurs', 1, 'Nemo');
+      return;
+    }
+    var ident = null;
+    if (!apercuAdminAutorise()) {
+      ident = await monIdentite();
+      if (ident && !ident.isTest) {
+        var bloc = await window.NautilusBlocages.blocageActif(ident);
+        if (bloc) {
+          lance = false;
+          afficherBlocage(bloc.lockedUntil, ident.name, bloc.reason);
+          journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
+            + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
+          return;
+        }
+      } else if (!ident) {
+        var jusqua = blocageAnonymeJusqua();
+        if (jusqua > Date.now()) { lance = false; afficherBlocage(jusqua, null, 'anonyme'); return; }
+      }
+    }
+    afficherVueEpreuve();
+    t0Partie = Date.now();
+    partieEnCours = true;
+    statut('🎯 <b>Épreuve en cours :</b> trouvez le prix exact arrondi à l’euro près pour chaque article Fnac Labège. Objectif : au moins 8 réussites sur 10.', 'info');
+
+    var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
+
+    window.NautilusJustePrix.init($('justePrixHost'), {
+      equipe: equipageCode,
+      onVictoire: function (res) {
+        partieEnCours = false;
+        onVictoire(res);
+      },
+      onEchec: function (motif) {
+        partieEnCours = false;
+        declencherBlocage(motif || 'erreurs');
+      },
+      onAbandon: function () {
+        partieEnCours = false;
+        declencherBlocage('abandon');
+      }
+    });
+  }
+
+  function intercepterSortie(e) {
+    if (partieEnCours) {
+      var conf = confirm("⚠️ Quitter le mini-jeu en cours entraîne la remontée immédiate en surface (blocage matelot). Confirmez-vous l’abandon ?");
+      if (conf) {
+        declencherBlocage('sortie_jeu');
+      } else {
+        if (e) e.preventDefault();
+        return false;
+      }
+    }
+  }
+
+  var btnAccueilTop = $('backBtn');
+  if (btnAccueilTop) {
+    btnAccueilTop.addEventListener('click', function (e) {
+      if (partieEnCours) {
+        if (!intercepterSortie(e)) return;
+      }
+      location.href = 'index.html?ecoutille=0';
+    });
+  }
+
+  var btnAccueilBas = $('btnSortieJeu');
+  if (btnAccueilBas) {
+    btnAccueilBas.addEventListener('click', function (e) {
+      if (partieEnCours) {
+        if (!intercepterSortie(e)) return;
+      }
+    });
+  }
+
+  window.addEventListener('beforeunload', function () {
+    if (partieEnCours && !apercuAdminAutorise()) {
+      declencherBlocage('sortie_jeu');
+    }
+  });
+
+  /* ============ BRIEFING DU CAPITAINE ============ */
+  window.NautilusBriefing.afficher($('briefHost'), {
+    intro: "« Bienvenue dans la soute aux reliques du Nautilus ». Estimez le juste prix de 10 articles Fnac avant la fin du temps imparti.",
+    consignes: [
+      { ico: '🎯', html: "<b>10 articles à évaluer</b> : saisissez un <b>nombre entier</b> à l’euro près." },
+      { ico: '⏱️', html: "<b>10 secondes par réponse</b> : au-delà, l’article est perdu." },
+      { ico: '🚨', warn: true, html: "<b>3 erreurs max par article</b> : chaque tentative ratée allume un voyant." },
+      { ico: '🏆', html: "<b>Objectif de réussite</b> : au moins <b>8 articles trouvés sur 10</b>." }
+    ],
+    cta: '⚓ PRENDRE LES COMMANDES',
+    onDepart: function () {
+      glisserEnHaut();
+      lancer();
+      setTimeout(glisserEnHaut, 350);
+      setTimeout(glisserEnHaut, 900);
+    }
+  });
+
+  function glisserEnHaut() {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    catch (e) { try { window.scrollTo(0, 0); } catch (_) {} }
+  }
+
+  /* Démarrage : choix de la VUE */
+  if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+    var nomApercu = (function () {
+      try { return localStorage.getItem('nautilusMatelotName') || ''; } catch (_) { return ''; }
+    })() || 'Matelot';
+    afficherBlocage(Date.now() + 3600000, nomApercu, 'erreurs', 1, 'Nemo');
+  } else if (apercuAdminAutorise()) {
+    var banniereModeTest = function () {
+      if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+    };
+    banniereModeTest();
+    setTimeout(banniereModeTest, 150);
+    afficherVueBriefing(false);
+  } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.estDeverrouille(5)) {
+    afficherVueBriefing(false);
+  } else {
+    afficherVueScellee();
+    if (window.NautilusSas.observerDeverrouillageEquipe) {
+      window.NautilusSas.observerDeverrouillageEquipe();
+    }
+  }
+  window.addEventListener('nautilus:sas-ouvert', function () {
+    afficherVueBriefing();
+  });
+
+  var _btn = $('sasIndicationBtn'), _panel = $('sasIndicationPanel');
+  var _txt = $('sasIndicationTexte');
+  if (_txt) _txt.textContent = ZONE_RECHERCHE_HINT;
+  if (_btn && _panel) {
+    _btn.addEventListener('click', function () {
+      var ouvert = !_panel.hidden;
+      _panel.hidden = ouvert;
+      _btn.textContent = ouvert ? '📍 Voir l’indication de la zone de recherche' : '📍 Masquer l’indication';
+      _btn.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
+    });
+  }
+})();
+</script>
+<!-- Bouton d'ambiance sonore, commun à toutes les pages du jeu. -->
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=5" defer></script>
+<!-- Modules d'administration : magasins, réponses et codes QR. -->
+<script src="artefact-moteur.js?v=8"></script>
+<script src="artefact-service.js?v=8"></script>
+<script src="magasin-fnac.js?v=1"></script>
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="photo-defi.js?v=6" defer></script>
+<script src="admin-artefact.js?v=33" defer></script>
+<script src="admin-button.js?v=34" type="module"></script>
+</body>
+</html>

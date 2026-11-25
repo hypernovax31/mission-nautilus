@@ -1,0 +1,607 @@
+/* =============================================================
+   PALIER 5 — « LE JUSTE PRIX »
+   Moteur de l'épreuve du Palier 5 (css/palier5.css).
+   Ambiance pupitre sous-marin Nautilus / Rayon Fnac.
+   S'ajoute à palier1.css et palier2.css : liseré d'or, teintes cyan,
+   voyants rouges vifs, chronomètre 10s et contrastes WCAG AAA.
+   ============================================================= */
+
+/* Page pleine largeur comme les Paliers 2, 3 et 4 */
+main { max-width: 1720px; }
+
+/* Conteneur de mission Juste Prix */
+.jp-mission {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+/* En-tête HUD d'évaluation */
+.jp-hud {
+  background: linear-gradient(135deg, rgba(5, 18, 32, 0.95), rgba(8, 42, 64, 0.9));
+  border: 1px solid rgba(142, 231, 255, 0.28);
+  border-radius: 14px;
+  padding: 8px 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+.jp-hud-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+
+.jp-hud-label {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8ee7ff;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+}
+
+.jp-hud-val {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: clamp(15px, 3.8vw, 18px);
+  font-weight: 1000;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.jp-hud-val.is-gold { color: #f5b027; }
+.jp-hud-val.is-danger { color: #ff4b3e; }
+.jp-hud-val.is-cyan { color: #5bff9c; }
+
+/* Carte produit */
+.jp-card {
+  background: rgba(4, 18, 32, 0.95);
+  border: 1px solid rgba(142, 231, 255, 0.28);
+  border-radius: 18px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(142, 231, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.jp-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #f5b027 30%, #8ee7ff 70%, transparent);
+}
+
+/* En-tête produit associant image principale et intitulé */
+.jp-product-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jp-image-box {
+  width: 100%;
+  height: 220px;
+  min-height: 200px;
+  background: radial-gradient(circle at 50% 45%, rgba(18, 52, 82, 0.75) 0%, rgba(3, 16, 30, 0.95) 70%, rgba(1, 8, 16, 0.99) 100%);
+  border: 1.5px solid rgba(142, 231, 255, 0.4);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  padding: 10px;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.85), 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.jp-image {
+  width: 100%;
+  height: 100%;
+  max-width: 260px;
+  max-height: 200px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.75));
+  transition: transform 0.25s ease;
+}
+
+.jp-image:hover {
+  transform: scale(1.03);
+}
+
+/* Animation des pouces 👍 vert (succès) et 👎🏻 rouge (échec) */
+.jp-thumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+}
+
+.jp-thumb-ico {
+  font-size: 50px;
+  line-height: 1;
+}
+
+.jp-thumb.is-win {
+  background: radial-gradient(circle, rgba(91, 255, 156, 0.4) 0%, rgba(10, 48, 30, 0.85) 70%, rgba(4, 18, 32, 0.95) 100%);
+  border: 3px solid #5bff9c;
+  box-shadow: 0 0 35px rgba(91, 255, 156, 0.85), inset 0 0 15px rgba(255, 255, 255, 0.6);
+}
+
+.jp-thumb.is-loss {
+  background: radial-gradient(circle, rgba(255, 75, 62, 0.4) 0%, rgba(60, 10, 10, 0.85) 70%, rgba(4, 18, 32, 0.95) 100%);
+  border: 3px solid #ff4b3e;
+  box-shadow: 0 0 35px rgba(255, 75, 62, 0.85), inset 0 0 15px rgba(255, 255, 255, 0.6);
+}
+
+.jp-thumb.is-win.animate {
+  animation: thumbPopWin 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+.jp-thumb.is-loss.animate {
+  animation: thumbPopLoss 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes thumbPopWin {
+  0% { transform: translate(-50%, -50%) scale(0.2) rotate(-15deg); opacity: 0; }
+  25% { transform: translate(-50%, -50%) scale(1.15) rotate(5deg); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+  80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(1.25); opacity: 0; }
+}
+
+@keyframes thumbPopLoss {
+  0% { transform: translate(-50%, -50%) scale(0.2) rotate(15deg); opacity: 0; }
+  20% { transform: translate(-50%, -50%) scale(1.15) rotate(-10deg); opacity: 1; }
+  40% { transform: translate(-50%, -50%) scale(1) rotate(8deg); opacity: 1; }
+  60% { transform: translate(-50%, -50%) scale(1) rotate(-6deg); opacity: 1; }
+  80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(1.25); opacity: 0; }
+}
+
+.jp-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.jp-category-badge {
+  align-self: flex-start;
+  font-size: 11.5px;
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(142, 231, 255, 0.16);
+  color: #8ee7ff;
+  border: 1.5px solid rgba(142, 231, 255, 0.45);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.jp-title {
+  margin: 0;
+  font-size: clamp(17px, 4.4vw, 22px);
+  font-weight: 900;
+  line-height: 1.32;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+/* Barre de statut d'essais & chronomètre 10s */
+.jp-status-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+/* Voyants d'erreurs (3 voyants rouges s'allumant à chaque erreur) */
+.jp-voyants-box {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(142, 231, 255, 0.2);
+  white-space: nowrap !important;
+}
+
+.jp-voyants-label {
+  font-size: 11px;
+  font-weight: 900;
+  color: #b7d9e8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+}
+
+.jp-voyants {
+  display: flex;
+  gap: 6px;
+}
+
+.jp-voyant {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(142, 231, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  font-weight: 1000;
+  color: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  position: relative;
+}
+
+/* Voyant allumé en rouge vif lors d'une erreur */
+.jp-voyant.is-error {
+  background: radial-gradient(circle at 35% 35%, #ff8585 0%, #ff1a1a 60%, #990000 100%);
+  border-color: #ff9999;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(255, 30, 30, 0.95), inset 0 0 6px rgba(255, 255, 255, 0.8);
+  transform: scale(1.15);
+  animation: voyantPulse 1.2s infinite alternate;
+}
+
+@keyframes voyantPulse {
+  0% { box-shadow: 0 0 10px rgba(255, 30, 30, 0.85), inset 0 0 4px rgba(255, 255, 255, 0.6); }
+  100% { box-shadow: 0 0 20px rgba(255, 40, 40, 1), inset 0 0 8px rgba(255, 255, 255, 0.9); }
+}
+
+/* Chronomètre 10s par réponse */
+.jp-timer-box {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(142, 231, 255, 0.2);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.jp-timer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8ee7ff;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+}
+
+.jp-timer-val {
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  font-weight: 1000;
+  color: #5bff9c;
+  transition: color 0.3s ease;
+}
+
+.jp-timer-val.is-warning { color: #ffd36c; }
+.jp-timer-val.is-critical { color: #ff4b3e; }
+
+.jp-timer-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+
+.jp-timer-bar {
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #18c8ff, #5bff9c);
+  box-shadow: 0 0 10px rgba(91, 255, 156, 0.5);
+  transition: width 0.1s linear, background 0.3s ease;
+}
+
+.jp-timer-bar.is-warning {
+  background: linear-gradient(90deg, #f5b027, #ffd36c);
+  box-shadow: 0 0 10px rgba(245, 176, 39, 0.6);
+}
+
+.jp-timer-bar.is-critical {
+  background: linear-gradient(90deg, #ff4b3e, #ff7b72);
+  box-shadow: 0 0 12px rgba(255, 75, 62, 0.8);
+}
+
+/* Zone de saisie du prix */
+.jp-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.jp-price-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jp-input-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.jp-input {
+  width: 100%;
+  height: 52px;
+  box-sizing: border-box;
+  background: rgba(1, 10, 20, 0.9);
+  border: 2px solid rgba(142, 231, 255, 0.28);
+  border-radius: 12px;
+  color: #fff;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 24px;
+  font-weight: 1000;
+  padding: 0 45px 0 16px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.jp-input:focus-visible,
+.jp-input:focus {
+  border-color: #f5b027;
+  box-shadow: 0 0 0 3px rgba(245, 176, 39, 0.35);
+}
+
+.jp-input-unit {
+  position: absolute;
+  right: 14px;
+  font-size: 22px;
+  font-weight: 1000;
+  color: #f5b027;
+  pointer-events: none;
+}
+
+.jp-btn-clear {
+  min-width: 48px;
+  height: 52px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(142, 231, 255, 0.28);
+  border-radius: 12px;
+  color: #cfe6ef;
+  font-size: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.jp-btn-clear:hover,
+.jp-btn-clear:focus-visible {
+  background: rgba(255, 75, 62, 0.25);
+  border-color: #ff4b3e;
+  color: #fff;
+  outline: none;
+}
+
+/* Bouton principal de soumission */
+.jp-submit-btn {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  min-height: 52px;
+  background: linear-gradient(135deg, #f5b027, #d48b13);
+  border: 2px solid #ffe2a0;
+  border-radius: 14px;
+  color: #04101d;
+  font-size: 15px;
+  font-weight: 1000;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(245, 176, 39, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.18s ease;
+}
+
+.jp-submit-btn:hover,
+.jp-submit-btn:focus-visible {
+  filter: brightness(1.12);
+  box-shadow: 0 6px 24px rgba(245, 176, 39, 0.6);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.jp-submit-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.8);
+  box-shadow: none;
+  transform: none;
+}
+
+/* Bandeau de feedback interactif */
+.jp-feedback {
+  min-height: 48px;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.35;
+  transition: all 0.2s ease;
+}
+
+.jp-feedback.is-neutral {
+  background: rgba(142, 231, 255, 0.08);
+  border: 1px solid rgba(142, 231, 255, 0.22);
+  color: #cfe6ef;
+}
+
+.jp-feedback.is-more {
+  background: rgba(245, 176, 39, 0.18);
+  border: 1px solid #f5b027;
+  color: #ffe2a0;
+  animation: pulseMore 0.4s ease;
+}
+
+.jp-feedback.is-less {
+  background: rgba(24, 200, 255, 0.18);
+  border: 1px solid #18c8ff;
+  color: #dff8ff;
+  animation: pulseLess 0.4s ease;
+}
+
+.jp-feedback.is-won {
+  background: rgba(91, 255, 156, 0.18);
+  border: 1px solid #5bff9c;
+  color: #dfffe8;
+  box-shadow: 0 0 20px rgba(91, 255, 156, 0.3);
+}
+
+.jp-feedback.is-lost {
+  background: rgba(255, 75, 62, 0.22);
+  border: 1px solid #ff4b3e;
+  color: #ffd0cd;
+}
+
+@keyframes pulseMore {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes pulseLess {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+  100% { transform: translateY(0); }
+}
+
+/* Responsive mobile : visibilité maximale des photos et des intitulés d'articles */
+@media (max-width: 640px) {
+  .jp-mission {
+    gap: 12px;
+    padding: 0 2px;
+  }
+
+  .jp-card {
+    padding: 14px 12px;
+    border-radius: 16px;
+    gap: 12px;
+  }
+
+  .jp-product-header {
+    gap: 10px;
+  }
+
+  /* Boîte photo agrandie et contrastée sur smartphone */
+  .jp-image-box {
+    height: clamp(210px, 58vw, 290px);
+    min-height: 210px;
+    padding: 12px;
+    background: radial-gradient(circle at 50% 45%, rgba(20, 58, 92, 0.85) 0%, rgba(4, 18, 34, 0.98) 72%, rgba(1, 8, 16, 1) 100%);
+    border: 2px solid rgba(142, 231, 255, 0.48);
+    box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.9), 0 8px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  .jp-image {
+    max-width: 100%;
+    max-height: 100%;
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.9));
+  }
+
+  /* Intitulé très lisible et mis en valeur sur mobile */
+  .jp-title {
+    font-size: clamp(18px, 5.2vw, 23px);
+    font-weight: 900;
+    line-height: 1.3;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+  }
+
+  .jp-category-badge {
+    font-size: 11.5px;
+    padding: 4px 11px;
+  }
+
+  .jp-hud {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .jp-hud-val {
+    font-size: 16px;
+  }
+
+  .jp-submit-btn {
+    min-height: 48px;
+    font-size: 15px;
+  }
+}
+
+/* Très petits écrans (iPhone SE / <= 380px) */
+@media (max-width: 380px) {
+  .jp-image-box {
+    height: 200px;
+    min-height: 200px;
+    padding: 8px;
+  }
+
+  .jp-title {
+    font-size: 17px;
+  }
+}
+
+/* Réduction des mouvements système */
+@media (prefers-reduced-motion: reduce) {
+  .jp-feedback, .jp-voyant, .jp-submit-btn, .jp-image, .jp-timer-bar {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}

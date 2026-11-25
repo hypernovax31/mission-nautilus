@@ -1,0 +1,91 @@
+/* Secours discret : les boutons restent cachés tant que l'animation joue.
+   Un choix explicite est nécessaire pour dépasser « mouvements réduits ». */
+.animation-secours[hidden]{display:none!important}
+.animation-secours{
+  box-sizing:border-box; max-width:90%; padding:7px 11px;
+  border:1px solid rgba(142,231,255,.7); border-radius:999px;
+  background:rgba(2,18,30,.93); color:#e9faff; font:700 12px/1.25 system-ui,sans-serif;
+  text-align:center; cursor:pointer; touch-action:manipulation;
+}
+.animation-secours:focus-visible{outline:2px solid #fff;outline-offset:3px}
+#ecAnimationControl{
+  position:absolute; left:50%; bottom:8%; z-index:10;
+  transform:translateX(-50%); min-width:150px;
+}
+#radarAnimationControl{margin:4px auto 0;min-height:38px}
+
+/* Le système reste prioritaire par défaut. Ces règles ne s'appliquent que
+   si la personne a cliqué elle-même sur « Activer les animations ».
+   On ne touche pas à animation-play-state : la pause hors écran continue
+   donc à fonctionner même lorsque le balayage est réactivé. */
+@media (prefers-reduced-motion: reduce){
+  html.nautilus-motion-enabled #ecoutille .m-rayons{
+    animation-name:ecMerRais!important;animation-duration:22s!important;
+    animation-timing-function:ease-in-out!important;animation-iteration-count:infinite!important;
+    animation-direction:alternate!important;
+  }
+  html.nautilus-motion-enabled #ecoutille .m-caustique{
+    animation-name:ecMerCaustique!important;animation-duration:18s!important;
+    animation-timing-function:ease-in-out!important;animation-iteration-count:infinite!important;
+    animation-direction:alternate!important;
+  }
+  html.nautilus-motion-enabled #ecoutille .m-caustique.b{animation-duration:26s!important}
+  html.nautilus-motion-enabled #ecoutille .m-neige{
+    animation-name:ecMerNeige!important;animation-duration:28s!important;
+    animation-timing-function:linear!important;animation-iteration-count:infinite!important;
+  }
+  html.nautilus-motion-enabled #ecoutille .m-bulles{
+    animation-name:ecMerBulles!important;animation-duration:16s!important;
+    animation-timing-function:ease-in!important;animation-iteration-count:infinite!important;
+  }
+  html.nautilus-motion-enabled #ecoutille .m-bulles.b{
+    animation-duration:26s!important;animation-delay:-9s!important;
+  }
+  html.nautilus-motion-enabled #ecoutille .ec-film{
+    animation-name:ecNolanFilm!important;animation-duration:28s!important;
+    animation-timing-function:linear!important;animation-iteration-count:infinite!important;
+    animation-direction:alternate!important;
+  }
+  html.nautilus-motion-enabled .radar-sweep-big{
+    animation-name:radarRotateFast!important;animation-duration:2.8s!important;
+    animation-timing-function:linear!important;animation-iteration-count:infinite!important;
+    animation-direction:normal!important;
+  }
+  /* Le pilote JS évite le blocage CSS constaté sur certains iPhone. */
+  html.nautilus-motion-enabled .radar-sweep-big.nautilus-radar-js{
+    animation:none!important;will-change:transform;
+  }
+  html.nautilus-motion-enabled .radar-center{
+    animation-name:centerPulse!important;animation-duration:1.6s!important;
+    animation-timing-function:ease-in-out!important;animation-iteration-count:infinite!important;
+  }
+  html.nautilus-motion-enabled .radar-blip.blip-pop{
+    animation-name:victoryBlipCore!important;animation-duration:.10s!important;
+    animation-timing-function:cubic-bezier(.18,.82,.26,1)!important;
+    animation-fill-mode:both!important;
+  }
+  html.nautilus-motion-enabled .radar-blip .blip-echo{display:block!important}
+  html.nautilus-motion-enabled .oxygen-liquid::before,
+  html.nautilus-motion-enabled .o2-fill::before{
+    animation-name:bubblesMove!important;
+    animation-duration:28s!important;
+    animation-play-state:running!important;
+  }
+  html.nautilus-motion-enabled .oxygen-liquid::after,
+  html.nautilus-motion-enabled .o2-fill::after{
+    animation-name:bubblesCross!important;
+    animation-duration:38s!important;
+    animation-play-state:running!important;
+  }
+  html.nautilus-motion-enabled body.page-hidden #ecoutille .m-rayons,
+  html.nautilus-motion-enabled body.page-hidden #ecoutille .m-caustique,
+  html.nautilus-motion-enabled body.page-hidden #ecoutille .m-neige,
+  html.nautilus-motion-enabled body.page-hidden #ecoutille .m-bulles,
+  html.nautilus-motion-enabled body.page-hidden #ecoutille .ec-film,
+  html.nautilus-motion-enabled body.page-hidden .oxygen-liquid::before,
+  html.nautilus-motion-enabled body.page-hidden .oxygen-liquid::after,
+  html.nautilus-motion-enabled body.page-hidden .o2-fill::before,
+  html.nautilus-motion-enabled body.page-hidden .o2-fill::after{
+    animation-play-state:paused!important;
+  }
+}

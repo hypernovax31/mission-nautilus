@@ -1,0 +1,472 @@
+--- a/index.html
++++ b/index.html
+@@ -1906,12 +1906,16 @@
+     #ecoutille .m-bulles{
+       animation:none !important;
+     }
+-    /* Mer : on garde le mouvement mais ralenti et très léger */
+-    #ecoutille .m-rayons{ animation: mRayons 22s ease-in-out infinite alternate !important; opacity:.28 !important; }
+-    #ecoutille .m-caustique{ animation: mCaustique 18s ease-in-out infinite alternate !important; }
++    /* Mer : utiliser les keyframes ecMer* définies plus haut. Les noms
++       mRayons/mCaustique/mNeige/mBulles n'existaient pas : le navigateur
++       acceptait la déclaration mais toutes ces couches restaient figées. */
++    #ecoutille .m-rayons{ animation: ecMerRais 22s ease-in-out infinite alternate !important; opacity:.28 !important; }
++    #ecoutille .m-caustique{ animation: ecMerCaustique 18s ease-in-out infinite alternate !important; }
+     #ecoutille .m-caustique.b{ animation-duration: 26s !important; }
+-    #ecoutille .m-neige{ animation: mNeige 28s linear infinite !important; }
+-    #ecoutille .m-bulles{ animation: mBulles 16s ease-in infinite !important; }
++    #ecoutille .m-neige{ animation: ecMerNeige 28s linear infinite !important; }
++    #ecoutille .m-bulles{ animation: ecMerBulles 16s ease-in infinite !important; }
++    #ecoutille .m-bulles.b{ animation-duration: 26s !important; animation-delay: -9s !important; }
++
+-
++
+     /* --- PLONGÉE FLUIDE : rapide, net, sans blur lourd --- */
+     #ecoutille.ec-plongee .ec-scene{ transform: scale(1.03) !important; }
+@@ -2439,6 +2443,8 @@
+        ce drapeau est posé avant son chargement (deferred), et l'ordre
+        de mission émet 'nautilus:fin-typewriter' à sa dernière lettre. -->
+   <script>window.nautilusAttendreTypewriter = true;</script>
++  <!-- Si Firebase ne charge pas, l'ordre reste lisible après l'écoutille. -->
++  <script src="typewriter-secours.js?v=1" defer></script>
+-
++
+   <!-- Sans JavaScript, il n'y a pas de page de garde : personne ne doit
+        rester bloqué devant une écoutille qui ne peut pas s'ouvrir. -->
+@@ -3448,19 +3454,23 @@
+      au repli de playAlarmOnce(). Le declenchement de l'annonce, lui, ne
+      depend plus que de la position du bloc a l'ecran (voir plus bas). */
+-
++
+-  /* --- L'animation tourne UNIQUEMENT quand le bloc est sous les yeux -----
+-     Bloc "Equipages en plongee" visible a >= 45 % : animation active.
+-     En dessous : tout se met en pause (balayage, halos, annonce, son) et
+-     reprend ensuite au meme point.
+-
+-     PIEGE : le pourcentage d'un IntersectionObserver se calcule sur la
+-     taille de l'ELEMENT. Ce bloc etant souvent plus haut que l'ecran, il
+-     n'atteindrait jamais 45 % et l'animation ne demarrerait plus. On
+-     ramene donc le calcul a la plus petite des deux hauteurs (bloc ou
+-     ecran), ce qui correspond a ce que voit vraiment le joueur. */
+-  const RADAR_VISIBLE_RATIO = 0.45;
++  /* Le radar est mis en pause uniquement si son écran est hors de vue ou si
++     l'onglet est masqué. Les cartes d'équipage sous le radar peuvent agrandir
++     toute la section sans bloquer son animation. */
+   let _radarVisible = false;
+   const _visibilityWaiters = [];
++
++  /* La carte des équipages peut dépasser la hauteur de l'écran. La visibilité
++     du radar doit être calculée sur le disque, pas sur la carte entière. */
++  function radarScreenVisible(){
++    const screen = document.querySelector('#radarStage .radar-screen-big');
++    if(!screen) return false;
++    const r = screen.getBoundingClientRect();
++    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
++    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
++    return Boolean(vh && vw && r.width && r.height &&
++      r.bottom > 0 && r.top < vh && r.right > 0 && r.left < vw);
++  }
+-
++
+   /* Gele ou relance les animations du sonar. */
+   function setRadarPaused(paused){
+@@ -3499,30 +3509,17 @@
+   }
+-
++
+   (function watchRadarVisibility(){
+-    // On surveille le BLOC entier, pas seulement le sonar.
+-    const target = document.getElementById('equipagesEnMer');
+-    if(!target){ _radarVisible = true; return; }
+-
+-    /* Part du bloc reellement sous les yeux, rapportee a la plus petite
+-       des deux hauteurs (bloc / ecran) — voir l'explication ci-dessus. */
+-    function visibleRatio(){
+-      const r = target.getBoundingClientRect();
+-      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+-      if(!vh || !r.height) return 0;
+-      const visible = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+-      if(visible <= 0) return 0;
+-      return visible / Math.min(r.height, vh);
+-    }
+-
+-    /* On ne pose l'etat visuel QUE sur un changement reel.
+-       Ne pas "forcer" au premier passage : la valeur de depart de
+-       _radarVisible est `false` mais AUCUNE classe n'est encore posee,
+-       donc le radar tourne. Forcer reviendrait a le geler au chargement
+-       tant que la page n'a pas sa hauteur definitive — exactement le
+-       defaut qu'on cherche a eviter. */
++    if(!document.getElementById('equipagesEnMer')){ _radarVisible = true; return; }
++
++    let observer = null;
++    let observedScreen = null;
++    let ticking = false;
++
+     function apply(){
+-      const onScreen = visibleRatio() >= RADAR_VISIBLE_RATIO;
+-      if(onScreen === _radarVisible) return;
++      const onScreen = document.visibilityState === 'visible' && radarScreenVisible();
++      const stage = document.getElementById('radarStage');
++      const pauseIncorrecte = stage && stage.classList.contains('anim-idle') === onScreen;
++      if(onScreen === _radarVisible && !pauseIncorrecte) return;
+       _radarVisible = onScreen;
+       setRadarPaused(!onScreen);
+       if(onScreen){
+@@ -3530,52 +3527,36 @@
+       }
+     }
+-
++
+-    /* Le pourcentage doit etre suivi en continu pendant le defilement.
+-       Pour ne pas alourdir le scroll (et la batterie), l'ecoute n'est
+-       active QUE lorsque le bloc est au moins un peu a l'ecran ; des qu'il
+-       en sort completement, on se contente de l'observateur. */
+-    let ticking = false;
++    function observeScreen(){
++      const screen = document.querySelector('#radarStage .radar-screen-big');
++      if(observer && screen !== observedScreen){
++        if(observedScreen) observer.unobserve(observedScreen);
++        observedScreen = screen;
++        if(screen) observer.observe(screen);
++      }
++      apply();
++    }
++
+     function onMove(){
+       if(ticking) return;
+       ticking = true;
+       requestAnimationFrame(() => { ticking = false; apply(); });
+     }
+-    let listening = false;
+-    function listen(on){
+-      if(on === listening) return;
+-      listening = on;
+-      const fn = on ? window.addEventListener : window.removeEventListener;
+-      fn.call(window, 'scroll', onMove, { passive:true });
+-      fn.call(window, 'resize', onMove, { passive:true });
+-      fn.call(window, 'orientationchange', onMove, { passive:true });
+-    }
+-
++
++    /* Observer l'ecran lui-meme permet aussi de reagir aux changements de
++       mise en page sans defilement. Le suivi de scroll reste un repli pour
++       les navigateurs sans IntersectionObserver. */
+     if(typeof IntersectionObserver === 'function'){
+-      new IntersectionObserver(entries => {
+-        entries.forEach(en => listen(en.isIntersecting));
+-        apply();
+-      }, { threshold: [0, 0.01] }).observe(target);
+-    }else{
+-      listen(true);   // vieux navigateur : on suit le defilement en continu
+-    }
+-
+-    apply();          // etat de depart (page rechargee deja defilee)
+-
+-    /* La hauteur de la page bouge encore apres ce premier calcul : polices
+-       de caracteres, image de fond, cartes d'equipage... Un bloc juge
+-       "hors ecran" a cet instant peut tres bien etre sous les yeux une
+-       demi-seconde plus tard. On refait donc le point au chargement
+-       complet, puis deux fois a court terme — c'est gratuit et cela evite
+-       un sonar immobile jusqu'au premier defilement. */
+-    window.addEventListener('load', apply, { once:true });
+-    setTimeout(apply, 400);
+-    setTimeout(apply, 1500);
+-
+-    /* Retour sur l'onglet : certains navigateurs suspendent les animations
+-       en arriere-plan et ne les relancent pas toujours seuls. */
+-    document.addEventListener('visibilitychange', () => {
+-      if(document.visibilityState === 'visible') apply();
+-    });
++      observer = new IntersectionObserver(apply, { threshold: [0, 0.01] });
++    }
++    window.addEventListener('scroll', onMove, { passive:true });
++    window.addEventListener('resize', onMove, { passive:true });
++    window.addEventListener('orientationchange', onMove, { passive:true });
++    window.addEventListener('load', observeScreen, { once:true });
++    document.addEventListener('visibilitychange', apply);
++    observeScreen();
++    setTimeout(observeScreen, 400);
++    setTimeout(observeScreen, 1500);
+   })();
+-
++
+   function waitForRadarVisible(){
+@@ -4328,8 +4309,7 @@
+-
++
+     }catch(err){
+       console.error('NAUTILUS loadTeams error:', err);
+-      const stage = $('radarStage');
+-      if(stage) stage.remove();
++      // Une erreur de chargement ne doit pas supprimer le radar de la page.
+       box.innerHTML=`<div class="notice warning"><b>Le sonar gresille...</b> Impossible de joindre le Nautilus pour le moment.<br><span class="small">Detail technique : ${esc(err.code || err.message || err)}</span></div>`;
+     }finally{
+       _loadTeamsRunning = false;
+--- a/sw.js
++++ b/sw.js
+@@ -1,6 +1,6 @@
+ // Service worker minimal pour PWA Mission Nautilus
+-// Strategie : network-first pour les pages, cache-first pour assets statiques
+-const CACHE_NAME = 'nautilus-v392';
++// Pages : network-first ; code et styles : cache avec revalidation en fond.
++const CACHE_NAME = 'nautilus-v393';
+ const PRECACHE = [
+   './',
+   './index.html',
+@@ -9,21 +9,29 @@
+   './1831411720.html',
+   './classement.html',
+   './css/index.css?v=54',
++  './css/index.css?v=79',
+   './css/classement.css?v=9',
+   './css/hublots.css?v=15',
+   './css/palier1.css?v=54',
+   './css/palier2.css?v=26',
++  './css/palier2.css?v=30',
+   './css/artefact.css?v=3',
++  './css/artefact.css?v=1',
++  './css/artefact.css?v=7',
+   './css/tentatives.css?v=2',
++  './css/tentatives.css?v=3',
+   './css/admin.css?v=11',
++  './anti-zoom.js?v=1',
+   './son-partage.js?v=2',
+   './sonar-button.js?v=4',
+   './admin-button.js?v=28',
++  './admin-button.js?v=26',
+   './palier-annonces.js?v=3',
+   './journal-bord.js?v=7',
+   './palier-sas.js?v=22',
+   './palier-cinematic.js?v=4',
+   './palier-briefing.js?v=5',
++  './palier-briefing.js?v=3',
+   './matelot-blocages.js?v=3',
+   './reserve-o2.js?v=4',
+   './equipage-actif.js?v=11',
+@@ -35,13 +43,16 @@
+   './artefact-service.js?v=8',
+   './magasin-fnac.js?v=1',
+   './magasin-guard.js?v=3',
++  './magasin-guard.js?v=4',
+   './artefact-palier3.js?v=11',
+   './fnac-lecteur.js?v=1',
+   './admin-artefact.js?v=26',
++  './admin-artefact.js?v=22',
+   './data/magasins-fnac.json',
+   './data/catalogue-artefacts.example.json',
+   './victoire-palier.js?v=12',
+   './records-palier.js?v=2',
++  './typewriter-secours.js?v=1',
+   './install-promo.js?v=9',
+   './ecoutille.js?v=37',
+   /* Lecteur QR local du sas : caméra et import photo sans CDN. */
+@@ -73,27 +84,53 @@
+   './assets/film-nautilus-P.jpg?v=2'
+ ];
+-
++
++/* Chaque ressource est precachee independamment : cache.addAll annule
++   TOUT le lot si une seule reponse echoue (par exemple un son indisponible
++   lors d'une coupure 4G). On essaie au besoin l'ancien cache pour ce meme
++   fichier et cette meme version ; les autres ressources restent utilisables. */
++async function remplirPrecache() {
++  const cache = await caches.open(CACHE_NAME);
++  let prochain = 0;
++  async function charger() {
++    while (prochain < PRECACHE.length) {
++      const adresse = PRECACHE[prochain++];
++      try {
++        const reponse = await fetch(adresse, { cache: 'reload' });
++        if (!reponse.ok) throw new Error('HTTP ' + reponse.status);
++        await cache.put(adresse, reponse);
++      } catch (_) {
++        try {
++          const copie = await caches.match(adresse);
++          if (copie) await cache.put(adresse, copie);
++        } catch (_) { /* stockage indisponible : les autres fichiers restent */ }
++      }
++    }
++  }
++  // Six telechargements en parallele : ne pas saturer une connexion mobile.
++  await Promise.all(Array.from({ length: 6 }, () => charger()));
++}
++
+ self.addEventListener('install', (event) => {
+-  event.waitUntil(
+-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE).catch(() => {}))
+-  );
+-  /* skipWaiting : la nouvelle version prend la main tout de suite, sans
+-     attendre la fermeture de tous les onglets. Combine a l'ecoute de
+-     'controllerchange' dans index.html, qui affiche alors un bandeau
+-     « Nouvelle version prete — Actualiser » : PLUS JAMAIS de rechargement
+-     automatique (il causait le faux depart qui effacait la saisie du
+-     joueur). Les fichiers frais arrivent d'eux-memes a la prochaine
+-     navigation, servis par ce nouveau service worker. */
+-  self.skipWaiting();
++  event.waitUntil((async () => {
++    await remplirPrecache();
++    // L'accueil affiche un bandeau de mise a jour, sans recharger le joueur.
++    await self.skipWaiting();
++  })());
+ });
+-
++
+ self.addEventListener('activate', (event) => {
+-  event.waitUntil(
+-    caches.keys().then((keys) => Promise.all(
+-      keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+-    ))
+-  );
+-  self.clients.claim();
++  event.waitUntil((async () => {
++    const cache = await caches.open(CACHE_NAME);
++    const presents = await Promise.all(PRECACHE.map((adresse) => cache.match(adresse)));
++    if (presents.every(Boolean)) {
++      const keys = await caches.keys();
++      // Ne jamais supprimer les caches d'une autre application du domaine.
++      await Promise.all(keys.filter((k) => k.startsWith('nautilus-v') && k !== CACHE_NAME)
++        .map((k) => caches.delete(k)));
++    }
++    // Si le precache est incomplet, l'ancien reste disponible hors connexion.
++    await self.clients.claim();
++  })());
+ });
+-
++
+ self.addEventListener('fetch', (event) => {
+@@ -117,7 +154,31 @@
+     );
+     return;
+   }
+-  // Assets : cache-first
++  /* CSS et JS : cache immediat, puis revalidation en arriere-plan. Le
++     waitUntil est indispensable : sans lui le navigateur peut terminer le
++     service worker avant que la nouvelle version soit ecrite dans le cache. */
++  const dest = req.destination;
++  const estCodeOuStyle = dest === 'style' || dest === 'script'
++    || url.pathname.endsWith('.css') || url.pathname.endsWith('.js');
++  if (estCodeOuStyle) {
++    const miseAJour = fetch(req).then(async (res) => {
++      if (res && res.ok) {
++        try {
++          const cache = await caches.open(CACHE_NAME);
++          await cache.put(req, res.clone());
++        } catch (_) { /* une erreur de cache ne doit pas masquer la reponse */ }
++      }
++      return res;
++    }).catch(() => null);
++    event.waitUntil(miseAJour);
++    event.respondWith(
++      caches.open(CACHE_NAME).then((c) => c.match(req)).catch(() => null)
++        .then((cached) => cached || miseAJour.then((res) => res || Response.error()))
++    );
++    return;
++  }
++
++  // Autres assets (images, sons, polices) : cache-first
+   event.respondWith(
+     caches.match(req).then((cached) => cached || fetch(req).then((res) => {
+       const copy = res.clone();
+--- /dev/null
++++ b/typewriter-secours.js
+@@ -0,0 +1,100 @@
++/* Secours local pour l'ordre de mission si le module Firebase ne demarre
++   pas ou si le chargement de la page reste bloque. Le module principal reste
++   prioritaire : les deux chemins utilisent data-typed comme verrou. */
++(function () {
++  'use strict';
++
++  function planifier() {
++    var ordre = document.getElementById('missionOrderText');
++    var texte = document.getElementById('missionOrderTyping');
++    if (!ordre || !texte) return;
++
++    // Le module principal demarre normalement une seconde apres le chargement.
++    // Ce delai lui laisse la priorite, sans laisser l'ordre vide indefiniment.
++    setTimeout(function () {
++      if (ordre.dataset.typed === 'true') return;
++      ordre.dataset.typed = 'true';
++      var complet = ordre.dataset.text || '';
++      var mouvementReduit = window.matchMedia &&
++        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
++
++      function terminer() {
++        // L'invitation PWA attend ce signal, comme avec le module principal.
++        window.dispatchEvent(new Event('nautilus:fin-typewriter'));
++      }
++
++      if (mouvementReduit || !complet) {
++        texte.textContent = complet;
++        terminer();
++        return;
++      }
++
++      // Meme superposition que le module principal : la hauteur reservee ne
++      // bouge pas pendant la frappe, y compris sur un petit ecran.
++      var fantome = document.createElement('span');
++      fantome.className = 'typewriter-ghost';
++      fantome.setAttribute('aria-hidden', 'true');
++      fantome.textContent = complet;
++      ordre.insertBefore(fantome, texte);
++      texte.classList.add('typewriter-live');
++      texte.textContent = '';
++      var noeud = document.createTextNode('');
++      texte.appendChild(noeud);
++      var curseur = document.createElement('span');
++      curseur.className = 'typewriter-caret';
++      curseur.textContent = '▌';
++      texte.appendChild(curseur);
++      var i = 0;
++
++      function ecrire() {
++        if (!ordre.isConnected) return;
++        i++;
++        noeud.nodeValue = complet.slice(0, i);
++        if (i < complet.length) {
++          setTimeout(ecrire, 18);
++          return;
++        }
++        curseur.remove();
++        texte.classList.remove('typewriter-live');
++        fantome.remove();
++        terminer();
++      }
++      setTimeout(ecrire, 40);
++    }, 2500);
++  }
++
++  /* Sur la version avec page de garde, la frappe doit attendre l'ouverture
++     de l'ecoutille. Sur les autres versions il n'y a pas de porte a attendre. */
++  function quandEcoutilleOuverte() {
++    var porte = document.getElementById('ecoutille');
++    function ouverte() {
++      var racine = document.documentElement;
++      return !document.getElementById('ecoutille') || window.__ecoutilleJouer === false ||
++        racine.classList.contains('ec-arrivee') || racine.classList.contains('ec-passee') ||
++        (porte && porte.classList.contains('ec-passee'));
++    }
++    if (ouverte()) { planifier(); return; }
++
++    var observer = null;
++    var dejaPlanifie = false;
++    function verifier() {
++      if (dejaPlanifie || !ouverte()) return;
++      dejaPlanifie = true;
++      window.removeEventListener('nautilus:ecoutille-ouverte', verifier);
++      if (observer) observer.disconnect();
++      planifier();
++    }
++    window.addEventListener('nautilus:ecoutille-ouverte', verifier);
++    if (typeof MutationObserver === 'function') {
++      observer = new MutationObserver(verifier);
++      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
++      if (porte) observer.observe(porte, { attributes: true, attributeFilter: ['class'] });
++      if (document.body) observer.observe(document.body, { childList: true });
++    }
++    verifier(); // couvre une ouverture survenue pendant l'installation du suivi
++  }
++
++  // Le script est defer : le DOM existe deja meme si un module distant tarde.
++  if (document.getElementById('missionOrderText')) quandEcoutilleOuverte();
++  else document.addEventListener('DOMContentLoaded', quandEcoutilleOuverte, { once: true });
++})();

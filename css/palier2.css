@@ -1,0 +1,592 @@
+/* =============================================================
+   PALIER 2 — portail d'accès scellé (QR Code)
+   S'ajoute à palier1.css : même liseré d'or, même ambiance.
+   ============================================================= */
+
+/* Page pleine largeur : le Palier 2 s'étend au-delà du cadre standard
+   (1180 px) pour laisser la grille et ses descriptions se déployer de
+   part et d'autre sur grand écran. */
+main{ max-width:1720px; }
+
+.gate-hero .body{ display:block; }
+
+/* Encart de scan : cadre pointillé or, façon « zone d'amarrage ». */
+.gate-scanbox{
+  position:relative;
+  border:2px dashed rgba(245,176,39,.55);
+  border-radius:18px;
+  background:rgba(2,10,18,.55);
+  min-height:190px;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+  margin-bottom:12px;
+}
+.gate-cam{ width:100%; max-height:340px; object-fit:cover; display:block; }
+/* BUG CORRIGÉ : le display:block ci-dessus écrasait l'attribut hidden
+   de la vidéo — la zone vidéo VIDE (300×150 px par défaut) restait
+   affichée caméra éteinte et poussait le placeholder hors du centre
+   de l'encart. On redonne sa force à l'attribut hidden. */
+.gate-cam[hidden]{ display:none; }
+/* Le message « Caméra en veille » est centré pile au milieu de
+   l'encart : calque absolu occupant toute la zone de scan. */
+.gate-cam-placeholder{
+  position:absolute; inset:0; margin:auto;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  color:#9bc4d4; font-size:13.5px; font-weight:700; text-align:center;
+  padding:20px 18px; line-height:1.5;
+  cursor:pointer;
+  transition:background .18s ease;
+}
+.gate-cam-placeholder:hover{
+  background:rgba(142,231,255,.05);
+}
+.gate-cam-icon{
+  font-size:42px;
+  filter:drop-shadow(0 0 10px rgba(245,176,39,.5));
+  animation:gateCamPulse 2s infinite ease-in-out;
+}
+@keyframes gateCamPulse{
+  0%, 100%{ transform:scale(1); opacity:.9; }
+  50%{ transform:scale(1.08); opacity:1; filter:drop-shadow(0 0 16px rgba(245,176,39,.8)); }
+}
+.gate-placeholder-btn{
+  background:linear-gradient(135deg,#f5b027,#d48b13);
+  color:#04101d;
+  border:2px solid #ffe2a0;
+  border-radius:12px;
+  padding:10px 20px;
+  font-weight:1000;
+  font-size:13.5px;
+  letter-spacing:.04em;
+  cursor:pointer;
+  box-shadow:0 4px 16px rgba(245,176,39,.4);
+  transition:all .18s ease;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.gate-placeholder-btn:hover{
+  filter:brightness(1.12);
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(245,176,39,.6);
+}
+.gate-scan-status{
+  position:absolute; left:0; right:0; bottom:0;
+  padding:8px 12px; font-size:12px; font-weight:900;
+  letter-spacing:.06em; text-transform:uppercase;
+  color:#dff6ff; background:rgba(2,10,18,.65);
+  text-align:center;
+}
+.gate-scan-status:empty{ display:none; }
+.gate-cam-placeholder[hidden]{ display:none; }
+
+.gate-actions{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+.gate-btn{
+  border-radius:12px; padding:12px 18px;
+  font-weight:900; font-size:13px; letter-spacing:.05em; text-transform:uppercase;
+  cursor:pointer; border:2px solid transparent;
+}
+.gate-btn--cam{ background:rgba(142,231,255,.12); border-color:rgba(142,231,255,.55); color:#8ee7ff; }
+.gate-btn--cam:hover{ background:rgba(142,231,255,.24); color:#fff; }
+.gate-btn--cam.is-cam-off{
+  background:rgba(245,176,39,.2);
+  border-color:#f5b027;
+  color:#ffd36c;
+  box-shadow:0 0 12px rgba(245,176,39,.25);
+}
+.gate-btn--cam.is-cam-active{
+  background:rgba(255,75,62,.18);
+  border-color:rgba(255,75,62,.55);
+  color:#ff8579;
+}
+.gate-btn--import{ background:var(--fnac); color:#111; border-color:transparent; }
+.gate-btn--import:hover{ filter:brightness(1.08); }
+.gate-msg{
+  margin-top:12px; font-size:13px; font-weight:800; line-height:1.5;
+  border-radius:12px; padding:0;
+}
+.gate-msg:empty{ display:none; }
+.gate-msg.is-info{ color:#dff6ff; background:rgba(142,231,255,.10); border:1px solid rgba(142,231,255,.35); padding:10px 12px; }
+.gate-msg.is-warning{ color:#ffe2a0; background:rgba(245,176,39,.12); border:1px solid rgba(245,176,39,.45); padding:10px 12px; }
+.gate-msg.is-danger{ color:#ffd0cd; background:rgba(255,75,62,.14); border:1px solid rgba(255,75,62,.5); padding:10px 12px; }
+.gate-msg.is-success{ color:#dfffe8; background:rgba(91,255,156,.10); border:1px solid rgba(91,255,156,.5); padding:10px 12px; }
+.gate-msg-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.gate-btn-retry-cam{
+  background:#f5b027;
+  color:#04101d;
+  border:0;
+  border-radius:8px;
+  padding:6px 14px;
+  font-weight:1000;
+  font-size:12.5px;
+  letter-spacing:.03em;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+  transition:.15s;
+}
+.gate-btn-retry-cam:hover{
+  filter:brightness(1.15);
+  transform:scale(1.03);
+}
+
+
+/* L'encart de saisie manuscrite du numéro secret (.gate-manual) a été
+   SUPPRIMÉ : caméra ou photo du QR Code uniquement. Styles retirés. */
+
+.gate-unlocked{ border-color:rgba(91,255,156,.5); }
+.gate-unlocked h2{ color:#5be09b; }
+
+/* BRIEFING DU CAPITAINE (#briefCard) : vue obligatoire entre la ZONE
+   SCELLÉE (sas QR) et l'épreuve, sur TOUS les paliers de la mission
+   (Palier 2 → final). La carte réutilise .card / .body de palier1.css
+   et le bloc rendu par palier-briefing.js réutilise EXACTEMENT les
+   classes .brief du briefing du Palier 1 (.brief-signature,
+   .brief-intro, .brief-list, .brief-cta). Le texte s'étend désormais
+   sur TOUTE la largeur de la carte — comme au Palier 1 — au lieu de
+   rester centré sur une colonne étroite. */
+/* Responsive : la clause descriptive longue du briefing (.brief-verbose)
+   est masquée sur petit écran — le texte se lit plus court et plus serré,
+   sans mur de texte sur téléphone. */
+@media(max-width:640px){
+  .brief-verbose{ display:none; }
+  .brief-intro{ font-size:14px; line-height:1.6; }
+}
+
+/* MISE EN PAGE « AU MOMENT DE JOUER » : pendant les mots croisés, la
+   page ne laisse QUE la carte de l'épreuve (le journal de bord s'est
+   rangé : il vit sur les vues d'avant-partie — portail scellé et
+   briefing du capitaine). Même scène unique qu'au Palier 1 : liseré
+   d'or renforcé et halo doux, avec transition courte pour un
+   basculement sans à-coup. */
+.gate-unlocked{ transition:border-color .3s ease, box-shadow .3s ease, background .3s ease; }
+.gate-unlocked.epreuve-focus{
+  border-color:rgba(245,176,39,.6);
+  background:rgba(5,19,33,.95);
+  box-shadow:0 0 0 3px rgba(245,176,39,.14), 0 22px 48px rgba(0,0,0,.55);
+}
+.gate-home{
+  display:inline-block; margin-top:8px;
+  background:rgba(255,255,255,.08); color:#fff;
+  border:1px solid rgba(245,176,39,.5); border-radius:12px;
+  padding:11px 20px; font-weight:900; font-size:13px; text-decoration:none;
+  letter-spacing:.04em; text-transform:uppercase;
+}
+.gate-home:hover{ background:rgba(245,176,39,.85); color:#111; }
+
+/* Bouton « Voir l'indication de la zone de recherche » (zone scellée) :
+   remplace l'ancienne phrase d'explication — renvoie sur palier1.html
+   ?relecture=sas, c'est-à-dire l'écran de relecture de la direction
+   du QR du palier précédent. */
+/* =============================================================
+   MOTS CROISÉS « ESCALE LABÈGE » (moteur mots-croises.js)
+   REFAITE CONTRASTES : cases « papier » claires sur fond abyssal
+   (avant : cases sombres + liseré translucide = illisibles),
+   cadre de grille cerclé d'or, mot actif or pâle, curseur or
+   vif, validation vert menthe, faute rouge clair — l'encre reste
+   marine foncée sur case claire dans TOUS les états.
+   Le badge de droite = NOMBRE DE LETTRES du mot.
+   ============================================================= */
+/* GRAND ÉCRAN : la grille au centre, les descriptions l'ENTOURENT —
+   « Horizontalement » à gauche, « Verticalement » à droite (3 colonnes,
+   toute la largeur). */
+.mc{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,640px) minmax(0,1fr);
+  grid-template-areas:"across grille down";
+  gap:32px; align-items:start;
+}
+.mc-grille{ grid-area:grille; }
+.mc-defs{ display:contents; }
+.mc-defs-group--h{ grid-area:across; }
+.mc-defs-group--v{ grid-area:down; }
+/* ÉCRAN MOYEN : la grille passe au-dessus, et les descriptions se
+   rangent en DEUX colonnes côte à côte (occupe toute la largeur). */
+@media(max-width:1439px){
+  .mc{ grid-template-columns:1fr; grid-template-areas:none; gap:20px; }
+  .mc-grille{ grid-area:auto; max-width:640px; }
+  .mc-defs{ display:flex; flex-direction:row; align-items:flex-start; gap:16px; }
+  .mc-defs-group--h, .mc-defs-group--v{ grid-area:auto; }
+  .mc-defs-group{ flex:1 1 0; }
+}
+/* PETIT TÉLÉPHONE : descriptions de nouveau sur UNE colonne. */
+@media(max-width:640px){
+  .mc-defs{ flex-direction:column; gap:14px; }
+}
+/* RESPONSIVE « PLEIN CADRE » : sur petit écran, la page et la carte
+   rognent leurs marges pour donner le maximum de largeur à la grille
+   (16 colonnes) et aux définitions — on exploite toute la fenêtre
+   visible, sans perdre un seul pixel en gouttières. */
+@media(max-width:640px){
+  main{ padding:12px 10px 64px; gap:14px; }
+  .body{ padding:14px 12px; }
+}
+@media(max-width:430px){
+  main{ padding:10px 8px 60px; gap:12px; }
+  .body{ padding:12px 10px; }
+}
+.mc-grille{
+  display:grid; gap:6px; width:100%; max-width:680px; min-width:0; margin:0 auto;
+  /* FOND RETRAVAILLÉ : cadre abyssal en dégradé, filet d'or plus
+     présent — les cases « papier » restent DANS l'encadrement à
+     toutes les largeurs (min-width:0 + input size=1, voir
+     mots-croises.js) : plus aucun débordement. */
+  background:linear-gradient(180deg, rgba(8,26,41,.92), rgba(3,13,23,.94));
+  border:1px solid rgba(245,176,39,.45);
+  border-radius:18px; padding:14px;
+  box-shadow:inset 0 2px 16px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.35);
+  /* un clic sur une définition glisse la page jusqu'au HAUT de la
+     grille : marge de scroll pour ne pas passer sous la topbar
+     sticky (~62 px, même convention que #gameCard de palier1.css) */
+  scroll-margin-top:74px;
+}
+.mc-vide{ aspect-ratio:1; min-width:0; }
+.mc-case{
+  position:relative; aspect-ratio:1; min-width:0; border-radius:9px;
+  background:#f1f6fc; border:1px solid #12365a;
+  transition:border-color .15s, box-shadow .15s, background .2s;
+}
+.mc-case:focus-within{ border-color:#8ee7ff; box-shadow:0 0 0 2px rgba(142,231,255,.55); }
+.mc-num{ position:absolute; top:1px; left:4px; font-size:9px; font-weight:900; color:#4d6c86; pointer-events:none; }
+.mc-input{
+  width:100%; height:100%; min-width:0; border:0; background:transparent; outline:none;
+  text-align:center; color:#0b2740; font-weight:900; font-size:clamp(13px,3.8vw,24px);
+  caret-color:#c47f0e; text-transform:uppercase; padding:0; border-radius:9px;
+}
+/* Petit écran : grille resserrée pour des cases aussi grosses que
+   possible (13 colonnes !), badg/ne numéro réduit, parfums arrondis. */
+@media(max-width:760px){
+  .mc-grille{ gap:3px; padding:6px; border-radius:13px; }
+  .mc-case{ border-radius:5px; }
+  .mc-input{ border-radius:5px; }
+  .mc-num{ font-size:7.5px; top:0; left:3px; }
+}
+/* Très petit écran : encore un cran plus compact, définitions assouplies. */
+@media(max-width:430px){
+  .mc-grille{ gap:2px; padding:5px; }
+  .mc-num{ font-size:7px; left:2px; }
+  .mc-def{ padding:10px 12px; gap:9px; font-size:13px; }
+  .mc-def-check{ width:22px; height:22px; font-size:12px; }
+}
+.mc-case.mc-actif{ background:#ffe6ad; border-color:#b97e0c; box-shadow:0 0 8px rgba(245,176,39,.35); }
+.mc-case.mc-curseur{ background:#ffd877; border-color:#f5b027; box-shadow:0 0 0 2px #f5b027, 0 0 14px rgba(245,176,39,.5); }
+/* MOT VALIDÉ = VERT FRANC, bien lisible (demande explicite) : la case
+   passe au vert dès que le mot est complet et juste — y compris
+   complété « par-dessus » un croisement (correctif mots-croises.js). */
+.mc-case.mc-juste{ background:#b9eccd; border-color:#1f9d5c; box-shadow:inset 0 0 0 1px rgba(31,157,92,.4); }
+.mc-case.mc-juste .mc-input{ color:#0f6a3d; }
+.mc-case.mc-faux{ animation:mcShake .5s; background:#ffd9d4; border-color:#d02c1c; }
+.mc-case.mc-faux .mc-input{ color:#a11e12; }
+@keyframes mcShake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+.mc.mc-termine .mc-grille{ pointer-events:none; }
+
+.mc-defs-group{ display:flex; flex-direction:column; gap:9px; min-width:0; }
+.mc-defs-titre{ color:#ffd36c; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; margin:0 0 2px; }
+.mc-def{
+  display:flex; gap:12px; align-items:flex-start; text-align:left; cursor:pointer;
+  background:rgba(4,18,30,.72); border:1px solid rgba(142,231,255,.38); border-radius:12px;
+  color:#ecf8ff; font-size:14px; line-height:1.55; padding:13px 15px; font-family:inherit;
+  transition:border-color .15s, background .15s, box-shadow .15s;
+}
+.mc-def:hover{ border-color:rgba(245,176,39,.75); background:rgba(245,176,39,.08); }
+.mc-def.mc-def-active{ border-color:#f5b027; background:rgba(245,176,39,.12); box-shadow:0 0 0 1px rgba(245,176,39,.40), 0 0 14px rgba(245,176,39,.18); }
+/* BADGE ✔ DE VALIDATION : caché par défaut, il POP (échelle) quand le
+   mot est trouvé — posé à droite de la définition, impossible à rater. */
+.mc-def-check{
+  flex:0 0 auto; align-self:center;
+  width:26px; height:26px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:1000; color:#06170f;
+  background:#3ddc84; box-shadow:0 0 10px rgba(61,220,132,.55);
+  opacity:0; transform:scale(.5);
+  transition:opacity .25s ease, transform .25s cubic-bezier(.2,1.4,.4,1);
+}
+/* MOT VALIDÉ = IMPOSSIBLE À RATER : badge ✔ vert plein + fond doucement
+   teinté + filet vert + indice raturé — bien plus clair que l'ancien
+   simple barré translucide. */
+.mc-def.mc-def-ok{
+  border-color:rgba(61,220,132,.65);
+  background:linear-gradient(135deg, rgba(61,220,132,.17), rgba(61,220,132,.05));
+  box-shadow:0 0 0 1px rgba(61,220,132,.28);
+}
+.mc-def.mc-def-ok .mc-def-check{ opacity:1; transform:scale(1); }
+.mc-def.mc-def-ok .mc-def-numtxt{ color:#7ce6ad; }
+.mc-def.mc-def-ok .mc-def-txt{
+  color:#b9ecd2;
+  text-decoration:line-through; text-decoration-color:rgba(61,220,132,.6);
+}
+/* Définitions NUES (Palier 2 « Code Magasin ») : ni pastille numérotée,
+   ni badge « nombre de lettres », ni cryptogramme — juste le numéro en
+   texte or suivi de l'indice oblique. */
+.mc-def-numtxt{
+  flex:0 0 auto; min-width:26px; text-align:right; padding-top:1px;
+  color:#ffd36c; font-size:13.5px; font-weight:900; line-height:1.55;
+}
+.mc-def-txt{ flex:1 1 auto; min-width:0; }
+
+/* Bandeaux d'état du jeu (compteur d'erreurs, blocage, victoire). */
+.mc-statut{
+  margin-bottom:12px; padding:10px 12px; border-radius:10px;
+  font-size:13px; font-weight:800; line-height:1.5;
+  background:rgba(142,231,255,.08); border:1px solid rgba(142,231,255,.30); color:#dff6ff;
+}
+.mc-statut.is-danger{ background:rgba(255,75,62,.12); border-color:rgba(255,75,62,.5); color:#ffd0cd; }
+.mc-statut.is-success{ background:rgba(91,224,155,.10); border-color:rgba(91,224,155,.5); color:#dfffe8; }
+
+/* =============================================================
+   SAS SCELLÉ — LA PORTE D'ACCÈS (scène unique et immersive)
+   Le message de verrouillage, le lecteur QR et l'indication de la
+   zone de recherche ne forment PLUS QU'UN SEUL BLOC. Tant que le sas
+   est fermé, c'est la seule chose à l'écran : toute la mise en scène
+   (médaillon cadenas qui « respire », rayon de scanner qui balaie)
+   tend vers le même geste — ouvrir la porte.
+   ============================================================= */
+.sas-scene{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  text-align:center;
+}
+.sas-head{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  max-width:56ch;
+}
+/* Médaillon cadenas : hublot de laiton sombre cerclé d'ambre, qui
+   pulse lentement — le sas attend sa clé. */
+.sas-lock{
+  display:grid;place-items:center;
+  width:74px;height:74px;border-radius:50%;
+  background:
+    radial-gradient(circle at 38% 30%,rgba(255,255,255,.16),transparent 46%),
+    radial-gradient(circle,rgba(245,176,39,.18),rgba(0,0,0,.6) 74%),#150d04;
+  border:3px solid rgba(245,176,39,.62);
+  animation:sasLockPulse 2.8s ease-in-out infinite;
+}
+.sas-lock-ico{ font-size:32px;line-height:1; }
+@keyframes sasLockPulse{
+  0%,100%{ box-shadow:0 0 0 5px rgba(245,176,39,.12),0 0 22px rgba(245,176,39,.22),inset 0 0 16px rgba(245,176,39,.12); }
+  50%{ box-shadow:0 0 0 10px rgba(245,176,39,.04),0 0 40px rgba(245,176,39,.42),inset 0 0 26px rgba(245,176,39,.24); }
+}
+.sas-kicker{
+  margin:0;font-size:12px;font-weight:900;letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(142,231,255,.7);
+}
+.sas-titre{
+  margin:0;font-family:Consolas,"Courier New",monospace;
+  font-weight:1000;letter-spacing:.05em;text-transform:uppercase;
+  color:#ffd36c;font-size:clamp(16px,3vw,21px);
+  text-shadow:0 1px 0 #000,0 0 16px rgba(245,176,39,.45);
+}
+.sas-msg{
+  margin:0;color:#dff6ff;line-height:1.55;
+  font-size:clamp(13px,2vw,14.5px);
+}
+.sas-msg b{color:#ffe2a0}
+
+/* Le lecteur devient le cœur de la scène : plus haut, un rayon ambré
+   balaie lentement la zone de scan pour entretenir le suspense. */
+.sas-scanbox{
+  width:100%;max-width:560px;
+  min-height:clamp(230px,44vw,320px);
+  margin-bottom:0;
+}
+.sas-scanbox::after{
+  content:"";position:absolute;left:8%;right:8%;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(245,176,39,.55),transparent);
+  box-shadow:0 0 14px rgba(245,176,39,.5);
+  animation:sasSweep 3.4s ease-in-out infinite;
+  pointer-events:none;opacity:.7;
+}
+@keyframes sasSweep{
+  0%,100%{ top:16%; }
+  50%{ top:82%; }
+}
+/* Les boutons deviennent le geste central de la scène. */
+.sas-scene .gate-btn{
+  padding:14px 24px;
+  font-size:14px;
+}
+/* L'indication de la zone de recherche : fil d'Ariane discret en fin
+   de scène, pour qui a perdu la piste du QR. C'est désormais un BOUTON
+   qui déplie l'encart « Cap sur le Palier » SUR PLACE — plus de renvoi
+   vers palier1.html?relecture=sas, qui tombait sur l'écran
+   d'identification faute d'identité dans l'URL. */
+.sas-indication{
+  margin-top:2px;
+  color:#9bc4d4;font-size:12.5px;font-weight:800;
+  text-decoration:none;letter-spacing:.02em;
+  background:none;border:0;border-bottom:1px dashed rgba(142,231,255,.35);
+  padding:2px 0;cursor:pointer;font-family:inherit;
+}
+.sas-indication:hover{ color:#dff6ff;border-color:rgba(142,231,255,.7); }
+
+/* Encart « Cap sur le Palier » dépliable depuis la zone scellée : il
+   réutilise le bloc « PROCHAINE IMMERSION » (.won-nextzone) de l'écran
+   de victoire — radar, indication, étapes — sans quitter la scène. */
+.sas-indication-panel{ width:100%; }
+.sas-indication-panel[hidden]{ display:none; }
+.sas-indication-panel .won-nextzone{ margin:16px auto 0; }
+
+/* Réduction de mouvement : cadenas et rayon restent fixes. */
+@media (prefers-reduced-motion: reduce){
+  .sas-lock{ animation:none; }
+  .sas-scanbox::after{ animation:none; }
+}
+
+/* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur ===== */
+html{font-size:100%;}
+h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-word;word-break:break-word;}
+img,video:not(.photo-video):not(#photoVideo),svg,canvas:not(.photo-canvas),iframe{max-width:100%;height:auto;}
+button,input,select,textarea{max-width:100%;box-sizing:border-box;}
+body{overflow-wrap:break-word;}
+
+/* =============================================================
+   COLLIMATEUR OPTIQUE — ANIMATION DE TRANSITION VERS LE BRIEFING
+   ============================================================= */
+.collimateur-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(3, 11, 20, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+
+.collimateur-box {
+  background: linear-gradient(180deg, rgba(8, 22, 38, 0.95) 0%, rgba(3, 12, 22, 0.98) 100%);
+  border: 1.5px solid rgba(142, 231, 255, 0.45);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 35px rgba(142, 231, 255, 0.25), inset 0 0 20px rgba(142, 231, 255, 0.1);
+  border-radius: 20px;
+  padding: 32px 28px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: collimateurPulse 2s ease-in-out infinite;
+}
+
+.collimateur-viseur {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 6px;
+}
+
+.collimateur-cercle-ext {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed rgba(142, 231, 255, 0.75);
+  border-radius: 50%;
+  animation: collimateurRotate 8s linear infinite;
+}
+
+.collimateur-cercle-int {
+  position: absolute;
+  inset: 14px;
+  border: 1.5px solid rgba(230, 198, 112, 0.85);
+  border-radius: 50%;
+}
+
+.collimateur-reticule-h {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  right: 4px;
+  height: 1.5px;
+  background: linear-gradient(90deg, rgba(142, 231, 255, 0.8) 0%, transparent 40%, transparent 60%, rgba(142, 231, 255, 0.8) 100%);
+  transform: translateY(-50%);
+}
+
+.collimateur-reticule-v {
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  bottom: 4px;
+  width: 1.5px;
+  background: linear-gradient(180deg, rgba(142, 231, 255, 0.8) 0%, transparent 40%, transparent 60%, rgba(142, 231, 255, 0.8) 100%);
+  transform: translateX(-50%);
+}
+
+.collimateur-point {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8ee7ff;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 12px #8ee7ff, 0 0 20px rgba(142, 231, 255, 0.8);
+}
+
+.collimateur-scan {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(142, 231, 255, 0.35) 0deg, transparent 90deg, transparent 360deg);
+  animation: collimateurScan 2.4s linear infinite;
+}
+
+.collimateur-titre {
+  margin: 0;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #8ee7ff;
+  text-shadow: 0 0 12px rgba(142, 231, 255, 0.5);
+  animation: collimateurGlow 1.8s ease-in-out infinite;
+}
+
+.collimateur-sub {
+  margin: 0;
+  font-size: 13px;
+  color: #c0d8e4;
+  letter-spacing: 0.02em;
+}
+
+.collimateur-dots {
+  display: inline-block;
+  animation: collimateurDots 1.4s steps(4, jump-none) infinite;
+}
+
+@keyframes collimateurRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes collimateurPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes collimateurScan {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes collimateurGlow {
+  0%, 100% { opacity: 0.9; text-shadow: 0 0 10px rgba(142, 231, 255, 0.4); }
+  50% { opacity: 1; text-shadow: 0 0 20px rgba(142, 231, 255, 0.85), 0 0 30px rgba(230, 198, 112, 0.5); }
+}
+
+@keyframes collimateurDots {
+  0%, 20% { opacity: 0.2; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}

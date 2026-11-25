@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#020812" />
+  <title>Mission Nautilus — Palier Final</title>
+  <meta name="description" content="Accès scellé et briefing du Palier Final de la Mission Nautilus." />
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=61">
+  <link rel="stylesheet" href="css/palier2.css?v=27">
+  <script src="anti-zoom.js?v=2"></script>
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
+    <div class="topbar-title" id="topPalierTitle">Palier Final</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER FINAL. -->
+  <section class="card gate-hero" id="gateHero">
+    <h2 id="sasHeroTitle">PALIER FINAL — ZONE SCELLÉE</h2>
+    <div class="body">
+      <div class="sas-scene">
+        <div class="sas-head">
+          <div class="sas-lock" aria-hidden="true">
+            <span class="sas-lock-ico">🔒</span>
+          </div>
+          <p class="sas-kicker">Profondeur — sas scellé</p>
+          <p class="sas-titre">⛔ Le sas final de surface est verrouillé.</p>
+          <p class="sas-msg">Déverrouillez le sas final grâce au <b>QR Code de la zone de recherche</b>.</p>
+        </div>
+
+        <div class="gate-scanbox sas-scanbox" id="gateScanbox">
+          <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
+          <canvas id="gateCanvas" hidden></canvas>
+          <div class="gate-cam-placeholder" id="gateCamPlaceholder" role="button" tabindex="0" aria-label="Activer la caméra pour scanner le QR Code">
+            <span class="gate-cam-icon">📷</span>
+            <span>Objectif en veille — vise le QR Code pour ouvrir le sas.</span>
+          </div>
+          <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
+        </div>
+
+        <div class="gate-actions">
+          <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
+          <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
+          <input type="file" id="gateFile" accept="image/*" hidden>
+        </div>
+
+        <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
+
+        <button type="button" class="sas-indication" id="sasIndicationBtn" aria-expanded="false">📍 Voir l'indication de la zone de recherche</button>
+        <div class="sas-indication-panel" id="sasIndicationPanel" hidden>
+          <div class="won-nextzone">
+            <div class="won-radar" aria-hidden="true">
+              <span class="won-radar-ring"></span>
+              <span class="won-radar-ring won-radar-ring--2"></span>
+              <span class="won-radar-core">🧭</span>
+            </div>
+            <h3 class="won-nextzone-title">CAP SUR LE DERNIER SAS</h3>
+            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">Zone finale de surface</span> »</p>
+            <div class="won-nextzone-steps">
+              <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
+              <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
+              <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE -->
+  <section class="card" id="teamCard" hidden>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- Journal de bord (live). -->
+  <section class="card" id="logCard" hidden>
+    <h2>JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
+        <ol class="morse-log-list" id="logList"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING DU CAPITAINE -->
+  <section class="card" id="briefCard" hidden>
+    <h2>BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+
+  <!-- ÉPREUVE DU PALIER FINAL -->
+  <section class="card gate-unlocked" id="gateUnlocked" hidden>
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER FINAL</span>
+    </h2>
+    <div class="body">
+      <div id="epreuveStatut" class="status-banner info">🏆 <b>Palier Final :</b> Dernier sas. L’écoutille de surface est prête à être franchie pour sceller le carnet de bord.</div>
+      <div id="finalHost" class="game-stage">
+        <div style="text-align:center;padding:24px 12px">
+          <p style="font-size:16px;color:#8ee7ff;font-weight:700">Le sas du Palier Final est fonctionnel et vérifié.</p>
+          <p class="small" style="color:#cfe6f4">Les coordonnées du sas (Code QR <code>23819161225</code>) ont été validées avec succès.</p>
+        </div>
+      </div>
+      <div class="game-footer-actions">
+        <a class="puzzle-home" href="classement.html" id="btnSortieJeu">🏁 Voir le classement final</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="son-partage.js?v=2"></script>
+<script src="journal-bord.js?v=6"></script>
+<script src="palier-sas.js?v=13"></script>
+<script src="palier-briefing.js?v=5"></script>
+<script>window.NautilusSas.init(8);</script>
+<script src="matelot-blocages.js?v=3"></script>
+<script src="reserve-o2.js?v=9"></script>
+<script src="equipage-actif.js?v=10"></script>
+<script>window.EquipageActif.init();</script>
+<script src="victoire-palier.js?v=18"></script>
+<script src="records-palier.js?v=2"></script>
+
+<script>
+const LIEU_DESCRIPTION = "Zone finale de surface";
+const QR_LOCATION_HINT = "Zone finale de surface";
+const ZONE_RECHERCHE_HINT = "Zone finale de surface";
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function apercuAdminAutorise() {
+    try {
+      if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
+      var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
+      if (!k) return false;
+      var h = 0, s = 'apercu-admin:NEMO2026';
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return k === ('k' + Math.abs(h).toString(36));
+    } catch (e) { return false; }
+  }
+
+  function montrerCarte(id, visible) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? '' : 'none';
+  }
+
+  function afficherVueScellee() {
+    montrerCarte('gateHero', true);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', false);
+  }
+
+  function afficherVueBriefing() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
+    montrerCarte('briefCard', true);
+    montrerCarte('gateUnlocked', false);
+    window.NautilusBriefing.afficher($('briefHost'), {
+      intro: "« La surface n’est plus qu’à quelques brasses ». L’océan s’ouvre au-dessus du kiosque, prêt à saluer l’équipage qui saura manœuvrer l’écoutille finale.",
+      consignes: [
+        { ico: '⚓', html: "<b>Franchissez l’ultime sas</b> pour ramener le Nautilus à la surface." },
+        { ico: '⏱️', html: "<b>Chronomètre final</b> : chaque seconde scelle votre rang définitif au classement." }
+      ],
+      cta: '⚓ ÉMERGER À LA SURFACE',
+      onDepart: function () {
+        afficherVueEpreuve();
+      }
+    });
+  }
+
+  function afficherVueEpreuve() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', true);
+  }
+
+  window.addEventListener('nautilus:sas-ouvert', function (ev) {
+    var source = ev && ev.detail && ev.detail.source;
+    if (source === 'scan' || source === 'manuel') {
+      window.NautilusBriefing.transitionVersBriefing(afficherVueBriefing);
+    } else {
+      afficherVueBriefing();
+    }
+  });
+
+  window.addEventListener('DOMContentLoaded', function () {
+    $('backBtn')?.addEventListener('click', function () {
+      location.href = 'index.html?ecoutille=0';
+    });
+    if (apercuAdminAutorise()) {
+      afficherVueEpreuve();
+    } else {
+      afficherVueScellee();
+    }
+  });
+})();
+</script>
+
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=5" defer></script>
+<script src="artefact-moteur.js?v=8"></script>
+<script src="artefact-service.js?v=8"></script>
+<script src="magasin-fnac.js?v=1"></script>
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="photo-defi.js?v=6" defer></script>
+<script src="admin-artefact.js?v=33" defer></script>
+<script src="admin-button.js?v=34" type="module"></script>
+</body>
+</html>

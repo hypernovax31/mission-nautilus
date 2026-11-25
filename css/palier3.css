@@ -1,0 +1,490 @@
+/* =============================================================
+   PALIER 3 — « CHASSE AUX ARTEFACTS EN MAGASIN FNAC »
+   Viseur optique sous-marin du Nautilus. S'ajoute à palier1.css
+   et palier2.css : même liseré d'or, ambiance rétrofuturiste.
+   ============================================================= */
+
+/* Page pleine largeur, comme le Palier 2. */
+main{ max-width:1720px; }
+
+/* ---------- Conteneur principal de la mission Photo Défi ---------- */
+.photo-mission{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  width:100%;
+  max-width:580px;
+  margin:0 auto;
+  box-sizing:border-box;
+}
+
+/* ---------- HUD Supérieur : Chronomètre & Étapes ---------- */
+.photo-hud-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:rgba(2,8,16,.85);
+  border:1px solid rgba(245,176,39,.35);
+  border-radius:14px;
+  padding:8px 14px;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.6);
+}
+
+.photo-timer-box{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  font-size:18px;
+  font-weight:900;
+  color:#8ee7ff;
+}
+.photo-timer-ico{ font-size:18px; }
+.photo-timer-val.is-urgent{
+  color:#ff4757;
+  animation:photoTimerPulse .8s infinite alternate;
+}
+@keyframes photoTimerPulse{
+  from{ opacity:1; transform:scale(1); }
+  to{ opacity:.7; transform:scale(1.08); }
+}
+
+.photo-steps-box{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.photo-step-dot{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:1px solid rgba(142,231,255,.3);
+  background:rgba(0,0,0,.45);
+  color:#8ee7ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:900;
+  transition:all .2s ease;
+}
+.photo-step-dot.is-current{
+  border-color:#f5b027;
+  background:rgba(245,176,39,.25);
+  color:#fff;
+  box-shadow:0 0 10px rgba(245,176,39,.6);
+  transform:scale(1.12);
+}
+.photo-step-dot.is-done{
+  border-color:#2ed573;
+  background:#2ed573;
+  color:#04101d;
+  box-shadow:0 0 8px rgba(46,213,115,.4);
+}
+
+/* ---------- Fiche Cible / Défi Actuel ---------- */
+.photo-defi-card{
+  background:radial-gradient(circle at 50% 50%, rgba(8,28,44,.95), rgba(2,8,16,.98));
+  border:2px solid rgba(245,176,39,.45);
+  border-radius:16px;
+  padding:12px 16px;
+  text-align:center;
+  box-shadow:inset 0 0 20px rgba(0,0,0,.6), 0 6px 18px rgba(0,0,0,.4);
+}
+.photo-defi-kicker{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  color:#f5b027;
+  text-transform:uppercase;
+  margin-bottom:2px;
+}
+.photo-defi-title{
+  font-size:18px;
+  font-weight:900;
+  color:#ffffff;
+  margin:4px 0 2px;
+  text-shadow:0 2px 6px rgba(0,0,0,.8);
+}
+
+/* ---------- Viseur Caméra Optique du Nautilus ---------- */
+.photo-viewfinder{
+  position:relative;
+  width:100%;
+  aspect-ratio:4/3;
+  max-height:380px;
+  border-radius:18px;
+  overflow:hidden;
+  border:2px solid rgba(245,176,39,.55);
+  background:#020810;
+  box-shadow:0 10px 30px rgba(0,0,0,.7), inset 0 0 30px rgba(0,0,0,.8);
+}
+.photo-video,
+#photoVideo,
+.photo-viewfinder video{
+  position:absolute !important;
+  top:0 !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:100% !important;
+  min-height:100% !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  display:block !important;
+  transform-origin:center center;
+  transition:transform .2s ease;
+  z-index:1;
+}
+.photo-canvas{ display:none; }
+
+/* Réticule et collimateur de visée sous-marin */
+.photo-reticle{
+  position:absolute;
+  inset:0;
+  z-index:10;
+  pointer-events:none;
+}
+.reticle-corner{
+  position:absolute;
+  width:22px;
+  height:22px;
+  border-color:#f5b027;
+  border-style:solid;
+}
+.reticle-tl{ top:12px; left:12px; border-width:3px 0 0 3px; }
+.reticle-tr{ top:12px; right:12px; border-width:3px 3px 0 0; }
+.reticle-bl{ bottom:12px; left:12px; border-width:0 0 3px 3px; }
+.reticle-br{ bottom:12px; right:12px; border-width:0 3px 3px 0; }
+
+.reticle-center{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  width:110px;
+  height:110px;
+  border:2px dashed rgba(142,231,255,.6);
+  border-radius:50%;
+  box-shadow:0 0 16px rgba(142,231,255,.2);
+  transition:all .25s ease;
+}
+.reticle-center::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  width:10px;
+  height:10px;
+  background:#f5b027;
+  border-radius:50%;
+  opacity:.75;
+}
+.reticle-center.is-macro{
+  width:70px;
+  height:70px;
+  border:2px solid #2ed573;
+  border-radius:10px;
+  box-shadow:0 0 18px rgba(46,213,115,.4);
+}
+
+.reticle-scanline{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:2px;
+  background:linear-gradient(90deg, transparent, rgba(142,231,255,.8), transparent);
+  box-shadow:0 0 8px rgba(142,231,255,.6);
+  animation:reticleScan 3s linear infinite;
+  opacity:.6;
+}
+@keyframes reticleScan{
+  0%{ top:0%; }
+  50%{ top:100%; }
+  100%{ top:0%; }
+}
+
+.reticle-tag{
+  position:absolute;
+  bottom:8px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:9px;
+  letter-spacing:.14em;
+  color:rgba(142,231,255,.7);
+  font-weight:900;
+  text-shadow:0 1px 4px rgba(0,0,0,.9);
+  white-space:nowrap;
+}
+
+/* Flash de capture */
+.photo-flash-fx{
+  position:absolute;
+  inset:0;
+  background:#fff;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .08s ease;
+  z-index:15;
+}
+.photo-flash-fx.is-active{ opacity:0.85; }
+
+/* Calque d'activation / réactivation de la caméra */
+.photo-cam-off-overlay{
+  position:absolute;
+  inset:0;
+  z-index:20;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:rgba(2,10,20,.88);
+  backdrop-filter:blur(6px);
+  gap:12px;
+  padding:20px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.photo-cam-off-overlay[hidden]{ display:none !important; }
+.photo-cam-off-icon{
+  font-size:44px;
+  filter:drop-shadow(0 0 12px rgba(245,176,39,.6));
+  animation:camIconPulse 1.8s infinite ease-in-out;
+}
+@keyframes camIconPulse{
+  0%, 100%{ transform:scale(1); opacity:.9; }
+  50%{ transform:scale(1.1); opacity:1; filter:drop-shadow(0 0 18px rgba(245,176,39,.9)); }
+}
+.photo-cam-off-text{
+  font-size:13.5px;
+  font-weight:800;
+  color:#eaf8ff;
+  letter-spacing:.03em;
+  text-shadow:0 1px 4px rgba(0,0,0,.8);
+}
+.photo-btn-reactivate-cam{
+  background:linear-gradient(135deg,#f5b027,#d48b13);
+  color:#04101d;
+  border:2px solid #ffe2a0;
+  border-radius:12px;
+  padding:12px 22px;
+  font-weight:1000;
+  font-size:14px;
+  letter-spacing:.04em;
+  cursor:pointer;
+  box-shadow:0 4px 18px rgba(245,176,39,.5);
+  transition:all .18s ease;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.photo-btn-reactivate-cam:hover{
+  filter:brightness(1.12);
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(245,176,39,.7);
+}
+.photo-btn-inline-reactivate{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  background:#f5b027;
+  color:#04101d;
+  border:0;
+  border-radius:6px;
+  padding:4px 9px;
+  margin-left:6px;
+  font-weight:900;
+  font-size:12px;
+  cursor:pointer;
+  vertical-align:middle;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+  transition:.15s;
+}
+.photo-btn-inline-reactivate:hover{
+  filter:brightness(1.15);
+  transform:scale(1.04);
+}
+.photo-tool-btn.is-cam-btn{
+  background:rgba(245,176,39,.18);
+  border-color:#f5b027;
+  color:#ffd36c;
+}
+.photo-tool-btn.is-cam-btn.is-active{
+  background:rgba(46,213,115,.2);
+  border-color:#2ed573;
+  color:#a8ffcc;
+}
+
+/* ---------- Barre de Contrôles : Zoom, Macro, Flash & Déclencheur ---------- */
+.photo-controls{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  align-items:center;
+}
+.photo-tools-bar{
+  display:flex;
+  gap:8px;
+  width:100%;
+  justify-content:center;
+}
+.photo-tool-btn{
+  flex:1;
+  max-width:130px;
+  padding:9px 8px;
+  background:rgba(142,231,255,.12);
+  color:#8ee7ff;
+  border:1px solid rgba(142,231,255,.35);
+  border-radius:12px;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  transition:all .18s ease;
+}
+.photo-tool-btn:hover:not(:disabled){
+  background:rgba(142,231,255,.24);
+}
+.photo-tool-btn.is-active{
+  background:rgba(245,176,39,.32);
+  color:#fff;
+  border-color:#f5b027;
+  box-shadow:0 0 10px rgba(245,176,39,.45);
+}
+
+.photo-trigger-btn{
+  width:100%;
+  max-width:380px;
+  min-height:50px;
+  background:linear-gradient(135deg, #f5b027, #d48b13);
+  border:2px solid #ffe2a0;
+  border-radius:14px;
+  color:#04101d;
+  font-family:inherit;
+  font-weight:1000;
+  font-size:15px;
+  letter-spacing:.04em;
+  cursor:pointer;
+  box-shadow:0 4px 18px rgba(245,176,39,.4);
+  transition:all .16s ease;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.photo-trigger-btn:hover:not(:disabled){
+  filter:brightness(1.1);
+  transform:translateY(-1px);
+}
+.photo-trigger-btn:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+  transform:none;
+}
+
+/* ---------- Zone de Retour & Diagnostic d'Analyse ---------- */
+.photo-feedback{
+  min-height:42px;
+  padding:10px 14px;
+  border-radius:12px;
+  font-size:13px;
+  font-weight:800;
+  text-align:center;
+  line-height:1.45;
+  background:rgba(0,0,0,.35);
+  color:#dff6ff;
+  border:1px solid rgba(142,231,255,.2);
+  box-sizing:border-box;
+  transition:all .2s ease;
+}
+.photo-feedback.is-success{
+  background:rgba(46,213,115,.22);
+  border-color:#2ed573;
+  color:#a8ffcc;
+  box-shadow:0 0 12px rgba(46,213,115,.3);
+}
+.photo-feedback.is-warning{
+  background:rgba(255,165,2,.22);
+  border-color:#ffa502;
+  color:#ffeaa7;
+}
+.photo-feedback.is-danger{
+  background:rgba(255,71,87,.28);
+  border-color:#ff4757;
+  color:#ffcdd2;
+}
+.photo-feedback.is-analyzing{
+  background:rgba(142,231,255,.22);
+  border-color:#8ee7ff;
+  color:#8ee7ff;
+  animation:feedbackPulse 1s infinite alternate;
+}
+@keyframes feedbackPulse{
+  from{ opacity:.7; }
+  to{ opacity:1; }
+}
+
+/* ---------- Issue de Secours (Permutation Unique) ---------- */
+.photo-emergency-sec{
+  text-align:center;
+  margin-top:4px;
+  padding-top:8px;
+  border-top:1px dashed rgba(255,255,255,.1);
+}
+.photo-btn-emergency{
+  background:rgba(255,71,87,.14);
+  color:#ff6b81;
+  border:1px solid rgba(255,71,87,.45);
+  border-radius:12px;
+  padding:10px 20px;
+  font-family:inherit;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+  transition:all .18s ease;
+}
+.photo-btn-emergency:hover:not(:disabled){
+  background:rgba(255,71,87,.26);
+}
+.photo-btn-emergency.is-abandon{
+  background:rgba(255,71,87,.32);
+  color:#ffffff;
+  border:2px solid #ff4757;
+  box-shadow:0 0 14px rgba(255,71,87,.5);
+  font-weight:1000;
+  animation:abandonPulse 1.2s infinite alternate;
+}
+@keyframes abandonPulse{
+  from{ transform:scale(1); box-shadow:0 0 10px rgba(255,71,87,.4); }
+  to{ transform:scale(1.03); box-shadow:0 0 18px rgba(255,71,87,.8); }
+}
+.photo-btn-emergency.is-abandon:hover{
+  background:#d91438;
+  color:#fff;
+}
+.photo-emergency-warning{
+  font-size:11px;
+  color:#ffa502;
+  margin-top:6px;
+  line-height:1.35;
+}
+.photo-emergency-warning.is-urgent{
+  color:#ff4757;
+  font-weight:800;
+}
+
+/* Lien de retour à l'accueil */
+.puzzle-home{
+  display:inline-block; margin-top:8px;
+  background:rgba(255,255,255,.08); color:#fff;
+  border:1px solid rgba(245,176,39,.5); border-radius:12px;
+  padding:11px 20px; font-weight:900; font-size:13px; text-decoration:none;
+}

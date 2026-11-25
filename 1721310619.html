@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#020812" />
+  <title>Mission Nautilus — Palier 2</title>
+  <meta name="description" content="Accès scellé du Palier 2 de la Mission Nautilus : le QR Code de la zone de recherche est la clé d'entrée." />
+  <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil) : SVG
+       source + PNG de repli + Apple touch (iOS). Sans ces balises, le
+       navigateur affichait son icône générique à la place du logo. -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=61">
+  <link rel="stylesheet" href="css/palier2.css?v=27">
+  <script src="anti-zoom.js?v=2"></script>
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+  <script>
+    (function(){
+      try {
+        var base = [16,1,12,9,5,18];
+        var code = base.map(function(x){ return String(x + 1); }).join('');
+        var forceFerme = /[?&]sas=ferme\b/.test(location.search) || /[?&]scan=1\b/.test(location.search);
+        var isUnlocked = localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok';
+        var isApercu = /[?&]apercu=admin\b/.test(location.search) || sessionStorage.getItem('nautilusAdminApercu') === '1';
+        if (!forceFerme && (isUnlocked || isApercu)) {
+          document.documentElement.classList.add('sas-skip-flash');
+        }
+      } catch(_) {}
+    })();
+  </script>
+  <style>
+    html.sas-skip-flash #gateHero { display: none !important; }
+    html.sas-skip-flash #briefCard { display: block !important; }
+  </style>
+  <!-- Lecteur QR embarqué (caméra + import photo). Indisponible hors
+       connexion : l'import de la PHOTO du QR Code prend alors le
+       relais. -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">🏠 Retour à l'accueil</button>
+    <div class="topbar-title" id="topPalierTitle">Palier 2</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER. Vue unique et immersive —
+       le message de verrouillage, le lecteur QR et l'indication de la
+       zone de recherche ne forment PLUS QU'UN SEUL BLOC. Tant que le sas
+       est fermé, RIEN d'autre n'est à l'écran (ni équipage, ni journal) :
+       toute l'attention se porte sur le QR Code à scanner ou à importer.
+       Dès que le sas s'ouvre (scan réussi, sas mémorisé, aperçu admin),
+       cette scène se retire au profit du BRIEFING DU CAPITAINE
+       (#briefCard) — et l'équipage actif + le journal reviennent. -->
+  <section class="card gate-hero" id="gateHero">
+    <h2 id="sasHeroTitle">PALIER 2 — ZONE SCELLÉE</h2>
+    <div class="body">
+      <div class="sas-scene">
+        <!-- En-tête de suspense : le sas est clos, il attend sa clé. -->
+        <div class="sas-head">
+          <div class="sas-lock" aria-hidden="true">
+            <span class="sas-lock-ico">🔒</span>
+          </div>
+          <p class="sas-kicker">Profondeur — sas scellée</p>
+          <p class="sas-titre">⛔ Ce palier est verrouillé.</p>
+          <p class="sas-msg">Déverrouillez le palier suivant grâce au <b>QR Code de la zone de recherche</b>.</p>
+        </div>
+
+        <!-- Le lecteur : la serrure à ouvrir. Il occupe le centre de la
+             scène — c'est LE geste à faire, ni plus ni moins. -->
+        <div class="gate-scanbox sas-scanbox" id="gateScanbox">
+          <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
+          <canvas id="gateCanvas" hidden></canvas>
+          <div class="gate-cam-placeholder" id="gateCamPlaceholder" role="button" tabindex="0" aria-label="Activer la caméra pour scanner le QR Code">
+            <span class="gate-cam-icon">📷</span>
+            <span>Objectif en veille — vise le QR Code pour ouvrir le sas.</span>
+          </div>
+          <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
+        </div>
+
+        <div class="gate-actions">
+          <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
+          <!-- Import du QR Code photographié : placé sous l'encart de scan.
+               Sert quand l'équipage a photographié le QR pour continuer
+               plus tard. -->
+          <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
+          <input type="file" id="gateFile" accept="image/*" hidden>
+        </div>
+
+        <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
+
+        <!-- L'indication de la zone de recherche, en toute fin de scène :
+             un fil d'Ariane discret pour ceux qui ont perdu la piste du
+             QR. Elle se DÉPLIE sur place (encart « CAP SUR LE QR CODE »),
+             sans quitter la scène scellée. L'ancien renvoi vers
+             palier1.html?relecture=sas menait à l'écran d'identification
+             faute d'identité portée par l'URL. -->
+        <button type="button" class="sas-indication" id="sasIndicationBtn" aria-expanded="false">📍 Voir l'indication de la zone de recherche</button>
+        <div class="sas-indication-panel" id="sasIndicationPanel" hidden>
+          <div class="won-nextzone">
+            <div class="won-radar" aria-hidden="true">
+              <span class="won-radar-ring"></span>
+              <span class="won-radar-ring won-radar-ring--2"></span>
+              <span class="won-radar-core">🧭</span>
+            </div>
+            <h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>
+            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">……</span> »</p>
+            <div class="won-nextzone-steps">
+              <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
+              <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
+              <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE : même bloc que le Palier 1 — les
+       matelots de l'équipage connectés en direct (en train de jouer ou
+       en spectateur). Placé AVANT le journal de bord, sur les vues
+       d'avant-partie (zone scellée + briefing). Rendu par le module
+       commun equipage-actif.js ; il se retire avec le journal dès que
+       le mini-jeu démarre. -->
+  <section class="card" id="teamCard" hidden>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- Journal de bord (live) : consultable sur les DEUX vues
+       d'avant-partie — la VUE SCELLÉE (en haut, entre le héros et le
+       sas) et le BRIEFING DU CAPITAINE — comme sur le Palier 1, où le
+       journal précède la carte de l'épreuve. Dès que le mini-jeu
+       démarre, il se retire pour ne laisser QUE l'encart du mini-jeu
+       (il ne revient que quand l'épreuve s'arrête : blocage,
+       victoire). -->
+  <section class="card" id="logCard" hidden>
+    <h2>JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
+        <ul id="morse-log-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING DU CAPITAINE — vue OBLIGATOIRE entre la ZONE SCELLÉE et
+       l'épreuve, sur TOUS les paliers de la mission (Palier 2 →
+       final) : explication immersive du thème du mini-jeu, SANS
+       dévoiler le contenu, avec la mise en page du Palier 1 (classes
+       .brief de css/palier1.css). Le bloc est rendu par le module
+       COMMUN palier-briefing.js ; la vue est montrée par
+       afficherVueBriefing() dès que le sas est ouvert. -->
+  <section class="card" id="briefCard" hidden>
+    <h2>BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+
+  <section class="card gate-unlocked" id="gateUnlocked" hidden>
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 2</span>
+      <div class="nautilus-voyants-rack" id="mcVoyantsRack" title="3 erreurs maximum">
+        <span class="nautilus-voyants-lbl">ERREURS</span>
+        <div class="nautilus-voyants">
+          <span class="nautilus-voyant" id="mcVoyant1"></span>
+          <span class="nautilus-voyant" id="mcVoyant2"></span>
+          <span class="nautilus-voyant" id="mcVoyant3"></span>
+        </div>
+      </div>
+    </h2>
+    <div class="body">
+      <div id="epreuveStatut" class="status-banner info">⏳ <b>Préparation de la grille…</b></div>
+      <div id="mcHost" class="game-stage"></div>
+      <div class="game-footer-actions">
+        <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Journal de bord « Activité en direct », code COMMUN à tous les
+     paliers. Script classique SANS defer : l'ordre avec le sas est
+     garanti (journal-bord.js → palier-sas.js → init). -->
+<script src="son-partage.js?v=2"></script>
+<script src="journal-bord.js?v=6"></script>
+<!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2 :
+     le QR Code de la zone de recherche est OBLIGATOIRE avant tout
+     accès au mini-jeu. Toute la logique vit dans palier-sas.js. -->
+<script src="palier-sas.js?v=13"></script>
+<!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2 :
+     la vue d'explication immersive du thème (SANS dévoiler le
+     contenu) entre la ZONE SCELLÉE et le mini-jeu — mise en page du
+     Palier 1. Toute la logique vit dans palier-briefing.js. -->
+<script src="palier-briefing.js?v=5"></script>
+<script>window.NautilusSas.init(2);</script>
+<!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers :
+     3 erreurs = remise en surface de CE matelot, consignée dans le
+     document Firestore de son équipage, JAMAIS dans le seul appareil. -->
+<script src="matelot-blocages.js?v=3"></script>
+<!-- Réserve d'oxygène (jauge du haut) : commune à tous les paliers,
+     s'injecte toute seule en tête de <main> (mêmes styles que le
+     Palier 1, css/palier1.css). -->
+<script src="reserve-o2.js?v=9"></script>
+<!-- Équipage actif en plongée : liste des matelots connectés en direct,
+     commune à tous les paliers (mêmes styles que le Palier 1). -->
+<script src="equipage-actif.js?v=10"></script>
+<script>window.EquipageActif.init();</script>
+<!-- Moteur de mots croisés (générique) + données : 11 mots « rétro-futuristes » -->
+<script src="mots-croises.js?v=9"></script>
+<!-- Écran de VICTOIRE commun à TOUS les paliers (même page de victoire
+     que le Palier 1) : badge, stats, panneau pliable « DIRECTION VERS
+     LA ZONE DE RECHERCHE ». -->
+<script src="victoire-palier.js?v=18"></script>
+<script src="records-palier.js?v=2"></script>
+<script>
+/* ================= ÉPREUVE DU PALIER 2 — « MOTS CROISÉS » =================
+   Thème RÉTRO-FUTURISTE : 11 mots du quotidien du magasin (produits,
+   gestes, techniques), décrits dans la langue d'outre-temps du Nautilus
+   — le joueur reconnaît leur équivalent en rayon (défroisseur, diaphragme,
+   anti-skating, picking, réassort, ray tracing, steelbook, neuronal,
+   reprise, écotaxe, Pléiade).
+   Définitions « rétro-futuristes » : jamais le mot ni sa racine (le
+   générateur vérifie l'absence du mot en clair, la racine est relue à la
+   main). Grille 15×16, 81 cases, 14 croisements — construite et vérifiée
+   lettre par lettre par tools/generer_mots_croises.py (rejouable à
+   l'identique).
+   Règle calquée sur le Palier 1 : 3 mots faux tentés = remise en
+   surface PERSONNELLE du matelot fautif (matelot-blocages.js — compteur
+   d'échecs et barème 1 h/2 h/4 h/8 h/12 h communs à TOUS les paliers).
+   Joueur SANS Code Matelot : repli historique local à l'appareil (1 h),
+   lu pour lui SEUL — un matelot identifié ne lit jamais ce repli :
+   les erreurs d'un collègue anonyme ne peuvent plus bloquer un matelot
+   qui reprend SA partie sur le même appareil. La victoire inscrit
+   « livres » dans completedSteps de l'équipage (mêmes champs que le
+   Palier 1) et lève les blocages personnels encore actifs de
+   l'équipage, comme advanceTeam() du Palier 1. */
+(function () {
+  'use strict';
+  /* Repli ANONYME uniquement (joueur sans Code Matelot) — le canal
+     personnel vit dans matelot-blocages.js (règle globale du jeu). */
+  var CLE_BLOCAGE_ANONYME = 'nautilusEpreuve2BloqueJusqua';
+  var BLOCAGE_MS  = 60 * 60 * 1000;          /* repli anonyme : 1 h */
+  var _blocageSession = 0;                   /* mode test : volatil */
+
+  /* Indication de la zone de recherche pour l'écran de victoire — même
+     chaîne que QR_LOCATION_HINT de palier1.html : quand l'admin fixe
+     le lieu, on aligne les DEUX fichiers (paliers suivants idem). */
+  var QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
+
+  /* Indication de la zone de recherche du PALIER 2 — l'endroit du magasin
+     où se trouve le QR qui ouvre ce sas. Affichée dans l'encart
+     « CAP SUR LE QR CODE » déplié depuis la zone scellée. Même valeur
+     que QR_LOCATION_HINT de palier1.html : quand l'admin fixe le lieu,
+     on aligne les DEUX fichiers. */
+  var ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
+
+  /* Bilan de l'épreuve, affiché sur l'écran de victoire (façon
+     Palier 1) : chrono qui démarre avec la grille, compteur d'erreurs. */
+  var t0Partie = null;
+  var nbErreurs = 0;
+
+  var MOTS = [
+    { num: 1, dir: 'h', row: 0, col: 2, reponse: 'STEELBOOK', secteur: 'rayon', definition: "Coffret plat à deux volets, trempé contre l'oubli, dont la surface polie renvoie au possesseur son propre visage avant de lui concéder l'accès à la fiction qu'il abrite." },
+    { num: 2, dir: 'v', row: 0, col: 5, reponse: 'ECOTAXE', secteur: 'caisse', definition: "Obole de compensation opérée à l'instant de l'acquisition, destinée à provisionner la cérémonie ultérieure de démantèlement et la restauration des équilibres que l'objet aura fatigués par sa seule circulation." },
+    { num: 3, dir: 'v', row: 3, col: 13, reponse: 'PICKING', secteur: 'stock', definition: "Protocole chrono-opérationnel de matérialisation sélective, piloté par une matrice d'allocation omnicanale, qui convertit une intention transactionnelle en micro-séquences de navigation tactile au sein d'un environnement indexé, jusqu'à stabilisation de l'unité désignée dans son vecteur de circulation." },
+    { num: 4, dir: 'h', row: 4, col: 5, reponse: 'ANTISKATING', secteur: 'rayon', definition: "Procédé métaphysique chargé de stabiliser la dérive latérale d'un vecteur acoustico-mental en injectant, dans la trajectoire d'un sillon cognitif, une contre-résonance spectrale destinée à empêcher la pensée non formulée de glisser vers son propre centre." },
+    { num: 5, dir: 'v', row: 7, col: 3, reponse: 'NEURONAL', secteur: 'rayon', definition: "Accélérateur matériel pour opérations de réduction dimensionnelle sur espaces vectoriels de grande dimension, avec pipeline dédié aux produits scalaires massivement parallèles." },
+    { num: 6, dir: 'h', row: 7, col: 6, reponse: 'RAYTRACING', secteur: 'rayon', definition: "Opération de cartographie négative où l'on ne décrit pas ce qui est, mais ce qu'un parcours hypothétique aurait dû rencontrer pour que l'apparence finale puisse justifier sa propre présence." },
+    { num: 6, dir: 'v', row: 7, col: 6, reponse: 'REASSORT', secteur: 'stock', definition: "Cycle régénératif à cadence différée qui restaure l'équilibre densitaire d'un ensemble ordonné, en réinjectant depuis une réserve latente les unités manquantes d'une trame consommée, jusqu'à rétablissement de la continuité perceptive de l'alignement." },
+    { num: 7, dir: 'v', row: 7, col: 10, reponse: 'REPRISE', secteur: 'sav', definition: "Clause de filiation inversée consentie à tout bien vieillissant : l'opérateur d'origine l'absorbe à nouveau, en négocie la déchéance selon un barème d'érosion, puis lui désigne un successeur qui ignorera tout de l'aîné." },
+    { num: 8, dir: 'v', row: 8, col: 1, reponse: 'PLEIADE', secteur: 'rayon', definition: "Fratrie lumineuse issue d'un unique embrasement, dont le nombre consacré dépasse d'une unité le témoignage du regard — matrice de toutes les confréries d'éclat, jusqu'à cette bibliothèque de peau fine où l'on inhume les œuvres qu'on estime achevées." },
+    { num: 9, dir: 'h', row: 10, col: 0, reponse: 'DEFROISSEUR', secteur: 'rayon', definition: "Dispositif moderne qui ajuste les fréquences internes d'une matière pour apaiser les tensions invisibles entre ses états, sans jamais intervenir physiquement." },
+    { num: 10, dir: 'h', row: 13, col: 1, reponse: 'DIAPHRAGME', secteur: 'rayon', definition: "Module orbiculaire à rétraction polyphasique, saturé d'un bruit électro-spectral, qui contracte un interstice d'éclat pour dériver la densité du visible comme un mécanisme optico-analogique en dérive temporelle." }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
+  /* ACTE de l'épreuve (affiché dans le flux « en direct ») : phrase
+     courte et nue, le prénom est ajouté à l'affichage. */
+  function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
+  function enModeTest() {
+    try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
+  }
+  function blocageAnonymeJusqua() {
+    try { return Number(localStorage.getItem(CLE_BLOCAGE_ANONYME) || 0); } catch (e) { return 0; }
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function heureLisible(v) {
+    var d = new Date(typeof v === 'number' ? v : String(v));
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* QUI joue sur cet appareil ? Résolution mémoïsée (param ?m=, à
+     défaut localStorage nautilusMatelotCode). null = joueur anonyme
+     → repli LOCAL, jamais lu par un matelot identifié. */
+  var _ident = null, _identLue = false;
+  function monIdentite() {
+    if (_identLue) return Promise.resolve(_ident);
+    _identLue = true;
+    return window.NautilusBlocages.identiteCourante()
+      .then(function (i) { _ident = i; return _ident; })
+      .catch(function () { _ident = null; return null; });
+  }
+
+  /* Aperçu organisateur : ?apercu=jeu&k=… — même clé que les aperçus du
+     Palier 1 (djb2 salé, synchrone ; constate en phase avec palier1.html
+     et admin-button.js). */
+  function apercuAdminAutorise() {
+    try {
+      if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
+      var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
+      if (!k) return false;
+      /* EN PHASE avec palier1.html / index.html / admin-button.js : djb2
+         salé initialisé à 0 (et NON 5381 — sinon la clé k=… générée par le
+         panneau admin était refusée ici et l'aperçu « Jouer l'épreuve »
+         retombait sur le portail scellé). */
+      var h = 0, s = 'apercu-admin:NEMO2026';
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return k === ('k' + Math.abs(h).toString(36));
+    } catch (e) { return false; }
+  }
+
+  function majVoyants(n) {
+    for (var i = 1; i <= 3; i++) {
+      var v = $('mcVoyant' + i);
+      if (v) v.classList.toggle('active', i <= n);
+    }
+  }
+
+  function statut(html, kind) {
+    var el = $('epreuveStatut') || $('mcStatut');
+    if (!el) return;
+    el.innerHTML = html;
+    el.className = 'status-banner' + (kind ? ' ' + (kind === 'danger' ? 'danger is-danger' : (kind === 'warning' ? 'warning' : (kind === 'success' ? 'success is-success' : kind))) : ' info');
+  }
+
+  /* ================= TROIS VUES EN SÉQUENCE =================
+     Enchaînement imposé sur TOUTE la mission (Palier 2 → final) :
+     ZONE SCELLÉE → BRIEFING DU CAPITAINE → ÉPREUVE.
+
+     1) VUE SCELLÉE — montrée SEULEMENT quand la zone est réellement
+        scellée (en attente du QR Code) : UN SEUL BLOC immersif — le
+        message de verrouillage, le lecteur QR et l'indication de la
+        zone. Ni équipage, ni journal : tout l'écran se concentre sur
+        le geste d'ouverture.
+     2) VUE BRIEFING DU CAPITAINE — montrée dès que le sas est ouvert
+        (scan réussi, sas déjà mémorisé sur l'appareil ou aperçu
+        admin) et AVANT le mini-jeu : explication immersive du thème
+        SANS dévoiler le contenu (mise en page du Palier 1, module
+        commun palier-briefing.js). Le journal de bord reste
+        consultable là, exactement comme sur la vue d'avant-partie
+        du Palier 1 — héros « ZONE SCELLÉE » et sas, eux, se rangent
+        (la zone n'est plus scellée). Le « ⚓ PRENDRE LES COMMANDES »
+        du briefing arme la partie (lancer()).
+     3) VUE ÉPREUVE — SEUL l'encart du mini-jeu reste à l'écran — ni
+        héros, ni journal, ni sas, ni briefing. Le journal de bord ne
+        réapparaît que quand l'épreuve s'arrête (blocage, victoire) :
+        c'est le seul moment « hors mini-jeu » où on le consulte. */
+  function montrerCarte(id, visible) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? '' : 'none';
+  }
+  function afficherVueScellee() {
+    /* LA PORTE SCELLÉE, et RIEN d'autre : tant que le sas est fermé,
+       ni l'équipage actif ni le journal ne viennent disperser
+       l'attention — toute la scène se concentre sur le QR Code à
+       scanner ou à importer (le tout vit dans un seul bloc #gateHero). */
+    montrerCarte('gateHero', true);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueBriefing() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
+    montrerCarte('briefCard', true);
+    montrerCarte('gateUnlocked', false);
+    var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
+  }
+  function afficherVueEpreuve() {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+    montrerCarte('gateUnlocked', true);
+    var c = $('gateUnlocked'); if (c) c.classList.add('epreuve-focus');
+  }
+  /* Fin d'épreuve (blocage, victoire) : le journal revient SOUS la
+     carte du mini-jeu — le héros « ZONE SCELLÉE », le sas et le
+     briefing restent rangés : la zone n'est plus scellée. */
+  function afficherJournalDeBord(visible) {
+    montrerCarte('teamCard', visible);
+    montrerCarte('logCard', visible);
+    var carte = $('gateUnlocked');
+    if (carte) carte.classList.toggle('epreuve-focus', !visible);
+  }
+
+  function afficherBlocage(jusqua, nom, hours, equipe) {
+    afficherVueEpreuve();
+    var host = $('mcHost');
+    if (host && window.NautilusDefaite) {
+      window.NautilusDefaite.afficher(host, {
+        palier: 2,
+        motif: 'erreurs',
+        nom: nom,
+        jusqua: jusqua,
+        hours: hours,
+        equipe: equipe,
+        details: '3 erreurs au Palier 2'
+      });
+    }
+  }
+
+  function onErreur(n, max) {
+    nbErreurs = n;
+    majVoyants(n);
+    if (n >= max) {
+      declencherBlocage();
+    } else {
+    /* Code d'erreur repris du PALIER 1 (« ❌ Mauvaise réponse.
+       X chance(s) restante(s). ») : même formule courte, sans jamais
+       révéler quelles lettres sont fausses. */
+    statut('❌ <b>Mauvaise réponse (' + n + '/' + max + '). ' + (max - n) + ' chance(s) restante(s).</b> Toutes les cases passent au rouge puis le mot se vide tout seul — retape-le en entier.', 'danger');
+    acte('mauvaise réponse (' + n + '/' + max + ')', 'warning');
+    }
+  }
+
+  /* Son de défaite (module partagé palier-annonces.js) : joué à
+     l'éjection du mini-jeu, JAMAIS si le sonar est éteint. */
+  function jouerSonDefaite() {
+    try {
+      if (window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound) {
+        window.NautilusAnnonces.playDefeatSound();
+      }
+    } catch (e) {}
+  }
+
+  /* 3 erreurs atteintes : le blocage est PERSONNEL quand le matelot est
+     identifié (Code Matelot) — sinon repli historique LOCAL à
+     l'appareil, réservé aux joueurs anonymes. */
+  function declencherBlocage() {
+    jouerSonDefaite();
+    var maintenant = Date.now();
+    var jusquaDefaut = maintenant + BLOCAGE_MS;
+    var nomLocal = (function () {
+      try { return localStorage.getItem('nautilusMatelotName') || localStorage.getItem('nautilusMatelotNom') || ''; }
+      catch (_) { return ''; }
+    })() || (_ident && _ident.name) || 'Matelot';
+    var equipeLocale = (_ident && _ident.teamCode) || (function () {
+      try { return localStorage.getItem('nautilusCurrentTeam') || ''; } catch (_) { return ''; }
+    })() || 'Nemo';
+
+    // Affichage IMMÉDIAT synchrone de la page de défaite
+    afficherBlocage(jusquaDefaut, nomLocal, 1, equipeLocale);
+
+    if (apercuAdminAutorise()) {
+      journal('ℹ️ Aperçu organisateur : écran de défaite affiché (aucun blocage réel enregistré).', 'info');
+      return;
+    }
+    monIdentite().then(function (ident) {
+      if (ident && ident.isTest) {
+        journal('🧪 Mode concepteur : écran de défaite affiché pour ' + ident.name + ' (aucun blocage en test).', 'info');
+        return;
+      }
+      if (ident) {
+        window.NautilusBlocages.poserBlocage(ident, 'mots_croises_too_many_errors')
+          .then(function (r) {
+            afficherBlocage(r.lockedUntil, ident.name, r.hours, ident.teamCode);
+            acte('3 erreurs — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
+          })
+          .catch(function () {
+            _blocageSession = jusquaDefaut;
+            afficherBlocage(_blocageSession, ident.name, 1, ident.teamCode);
+            journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
+          });
+        return;
+      }
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusquaDefaut)); } catch (e) {}
+      acte('3 erreurs — remonte en surface (1 h)', 'danger');
+    }).catch(function () {});
+  }
+
+  /* Inscription Firestore : mêmes champs que le Palier 1 (progression
+     partagée + annonce verte aux autres équipages). L'équipage est celui
+     du matelot identifié quand il existe (sa fiche fait foi). Firebase
+     passe par matelot-blocages.js (app mutualisée, jamais deux init).
+     Mode test, aperçu admin ou visite sans équipage : AUCUNE écriture. */
+  async function propagerVictoire() {
+    var ident = await monIdentite();
+    var equipage = (ident && !ident.isTest) ? ident.teamCode : null;
+    if (!equipage) { try { equipage = localStorage.getItem('nautilusCurrentTeam'); } catch (e) {} }
+    /* PLUS de passe-droit « NEMO = coquille de test » : c'était un reste
+       de l'ère où le mode concepteur se déguisait en équipage NEMO — un
+       VRAI équipage Nemo ne voyait JAMAIS sa victoire du Palier 2
+       inscrite. Règle d'uniformité : le test est détecté UNIQUEMENT par
+       le code ZZZZ-0000 (ident.isTest / enModeTest) ou l'aperçu admin ;
+       Nemo est un équipage comme les autres. */
+    if (!equipage || enModeTest() || apercuAdminAutorise()) {
+      journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
+      return;
+    }
+    try {
+      var x = await window.NautilusBlocages.db();
+      await x.fs.updateDoc(x.fs.doc(x.db, 'teams', equipage), {
+        completedSteps: x.fs.arrayUnion('livres'),
+        currentStep: 'son',
+        lastEvent: 'step_advanced',
+        lastStepCompleted: 'livres',
+        lastStepCompletedAt: new Date().toISOString(),
+        lastStepCompletedLabel: 'Palier 2',
+        lastStepCompletedBy: (ident && !ident.isTest) ? ident.name : 'Un matelot'
+      });
+      /* Record de temps de résolution du Palier 2 (records-palier.js) :
+         écrit dans game/records partagé, silencieux en cas de panne. */
+      if (typeof window.NautilusRecords !== 'undefined') {
+        var NOMS_EQUIPES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+        var dureeSec = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
+        window.NautilusRecords.enregistrer({
+          stepId: 'livres',
+          seconds: dureeSec,
+          matelot: (ident && !ident.isTest) ? ident.name : 'Un matelot',
+          equipage: NOMS_EQUIPES[ident.teamCode] || ident.teamCode
+        }).then(chargerRecords);
+        /* Relecture après écriture : le vainqueur voit son propre temps
+           apparaître aussitôt, sans recharger la page. */
+      }
+      /* Même règle qu'advanceTeam() du Palier 1 : un palier franchi
+         lève les blocages PERSONNELS encore actifs de l'équipage.
+         Les compteurs d'échecs, eux, sont conservés. */
+      var leves = await window.NautilusBlocages.leverBlocages(equipage, 'livres');
+      journal('📈 Victoire inscrite au tableau de bord — direction le Palier 3 !'
+        + (leves > 0 ? ' ' + leves + ' matelot' + (leves > 1 ? 's' : '') + ' débloqué' + (leves > 1 ? 's' : '') + '.' : ''), 'success');
+    } catch (e) {
+      journal("⚠️ Victoire non inscrite (connexion ?). Préviens l'organisation.", 'warning');
+    }
+  }
+
+  /* ÉCRAN DE VICTOIRE FAÇON PALIER 1 — le même pour TOUS les paliers
+     (module commun victoire-palier.js) : il REMPLACE la grille dans
+     l'encart de l'épreuve, avec bilan et direction vers le Palier 3. */
+  async function afficherEcranVictoire() {
+    var host = $('mcHost');
+    if (!host || !window.NautilusVictoire) return;
+    var ident = await monIdentite();
+    var duree = t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0;
+    var mm = Math.floor(duree / 60), ss = ('0' + (duree % 60)).slice(-2);
+    var NOMS = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+    var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
+    host.classList.remove('mc', 'mc-termine');
+    window.NautilusVictoire.afficher(host, {
+      palier: 2,
+      mission: 'Palier 2',
+      equipe: equipe,
+      bravo: (ident && !ident.isTest) ? ident.name : null,
+      stats: [
+        { valeur: mm + ':' + ss, label: 'Temps utilisé' },
+        { valeur: MOTS.length + '/' + MOTS.length, label: 'Mots validés' },
+        { valeur: String(nbErreurs), label: nbErreurs > 1 ? 'Erreurs' : 'Erreur' }
+      ],
+      indication: QR_LOCATION_HINT,
+      labelSuivant: 'Palier 3',
+      urlSuivante: '1831411720.html'
+    });
+    /* Records de résolution de TOUS les matelots / équipages (menu
+       déroulant discret sous les résultats, via records-palier.js) — le
+       record du matelot courant est marqué « (toi) ». */
+    chargerRecords();
+  }
+
+  /* Lit et affiche les records du Palier 2. Appelé DÈS le rendu de
+     l'écran de victoire, puis RE-APPELÉ une fois le record consigné
+     (propagerVictoire) : le vainqueur voit son temps apparaître. */
+  function chargerRecords() {
+    if (typeof window.NautilusRecords === 'undefined') return;
+    monIdentite().then(function (ident) {
+      window.NautilusRecords.chargerEtRendre($('wonRecordsHost'), {
+        stepId: 'livres',
+        moi: (ident && !ident.isTest) ? ident.name : ''
+      });
+    });
+  }
+
+  function onVictoire() {
+    /* PAGE VICTOIRE : les blocs « ⚓ ÉQUIPAGE ACTIF EN PLONGÉE » et
+       « 📜 JOURNAL DE BORD » sont RETIRÉS (demande capitaine) — seule
+       la carte de l'épreuve reste, en scène unique (epreuve-focus),
+       exactement comme pendant la partie. */
+    afficherJournalDeBord(false);
+    statut('🏆 <b>Palier 2 franchi !</b> La grille est entièrement résolue.', 'success');
+    acte('réussit l’épreuve', 'success');
+    propagerVictoire();
+    afficherEcranVictoire();
+  }
+
+  var lance = false;
+  function lancer() {
+    if (lance) return;
+    lance = true;
+    demarrer();
+  }
+
+  /* Démarrage protégé : on vérifie d'abord le blocage PERSONNEL du
+     matelot identifié ; à défaut d'identité, le repli local historique
+     (réservé aux anonymes). Le moindre doute réseau laisse JOUER :
+     jamais de verrouillage sur une simple panne de connexion. */
+  async function demarrer() {
+    if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+      var nomApercu = (function () {
+        try { return localStorage.getItem('nautilusMatelotName') || ''; } catch (_) { return ''; }
+      })() || 'Matelot';
+      afficherBlocage(Date.now() + 3600000, nomApercu, 1, 'Nemo');
+      return;
+    }
+    if (!apercuAdminAutorise()) {
+      var ident = await monIdentite();
+      /* Concepteur (ident.isTest) : AUCUN blocage n'est jamais posé ni
+         lu — le testeur joue chaque palier sans bride. */
+      if (ident && !ident.isTest) {
+        var bloc = await window.NautilusBlocages.blocageActif(ident);
+        if (bloc) {
+          afficherBlocage(bloc.lockedUntil, ident.name);
+          journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
+            + ' : un coéquipier peut prendre le relais avec son Code Matelot.', 'warning');
+          return;
+        }
+      } else if (!ident) {
+        var jusqua = blocageAnonymeJusqua();
+        if (jusqua > Date.now()) { afficherBlocage(jusqua, null); return; }
+      }
+    }
+    afficherVueEpreuve();  /* la partie démarre : il ne reste QUE l'encart du mini-jeu (ni héros, ni journal, ni sas, ni briefing) */
+    t0Partie = Date.now(); /* chrono du bilan de l'écran de victoire */
+    majVoyants(0);
+    statut("✍️ <b>" + MOTS.length + " mots à retrouver</b> — lis une définition, écris la réponse dans la grille. <b>3 erreurs max</b>.");
+    window.NautilusMotsCroises.init($('mcHost'), {
+      mots: MOTS,
+      maxErreurs: 3,
+      onErreur: onErreur,
+      onMotValide: function (m) { acte('valide une réponse', 'success'); },
+      onVictoire: onVictoire
+    });
+  }
+
+  /* ============ BRIEFING DU CAPITAINE (vue du milieu) ============
+     Règle de TOUTE la mission (Palier 2 → final) : APRÈS la ZONE
+     SCELLÉE (déverrouillage par QR Code) et AVANT la page qui joue au
+     mini-jeu, le briefing explique le thème de l'épreuve de façon
+     immersive et IMPLICITE — jamais le contenu (ni mot, ni réponse,
+     ni grille) — avec la mise en page du Palier 1, rendue par le
+     module commun palier-briefing.js. « ⚓ PRENDRE LES COMMANDES »
+     arme réellement la partie (lancer() : blocage vérifié en réseau,
+     vue épreuve, grille). */
+  window.NautilusBriefing.afficher($('briefHost'), {
+    intro: "« Bienvenue à bord, matelot ». Le <b>Nautilus</b> consigne votre univers dans une langue d'un autre âge. Déchiffrez chaque description rétro-futuriste pour identifier les articles correspondants dans vos rayons.",
+    consignes: [
+      { ico: '✍️', html: "<b>" + MOTS.length + " mots à retrouver</b> — chaque définition cache un article de vos rayons." },
+      { ico: '⏱️', html: "<b>Plongée en mer calme</b> : aucun chronomètre pour répondre." },
+      { ico: '🚨', warn: true, html: "<b>3 erreurs maximum</b> : la 3ème erreur allume tous les voyants et provoque la remontée en surface — un équipier prend le relais." }
+    ],
+    cta: '⚓ PRENDRE LES COMMANDES',
+    onDepart: function () {
+      glisserEnHaut();
+      lancer();
+      setTimeout(glisserEnHaut, 350);
+      setTimeout(glisserEnHaut, 900);
+    }
+  });
+
+  /* SCROLL au départ de l'épreuve — reprise du geste du Palier 1
+     (« PRENDRE LES COMMANDES » glisse vers l'encart du mini-jeu) :
+     la vue épreuve est la scène unique, on plaque son haut sous la
+     barre. Sur grand écran où tout tient déjà, rien ne bouge —
+     c'est normal ; sur téléphone, la grille arrive sous les yeux. */
+  function glisserEnHaut() {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    catch (e) { try { window.scrollTo(0, 0); } catch (_) {} }
+  }
+
+  /* Démarrage : on choisit la VUE — l'épreuve, elle, ne s'arme QUE
+     depuis le « ⚓ PRENDRE LES COMMANDES » du briefing.
+     — aperçu défaite / blocage → affichage IMMÉDIAT de la défaite ;
+     — aperçu admin ou sas déjà ouvert ici → VUE BRIEFING : la zone
+       n'est PAS scellée (« ZONE SCELLÉE » n'a pas à apparaître), mais
+       le mini-jeu n'apparaît qu'après le briefing du capitaine —
+       enchaînement valable sur toute la mission ;
+     — page scellée forcée (?sas=ferme, test du QR concepteur) ou sas
+       fermé → VUE SCELLÉE : le seul bloc « porte scellée » (message +
+       lecteur QR + indication) ;
+     — le scan réussi ('nautilus:sas-ouvert') fait entrer dans la
+       VUE BRIEFING en direct. */
+  if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+    var nomApercu = (function () {
+      try { return localStorage.getItem('nautilusMatelotName') || ''; } catch (_) { return ''; }
+    })() || 'Matelot';
+    afficherBlocage(Date.now() + 3600000, nomApercu, 1, 'Nemo');
+  } else if (apercuAdminAutorise()) {
+    /* MODE CONCEPTEUR = MODE TEST (règle d'uniformité) : la barre du
+       haut porte la même bannière que le compte ZZZZ-0000 — le
+       concepteur n'appartient à AUCUN équipage et rien n'est enregistré
+       (blocage et victoire déjà neutralisés plus haut). Ré-affirmée un
+       instant après : palier-sas.js peut plaquer sur topTeam un
+       équipage mémorisé sur l'appareil de l'organisateur. */
+    var banniereModeTest = function () {
+      if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+    };
+    banniereModeTest();
+    setTimeout(banniereModeTest, 150);
+    afficherVueBriefing(false);
+  } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
+    /* Concepteur : la page reste scellée, on attend le vrai scan du QR. */
+    afficherVueScellee();
+  } else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) {
+    /* Matelot venu scanner le QR (bouton « Scanner le QR Code trouvé » de
+       l'écran de victoire) : on présente le sas, même déjà ouvert ici. */
+    afficherVueScellee();
+  } else if (window.NautilusSas.estDeverrouille(2)) {
+    afficherVueBriefing(false);
+  } else {
+    afficherVueScellee();
+    /* DÉVERROUILLAGE D'ÉQUIPE EN DIRECT : tant que la zone est scellée,
+       on écoute le document d'équipage. Dès qu'un coéquipier scanne le
+       QR (sur n'importe quel appareil), le sas s'ouvre ici aussi, à
+       l'instant, sans avoir à rescanner. Couvre aussi le retour d'un
+       matelot dont l'équipage a déjà ouvert le sas entre-temps. */
+    if (window.NautilusSas.observerDeverrouillageEquipe) {
+      window.NautilusSas.observerDeverrouillageEquipe();
+    }
+  }
+  window.addEventListener('nautilus:sas-ouvert', function () {
+    afficherVueBriefing();
+  });
+
+  /* --- Indication de la zone de recherche : dépliable SUR PLACE ---
+     Le bouton « 📍 Voir l'indication… » déplie/replie l'encart
+     « CAP SUR LE QR CODE » DANS la scène scellée — plus aucun renvoi
+     vers palier1.html?relecture=sas, qui tombait sur l'écran
+     d'identification faute d'identité dans l'URL. */
+  var _btnIndication = $('sasIndicationBtn');
+  var _panelIndication = $('sasIndicationPanel');
+  if (_btnIndication && _panelIndication) {
+    var _txtIndication = $('sasIndicationTexte');
+    if (_txtIndication) _txtIndication.textContent = ZONE_RECHERCHE_HINT;
+    _btnIndication.addEventListener('click', function () {
+      var estOuvert = !_panelIndication.hidden;
+      _panelIndication.hidden = estOuvert;
+      _btnIndication.textContent = estOuvert
+        ? '📍 Voir l’indication de la zone de recherche'
+        : '📍 Masquer l’indication';
+      _btnIndication.setAttribute('aria-expanded', estOuvert ? 'false' : 'true');
+    });
+  }
+})();
+</script>
+<!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu. -->
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=5" defer></script>
+<!-- Modules d'administration : magasins, réponses et codes QR. -->
+<script src="artefact-moteur.js?v=8"></script>
+<script src="artefact-service.js?v=8"></script>
+<script src="magasin-fnac.js?v=1"></script>
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="photo-defi.js?v=2" defer></script>
+<script src="admin-artefact.js?v=33" defer></script>
+<script src="admin-button.js?v=34" type="module"></script>
+</body>
+</html>

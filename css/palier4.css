@@ -1,0 +1,385 @@
+/* =============================================================
+   PALIER 4 — « TRAQUE SONAR : LE DUEL DES ABYSSES »
+   Feuille de styles radar moderne & cinématographique (css/palier4.css)
+   ============================================================= */
+
+main { max-width: 900px; margin: 0 auto; }
+
+.bt-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #eaf8ff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ================= 1. EN-TÊTE / HUD ================= */
+.bt-hud {
+  background: linear-gradient(135deg, rgba(3, 20, 36, 0.95), rgba(2, 10, 20, 0.98));
+  border: 1.5px solid rgba(142, 231, 255, 0.35);
+  border-radius: 14px;
+  padding: 12px 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bt-hud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bt-step-badge {
+  font-size: 13.5px;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  color: #8ee7ff;
+  text-transform: uppercase;
+}
+.bt-step-badge b { color: #ffd36c; font-size: 15px; }
+
+.bt-voyants {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 75, 62, 0.3);
+}
+
+.bt-voyants-lbl {
+  font-size: 10px;
+  font-weight: 900;
+  color: #ff8579;
+  letter-spacing: .08em;
+  margin-left: 2px;
+}
+
+.bt-voyant {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #2a1111;
+  border: 1.5px solid #ff4b3e;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bt-voyant.active {
+  background: #ff2211;
+  box-shadow: 0 0 12px #ff2211, 0 0 4px #fff;
+  animation: btFlash 0.8s infinite alternate;
+}
+@keyframes btFlash {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  100% { transform: scale(1.18); opacity: 1; }
+}
+
+.bt-relais-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #a4dcff;
+  font-weight: 700;
+}
+.bt-relais-info b { color: #5be09b; }
+
+.bt-test-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 900;
+  border-radius: 999px;
+  background: rgba(245, 176, 39, 0.25);
+  border: 1px solid rgba(245, 176, 39, 0.6);
+  color: #ffd36c;
+  vertical-align: middle;
+}
+
+.bt-btn-reinit-test {
+  background: rgba(245, 176, 39, 0.18);
+  border: 1px solid rgba(245, 176, 39, 0.6);
+  color: #ffd36c;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bt-btn-reinit-test:hover {
+  background: rgba(245, 176, 39, 0.35);
+  box-shadow: 0 0 10px rgba(245, 176, 39, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ================= 2. ÉTAT DE LA FLOTTE ================= */
+.bt-fleet-box {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.bt-ship-card {
+  background: linear-gradient(135deg, rgba(8, 30, 50, 0.85), rgba(4, 16, 28, 0.95));
+  border: 1.5px solid rgba(142, 231, 255, 0.25);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.25s, opacity 0.25s, background 0.25s;
+}
+
+.bt-ship-card.is-sunk {
+  border-color: #ff4b3e;
+  background: linear-gradient(135deg, rgba(60, 10, 10, 0.85), rgba(30, 4, 4, 0.95));
+  box-shadow: 0 0 14px rgba(255, 75, 62, 0.35);
+}
+
+.bt-ship-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bt-ship-ico {
+  font-size: 18px;
+}
+
+.bt-ship-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.bt-ship-nom {
+  font-size: 13px;
+  font-weight: 900;
+  color: #eaf8ff;
+}
+.bt-ship-card.is-sunk .bt-ship-nom {
+  color: #ff8579;
+  text-decoration: line-through;
+}
+
+.bt-ship-desc {
+  font-size: 10.5px;
+  color: #8ea8b8;
+  font-weight: 700;
+}
+
+.bt-ship-pips {
+  display: flex;
+  gap: 5px;
+}
+
+.bt-ship-pip {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(142, 231, 255, 0.2);
+  border: 1px solid rgba(142, 231, 255, 0.4);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.bt-ship-pip.hit {
+  background: #ff4b3e;
+  border-color: #ff2211;
+  box-shadow: 0 0 8px #ff4b3e;
+}
+
+/* ================= 3. RADAR TACTIQUE 8X8 ================= */
+.bt-radar-wrap {
+  position: relative;
+  background: radial-gradient(circle at center, rgba(6, 28, 48, 0.95), rgba(2, 12, 22, 0.98));
+  border: 2px solid rgba(142, 231, 255, 0.4);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(142, 231, 255, 0.08);
+  overflow: hidden;
+}
+
+.bt-radar-sweep {
+  position: absolute;
+  inset: -100%;
+  pointer-events: none;
+  background: conic-gradient(from 0deg, rgba(142, 231, 255, 0) 0deg, rgba(91, 224, 155, 0.12) 320deg, rgba(91, 224, 155, 0.35) 360deg);
+  border-radius: 50%;
+  animation: radarSweep 8s linear infinite;
+  z-index: 1;
+}
+@keyframes radarSweep {
+  to { transform: rotate(360deg); }
+}
+
+.bt-radar-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 28px repeat(8, 1fr);
+  grid-template-rows: 28px repeat(8, 1fr);
+  gap: 4px;
+  aspect-ratio: 1 / 1;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.bt-corner-cell, .bt-header-col, .bt-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 1000;
+  color: #ffd36c;
+  letter-spacing: .04em;
+  opacity: 0.9;
+}
+
+.bt-cell {
+  position: relative;
+  background: rgba(4, 20, 34, 0.75);
+  border: 1px solid rgba(142, 231, 255, 0.25);
+  border-radius: 8px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: transform 0.12s, border-color 0.12s, background 0.12s, box-shadow 0.12s;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.bt-cell:hover:not(:disabled) {
+  border-color: #8ee7ff;
+  background: rgba(14, 52, 84, 0.95);
+  transform: scale(1.06);
+  box-shadow: 0 0 12px rgba(142, 231, 255, 0.4);
+}
+
+.bt-cell:disabled {
+  cursor: default;
+  transform: none;
+}
+
+/* Tir dans l'eau */
+.bt-cell.is-miss {
+  background: rgba(2, 10, 18, 0.85);
+  border-color: rgba(142, 231, 255, 0.15);
+  opacity: 0.65;
+}
+
+/* Touché (Flamme / explosion) */
+.bt-cell.is-hit {
+  background: rgba(255, 75, 62, 0.35);
+  border-color: #ff4b3e;
+  box-shadow: 0 0 14px rgba(255, 75, 62, 0.55);
+  animation: hitPulse 1.2s infinite alternate;
+}
+@keyframes hitPulse {
+  0% { transform: scale(0.98); }
+  100% { transform: scale(1.04); }
+}
+
+/* Coulé (Carcasse) */
+.bt-cell.is-sunk {
+  background: rgba(180, 20, 10, 0.6);
+  border-color: #ff2211;
+  box-shadow: 0 0 16px rgba(255, 34, 17, 0.7);
+}
+
+.bt-cell-ico {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* ================= 4. JOURNAL TACTIQUE ================= */
+.bt-log-status {
+  background: rgba(3, 16, 28, 0.85);
+  border: 1px solid rgba(142, 231, 255, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  color: #cde6f2;
+  line-height: 1.4;
+  min-height: 20px;
+}
+
+.bt-log-status.is-hit {
+  border-color: #ff4b3e;
+  color: #ffb4ad;
+  background: rgba(60, 12, 12, 0.85);
+}
+
+.bt-log-status.is-miss {
+  border-color: #8ee7ff;
+  color: #a4dcff;
+}
+
+.bt-log-status.is-danger {
+  border-color: #ff2211;
+  color: #ffd2d2;
+  background: rgba(80, 10, 10, 0.9);
+}
+
+.bt-log-status.is-win {
+  border-color: #5be09b;
+  color: #b9f5d5;
+  background: rgba(10, 60, 30, 0.85);
+}
+
+/* ================= 5. SECOUSSES HOLLYWOODIENNES ================= */
+.bt-shake-soft {
+  animation: shakeSoft 0.35s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shakeSoft {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
+  40%, 60% { transform: translate3d(2px, 0, 0); }
+}
+
+.bt-shake-hard {
+  animation: shakeHard 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shakeHard {
+  10%, 90% { transform: translate3d(-3px, -2px, 0); }
+  20%, 80% { transform: translate3d(4px, 2px, 0); }
+  30%, 50%, 70% { transform: translate3d(-5px, -3px, 0); }
+  40%, 60% { transform: translate3d(5px, 3px, 0); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .bt-fleet-box {
+    grid-template-columns: 1fr;
+  }
+  .bt-radar-grid {
+    grid-template-columns: 22px repeat(8, 1fr);
+    grid-template-rows: 22px repeat(8, 1fr);
+    gap: 3px;
+  }
+  .bt-cell {
+    border-radius: 6px;
+  }
+  .bt-cell-ico {
+    font-size: 11px;
+  }
+}

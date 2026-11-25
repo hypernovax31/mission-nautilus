@@ -7,9 +7,9 @@
        responsive ou une valeur en pixels fixes finissait par rattraper
        (voire depasser) le texte standard. */
     :root{
-      --fs-base:clamp(15px,2.4vw,17px);
-      --fs-small:max(10.5px, calc(var(--fs-base) * .80));
-      --fs-tiny:max(9.5px, calc(var(--fs-base) * .70));
+      --fs-base:clamp(0.94rem,2.4vw,1.06rem);
+      --fs-small:max(0.75rem, calc(var(--fs-base) * .80));
+      --fs-tiny:max(0.75rem, calc(var(--fs-base) * .70));
     }
     /* Couleurs de base du site. Seules celles reellement utilisees sont
        gardees : 8 autres (--abyss, --black, --cyan, --deep, --line,
@@ -25,8 +25,23 @@
       --dangerb:#efb2ac;        /*  et son contour */
       --successbg:#effff7;      /* fond de reussite */
       --successb:#aee5ca;       /*  et son contour */
+      /* Échelle d'espaces équidistants — tout le site respire sur la même grille */
+      --space-xs: clamp(6px, 1vw, 10px);
+      --space-sm: clamp(10px, 1.6vw, 14px);
+      --space-md: clamp(14px, 2vw, 20px);
+      --space-lg: clamp(18px, 2.6vw, 26px);
+      --space-xl: clamp(24px, 3.2vw, 32px);
+      --gutter: var(--space-md);
+      --gutter-inner: var(--space-md);
     }
     *{box-sizing:border-box}
+    html, body{
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+    }
+    button, a, input, select, textarea, .card, main{
+      touch-action: manipulation;
+    }
     /* PROTECTION-COPIE (desactivee) : selection de texte libre.
        Pour la reactiver au dernier palier, decommenter la ligne ci-dessous.
     body, button, .card, .notice, .team, .stepbox{user-select:none;-webkit-user-select:none;-ms-user-select:none} */
@@ -56,17 +71,16 @@
     }
     .admin-o2-badge{
       font-size:var(--fs-tiny);font-weight:900;text-transform:uppercase;
-      letter-spacing:.04em;color:#8c5a1f;background:rgba(245,176,39,.14);
-      border:1px solid rgba(245,176,39,.4);border-radius:999px;
+      letter-spacing:.04em;color:#075c39;background:#effff7;
+      border:1px solid #aee5ca;border-radius:999px;
       padding:2px 9px;text-align:right;
     }
 
-    /* Onglet O2 : la date a besoin de place, elle prend une ligne entiere. */
+    /* Onglet O2 : deux champs (jours + heures), sur une grille à deux
+       paires libellé / saisie. */
     .admin-o2-form{grid-template-columns:minmax(0,auto) minmax(0,1fr)}
-    .admin-o2-form>input[type="datetime-local"]{min-width:0}
     @media(min-width:761px){
-      .admin-o2-form{grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,auto) minmax(0,110px) minmax(0,auto) minmax(0,110px)}
-      .admin-o2-form>input[type="datetime-local"]{grid-column:2 / -1}
+      .admin-o2-form{grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,auto) minmax(0,1fr)}
     }
     /* Filet de securite : rien ne deborde du panneau admin. */
     #adminPanel input,#adminPanel select,#adminPanel textarea{max-width:100%;box-sizing:border-box}
@@ -91,29 +105,16 @@
       opacity:.07;
     }
     /* IDENTITE VISUELLE DES EQUIPAGES
-       Chaque carte porte la couleur de son equipage sur TOUT son contour
-       (et non plus un simple liseré a gauche), avec un halo exterieur de
-       cette meme couleur. Objectif : reconnaitre un equipage d'un coup
-       d'oeil, sans avoir a lire son nom. */
+       Chaque carte porte la couleur de son équipage sur son contour. Le
+       halo coloré est réservé au survol : ainsi il apparaît clairement à
+       l'entrée et disparaît totalement quand la souris quitte la carte. */
     .team.team-reveal{
-      /* Les couleurs de halo ont ete eclaircies pour bien ressortir sur le
-         fond noir du sonar. Sur le fond BLANC des cartes, un trait clair
-         s'efface : on monte donc l'opacite du contour a 85 % pour garder
-         un trait franc. La barre de gauche, elle, garde la teinte sombre
-         d'origine (tint), parfaitement lisible sur blanc. */
       border:2px solid rgba(var(--team-glow,143,164,181),.85);
       border-left:7px solid var(--team-tint,#dfe8ee);
-      box-shadow:
-        0 0 0 1px rgba(var(--team-glow,143,164,181),.20),
-        0 8px 22px rgba(var(--team-glow,143,164,181),.28),
-        0 2px 6px rgba(0,0,0,.06);
-      transition:box-shadow .3s ease,border-color .3s ease;
-    }
-    .team.team-reveal::after{
-      content:"";position:absolute;inset:0;z-index:-2;pointer-events:none;
-      border-radius:inherit;
-      background:linear-gradient(135deg,var(--team-tint,#dfe8ee) 0%,transparent 62%);
-      opacity:.10;
+      /* Ombre neutre uniquement au repos : aucun halo résiduel coloré. */
+      box-shadow:0 2px 6px rgba(0,0,0,.10);
+      /* Pas de transition ici : au départ du pointeur, le halo s'éteint
+         immédiatement au lieu de laisser une traînée lumineuse. */
     }
     /* Bandeau colore en haut de carte : renforce la reconnaissance */
     .team.team-reveal>div:first-child{
@@ -121,14 +122,32 @@
       padding-bottom:10px;
       border-bottom:1px solid rgba(var(--team-glow,143,164,181),.30);
     }
+    /* Halo de repérage : visible uniquement sous la souris, soit directement
+       sur la carte, soit quand le point radar associé est survolé. */
     @media (hover:hover){
-      .team.team-reveal:hover{
-        border-color:rgba(var(--team-glow,143,164,181),.85);
+      .team.team-reveal:hover,
+      .team.team-reveal.team-radar-hover{
+        border-color:rgba(var(--team-glow,143,164,181),1);
         box-shadow:
-          0 0 0 1px rgba(var(--team-glow,143,164,181),.35),
-          0 12px 30px rgba(var(--team-glow,143,164,181),.42),
-          0 2px 6px rgba(0,0,0,.08);
+          0 0 0 2px rgba(var(--team-glow,143,164,181),.42),
+          0 0 26px 7px rgba(var(--team-glow,143,164,181),.52),
+          0 8px 20px rgba(0,0,0,.16);
       }
+      /* L'entrée est douce ; la classe est retirée immédiatement à la sortie. */
+      .team.team-reveal:hover{transition:box-shadow .22s ease,border-color .22s ease;}
+    }
+    /* Clic ou toucher : exactement le même halo qu'au survol, MAIS hors du
+       media (hover:hover) ci-dessus — sinon il n'existerait jamais sur les
+       écrans tactiles, où :hover n'est pas disponible. La transition donne
+       la même entrée douce ; le retrait reste net, comme à la sortie du
+       survol. */
+    .team.team-reveal.team-click-highlight{
+      border-color:rgba(var(--team-glow,143,164,181),1);
+      box-shadow:
+        0 0 0 2px rgba(var(--team-glow,143,164,181),.42),
+        0 0 26px 7px rgba(var(--team-glow,143,164,181),.52),
+        0 8px 20px rgba(0,0,0,.16);
+      transition:box-shadow .22s ease,border-color .22s ease;
     }
     @media (prefers-contrast: more){
       .team::before{opacity:0}
@@ -147,6 +166,7 @@
     .anim-idle .radar-center,
     .anim-idle .radar-blip,
     .anim-idle .radar-blip::after,
+    .anim-idle .radar-blip .blip-echo,
     .anim-idle .radar-rings,
     .anim-idle.radar-stage{animation-play-state:paused !important}
 
@@ -174,7 +194,20 @@
     .offscreen .radar-stage:not(.anim-idle) .radar-sweep-big,
     .offscreen .radar-stage:not(.anim-idle) .radar-center,
     .offscreen .radar-stage:not(.anim-idle) .radar-blip,
-    .offscreen .radar-stage:not(.anim-idle) .radar-blip::after{
+    .offscreen .radar-stage:not(.anim-idle) .radar-blip::after,
+    .offscreen .radar-stage:not(.anim-idle) .radar-blip .blip-echo{
+      animation-play-state:running !important;
+    }
+
+    /* EXCEPTION : la circulation continue des bulles de la jauge O2.
+       La jauge d'oxygène et le flux horizontal de ses bulles ne doivent pas
+       être bloqués par la classe .offscreen (notamment sur Brave, Safari,
+       ou lors de l'ouverture du sas/écoutille). Seul l'arrière-plan de l'onglet
+       (body.page-hidden) suspend les bulles pour économiser la batterie. */
+    .offscreen .oxygen-liquid::before,
+    .offscreen .oxygen-liquid::after,
+    .offscreen .o2-fill::before,
+    .offscreen .o2-fill::after{
       animation-play-state:running !important;
     }
 
@@ -201,13 +234,13 @@
       .code,.code.code-copied{transition:none;transform:none}
     }
 
-    .admin-o2-badge.warning{color:#8c5a1f;background:rgba(245,176,39,.14);border-color:rgba(245,176,39,.4)}
-    .admin-o2-badge.critical{color:#a3271b;background:rgba(255,75,62,.12);border-color:rgba(255,75,62,.45)}
+    .admin-o2-badge.warning{color:#734300;background:#fff3cd;border-color:#ffd166}
+    .admin-o2-badge.critical{color:#841818;background:#ffe6e6;border-color:#ff9999}
 
-    /* Placeholders : gris tres clair, identique sur input et select */
-    input::placeholder{color:#b8c4cd;opacity:1}
-    input::-webkit-input-placeholder{color:#b8c4cd}
-    select:invalid,select option[value=""]{color:#b8c4cd}
+    /* Placeholders : gris lisible conforme WCAG, identique sur input et select */
+    input::placeholder{color:#617181;opacity:1}
+    input::-webkit-input-placeholder{color:#617181}
+    select:invalid,select option[value=""]{color:#617181}
 
     /* Le Code Matelot doit rester selectionnable en TOUTES circonstances,
        y compris si une protection anti-copie est reactivee plus tard. */
@@ -243,10 +276,10 @@
     }
     header{
       position:relative;
-      min-height:400px;
+      min-height:auto;
       color:#fff;
-      padding:34px clamp(20px,4vw,52px) 64px;
-      border-bottom:10px solid var(--fnac);
+      padding:var(--space-md) var(--space-lg);
+      border-bottom:4px solid var(--fnac);
       background:
         linear-gradient(135deg,rgba(0,0,0,.72),rgba(3,17,31,.74)),
         radial-gradient(circle at 75% 35%,rgba(142,231,255,.18),transparent 28%);
@@ -277,7 +310,7 @@
     }
     .top-bar{position:fixed;top:14px;right:14px;z-index:10000;display:flex;align-items:stretch;gap:8px;flex-wrap:nowrap;justify-content:flex-end;width:calc(100vw - 28px);max-width:calc(2*var(--tb-btn-w) + 8px);pointer-events:none;--tb-btn-w:clamp(104px,30vw,170px)}
     .top-bar>*{margin:0;pointer-events:auto}
-    .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{box-sizing:border-box;flex:1 1 0;min-width:0;max-width:var(--tb-btn-w);padding:9px 10px;border-width:2px;border-style:solid;border-radius:999px;font-size:clamp(10px,2.5vw,12px);font-weight:1000;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;min-height:auto;position:static}
+    .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{box-sizing:border-box;flex:1 1 0;min-width:0;max-width:var(--tb-btn-w);padding:9px 10px;border-width:2px;border-style:solid;border-radius:999px;font-size:clamp(12px,2.5vw,12px);font-weight:1000;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;min-height:auto;position:static}
     /* L'icone du bouton sonar ne doit jamais etre rognee ni compressee :
        c'est le libelle qui se raccourcit si la place manque. */
     .top-bar>.sonar-toggle>.tb-ico{flex:0 0 auto;line-height:1}
@@ -347,15 +380,32 @@
     @media(max-width:520px){
       /* Les 2 boutons restent strictement identiques et sur une seule ligne */
       .top-bar{top:7px;right:7px;gap:6px;width:calc(100vw - 14px);max-width:calc(2*var(--tb-btn-w) + 6px);--tb-btn-w:clamp(118px,33.5vw,152px)}
-      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{padding:7px 5px;letter-spacing:0;border-width:1.5px;font-size:clamp(8px,2.05vw,9.6px);gap:3px}
+      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{padding:7px 5px;letter-spacing:0;border-width:1.5px;font-size:clamp(12px,2.05vw,9.6px);gap:3px}
     }
     @media(max-width:360px){
       .top-bar{top:6px;right:6px;gap:5px;width:calc(100vw - 12px);--tb-btn-w:clamp(104px,32.5vw,132px)}
-      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{font-size:clamp(7.4px,2.35vw,8.4px);padding:6px 4px;gap:2px}
+      .top-bar>.install-pwa-btn,.top-bar>.sonar-toggle{font-size:clamp(12px,2.35vw,8.4px);padding:6px 4px;gap:2px}
     }
     /* --- Encart d'embarquement : code matelot + QR alignes --- */
     .matelot-card{padding:clamp(16px,3.5vw,22px)}
-    .matelot-welcome{margin:0 0 8px;font-size:clamp(15px,2.4vw,17px);line-height:1.45}
+    /* Message de bienvenue : la nouvelle la plus importante de la carte,
+       mise en avant par un bandeau PLEIN qui tranche sur le fond clair de
+       l'encart. Sa couleur est celle de l'équipage (teinte posée par le JS
+       via --team-tint / --team-glow, mêmes valeurs que les cartes d'équipe) :
+       le matelot reconnaît son bord d'un coup d'œil. Repli vert historique
+       si aucune teinte n'est posée. Le nom et l'équipage ressortent en doré. */
+    .matelot-welcome{
+      display:flex;align-items:center;gap:12px;
+      margin:0 0 14px;padding:14px 16px;border-radius:12px;
+      background:
+        linear-gradient(135deg, rgba(var(--team-glow,7,92,57),.22), transparent 55%),
+        var(--team-tint,#075c39);
+      color:#fff;font-size:clamp(17px,2.6vw,20px);font-weight:900;line-height:1.3;
+      box-shadow:0 8px 18px rgba(var(--team-glow,7,92,57),.30);
+    }
+    .matelot-welcome b{color:#ffe2a0}
+    .matelot-welcome-ico{flex:0 0 auto;font-size:28px;line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.3)}
+    .matelot-welcome-txt{flex:1 1 auto;min-width:0}
     /* Invitation a aller voir son equipage sur le sonar. Volontairement
        plus discrete que le message de bienvenue : c'est une suggestion,
        pas une consigne. */
@@ -427,7 +477,7 @@
       box-shadow:0 18px 46px rgba(0,0,0,.55);display:block}
     .fiche-loading{color:#8ee7ff;font-size:13px;font-weight:800}
     .fiche-fallback{background:#0a2a40;border:1px solid rgba(245,176,39,.5);border-radius:14px;padding:22px 18px;width:100%}
-    .fiche-fallback-lab{font-size:11px;font-weight:900;letter-spacing:.06em;color:#9fc4d6;margin-bottom:10px}
+    .fiche-fallback-lab{font-size:12px;font-weight:900;letter-spacing:.06em;color:#9fc4d6;margin-bottom:10px}
     .fiche-hint{margin:12px 0 4px;font-size:12px;color:#9fc4d6;line-height:1.45}
     .fiche-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
     .fiche-btn{width:100%;margin:0;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.22);
@@ -439,6 +489,37 @@
     }
     .qr-modal-share{padding:10px 18px;background:linear-gradient(135deg,#075c39,#0a8a5a);color:#fff;border:0;border-radius:999px;font-weight:1000;font-size:14px;margin-top:16px;cursor:pointer;letter-spacing:.04em}
     .qr-modal-share:hover{filter:brightness(1.1);transform:translateY(-1px)}
+
+    /* ===== Case de reprise de mission =====
+       Petite case qui surgit en haut de l'écran (sous la barre du haut) et
+       disparaît seule après quelques secondes : « ✅ NOM, matelot de
+       l'équipage TEAM, reprends la plongée. » Non bloquante, la page reste
+       entièrement utilisable dessous. */
+    .resume-popup{
+      position:fixed;top:70px;left:50%;z-index:10006;
+      transform:translateX(-50%);
+      width:min(92vw,520px);box-sizing:border-box;
+      padding:14px 18px;border-radius:14px;
+      background:linear-gradient(135deg,#075c39,#0a8a5a);
+      color:#fff;font-weight:800;font-size:clamp(14px,3.6vw,16px);line-height:1.4;
+      text-align:center;
+      border:1px solid rgba(255,255,255,.28);
+      box-shadow:0 14px 34px rgba(0,0,0,.45),0 0 0 4px rgba(245,176,39,.14);
+      animation:resumePopupIn .4s cubic-bezier(.2,.9,.3,1.35);
+    }
+    .resume-popup b{color:#ffe2a0}
+    .resume-popup-out{opacity:0;transform:translateX(-50%) translateY(-12px);transition:opacity .3s ease,transform .3s ease}
+    @keyframes resumePopupIn{
+      from{opacity:0;transform:translateX(-50%) translateY(-16px) scale(.92)}
+      to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+    }
+    @media (prefers-reduced-motion: reduce){
+      .resume-popup{animation:none}
+      .resume-popup-out{transition:opacity .3s ease}
+    }
+    @media(max-width:520px){
+      .resume-popup{top:60px}
+    }
 
 
     .brand{
@@ -500,27 +581,36 @@
       z-index:2;
       width:100%;
       max-width:none;
-      margin:0 auto 24px;
-      padding:28px clamp(14px,2.4vw,44px) 0;
+      margin:0 auto var(--space-md);
+      padding:var(--gutter) var(--gutter) 0;
       display:grid;
-      gap:24px;
+      gap:var(--gutter);
     }
     .card{
       background:rgba(255,255,255,.97);
-      border:1px solid rgba(255,255,255,.62);
-      border-radius:28px;
-      box-shadow:0 22px 48px rgba(0,0,0,.24);
+      border:1px solid rgba(245,176,39,.28);
+      border-radius:20px;
+      box-shadow:0 12px 28px rgba(0,0,0,.18);
       overflow:hidden;
     }
     .card h2{
       margin:0;
-      background:linear-gradient(90deg,#101820,#253545);
-      color:#fff;
-      padding:18px clamp(18px,3vw,26px);
-      font-size:clamp(20px,2.6vw,24px);
+      background:
+        linear-gradient(115deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,0) 32%, rgba(255,255,255,.06) 72%),
+        radial-gradient(130% 90% at 8% 12%, rgba(48,22,2,.52), transparent 48%),
+        radial-gradient(120% 90% at 94% 88%, rgba(28,12,0,.52), transparent 52%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, rgba(0,0,0,.09) 1px 3px),
+        linear-gradient(180deg, #b57318 0%, #8f4f0a 30%, #663606 58%, #452404 82%, #7c4808 100%);
+      color:#f2f6f9;
+      padding:var(--space-sm) var(--gutter-inner);
+      font-size:clamp(18px,2.4vw,22px);
+      font-weight:700;
+      letter-spacing:.06em;
       line-height:1.18;
+      text-shadow:0 1px 2px rgba(0,0,0,.65), 0 -1px 0 rgba(255,255,255,.22);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -3px 0 rgba(30,14,0,.65), inset 0 0 18px rgba(0,0,0,.2), 0 2px 5px rgba(0,0,0,.35);
     }
-    .body{padding:clamp(18px,3vw,28px)}
+    .body{padding:var(--gutter-inner)}
 
     /* ===== JOURNAL DE BORD DU COCKPIT =====
        Le titre etait un simple texte de 11 px en majuscules, plus petit
@@ -568,16 +658,32 @@
        petite, plus sombre, sans gras. `white-space:nowrap` empeche
        "06/08" et "00:09" de se retrouver sur deux lignes. */
     .ck-journal-date{
-      flex:0 0 auto;color:rgba(142,231,255,.42);font-size:11px;
+      flex:0 0 auto;color:rgba(142,231,255,.42);font-size:12px;
       font-family:Consolas,"Courier New",monospace;line-height:1.65;
       white-space:nowrap;
     }
+    /* Menu replié discret de l'historique : les événements antérieurs aux
+       6 plus récents. <details> natif : aucun script nécessaire pour
+       déplier/replier, accessible au clavier. */
+    .ck-journal-suite{margin-top:10px}
+    .ck-journal-suite summary{
+      cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border:1px solid rgba(142,231,255,.22);border-radius:999px;
+      color:#9bc4d4;font-weight:800;font-size:12.5px;letter-spacing:.02em;
+      background:rgba(0,0,0,.16);transition:.18s color,.18s border-color;
+    }
+    .ck-journal-suite summary::-webkit-details-marker{display:none}
+    .ck-journal-suite summary::before{content:"▸";font-size:12px;transition:transform .18s ease}
+    .ck-journal-suite[open] summary::before{transform:rotate(90deg)}
+    .ck-journal-suite summary:hover{color:#dff6ff;border-color:rgba(142,231,255,.55)}
+    .ck-journal-suite[open] summary{margin-bottom:10px}
+    .ck-journal-suite .ck-journal-liste{margin-top:0}
     @media(max-width:430px){
       .ck-journal{padding:12px 13px}
       .ck-journal-texte{font-size:13px}
     }
 
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.grid>div{display:flex;flex-direction:column;justify-content:flex-end}.boarding-grid{display:grid;grid-template-columns:50fr 15fr 35fr;gap:18px;align-items:end}.boarding-grid>div{min-width:0}.boarding-action button{width:100%;margin:0;height:52px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}.grid>div{display:flex;flex-direction:column;justify-content:flex-end}.boarding-grid{display:grid;grid-template-columns:50fr 15fr 35fr;gap:18px;align-items:end}.boarding-grid>div{min-width:0}.boarding-grid input,.boarding-grid select{height:52px;min-height:52px;box-sizing:border-box}.boarding-action button{width:100%;margin:0;height:52px;min-height:52px;padding:0 18px;line-height:48px;box-sizing:border-box}
 
     /* =====================================================================
        LES 4 HUBLOTS  —  consignes de mission
@@ -624,8 +730,14 @@
       border:1px solid rgba(245,176,39,.30);
       box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 26px rgba(0,0,0,.34);
     }
-    .rule-invite-eyebrow{
-      font-size:var(--fs-tiny);font-weight:900;letter-spacing:.22em;
+    /* « Consignes de plongee » promu en vrai titre H2, a la meme echelle
+       que les autres titres .card h2 (clamp 20 → 24 px), mais sans reprendre
+       leur bande sombre : la regle a 2 classes (.card .rule-invite-eyebrow,
+       specificite 0-2-0) l'emporte sur .card h2 (0-1-1). Oscillation
+       reduite de .22em a .14em pour que le mot tienne sur mobile. */
+    .card .rule-invite-eyebrow{
+      margin:0;padding:0;background:none;line-height:1.18;
+      font-size:clamp(20px,2.6vw,24px);font-weight:900;letter-spacing:.14em;
       text-transform:uppercase;color:rgba(245,176,39,.85);
     }
     .rule-invite-main{font-size:clamp(13px,2.6vw,16px);font-weight:800;line-height:1.45;color:#dff1fb}
@@ -650,7 +762,7 @@
     /* --- Rangee de hublots --- */
     .mission-steps{
       display:grid;grid-template-columns:repeat(4,1fr);
-      gap:clamp(10px,2.2vw,22px);margin:22px 0 0;
+      gap:clamp(12px,2.2vw,22px);margin:22px 0 0;
       justify-items:center;align-items:start;
     }
 
@@ -689,39 +801,6 @@
       box-shadow:0 0 8px rgba(245,176,39,.6);
     }
 
-    /* --- Bareme de blocage : une ligne par echec, duree a droite --- */
-    .bareme{margin:16px 0 0;padding:14px 16px;border-radius:12px;
-      background:rgba(4,16,26,.72);border:1px solid rgba(142,231,255,.18);}
-    .bareme-titre{
-      font-size:clamp(12px,2.4vw,14px);font-weight:900;letter-spacing:.04em;
-      text-transform:uppercase;color:#fff;margin-bottom:10px;
-    }
-    .bareme-liste{display:grid;gap:5px}
-    .bareme-l{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:7px 11px;border-radius:8px;font-size:var(--fs-small);line-height:1.3;
-      background:rgba(142,231,255,.06);border-left:3px solid rgba(142,231,255,.45);
-      color:#cfe6f4;
-    }
-    .bareme-l.ambre{background:rgba(245,176,39,.09);border-left-color:var(--amber);color:#ffe2a0}
-    .bareme-l.rouge{background:rgba(255,75,62,.11);border-left-color:#ff4b3e;color:#ffd0cd}
-    .bareme-l.actif{
-      outline:1px solid rgba(255,255,255,.55);
-      box-shadow:0 0 14px rgba(255,255,255,.18);font-weight:800;
-    }
-    .bareme-n{font-weight:700}
-    .bareme-h{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
-    .bareme-note{
-      margin:11px 0 0!important;font-size:calc(var(--fs-small) - .5px)!important;
-      line-height:1.55!important;color:#a9c6d6!important;
-    }
-    .bareme-note b{color:#fff}
-    .bareme-note.entraide{
-      margin-top:10px!important;padding:10px 12px;border-radius:9px;
-      background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
-      color:#c8ece0!important;
-    }
-    .bareme-note.entraide b{color:#8dffd0}
 
     @media(max-width:620px){
       .mission-steps{grid-template-columns:repeat(2,1fr);gap:14px}
@@ -756,12 +835,12 @@
        ces pastilles etaient cliquables, ni qu'il fallait les lire TOUTES. */
     /* Hublot deja lu : coche discrete, pour savoir ou l'on en est. */@keyframes hublotPulse{0%,100%{border-color:rgba(245,176,39,.35);box-shadow:0 0 0 rgba(245,176,39,0)}50%{border-color:rgba(245,176,39,.95);box-shadow:0 0 18px rgba(245,176,39,.55)}}
     label{display:block;font-weight:900;margin:0 0 9px;color:#1a2834}
-    input,select{width:100%;height:52px;min-height:52px;padding:13px 14px;border:2px solid #d8e0e6;border-radius:15px;font:inherit;background:#fff;color:#111;line-height:1.2}
+    input,select{width:100%;height:auto;min-height:52px;padding:13px 14px;border:2px solid #d8e0e6;border-radius:15px;font:inherit;background:#fff;color:#111;line-height:1.2}
     input:focus,select:focus{outline:none;border-color:var(--fnac);box-shadow:0 0 0 4px rgba(245,176,39,.22)}
     #matelotCodeInput,#memberName{text-transform:uppercase}.uppercase{text-transform:uppercase;letter-spacing:.04em}
     button{border:0;border-radius:15px;padding:14px 18px;font:inherit;font-weight:900;cursor:pointer;margin:12px 8px 0 0;transition:.15s filter,.15s transform;min-height:48px}
     button:hover{filter:brightness(1.03);transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed;transform:none}.primary{background:var(--fnac);color:#111;box-shadow:0 10px 18px rgba(245,176,39,.26)}.secondary{background:#eaf0f4;color:#111}.danger{background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac}
-    .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:var(--fs-small);color:#6e7a84;line-height:1.38}.code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111;color:var(--fnac);border:2px solid var(--fnac);border-radius:12px;padding:8px 12px;display:inline-block;user-select:all;font-size:16px;box-shadow:0 6px 14px rgba(0,0,0,.12)}.teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);font-weight:900;margin-top:3px}.sonar-loader{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:34px 18px;background:linear-gradient(135deg,rgba(7,26,43,.98),rgba(11,52,78,.96));border:1px solid rgba(120,255,180,.28);border-radius:22px;color:#baffd2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18)}.sonar-screen{position:relative;width:170px;height:170px;min-width:170px;flex:0 0 170px;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.08),rgba(0,0,0,.25) 70%),#02120d;border:3px solid rgba(91,255,156,.75);box-shadow:0 0 22px rgba(91,255,156,.28),inset 0 0 22px rgba(91,255,156,.12);overflow:hidden}.sonar-screen:before{content:"";position:absolute;inset:26px;border:1px solid rgba(91,255,156,.24);border-radius:50%;box-shadow:0 0 0 26px rgba(91,255,156,.10),0 0 0 52px rgba(91,255,156,.07)}.sonar-screen:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(91,255,156,.18);box-shadow:-59px 59px 0 -58px transparent}.sonar-text{font-family:Consolas,"Courier New",monospace;text-transform:uppercase;white-space:nowrap;letter-spacing:.045em;font-weight:1000;font-size:clamp(11px,3vw,20px);color:#fff;text-shadow:0 0 14px rgba(91,255,156,.55);max-width:100%;overflow:visible;text-align:center}.sonar-text:after{content:"";animation:none}.cockpit-action{display:flex;justify-content:center;margin-top:18px}.cockpit-launch{min-width:min(100%,360px);text-align:center}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}
+    .notice{background:var(--warn);border:1px solid var(--warnb);border-radius:16px;padding:14px 16px;line-height:1.48;margin:0 0 16px}.warning{background:var(--dangerbg);border-color:var(--dangerb);color:#5d130e}.success{background:var(--successbg);border-color:var(--successb);color:#075c39}.muted{color:#526473;line-height:1.5}.small{font-size:var(--fs-small);color:#6e7a84;line-height:1.38}.code{font-family:Consolas,"Courier New",monospace;font-weight:1000;background:#111;color:var(--fnac);border:2px solid var(--fnac);border-radius:12px;padding:8px 12px;display:inline-block;user-select:all;font-size:16px;box-shadow:0 6px 14px rgba(0,0,0,.12)}.teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}.team{border:1px solid #dfe8ee;border-radius:20px;padding:16px;background:linear-gradient(180deg,#fff,#f7fbfd);min-width:0}.team h3{margin:0 0 10px;font-size:19px;color:#13202b}.service{display:inline-block;background:#eef3ff;color:#163f8d;border:1px solid #d5e1ff;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);font-weight:900;margin-top:3px}.sonar-loader{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:34px 18px;background:linear-gradient(135deg,rgba(7,26,43,.98),rgba(11,52,78,.96));border:1px solid rgba(120,255,180,.28);border-radius:22px;color:#baffd2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 14px 28px rgba(0,0,0,.18)}.sonar-screen{position:relative;width:170px;height:170px;min-width:170px;flex:0 0 170px;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.08),rgba(0,0,0,.25) 70%),#02120d;border:3px solid rgba(91,255,156,.75);box-shadow:0 0 22px rgba(91,255,156,.28),inset 0 0 22px rgba(91,255,156,.12);overflow:hidden}.sonar-screen:before{content:"";position:absolute;inset:26px;border:1px solid rgba(91,255,156,.24);border-radius:50%;box-shadow:0 0 0 26px rgba(91,255,156,.10),0 0 0 52px rgba(91,255,156,.07)}.sonar-screen:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(91,255,156,.18);box-shadow:-59px 59px 0 -58px transparent}.sonar-text{font-family:Consolas,"Courier New",monospace;text-transform:uppercase;white-space:nowrap;letter-spacing:.045em;font-weight:1000;font-size:clamp(12px,3vw,20px);color:#fff;text-shadow:0 0 14px rgba(91,255,156,.55);max-width:100%;overflow:visible;text-align:center}.sonar-text:after{content:"";animation:none}.cockpit-action{display:flex;justify-content:center;margin-top:18px}.cockpit-launch{min-width:min(100%,360px);text-align:center}.stepbox{border:2px dashed #cbd7df;border-radius:20px;padding:18px;background:#fafafa;margin-top:14px}.locked{border-color:var(--dangerb);background:var(--dangerbg)}.done{border-color:var(--successb);background:var(--successbg)}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.hr{height:1px;background:#e8eef2;margin:18px 0}
     .hero-actions{position:relative;z-index:2;display:flex;gap:20px;flex-wrap:wrap;margin-top:40px}.hero-cta{position:relative;z-index:2;margin-top:0;background:var(--fnac);color:#111;border:0;border-radius:999px;padding:16px 24px;font-weight:1000;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(245,176,39,.28);width:auto;min-width:210px}.hero-cta.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(245,176,39,.55);box-shadow:none}
     .hero-cta.red{background:linear-gradient(135deg,#ff4b3e,#9b1111);color:#fff;box-shadow:0 0 30px rgba(255,55,55,.25)}
     .ocean-wallpaper{position:fixed;top:0;left:0;width:100vw;height:100vh;height:100lvh;z-index:0;pointer-events:none;overflow:hidden;background-image:url('../assets/fond-nautilus.jpg');background-position:center top;background-size:100% auto;background-repeat:no-repeat;background-color:#03111f;
@@ -771,14 +850,15 @@
          translateZ(0) le fige dans une couche a part, dessinee une seule
          fois puis simplement reaffichee. */
       contain:strict;transform:translateZ(0);backface-visibility:hidden;}
-    .countdown-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(8,48,72,.80));color:#fff;border-color:rgba(142,231,255,.18);position:relative;overflow:hidden}.countdown-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(142,231,255,.06) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.05) 1px,transparent 1px);background-size:34px 34px;opacity:.35;pointer-events:none}.oxygen-dashboard{position:relative;z-index:1}.oxygen-meter{background:linear-gradient(135deg,#061524,#0b2d44);border:1px solid rgba(142,231,255,.25);border-radius:24px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 18px 35px rgba(0,0,0,.25)}.oxygen-meter-top{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:baseline;gap:clamp(6px,2vw,14px);color:#dff6ff;font-weight:900;letter-spacing:.05em;text-transform:uppercase;font-size:13px;margin-bottom:10px;min-width:0}.oxygen-meter-top span{font-size:clamp(13px,3.6vw,34px);line-height:1.1;letter-spacing:.02em;min-width:0;overflow-wrap:anywhere;flex:1 1 auto}.oxygen-meter-top strong{font-family:Consolas,"Courier New",monospace;font-size:clamp(20px,5vw,44px);line-height:1;color:#8ee7ff;text-shadow:0 0 12px rgba(142,231,255,.45);white-space:nowrap;flex:0 0 auto}.oxygen-status{margin:0 0 16px;color:#b7d9e8;font-weight:800;line-height:1.4}.oxygen-tube{position:relative;height:38px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),#020812;border:2px solid rgba(220,250,255,.45);box-shadow:inset 0 0 18px rgba(0,0,0,.85),0 0 18px rgba(142,231,255,.12)}.oxygen-liquid{position:relative;height:100%;width:100%;border-radius:999px;overflow:hidden;background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);background-size:220% 100%;transition:width 1.4s cubic-bezier(.22,.9,.3,1),filter .3s ease;box-shadow:0 0 22px rgba(142,231,255,.65),inset 0 0 18px rgba(255,255,255,.28)}.oxygen-liquid:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(255,255,255,.62) 0 2px,transparent 3px),radial-gradient(circle at 55% 45%,rgba(255,255,255,.48) 0 2px,transparent 3px),radial-gradient(circle at 80% 55%,rgba(255,255,255,.42) 0 1px,transparent 2px);background-size:90px 100%;animation:bubblesMove 12s linear infinite;opacity:.65}.oxygen-liquid:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.38) 45%,transparent 60%);transform:translateX(-100%);animation:glassSweep 9s ease-in-out infinite;will-change:transform}.oxygen-liquid.o2-attente{width:100%!important;transition:none!important}.oxygen-liquid.warning-level{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}.oxygen-liquid.critical{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c);animation:criticalPulse .6s infinite alternate}.oxygen-scale{display:flex;justify-content:space-between;color:rgba(223,246,255,.65);font-family:Consolas,"Courier New",monospace;font-size:var(--fs-tiny);margin-top:8px}.oxygen-bottom{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap}.countdown-block{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;margin-left:auto}.countdown-label{color:#b7d9e8;font-weight:900;font-size:var(--fs-small);letter-spacing:.04em;text-transform:uppercase;line-height:1.25;text-align:right}.oxygen-state{display:inline-flex;padding:7px 11px;border-radius:999px;font-weight:900;font-size:12px;letter-spacing:.06em;background:rgba(142,231,255,.12);color:#8ee7ff;border:1px solid rgba(142,231,255,.35);text-transform:uppercase}.oxygen-state.warning{background:rgba(245,176,39,.13);color:#ffd36c;border-color:rgba(245,176,39,.45)}.oxygen-state.critical{background:rgba(255,75,62,.16);color:#ff7b72;border-color:rgba(255,75,62,.55);animation:criticalText .7s infinite alternate}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,4vw,44px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap;line-height:1}@keyframes bubblesMove{from{background-position:0 0}to{background-position:180px 0}}@keyframes glassSweep{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}@keyframes criticalPulse{from{filter:brightness(.9)}to{filter:brightness(1.45)}}@keyframes criticalText{from{opacity:.7}to{opacity:1}}.nautilus-alarm{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(130,0,0,.38);animation:alarmScreen .55s infinite alternate}.nautilus-alarm.show{display:flex}.alarm-panel{max-width:720px;margin:20px;padding:28px;border:3px solid #ff352e;border-radius:24px;background:linear-gradient(135deg,rgba(20,0,0,.94),rgba(80,0,0,.92));color:#fff;text-align:center;box-shadow:0 0 45px rgba(255,0,0,.5)}.alarm-title{font-size:clamp(34px,6vw,70px);font-weight:1000;color:#ff4b3e;text-shadow:0 0 20px rgba(255,0,0,.55);letter-spacing:-.04em}.alarm-panel p{font-size:clamp(18px,2.5vw,26px);font-weight:900;line-height:1.25}@keyframes alarmScreen{from{box-shadow:inset 0 0 0 rgba(255,0,0,0)}to{box-shadow:inset 0 0 120px rgba(255,0,0,.95)}}.final-cta{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 0%,rgba(120,0,0,.22),transparent 34%),linear-gradient(180deg,rgba(3,3,5,.80) 0%,rgba(18,4,7,.80) 48%,rgba(0,0,0,.80) 100%);color:#fff;border:1px solid rgba(255,40,40,.24);text-align:center;box-shadow:0 28px 70px rgba(0,0,0,.38),inset 0 0 60px rgba(255,0,0,.08)}.final-cta:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,0,0,.06),transparent),radial-gradient(circle at 20% 80%,rgba(0,0,0,.38),transparent 42%);pointer-events:none}.final-cta .body{position:relative;z-index:1}.abyss-warning{padding-top:clamp(24px,4vw,42px);padding-bottom:clamp(24px,4vw,42px)}.abyss-top{margin:0 0 10px;color:#9b1111;font-size:clamp(14px,2vw,20px);font-weight:1000;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 0 16px rgba(155,17,17,.45)}.final-cta h2{background:none!important;color:#fff!important;font-size:clamp(38px,6.3vw,76px);line-height:.95;padding:0!important;margin:0 0 18px!important;text-shadow:0 0 18px rgba(255,0,0,.38),4px 4px 0 #000;text-transform:uppercase}.abyss-mid{margin:0 auto 8px;color:#b31313;font-size:clamp(15px,2.15vw,22px);line-height:1.35;font-weight:900;max-width:920px}.abyss-bottom{margin:0 auto;color:#b31313;font-size:clamp(16px,2.35vw,24px);line-height:1.35;font-weight:1000;max-width:920px;text-transform:none}
+    .countdown-card{background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(8,48,72,.80));color:#fff;border-color:rgba(245,176,39,.28);position:relative;overflow:hidden}.countdown-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(142,231,255,.06) 1px,transparent 1px),linear-gradient(rgba(142,231,255,.05) 1px,transparent 1px);background-size:34px 34px;opacity:.35;pointer-events:none}.oxygen-dashboard{position:relative;z-index:1}.oxygen-meter{background:linear-gradient(135deg,#061524,#0b2d44);border:1px solid rgba(142,231,255,.25);border-radius:24px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 18px 35px rgba(0,0,0,.25)}.oxygen-meter-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:clamp(12px,2vw,14px);color:#dff6ff;font-weight:900;letter-spacing:.05em;text-transform:uppercase;font-size:13px;margin-bottom:10px;min-width:0}.oxygen-meter-top .oxygen-level-title{line-height:1.05;letter-spacing:.02em;min-width:0;overflow-wrap:anywhere;flex:1 1 auto}.oxygen-meter-top strong{font-family:Consolas,"Courier New",monospace;font-size:clamp(20px,5vw,44px);line-height:1;color:#8ee7ff;text-shadow:0 0 12px rgba(142,231,255,.45);white-space:nowrap;flex:0 0 auto}.oxygen-status{margin:0 0 16px;color:#b7d9e8;font-weight:800;line-height:1.4}.oxygen-tube{position:relative;height:38px;border-radius:999px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),#020812;border:2px solid rgba(220,250,255,.45);box-shadow:inset 0 0 18px rgba(0,0,0,.85),0 0 18px rgba(142,231,255,.12)}.oxygen-liquid{position:relative;height:100%;width:100%;border-radius:999px;overflow:hidden;background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);background-size:220% 100%;transition:width 1.4s cubic-bezier(.22,.9,.3,1),filter .3s ease;box-shadow:0 0 22px rgba(142,231,255,.65),inset 0 0 18px rgba(255,255,255,.28)}.oxygen-liquid:before{content:"";position:absolute;top:0;bottom:0;left:-160px;right:0;background:radial-gradient(circle at 18% 42%,rgba(255,255,255,.95) 0 2.5px,rgba(142,231,255,.6) 4.2px,transparent 6.5px),radial-gradient(circle at 45% 62%,rgba(255,255,255,.9) 0 3.2px,rgba(142,231,255,.55) 5px,transparent 7.2px),radial-gradient(circle at 72% 38%,rgba(255,255,255,.95) 0 2.8px,rgba(142,231,255,.6) 4.5px,transparent 6.8px),radial-gradient(circle at 90% 55%,rgba(255,255,255,.85) 0 2px,rgba(142,231,255,.5) 3.8px,transparent 5.5px);background-size:160px 100%;animation:bubblesMove 28s linear infinite;opacity:.35;will-change:transform;pointer-events:none}.oxygen-liquid:after{content:"";position:absolute;top:0;bottom:0;left:-220px;right:0;background:radial-gradient(circle at 15% 58%,rgba(255,255,255,.9) 0 2.2px,rgba(142,231,255,.52) 4px,transparent 6px),radial-gradient(circle at 55% 32%,rgba(255,255,255,.95) 0 3px,rgba(142,231,255,.55) 4.8px,transparent 7px),radial-gradient(circle at 82% 48%,rgba(255,255,255,.85) 0 2.5px,rgba(142,231,255,.48) 4.2px,transparent 6.2px);background-size:220px 100%;animation:bubblesCross 38s linear infinite;opacity:.28;will-change:transform;pointer-events:none}.oxygen-liquid.o2-attente{width:100%!important;transition:none!important}.oxygen-liquid.warning-level{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}.oxygen-liquid.critical{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c)}.oxygen-tube:has(.oxygen-liquid.critical){animation:oxygenContourAlert 5s ease-in-out infinite}.oxygen-scale{display:flex;justify-content:space-between;color:rgba(223,246,255,.65);font-family:Consolas,"Courier New",monospace;font-size:var(--fs-tiny);margin-top:8px}.oxygen-bottom{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap}.countdown-block{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;margin-left:auto}.countdown-label{color:#b7d9e8;font-weight:900;font-size:var(--fs-small);letter-spacing:.04em;text-transform:uppercase;line-height:1.25;text-align:right}.oxygen-state{display:inline-flex;padding:7px 11px;border-radius:999px;font-weight:900;font-size:12px;letter-spacing:.06em;background:rgba(142,231,255,.12);color:#8ee7ff;border:1px solid rgba(142,231,255,.35);text-transform:uppercase}.oxygen-state.warning{background:rgba(245,176,39,.13);color:#ffd36c;border-color:rgba(245,176,39,.45)}.oxygen-state.critical{background:rgba(255,75,62,.16);color:#ff7b72;border-color:rgba(255,75,62,.55);animation:criticalText .7s infinite alternate}.countdown{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,4vw,44px);font-weight:1000;color:var(--fnac);text-shadow:0 0 18px rgba(245,176,39,.25);white-space:nowrap;line-height:1}@keyframes bubblesMove{0%{transform:translateX(0) translateY(0)}25%{transform:translateX(40px) translateY(-2px)}50%{transform:translateX(80px) translateY(1.5px)}75%{transform:translateX(120px) translateY(-1.5px)}100%{transform:translateX(160px) translateY(0)}}@keyframes bubblesCross{0%{transform:translateX(0) translateY(0)}33%{transform:translateX(73px) translateY(2px)}66%{transform:translateX(146px) translateY(-2px)}100%{transform:translateX(220px) translateY(0)}}@keyframes oxygenContourAlert{0%,100%{border-color:rgba(255,255,255,.9);box-shadow:inset 0 0 18px rgba(0,0,0,.85),0 0 0 2px rgba(255,255,255,.25),0 0 20px rgba(255,75,62,.4)}50%{border-color:#ff4b3e;box-shadow:inset 0 0 18px rgba(0,0,0,.85),0 0 0 2px rgba(255,75,62,.45),0 0 26px rgba(255,75,62,.9)}}@keyframes criticalText{from{opacity:.7}to{opacity:1}}.nautilus-alarm{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(130,0,0,.38);animation:alarmScreen .55s infinite alternate}.nautilus-alarm.show{display:flex}.alarm-panel{max-width:720px;margin:20px;padding:28px;border:3px solid #ff352e;border-radius:24px;background:linear-gradient(135deg,rgba(20,0,0,.94),rgba(80,0,0,.92));color:#fff;text-align:center;box-shadow:0 0 45px rgba(255,0,0,.5)}.alarm-title{font-size:clamp(34px,6vw,70px);font-weight:1000;color:#ff4b3e;text-shadow:0 0 20px rgba(255,0,0,.55);letter-spacing:-.04em}.alarm-panel p{font-size:clamp(18px,2.5vw,26px);font-weight:900;line-height:1.25}@keyframes alarmScreen{from{box-shadow:inset 0 0 0 rgba(255,0,0,0)}to{box-shadow:inset 0 0 120px rgba(255,0,0,.95)}}.final-cta{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 0%,rgba(120,0,0,.22),transparent 34%),linear-gradient(180deg,rgba(3,3,5,.80) 0%,rgba(18,4,7,.80) 48%,rgba(0,0,0,.80) 100%);color:#fff;border:1px solid rgba(245,176,39,.28);text-align:center;box-shadow:0 28px 70px rgba(0,0,0,.38),inset 0 0 60px rgba(255,0,0,.08)}.final-cta:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,0,0,.06),transparent),radial-gradient(circle at 20% 80%,rgba(0,0,0,.38),transparent 42%);pointer-events:none}.final-cta .body{position:relative;z-index:1}.abyss-warning{padding-top:clamp(24px,4vw,42px);padding-bottom:clamp(24px,4vw,42px)}.abyss-top{margin:0 0 10px;font-size:16px;font-weight:1000;letter-spacing:.08em;text-transform:uppercase;color:#e0113a;background:linear-gradient(180deg,#ff6b85 0%,#e0113a 45%,#8a0c24 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.final-cta.card h2{color:#d7dfe6;font-size:clamp(20px,7.5vw,88px);line-height:1.05;padding:0!important;margin:0 0 18px!important;letter-spacing:normal;text-shadow:none;box-shadow:none;background:linear-gradient(180deg,#4a5560 0%,#8b98a4 22%,#c6d1da 46%,#f0f5f9 68%,#ffffff 84%,#b3bfc9 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-transform:uppercase}.abyss-mid{margin:0 auto 8px;color:#b31313;font-size:clamp(15px,2.15vw,22px);line-height:1.35;font-weight:900;max-width:920px}.abyss-bottom{margin:0 auto;font-size:20px;line-height:1.35;font-weight:1000;max-width:920px;text-transform:none;color:#e0113a;background:linear-gradient(180deg,#ff6b85 0%,#e0113a 45%,#8a0c24 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    @media(min-width:1100px){.final-cta.card h2{font-size:clamp(32px,4.3vw,70px)}}
 
     @supports (height: 100svh){.ocean-wallpaper{height:100svh}}
 
 
     @media(max-width:900px){.boarding-grid{grid-template-columns:1fr 180px}.boarding-action{grid-column:1/-1}header{min-height:auto;padding-bottom:42px}header:before,header:after{opacity:.12}.oxygen-bottom{align-items:flex-start}.countdown{white-space:normal}.countdown-block{align-items:flex-start;margin-left:0}.countdown-label{text-align:left}}
-    @media(max-width:520px){.sonar-loader{text-align:center;padding-left:8px;padding-right:8px}.sonar-screen{width:145px;height:145px;min-width:145px;flex-basis:145px}.sonar-text{font-size:clamp(9px,3.4vw,14px);letter-spacing:.015em}}
-    @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:26px 14px 36px}.hero-title{font-size:clamp(44px,13vw,72px);line-height:1.04;-webkit-text-stroke:2px #050505}.hero-line{margin-top:18px;font-size:clamp(20px,6vw,30px);line-height:1.22}.hero-kicker{font-size:var(--fs-tiny);line-height:1.25;align-items:flex-start}main{padding:18px 10px 0;gap:18px}.card{border-radius:22px}.body{padding:18px}.grid{grid-template-columns:1fr;gap:14px}.grid>div{min-height:auto}button{width:100%;margin-right:0}.team{padding:14px}}
+    @media(max-width:520px){.sonar-loader{text-align:center;padding-left:8px;padding-right:8px}.sonar-screen{width:145px;height:145px;min-width:145px;flex-basis:145px}.sonar-text{font-size:clamp(12px,3.4vw,14px);letter-spacing:.015em}}
+    @media(max-width:640px){.boarding-grid{grid-template-columns:1fr}.boarding-action{grid-column:auto}header{padding:var(--gutter) var(--gutter-inner)}.hero-title{font-size:clamp(38px,11vw,64px);line-height:1.04;-webkit-text-stroke:1.5px #050505}.hero-line{margin-top:var(--space-sm);font-size:clamp(18px,5vw,26px);line-height:1.22}.hero-kicker{font-size:var(--fs-tiny);line-height:1.25;align-items:flex-start}main{padding:var(--gutter) var(--gutter) 0;gap:var(--gutter)}.card{border-radius:18px}.body{padding:var(--gutter-inner)}.grid{grid-template-columns:1fr;gap:var(--gutter)}.grid>div{min-height:auto}button{width:100%;margin-right:0}.team{padding:var(--gutter-inner)}}
 
     /* ===== Correctifs responsive : anti-chevauchement ===== */
     /* Le texte des hublots ne déborde jamais de son cercle */
@@ -804,7 +884,7 @@
 
     /* Panneau admin : le h2 (titre + ✕) ne déborde jamais */
     #adminPanel h2{gap:6px;flex-wrap:nowrap;min-width:0}
-    #adminPanel h2>span{font-size:clamp(11px,2.8vw,14px);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}
+    #adminPanel h2>span{font-size:clamp(12px,2.8vw,14px);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}
     #adminPanel h2>button{flex:0 0 auto}
 
     /* Inputs / selects : pas de débordement dans les grilles */
@@ -847,7 +927,7 @@
       position:fixed !important;
       inset:0 !important;
       margin:0 !important;
-      padding:clamp(10px,2vw,24px);
+      padding:clamp(12px,2vw,24px);
       box-sizing:border-box;
       z-index:12000 !important;
       display:none !important;
@@ -877,27 +957,27 @@
       width:100%;max-width:900px;box-sizing:border-box;
       max-height:calc(100vh - 150px);max-height:calc(100dvh - 150px);
       overflow-y:auto;padding:14px 16px;
-      background:linear-gradient(180deg,#f2f8fc,#fff);color:#13202b;
+      background:linear-gradient(180deg,#071a2b 0%,#03111f 100%) !important;color:#eaf8ff !important;
       border:1px solid rgba(245,176,39,.5);border-top:0;
-      border-radius:0 0 16px 16px;box-shadow:0 26px 80px rgba(0,0,0,.6);
+      border-radius:0 0 16px 16px;box-shadow:0 26px 80px rgba(0,0,0,.7);
     }
     @media(max-width:640px){
       #adminPanel{padding:8px}
       #adminPanel>h2, #adminPanel h2{border-radius:12px 12px 0 0;padding:11px 12px !important}
       #adminPanel>div.body, #adminPanel .body{border-radius:0 0 12px 12px;padding:10px 12px;max-height:calc(100dvh - 96px)}
     }
-    #adminPanel p.small{font-size:var(--fs-small);line-height:1.35;margin:0 0 10px}
-    #adminPanel .hr{margin:12px 0}
+    #adminPanel p.small{font-size:var(--fs-small);line-height:1.35;margin:0 0 10px;color:#b0d4e3}
+    #adminPanel .hr{margin:12px 0;background:rgba(142,231,255,0.2)}
     #adminPanel .notice{padding:10px 12px;margin:0 0 12px;line-height:1.4;font-size:12px}
-    #adminPanel label{font-size:11px;margin:0 0 4px}
+    #adminPanel label{font-size:12px;margin:0 0 4px;color:#8ee7ff}
     #adminPanel input,#adminPanel select{height:38px !important;min-height:38px;padding:8px 10px !important;border-radius:8px;font-size:13px}
     #adminPanel button{font-size:12px;padding:8px 12px !important;min-height:34px;border-radius:8px;letter-spacing:.02em}
 
     /* Tabs : icônes seules sur mobile, libellé + icône sur desktop */
-    .admin-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
-    .admin-tab{background:#eef0f4;color:#1a2834;border:1px solid #cbd7df;border-radius:8px;padding:6px 10px;font-weight:900;font-size:11px;letter-spacing:.02em;text-transform:uppercase;cursor:pointer;margin:0;min-height:30px;width:auto;transition:.15s}
-    .admin-tab:hover{filter:brightness(1.05)}
-    .admin-tab.active{background:linear-gradient(135deg,#1a2834,#2a4258);color:var(--fnac);border-color:rgba(245,176,39,.6);box-shadow:inset 0 0 0 1px rgba(245,176,39,.35)}
+    .admin-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;background:rgba(2,10,20,.7);border-bottom:1px solid rgba(142,231,255,.2);padding:4px;border-radius:10px}
+    .admin-tab{background:rgba(142,231,255,.08);color:#b0d4e3;border:1px solid rgba(142,231,255,.25);border-radius:8px;padding:6px 10px;font-weight:900;font-size:12px;letter-spacing:.02em;text-transform:uppercase;cursor:pointer;margin:0;min-height:30px;width:auto;transition:.15s}
+    .admin-tab:hover{background:rgba(142,231,255,.18);color:#fff}
+    .admin-tab.active{background:linear-gradient(135deg,#f5b027,#d48b13) !important;color:#04101d !important;border-color:#ffd36c !important;box-shadow:0 2px 8px rgba(245,176,39,.35)}
     .admin-tab .lbl-desktop{display:inline}
     .admin-tab .lbl-mobile{display:none}
     @media(max-width:560px){
@@ -907,10 +987,10 @@
     }
 
     /* Panes */
-    .admin-pane{background:rgba(255,255,255,.7);border:1px solid #dfe8ee;border-radius:10px;padding:12px}
+    .admin-pane{background:rgba(4,18,30,.8) !important;border:1px solid rgba(142,231,255,.25) !important;border-radius:10px;padding:12px;color:#eaf8ff !important}
 
     /* Rows compactes — grille flexible qui s'adapte à la largeur du panneau */
-    .member-edit-row,.team-edit-row{display:grid;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #e8eef2}
+    .member-edit-row,.team-edit-row{display:grid;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(142,231,255,.15);color:#eaf8ff}
     /* Desktop large (>=1200px) : 5 colonnes larges [Nom | Svc | Equipe | Vide | Actions] */
     @media(min-width:1200px){
       /* [Nom | Service+Equipe | Code Matelot | Actions] */
@@ -934,7 +1014,7 @@
       text-transform:uppercase;letter-spacing:.04em;font-weight:900;
     }
     .member-edit-row .me-code.me-code-bad{
-      border-color:#efb2ac !important;background:#ffe7e3 !important;
+      border-color:#ff8579 !important;background:rgba(255,75,62,.2) !important;
     }
     /* Sous-grille 2 colonnes (service + team) — optimisée pour tablette/mobile */
     .me-sub{display:grid;grid-template-columns:1fr 1fr;gap:6px;min-width:0}
@@ -956,29 +1036,53 @@
     }
     /* Stack horizontal pour les boutons */
     .me-actions,.tt-actions{display:flex;flex-direction:row;gap:6px;align-items:center;justify-content:flex-end}
-    .admin-pane .team{border:1px solid #dfe8ee;border-radius:12px;padding:12px;background:#fff;margin-bottom:10px}
+    .admin-pane .team{border:1px solid rgba(142,231,255,.3) !important;border-radius:12px;padding:12px;background:rgba(7,26,43,.95) !important;margin-bottom:10px;color:#eaf8ff !important;box-shadow:0 4px 16px rgba(0,0,0,.4)}
     .admin-pane .team:last-child{margin-bottom:0}
-    .admin-pane .team h3{font-size:14px;margin:0 0 8px}
-    .admin-pane .team h3 .small{font-size:var(--fs-tiny);font-weight:600}
+    .admin-pane .team h3{font-size:14px;margin:0 0 8px;color:#ffd36c !important;font-weight:900}
+    .admin-pane .team h3 .small{font-size:var(--fs-tiny);font-weight:600;color:#9bc4d4 !important}
+
+    /* Onglet Bonnes Réponses & QR Codes & Magasins (console sombre permanente) */
+    #adminPanel .adm-af-cards{display:flex !important;flex-direction:column !important;gap:12px !important;padding:6px 2px 8px !important;overflow:visible !important}
+    #adminPanel .adm-af-teamcard{flex:0 0 auto !important;width:100% !important;max-width:none !important;min-width:0 !important;background:rgba(4,18,32,0.92) !important;border:1px solid rgba(142,231,255,0.3) !important;border-radius:12px !important;padding:12px 14px !important;color:#eaf8ff !important;box-shadow:0 4px 16px rgba(0,0,0,0.4) !important;box-sizing:border-box !important}
+    #adminPanel .adm-af-teamhead{font-weight:900 !important;font-size:13px !important;letter-spacing:.05em !important;display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:8px !important;color:#ffd36c !important}
+    #adminPanel .adm-af-teamhead span:first-child{color:#ffd36c !important;font-weight:900 !important}
+    #adminPanel .adm-af-teamhead .small{color:#9bc4d4 !important;font-weight:600 !important}
+    #adminPanel .adm-af-row{display:flex !important;align-items:center !important;gap:8px !important;margin:8px 0 !important;min-width:0 !important}
+    #adminPanel .adm-af-lbl{display:inline-flex !important;align-items:center !important;font-size:11px !important;font-weight:900 !important;letter-spacing:.08em !important;text-transform:uppercase !important;background:rgba(142,231,255,0.18) !important;color:#8ee7ff !important;border:1px solid rgba(142,231,255,0.45) !important;border-radius:999px !important;padding:3px 9px !important;flex:0 0 auto !important;box-shadow:0 1px 4px rgba(0,0,0,0.3) !important;line-height:1.3 !important}
+    #adminPanel .adm-af-chips{display:flex !important;gap:6px !important;overflow-x:auto !important;overflow-y:hidden !important;align-items:center !important;-webkit-overflow-scrolling:touch !important;scrollbar-width:thin !important;scrollbar-color:rgba(142,231,255,0.3) transparent !important;flex:1 !important;min-width:0 !important;padding:2px 2px 4px !important}
+    #adminPanel .adm-af-chips::-webkit-scrollbar{height:4px !important}
+    #adminPanel .adm-af-chips::-webkit-scrollbar-thumb{background:rgba(142,231,255,0.3) !important;border-radius:4px !important}
+    #adminPanel .adm-af-chip{display:inline-flex !important;align-items:center !important;font-size:12px !important;font-weight:800 !important;background:#03111f !important;color:#ffffff !important;border:1.5px solid rgba(142,231,255,0.38) !important;border-radius:999px !important;padding:4px 10px !important;white-space:nowrap !important;flex:0 0 auto !important;box-shadow:0 2px 6px rgba(0,0,0,0.4) !important;letter-spacing:.02em !important;transition:all .15s ease !important;line-height:1.3 !important}
+    #adminPanel .adm-af-chip:hover{background:rgba(142,231,255,0.18) !important;border-color:#8ee7ff !important;color:#ffffff !important}
+    #adminPanel .adm-af-chip--hl{background:rgba(46,213,115,0.22) !important;border:1.5px solid #2ed573 !important;color:#a8ffcc !important;font-weight:900 !important;box-shadow:0 0 10px rgba(46,213,115,0.45) !important}
+    #adminPanel .adm-af-chip--hl:hover{background:rgba(46,213,115,0.32) !important;border-color:#5be09b !important;color:#ffffff !important}
+    #adminPanel .adm-af-ean{font-family:Consolas,monospace !important;font-size:12px !important;background:#03111f !important;color:#ffd36c !important;border:1px solid rgba(142,231,255,0.3) !important;border-radius:6px !important;padding:3px 6px !important;letter-spacing:.02em !important}
+    #adminPanel .adm-qr-card{background:rgba(4,18,32,0.92) !important;border:1px solid rgba(142,231,255,0.3) !important;border-radius:12px !important;padding:12px !important;box-shadow:0 4px 16px rgba(0,0,0,0.4) !important;color:#eaf8ff !important}
+    #adminPanel .adm-qr-card h5{margin:0 0 6px !important;font-size:13px !important;font-weight:900 !important;color:#ffd36c !important}
+    #adminPanel .adm-qr-imgbox{background:#03111f !important;border:1px solid rgba(142,231,255,0.25) !important;border-radius:8px !important;padding:6px !important;text-align:center !important;color:#eaf8ff !important}
+    #adminPanel .adm-qr-imgbox img{width:100% !important;height:auto !important;display:block !important;border-radius:6px !important;background:#ffffff !important;padding:4px !important}
+    #adminPanel .adm-qr-dl{display:flex !important;gap:6px !important;flex-wrap:wrap !important;margin-top:6px !important}
+    #adminPanel .adm-qr-dl a{flex:1 !important;min-width:110px !important;text-align:center !important;background:rgba(142,231,255,0.18) !important;color:#8ee7ff !important;border:1px solid rgba(142,231,255,0.4) !important;border-radius:999px !important;padding:6px 10px !important;font-size:12px !important;font-weight:700 !important;text-decoration:none !important}
+    #adminPanel .adm-qr-dl a:nth-child(2){background:#f5b027 !important;color:#0b1a2e !important;border:1px solid #f5b027 !important}
 
     /* Tab O2 : champs alignés compact */
     #adminO2Date,#adminO2Days,#adminO2Hours{height:34px !important;min-height:34px;padding:6px 8px !important;font-size:12px !important}
     /* Grille 4 colonnes (Statut | Reprise | Échecs | Vide) sur Blocages,
        s'adapte à la largeur du panneau */
     .admin-form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.4fr);gap:8px 14px;align-items:center}
-    .admin-form-grid>label{margin:0;font-size:11px !important;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#52606a;text-align:right;padding-right:4px;white-space:nowrap}
+    .admin-form-grid>label{margin:0;font-size:12px !important;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#8ee7ff !important;text-align:right;padding-right:4px;white-space:nowrap}
     .admin-form-grid>input,.admin-form-grid>select{height:36px !important;min-height:36px;max-height:36px;padding:6px 10px !important;font-size:13px !important;line-height:1.2;border-radius:8px;min-width:0;width:100%;max-width:100%;box-sizing:border-box;margin:0 !important;appearance:none;-webkit-appearance:none}
     /* Le selecteur natif a besoin d'une fleche : on la remet. */
-    .admin-form-grid>select{background-image:linear-gradient(45deg,transparent 50%,#52606a 50%),linear-gradient(135deg,#52606a 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:28px !important}
+    .admin-form-grid>select{background-image:linear-gradient(45deg,transparent 50%,#8ee7ff 50%),linear-gradient(135deg,#8ee7ff 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:28px !important}
     /* Safari iOS agrandit les champs date : on force la meme hauteur. */
     .admin-form-grid>input[type="datetime-local"],.admin-form-grid>input[type="number"]{min-width:0;font-variant-numeric:tabular-nums}
     .admin-form-grid>.full{grid-column:1 / -1}
     /* Variante 6 colonnes pour O2 (3 paires label/input sur 1 ligne) */
-    /* En dessous de 860px la grille 4 colonnes comprimait les champs
-       datetime-local sous leur largeur utile (~190px) : on bascule en
-       2 colonnes plus tot. */
+    /* En dessous de 860px (ou zoom important) : chaque champ passe SOUS
+       son libellé (une colonne) au lieu de rester côte à côte — plus de
+       chevauchement ni de compression des saisies. */
     @media(max-width:860px){
-      .admin-form-grid,.admin-form-grid-6{grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:8px 12px}
+      .admin-form-grid,.admin-form-grid-6{grid-template-columns:1fr;gap:8px 12px}
       .admin-form-grid>label,.admin-form-grid-6>label{text-align:left;padding-right:0;white-space:normal}
     }
     @media(max-width:560px){
@@ -995,9 +1099,10 @@
     #adminLocked>div{flex:1;min-width:160px}
     #adminLocked input{height:38px !important;min-height:38px;padding:8px 10px !important;font-size:14px !important;letter-spacing:.15em}
 
-    /* Bouton ✕ */
-    #adminCloseBtn{width:28px;height:28px;min-height:28px;font-size:16px;border-radius:50%;background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;flex:0 0 auto;transition:.18s}
-    #adminCloseBtn:hover{background:rgba(255,75,62,.42);color:#fff;transform:rotate(90deg)}
+    /* Bouton ✕ en haut à droite */
+    #adminPanel > h2, #adminPanel h2{position:relative !important;padding-right:52px !important}
+    #adminCloseBtn{position:absolute !important;top:50% !important;transform:translateY(-50%) !important;right:14px !important;width:32px;height:32px;min-height:32px;font-size:16px;border-radius:50%;background:rgba(255,75,62,.22) !important;color:#ffb4ad !important;border:1px solid rgba(255,75,62,.48) !important;padding:0;display:inline-flex !important;align-items:center !important;justify-content:center !important;cursor:pointer;margin:0;z-index:10;transition:background .18s, color .18s, transform .18s !important}
+    #adminCloseBtn:hover{background:rgba(255,75,62,.45) !important;color:#fff !important;transform:translateY(-50%) rotate(90deg) !important}
     #adminCloseBtn:focus-visible{outline:2px solid rgba(255,180,173,.7);outline-offset:2px}
 
     /* Responsive : < 640px → 2 colonnes pour les rows */
@@ -1029,24 +1134,30 @@
       .oxygen-meter-top strong{font-size:clamp(20px,7vw,32px)}
       .countdown{font-size:clamp(22px,8vw,34px)}
     }
+    /* Panoramique — espaces strictement équidistants (même grille partout) */
     @media (orientation:landscape) and (max-height:620px){
-      header{min-height:auto;padding:18px 22px 26px}
-      .brand{font-size:18px;margin-bottom:8px}
-      .hero-kicker{font-size:var(--fs-tiny);padding:6px 10px}
-      .hero-title{margin-top:10px;font-size:clamp(38px,8vh,72px);line-height:.9;max-width:100vw}
-      .hero-line{margin-top:10px;font-size:clamp(18px,4.4vh,30px);line-height:1.1}
-      .hero-actions{margin-top:22px;gap:14px}
-      .hero-cta{padding:11px 16px;min-height:42px;font-size:13px}
-      main{padding-top:14px;gap:14px;margin-bottom:60px}
-      .card{border-radius:18px}.card h2{padding:12px 16px;font-size:18px}.body{padding:14px}
-      .intro-text{font-size:14px;line-height:1.45;padding:12px}
-      .oxygen-meter{padding:14px}.oxygen-tube{height:28px}.oxygen-meter-top strong{font-size:clamp(18px,6.5vw,26px)}.countdown{font-size:30px}
-      .sonar-screen{width:120px;height:120px;min-width:120px;flex-basis:120px}.sonar-loader{padding:18px 12px}
+      :root{--gutter:var(--space-sm); --gutter-inner:var(--space-sm);}
+      header{padding:var(--gutter) var(--gutter) !important; min-height:auto !important}
+      .brand{font-size:17px; margin-bottom:var(--space-xs)}
+      .hero-kicker{font-size:var(--fs-tiny); padding:var(--space-xs) var(--space-sm)}
+      .hero-title{margin-top:var(--space-xs); font-size:clamp(32px,7vh,62px); line-height:.92; max-width:100vw}
+      .hero-line{margin-top:var(--space-xs); font-size:clamp(16px,3.8vh,26px); line-height:1.15}
+      .hero-actions{margin-top:var(--space-sm); gap:var(--space-sm)}
+      .hero-cta{padding:var(--space-xs) var(--space-sm); min-height:38px; font-size:13px}
+      main{padding:var(--gutter) var(--gutter) 0 !important; gap:var(--gutter) !important; margin-bottom:var(--gutter)}
+      .card{border-radius:16px} .card h2{padding:var(--space-sm) var(--gutter-inner); font-size:17px} .body{padding:var(--gutter-inner)}
+      .intro-text{font-size:14px; line-height:1.45; padding:var(--space-sm)}
+      .oxygen-meter{padding:var(--gutter-inner)} .oxygen-tube{height:28px} .oxygen-meter-top strong{font-size:clamp(18px,6vw,26px)} .countdown{font-size:28px}
+      .sonar-screen{width:110px; height:110px; min-width:110px; flex-basis:110px} .sonar-loader{padding:var(--gutter-inner)}
     }
     @media (orientation:landscape) and (max-height:430px){
-      .hero-title{font-size:clamp(34px,10vh,56px)}
-      .hero-line{font-size:clamp(16px,5vh,24px)}
-      .sonar-screen{width:96px;height:96px;min-width:96px;flex-basis:96px}
+      :root{--gutter:var(--space-xs); --gutter-inner:var(--space-xs);}
+      .hero-title{font-size:clamp(28px,9vh,48px)}
+      .hero-line{font-size:clamp(14px,4.5vh,20px)}
+      .sonar-screen{width:90px; height:90px; min-width:90px; flex-basis:90px}
+      main{gap:var(--gutter) !important; padding:var(--gutter) !important}
+      .card h2{padding:var(--space-xs) var(--gutter-inner)}
+      .body{padding:var(--gutter-inner)}
     }
 
     /* Correction hublots : cercles parfaitement ronds + contenu centré */
@@ -1094,8 +1205,8 @@
 
     .radar-big{padding:0;background:transparent;border:0;box-shadow:none;width:100%}
     .radar-screen-big{
-      position:relative;width:min(62vw,250px);height:min(62vw,250px);min-width:170px;flex:0 0 auto;
-      aspect-ratio:1/1;border-radius:50%;
+      position:relative;width:min(62vw,250px);aspect-ratio:1/1;height:auto;flex:0 0 auto;
+      border-radius:50%;
       background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.10),rgba(0,0,0,.35) 75%),#02120d;
       border:3px solid rgba(91,255,156,.85);
       box-shadow:0 0 35px rgba(91,255,156,.32),inset 0 0 28px rgba(91,255,156,.16);
@@ -1126,68 +1237,62 @@
       box-shadow:0 0 0 0 rgba(255,255,255,.85);
       opacity:0;
     }
-    /* Le coeur du point reste blanc (lisible sur le fond sombre) mais tout
-       ce qui l'entoure est a la couleur de l'equipage.
-       PROBLEME CORRIGE : un anneau BLANC etait intercale entre le point et
-       son halo colore. Il delavait la teinte et rendait deux couleurs
-       voisines difficiles a distinguer. Cet anneau blanc est supprime et
-       remplace par un anneau plein de la couleur de l'equipe, en 3 couches :
-         1. un cerne net et opaque, qui donne la couleur franche
-         2. un halo moyen tres dense
-         3. un halo large plus diffus, qui signale la presence de loin
-       Le point est aussi legerement agrandi (14 -> 16 px) pour porter
-       cet anneau sans paraitre etouffe. */
+    /* Le cœur du point reste blanc, entouré d'un fin anneau coloré pour
+       identifier l'équipage. Le halo flou est volontairement absent au
+       repos : il est réservé au survol réel de la souris. */
     .radar-blip.revealed{
       width:16px;height:16px;opacity:1;
       background:#fff;
-      box-shadow:
-        0 0 0 4px rgba(var(--blip-glow,91,255,156),1),
-        0 0 12px 5px rgba(var(--blip-glow,91,255,156),.95),
-        0 0 30px 12px rgba(var(--blip-glow,91,255,156),.55);
+      /* Repère neutre au repos : aucun halo flou hors survol. */
+      box-shadow:0 0 0 2px rgba(var(--blip-glow,91,255,156),.92);
     }
-    /* Le point "pop" : apparition franche puis pulsation, avec onde de choc */
+    /* Découverte synchronisée avec Victoire.mp3 (~4,1 s). Les trois ondes
+       sont de vrais éléments centrés sur le point : plus de box-shadow mis
+       à l'échelle, qui était coûteux à peindre et semblait décalé. */
     .radar-blip.blip-pop{
-      width:20px;height:20px;background:#fff;
-      animation:blipPop .5s cubic-bezier(.2,1.4,.4,1) both, blipPulse 1s ease-in-out .5s infinite;
+      width:16px;height:16px;background:#fff;
+      /* Empêche la transition width/height du blip de se battre avec le
+         transform de l'apparition : source principale du mouvement saccadé. */
+      transition:none !important;
+      animation:victoryBlipCore .10s cubic-bezier(.18,.82,.26,1) both;
     }
-    /* L'onde de choc porte elle aussi la couleur de l'equipage : au moment
-       de la detection, c'est le signal le plus visible a l'ecran. */
-    .radar-blip.blip-pop::after{
-      content:"";position:absolute;left:50%;top:50%;width:20px;height:20px;
-      margin:-10px 0 0 -10px;border-radius:50%;
-      border:3px solid rgba(var(--blip-glow,91,255,156),.95);
-      animation:blipWave 1.4s ease-out infinite;pointer-events:none;
+    .radar-blip.blip-pop::after{content:none;}
+    .radar-blip .blip-echo{
+      position:absolute;left:50%;top:50%;width:14px;height:14px;
+      /* translate(-50%,-50%) assure le centrage exact : pas de marge
+         négative en plus, qui décalerait l'onde hors du point. */
+      margin:0;border:2px solid rgba(var(--blip-glow,91,255,156),.92);
+      border-radius:50%;pointer-events:none;opacity:0;
+      transform:translate(-50%,-50%) scale(.35);
+      transform-origin:center;will-change:transform,opacity;
+      animation:victorySonarEcho var(--echo-duration,.4s) cubic-bezier(.16,.72,.25,1) both;
+      animation-delay:var(--echo-delay,0ms);
     }
-    /* Le centrage translate(-50%,-50%) est repris dans chaque etape :
-       une animation sur transform remplace la valeur de base. */
-    @keyframes blipPop{
-      0%{transform:translate(-50%,-50%) scale(0);opacity:0}
-      55%{transform:translate(-50%,-50%) scale(1.55);opacity:1}
+    @keyframes victoryBlipCore{
+      0%{transform:translate(-50%,-50%) scale(.42);opacity:0}
+      55%{transform:translate(-50%,-50%) scale(1.12);opacity:1}
       100%{transform:translate(-50%,-50%) scale(1);opacity:1}
     }
-    @keyframes blipPulse{
-      0%,100%{
-        box-shadow:
-          0 0 0 4px rgba(var(--blip-glow,91,255,156),1),
-          0 0 18px 6px rgba(var(--blip-glow,91,255,156),.85),
-          0 0 34px 14px rgba(var(--blip-glow,91,255,156),.45);
-      }
-      50%{
-        box-shadow:
-          0 0 0 6px rgba(var(--blip-glow,91,255,156),1),
-          0 0 30px 12px rgba(var(--blip-glow,91,255,156),1),
-          0 0 52px 22px rgba(var(--blip-glow,91,255,156),.6);
-      }
+    @keyframes victorySonarEcho{
+      0%{transform:translate(-50%,-50%) scale(.35);opacity:0}
+      9%{opacity:.92}
+      72%{opacity:.30}
+      100%{transform:translate(-50%,-50%) scale(5.8);opacity:0}
     }
-    @keyframes blipWave{
-      0%{transform:scale(1);opacity:.85}
-      100%{transform:scale(4.6);opacity:0}
+    /* Mode « réduire les animations » : pas de son, pas d'échos ni de
+       pulsation. Le point apparaît avec un seul mouvement court, régulier
+       et centré pour rester lisible sans devenir brutal. */
+    @keyframes reducedMotionBlipAppear{
+      0%{transform:translate(-50%,-50%) scale(.58);opacity:0}
+      65%{transform:translate(-50%,-50%) scale(1.06);opacity:1}
+      100%{transform:translate(-50%,-50%) scale(1);opacity:1}
     }
     @media (prefers-reduced-motion: reduce){
-      /* Sans animation, il faut remettre le centrage a la main : c'est
-         blipPop qui le portait pendant la pulsation. */
-      .radar-blip.blip-pop{animation:none;transform:translate(-50%,-50%)}
-      .radar-blip.blip-pop::after{animation:none;opacity:0}
+      .radar-blip.blip-pop{
+        transition:none !important;
+        animation:reducedMotionBlipAppear .15s cubic-bezier(.2,.8,.3,1) both;
+      }
+      .radar-blip .blip-echo{display:none}
     }
     /* POSITION DES POINTS = AVANCEMENT DANS LE JEU
        Les points ne sont plus places en dur : le script calcule leur
@@ -1204,8 +1309,8 @@
       /* le point est centre sur sa coordonnee, quelle que soit sa taille */
       transform:translate(-50%,-50%);
       transition:
-        width .55s ease,height .55s ease,box-shadow .55s ease,opacity .35s ease,
-        left 1.2s cubic-bezier(.25,.9,.3,1),top 1.2s cubic-bezier(.25,.9,.3,1);
+        width .27s ease,height .27s ease,opacity .18s ease,
+        left .6s cubic-bezier(.25,.9,.3,1),top .6s cubic-bezier(.25,.9,.3,1);
     }
     @media (prefers-reduced-motion: reduce){
       .radar-blip{transition:opacity .35s ease}
@@ -1218,7 +1323,21 @@
        ce qui rend le calcul des rayons exact. */
     .radar-rings{
       position:absolute;inset:0;border-radius:50%;pointer-events:none;
-      background:radial-gradient(circle closest-side,transparent 0,transparent 21.69%,rgba(91,255,156,.34) 21.69%,rgba(91,255,156,.34) 22.31%,transparent 22.31%,transparent 30.83%,rgba(91,255,156,.15) 30.83%,rgba(91,255,156,.15) 31.45%,transparent 31.45%,transparent 39.98%,rgba(91,255,156,.15) 39.98%,rgba(91,255,156,.15) 40.60%,transparent 40.60%,transparent 49.12%,rgba(91,255,156,.15) 49.12%,rgba(91,255,156,.15) 49.74%,transparent 49.74%,transparent 58.26%,rgba(91,255,156,.15) 58.26%,rgba(91,255,156,.15) 58.88%,transparent 58.88%,transparent 67.40%,rgba(91,255,156,.15) 67.40%,rgba(91,255,156,.15) 68.02%,transparent 68.02%,transparent 76.55%,rgba(91,255,156,.15) 76.55%,rgba(91,255,156,.15) 77.17%,transparent 77.17%,transparent 85.69%,rgba(91,255,156,.15) 85.69%,rgba(91,255,156,.15) 86.31%,transparent 86.31%);
+      background:
+        /* halo discret autour du palier final (le cercle le plus proche du centre) */
+        radial-gradient(circle closest-side,transparent 0,transparent 17.5%,rgba(91,255,156,.10) 21.69%,transparent 26%),
+        /* lignes circulaires nettes : un cercle fin et régulier par palier,
+           le palier final étant volontairement plus épais et plus lumineux */
+        radial-gradient(circle closest-side,
+          transparent 0,
+          transparent 20.99%,rgba(91,255,156,.72) 20.99%,rgba(91,255,156,.72) 22.39%,transparent 22.39%,
+          transparent 30.38%,rgba(91,255,156,.38) 30.38%,rgba(91,255,156,.38) 31.28%,transparent 31.28%,
+          transparent 39.53%,rgba(91,255,156,.38) 39.53%,rgba(91,255,156,.38) 40.43%,transparent 40.43%,
+          transparent 48.67%,rgba(91,255,156,.38) 48.67%,rgba(91,255,156,.38) 49.57%,transparent 49.57%,
+          transparent 57.81%,rgba(91,255,156,.38) 57.81%,rgba(91,255,156,.38) 58.71%,transparent 58.71%,
+          transparent 66.95%,rgba(91,255,156,.38) 66.95%,rgba(91,255,156,.38) 67.85%,transparent 67.85%,
+          transparent 76.10%,rgba(91,255,156,.38) 76.10%,rgba(91,255,156,.38) 77.00%,transparent 77.00%,
+          transparent 85.24%,rgba(91,255,156,.38) 85.24%,rgba(91,255,156,.38) 86.14%,transparent 86.14%);
     }
     .radar-center{
       position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;
@@ -1282,24 +1401,33 @@
         radial-gradient(circle at 100% 100%,rgba(210,220,230,.55) 0 2.5px,transparent 3px);
     }
 
-    /* Plaque gravee du nom d'equipage */
+    /* En-tete du pupitre : identite de l'equipage, integree au decor.
+       Plus de boite a fond clair : le badge et le nom reposent directement
+       sur le metal du cockpit, separes du reste par un simple filet. */
     .ck-plate{
-      position:relative;display:flex;align-items:center;justify-content:space-between;
-      gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:9px 14px;border-radius:8px;
-      background:linear-gradient(180deg,#3a3027,#241d16);
-      border:1px solid rgba(201,151,63,.55);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 8px rgba(0,0,0,.35);
+      position:relative;display:flex;align-items:center;gap:14px;
+      margin-bottom:16px;padding:0 2px 14px;
+      background:none;border:0;border-bottom:1px solid rgba(245,176,39,.22);
+      box-shadow:none;
     }
+    .ck-plate-badge{
+      flex:0 0 auto;width:46px;height:46px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--team-tint,#c9973f);color:#fff;
+      font-weight:1000;font-size:22px;line-height:1;
+      box-shadow:0 0 0 2px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.30),0 4px 12px rgba(0,0,0,.5);
+    }
+    .ck-plate-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
     .ck-plate-name{
       font-family:Consolas,"Courier New",monospace;font-weight:1000;
-      font-size:clamp(15px,2.6vw,21px);letter-spacing:.10em;text-transform:uppercase;
-      color:var(--brass);text-shadow:0 1px 0 #000;
+      font-size:clamp(21px,4vw,30px);line-height:1.05;letter-spacing:.06em;text-transform:uppercase;
+      color:#ffd36c;text-shadow:0 1px 0 #000,0 0 18px rgba(245,176,39,.5);
     }
     .ck-plate-sub{font-size:var(--fs-tiny);letter-spacing:.14em;text-transform:uppercase;color:#9fb0bd}
 
     /* Rangee de cadrans */
     .ck-gauges{
-      display:grid;gap:clamp(10px,2vw,16px);
+      display:grid;gap:clamp(12px,2vw,16px);
       grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
       margin-bottom:14px;
     }
@@ -1390,7 +1518,7 @@
     .ck-led.done .ck-led-dot{background:var(--glass);box-shadow:0 0 10px rgba(106,255,192,.9)}
     .ck-led.now  .ck-led-dot{background:var(--amber);box-shadow:0 0 12px rgba(255,181,69,1)}
     .ck-led-txt{
-      font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:900;
+      font-size:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:900;
       color:#7f909c;text-align:center;line-height:1.2;overflow-wrap:anywhere;
     }
     .ck-led.done .ck-led-txt{color:rgba(106,255,192,.9)}
@@ -1402,37 +1530,59 @@
       background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
       font-size:var(--fs-small);line-height:1.5;color:#cfe6ef;
     }
-    /* Avertissement chiffre : ce qu'un nouvel echec couterait a CE matelot */
-    .ck-risque{
-      margin:0 0 14px;padding:13px 15px;border-radius:12px;
-      background:rgba(4,16,26,.7);border:1px solid rgba(142,231,255,.20);
-      border-left:4px solid rgba(142,231,255,.55);
-    }
-    .ck-risque.ambre{border-left-color:var(--amber);background:rgba(245,176,39,.07)}
-    .ck-risque.rouge{border-left-color:#ff4b3e;background:rgba(255,75,62,.08)}
-    .ck-risque-titre{
-      font-size:clamp(12px,2.4vw,14px);font-weight:900;letter-spacing:.04em;
-      text-transform:uppercase;color:#fff;margin-bottom:8px;
-    }
-    .ck-risque-l{margin:0;font-size:var(--fs-small);line-height:1.55;color:#cfe6f4}
-    .ck-risque-l b{color:#fff}
+    /* Avertissement chiffre : ce qu'un nouvel echec couterait a CE matelot.
+       « ⏳ L'échelle des blocages » (bloc risque + tableau bareme)
+       a été SUPPRIMÉE de l'écran de blocage — demande organisation :
+       sous le journal de bord de l'équipage, elle se lisait comme une
+       donnée d'équipage alors qu'elle extrapole un compteur personnel.
+       Seul reste .ck-risque-h, qui met en or la peine du prochain
+       échec dans la phrase du statut personnel. */
     .ck-risque-h{font-size:1.12em;color:#ffd36c!important}
-    .ck-risque.rouge .ck-risque-h{color:#ff8f86!important}
-    .ck-risque-l.aide{
-      margin-top:10px;padding:10px 12px;border-radius:9px;
-      background:rgba(106,255,192,.07);border-left:3px solid rgba(106,255,192,.55);
-      color:#c8ece0;
-    }
-    .ck-risque-l.aide b{color:#8dffd0}
-    .ck-risque .bareme{background:transparent;border-color:rgba(142,231,255,.14);padding:12px 0 0}
-    .ck-risque .bareme .bareme-titre{display:none}
-    /* Les deux notes du bareme repetent ce que le paragraphe du dessus dit
-       deja avec les chiffres du matelot : inutile de les redire ici. */
-    .ck-risque .bareme .bareme-note{display:none}
 
     .ck-launch{display:flex;justify-content:center}
     /* Acces a la fiche du matelot, sous le bouton de mission. */
     .ck-launch .hero-cta{min-width:min(100%,380px)}
+
+    /* ===== CHAMBRE DE PILOTAGE : même décor sombre que l'ORDRE DE MISSION =====
+       Le bloc #gameCard était une .card BLANCHE : le pupitre sombre
+       (.cockpit) flottait sur un fond clair qui tranchait avec l'ambiance
+       du sous-marin. On reprend ici le style du bloc « Ordre de mission »
+       (dégradé abyssal + quadrillage en filigrane), pour que le cockpit se
+       fonde dans le décor. */
+    #gameCard{
+      position:relative;
+      background:linear-gradient(135deg,rgba(5,16,28,.92),rgba(12,53,77,.92));
+      color:#eaf8ff;
+    }
+    #gameCard:before{
+      content:"";position:absolute;inset:0;pointer-events:none;opacity:.85;
+      background:
+        radial-gradient(circle at 18% 20%,rgba(142,231,255,.18),transparent 26%),
+        radial-gradient(circle at 82% 70%,rgba(245,176,39,.14),transparent 22%),
+        linear-gradient(90deg,rgba(142,231,255,.05) 1px,transparent 1px),
+        linear-gradient(rgba(142,231,255,.045) 1px,transparent 1px);
+      background-size:auto,auto,38px 38px,38px 38px;
+    }
+    #gameCard>h2,
+    #gameCard .body{position:relative;z-index:1}
+    /* Les encarts du cockpit (état vide, « transmission réactivée »,
+       « palier chargé ») deviennent des bandeaux sombres translucides,
+       lisibles sur le fond abyssal — comme le reste du pupitre. */
+    #gameCard .notice{
+      background:rgba(0,0,0,.28);
+      border:1px solid rgba(142,231,255,.3);
+      color:#dff6ff;
+    }
+    #gameCard .notice.success{
+      background:rgba(91,255,156,.10);
+      border-color:rgba(91,255,156,.5);
+      color:#dfffe8;
+    }
+    #gameCard .notice.warning{
+      background:rgba(255,75,62,.12);
+      border-color:rgba(255,75,62,.5);
+      color:#ffd0cd;
+    }
 
     /* Etats particuliers : bloque / termine */
     .cockpit.is-locked{border-color:rgba(255,75,62,.5)}
@@ -1467,10 +1617,10 @@
     .sonar-readout{
       display:flex;align-items:stretch;justify-content:center;
       flex-wrap:wrap;
-      gap:clamp(10px,2.4vw,22px);
+      gap:clamp(12px,2.4vw,22px);
       width:min(96%,560px);
       margin:14px auto 0;
-      padding:12px clamp(10px,2.6vw,18px);
+      padding:12px clamp(12px,2.6vw,18px);
       border:1px solid rgba(91,255,156,.30);
       border-radius:14px;
       background:linear-gradient(180deg,rgba(2,18,13,.72),rgba(2,18,13,.42));
@@ -1521,57 +1671,16 @@
 
     @keyframes centerPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}50%{transform:translate(-50%,-50%) scale(1.4);opacity:.7}}
 
-    /* Reveal des equipages (style hollywood: slide+fade+glow) */
+    /* Révélation des équipages : apparition par fondu et déplacement léger.
+       Le halo reste réservé aux survols réels de la carte ou du point radar,
+       jamais à la découverte elle-même. */
     .teamlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
-    /* Apparition d'une carte : le halo prend la couleur de l'equipage
-       (avant, toutes les equipes surgissaient dans le meme halo vert du
-       sonar, ce qui ne disait rien de l'equipe qui venait d'arriver). */
     .team-reveal{
-      opacity:0;transform:translateY(28px) scale(.92);
-      transition:opacity .55s ease,transform .55s cubic-bezier(.2,.9,.3,1.2);
+      opacity:0;transform:translateY(20px) scale(.95);
+      transition:opacity .14s ease,transform .14s cubic-bezier(.2,.9,.3,1.2);
     }
-    .team-reveal.in{
-      opacity:1;transform:translateY(0) scale(1);
-      animation:teamGlint 1.4s ease both;
-    }
-    .team-reveal.out{opacity:0;transform:translateY(-12px) scale(.96);transition:opacity .45s ease,transform .45s ease}
-
-    /* On anime box-shadow plutot que drop-shadow : le halo epouse alors le
-       contour arrondi de la carte au lieu de baver autour du bloc. */
-    @keyframes teamGlint{
-      0%{
-        box-shadow:
-          0 0 0 1px rgba(var(--team-glow,143,164,181),.20),
-          0 0 0 0 rgba(var(--team-glow,143,164,181),.55),
-          0 8px 22px rgba(var(--team-glow,143,164,181),.28);
-      }
-      35%{
-        box-shadow:
-          0 0 0 1px rgba(var(--team-glow,143,164,181),.45),
-          0 0 34px 10px rgba(var(--team-glow,143,164,181),.75),
-          0 8px 26px rgba(var(--team-glow,143,164,181),.45);
-      }
-      100%{
-        box-shadow:
-          0 0 0 1px rgba(var(--team-glow,143,164,181),.20),
-          0 8px 22px rgba(var(--team-glow,143,164,181),.28),
-          0 2px 6px rgba(0,0,0,.06);
-      }
-    }
-    /* ===== Mise en evidence depuis le sonar =====
-       Survol ou clic sur un point blanc : la carte de l'equipage s'entoure
-       d'un halo de sa couleur, nettement plus marque que son contour
-       habituel, pour la reperer d'un coup d'oeil dans la liste. */
-    .team.team-reveal.team-spotlight{
-      border-color:rgba(var(--team-glow,143,164,181),1);
-      box-shadow:
-        0 0 0 3px rgba(var(--team-glow,143,164,181),.55),
-        0 0 26px 8px rgba(var(--team-glow,143,164,181),.60),
-        0 10px 28px rgba(0,0,0,.18);
-      /* animation:none -> la mise en evidence prend le pas sur teamGlint,
-         qui pourrait encore tourner juste apres l'apparition de la carte. */
-      animation:none;
-    }
+    .team-reveal.in{opacity:1;transform:translateY(0) scale(1);}
+    .team-reveal.out{opacity:0;transform:translateY(-12px) scale(.96);transition:opacity .11s ease,transform .11s ease}
     /* Le point du sonar montre qu'il est cliquable et repond au survol.
        Deux precautions indispensables :
        1) le balayage, la grille et les anneaux sont dessines APRES les
@@ -1595,49 +1704,20 @@
       .radar-blip[data-team]::before{width:30px;height:30px;margin:-15px 0 0 -15px}
     }
     .radar-grid,.radar-rings,.radar-sweep-big{pointer-events:none}
-    /* Etat allume simple (sans clignotement, ex. animations reduites).
-       PAS de !important ici : il l'emporterait sur l'animation de
-       clignotement definie plus bas, qui ne se verrait alors jamais. */
-    .radar-blip.blip-active{
+    /* Survol léger et fixe du point radar : un seul halo, sans pulsation,
+       retiré immédiatement quand la souris quitte le point.
+       .blip-click-halo reproduit exactement ce rendu au clic ou au toucher
+       (classe séparée pour que le minuteur du clic ne puisse jamais éteindre
+       un vrai survol de souris encore en cours). */
+    .radar-blip.blip-hover,
+    .radar-blip.blip-click-halo{
+      animation:none !important;
       box-shadow:
-        0 0 0 5px rgba(var(--blip-glow,91,255,156),1),
-        0 0 26px 10px rgba(var(--blip-glow,91,255,156),1),
-        0 0 48px 20px rgba(var(--blip-glow,91,255,156),.65);
+        0 0 0 5px rgba(var(--blip-glow,91,255,156),.88),
+        0 0 18px 7px rgba(var(--blip-glow,91,255,156),.52);
     }
     .radar-blip:focus-visible{outline:2px solid #fff;outline-offset:3px}
-
-    /* Clignotement du point quand on survole ou clique sa carte (et
-       inversement) : le halo bat, ce qui attire l'oeil bien plus qu'un
-       simple changement de taille. On anime uniquement box-shadow, la
-       taille ne bouge pas : le point reste exactement sur sa position. */
-    .radar-blip.blip-flash{
-      animation:blipFlash .55s ease-in-out infinite alternate !important;
-    }
-    @keyframes blipFlash{
-      from{
-        box-shadow:
-          0 0 0 4px rgba(var(--blip-glow,91,255,156),.85),
-          0 0 16px 6px rgba(var(--blip-glow,91,255,156),.55);
-      }
-      to{
-        box-shadow:
-          0 0 0 8px rgba(var(--blip-glow,91,255,156),1),
-          0 0 38px 16px rgba(var(--blip-glow,91,255,156),1),
-          0 0 60px 26px rgba(var(--blip-glow,91,255,156),.55);
-      }
-    }
-    /* La carte indique qu'elle reagit au clic. */
     .team.team-reveal{cursor:pointer}
-    @media (prefers-reduced-motion: reduce){
-      /* Pas de clignotement : le point reste allume en continu. */
-      .radar-blip.blip-flash{animation:none !important}
-    }
-
-    /* Accessibilite / batterie : pas de pulsation de halo si l'utilisateur
-       demande des animations reduites. */
-    @media (prefers-reduced-motion: reduce){
-      .team-reveal.in{animation:none}
-    }
 
 
     /* ===== Modale d'installation PWA ===== */
@@ -1689,24 +1769,6 @@
   }
 }
 
-/* Trait de liaison entre le hublot choisi et son encart de consigne. */
-.rule-detail::after{
-  content:"";
-  position:absolute;
-  inset:-2px;
-  padding:2px;
-  border-radius:inherit;
-  background:conic-gradient(from 0deg,transparent 0deg 275deg,rgba(245,176,39,.12) 290deg,rgba(245,176,39,.98) 315deg,rgba(142,231,255,.95) 333deg,transparent 350deg 360deg);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask-composite:exclude;
-  opacity:0;
-  pointer-events:none;
-}
-.rule-detail.ring-active::after{opacity:1;animation:ruleDetailRing 2.1s linear infinite}
-@keyframes ruleDetailRing{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.rule-detail.ring-active::after{animation:none;opacity:.9}}
-
 /* Hiérarchie typographique du hero : H1 dominant, sous-titre limité au
    niveau H2, y compris sur tablette et mobile en paysage. */
 .hero-title{font-size:clamp(54px,11vw,150px);line-height:1.02}
@@ -1737,9 +1799,9 @@
 .countdown-kicker{color:var(--fnac);font-size:.82em;letter-spacing:.10em;font-weight:1000}
 @media(max-width:900px){.countdown-block{align-items:flex-start}.countdown-label{text-align:left}}
 
-/* Surlignage sobre de l'encart explicatif : plus de trait lumineux animé
-   qui tourne autour du rectangle. */
-.rule-detail::after{display:none}
+/* Surbrillance de l'encart de consigne : quand un hublot est touché,
+   un liseré et un halo ambrés, sobres et statiques, relient le bouton
+   à sa consigne. Volontairement sans animation (économie de batterie). */
 .rule-detail.ring-active{
   border-color:rgba(245,176,39,.88);
   box-shadow:
@@ -1748,14 +1810,6 @@
     inset 0 1px 0 rgba(255,255,255,.08),
     0 16px 36px rgba(0,0,0,.42);
   transition:border-color .25s ease,box-shadow .25s ease;
-}
-
-.rule-detail.ring-active{
-  animation:selectedPanelHalo 2.4s ease-in-out infinite;
-}
-50%{box-shadow:0 0 0 4px rgba(245,176,39,.28),0 0 25px rgba(245,176,39,.30),inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.42)}
-}
-@media(prefers-reduced-motion:reduce){
 }
 
 /* Tableau O₂ : deux informations prioritaires, visibles d'un coup d'œil.
@@ -1768,8 +1822,11 @@
   margin-bottom:12px;
   align-items:center;
 }
-.oxygen-meter-top span{
-  font-size:clamp(14px,2.2vw,21px);
+.oxygen-meter-top .oxygen-level-title{
+  margin:0;
+  font-size:clamp(22px,3.4vw,34px);
+  font-weight:1000;
+  line-height:1.05;
 }
 .oxygen-meter-top strong{
   font-size:clamp(32px,6vw,52px);
@@ -1779,45 +1836,101 @@
   font-size:clamp(12px,1.7vw,15px);
   line-height:1.35;
 }
+/* Phrase « La mission est lancée… » : le titre est mis en avant en
+   rouge (H4), la question passe dessous, plus claire, avec le nom du
+   Nautilus en jaune d'accent pour l'oeil. */
+.oxygen-status-title{
+  margin:0 0 6px;
+  font-size:clamp(16px,2.4vw,21px);
+  font-weight:1000;
+  color:#ff4b3e;
+  letter-spacing:.03em;
+  line-height:1.2;
+  text-shadow:0 0 14px rgba(255,75,62,.4);
+}
+.oxygen-status-question{
+  display:block;
+  margin-top:4px;
+  color:#eaf6ff;
+  font-weight:900;
+  line-height:1.4;
+}
+.oxygen-status-question i{
+  color:var(--fnac);
+  font-style:italic;
+  font-weight:900;
+}
 .oxygen-tube{height:46px}
 .oxygen-bottom{
   display:grid;
+  /* Colonne de gauche = le badge d'état (court), colonne de droite = le
+     compte à rebours qui prend tout l'espace restant : la phrase
+     « COMPTE À REBOURS — Durée initiale : … » tient ainsi sur moins de
+     lignes, sans chevaucher le badge. */
   grid-template-columns:auto minmax(0,1fr);
-  align-items:end;
+  align-items:center;
   gap:clamp(14px,3vw,28px);
   margin-top:18px;
 }
 .oxygen-state{
-  align-self:end;
-  white-space:nowrap;
+  justify-self:start;
+  align-self:center;
+  white-space:normal;
+  line-height:1.25;
+  text-align:center;
+}
+/* État critique : alerte mise en avant — plus grosse et bien lisible,
+   posée sur la même ligne que le compte à rebours. */
+.oxygen-state.critical{
+  font-size:clamp(15px,2.6vw,20px);
+  padding:10px 16px;
+  color:#ffb3ad;
+  background:rgba(255,75,62,.24);
+  border:2px solid #ff4b3e;
+  letter-spacing:.08em;
+  text-shadow:0 0 12px rgba(255,75,62,.6);
 }
 .countdown-block{
   align-items:flex-end;
+  justify-content:center;
   gap:5px;
+  justify-self:stretch;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  text-align:right;
 }
 .countdown-label{
   align-items:flex-end;
   gap:2px;
+  text-align:right;
+  max-width:100%;
+  min-width:0;
 }
 .countdown-kicker{
-  font-size:clamp(11px,1.5vw,14px);
-  letter-spacing:.08em;
+  font-size:clamp(12px,1.7vw,16px);
+  letter-spacing:.05em;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  line-height:1.3;
 }
 .countdown{
-  font-size:clamp(34px,6vw,56px);
+  font-size:clamp(15px,5.5vw,64px);
   line-height:1;
   letter-spacing:.01em;
+  white-space:nowrap;
 }
 @media(max-width:600px){
   .oxygen-bottom{
-    grid-template-columns:1fr;
-    gap:14px;
-    justify-items:center;
+    grid-template-columns:auto minmax(0,1fr);
+    align-items:center;
+    gap:10px;
+    justify-items:stretch;
   }
-  .oxygen-state{justify-self:center}
-  .countdown-block,
-  .countdown-label{align-items:center;text-align:center}
-  .countdown{font-size:clamp(34px,10vw,48px)}
+  .oxygen-state{justify-self:start}
+  .countdown-block{align-items:flex-end;min-width:0;max-width:100%}
+  .countdown-label{align-items:flex-end;text-align:right;max-width:100%}
+  .countdown{font-size:clamp(13px,4.6vw,28px)}
 }
 
 /* La couleur accompagne la vidange : elle part du bleu 100 % et rejoint
@@ -1881,14 +1994,6 @@ header,main,footer{position:relative;z-index:1}
 }
 @media(max-width:640px){.hero-line{font-size:clamp(16px,4.7vw,26px)}}
 @media(orientation:landscape) and (max-height:620px){.hero-line{font-size:clamp(16px,4vh,25px)}}
-
-.rule-detail.ring-active{
-  animation:none;
-  border-color:rgba(245,176,39,.92);
-  box-shadow:0 0 0 3px rgba(245,176,39,.24),0 0 18px rgba(245,176,39,.22),inset 0 1px 0 rgba(255,255,255,.08),0 16px 36px rgba(0,0,0,.42);
-}
-
-
 
 /* Le panneau des consignes devient lui aussi plus transparent : sans cela,
    le fond sombre de la carte se trouvait derrière le verre et masquait le
@@ -2026,9 +2131,80 @@ body, body *{
   background:linear-gradient(135deg,rgba(5,16,28,.95),rgba(12,53,77,.95));
 }
 .countdown-card,
-#equipagesEnMer,
-.final-cta{
+#equipagesEnMer{
   background:linear-gradient(135deg,rgba(5,16,28,.95),rgba(8,48,72,.95));
+}
+.final-cta{
+  background:
+    /* voile de lisibilité + vignette de profondeur */
+    radial-gradient(120% 90% at 50% 0%, rgba(0,0,0,0), rgba(0,0,0,.35) 78%),
+    /* tissage carbone : deux séries de diagonales croisées */
+    linear-gradient(27deg, #151515 5px, transparent 5px) 0 5px,
+    linear-gradient(207deg, #151515 5px, transparent 5px) 10px 0px,
+    linear-gradient(27deg, #222222 5px, transparent 5px) 0px 10px,
+    linear-gradient(207deg, #222222 5px, transparent 5px) 10px 5px,
+    linear-gradient(90deg, #1b1b1b 10px, transparent 10px),
+    linear-gradient(#1d1d1d 25%, #1a1a1a 25%, #1a1a1a 50%, transparent 50%, transparent 75%, #242424 75%, #242424);
+  background-color:#131313;
+  background-size:20px 20px;
+  border:2px solid #3a4854;
+  border-radius:14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -2px 0 rgba(0,0,0,.6),
+    inset 0 0 90px rgba(0,0,0,.5),
+    0 28px 70px rgba(0,0,0,.45);
+}
+/* Rivets cuivre/laiton : coins et côtés seulement (haut et bas retirés). */
+.final-cta::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background-image:
+    radial-gradient(circle 6px at 50% 40%, #ffe2a6 0 1px, #cf9a46 1px 3px, #92641f 3px 5px, #3c2708 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #ffe2a6 0 1px, #cf9a46 1px 3px, #92641f 3px 5px, #3c2708 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #ffe2a6 0 1px, #cf9a46 1px 3px, #92641f 3px 5px, #3c2708 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #ffe2a6 0 1px, #cf9a46 1px 3px, #92641f 3px 5px, #3c2708 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #ffe2a6 0 1px, #cf9a46 1px 3px, #92641f 3px 5px, #3c2708 5px 6px, transparent 6px),
+    radial-gradient(circle 6px at 50% 40%, #ffe2a6 0 1px, #cf9a46 1px 3px, #92641f 3px 5px, #3c2708 5px 6px, transparent 6px);
+  background-size:12px 12px;
+  background-repeat:no-repeat;
+  background-position:
+    20px 20px,
+    calc(100% - 20px) 20px,
+    20px calc(100% - 20px),
+    calc(100% - 20px) calc(100% - 20px),
+    20px 50%,
+    calc(100% - 20px) 50%;
+  box-shadow: inset 0 0 70px rgba(0,0,0,.50);
+}
+/* Reflet métallique brillant : bande de lumière qui balaie le panneau
+   « LES ABYSSES NE PARDONNENT PAS » au mouvement du scroll. La position
+   est pilotée par la variable --sheen-x (JS) ; le reflet n'apparaît que
+   pendant le défilement puis s'estompe au repos. */
+.final-cta::after{
+  content:"";
+  position:absolute;
+  top:-25%;
+  bottom:-25%;
+  left:0;
+  width:38%;
+  background:linear-gradient(100deg, transparent 0%, rgba(190,225,255,.10) 40%, rgba(255,255,255,.30) 50%, rgba(190,225,255,.10) 60%, transparent 100%);
+  transform:translateX(var(--sheen-x, -130%));
+  pointer-events:none;
+  filter:blur(3px);
+  opacity:0;
+  transition:opacity .5s ease;
+  z-index:1;
+}
+.final-cta.sheen-active::after{
+  opacity:1;
+}
+.final-cta .body{
+  position:relative;
+  z-index:2;
 }
 .team,
 .admin-pane{
@@ -2041,16 +2217,17 @@ body, body *{
   background-color:rgba(5,16,28,.95);
 }
 
-/* Ligne d'identité du hero : marque et message restent toujours côte à côte. */
+/* Ligne d'identité du hero : marque et message. Sur écran étroit, ils
+   PASSENT À LA LIGNE au lieu d'être tronqués (plus de phrase coupée). */
 .hero-meta{
   position:relative;
   z-index:1;
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  gap:clamp(8px,2vw,18px);
+  flex-wrap:wrap;
+  gap:clamp(12px,2vw,18px);
   width:100%;
-  white-space:nowrap;
 }
 .hero-meta .brand{
   flex:0 1 auto;
@@ -2061,17 +2238,16 @@ body, body *{
 .hero-meta .hero-kicker{
   flex:0 1 auto;
   min-width:0;
-  max-width:none;
+  max-width:100%;
   padding:7px 10px;
-  font-size:clamp(9px,1.6vw,15px);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  font-size:clamp(12px,1.6vw,15px);
+  overflow-wrap:anywhere;
+  line-height:1.35;
 }
 @media(max-width:520px){
   .hero-meta{gap:6px}
-  .hero-meta .brand{font-size:clamp(9px,3vw,15px);letter-spacing:.04em}
-  .hero-meta .hero-kicker{padding:5px 7px;font-size:clamp(7px,2.35vw,12px);letter-spacing:.04em}
+  .hero-meta .brand{font-size:clamp(12px,3vw,15px);letter-spacing:.04em}
+  .hero-meta .hero-kicker{padding:5px 7px;font-size:clamp(12px,2.35vw,12px);letter-spacing:.04em}
 }
 
 
@@ -2189,10 +2365,10 @@ body, body *{
 @media(max-width:640px){
 }
 
-/* L'Ordre de mission ne doit pas masquer le wallpaper : son panneau reste
-   lisible, mais laisse davantage de profondeur visible derrière les hublots. */
+/* Ordre de mission : un fond plus dense améliore la lecture, tout en
+   conservant la grille et les reflets propres au panneau. */
 .intro-card{
-  background:linear-gradient(135deg,rgba(5,16,28,.80),rgba(12,53,77,.80));
+  background:linear-gradient(135deg,rgba(5,16,28,.92),rgba(12,53,77,.92));
 }
 
 /* Les voyants numérotés restent visibles dès l'arrivée sur la page. */
@@ -2224,3 +2400,1229 @@ body{background:transparent}
    alertes et animations de fin de mission. */
 .top-bar{z-index:11000 !important}
 #sonarToggleBtn{position:relative;z-index:11001 !important}
+
+/* ===== MISE A JOUR DISPONIBLE — BANDEAU BAS D'ECRAN =====
+   Remplace l'ancien rechargement automatique (faux depart : la page
+   repartait de zero pendant la saisie du joueur). Bandeau discret et non
+   bloquant : le jeu continue dessous, le joueur choisit son moment. */
+.maj-toast{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%);z-index:10003;display:flex;align-items:center;gap:10px;
+  width:min(430px,93vw);box-sizing:border-box;padding:10px 12px;border-radius:16px;
+  border:1.5px solid rgba(245,176,39,.55);
+  background:linear-gradient(160deg,rgba(7,34,47,.97),rgba(4,19,28,.97));
+  box-shadow:0 14px 34px rgba(0,0,0,.55),0 0 0 4px rgba(245,176,39,.06);
+  color:#e9f6ff;font-size:13px;font-family:inherit;
+  animation:majToastIn .45s cubic-bezier(.2,.9,.25,1.2) both}
+.maj-toast-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;
+  background:#5be09b;box-shadow:0 0 10px rgba(91,224,155,.9);
+  animation:majDotPulse 1.6s ease-in-out infinite}
+.maj-toast-txt{flex:1 1 auto;min-width:0;line-height:1.35}
+.maj-toast-txt strong{color:var(--fnac)}
+.maj-toast-btn{flex:0 0 auto;width:auto;padding:8px 14px;border-radius:999px;min-height:auto;margin:0;
+  border:1.5px solid rgba(255,255,255,.25);background:var(--fnac);color:#171006;
+  font-family:inherit;font-weight:1000;font-size:12px;letter-spacing:.04em;
+  text-transform:uppercase;cursor:pointer}
+.maj-toast-btn:active{transform:scale(.96)}
+.maj-toast-close{flex:0 0 auto;width:auto;background:none;border:none;min-height:auto;margin:0;
+  color:rgba(233,246,255,.6);font-size:14px;cursor:pointer;padding:6px;line-height:1}
+.maj-toast-close:hover{color:#fff}
+@keyframes majToastIn{from{opacity:0;transform:translate(-50%,18px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes majDotPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
+
+/* ===== MODE CONCEPTEUR — lignes responsives (aucun chevauchement) =====
+   ds-row / ds-row-main / ds-row-actions posées par renderDesignerAccess
+   (index.html). Le titre peut se replier, les actions passent en dessous
+   sur écran étroit au lieu de chevaucher le texte ou de le décaler. */
+.ds-row{flex-wrap:wrap}
+.ds-row-main{flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+.ds-row-actions{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto;max-width:100%}
+.ds-row-actions a{white-space:nowrap}
+/* Sur téléphone, les actions (liens/boutons) passent sous le titre et
+   s'étirent en pleine largeur : le !important est nécessaire car les
+   lignes portent un flex:0 0 auto EN INLINE (posé par renderDesignerAccess),
+   qui écraserait sinon la règle responsive. */
+@media(max-width:480px){
+  .ds-row-actions{flex:1 1 100% !important}
+  .ds-row-actions a, .ds-row-actions button{flex:1 1 auto;text-align:center}
+}
+
+/* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur =====
+   Ces règles neutralisent le débordement / chevauchement quand
+   l'utilisateur force une grande police ou zoome fortement :
+   - le texte se replie (jamais de coupure hors écran) ;
+   - les médias ne dépassent jamais leur conteneur ;
+   - les champs/boutons ne débordent pas en largeur. */
+html{font-size:100%;}
+h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{
+  overflow-wrap:break-word;
+  word-break:break-word;
+}
+img,video:not(.photo-video):not(#photoVideo),svg,canvas:not(.photo-canvas),iframe{max-width:100%;height:auto;}
+button,input,select,textarea{max-width:100%;box-sizing:border-box;}
+body{overflow-wrap:break-word;}
+
+/* =====================================================================
+/* =====================================================================
+   PC — DASHBOARD CORRIGÉ : une seule fenêtre sans chevauchement
+   Blocs aérés, textes lisibles (≥13px), grille 3 colonnes équilibrée.
+   Header compact mais lisible (160px), main en 100vh flex, cartes avec
+   scroll interne uniquement si nécessaire. Aucune déformation.
+   ===================================================================== */
+@media (min-width: 1100px) {
+  html { background:#020b14; }
+  body { overflow-x:clip; }
+  .ocean-wallpaper {
+    position:fixed !important; inset:0; z-index:0 !important; opacity:1 !important;
+    background:linear-gradient(180deg, rgba(3,18,33,.74) 0%, rgba(3,18,33,.48) 28%, rgba(3,18,33,.88) 100%), url('../assets/fond-nautilus.jpg') center 18% / cover no-repeat;
+  }
+  header, main, .site-footer { position:relative; z-index:1; }
+
+  /* Header : espacements strictement équidistants */
+  body > header {
+    padding:var(--space-md) var(--space-lg) !important;
+    text-align:center !important;
+    display:block !important;
+    background:linear-gradient(135deg, rgba(2,14,26,.92), rgba(6,30,50,.82)) !important;
+    border-bottom:1px solid rgba(245,176,39,.26) !important;
+  }
+  body > header::before, body > header::after { display:none !important; }
+  body > header .hero-meta { justify-content:center !important; gap:8px !important; margin:0 !important; }
+  body > header .hero-meta .brand { font-size:14px !important; letter-spacing:.08em !important; }
+  body > header .hero-meta .hero-kicker { font-size:11px !important; padding:4px 10px !important; }
+  body > header .hero-title { font-size:clamp(34px,3vw,46px) !important; margin:8px auto 0 !important; width:auto !important; text-align:center !important; line-height:1 !important; -webkit-text-stroke:1.5px #050505 !important; }
+  body > header .hero-line { margin:6px auto 0 !important; text-align:center !important; max-width:54ch !important; font-size:15px !important; line-height:1.3 !important; }
+  body > header .hero-actions { justify-content:center !important; gap:10px !important; margin:12px auto 0 !important; flex-wrap:wrap !important; }
+  body > header .hero-actions .hero-cta { display:inline-flex !important; min-width:160px !important; padding:10px 18px !important; font-size:12px !important; border-radius:999px !important; min-height:36px !important; }
+
+  .top-bar {
+    top:10px !important; right:50% !important; left:auto !important; transform:translateX(50%) !important;
+    width:auto !important; max-width:none !important; gap:8px !important;
+    background:rgba(6,22,38,.70); backdrop-filter:blur(10px); border:1px solid rgba(142,231,255,.22); border-radius:999px; padding:5px !important;
+  }
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle { height:32px !important; padding:0 14px !important; font-size:11px !important; flex:0 0 auto !important; max-width:none !important; }
+
+  /* Grille PC : même gouttière partout — dehors = dedans */
+  main {
+    max-width:1260px !important; width:100% !important; margin:0 auto !important;
+    padding:var(--gutter) !important;
+    display:grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap:var(--gutter) !important;
+    align-items:start !important;
+    box-sizing:border-box !important;
+  }
+  /* Grands blocs : pleine largeur */
+  main .intro-card { grid-column:1 / -1 !important; }
+  main #oxygenPanel { grid-column:1 / -1 !important; }
+  main #equipagesEnMer { grid-column:1 / -1 !important; display:block !important; }
+  main #gameCard { grid-column:1 / -1 !important; }
+  main #bottomAlertMessage { grid-column:1 / -1 !important; }
+  /* Petits blocs : côte à côte */
+  main #embarquementMatelot { grid-column:1 !important; }
+  main #retrouverEquipage { grid-column:2 !important; }
+
+  /* Cartes : marges internes = marges externes (équidistance) */
+  .card { border-radius:16px !important; overflow:hidden !important; display:block !important; }
+  .card h2 { padding:var(--space-sm) var(--gutter-inner) !important; font-size:13px !important; letter-spacing:.06em !important; }
+  .card .body { padding:var(--gutter-inner) !important; }
+
+  /* Intro — même grille partout */
+  .intro-card .intro-text { font-size:13px !important; line-height:1.5 !important; padding:var(--space-sm) var(--gutter-inner) !important; }
+  .intro-card .rule-invite { margin:var(--gutter) 0 0 !important; padding:var(--space-sm) var(--gutter-inner) !important; gap:var(--space-sm) !important; }
+  .card .rule-invite-eyebrow { font-size:12px !important; }
+  .rule-invite-main { font-size:13px !important; }
+  .intro-card .mission-steps { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:var(--gutter) !important; margin:var(--gutter) 0 0 !important; }
+  .rule-detail { margin-top:var(--gutter) !important; padding:var(--gutter-inner) !important; }
+  .rule-detail h3 { font-size:13px !important; }
+  .rule-detail p, .rule-detail li { font-size:12px !important; line-height:1.45 !important; }
+  #ruleProgress { gap:6px !important; } #ruleProgress i { width:22px !important; height:5px !important; }
+
+  /* Formulaires — gouttière unique */
+  .boarding-grid { display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:var(--gutter) !important; }
+  .grid { display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--gutter) !important; }
+  label { font-size:12px !important; margin:0 0 5px !important; }
+  input, select { min-height:38px !important; height:38px !important; padding:8px 10px !important; font-size:16px !important; border-radius:10px !important; }
+  button { min-height:38px !important; padding:8px 14px !important; font-size:13px !important; }
+  #registerMsg, #joinMsg { font-size:12px !important; }
+
+  /* O2 — même grille que partout */
+  #oxygenPanel .oxygen-meter { padding:var(--gutter-inner) !important; border-radius:14px !important; }
+  #oxygenPanel .oxygen-meter-top .oxygen-level-title { font-size:13px !important; }
+  #oxygenPanel .oxygen-meter-top strong { font-size:28px !important; }
+  #oxygenPanel .oxygen-status { font-size:13px !important; margin:0 0 var(--space-sm) !important; }
+  #oxygenPanel .oxygen-tube { height:28px !important; }
+  #oxygenPanel .oxygen-bottom { display:flex !important; flex-direction:row !important; gap:var(--gutter) !important; margin-top:var(--space-sm) !important; }
+  #oxygenPanel .countdown { font-size:20px !important; }
+  #oxygenPanel .countdown-kicker { font-size:11px !important; }
+
+  /* Equipages — même pas d'un pixel de différence */
+  #equipagesEnMer #equipagesBody { display:block !important; padding:0 !important; }
+  #equipagesEnMer .radar-stage { padding:var(--gutter-inner) !important; margin:0 0 var(--gutter) !important; }
+  #equipagesEnMer .radar-screen-big { width:150px !important; height:150px !important; }
+  #equipagesEnMer #teamsBox { padding:var(--gutter-inner) !important; gap:var(--gutter) !important; display:grid !important; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)) !important; }
+
+  /* Cockpit — grille identique */
+  #gameCard .cockpit { padding:var(--gutter-inner) !important; }
+  #gameCard .ck-gauges { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:var(--gutter) !important; margin-bottom:var(--gutter) !important; }
+  #gameCard .ck-dial { width:68px !important; height:68px !important; }
+  #gameCard .ck-dial-value { font-size:16px !important; }
+
+  /* Abysses — même respiration */
+  #bottomAlertMessage .body { padding:var(--gutter-inner) !important; }
+  #bottomAlertMessage.card h2 { font-size:16px !important; }
+  #bottomAlertMessage .abyss-bottom { font-size:13px !important; }
+
+  .site-footer { max-width:1260px !important; margin:var(--gutter) auto 0 !important; padding:var(--gutter) var(--space-lg) !important; display:flex !important; flex-direction:row !important; align-items:center !important; justify-content:space-between !important; background:transparent !important; border-top:none !important; }
+}
+/* =====================================================================
+   ÉCOUTILLES PC — tout visible à l'écran (PC)
+   Sur PC, l'écoutille doit tenir en 100dvh sans scroll, boutons compris.
+   FIX START invisible : on garde 100dvh mais on autorise le scroll interne
+   si le viewport est trop court — START reste atteignable.
+   ===================================================================== */
+@media (min-width: 1100px) {
+  #ecoutille {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+  #ecoutille .ec-scene {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding:var(--gutter) var(--space-lg) !important;
+    gap:var(--gutter) !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  #ecoutille .ec-enseigne { gap:var(--space-sm) !important; flex-shrink: 0; }
+  #ecoutille .ec-verne { font-size: 11px !important; letter-spacing:.38em !important; }
+  #ecoutille .ec-titre { font-size: clamp(28px, 3.2vw, 52px) !important; line-height:.92 !important; }
+  #ecoutille .ec-regle { margin:var(--space-xs) 0 !important; }
+  #ecoutille .ec-sous-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4 { font-size: 13px !important; }
+  #ecoutille .ec-hud { font-size: 9px !important; padding: 0 !important; gap:var(--space-sm) !important; }
+  /* Hublot calibré pour PC : tient entre enseigne et pied sans pousser */
+  #ecoutille .ec-hublot {
+    width: min(38vh, 480px) !important;
+    height: min(38vh, 480px) !important;
+    max-width: 480px !important; max-height: 480px !important;
+    margin:0 !important;
+    flex: 0 0 auto !important;
+  }
+  #ecoutille .ec-pied { gap:var(--space-sm) !important; flex-shrink: 0 !important; padding-bottom:var(--space-xs) !important; min-height: fit-content !important; }
+  #ecoutille .ec-consigne { font-size: 11px !important; display:block !important; }
+  #ecoutille .ec-start {
+    width: clamp(110px, 11vw, 148px) !important;
+    flex-shrink: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  #ecoutille .ec-start-label { font-size: 18px !important; }
+  #ecoutille .ec-version { font-size: 9px !important; opacity:.7; }
+}
+@media (min-width: 1100px) and (max-height: 820px) {
+  #ecoutille .ec-scene{padding:var(--space-sm) var(--space-md) !important; gap:var(--space-sm) !important;}
+  #ecoutille .ec-hublot { width: min(36vh, 440px) !important; height: min(36vh, 440px) !important; }
+  #ecoutille .ec-titre { font-size: clamp(24px, 3vw, 40px) !important; }
+  #ecoutille .ec-pied { gap:var(--space-sm) !important; }
+}
+@media (min-width: 1100px) and (max-height: 720px) {
+  #ecoutille .ec-scene{padding:var(--space-xs) var(--space-sm) !important; gap:var(--space-xs) !important;}
+  #ecoutille .ec-sous-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4 { font-size:10px !important; opacity:.9 }
+  #ecoutille .ec-hublot { width: min(30vh, 360px) !important; height: min(30vh, 360px) !important; }
+}
+/* =====================================================================
+   1 SEULE COLONNE — TABLETTE (641–1099px) : même pile que PC
+   La page d'accueil et de démarrage est pensée mobile-first :
+   dès 641px on garde la pile verticale (pas de 2 colonnes).
+   ===================================================================== */
+@media (min-width: 641px) and (max-width: 1099px) {
+  html { background:#020b14; }
+  .ocean-wallpaper {
+    position: fixed !important; inset:0; z-index:0 !important; opacity:1 !important;
+    background: linear-gradient(180deg, rgba(3,18,33,.72) 0%, rgba(3,18,33,.45) 22%, rgba(3,18,33,.86) 100%), url('../assets/fond-nautilus.jpg') center 18% / cover no-repeat;
+  }
+  header, main, .site-footer { position:relative; z-index:1; }
+  body > header {
+    min-height:auto !important;
+    padding:var(--space-md) var(--space-lg) !important;
+    text-align:center !important;
+    display:block !important;
+    background: linear-gradient(135deg, rgba(2,14,26,.88), rgba(4,28,48,.72)) !important;
+    border-bottom:1px solid rgba(245,176,39,.22) !important;
+  }
+  body > header::before, body > header::after { display:none !important; }
+  body > header .hero-meta { justify-content:center !important; gap:var(--space-sm) !important; }
+  body > header .hero-title { text-align:center !important; margin:var(--space-sm) auto 0 !important; }
+  body > header .hero-line { margin:var(--space-sm) auto 0 !important; text-align:center !important; max-width:40ch !important; }
+  body > header .hero-actions { justify-content:center !important; flex-direction:column !important; align-items:center !important; gap:var(--gutter) !important; margin-top:var(--gutter) !important; }
+  body > header .hero-actions .hero-cta { width:100% !important; max-width:420px !important; justify-content:center !important; }
+  main { max-width:760px !important; margin:0 auto !important; padding:var(--gutter) var(--gutter) 0 !important; display:flex !important; flex-direction:column !important; gap:var(--gutter) !important; }
+  .grid, .boarding-grid, .matelot-reveal, .teamlist, .ck-gauges, .admin-form-grid, .admin-form-grid-6, .admin-o2-form { display:flex !important; flex-direction:column !important; gap:var(--gutter) !important; grid-template-columns:1fr !important; }
+  .intro-card .mission-steps { display:flex !important; flex-direction:column !important; gap:var(--gutter) !important; }
+  .oxygen-bottom { flex-direction:column !important; align-items:stretch !important; gap:var(--gutter) !important; }
+  .countdown-block { align-items:flex-start !important; margin-left:0 !important; text-align:left !important; }
+  .card h2{padding:var(--space-sm) var(--gutter-inner) !important} .body, .oxygen-meter, .cockpit{padding:var(--gutter-inner) !important}
+  .site-footer { max-width:760px; margin:var(--gutter) auto 0 !important; padding:var(--gutter) var(--space-lg) !important; flex-direction:column !important; align-items:center !important; gap:var(--space-sm) !important; }
+  #adminPanel { max-width:760px !important; margin:14px auto 0 !important; }
+}
+/* =====================================================================
+   ÉCOUTILLES MOBILE — blocs égalisés (≤640px)
+   Les 3 zones (enseigne / hublot / pied) occupent chacune 1/3 de 100dvh
+   avec gaps identiques, plus de bloc écrasé ou décalé.
+   ===================================================================== */
+@media (max-width: 640px) {
+  #ecoutille { height:100dvh !important; min-height:100dvh !important; overflow:hidden !important; }
+  #ecoutille .ec-scene {
+    height:100dvh !important; min-height:100dvh !important;
+    display:flex !important; flex-direction:column !important;
+    justify-content:space-between !important;
+    align-items:center !important;
+    gap:var(--gutter, clamp(8px,1.8vmin,14px)) !important;
+    padding:var(--space-md, clamp(10px,2.2vmin,16px)) var(--space-md, clamp(10px,2.2vmin,16px)) !important;
+    box-sizing:border-box !important;
+  }
+  #ecoutille .ec-enseigne {
+    flex:0 0 auto !important; width:100% !important;
+    display:flex !important; flex-direction:column !important; align-items:center !important;
+    gap:var(--space-sm) !important; padding:0 !important;
+  }
+  #ecoutille .ec-verne { font-size:9px !important; }
+  #ecoutille .ec-titre { font-size:clamp(22px, 6.5vw, 30px) !important; line-height:1 !important; }
+  #ecoutille .ec-sous-titre, #ecoutille .ec-sous-titre-h3, #ecoutille .ec-sous-titre-h4 { font-size:11px !important; }
+  #ecoutille .ec-hud { font-size:8px !important; gap:var(--space-sm) !important; }
+  #ecoutille .ec-hublot {
+    flex:1 1 auto !important;
+    width:min(44vh, 74vw) !important; height:min(44vh, 74vw) !important;
+    margin:0 !important;
+  }
+  #ecoutille .ec-pied {
+    flex:0 0 auto !important; width:100% !important;
+    gap:var(--space-sm) !important; padding:0 !important;
+  }
+  #ecoutille .ec-consigne { font-size:10px !important; line-height:1.3 !important; }
+  #ecoutille .ec-start { width:88px !important; height:88px !important; }
+  #ecoutille .ec-start-label { font-size:13px !important; }
+}
+/* =====================================================================
+   GARANTIE RESPONSIVE GLOBALE — TOUS ÉCRANS VISIBLES
+   Vérifie toutes tailles : 320→1920, portrait/paysage, safe-area
+   ===================================================================== */
+html, body{width:100%; max-width:100vw; overflow-x:hidden; -webkit-text-size-adjust:100%;}
+header, main, .site-footer, .card, .intro-card, #oxygenPanel, #equipagesEnMer, #gameCard, #bottomAlertMessage{max-width:100%; min-width:0; box-sizing:border-box;}
+main{width:100%; max-width:min(1260px, 100vw); margin-left:auto; margin-right:auto; padding-left:max(var(--gutter,14px), env(safe-area-inset-left)); padding-right:max(var(--gutter,14px), env(safe-area-inset-right)); box-sizing:border-box;}
+.hero-title, .hero-line, .card h2, .body, .intro-text, .oxygen-status, .countdown, .team, .cockpit, .rule-detail{overflow-wrap:break-word; word-break:break-word; max-width:100%;}
+img, video:not(.photo-video):not(#photoVideo), svg, canvas:not(.photo-canvas), iframe{max-width:100%; height:auto; display:block;}
+@media (max-width:360px){
+  :root{--gutter:var(--space-sm); --gutter-inner:var(--space-sm);}
+  body > header{padding:var(--space-sm) var(--gutter) !important;}
+  main{padding:var(--gutter) var(--gutter) 0 !important; gap:var(--gutter) !important;}
+  .card h2{font-size:11px !important; padding:var(--space-xs) var(--gutter-inner) !important;}
+  .body, .oxygen-meter, .cockpit, .team{padding:var(--gutter-inner) !important;}
+  .hero-title{font-size:clamp(26px, 9vw, 38px) !important; -webkit-text-stroke:1px #050505 !important;}
+  .hero-line{font-size:clamp(14px, 4vw, 20px) !important;}
+  .hero-cta{font-size:11px !important; padding:8px 12px !important;}
+}
+@media (max-height:520px) and (orientation:landscape){
+  body > header{padding:var(--space-sm) var(--gutter) !important;}
+  main{gap:var(--space-sm) !important; padding:var(--space-sm) var(--gutter) 0 !important;}
+  .card{border-radius:14px !important;}
+  .card h2{padding:var(--space-xs) var(--gutter-inner) !important; font-size:11px !important;}
+  .body{padding:var(--space-sm) !important;}
+}
+@media (min-width:1920px){
+  main{max-width:1400px !important;}
+  body > header .hero-title{font-size:clamp(38px, 2.8vw, 52px) !important;}
+  body > header .hero-line{font-size:18px !important;}
+  .card{border-radius:20px !important;}
+}
+/* Cercle garanti — aucun breakpoint ne peut l'écraser */
+#ecoutille .ec-hublot{aspect-ratio:1/1 !important; border-radius:50% !important; overflow:visible !important; width:clamp(100px, min(38vh, 68vw), 500px) !important; height:clamp(100px, min(38vh, 68vw), 500px) !important; flex:0 0 auto !important; max-width:88vw !important; max-height:58vh !important; margin:0 auto !important;}
+#ecoutille .ec-fenetre, #ecoutille .ec-mer, #ecoutille .ec-verre, #ecoutille .ec-cercle, #ecoutille .ec-reflet{border-radius:50% !important; overflow:hidden !important;}
+#ecoutille .ec-enseigne, #ecoutille .ec-pied, #ecoutille .ec-start{max-width:100%; min-width:0; flex-shrink:0;}
+#ecoutille .ec-scene{overflow:hidden !important; min-height:0 !important; justify-content:space-between !important; align-items:center !important; gap:var(--gutter, 14px) !important; padding:max(var(--space-md,14px), env(safe-area-inset-top)) max(var(--space-md,14px), env(safe-area-inset-right)) max(var(--space-sm,10px), env(safe-area-inset-bottom)) max(var(--space-md,14px), env(safe-area-inset-left)) !important;}
+/* Écoutille responsive — laisse texte + START toujours visibles */
+@media (max-width:360px){
+  #ecoutille .ec-hublot{width:clamp(88px, min(32vh, 78vw), 240px) !important; height:clamp(88px, min(32vh, 78vw), 240px) !important;}
+  #ecoutille .ec-titre{font-size:clamp(15px, 5vw, 22px) !important;}
+  #ecoutille .ec-sous-titre-h4{font-size:clamp(7px, 2.4vw, 10px) !important;}
+}
+@media (max-height:520px){
+  #ecoutille .ec-hublot{width:clamp(78px, min(30vh, 46vw), 200px) !important; height:clamp(78px, min(30vh, 46vw), 200px) !important;}
+  #ecoutille .ec-enseigne{gap:4px !important;}
+  #ecoutille .ec-pied{gap:4px !important;}
+}
+@media (min-width:768px) and (max-width:1024px) and (orientation:portrait){
+  #ecoutille .ec-hublot{width:clamp(120px, min(32vh, 56vw), 380px) !important; height:clamp(120px, min(32vh, 56vw), 380px) !important;}
+}
+/* Radar ÉQUIPAGES EN PLONGÉE — cercle parfait jamais déformé */
+#equipagesEnMer .radar-stage{display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; gap:var(--gutter) !important; width:100% !important; box-sizing:border-box !important;}
+#equipagesEnMer .radar-screen-big, .radar-screen-big, .radar-screen, .sonar-screen{aspect-ratio:1/1 !important; border-radius:50% !important; overflow:hidden !important; flex:0 0 auto !important; min-width:0 !important; min-height:0 !important; width:clamp(130px, min(42vw, 260px), 280px) !important; height:clamp(130px, min(42vw, 260px), 280px) !important; max-width:90vw !important; max-height:90vw !important; margin:0 auto !important; display:block !important; position:relative !important;}
+#equipagesEnMer .radar-grid, #equipagesEnMer .radar-rings, #equipagesEnMer .radar-sweep-big, #equipagesEnMer .radar-center{border-radius:50% !important;}
+/* Responsive radar : s'adapte sans se déformer */
+@media (max-width:640px){
+  #equipagesEnMer .radar-screen-big, .radar-screen-big, .sonar-screen{width:clamp(120px, min(48vw, 220px), 240px) !important; height:clamp(120px, min(48vw, 220px), 240px) !important;}
+}
+@media (orientation:landscape) and (max-height:620px){
+  #equipagesEnMer .radar-screen-big, .radar-screen-big, .sonar-screen{width:clamp(100px, min(38vh, 200px), 220px) !important; height:clamp(100px, min(38vh, 200px), 220px) !important;}
+}
+@media (min-width:1100px){
+  #equipagesEnMer .radar-screen-big{width:clamp(140px, 18vw, 260px) !important; height:clamp(140px, 18vw, 260px) !important;}
+}
+@media (min-width:1920px){
+  #equipagesEnMer .radar-screen-big{width:280px !important; height:280px !important;}
+}
+/* =====================================================================
+   TOP-BAR — toujours en haut à droite, jamais sur les textes/titres
+   PC + mobile : même position, même taille compacte, header dégagé
+   ===================================================================== */
+.top-bar{
+  position:fixed !important;
+  top:max(8px, env(safe-area-inset-top)) !important;
+  right:max(8px, env(safe-area-inset-right)) !important;
+  left:auto !important;
+  transform:none !important;
+  width:auto !important;
+  max-width:min(92vw, 380px) !important;
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+  gap:6px !important;
+  background:rgba(6,22,38,.78) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  border:1px solid rgba(142,231,255,.22) !important;
+  border-radius:999px !important;
+  padding:4px !important;
+  box-sizing:border-box !important;
+  z-index:10000 !important;
+  pointer-events:none !important;
+}
+.top-bar > *{pointer-events:auto !important;}
+.top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{
+  flex:0 0 auto !important;
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:30px !important;
+  min-height:30px !important;
+  padding:0 12px !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  letter-spacing:.02em !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  border-radius:999px !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+}
+/* Header dégagé : réserve la hauteur de la top-bar */
+body > header{
+  padding-top:calc(var(--space-md,16px) + 38px + env(safe-area-inset-top)) !important;
+}
+@media (max-width:640px){
+  .top-bar{
+    top:max(6px, env(safe-area-inset-top)) !important;
+    right:max(6px, env(safe-area-inset-right)) !important;
+    gap:5px !important;
+    padding:3px !important;
+    max-width:min(96vw, 340px) !important;
+  }
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{
+    height:28px !important;
+    min-height:28px !important;
+    padding:0 10px !important;
+    font-size:10px !important;
+    gap:3px !important;
+  }
+  body > header{padding-top:calc(var(--gutter,14px) + 34px + env(safe-area-inset-top)) !important;}
+}
+@media (max-width:360px){
+  .top-bar{max-width:98vw !important; gap:4px !important;}
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{height:26px !important; min-height:26px !important; padding:0 8px !important; font-size:9.5px !important;}
+  body > header{padding-top:calc(var(--space-sm,10px) + 30px + env(safe-area-inset-top)) !important;}
+}
+@media (min-width:1100px){
+  .top-bar{
+    top:max(10px, env(safe-area-inset-top)) !important;
+    right:max(14px, env(safe-area-inset-right)) !important;
+    gap:6px !important;
+    padding:4px !important;
+  }
+  .top-bar > .install-pwa-btn, .top-bar > .sonar-toggle{height:32px !important; min-height:32px !important; padding:0 14px !important; font-size:11px !important;}
+  body > header{padding-top:calc(var(--space-md,16px) + 42px + env(safe-area-inset-top)) !important;}
+}
+/* =====================================================================
+   SCROLL MOBILE PAYSAGE — jamais bloqué
+   L'écoutille reste en 100dvh mais devient scrollable si elle dépasse,
+   la page principale reste toujours scrollable en paysage
+   ===================================================================== */
+@media (orientation:landscape){
+  html, body{overflow-y:auto !important; overflow-x:hidden !important; height:auto !important; min-height:100vh !important; min-height:100dvh !important; -webkit-overflow-scrolling:touch !important;}
+  main{overflow:visible !important; min-height:auto !important;}
+  /* Écoutille en paysage : si le hublot + textes dépassent, on scroll dedans pour atteindre START */
+  #ecoutille{overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; overscroll-behavior:contain !important;}
+  #ecoutille .ec-scene{overflow-y:auto !important; overflow-x:hidden !important; -webkit-overflow-scrolling:touch !important; max-height:100dvh !important; min-height:100dvh !important; height:100dvh !important; justify-content:flex-start !important; gap:var(--gutter,14px) !important;}
+  /* Mobile paysage : header + main toujours visibles */
+  body.ec-bloque, body.ec-bloque html{overflow:hidden !important;}
+  body:not(.ec-bloque){overflow-y:auto !important;}
+}
+/* =====================================================================
+   PAYSAGE MOBILE/TABLETTE — exploite toute la largeur comme PC
+   Hublots, boutons et embarquement réorganisés pour être esthétiques
+   et confortables, jamais entassés en 1 colonne
+   ===================================================================== */
+@media (orientation:landscape) and (min-width:480px) and (max-height:800px){
+  body > header{padding:var(--space-sm) var(--space-lg) calc(var(--space-sm) + 6px) !important; text-align:left !important; min-height:auto !important;}
+  body > header .hero-meta{flex-direction:row !important; justify-content:space-between !important; align-items:center !important; gap:var(--space-sm) !important; flex-wrap:wrap !important;}
+  body > header .hero-meta .brand{font-size:13px !important; flex:0 0 auto !important;}
+  body > header .hero-meta .hero-kicker{font-size:10px !important; padding:4px 8px !important; flex:0 1 auto !important; max-width:52% !important;}
+  body > header .hero-title{font-size:clamp(26px, 4vw, 38px) !important; text-align:left !important; margin:var(--space-xs) 0 0 !important; width:100% !important; max-width:100% !important; line-height:.98 !important;}
+  body > header .hero-line{font-size:clamp(13px, 1.8vw, 17px) !important; text-align:left !important; margin:var(--space-xs) 0 0 !important; max-width:100% !important;}
+  body > header .hero-actions{flex-direction:row !important; flex-wrap:wrap !important; justify-content:flex-start !important; align-items:center !important; gap:var(--space-sm) !important; margin-top:var(--space-sm) !important;}
+  body > header .hero-actions .hero-cta{flex:0 1 auto !important; min-width:132px !important; width:auto !important; max-width:220px !important; padding:8px 14px !important; font-size:11px !important; min-height:34px !important; justify-content:center !important;}
+  main{display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--gutter) !important; max-width:1200px !important; padding:var(--gutter) !important; margin:0 auto !important; align-items:start !important;}
+  main .intro-card, main #oxygenPanel, main #equipagesEnMer, main #gameCard, main #bottomAlertMessage{grid-column:1 / -1 !important;}
+  main #embarquementMatelot{grid-column:1 !important;}
+  main #retrouverEquipage{grid-column:2 !important;}
+  .card{border-radius:16px !important;}
+  .card h2{padding:var(--space-sm) var(--gutter-inner) !important; font-size:12px !important; letter-spacing:.05em !important;}
+  .card .body{padding:var(--gutter-inner) !important;}
+  .intro-card .intro-text{font-size:13px !important; line-height:1.5 !important; padding:var(--space-sm) var(--gutter-inner) !important;}
+  .intro-card .rule-invite{margin:var(--space-sm) 0 0 !important; padding:var(--space-sm) var(--gutter-inner) !important; gap:var(--space-xs) !important;}
+  .card .rule-invite-eyebrow{font-size:11px !important;}
+  .rule-invite-main{font-size:12px !important;}
+  .intro-card .mission-steps{display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:var(--space-sm) !important; margin:var(--space-sm) 0 0 !important;}
+  .rule-detail{margin-top:var(--space-sm) !important; padding:var(--gutter-inner) !important;}
+  .rule-detail h3{font-size:13px !important;}
+  .rule-detail p, .rule-detail li{font-size:12px !important; line-height:1.45 !important;}
+  .boarding-grid{display:grid !important; grid-template-columns:50fr 15fr 35fr !important; gap:var(--space-sm) !important; align-items:end !important;}
+  .grid{display:grid !important; grid-template-columns:1fr 1fr !important; gap:var(--space-sm) !important;}
+  label{font-size:11px !important; margin:0 0 4px !important;}
+  input, select{min-height:36px !important; height:36px !important; padding:6px 10px !important; font-size:16px !important; border-radius:10px !important;}
+  button{min-height:34px !important; padding:7px 12px !important; font-size:11px !important;}
+  .oxygen-meter{padding:var(--gutter-inner) !important;}
+  #oxygenPanel .oxygen-meter-top strong{font-size:22px !important;}
+  #oxygenPanel .countdown{font-size:16px !important;}
+  #equipagesEnMer .radar-stage{padding:var(--space-sm) var(--gutter-inner) !important; min-height:180px !important; margin:0 0 var(--space-sm) !important;}
+  #equipagesEnMer #teamsBox{padding:var(--gutter-inner) !important; gap:var(--space-sm) !important; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)) !important;}
+  #gameCard .cockpit{padding:var(--gutter-inner) !important;}
+  #gameCard .ck-gauges{grid-template-columns:repeat(4,1fr) !important; gap:var(--space-sm) !important; margin-bottom:var(--space-sm) !important;}
+  #gameCard .ck-dial{width:58px !important; height:58px !important;}
+  #gameCard .ck-dial-value{font-size:14px !important;}
+  .site-footer{flex-direction:row !important; justify-content:space-between !important; padding:var(--space-sm) var(--gutter) !important; margin:var(--space-sm) auto 0 !important; max-width:1200px !important;}
+  #adminPanel{max-width:900px !important;}
+}
+/* =====================================================================
+   BLOCS EMBARQUEMENT / REPRENDRE — dimensions largeur-hauteur identiques
+   Sélecteurs à la taille du texte, boutons même hauteur centrés
+   Vérifié portrait/paysage PC/mobile
+   ===================================================================== */
+main{ align-items:stretch !important; }
+#embarquementMatelot, #retrouverEquipage{
+  display:flex !important; flex-direction:column !important;
+  height:100% !important; min-height:clamp(160px, 20vh, 200px) !important;
+  box-sizing:border-box !important; align-self:stretch !important;
+}
+#embarquementMatelot .body, #retrouverEquipage .body{
+  flex:1 1 auto !important; display:flex !important; flex-direction:column !important;
+  justify-content:center !important; gap:var(--space-sm) !important; min-height:0 !important;
+}
+#embarquementMatelot .boarding-grid, #retrouverEquipage .grid{
+  width:100% !important; gap:var(--space-sm) !important; align-items:end !important;
+}
+#embarquementMatelot .boarding-grid{grid-template-columns:1fr auto minmax(130px, auto) !important;}
+#retrouverEquipage .grid{grid-template-columns:1fr minmax(150px, auto) !important;}
+#embarquementMatelot input, #embarquementMatelot select, #retrouverEquipage input{
+  width:100% !important; min-width:0 !important;
+  height:38px !important; min-height:38px !important; max-height:38px !important;
+  padding:0 10px !important; line-height:38px !important; font-size:16px !important;
+  box-sizing:border-box !important; display:block !important; border-radius:10px !important;
+}
+#embarquementMatelot select{width:auto !important; min-width:84px !important; max-width:100% !important; padding-right:24px !important; text-align:center !important; text-align-last:center !important;}
+#embarquementMatelot .boarding-action button, #retrouverEquipage .grid button{
+  width:100% !important; height:38px !important; min-height:38px !important; max-height:38px !important;
+  padding:0 14px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important;
+  line-height:1 !important; text-align:center !important; white-space:nowrap !important;
+  border-radius:10px !important; box-sizing:border-box !important;
+}
+@media (max-width:640px){
+  #embarquementMatelot, #retrouverEquipage{min-height:clamp(150px, 18vh, 190px) !important;}
+  #embarquementMatelot .boarding-grid, #retrouverEquipage .grid{grid-template-columns:1fr !important; gap:var(--space-sm) !important;}
+  #embarquementMatelot select{width:100% !important; min-width:0 !important;}
+}
+@media (orientation:landscape) and (min-width:480px) and (max-height:800px){
+  #embarquementMatelot, #retrouverEquipage{min-height:140px !important;}
+  /* En paysage : nom + service utilisent toute la largeur du bloc */
+  #embarquementMatelot .boarding-grid{grid-template-columns:1fr 1fr !important; gap:var(--space-sm) !important;}
+  #embarquementMatelot .boarding-grid > div:nth-child(1),
+  #embarquementMatelot .boarding-grid > div:nth-child(2){min-width:0 !important;}
+  #embarquementMatelot .boarding-grid .boarding-action{grid-column:1 / -1 !important;}
+  #embarquementMatelot input, #embarquementMatelot select{width:100% !important; min-width:0 !important; max-width:none !important;}
+  #retrouverEquipage .grid{grid-template-columns:1fr minmax(130px, auto) !important;}
+}
+
+/* =====================================================================
+   TITRE + BOUTONS ACCUEIL — plus gros et centré horizontalement
+   Demande utilisateur : MISSION NAUTILUS + Plongez dans les 20 000
+   lieues + 3 CTA bien visibles et parfaitement centrés
+   ===================================================================== */
+body > header {
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+body > header .hero-title {
+  font-size: clamp(48px, 6vw, 82px) !important;
+  line-height: 0.95 !important;
+  text-align: center !important;
+  margin: 18px auto 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  -webkit-text-stroke: 1.8px #050505 !important;
+}
+body > header .hero-line {
+  font-size: clamp(20px, 2.8vw, 30px) !important;
+  line-height: 1.25 !important;
+  text-align: center !important;
+  margin: 14px auto 0 !important;
+  max-width: 780px !important;
+  width: 100% !important;
+  display: block !important;
+}
+body > header .hero-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  align-content: center !important;
+  gap: 16px 18px !important;
+  margin: 28px auto 0 !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  text-align: center !important;
+}
+body > header .hero-actions .hero-cta {
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  letter-spacing: .06em !important;
+  padding: 16px 28px !important;
+  min-width: 240px !important;
+  min-height: 52px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 1.1 !important;
+  border-radius: 999px !important;
+}
+/* Tablette */
+@media (max-width: 1099px) and (min-width: 641px) {
+  body > header .hero-title { font-size: clamp(44px, 7vw, 68px) !important; }
+  body > header .hero-line { font-size: clamp(18px, 3.2vw, 26px) !important; max-width: 640px !important; }
+  body > header .hero-actions { gap: 14px !important; margin-top: 22px !important; }
+  body > header .hero-actions .hero-cta { min-width: 220px !important; font-size: 14px !important; padding: 14px 24px !important; min-height: 48px !important; }
+}
+/* Mobile — 3 boutons sur un axe horizontal, compacts */
+@media (max-width: 640px) {
+  body > header { padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; }
+  /* GRAND JEU INTERNE · MISSION CONFIDENTIELLE juste sous FNAC LABÈGE — mobile uniquement */
+  body > header .hero-meta { flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px !important; margin: 0 auto !important; width: 100% !important; text-align: center !important; }
+  body > header .hero-meta .brand { font-size: clamp(14px, 4vw, 16px) !important; text-align: center !important; margin: 0 !important; flex: 0 0 auto !important; }
+  body > header .hero-meta .hero-kicker { font-size: 10px !important; padding: 4px 10px !important; text-align: center !important; max-width: 100% !important; flex: 0 0 auto !important; margin: 0 !important; }
+  /* MISSION NAUTILUS : utilise toute la largeur mobile */
+  body > header .hero-title { font-size: clamp(34px, 11.5vw, 54px) !important; width: 100% !important; max-width: 100% !important; letter-spacing: -0.015em !important; line-height: 0.95 !important; text-align: center !important; padding: 0 2px !important; margin: 8px auto 0 !important; -webkit-text-stroke: 1.2px #050505 !important; }
+  body > header .hero-line { font-size: clamp(14px, 4vw, 20px) !important; margin-top: var(--space-sm) !important; max-width: 40ch !important; }
+  /* Supprime CONSULTER LA RÉSERVE O₂ sur mobile et étend les 2 restants sur toute la largeur */
+  body > header #reserveMissionBtn { display: none !important; }
+  body > header .hero-actions { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; margin-top: 14px !important; width: 100% !important; max-width: 100% !important; justify-content: stretch !important; align-items: stretch !important; }
+  body > header .hero-actions .hero-cta { flex: initial !important; width: 100% !important; max-width: none !important; min-width: 0 !important; font-size: 11px !important; line-height: 1.15 !important; padding: 12px 10px !important; min-height: 44px !important; letter-spacing: .04em !important; white-space: normal !important; text-align: center !important; justify-content: center !important; display: flex !important; align-items: center !important; }
+}
+
+/* =====================================================================
+   PANNEAU ADMIN — RECENTRÉ AU MILIEU EN VERSION PC
+   L'overlay était désaxé par les surcharges tablet/paysage
+   (max-width:760px / 900px + margin) qui cassaient le centrage flex.
+   Ici on restaure le centrage parfait : plein écran + flex center.
+   ===================================================================== */
+@media (min-width: 1100px) {
+  #adminPanel {
+    position: fixed !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100dvh !important;
+    padding: clamp(14px, 2vw, 28px) !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: column !important;
+    background: rgba(2,8,18,.82) !important;
+    backdrop-filter: blur(7px) !important;
+    -webkit-backdrop-filter: blur(7px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+    z-index: 12000 !important;
+    overflow: hidden !important;
+  }
+  #adminPanel.open {
+    display: flex !important;
+  }
+  #adminPanel > h2,
+  #adminPanel h2 {
+    width: 100% !important;
+    max-width: 920px !important;
+    margin: 0 auto !important;
+    align-self: center !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+  #adminPanel > div.body,
+  #adminPanel .body {
+    width: 100% !important;
+    max-width: 920px !important;
+    margin: 0 auto !important;
+    align-self: center !important;
+    max-height: calc(100dvh - 150px) !important;
+  }
+}
+
+/* ==========================================================================
+   MISSION NAUTILUS — MODE SOMBRE (DARK MODE & HAUT CONTRASTE)
+   Assure une immersion totale dans l'univers sous-marin avec des contrastes
+   strictement conformes WCAG AA / AAA sur l'ensemble des écrans et composants.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --text: #eaf8ff;
+    --muted: #9bc4d4;
+    --bad: #ff5a4e;
+    --warn: rgba(245, 176, 39, 0.16);
+    --warnb: rgba(245, 176, 39, 0.45);
+    --dangerbg: rgba(255, 75, 62, 0.18);
+    --dangerb: rgba(255, 75, 62, 0.5);
+    --successbg: rgba(91, 255, 156, 0.14);
+    --successb: rgba(91, 255, 156, 0.45);
+  }
+
+  /* Cartes d'embarquement et de reprise de mission */
+  .card,
+  #embarquementMatelot,
+  #retrouverEquipage {
+    background: linear-gradient(135deg, rgba(5, 16, 28, 0.95), rgba(12, 53, 77, 0.95)) !important;
+    border: 1px solid rgba(245, 176, 39, 0.28) !important;
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45) !important;
+    color: #eaf8ff !important;
+  }
+
+  #embarquementMatelot .body p.small,
+  #retrouverEquipage .body p.small {
+    color: #cfe6f4 !important;
+  }
+
+  label,
+  #embarquementMatelot label,
+  #retrouverEquipage label {
+    color: #eaf8ff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Champs de saisie & listes déroulantes */
+  input,
+  select,
+  textarea {
+    background: rgba(3, 17, 31, 0.88) !important;
+    color: #f2f8fc !important;
+    border: 2px solid rgba(142, 231, 255, 0.35) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none !important;
+    border-color: #8ee7ff !important;
+    box-shadow: 0 0 0 3px rgba(142, 231, 255, 0.28), inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  input::placeholder,
+  input::-webkit-input-placeholder {
+    color: #8ba5b5 !important;
+    opacity: 1 !important;
+  }
+
+  select:invalid,
+  select option[value=""] {
+    color: #8ba5b5 !important;
+  }
+
+  select option {
+    background: #071a2b !important;
+    color: #f2f8fc !important;
+  }
+
+  /* Bouton secondaire */
+  .secondary {
+    background: rgba(142, 231, 255, 0.12) !important;
+    color: #8ee7ff !important;
+    border: 1px solid rgba(142, 231, 255, 0.35) !important;
+  }
+  .secondary:hover {
+    background: rgba(142, 231, 255, 0.22) !important;
+    color: #ffffff !important;
+  }
+
+  /* Encart après inscription du matelot */
+  .matelot-reveal-code,
+  .matelot-qr-card {
+    background: rgba(4, 18, 32, 0.85) !important;
+    border: 1px solid rgba(142, 231, 255, 0.28) !important;
+  }
+
+  .matelot-reveal-label {
+    color: #8ee7ff !important;
+  }
+
+  .matelot-code-help,
+  .matelot-qr-help {
+    color: #cfe6f4 !important;
+  }
+
+  .matelot-code-help b,
+  .matelot-qr-help b {
+    color: var(--fnac) !important;
+  }
+
+  .matelot-alert {
+    background: rgba(90, 16, 16, 0.55) !important;
+    border: 2px solid #ff5a4e !important;
+    border-left-width: 6px !important;
+    color: #ffd0cd !important;
+  }
+
+  .matelot-alert-titre {
+    color: #ffffff !important;
+  }
+
+  .matelot-alert-l b {
+    color: #ffe2a0 !important;
+  }
+
+  .matelot-crewhint {
+    color: #cfe6f4 !important;
+  }
+
+  /* Cartes d'équipage (Sonar & Équipages en mer) */
+  .team {
+    background: linear-gradient(180deg, rgba(8, 28, 46, 0.90), rgba(4, 16, 28, 0.95)) !important;
+    border: 1px solid rgba(142, 231, 255, 0.25) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    color: #eaf8ff !important;
+  }
+
+  .team h3 {
+    color: #eaf8ff !important;
+  }
+
+  .team .small {
+    color: #9bc4d4 !important;
+  }
+
+  .team b {
+    color: #ffffff !important;
+  }
+
+  .team .service {
+    background: rgba(142, 231, 255, 0.15) !important;
+    color: #8ee7ff !important;
+    border: 1px solid rgba(142, 231, 255, 0.3) !important;
+  }
+
+  .team .hr {
+    background: rgba(142, 231, 255, 0.15) !important;
+  }
+
+  /* Panneau Admin en mode sombre */
+  #adminPanel > div.body,
+  #adminPanel .body {
+    background: linear-gradient(180deg, #071a2b 0%, #03111f 100%) !important;
+    color: #eaf8ff !important;
+    border: 1px solid rgba(245, 176, 39, 0.35) !important;
+    border-top: 0 !important;
+    box-shadow: 0 26px 80px rgba(0, 0, 0, 0.75) !important;
+  }
+
+  #adminPanel p.small,
+  #adminPanel .small {
+    color: #9bc4d4 !important;
+  }
+
+  #adminPanel label {
+    color: #cfe6f4 !important;
+  }
+
+  #adminPanel .body p.small[style*="9b1111"] {
+    color: #ff8579 !important;
+  }
+
+  #adminWorkspace span.small[style*="075c39"] {
+    color: #5be09b !important;
+  }
+
+  #adminWorkspace div[style*="163f58"] {
+    color: #8ee7ff !important;
+  }
+
+  .admin-designer-box {
+    background: rgba(11, 52, 78, 0.35) !important;
+    border-color: rgba(142, 231, 255, 0.3) !important;
+  }
+
+  .admin-tabs {
+    background: rgba(2, 10, 20, 0.7) !important;
+    border-bottom: 1px solid rgba(142, 231, 255, 0.2) !important;
+  }
+
+  .admin-tab {
+    background: rgba(142, 231, 255, 0.08) !important;
+    color: #9bc4d4 !important;
+    border: 1px solid rgba(142, 231, 255, 0.2) !important;
+  }
+
+  .admin-tab.active {
+    background: linear-gradient(135deg, #f5b027, #d48b13) !important;
+    color: #04101d !important;
+    border-color: #ffd36c !important;
+  }
+
+  .admin-add-member {
+    background: rgba(6, 24, 40, 0.75) !important;
+    border: 1px solid rgba(142, 231, 255, 0.22) !important;
+  }
+
+  .admin-add-title {
+    color: #8ee7ff !important;
+  }
+
+  .admin-o2-status {
+    background: rgba(255, 75, 62, 0.10) !important;
+    border-color: rgba(255, 75, 62, 0.35) !important;
+  }
+
+  .admin-o2-row > span:first-child {
+    color: #9bc4d4 !important;
+  }
+
+  .admin-o2-row > strong {
+    color: #ff7b72 !important;
+  }
+
+  .admin-o2-badge {
+    color: #5be09b !important;
+    background: rgba(91, 255, 156, 0.14) !important;
+    border-color: rgba(91, 255, 156, 0.4) !important;
+  }
+
+  .admin-o2-badge.warning {
+    color: #ffd36c !important;
+    background: rgba(245, 176, 39, 0.18) !important;
+    border-color: rgba(245, 176, 39, 0.45) !important;
+  }
+
+  .admin-o2-badge.critical {
+    color: #ff8579 !important;
+    background: rgba(255, 75, 62, 0.18) !important;
+    border-color: rgba(255, 75, 62, 0.45) !important;
+  }
+
+  #adminPanel input,
+  #adminPanel select {
+    background: rgba(3, 17, 31, 0.88) !important;
+    color: #f2f8fc !important;
+    border: 1px solid rgba(142, 231, 255, 0.3) !important;
+  }
+
+  #adminPanel .team {
+    background: rgba(6, 22, 36, 0.85) !important;
+    border: 1px solid rgba(142, 231, 255, 0.2) !important;
+    color: #eaf8ff !important;
+  }
+
+  #adminPanel .team h3 {
+    color: #eaf8ff !important;
+  }
+
+  #adminPanel .adm-af-sec {
+    background: rgba(6, 24, 40, 0.75) !important;
+    border: 1px solid rgba(142, 231, 255, 0.22) !important;
+    color: #eaf8ff !important;
+  }
+
+  #adminPanel .adm-af-sec > h4 {
+    color: #8ee7ff !important;
+  }
+
+  #adminPanel .adm-af-note {
+    color: #9bc4d4 !important;
+  }
+
+  #adminPanel .adm-af-table th {
+    color: #8ee7ff !important;
+    border-bottom: 1px solid rgba(142, 231, 255, 0.18) !important;
+  }
+
+  #adminPanel .adm-af-table td {
+    color: #eaf8ff !important;
+    border-bottom: 1px solid rgba(142, 231, 255, 0.12) !important;
+  }
+
+  #adminPanel .adm-af-table code {
+    color: #8ee7ff !important;
+    background: rgba(142, 231, 255, 0.1) !important;
+  }
+
+  #adminPanel .adm-af-badge--ok {
+    background: rgba(46, 213, 115, 0.18) !important;
+    color: #7ce6ad !important;
+    border: 1px solid rgba(46, 213, 115, 0.4) !important;
+  }
+
+  #adminPanel .adm-af-badge--warn {
+    background: rgba(245, 176, 39, 0.18) !important;
+    color: #ffd36c !important;
+    border: 1px solid rgba(245, 176, 39, 0.4) !important;
+  }
+
+  #adminPanel .adm-af-badge--danger {
+    background: rgba(255, 75, 62, 0.18) !important;
+    color: #ff8579 !important;
+    border: 1px solid rgba(255, 75, 62, 0.4) !important;
+  }
+
+  #adminPanel .adm-af-hist {
+    color: #9bc4d4 !important;
+  }
+
+  #adminPanel .adm-af-teamcard {
+    background: rgba(4, 18, 32, 0.92) !important;
+    border: 1px solid rgba(142, 231, 255, 0.3) !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    color: #eaf8ff !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    box-sizing: border-box !important;
+  }
+
+  #adminPanel .adm-af-teamhead {
+    font-weight: 900 !important;
+    font-size: 13px !important;
+    letter-spacing: .05em !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 8px !important;
+    color: #ffd36c !important;
+  }
+
+  #adminPanel .adm-af-teamhead span:first-child {
+    color: #ffd36c !important;
+    font-weight: 900 !important;
+  }
+
+  #adminPanel .adm-af-teamhead .small {
+    color: #9bc4d4 !important;
+    font-weight: 600 !important;
+  }
+
+  #adminPanel .adm-af-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 8px 0 !important;
+    min-width: 0 !important;
+  }
+
+  #adminPanel .adm-af-lbl {
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    background: rgba(142, 231, 255, 0.16) !important;
+    color: #8ee7ff !important;
+    border: 1px solid rgba(142, 231, 255, 0.45) !important;
+    border-radius: 999px !important;
+    padding: 3px 9px !important;
+    flex: 0 0 auto !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+    line-height: 1.3 !important;
+  }
+
+  #adminPanel .adm-af-chips {
+    display: flex !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(142, 231, 255, 0.3) transparent !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 2px 2px 4px !important;
+  }
+
+  #adminPanel .adm-af-chips::-webkit-scrollbar {
+    height: 4px !important;
+  }
+
+  #adminPanel .adm-af-chips::-webkit-scrollbar-thumb {
+    background: rgba(142, 231, 255, 0.3) !important;
+    border-radius: 4px !important;
+  }
+
+  #adminPanel .adm-af-chip {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    background: #03111f !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(142, 231, 255, 0.38) !important;
+    border-radius: 999px !important;
+    padding: 4px 10px !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+    letter-spacing: .02em !important;
+    transition: all .15s ease !important;
+    line-height: 1.3 !important;
+  }
+
+  #adminPanel .adm-af-chip:hover {
+    background: rgba(142, 231, 255, 0.18) !important;
+    border-color: #8ee7ff !important;
+    color: #ffffff !important;
+  }
+
+  #adminPanel .adm-af-chip--hl {
+    background: rgba(46, 213, 115, 0.22) !important;
+    border: 1.5px solid #2ed573 !important;
+    color: #a8ffcc !important;
+    font-weight: 900 !important;
+    box-shadow: 0 0 10px rgba(46, 213, 115, 0.45) !important;
+    letter-spacing: .02em !important;
+  }
+
+  #adminPanel .adm-af-chip--hl:hover {
+    background: rgba(46, 213, 115, 0.32) !important;
+    border-color: #5be09b !important;
+    color: #ffffff !important;
+  }
+
+  #adminPanel .adm-af-ean {
+    font-family: Consolas, monospace !important;
+    font-size: 12px !important;
+    background: #03111f !important;
+    color: #ffd36c !important;
+    border: 1px solid rgba(142, 231, 255, 0.3) !important;
+    border-radius: 6px !important;
+    padding: 3px 6px !important;
+    letter-spacing: .02em !important;
+  }
+
+  #adminPanel .adm-qr-card {
+    background: rgba(4, 18, 32, 0.92) !important;
+    border: 1px solid rgba(142, 231, 255, 0.3) !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    color: #eaf8ff !important;
+  }
+
+  #adminPanel .adm-qr-card h5 {
+    margin: 0 0 6px !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    color: #ffd36c !important;
+  }
+
+  #adminPanel .adm-qr-imgbox {
+    background: #03111f !important;
+    border: 1px solid rgba(142, 231, 255, 0.25) !important;
+    border-radius: 8px !important;
+    padding: 6px !important;
+    text-align: center !important;
+    color: #eaf8ff !important;
+  }
+
+  /* Bannières et cartes PWA */
+  .pwa-card,
+  .pwa-modal-box,
+  .ios-install-banner {
+    background: linear-gradient(135deg, rgba(6, 22, 36, 0.95), rgba(4, 14, 24, 0.95)) !important;
+    border: 1px solid rgba(245, 176, 39, 0.3) !important;
+    color: #eaf8ff !important;
+  }
+}
+
+/* Bulles de premier plan retirées de la jauge */
+.o2-bubbles,
+.o2-bubble {
+  display: none !important;
+}
+
+.oxygen-liquid::before,
+.oxygen-liquid::after,
+.o2-fill::before,
+.o2-fill::after {
+  animation-play-state: running !important;
+}
+
+body.page-hidden .oxygen-liquid::before,
+body.page-hidden .oxygen-liquid::after,
+body.page-hidden .o2-fill::before,
+body.page-hidden .o2-fill::after {
+  animation-play-state: paused !important;
+}
+
+/* Mise en garde d'alerte renforcée (paliers 6, 7, 8 et urgence) */
+.final-cta.is-high-alert {
+  border-color: rgba(255, 75, 62, 0.7) !important;
+  box-shadow: 0 0 30px rgba(255, 75, 62, 0.35), inset 0 0 40px rgba(255, 0, 0, 0.2) !important;
+  animation: abyssPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes abyssPulse {
+  0%, 100% {
+    border-color: rgba(255, 75, 62, 0.5);
+    box-shadow: 0 0 20px rgba(255, 75, 62, 0.25), inset 0 0 30px rgba(255, 0, 0, 0.15);
+  }
+  50% {
+    border-color: rgba(255, 75, 62, 0.95);
+    box-shadow: 0 0 45px rgba(255, 75, 62, 0.55), inset 0 0 50px rgba(255, 0, 0, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .final-cta.is-high-alert { animation: none !important; }
+}
+
+

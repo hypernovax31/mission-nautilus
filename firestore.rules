@@ -26,6 +26,14 @@ service cloud.firestore {
         allow read: if true;
         allow write: if request.auth != null;
       }
+
+      // Journal de bord partagé de l'équipage (« Activité en direct ») :
+      // chaque événement vit dans teams/{equipage}/journal/{id}, lu par
+      // tous les matelots de l'équipage en temps réel.
+      match /journal/{entryId} {
+        allow read: if true;
+        allow write: if request.auth != null;
+      }
     }
 
     match /matelots/{matelotCode} {

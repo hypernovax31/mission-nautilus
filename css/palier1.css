@@ -14,6 +14,13 @@
       --dangerb:#efb2ac;
     }
     *{box-sizing:border-box}
+    html, body{
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+    }
+    button, a, input, select, textarea, .card, main{
+      touch-action: manipulation;
+    }
     /* PROTECTION-COPIE (desactivee) : selection de texte libre.
        Pour la reactiver au dernier palier, decommenter la ligne ci-dessous.
     body, button, .card, .notice, .stepbox, .morse-stepbox, .morse-log{user-select:none;-webkit-user-select:none} */
@@ -37,28 +44,90 @@
     }
     .topbar-left{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
     .topbar-back{
-      background:rgba(255,255,255,.08);color:#fff;
-      border:1px solid rgba(245,176,39,.5);border-radius:999px;
-      padding:8px 14px;font-weight:900;font-size:12px;
+      display:inline-flex;align-items:center;gap:6px;
+      background:rgba(255,255,255,.12);color:#fff;
+      border:1.5px solid rgba(245,176,39,.7);border-radius:999px;
+      padding:8px 16px;font-weight:900;font-size:12.5px;
       letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+      box-shadow:0 2px 8px rgba(0,0,0,.35);
+      transition:background .18s, color .18s, transform .14s, border-color .18s;
     }
-    .topbar-back:hover{background:rgba(245,176,39,.85);color:#111;}
+    .topbar-back:hover{background:rgba(245,176,39,.95);color:#03111f;border-color:#ffd36c;transform:translateY(-1px);}
+    .gate-home, .puzzle-home{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      margin-top:14px;
+      background:rgba(255,255,255,.1); color:#fff !important;
+      border:1.5px solid rgba(245,176,39,.65); border-radius:12px;
+      padding:11px 22px; font-weight:900; font-size:13.5px; text-decoration:none !important;
+      letter-spacing:.04em; text-transform:uppercase;
+      box-shadow:0 4px 14px rgba(0,0,0,.45);
+      cursor:pointer;
+      transition:background .18s ease, color .18s ease, transform .15s ease, border-color .18s ease;
+    }
+    .gate-home:hover, .puzzle-home:hover{
+      background:rgba(245,176,39,.95); color:#03111f !important;
+      border-color:#ffd36c; transform:translateY(-1px);
+    }
     .topbar-title{font-family:Impact,Haettenschweiler,"Arial Black",sans-serif;font-size:clamp(20px,3vw,30px);color:#fff;letter-spacing:.04em;text-transform:uppercase;text-shadow:2px 2px 0 #000;}
     .topbar-info{display:flex;gap:14px;align-items:center;font-size:13px;color:#9bc4d4;flex-wrap:wrap;}
     .topbar-info b{color:var(--fnac);}
-    main{max-width:1180px;margin:0 auto;padding:24px 18px 80px;display:grid;gap:18px;}
+    /* PLEINE LARGEUR « comme le Palier 2 » : les blocs d'AVANT le mini-jeu
+       (identification, équipage actif, journal de bord, BRIEFING DU
+       CAPITAINE) s'étendent sur toute la fenêtre visible, plafonnés au
+       même cadre que css/palier2.css (1720 px). L'épreuve, elle, garde
+       son gabarit standard (voir #gameCard plus bas). */
+    main{max-width:1720px;margin:0 auto;padding:24px 18px 80px;display:grid;gap:18px;}
     .card{
       background:rgba(7,26,43,.85);
-      border:1px solid rgba(142,231,255,.25);
+      /* Liseré d'or commun à TOUS les blocs du site (style du bloc
+         ORDRE DE MISSION de l'accueil) : l'ancien filet cyan est
+         remplacé par la même ligne ambrée rgba(245,176,39,.28). */
+      border:1px solid rgba(245,176,39,.28);
       border-radius:22px;
       box-shadow:0 18px 38px rgba(0,0,0,.35);
       overflow:hidden;
     }
+    /* Carte « 🧪 ÉPREUVE DU PALIER » : au clic sur ⚓ PRENDRE LES
+       COMMANDES, la fenêtre glisse jusqu'à son DÉBUT (haut de la
+       fenêtre). Cette marge de défilement dégage la barre du haut
+       (sticky, ~62 px) pour que le titre ne passe jamais dessous. */
+    #gameCard{scroll-margin-top:74px;}
+    /* L'ÉPREUVE (morse) conserve son gabarit standard de 1180 px : la
+       pleine largeur ne concerne que les vues d'AVANT le mini-jeu. La
+       carte reste centrée dans le cadre élargi, à l'identique de
+       l'ancienne mise en page. */
+    #gameCard{
+      justify-self:center;
+      width:100%;
+      max-width:1180px;
+    }
+    /* MISE EN PAGE « AU MOMENT DE JOUER » : pendant la partie, la page
+       ne laisse QUE cette carte (l'équipage actif et le journal de bord
+       sont rangés sur la vue briefing). Elle devient la scène unique :
+       liseré d'or renforcé, halo doux, fond un cran plus profond —
+       transition courte pour que le basculement briefing ↔ épreuve se
+       lise sans à-coup. */
+    #gameCard{
+      transition:border-color .3s ease, box-shadow .3s ease, background .3s ease;
+    }
+    #gameCard.epreuve-focus{
+      border-color:rgba(245,176,39,.6);
+      background:rgba(5,19,33,.95);
+      box-shadow:0 0 0 3px rgba(245,176,39,.14), 0 22px 48px rgba(0,0,0,.55);
+    }
     .card h2{
       margin:0;padding:16px 20px;
-      background:linear-gradient(90deg,#101820,#253545);
-      color:#fff;font-size:18px;
-      border-bottom:1px solid rgba(142,231,255,.18);
+      /* Bronze ambré poli : reflet diagonal + patine + métal brossé, texte argent */
+      background:
+        linear-gradient(115deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,0) 32%, rgba(255,255,255,.06) 72%),
+        radial-gradient(130% 90% at 8% 12%, rgba(48,22,2,.52), transparent 48%),
+        radial-gradient(120% 90% at 94% 88%, rgba(28,12,0,.52), transparent 52%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, rgba(0,0,0,.09) 1px 3px),
+        linear-gradient(180deg, #b57318 0%, #8f4f0a 30%, #663606 58%, #452404 82%, #7c4808 100%);
+      color:#f2f6f9;font-size:18px;
+      font-weight:700;letter-spacing:.06em;
+      text-shadow:0 1px 2px rgba(0,0,0,.65),0 -1px 0 rgba(255,255,255,.22);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(30,14,0,.65),inset 0 0 18px rgba(0,0,0,.2),0 2px 5px rgba(0,0,0,.35);
     }
     /* Titre de carte en DEUX parties : l'intitule a gauche, le chrono a
        droite. Le temps etait auparavant repete dans un second encart, a
@@ -69,36 +138,53 @@
     .card-h2-split{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
     .card-h2-timer{display:flex;align-items:baseline;gap:8px;}
     .card-h2-timer .lbl{
-      font-size:10px;color:#9bc4d4;letter-spacing:.09em;
+      font-size:12px;color:#c9d4dd;letter-spacing:.09em;
       text-transform:uppercase;font-weight:800;
     }
     .card-h2-timer .val{
       font-family:Consolas,"Courier New",monospace;
-      font-size:clamp(18px,2.6vw,24px);font-weight:1000;color:#8ee7ff;
-      text-shadow:0 0 12px rgba(142,231,255,.5);line-height:1;
+      font-size:clamp(18px,2.6vw,24px);font-weight:1000;color:#f2f6f9;
+      text-shadow:0 1px 2px rgba(0,0,0,.55);line-height:1;
     }
     /* Chrono qui tourne : il vire a l'ambre sous 60 s, au rouge sous 20 s. */
-    .card-h2-timer.warn .val{color:#ffd36c;text-shadow:0 0 12px rgba(245,176,39,.55);}
-    .card-h2-timer.crit .val{color:#ff7b72;text-shadow:0 0 12px rgba(255,75,62,.6);}
+    .card-h2-timer.warn .val{color:#ffc95e;text-shadow:0 1px 2px rgba(0,0,0,.55);}
+    .card-h2-timer.crit .val{color:#ff5a4e;text-shadow:0 1px 2px rgba(0,0,0,.55);}
     @media(max-width:430px){
       .card-h2-timer .lbl{display:none}
     }
     .body{padding:18px 20px;}
 
-    /* === Identification joueur === */
-    .identity-grid{
-      display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;
+    /* Accès direct à un palier : reprise par Code Matelot, sans créer de
+       nouveau joueur depuis une URL partagée. */
+    .direct-resume-panel{max-width:700px;margin:0 auto;padding:clamp(16px,3vw,24px);border:1px solid rgba(142,231,255,.28);border-radius:18px;background:linear-gradient(145deg,rgba(4,23,39,.86),rgba(8,54,78,.78));box-shadow:inset 0 1px 0 rgba(255,255,255,.06);}
+    .direct-resume-heading{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+    .direct-resume-icon{display:grid;place-items:center;flex:0 0 auto;width:46px;height:46px;border-radius:14px;background:rgba(142,231,255,.13);border:1px solid rgba(142,231,255,.32);font-size:23px;}
+    .direct-resume-heading p{margin:0;color:#8ee7ff;font-size:12px;font-weight:1000;letter-spacing:.11em;line-height:1.2;text-transform:uppercase;}
+    .direct-resume-heading h3{margin:3px 0 0;color:#fff;font-size:clamp(19px,3vw,25px);line-height:1.1;}
+    .direct-resume-lead{max-width:610px;margin:0 0 16px;color:#c3e0ec;font-size:14px;font-weight:700;line-height:1.5;}
+    .direct-resume-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;}
+    .direct-resume-form label{display:block;margin-bottom:6px;color:#9bc4d4;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}
+    .direct-resume-form input{width:100%;height:auto;min-height:48px;padding:10px 12px;border:1px solid rgba(142,231,255,.35);border-radius:12px;background:rgba(0,0,0,.3);color:#fff;font:800 16px Consolas,"Courier New",monospace;letter-spacing:.08em;text-transform:uppercase;}
+    .direct-resume-form input:focus{outline:none;border-color:var(--fnac);box-shadow:0 0 0 3px rgba(245,176,39,.2);}
+    .direct-resume-form button{height:auto;min-height:48px;margin:0;padding:12px 17px;border:0;border-radius:12px;background:var(--fnac);color:#111;font-weight:1000;cursor:pointer;white-space:normal;line-height:1.2;}
+    .direct-resume-message:not(:empty){margin-top:12px;padding:10px 12px;border-radius:11px;font-size:13px;font-weight:800;line-height:1.45;}
+    .direct-resume-message.error{border:1px solid rgba(255,123,114,.42);color:#ffd0cd;background:rgba(255,75,62,.11);}
+    .direct-resume-message.loading{border:1px solid rgba(142,231,255,.3);color:#c3eaf7;background:rgba(142,231,255,.08);}
+    /* Salut du matelot qui revient : bandeau or, nom en TRES gros. */
+    .direct-resume-message.retour{
+      border:1px solid rgba(245,176,39,.6);color:#ffe9bd;background:rgba(245,176,39,.12);
+      font-size:16px;text-align:center;padding:13px 14px;
+      animation:drRetour .5s cubic-bezier(.2,.9,.3,1.2);
     }
-    @media(max-width:680px){.identity-grid{grid-template-columns:1fr;}}
-    .identity-grid label{display:block;color:#9bc4d4;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;}
-    .identity-grid input,.identity-grid select{
-      width:100%;height:48px;padding:10px 12px;
-      background:rgba(0,0,0,.32);color:#fff;
-      border:1px solid rgba(142,231,255,.35);border-radius:12px;
-      font:inherit;font-weight:700;
+    .direct-resume-message.retour .dr-name{
+      display:inline-block;color:var(--fnac);font-size:1.35em;font-weight:1000;
+      letter-spacing:.03em;text-shadow:0 0 14px rgba(245,176,39,.5);
     }
-    .identity-grid input:focus,.identity-grid select:focus{outline:none;border-color:var(--fnac);box-shadow:0 0 0 3px rgba(245,176,39,.25);}
-    .identity-grid button{margin:0;height:48px;background:var(--fnac);color:#111;font-weight:1000;border-radius:12px;padding:0 20px;cursor:pointer;}
+    @keyframes drRetour{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+    @media (prefers-reduced-motion:reduce){.direct-resume-message.retour{animation:none}}
+    .direct-resume-new{margin:14px auto 0;max-width:700px;color:#9bc4d4;font-size:12px;font-weight:700;line-height:1.45;text-align:center;}
+    .direct-resume-new a{color:var(--fnac);font-weight:900;text-underline-offset:3px;}
+    @media(max-width:560px){.direct-resume-form{grid-template-columns:1fr}.direct-resume-form button{width:100%;}.direct-resume-panel{padding:16px}.direct-resume-icon{width:42px;height:42px;font-size:20px;}}
 
     /* === Voyant "matelot aux commandes" ===
        Pastille rouge qui clignote tant qu'un matelot joue reellement, et
@@ -126,18 +212,48 @@
        reste allumee en rouge, mais cesse de clignoter. */
     @media (prefers-reduced-motion: reduce){
       .dive-lamp.on{animation:none}
+      /* Moniteur Nautilus : ondes, balayage et flash figés (lampe fixe). */
+      .morse-scope,.morse-scan,.morse-wave,.morse-signal-light.on{animation:none}
+      .morse-signal-light.on{opacity:.65}
     }
 
-    /* === Équipage === */
-    .crew{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px;}
+    /* === Équipage (plongée globale : tous les équipages) === */
+    .crew{display:flex;flex-direction:column;gap:14px;margin-top:12px;}
+    /* Panneau d'un équipage actif, souligné d'un liseré à sa couleur. */
+    .crew-group{
+      border:1px solid rgba(142,231,255,.16);
+      border-left:4px solid var(--team-tint,#6a6a6a);
+      border-radius:12px;padding:12px 14px;
+      background:rgba(0,0,0,.24);
+    }
+    .crew-group-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+    /* Voyant lumineux pulsant, à la teinte de l'équipage. */
+    .crew-group-dot{
+      width:9px;height:9px;border-radius:50%;flex:0 0 auto;
+      background:rgb(var(--team-glow,176,176,176));
+      box-shadow:0 0 10px rgba(var(--team-glow,176,176,176),.85);
+      animation:crewDotPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes crewDotPulse{50%{opacity:.3}}
+    .crew-group-name{
+      font-weight:900;color:#fff;font-size:13px;
+      letter-spacing:.07em;text-transform:uppercase;
+    }
+    .crew-group-count{margin-left:auto;font-size:12px;color:#9bc4d4;white-space:normal;overflow-wrap:anywhere;text-align:right;}
+    .crew-group-members{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
     .crew-member{
       padding:10px 12px;background:rgba(0,0,0,.32);
       border:1px solid rgba(142,231,255,.22);border-radius:12px;
       display:flex;flex-direction:column;gap:4px;
     }
-    .crew-member.self{border-color:var(--fnac);background:rgba(245,176,39,.12);}
-    .crew-member .crew-name{font-weight:900;color:#fff;}
-    .crew-member .crew-meta{font-size:11px;color:#9bc4d4;}
+    .crew-member.self{border:2px solid var(--fnac);background:rgba(245,176,39,.12);box-shadow:0 0 14px rgba(245,176,39,.22);}
+    .crew-member.self .crew-name{color:var(--fnac);text-shadow:0 0 10px rgba(245,176,39,.4);}
+    /* Taille de police EXPLICITE : sans elle, le nom héritait des 16 px
+       du body, dépareillé à côté des 12–13 px du reste de la carte —
+       et sujet au redimensionnement de texte auto de Safari en paysage. */
+    .crew-member .crew-name{font-weight:900;color:#fff;font-size:14px;line-height:1.3;}
+    .crew-member .crew-meta{font-size:12px;color:#9bc4d4;}
+    .crew-empty{color:#9bc4d4;font-size:13px;font-style:italic;padding:6px 2px;}
 
     /* === Bloc de l epreuve === */
     /* CADRE RETIRE : ce bloc enveloppait le panneau sonar, la zone de
@@ -149,12 +265,6 @@
       color:#eaf8ff;
       display:grid;gap:14px;
     }
-    .morse-header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
-    .morse-header h3{margin:0;color:var(--fnac);font-size:clamp(18px,2.4vw,24px);letter-spacing:.04em;text-transform:uppercase;}
-    .morse-timer-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-    .morse-timer-label{font-size:11px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:800;}
-    .morse-timer{font-family:Consolas,"Courier New",monospace;font-size:clamp(22px,3.4vw,32px);font-weight:1000;color:#8ee7ff;text-shadow:0 0 14px rgba(142,231,255,.55);line-height:1;}
-
     .morse-brief{margin:0;color:#bcd9e6;line-height:1.5;font-size:clamp(13px,1.8vw,15px);}
 
     /* ===== BRIEFING DU PALIER — mise en page A PLAT =====
@@ -181,7 +291,7 @@
 
     .brief-intro{
       margin:0 0 16px;color:#dff6ff;line-height:1.55;
-      font-size:clamp(13px,1.8vw,15px);
+      font-size:clamp(14px,2vw,16px);
     }
     .brief-intro b{color:var(--cyan)}
 
@@ -204,41 +314,11 @@
     }
     .brief-list li.warn b{color:#ffd36c}
 
-    /* Bouton pleine largeur : il n'a plus besoin d'une rangee dediee. */
-    /* Avertissement chiffre avant de prendre la barre */
-    .risque{
-      margin:0 0 16px;padding:13px 15px;border-radius:12px;
-      background:rgba(4,16,26,.7);border:1px solid rgba(142,231,255,.20);
-      border-left:4px solid rgba(142,231,255,.55);
-    }
-    .risque.ambre{border-left-color:var(--fnac);background:rgba(245,176,39,.07)}
-    .risque.rouge{border-left-color:#ff4b3e;background:rgba(255,75,62,.08)}
-    .risque-titre{
-      font-size:clamp(12px,2.3vw,14px);font-weight:900;letter-spacing:.04em;
-      text-transform:uppercase;color:#fff;margin:0 0 8px;
-    }
-    .risque-l{margin:0;font-size:clamp(12.5px,1.8vw,14px);line-height:1.55;color:#cfe6f4}
-    .risque-l b{color:#fff}
-    .risque-h{font-size:1.12em;color:#ffd36c!important}
-    .risque.rouge .risque-h{color:#ff8f86!important}
-    .risque-l.aide{
-      margin-top:10px;padding:10px 12px;border-radius:9px;
-      background:rgba(91,255,156,.07);border-left:3px solid rgba(91,255,156,.55);
-      color:#c8ece0;
-    }
-    .risque-l.aide b{color:#8dffd0}
-    .bareme-liste{display:grid;gap:4px;margin:10px 0 0}
-    .bareme-l{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:6px 10px;border-radius:8px;font-size:12.5px;line-height:1.3;
-      background:rgba(142,231,255,.06);border-left:3px solid rgba(142,231,255,.45);
-      color:#cfe6f4;
-    }
-    .bareme-l.ambre{background:rgba(245,176,39,.09);border-left-color:var(--fnac);color:#ffe2a0}
-    .bareme-l.rouge{background:rgba(255,75,62,.11);border-left-color:#ff4b3e;color:#ffd0cd}
-    .bareme-l.actif{outline:1px solid rgba(255,255,255,.55);box-shadow:0 0 12px rgba(255,255,255,.18);font-weight:800}
-    .bareme-h{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+    /* L'encart « Ce qu'un nouvel echec te couterait » (.risque, .bareme)
+       a ete SUPPRIME de l'epreuve : ses styles ne servent plus ici.
+       (Le bareme d'index.html a ses propres styles dans index.css.) */
 
+    /* Bouton pleine largeur : il n'a plus besoin d'une rangee dediee. */
     .brief-cta{
       display:block;width:100%;margin:0;height:46px;border:0;border-radius:12px;
       background:var(--fnac);color:#111;font-family:inherit;
@@ -252,22 +332,86 @@
     }
 
     .morse-sonar-panel{
-      display:grid;grid-template-columns:140px 1fr;gap:16px;align-items:center;
+      display:grid;grid-template-columns:156px 1fr;gap:16px;align-items:center;
       padding:16px;background:rgba(0,0,0,.32);
       border:1px solid rgba(142,231,255,.18);border-radius:16px;
     }
     @media(max-width:560px){.morse-sonar-panel{grid-template-columns:1fr;justify-items:center;}}
+    /* MONITEUR ROND « NAUTILUS » — lecteur d'ondes sinusoïdales animé.
+       Hublot laiton à rivets (aucune image : dégradés + SVG data-URI)
+       abritant un oscilloscope à phosphore, façon salle des machines
+       hollywoodienne :
+       - deux sinusoïdes glissent en sens inverse (parallaxe),
+       - un balayage de rafraîchissement CRT traverse le tube,
+       - quand le signal morse joue (#morseVisual passe en .on), le tube
+         flashe et l'onde prend toute son amplitude. */
     .morse-sonar-screen{
-      position:relative;width:130px;height:130px;border-radius:50%;
-      background:radial-gradient(circle,#0d3b2c 0 2px,transparent 3px),radial-gradient(circle,rgba(74,255,151,.08),rgba(0,0,0,.25) 70%),#02120d;
-      border:3px solid rgba(91,255,156,.7);
-      box-shadow:0 0 18px rgba(91,255,156,.28),inset 0 0 18px rgba(91,255,156,.12);overflow:hidden;
+      position:relative;width:132px;height:132px;border-radius:50%;
+      background:radial-gradient(circle at 50% 38%,rgba(74,255,151,.10),transparent 62%),#020f0a;
+      background-clip:padding-box;border:9px solid transparent;
+      box-shadow:inset 0 0 22px rgba(0,0,0,.8),0 5px 16px rgba(0,0,0,.55),0 0 20px rgba(91,255,156,.14);
     }
-    .morse-sonar-screen:before{content:"";position:absolute;inset:22px;border:1px solid rgba(91,255,156,.22);border-radius:50%;box-shadow:0 0 0 18px rgba(91,255,156,.10),0 0 0 36px rgba(91,255,156,.06);}
-    .morse-sweep{position:absolute;left:50%;top:50%;width:50%;height:2px;background:linear-gradient(90deg,rgba(255,255,255,.95),rgba(91,255,156,.45),transparent);transform-origin:left center;animation:sonarRot 1.8s linear infinite;box-shadow:0 0 10px rgba(255,255,255,.7);}
-    @keyframes sonarRot{to{transform:rotate(360deg);}}
-    .morse-signal-light{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,#fff 0 5px,rgba(91,255,156,.7) 6px,transparent 12px);opacity:0;}
-    .morse-signal-light.on{opacity:1;}
+    /* Ceinture de laiton brossé (derrière la bordure transparente). */
+    .morse-sonar-screen:before{
+      content:"";position:absolute;inset:-9px;border-radius:50%;z-index:-1;
+      background:conic-gradient(from 210deg,#8a6420,#e8c26a 12%,#6b5122 30%,#caa24b 52%,#573f16 70%,#b98f3e 88%,#8a6420);
+      box-shadow:inset 0 2px 4px rgba(255,236,170,.45),inset 0 -3px 6px rgba(0,0,0,.65),0 2px 8px rgba(0,0,0,.5);
+    }
+    /* 8 rivets laiton autour du hublot. */
+    .morse-sonar-screen:after{
+      content:"";position:absolute;inset:-9px;border-radius:50%;z-index:5;pointer-events:none;
+      background:
+        radial-gradient(circle 4px at 50% 2.7%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 83.5% 16.5%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 97.3% 50%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 83.5% 83.5%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 50% 97.3%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 16.5% 83.5%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 2.7% 50%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px),
+        radial-gradient(circle 4px at 16.5% 16.5%,#ffe9b0 0 1.5px,#a97e2c 2.6px,#3c2c0e 4px,transparent 4.4px);
+    }
+    /* Le tube : cercle intérieur, tout y est écrêté (overflow propre). */
+    .morse-scope{position:absolute;inset:0;border-radius:50%;overflow:hidden;z-index:1;
+      animation:scopeFlicker 4.2s steps(80) infinite;}
+    /* Graticule d'oscilloscope + vignettage du verre bombé. */
+    .morse-scope:before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+      background:
+        linear-gradient(rgba(140,255,190,.16),rgba(140,255,190,.16)) 0 50%/100% 1px no-repeat,
+        linear-gradient(90deg,rgba(140,255,190,.16),rgba(140,255,190,.16)) 50% 0/1px 100% no-repeat,
+        radial-gradient(circle,transparent 56%,rgba(0,10,6,.8) 97%);}
+    /* Balayage de rafraîchissement CRT qui traverse le tube. */
+    .morse-scan{position:absolute;top:0;bottom:0;left:0;width:26px;z-index:1;
+      background:linear-gradient(90deg,transparent,rgba(170,255,205,.15),transparent);
+      animation:morseScan 3.1s linear infinite;}
+    @keyframes morseScan{from{transform:translateX(-30px)}to{transform:translateX(140px)}}
+    /* Ondes sinusoïdales : deux traces glissent en sens inverse.
+       AMPLITUDE PILOTÉE PAR LE SON : pendant l'écoute, le JS écrit
+       --amp sur l'écran à chaque frame (AnalyserNode) et l'onde prend
+       de la hauteur au rythme EXACT des « ti » et des « ta ». */
+    .morse-wave{position:absolute;left:0;right:0;top:50%;height:56px;margin-top:-28px;z-index:1;
+      background-repeat:repeat-x;background-position:0 50%;background-size:120px 56px;
+      transform:scaleY(var(--amp,1));transform-origin:50% 50%;transition:transform .06s ease-out;}
+    .morse-wave.w1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='56' viewBox='0 0 120 56'%3E%3Cpath d='M0 28 Q15 8 30 28 T60 28 T90 28 T120 28' stroke='%2366ffb0' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+      filter:drop-shadow(0 0 4px rgba(91,255,156,.8));opacity:.9;animation:morseDefile 1.9s linear infinite;}
+    .morse-wave.w2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='56' viewBox='0 0 120 56'%3E%3Cpath d='M0 28 Q15 48 30 28 T60 28 T90 28 T120 28' stroke='%233fd489' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+      opacity:.45;animation:morseDefile 3.4s linear infinite reverse;}
+    @keyframes morseDefile{from{background-position-x:0}to{background-position-x:-120px}}
+    /* Lampe témoin #morseVisual : le JS la passe en .on pendant l'écoute.
+       Le flash SUIT L'AMPLITUDE réelle (--amp) : il pulse avec chaque
+       ti/ta au lieu de rester allumé en continu. */
+    .morse-signal-light{position:absolute;inset:0;border-radius:50%;z-index:3;pointer-events:none;opacity:0;}
+    .morse-signal-light.on{opacity:calc(var(--amp,.25) * .55 - .1);
+      background:radial-gradient(circle,rgba(196,255,222,.30),transparent 62%);}
+    /* Défilement un peu accéléré pendant l'écoute (1,9 s → 1,15 s). */
+    .morse-signal-light.on ~ .morse-scope .morse-wave.w1{animation-duration:1.15s;}
+    .morse-signal-light.on ~ .morse-scope .morse-wave.w2{animation-duration:2.3s;}
+    .morse-signal-light.on ~ .morse-scope .morse-scan{animation-duration:1.7s;}
+    /* Reflet du verre du moniteur (au-dessus de tout). */
+    .morse-glass{position:absolute;inset:0;border-radius:50%;z-index:4;pointer-events:none;
+      background:linear-gradient(118deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.05) 14%,transparent 30%),
+                 radial-gradient(circle at 28% 22%,rgba(255,255,255,.10),transparent 40%);
+      box-shadow:inset 0 0 26px rgba(0,0,0,.55);}
+    @keyframes scopeFlicker{0%,89%,100%{opacity:1}90%{opacity:.8}91%{opacity:1}95%{opacity:.88}96%{opacity:1}}
     .morse-controls{display:flex;flex-direction:column;gap:10px;align-items:stretch;}
     .morse-listen-btn{width:100%;margin:0;background:var(--fnac);color:#111;font-weight:1000;border:0;border-radius:12px;padding:12px;font-size:15px;cursor:pointer;}
     .morse-listen-btn:disabled{opacity:.45;cursor:not-allowed;}
@@ -275,7 +419,7 @@
     .morse-counter b{color:var(--fnac);font-size:15px;}
 
     .morse-answer-zone{background:rgba(0,0,0,.28);border:1px solid rgba(142,231,255,.18);border-radius:16px;padding:16px;}
-    .morse-answer-label{display:block;font-size:11px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:8px;}
+    .morse-answer-label{display:block;font-size:12px;color:#9bc4d4;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:8px;}
     /* Zone de reponse : un seul bandeau qui s'allonge au fil de la frappe.
        Les anciennes cases pre-dessinees (une par lettre) revelaient la
        longueur du mot avant meme la premiere ecoute. */
@@ -336,46 +480,594 @@
       font-size:12px;line-height:1.45;color:#9bc4d4;
       min-height:64px;
     }
-    .morse-hint-card .morse-hint-card-label{color:#fff;font-weight:900;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+    .morse-hint-card .morse-hint-card-label{color:#fff;font-weight:900;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
     .morse-hint-card.morse-hint-revealed{
       background:rgba(91,255,156,.10);border-color:rgba(91,255,156,.5);color:#dfffe8;
     }
     .morse-hint-card.morse-hint-revealed .morse-hint-card-label{color:#5be09b;}
 
-    /* === Journal de bord === */
+    /* =====================================================================
+       JOURNAL DE BORD — bloc SOBRE, au même style que « ⚓ ÉQUIPAGE
+       ACTIF EN PLONGÉE » : plus de plaque métal ni de rivets ni de
+       liseré. Le sous-titre « ACTES DE L'ÉQUIPAGE — EN DIRECT » se lit
+       directement sous le titre de carte, comme un en-tête de bloc.
+       ===================================================================== */
     .morse-log{
-      background:rgba(0,0,0,.32);border:1px solid rgba(142,231,255,.18);
-      border-radius:16px;padding:14px;
+      padding:0;
+      background:none;
+      border:none;
+      border-radius:0;
+      box-shadow:none;
     }
-    .morse-log h3{margin:0 0 10px;color:var(--fnac);font-size:14px;letter-spacing:.06em;text-transform:uppercase;}
-    .morse-log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;}
+    /* Sous-titre en SEPARATEUR ORNEMENTAL : un libellé centré entre deux
+       filets dégradés, suivi d'un badge « EN DIRECT » à voyant pulsant —
+       comme une console de sonar qui annonce un flux en cours. */
+    .journal-titre{
+      display:flex;align-items:center;justify-content:center;
+      flex-wrap:nowrap;gap:10px;
+      margin:0 0 12px;
+    }
+    .journal-titre-rule{
+      flex:1 1 32px;min-width:24px;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(142,231,255,.35));
+    }
+    .journal-titre-rule:last-child{
+      background:linear-gradient(90deg,rgba(142,231,255,.35),transparent);
+    }
+    .journal-titre-label{
+      color:#fff;font-weight:900;font-size:13px;
+      letter-spacing:.09em;text-transform:uppercase;
+      white-space:nowrap;line-height:1.3;text-align:center;
+    }
+    .journal-live-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:3px 10px;border-radius:999px;
+      border:1px solid rgba(245,176,39,.45);
+      background:rgba(245,176,39,.08);
+      color:#ffd36c;font-weight:900;font-size:12px;
+      letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;
+    }
+    .journal-live-dot{
+      width:7px;height:7px;border-radius:50%;
+      background:#5be09b;box-shadow:0 0 8px #5be09b;
+      animation:journalLivePulse 1.3s ease-in-out infinite;
+    }
+    @keyframes journalLivePulse{50%{opacity:.3}}
+    /* Responsive : titre + badge centrés, toujours sur une seule ligne.
+       Sur écran étroit on retire les filets décoratifs et on resserre pour
+       que « Mouvements de l'équipage · En direct » tienne sans se couper. */
+    @media(max-width:560px){
+      .journal-titre-rule{display:none}
+      .journal-titre{gap:7px}
+      .journal-titre-label{font-size:12px;letter-spacing:.03em}
+      .journal-live-badge{font-size:12px;letter-spacing:.05em;padding:2px 8px}
+    }
 
-    /* === Lock screen === */
-    .lock-screen{text-align:center;padding:30px 20px;}
-    .lock-screen h2{color:#ff7b72;font-size:clamp(22px,4vw,32px);margin:0 0 10px;}
-    .lock-screen .countdown-big{font-family:Consolas,"Courier New",monospace;font-size:clamp(40px,9vw,80px);color:var(--fnac);font-weight:1000;text-shadow:0 0 18px rgba(245,176,39,.4);margin:16px 0;}
-    .lock-screen .lock-rule{color:#9bc4d4;font-size:13px;line-height:1.5;margin-top:14px;}
+    /* Ruban des actes : une ligne par acte */
+    .morse-log ul{
+      list-style:none;margin:0;padding:0;
+      display:flex;flex-direction:column;
+      font-family:Consolas,"Courier New",monospace;
+    }
+    /* JOURNAL VIDE : on le DIT simplement. 100 % CSS via :empty — la
+       phrase apparaît quand aucun acte n'est encore enregistré, et
+       s'efface toute seule dès le premier. */
+    .morse-log ul:empty::after{
+      content:'Personne n’est aux commandes en ce moment.';
+      display:block;padding:10px 12px;
+      color:rgba(142,231,255,.55);font-style:italic;font-size:13px;line-height:1.5;
+    }
+    .journal-acte{
+      display:flex;align-items:baseline;gap:9px;
+      padding:5px 0;
+      border-bottom:1px solid rgba(255,255,255,.04);
+      line-height:1.5;
+    }
+    .journal-acte:last-child{border-bottom:0}
+    .journal-acte-heure{flex:0 0 auto;color:rgba(142,231,255,.45);font-size:12px}
+    .journal-acte-auteur{flex:0 0 auto;color:#8ee7ff;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
+    .journal-acte-action{flex:1;min-width:0;color:var(--accent,#dff6ff);font-size:13px}
+    .journal-acte-action b{color:#eaf8ff}
+    /* JOURNAL DE BORD repliable : le titre fait office de bouton. Le
+       chevron à droite montre l'état ; carte repliée = contenu masqué. */
+    #logCard h2{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    #logCard h2 .log-chevron{flex:0 0 auto;color:#8ee7ff;font-size:16px;line-height:1;transition:transform .18s ease}
+    #logCard.log-replie .body{display:none}
+    #logCard.log-replie h2{border-bottom:0}
+
+    /* === Retour en surface : une information claire, sans écran punitif ===
+       TOUTE la largeur du bloc (plus de colonne centrale étroite) : la
+       page d'erreur se lit d'un bord à l'autre de la carte. */
+    /* PLUS DE CADRE DANS LE CADRE : la carte « ÉPREUVE DU PALIER » est le
+       seul cadre de la page. Le contenu (blocage, remontée) se pose
+       directement dedans, sans seconde boîte à fond/bordure. */
+    .lock-screen{
+      width:100%;margin:0;padding:0;
+      color:#eaf8ff;text-align:left;
+      box-sizing:border-box;
+    }
+    /* Page d'erreur allégée : trois lignes PLEINE LARGEUR, une
+       information chacune — fini les deux cartes côte à côte et les
+       longs paragraphes. */
+    /* Lignes PLEINE LARGEUR mais SANS boîte : trois informations, chacune
+       sur une ligne, la hiérarchie se lit à la couleur et à la graisse,
+       plus à des encadrements empilés. */
+    .lock-lignes{display:flex;flex-direction:column;gap:10px;width:100%;margin:2px 0 0;}
+    .lock-ligne{display:flex;align-items:flex-start;gap:10px;width:100%;box-sizing:border-box;color:#dff6ff;font-size:14px;font-weight:700;line-height:1.55;}
+    .lock-ligne b{color:#fff;}
+    .lock-ligne-ico{flex:0 0 auto;width:22px;text-align:center;font-size:16px;line-height:1.45;}
+    .lock-ligne--pause{color:#ffd0cd;}
+    .lock-ligne--pause b{color:#ffb0aa;}
+    .lock-ligne--relais{color:#d9f7e7;}
+    .lock-ligne--relais b{color:#a9f1c8;}
+    .lock-ligne--next{color:#b7d9e8;font-size:13px;}
+    .lock-ligne--next b{color:#fff;}
+    .lock-heading{display:flex;align-items:center;gap:12px;margin:0 0 14px;}
+    /* Icône nue (plus de pastille encadrée) : le symbole parle tout seul. */
+    .lock-heading-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:36px;line-height:1;}
+    .lock-screen--lost .lock-heading-icon{color:#ffb0aa;}
+    .lock-kicker,.lock-card-label{margin:0;color:#8ee7ff;font-size:12px;font-weight:1000;letter-spacing:.12em;line-height:1.2;text-transform:uppercase;}
+    .lock-screen--lost .lock-kicker{color:#ffb0aa;}
+    /* Ligne d'ambiance de la « Remontée forcée ! » : une phrase, en
+       italique — l'immersion sans pavé de texte. */
+    .lock-flavor{margin:-4px 0 13px;color:#ffb0aa;font-size:13px;line-height:1.5;font-style:italic;opacity:.92}
+    .lock-screen h2{margin:3px 0 0;padding:0;border:0;background:none;color:#fff;font-size:clamp(22px,4vw,32px);line-height:1.08;}
+    /* Plus de pastille : la cause de la remontée se lit en une ligne. */
+    .lock-attempt{display:inline-flex;align-items:center;gap:7px;margin:0 0 12px;color:#ffb0aa;font-size:13.5px;font-weight:800;}
+    .lock-attempt span{color:#ff7b72;font-size:17px;line-height:1;}
+    .lock-lead{max-width:650px;margin:0 0 18px;color:#c7e1ed;font-size:15px;font-weight:700;line-height:1.55;}
+    /* Carte « Prochaine prise de commande possible » (page indice) */
+    .lock-resume-card{display:flex;align-items:center;gap:12px;margin:0 0 12px;}
+    .lock-resume-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:22px;line-height:1;}
+    .lock-resume-card>div{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0;}
+    .lock-resume-date{color:#fff;font-family:Consolas,"Courier New",monospace;font-size:clamp(15px,2.5vw,19px);line-height:1.25;overflow-wrap:anywhere;}
+    .lock-resume-duration{color:#9bc4d4;font-size:12px;font-weight:800;}
+    .lock-loading{margin:16px 0;padding:12px 14px;border:1px solid rgba(142,231,255,.24);border-radius:13px;color:#b7d9e8;background:rgba(0,0,0,.18);font-size:13px;font-weight:800;}
+    .lock-home-link{display:inline-flex;align-items:center;justify-content:center;margin-top:18px;padding:11px 16px;border-radius:11px;color:#061420;background:var(--fnac);font-size:13px;font-weight:1000;text-decoration:none;box-shadow:0 8px 18px rgba(245,176,39,.2);}
+    .lock-home-link:hover{filter:brightness(1.06);transform:translateY(-1px);}
+    @media(max-width:520px){
+      .lock-heading{align-items:flex-start;}
+      .lock-heading-icon{font-size:30px;}
+      .lock-home-link{display:flex;width:100%;}
+    }
 
     /* === Won screen === */
     .won-screen{text-align:center;padding:30px 20px;}
     .won-screen h2{color:#5be09b;font-size:clamp(26px,5vw,40px);margin:0 0 12px;}
-    .won-screen .reveal-code{
-      font-family:Consolas,"Courier New",monospace;font-size:clamp(28px,5vw,44px);
-      font-weight:1000;color:#111;background:var(--fnac);
-      border-radius:14px;padding:14px 22px;display:inline-block;margin:14px 0;
-      letter-spacing:.12em;
-    }
-    .won-screen .next-step-hint{color:#9bc4d4;font-size:14px;line-height:1.5;margin-top:10px;}
 
-    /* === Status banner === */
-    .status-banner{
+    /* === Lost screen (Défaite unifiée et minimaliste pour tous les paliers) === */
+    .lost-screen {
+      text-align: center;
+      padding: 24px 16px;
+      color: #eaf8ff;
+      max-width: 500px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    .lost-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: rgba(255, 75, 62, 0.16);
+      border: 1.5px solid rgba(255, 75, 62, 0.45);
+      color: #ff8579;
+      font-size: 26px;
+      line-height: 1;
+      margin: 0 auto 12px;
+      box-shadow: 0 0 20px rgba(255, 75, 62, 0.25);
+    }
+    .lost-screen h2 {
+      margin: 0 0 8px;
+      font-size: clamp(20px, 4vw, 26px);
+      color: #ffffff;
+      font-weight: 900;
+      letter-spacing: .02em;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .lost-nom {
+      color: #ffd36c;
+    }
+    .lost-subtitle {
+      font-size: clamp(14px, 2.2vw, 16px);
+      font-weight: 700;
+      color: #b8dbeb;
+      margin: 0 0 16px;
+      line-height: 1.45;
+    }
+    .lost-cause {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 75, 62, 0.18);
+      border: 1px solid rgba(255, 75, 62, 0.4);
+      color: #ffd0cd;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+    .lost-info-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(4, 20, 34, 0.85);
+      border: 1px solid rgba(142, 231, 255, 0.25);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+      text-align: left;
+    }
+    .lost-info-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13.5px;
+      color: #cde6f2;
+    }
+    .lost-info-row b {
+      color: #ffffff;
+    }
+    .lost-info-ico {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .lost-action {
+      margin-top: 6px;
+    }
+    .lost-home-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--fnac);
+      color: #03111f !important;
+      font-weight: 1000;
+      font-size: 14px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      padding: 12px 26px;
+      border-radius: 12px;
+      text-decoration: none !important;
+      box-shadow: 0 6px 18px rgba(245, 176, 39, 0.3);
+      transition: transform 0.15s ease, filter 0.15s ease;
+      cursor: pointer;
+    }
+    .lost-home-btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+    @media (max-width: 520px) {
+      .lost-home-btn {
+        display: flex;
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+    /* === Status banner harmonisé (tous paliers) === */
+    .status-banner, .mc-statut{
       padding:10px 14px;border-radius:12px;margin-bottom:12px;
       font-size:13px;font-weight:800;line-height:1.45;
+      background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);color:#dff6ff;
     }
-    .status-banner.info{background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);color:#dff6ff;}
-    .status-banner.warning{background:rgba(245,176,39,.12);border:1px solid rgba(245,176,39,.45);color:#ffe2a0;}
-    .status-banner.danger{background:rgba(255,75,62,.14);border:1px solid rgba(255,75,62,.5);color:#ffd0cd;}
-    .status-banner.success{background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.45);color:#dfffe8;}
+    .status-banner.info, .mc-statut.info{background:rgba(142,231,255,.10);border:1px solid rgba(142,231,255,.35);color:#dff6ff;}
+    .status-banner.warning, .mc-statut.warning{background:rgba(245,176,39,.12);border:1px solid rgba(245,176,39,.45);color:#ffe2a0;}
+    .status-banner.danger, .status-banner.is-danger, .mc-statut.danger, .mc-statut.is-danger{background:rgba(255,75,62,.14);border:1px solid rgba(255,75,62,.5);color:#ffd0cd;}
+    .status-banner.success, .status-banner.is-success, .mc-statut.success, .mc-statut.is-success{background:rgba(91,255,156,.10);border:1px solid rgba(91,255,156,.45);color:#dfffe8;}
+
+    /* === En-tête et pied d'épreuve harmonisés (tous paliers) === */
+    .card-h2-split {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .game-stage {
+      position: relative;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 10px 0;
+    }
+    .game-footer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+      width: 100%;
+    }
+
+    /* === Rack de voyants d'erreurs harmonisé (tous paliers) === */
+    .nautilus-voyants-rack,
+    .bt-voyants,
+    .qz-voyants {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(3, 16, 28, 0.75);
+      border: 1.5px solid rgba(255, 75, 62, 0.35);
+      border-radius: 999px;
+      padding: 5px 14px;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .nautilus-voyants-lbl,
+    .bt-voyants-lbl,
+    .qz-voyants-lbl,
+    .jp-voyants-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: #ff8e85;
+      text-transform: uppercase;
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      overflow-wrap: normal !important;
+      hyphens: none !important;
+    }
+    .nautilus-voyants {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nautilus-voyant,
+    .bt-voyant,
+    .qz-voyant {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid rgba(142, 231, 255, 0.3);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+      transition: all 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      display: inline-block;
+    }
+    .nautilus-voyant.active,
+    .nautilus-voyant.is-error,
+    .bt-voyant.active,
+    .qz-voyant.active {
+      background: radial-gradient(circle at 35% 35%, #ff8585 0%, #ff1a1a 60%, #990000 100%) !important;
+      border-color: #ff9999 !important;
+      box-shadow: 0 0 14px rgba(255, 40, 40, 0.95), inset 0 0 4px rgba(255, 255, 255, 0.8) !important;
+      transform: scale(1.15);
+      animation: nautilusVoyantPulse 1.2s infinite alternate !important;
+    }
+    @keyframes nautilusVoyantPulse {
+      0% { box-shadow: 0 0 8px rgba(255, 40, 40, 0.85); }
+      100% { box-shadow: 0 0 16px rgba(255, 40, 40, 1); }
+    }
+
+    /* === Rack des indices & aides de bord harmonisé (centré, limpide et esthétique) === */
+    .nautilus-hints-rack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      background: radial-gradient(circle at 50% 20%, rgba(8, 28, 46, 0.85), rgba(3, 14, 24, 0.95));
+      border: 1px solid rgba(142, 231, 255, 0.25);
+      border-radius: 18px;
+      padding: 16px 18px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.35);
+      margin-top: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .nautilus-hints-head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .nautilus-hints-title,
+    .qz-indices-title {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 1000;
+      letter-spacing: 0.1em;
+      color: #8ee7ff;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(142, 231, 255, 0.4);
+    }
+    .nautilus-hints-note {
+      font-size: 12px;
+      color: #a2cadb;
+      line-height: 1.45;
+      margin: 0;
+      text-align: center;
+    }
+    .nautilus-hints-note b { color: var(--fnac); }
+    .nautilus-hints-action {
+      margin-top: 4px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    .nautilus-hint-btn {
+      background: linear-gradient(135deg, #f5b027 0%, #d89617 100%);
+      color: #04101d;
+      border: 1px solid #ffd36c;
+      border-radius: 12px;
+      padding: 10px 22px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 1000;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(245, 176, 39, 0.35);
+      transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    .nautilus-hint-btn:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 24px rgba(245, 176, 39, 0.55);
+      background: linear-gradient(135deg, #ffd36c 0%, #f5b027 100%);
+    }
+    .nautilus-hint-btn:disabled {
+      background: rgba(255, 255, 255, 0.08);
+      color: #7899a8;
+      border-color: rgba(142, 231, 255, 0.15);
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .nautilus-hints-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+      margin-top: 4px;
+    }
+    @media (max-width: 680px) {
+      .nautilus-hints-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+    }
+    .nautilus-hint-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(4, 16, 28, 0.7);
+      border: 1.5px solid rgba(142, 231, 255, 0.2);
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: all 0.3s ease;
+      min-height: 80px;
+      box-sizing: border-box;
+    }
+    .nautilus-hint-card.is-locked {
+      opacity: 0.75;
+      border-style: dashed;
+    }
+    .nautilus-hint-card.is-revealed,
+    .nautilus-hint-card.morse-hint-revealed {
+      background: linear-gradient(145deg, rgba(46, 213, 115, 0.12), rgba(12, 42, 32, 0.45));
+      border: 1.5px solid rgba(46, 213, 115, 0.65);
+      box-shadow: 0 0 18px rgba(46, 213, 115, 0.25), inset 0 0 12px rgba(46, 213, 115, 0.1);
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+    .nautilus-hint-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(142, 231, 255, 0.15);
+    }
+    .is-revealed .nautilus-hint-badge {
+      border-bottom-color: rgba(46, 213, 115, 0.3);
+    }
+    .nautilus-hint-num {
+      font-size: 11px;
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #ffd36c;
+    }
+    .nautilus-hint-status {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #8ee7ff;
+    }
+    .is-revealed .nautilus-hint-status {
+      color: #5bff9c;
+    }
+    .nautilus-hint-body {
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: #cfe7f4;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .is-locked .nautilus-hint-body {
+      color: #799bae;
+      font-style: italic;
+    }
+    .is-revealed .nautilus-hint-body {
+      color: #eafaf1;
+    }
+    .is-revealed .nautilus-hint-body b {
+      color: #5bff9c;
+      font-weight: 1000;
+    }
+
+    /* Rack des jokers Quiz (Palier 6) */
+    .qz-indices-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(3, 16, 28, 0.72);
+      border: 1px solid rgba(142, 231, 255, 0.22);
+      border-radius: 14px;
+      padding: 12px 16px;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+      margin-top: 14px;
+      box-sizing: border-box;
+    }
+    .qz-indices-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .qz-btn-joker {
+      flex: 1 1 140px;
+      background: linear-gradient(135deg, rgba(8, 36, 58, 0.9), rgba(4, 20, 32, 0.95));
+      border: 1.5px solid rgba(142, 231, 255, 0.35);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #eaf8ff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      transition: all 0.2s ease;
+    }
+    .qz-btn-joker:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(14, 52, 82, 0.95), rgba(8, 32, 52, 0.98));
+      border-color: #ffd36c;
+      color: #ffd36c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(245, 176, 39, 0.3);
+    }
+    .qz-btn-joker:disabled,
+    .qz-btn-joker.is-used {
+      opacity: 0.38;
+      cursor: not-allowed;
+      transform: none;
+      filter: grayscale(0.8);
+      border-color: rgba(142, 231, 255, 0.15);
+      box-shadow: none;
+    }
 
     /* === Step access (code de palier) === */
 
@@ -384,7 +1076,12 @@
       padding:9px 12px;border-radius:12px;
       background:linear-gradient(135deg,rgba(5,16,28,.9),rgba(8,48,72,.9));
       border:1px solid rgba(142,231,255,.22)}
-    .o2-label{flex:0 0 auto;font-size:10px;font-weight:900;letter-spacing:.09em;
+    /* La jauge doit rester MASQUÉE tant que la mission n'a pas de date de
+       départ (attribut hidden posé par le JS) : le display:flex ci-dessus
+       écraserait sinon l'attribut hidden et la jauge vide resterait
+       affichée (« Réserve O₂ — — ») au lieu de se retirer. */
+    .o2-bar[hidden]{display:none}
+    .o2-label{flex:0 0 auto;font-size:12px;font-weight:900;letter-spacing:.09em;
       text-transform:uppercase;color:#8ee7ff}
     .o2-tube{position:relative;flex:1 1 auto;height:22px;border-radius:999px;
       overflow:hidden;background:rgba(0,0,0,.45);
@@ -400,23 +1097,84 @@
        d'un ecran a l'autre, comme s'il s'agissait de deux informations
        differentes. Les trois teintes ci-dessous sont copiees a
        l'identique depuis index.html, etats d'alerte compris. */
-    .o2-fill{height:100%;width:100%;border-radius:999px;
+    .o2-fill{position:relative;overflow:hidden;height:100%;width:100%;border-radius:999px;
       background:linear-gradient(90deg,#006ba6,#18c8ff,#b8f4ff);
       box-shadow:0 0 12px rgba(142,231,255,.45),inset 0 0 10px rgba(255,255,255,.22);
       transition:width .6s ease,background .6s ease}
+    .o2-fill::before{
+      content:"";position:absolute;top:0;bottom:0;left:-160px;right:0;
+      background:
+        radial-gradient(circle at 18% 42%,rgba(255,255,255,.95) 0 2.2px,rgba(142,231,255,.6) 3.8px,transparent 5.5px),
+        radial-gradient(circle at 45% 62%,rgba(255,255,255,.9) 0 2.8px,rgba(142,231,255,.55) 4.2px,transparent 6.2px),
+        radial-gradient(circle at 72% 38%,rgba(255,255,255,.95) 0 2.5px,rgba(142,231,255,.6) 4px,transparent 5.8px),
+        radial-gradient(circle at 90% 55%,rgba(255,255,255,.85) 0 1.8px,rgba(142,231,255,.5) 3.2px,transparent 4.8px);
+      background-size:160px 100%;
+      animation:bubblesMove 28s linear infinite;
+      opacity:.35;
+      will-change:transform;
+      pointer-events:none;
+    }
+    .o2-fill::after{
+      content:"";position:absolute;top:0;bottom:0;left:-220px;right:0;
+      background:
+        radial-gradient(circle at 15% 58%,rgba(255,255,255,.9) 0 2px,rgba(142,231,255,.5) 3.5px,transparent 5px),
+        radial-gradient(circle at 55% 32%,rgba(255,255,255,.95) 0 2.6px,rgba(142,231,255,.55) 4.2px,transparent 6px),
+        radial-gradient(circle at 82% 48%,rgba(255,255,255,.85) 0 2.2px,rgba(142,231,255,.45) 3.6px,transparent 5.2px);
+      background-size:220px 100%;
+      animation:bubblesCross 38s linear infinite;
+      opacity:.28;
+      will-change:transform;
+      pointer-events:none;
+    }
+    @keyframes bubblesMove{
+      0%{transform:translateX(0) translateY(0)}
+      25%{transform:translateX(40px) translateY(-2px)}
+      50%{transform:translateX(80px) translateY(1.5px)}
+      75%{transform:translateX(120px) translateY(-1.5px)}
+      100%{transform:translateX(160px) translateY(0)}
+    }
+    @keyframes bubblesCross{
+      0%{transform:translateX(0) translateY(0)}
+      33%{transform:translateX(73px) translateY(2px)}
+      66%{transform:translateX(146px) translateY(-2px)}
+      100%{transform:translateX(220px) translateY(0)}
+    }
+
+    /* Bulles de premier plan retirées de la jauge */
+    .o2-bubbles,
+    .o2-bubble{
+      display:none !important;
+    }
+
+    .o2-fill::before,
+    .o2-fill::after,
+    .o2-bar.offscreen .o2-fill::before,
+    .o2-bar.offscreen .o2-fill::after{
+      animation-play-state:running !important;
+    }
+    body.page-hidden .o2-fill::before,
+    body.page-hidden .o2-fill::after{
+      animation-play-state:paused !important;
+    }
+    @media(prefers-reduced-motion:reduce){.o2-fill::before,.o2-fill::after{animation:none !important}}
     /* Le pourcentage est ECRIT DANS la jauge, centre, avec un lisere noir
        pour rester lisible aussi bien sur le vert que sur le fond sombre. */
     .o2-pct{position:absolute;inset:0;display:flex;align-items:center;
-      justify-content:center;font-size:11px;font-weight:1000;color:#fff;
-      letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+      justify-content:center;font-size:12px;font-weight:1000;color:#fff;
+      letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.85);z-index:3;pointer-events:none}
     .o2-time{flex:0 0 auto;font-family:Consolas,"Courier New",monospace;
-      font-size:11px;font-weight:900;color:#cfe6ef;white-space:nowrap}
+      font-size:12px;font-weight:900;color:#cfe6ef;white-space:nowrap}
     /* Alerte et niveau critique : memes degrades que sur l'accueil. */
     .o2-bar.warn .o2-fill{background:linear-gradient(90deg,#0877a8,#28c5ff,#ffd36c)}
     .o2-bar.crit .o2-fill{background:linear-gradient(90deg,#9b1111,#ff4b3e,#ffd36c)}
+    /* Alerte critique : on ne fait plus clignoter le FLUIDE mais le CONTOUR
+       de la jauge — blanc léger qui alterne avec le rouge d'alerte O₂
+       (même principe que la jauge d'accueil). */
+    .o2-bar.crit .o2-tube{animation:o2ContourAlert 5s ease-in-out infinite}
+    @keyframes o2ContourAlert{0%,100%{border-color:rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(255,255,255,.18)}50%{border-color:#ff4b3e;box-shadow:0 0 0 2px rgba(255,75,62,.4)}}
     @media(max-width:430px){
       .o2-label{display:none}
-      .o2-time{font-size:10px}
+      .o2-time{font-size:12px}
     }
 
     /* === Animations === */
@@ -434,19 +1192,165 @@
     .notif-floating.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
   
 
-/* === Célébration de victoire === */
-.won-screen.celebration{position:relative;padding:clamp(28px,6vw,58px) 20px;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(91,224,155,.18),transparent 42%)}
-.won-screen.celebration::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(115deg,transparent 0 24px,rgba(245,176,39,.08) 25px 27px);animation:celebrationSweep 7s linear infinite}
-.won-screen.celebration>*{position:relative;z-index:1}
-.won-screen.celebration h2{font-size:clamp(30px,6vw,52px);text-shadow:0 0 22px rgba(91,224,155,.55);animation:celebrationPop .7s cubic-bezier(.2,1.4,.4,1) both}
-.won-badge{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;margin:0 auto 10px;border-radius:50%;font-size:44px;background:linear-gradient(145deg,#ffd36c,#f5b027);box-shadow:0 0 0 6px rgba(245,176,39,.16),0 0 34px rgba(245,176,39,.55);animation:badgePulse 1.8s ease-in-out infinite}
-.won-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:520px;margin:18px auto;text-align:center}
-.won-stat{padding:11px 8px;border:1px solid rgba(142,231,255,.25);border-radius:12px;background:rgba(0,0,0,.24)}
-.won-stat strong{display:block;color:#fff;font:1000 21px Consolas,"Courier New",monospace}.won-stat span{display:block;margin-top:4px;color:#9bc4d4;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
-.won-next{margin:22px auto 0;max-width:540px;padding:16px;border:2px solid rgba(245,176,39,.55);border-radius:18px;background:linear-gradient(135deg,rgba(245,176,39,.16),rgba(245,176,39,.05));text-align:left}
-@keyframes celebrationPop{from{opacity:0;transform:scale(.7) translateY(12px)}to{opacity:1;transform:none}}@keyframes badgePulse{50%{transform:scale(1.08);box-shadow:0 0 0 10px rgba(245,176,39,.10),0 0 46px rgba(245,176,39,.75)}}@keyframes celebrationSweep{to{background-position:180px 0}}
+/* === Célébration de victoire : finition coque métallique / titane chanfreiné, minimaliste et arrondie === */
+.won-screen.celebration {
+  position: relative;
+  padding: clamp(24px, 5vw, 44px) clamp(16px, 4vw, 32px);
+  overflow: hidden;
+  border-radius: 28px;
+  background: linear-gradient(165deg, rgba(16, 32, 48, 0.94) 0%, rgba(8, 20, 32, 0.98) 100%), radial-gradient(circle at 50% 0%, rgba(91, 224, 155, 0.15), transparent 70%);
+  border: 1.5px solid rgba(142, 231, 255, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.7), 0 16px 45px rgba(0, 0, 0, 0.65), 0 0 30px rgba(91, 224, 155, 0.12);
+  max-width: 680px;
+  margin: 0 auto;
+}
+.won-screen.celebration::before {
+  display: none !important;
+}
+.won-screen.celebration > * {
+  position: relative;
+  z-index: 1;
+}
+
+.won-screen.celebration h2 {
+  font-size: clamp(26px, 5.2vw, 38px);
+  font-weight: 1000;
+  letter-spacing: 0.02em;
+  color: #5be09b;
+  text-shadow: 0 0 18px rgba(91, 224, 155, 0.45), 0 2px 4px rgba(0, 0, 0, 0.8);
+  margin: 0 0 10px;
+}
+
+.won-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  font-size: 38px;
+  background: radial-gradient(circle at 35% 30%, #ffe38a 0%, #f5b027 50%, #9e6402 100%);
+  border: 2px solid rgba(255, 240, 180, 0.6);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6), inset 0 -2px 5px rgba(0, 0, 0, 0.6), 0 0 24px rgba(245, 176, 39, 0.45);
+  animation: badgePulse 2.4s ease-in-out infinite;
+}
+
+.won-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 540px;
+  margin: 20px auto;
+  text-align: center;
+}
+
+/* Cartouches de statistiques métalliques arrondis */
+.won-stat {
+  border-radius: 18px;
+  background: linear-gradient(175deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(3, 16, 28, 0.65);
+  border: 1.5px solid rgba(142, 231, 255, 0.25);
+  padding: 12px 8px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), inset 0 -1px 2px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.won-stat strong {
+  display: block;
+  color: #fff;
+  font: 1000 clamp(17px, 3.8vw, 22px) Consolas, "Courier New", monospace;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.won-stat span {
+  display: block;
+  margin-top: 5px;
+  color: #8ee7ff;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+@keyframes badgePulse {
+  50% { transform: scale(1.04); box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.7), 0 0 32px rgba(245, 176, 39, 0.65); }
+}
+
+/* ===== Écran « Épreuve validée ! » : nouveaux blocs ===== */
+.won-line{color:#dfffe8;font-size:16px;line-height:1.5;margin:8px 0}
+.won-line--bravo{color:#bcd9e6;font-size:14px;margin:6px 0}
+/* Note de déblocage : capsule arrondie élégante */
+.won-unlock-note{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:rgba(91,224,155,.12);border:1px solid rgba(91,224,155,.38);border-radius:999px;padding:8px 18px;color:#5be09b;max-width:560px;margin:12px auto 0;font-size:13.5px;line-height:1.4;font-weight:800;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+/* ===== Bloc « PROCHAINE IMMERSION » — refonte v3 de la fin de l'écran
+   de victoire (demande capitaine : spectaculaire, immersif, COURT).
+   Remplace l'ancien panneau pliable « DIRECTION VERS LA ZONE DE
+   RECHERCHE » (longs paragraphes + bouton CONTINUER superflu, doublon
+   du vrai CTA) : radar sonar animé, indication, 3 étapes-chips, gros
+   bouton PULSANT, 1 ligne d'astuce. Le bloc reste TOUJOURS visible.
+   AMBIANT uniquement (radar/balayage/pulse en boucles lentes) : AUCUNE
+   animation d'entrée one-shot — l'écran est régénéré à chaque sync
+   d'état et une anim one-shot se « rejouerait » en boucle (bug h2). */
+.won-nextzone{position:relative;margin:22px auto 0;width:100%;max-width:none;padding:clamp(20px,4vw,36px) clamp(16px,4vw,40px);text-align:center}
+.won-radar{position:relative;width:76px;height:76px;margin:0 auto 10px}
+.won-radar-ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(91,224,155,.8);animation:radarPing 2.6s ease-out infinite}
+.won-radar-ring--2{animation-delay:1.3s}
+.won-radar-core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;border-radius:50%;background:radial-gradient(circle at 50% 35%,rgba(91,224,155,.30),rgba(3,17,29,.92) 72%);box-shadow:0 0 24px rgba(91,224,155,.40)}
+@keyframes radarPing{0%{transform:scale(.45);opacity:.9}70%{opacity:0}100%{transform:scale(1.55);opacity:0}}
+.won-nextzone-title{margin:0 0 16px;color:#ffd36c;font-size:clamp(19px,3.2vw,28px);letter-spacing:.06em;text-transform:uppercase;font-weight:1000;line-height:1.15;text-shadow:0 2px 0 #000,0 0 24px rgba(245,176,39,.55)}
+.won-nextzone-indication{margin:-6px auto 18px;max-width:640px;color:#fff;font-size:clamp(15px,2.4vw,18px);font-weight:700;line-height:1.5}
+.won-nextzone-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 auto 24px;width:100%;max-width:860px}
+@media(max-width:640px){.won-nextzone-steps{grid-template-columns:1fr;gap:10px}}
+.won-step-chip{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 14px;border:1px solid rgba(142,231,255,.32);border-radius:14px;background:rgba(0,0,0,.32);color:#dff6ff;font-size:13.5px;font-weight:700;text-align:center}
+.won-step-chip b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--fnac);color:#111;font-size:12px;font-weight:1000;flex:0 0 auto}
+/* Refonte du cap sur le QR Code : DEUX encarts côte à côte —
+   1) Rallier la Zone de recherche + descriptif de la zone ;
+   2) Passer au prochain palier + bouton « Scanner le QR Code trouvé ». */
+.won-zone-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;margin:0 auto 24px;width:100%;max-width:860px}
+@media(max-width:640px){.won-zone-steps{grid-template-columns:1fr;gap:12px}}
+/* Les DEUX encarts « Rallier la zone » / « Passer au palier » SANS boîte :
+   une tête numérotée + un texte, posés à plat dans le bloc « CAP SUR LE
+   QR CODE ». */
+.won-zone-panel{display:flex;flex-direction:column;gap:8px;text-align:left;padding:0}
+.won-zone-head{display:flex;align-items:center;gap:10px}
+.won-zone-num{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--fnac);color:#111;font-size:13px;font-weight:1000}
+.won-zone-title{font-weight:900;color:#fff;font-size:14px;letter-spacing:.04em;text-transform:uppercase;line-height:1.25}
+.won-zone-desc{margin:0;color:#bcd9e6;font-size:13.5px;line-height:1.5;font-weight:700}
+.won-zone-btn{display:block;width:100%;box-sizing:border-box;margin:0;padding:13px 16px;font-size:clamp(13px,1.9vw,16px);text-align:center;text-transform:none;letter-spacing:.02em}
+.won-next-btn{display:inline-block;background:var(--fnac);color:#111;border-radius:16px;padding:16px 42px;font-weight:1000;text-decoration:none;font-size:clamp(15px,2.4vw,19px);letter-spacing:.03em;text-transform:uppercase;animation:nextBtnPulse 2.2s ease-in-out infinite}
+.won-next-btn:hover{filter:brightness(1.08)}
+@media(max-width:520px){.won-next-btn{display:block;width:100%;max-width:440px;margin:0 auto;box-sizing:border-box}}
+@keyframes nextBtnPulse{50%{box-shadow:0 0 0 6px rgba(245,176,39,.16),0 0 30px rgba(245,176,39,.60)}}
+.won-nextzone-hint{margin:13px auto 0;max-width:520px;color:#9bc4d4;font-size:12.5px;line-height:1.5}
+/* Records de résolution — menu déroulant discret sous les résultats.
+   Le titre « ⏱️ Records de résolution » est centré horizontalement (le
+   <summary> est une pastille inline-flex, centrée par le text-align du
+   conteneur). La liste dépliée, elle, reste calée à gauche sur toute
+   la largeur pour rester lisible ; le record du matelot courant est
+   surligné et marqué « (toi) ». */
+.won-records{margin:18px auto 0;width:100%;max-width:none;text-align:center}
+.won-records summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border:1px solid rgba(142,231,255,.22);border-radius:999px;color:#9bc4d4;font-weight:800;font-size:12.5px;letter-spacing:.02em;background:rgba(0,0,0,.16)}
+.won-records summary::-webkit-details-marker{display:none}
+.won-records summary::before{content:"▸";font-size:12px;transition:transform .18s ease}
+.won-records[open] summary::before{transform:rotate(90deg)}
+.won-records summary:hover{color:#dff6ff;border-color:rgba(142,231,255,.55)}
+.won-records[open] summary{margin-bottom:10px}
+.won-records-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;text-align:left}
+.won-records-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(142,231,255,.13)}
+.won-records-item--self{background:rgba(245,176,39,.10);border-color:rgba(245,176,39,.42)}
+.won-records-self{flex:0 0 auto;color:var(--fnac);font-weight:900;font-size:12px;font-style:normal}
+.won-records-rank{flex:0 0 24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(245,176,39,.15);color:#ffd36c;font-weight:900;font-size:12px}
+.won-records-who{flex:1;color:#dff6ff;font-weight:700;font-size:13.5px}
+.won-records-who em{color:#9bc4d4;font-style:normal;font-weight:600}
+.won-records-time{color:#ffd36c;font-weight:900;font-size:13.5px;font-variant-numeric:tabular-nums}
+.won-records-empty{color:#9bc4d4;padding:6px 2px;font-style:italic;font-size:13px}
+/* Panneau « DIRECTION » sobre, conservé pour l'écran de RELECTURE de
+   la zone de recherche (palier1.html?relecture=sas) — texte brut. */
+.won-direction{margin:16px auto 0;max-width:560px;padding:16px;border:2px solid rgba(245,176,39,.55);border-radius:18px;background:linear-gradient(135deg,rgba(245,176,39,.16),rgba(245,176,39,.05));text-align:left}
+.won-direction[hidden]{display:none}
+.won-direction-line{color:#fff;font-size:14px;line-height:1.5;margin:0 0 12px;font-weight:700}
+.won-direction-label{color:#9bc4d4;font-weight:900}
 @media(max-width:430px){.won-stats{grid-template-columns:1fr 1fr}.won-stat:last-child{grid-column:1/-1}}
-@media(prefers-reduced-motion:reduce){.won-screen.celebration::before,.won-screen.celebration h2,.won-badge{animation:none}}
+@media(prefers-reduced-motion:reduce){.won-screen.celebration::before,.won-badge,.won-radar-ring,.won-next-btn{animation:none}}
 
 /* Même échelle couleur que la réserve de la page d'accueil. */
 .o2-fill{
@@ -468,3 +1372,14 @@
 /* Bouton sonar toujours visible au-dessus des animations du mini-jeu. */
 .nx-sonar-bar{z-index:11000 !important}
 .nx-sonar-toggle{position:relative;z-index:11001 !important}
+
+/* ===== ACCESSIBILITÉ — police système agrandie + zoom navigateur ===== */
+html{font-size:100%;}
+/* Empêche Safari (iOS) de redimensionner automatiquement le texte des
+   blocs au passage en paysage : la taille des polices reste celle écrite
+   dans la feuille, égale pour toutes les cartes d'équipage. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{overflow-wrap:break-word;word-break:break-word;}
+img,video:not(.photo-video):not(#photoVideo),svg,canvas:not(.photo-canvas),iframe{max-width:100%;height:auto;}
+button,input,select,textarea{max-width:100%;box-sizing:border-box;}
+body{overflow-wrap:break-word;}

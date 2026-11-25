@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#020812" />
+  <title>Mission Nautilus — Palier 7</title>
+  <meta name="description" content="Accès scellé et briefing du Palier 7 de la Mission Nautilus." />
+  <meta name="screen-orientation" content="portrait">
+  <meta name="x5-orientation" content="portrait">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=61">
+  <link rel="stylesheet" href="css/palier2.css?v=27">
+  <link rel="stylesheet" href="css/palier7.css?v=13">
+  <script src="anti-zoom.js?v=2"></script>
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+  <script>
+    (function(){
+      try {
+        var base = [16,1,12,9,5,18];
+        var code = base.map(function(x){ return String(x + 6); }).join('');
+        var forceFerme = /[?&]sas=ferme\b/.test(location.search) || /[?&]scan=1\b/.test(location.search);
+        var isUnlocked = localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok';
+        var isApercu = /[?&]apercu=(?:admin|jeu)\b/.test(location.search) || sessionStorage.getItem('nautilusAdminApercu') === '1';
+        if (!forceFerme && (isUnlocked || isApercu)) {
+          document.documentElement.classList.add('sas-skip-flash');
+        }
+      } catch(_) {}
+    })();
+  </script>
+  <style>
+    html.sas-skip-flash #gateHero { display: none !important; }
+    html.sas-skip-flash #briefCard { display: block !important; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
+    <div class="topbar-title" id="topPalierTitle">Palier 7</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- SAS SCELLÉ : LA PORTE D'ACCÈS DU PALIER 7. -->
+  <section class="card gate-hero" id="gateHero">
+    <h2 id="sasHeroTitle">PALIER 7 — ZONE SCELLÉE</h2>
+    <div class="body">
+      <div class="sas-scene">
+        <div class="sas-head">
+          <div class="sas-lock" aria-hidden="true">
+            <span class="sas-lock-ico">🔒</span>
+          </div>
+          <p class="sas-kicker">Profondeur — sas scellé</p>
+          <p class="sas-titre">⛔ Ce palier est verrouillé.</p>
+          <p class="sas-msg">Déverrouillez le palier suivant grâce au <b>QR Code de la zone de recherche</b>.</p>
+        </div>
+
+        <div class="gate-scanbox sas-scanbox" id="gateScanbox">
+          <video id="gateCam" class="gate-cam" playsinline autoplay muted hidden></video>
+          <canvas id="gateCanvas" hidden></canvas>
+          <div class="gate-cam-placeholder" id="gateCamPlaceholder" role="button" tabindex="0" aria-label="Activer la caméra pour scanner le QR Code">
+            <span class="gate-cam-icon">📷</span>
+            <span>Objectif en veille — vise le QR Code pour ouvrir le sas.</span>
+          </div>
+          <div class="gate-scan-status" id="gateScanStatus" role="status"></div>
+        </div>
+
+        <div class="gate-actions">
+          <button type="button" class="gate-btn gate-btn--cam" id="gateCamBtn">📸 ACTIVER LA CAMÉRA</button>
+          <button type="button" class="gate-btn gate-btn--import" id="gateImportBtn">IMPORTER QR CODE</button>
+          <input type="file" id="gateFile" accept="image/*" hidden>
+        </div>
+
+        <div class="gate-msg" id="gateMsg" aria-live="polite"></div>
+
+        <button type="button" class="sas-indication" id="sasIndicationBtn" aria-expanded="false">📍 Voir l'indication de la zone de recherche</button>
+        <div class="sas-indication-panel" id="sasIndicationPanel" hidden>
+          <div class="won-nextzone">
+            <div class="won-radar" aria-hidden="true">
+              <span class="won-radar-ring"></span>
+              <span class="won-radar-ring won-radar-ring--2"></span>
+              <span class="won-radar-core">🧭</span>
+            </div>
+            <h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>
+            <p class="won-nextzone-indication">📍 « <span id="sasIndicationTexte">Rayon Photo & Drone</span> »</p>
+            <div class="won-nextzone-steps">
+              <span class="won-step-chip"><b>1</b> Rallier la Zone de recherche</span>
+              <span class="won-step-chip"><b>2</b> Repérer le QR Code</span>
+              <span class="won-step-chip"><b>3</b> Scanner le QR du sas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE (masqué quand le sas est scellé, visible au briefing) -->
+  <section class="card" id="teamCard" hidden>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- Journal de bord (masqué quand le sas est scellé, visible au briefing). -->
+  <section class="card" id="logCard" hidden>
+    <h2>JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
+        <ol class="morse-log-list" id="logList"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING DU CAPITAINE -->
+  <section class="card" id="briefCard" hidden>
+    <h2>BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+</main>
+
+<script src="son-partage.js?v=2"></script>
+<script src="journal-bord.js?v=6"></script>
+<script src="palier-sas.js?v=13"></script>
+<script src="palier-briefing.js?v=5"></script>
+<script>window.NautilusSas.init(7);</script>
+<script src="matelot-blocages.js?v=3"></script>
+<script src="reserve-o2.js?v=9"></script>
+<script src="equipage-actif.js?v=10"></script>
+<script>if (window.EquipageActif) window.EquipageActif.init();</script>
+
+<script>
+const LIEU_DESCRIPTION = "Rayon Photo & Drone";
+const QR_LOCATION_HINT = "Rayon Photo & Drone";
+const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function apercuAdminAutorise() {
+    try {
+      if (!/[?&]apercu=(?:admin|jeu)(?:&|$)/.test(location.search)) return false;
+      var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
+      if (!k) return false;
+      var h = 0, s = 'apercu-admin:NEMO2026';
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return k === ('k' + Math.abs(h).toString(36));
+    } catch (e) { return false; }
+  }
+
+  function montrerCarte(id, visible) {
+    var el = $(id);
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? '' : 'none';
+  }
+
+  /* Vue scellée : teamCard et logCard MASQUÉES pour être conforme aux autres sas scellés */
+  function afficherVueScellee() {
+    montrerCarte('gateHero', true);
+    montrerCarte('teamCard', false);
+    montrerCarte('logCard', false);
+    montrerCarte('briefCard', false);
+  }
+
+  /* Vue briefing : teamCard, logCard et briefCard VISIBLES */
+  function afficherVueBriefing(smooth) {
+    montrerCarte('gateHero', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
+    montrerCarte('briefCard', true);
+    if (smooth !== false) {
+      setTimeout(function () {
+        var b = $('briefCard');
+        if (b && typeof b.scrollIntoView === 'function') {
+          b.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }
+
+  /* Configuration du Briefing du Capitaine pour le Palier 7 */
+  window.NautilusBriefing.afficher($('briefHost'), {
+    intro: "« Matelots, l’épave centrale du Nautilus est sous nos yeux, mais sa machinerie principale est scellée ». Vous devez piloter la bille à travers un labyrinthe circulaire 3D jusqu'au Cœur avant l'expiration de votre réserve.",
+    consignes: [
+      { ico: '🌀', html: "<b>Labyrinthe circulaire</b> : naviguez depuis la coursive extérieure jusqu'au Cœur central." },
+      { ico: '🧭', html: "<b>Pilotage gyroscope</b> : inclinez votre smartphone pour faire rouler la bille sous l'effet de la gravité." },
+      { ico: '⚠️', warn: true, html: "<b>De nombreuses impasses :</b> ne touche pas les parois plus de <b>100 fois,</b> sous peine que le cœur ne s’éteigne. Soyez attentifs aux <b>culs-de-sac trompeurs.</b>" },
+      { ico: '⏱️', warn: true, html: "<b>Minuteur strict de 1 minute chrono</b> : appuyez sur le bouton gyroscopique (ou joystick) pour enclencher le décompte et lancer la bille." },
+      { ico: '🔄', warn: true, html: "<b>Alerte secousses :</b> tous les <b>20 contacts</b> avec les parois, le labyrinthe pivote brutalement !" },
+      { ico: '🚨', warn: true, html: "<b>Attention si le compte à rebours est terminé, le</b> sas se verrouille et le matelot remonte en surface !" }
+    ],
+    cta: '⚓ PRENDRE LES COMMANDES',
+    onDepart: function () {
+      location.href = 'palier7-jeu.html' + (location.search || '');
+    }
+  });
+
+  window.addEventListener('nautilus:sas-ouvert', function (ev) {
+    var source = ev && ev.detail && ev.detail.source;
+    if (source === 'scan' || source === 'manuel') {
+      window.NautilusBriefing.transitionVersBriefing(afficherVueBriefing);
+    } else {
+      afficherVueBriefing();
+    }
+  });
+
+  /* Initialisation de la vue */
+  $('backBtn')?.addEventListener('click', function () {
+    location.href = 'index.html?ecoutille=0';
+  });
+
+  if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+    location.replace('palier7-jeu.html' + (location.search || ''));
+  } else if (apercuAdminAutorise()) {
+    var banniereModeTest = function () {
+      if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+    };
+    banniereModeTest();
+    setTimeout(banniereModeTest, 150);
+    afficherVueBriefing(false);
+  } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.estDeverrouille(7)) {
+    afficherVueBriefing(false);
+  } else {
+    afficherVueScellee();
+    if (window.NautilusSas.observerDeverrouillageEquipe) {
+      window.NautilusSas.observerDeverrouillageEquipe();
+    }
+  }
+
+  var _btn = $('sasIndicationBtn'), _panel = $('sasIndicationPanel');
+  var _txt = $('sasIndicationTexte');
+  if (_txt) _txt.textContent = ZONE_RECHERCHE_HINT;
+  if (_btn && _panel) {
+    _btn.addEventListener('click', function () {
+      var ouvert = !_panel.hidden;
+      _panel.hidden = ouvert;
+      _btn.textContent = ouvert ? '📍 Voir l’indication de la zone de recherche' : '📍 Masquer l’indication';
+      _btn.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
+    });
+  }
+})();
+</script>
+
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=5" defer></script>
+<script src="admin-button.js?v=34" type="module"></script>
+</body>
+</html>

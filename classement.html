@@ -3,9 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#030811">
   <title>Mission Nautilus — Classement final</title>
-  <link rel="stylesheet" href="css/classement.css?v=1">
+  <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil) : SVG
+       source + PNG de repli + Apple touch (iOS). Sans ces balises, le
+       navigateur affichait son icône générique à la place du logo. -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/classement.css?v=9">
+  <script src="anti-zoom.js?v=2"></script>
 </head>
 <body>
   <div class="result-wallpaper" aria-hidden="true"></div>
@@ -38,21 +46,43 @@
     const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
     function progressOf(team){ return Array.isArray(team.completedSteps) ? team.completedSteps.length : 0; }
+    /* Nombre d'erreurs cumulées de l'équipage (failCount) : sert à départager
+       deux équipages à égalité de paliers franchis. */
+    function errorCount(team){ return Number(team.failCount || 0); }
+    /* Instant où l'équipage a résolu son DERNIER palier : le « temps » de
+       référence pour départager deux équipages à égalité de paliers ET
+       d'erreurs. */
     function progressDate(team){
-      const dates = Object.values(team.progressionAt || {}).filter(Boolean).map(v => new Date(v).getTime()).filter(Number.isFinite);
-      if(dates.length) return Math.max(...dates);
-      return new Date(team.finishedAt || team.updatedAt || team.createdAt || 0).getTime() || Number.MAX_SAFE_INTEGER;
+      const t = new Date(team.lastStepCompletedAt || team.finishedAt || team.updatedAt || team.createdAt || 0).getTime();
+      return t || Number.MAX_SAFE_INTEGER;
     }
     function stepLabel(team){
       const n = progressOf(team);
       return n >= STEPS.length ? 'Mission terminée' : `${n} palier${n > 1 ? 's' : ''} franchi${n > 1 ? 's' : ''}`;
     }
+    /* Le compte test interne (ZZZZ-0000 / TEST) ne fait JAMAIS partie
+       d'un équipage : filtré à la lecture, même si une vieille fiche
+       l'avait laissé dans members[]. */
+    function isTestMember(m){
+      return !!m && (m.codeMatelot === 'ZZZZ-0000' || m.memberKey === 'TEST'
+        || String(m.name || '').trim().toUpperCase() === 'TEST');
+    }
     function crewLabel(team){
-      const names = (team.members || []).map(m => m.name).filter(Boolean);
+      const names = (team.members || []).filter(m => !isTestMember(m)).map(m => m.name).filter(Boolean);
       return names.length ? names.join(' · ') : 'Équipage non renseigné';
     }
+    /* Les identifiants techniques restent en majuscules dans Firestore. Le
+       classement affiche toujours le nom propre de l'équipage. */
+    function displayTeamName(team){
+      return team?.teamCode === 'ARONNAX' ? 'Aronnax' : (team?.teamName || team?.teamCode || '—');
+    }
     function sortTeams(teams){
-      return teams.filter(t => t && t.teamName).sort((a,b) => progressOf(b)-progressOf(a) || progressDate(a)-progressDate(b) || String(a.teamName).localeCompare(String(b.teamName),'fr'));
+      return teams.filter(t => t && (t.teamName || t.teamCode)).sort((a,b) =>
+        progressOf(b) - progressOf(a) ||       // 1) le plus de paliers franchis d'abord
+        errorCount(a) - errorCount(b) ||       // 2) à égalité de paliers : le MOINS d'erreurs d'abord (plus d'erreurs = dernier)
+        progressDate(a) - progressDate(b) ||   // 3) à égalité de paliers ET d'erreurs : le premier à avoir résolu le dernier palier d'abord
+        displayTeamName(a).localeCompare(displayTeamName(b),'fr')
+      );
     }
     function podiumCard(team, rank){
       if(!team) return '<div class="podium-empty"></div>';
@@ -60,8 +90,9 @@
       return `<article class="podium-card rank-${rank}">
         <div class="podium-medal">${medal}</div>
         <div class="podium-rank">${rank}<sup>e</sup></div>
-        <h2>${esc(team.teamName)}</h2>
+        <h2>${esc(displayTeamName(team))}</h2>
         <div class="podium-progress">${esc(stepLabel(team))}</div>
+        <div class="podium-errors">${errorCount(team)} erreur${errorCount(team) > 1 ? 's' : ''}</div>
         <div class="podium-crew">${esc(crewLabel(team))}</div>
         <div class="podium-spark"></div>
       </article>`;
@@ -77,10 +108,10 @@
       $('fleetResults').innerHTML = rest.length ? `<h2>Autres équipages</h2><ol>${rest.map((t,i)=>`<li>
   <span class="fleet-rank">${i+4}</span>
   <div class="fleet-team">
-    <b>${esc(t.teamName)}</b>
+    <b>${esc(displayTeamName(t))}</b>
     <em>${esc(crewLabel(t))}</em>
   </div>
-  <small>${esc(stepLabel(t))}</small>
+  <small>${esc(stepLabel(t))} · ${errorCount(t)} err.</small>
 </li>`).join('')}</ol>` : '';
     }
     try {
@@ -91,6 +122,16 @@
       console.error(e);
     }
   </script>
-<script src="admin-button.js" type="module"></script>
+<script src="son-partage.js?v=2" defer></script>
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=5" defer></script>
+<!-- Modules d'administration : magasins, réponses et codes QR. -->
+<script src="artefact-moteur.js?v=8"></script>
+<script src="artefact-service.js?v=8"></script>
+<script src="magasin-fnac.js?v=1"></script>
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="photo-defi.js?v=2" defer></script>
+<script src="admin-artefact.js?v=33" defer></script>
+<script src="admin-button.js?v=34" type="module"></script>
 </body>
 </html>

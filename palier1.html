@@ -3,9 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#020812" />
   <title>Mission Nautilus — Palier 1</title>
   <meta name="description" content="Épreuve du Palier 1 de la Mission Nautilus." />
-  <link rel="stylesheet" href="css/palier1.css?v=4">
+  <!-- Icônes du site dans l'onglet (mêmes fichiers que l'accueil) : SVG
+       source + PNG de repli + Apple touch (iOS). Sans ces balises, le
+       navigateur affichait son icône générique à la place du logo. -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=61">
+  <script src="anti-zoom.js?v=2"></script>
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+  <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
+       partagées par toutes les pages du jeu. -->
+  <script src="son-partage.js?v=2" defer></script>
+  <script src="palier-annonces.js?v=5" defer></script>
+  <!-- Journal de bord « Activité en direct », code COMMUN à tous les
+       paliers (extrait mot pour mot de cette page). Chargé avant le
+       module ci-dessous : window.JournalDeBord est prêt à temps. -->
+  <script src="journal-bord.js?v=6" defer></script>
+  <!-- Records de résolution des paliers (écran de victoire) : écriture
+       et lecture Firestore communes à tous les paliers. -->
+  <script src="records-palier.js?v=2" defer></script>
+  <!-- Briefing commun à tous les paliers -->
+  <script src="palier-briefing.js?v=5" defer></script>
 
 </head>
 <body>
@@ -35,64 +58,80 @@
     <div class="o2-time" id="o2Time">—</div>
   </div>
 
-  <!-- Section identification -->
-  <!-- Masque au depart : le matelot est identifie automatiquement par son
-       Code Matelot. Ce formulaire n'est reaffiche qu'en repli, si le code
-       est absent ou introuvable (voir autoIdentifyFromCode). Sans cela, il
-       apparaitrait une fraction de seconde avant de disparaitre. -->
+  <!-- Accès direct au palier : aucune identité n'est déduite d'une ancienne
+       session du navigateur. Le matelot reprend avec son Code Matelot, comme
+       depuis l'accueil, ou retourne s'inscrire s'il n'en possède pas encore. -->
   <section class="card" id="identityCard" style="display:none">
-    <h2>👤 IDENTIFICATION MATELOT</h2>
+    <h2>IDENTIFICATION MATELOT</h2>
     <div class="body">
-      <p style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 12px;">
-        Inscris ton nom et ton service pour rejoindre l’équipage.
-      </p>
-      <div class="identity-grid">
-        <div>
-          <label for="memberName">Ton nom</label>
-          <input id="memberName" placeholder="Ex. JULES VERNE" autocomplete="off" />
+      <div class="direct-resume-panel">
+        <div class="direct-resume-heading">
+          <span class="direct-resume-icon" aria-hidden="true">🧭</span>
+          <div>
+            <p>REPRENDRE LA MISSION</p>
+            <h3>Retrouve ta place à bord</h3>
+          </div>
         </div>
-        <div>
-          <label for="memberService">Ton service</label>
-          <select id="memberService">
-            <option>PE</option><option>PT</option><option>SAV</option>
-            <option>LOG</option><option>CAI</option><option>GAD</option><option>CODIR</option>
-          </select>
+        <p class="direct-resume-lead">Entre ton Code Matelot personnel pour rejoindre directement ton équipage et reprendre le palier.</p>
+        <div class="direct-resume-form">
+          <div>
+            <label for="matelotCodeInput">Code Matelot</label>
+            <input id="matelotCodeInput" placeholder="Ex. ABCD-1234" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" maxlength="9" />
+          </div>
+          <button id="resumeDirectBtn" type="button">🧭 Reprendre la mission</button>
         </div>
-        <button id="identifyBtn">Embarquer</button>
+        <div id="identifyMsg" class="direct-resume-message" aria-live="polite"></div>
       </div>
-      <div id="identifyMsg" style="margin-top:10px;"></div>
+      <p class="direct-resume-new">Nouveau matelot ? <a href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">Retourne à l'accueil pour embarquer et recevoir ton Code Matelot.</a></p>
     </div>
   </section>
 
   <!-- Pas de garde-fou d'URL : la sécurité est gérée par Firestore
        (session liée à l'équipe + identification matelot obligatoire). -->
 
-  <!-- Statut équipe -->
+  <!-- Statut équipe : PLUS DE BANDEAU ("Connexion au sonar en cours…"
+       a été supprimé). L'encart n'affiche QUE les matelots connectés en
+       live (présence par clé matelot, voir renderCrew). -->
   <section class="card" id="teamCard" style="display:none;">
-    <h2>⚓ ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Un matelot est aux commandes"></span></h2>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
     <div class="body">
-      <div id="teamStatus" class="status-banner info">Connexion au sonar en cours…</div>
       <div class="crew" id="crewList"></div>
     </div>
   </section>
 
   <!-- Journal de bord (live) -->
   <section class="card" id="logCard" style="display:none;">
-    <h2>📜 JOURNAL DE BORD</h2>
+    <h2>JOURNAL DE BORD</h2>
     <div class="body">
       <div class="morse-log">
-        <h3>Activité en direct</h3>
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
         <ul id="morse-log-list"></ul>
       </div>
     </div>
   </section>
 
+  <!-- BRIEFING DU CAPITAINE — vue OBLIGATOIRE entre l'identification et
+       l'épreuve (même architecture que les paliers ≥ 2) : le titre est
+       porté par la carte, le contenu (intro + consignes + CTA) est rendu
+       par renderIdleScreen() dans #briefHost. -->
+  <section class="card" id="briefCard" style="display:none;">
+    <h2>BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+
   <!-- Zone de jeu -->
-  <section class="card" id="gameCard" style="display:none;">
-    <h2 class="card-h2-split">
-      <span>🧪 ÉPREUVE DU PALIER</span>
+  <section class="card gate-unlocked" id="gameCard" style="display:none;">
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 1</span>
       <span class="card-h2-timer" id="gameCardTimer">
-        <span class="lbl">Temps imparti</span>
+        <span class="lbl">Temps restant</span>
         <span class="val" id="gameCardTimerVal">03:30</span>
       </span>
     </h2>
@@ -124,7 +163,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot
+  getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteField, onSnapshot, collection
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 /* ---------- CONFIGURATION ---------- */
@@ -142,8 +181,20 @@ const TEAM_DEFS = [
   { code: "NAUTILUS", name: "Nautilus" },
   { code: "ARONNAX",  name: "Aronnax" },
   { code: "NEDLAND",  name: "Ned Land" },
-  { code: "CALAMAR",  name: "Calamar" }
 ];
+
+/* Couleurs des équipages (mêmes teintes que index.html) : liseré + voyant
+   lumineux de chaque panneau d'équipage dans le bloc « Équipage actif ». */
+const TEAM_STYLES = {
+  NEMO:     { tint: '#0a4fd8', glow: '0,105,255' },
+  NAUTILUS: { tint: '#138046', glow: '49,251,142' },
+  ARONNAX:  { tint: '#924d06', glow: '252,146,51' },
+  NEDLAND:  { tint: '#9f0e3d', glow: '250,42,103' },
+  BALEINE:  { tint: '#0f6a6b', glow: '37,191,193' },
+  TRITON:   { tint: '#71770b', glow: '225,236,36' },
+  DEFAULT:  { tint: '#6a6a6a', glow: '176,176,176' }
+};
+function teamStyle(code) { return TEAM_STYLES[code] || TEAM_STYLES.DEFAULT; }
 
 /* Définition officielle UIT-R M.1677-1 (caractères accentués inclus) */
 const MORSE_TABLE = {
@@ -175,8 +226,9 @@ const STEPS = {
 
 /* Banque de mots : 40 mots, 7+ lettres, AVEC accents (UIT-R M.1677-1)
    Chaque mot a un hint thématique interne (pour l'indice nº2 ou pour le log).
-   ATTENTION : ces mots varient l'épreuve (anti-triche par rejouabilité)
-   mais le LIEU DU QR DANS LE MAGASIN est FIXE — voir QR_LOCATION_HINT. */
+   RÈGLE : un mot DIFFÉRENT est assigné à CHAQUE équipage (voir
+   getMotEquipage) — le même équipage garde le même mot à chaque tentative.
+   Le LIEU DU QR DANS LE MAGASIN est FIXE — voir QR_LOCATION_HINT. */
 const MORSE_WORDS = [
   { w:"NAUTILE",   h:"Animal marin à coquille spiralée" },
   { w:"ABYSSES",   h:"Profondeurs inexplorées de l'océan" },
@@ -220,11 +272,12 @@ const MORSE_WORDS = [
   { w:"SOUSMARINE",h:"Autre orthographe du sous-marin" }
 ];
 
-/* Lieu FIXE du QR du palier 2 dans le magasin.
-   Ce texte est identique pour tous les mots tirés (le lieu ne dépend
-   pas du mot trouvé). C'est ici que l'équipe devra scanner
-   le QR pour obtenir le numéro secret du palier 2. */
-const QR_LOCATION_HINT = "📍 Direction la borne d'arcade au fond du magasin, derrière l'écran de démonstration.";
+/* Indication de direction vers la zone de recherche du QR du palier.
+   Elle est fournie par l'organisation (l'admin) au démarrage de chaque
+   palier : tant qu'elle n'est pas communiquée, on affiche une attente.
+   == PENSE-BÊTE ADMIN : renseigner cette direction dès que le prochain
+      palier commence (la demander à l'organisation si besoin). */
+const QR_LOCATION_HINT = "…… (en attente d’indication par l’admin)";
 
 /* ---------- INITIALISATION FIREBASE ---------- */
 const app = initializeApp(firebaseConfig);
@@ -245,6 +298,17 @@ function teamCodeFromInput(value) {
   const wanted = simple(value);
   const found = TEAM_DEFS.find(t => simple(t.code) === wanted || simple(t.name) === wanted);
   return found ? found.code : String(value || '').trim();
+}
+/* Le code Firestore reste ARONNAX pour ne casser aucun lien, mais le nom
+   affiché est toujours le nom propre « Aronnax », y compris si une ancienne
+   fiche d'équipe contient encore le code tout en majuscules. */
+function displayTeamName(team) {
+  const code = team?.teamCode || team?.code || '';
+  const defined = TEAM_DEFS.find(t => t.code === code);
+  return defined?.name || team?.teamName || code || '—';
+}
+function withDisplayTeamName(team) {
+  return team ? { ...team, teamName: displayTeamName(team) } : null;
 }
 function hashString(s) {
   let h = 0;
@@ -307,7 +371,16 @@ function getCurrentTeamCode() {
   const fromUrl = params.get('code');
   if (fromUrl) {
     const clean = teamCodeFromInput(fromUrl);
-    localStorage.setItem('nautilusCurrentTeam', clean);
+    /* MODE CONCEPTEUR : l'équipage du lien de test (?code=NEMO&m=ZZZZ-0000)
+       n'est qu'une coquille technique — le compte fantôme ne fait JAMAIS
+       partie d'un équipage. On le garde en mémoire mais on ne le MÉMORISE
+       pas sur l'appareil : sinon les autres pages (sas des paliers,
+       identités) afficheraient le testeur « connecté dans l'équipage
+       NEMO », ce qui a trompé le concepteur. */
+    const mUrl = (params.get('m') || params.get('matelot') || '').trim().toUpperCase();
+    if (mUrl !== TEST_MATELOT_CODE && !isTestMode()) {
+      localStorage.setItem('nautilusCurrentTeam', clean);
+    }
     return clean;
   }
   return localStorage.getItem('nautilusCurrentTeam');
@@ -350,11 +423,13 @@ async function getMatelotByCode(teamCode, code) {
 async function getTeam(code) {
   const cleanCode = teamCodeFromInput(code);
   const snap = await getDoc(doc(db, 'teams', cleanCode));
-  return snap.exists() ? { teamCode: cleanCode, ...snap.data() } : null;
+  return snap.exists() ? withDisplayTeamName({ teamCode: cleanCode, ...snap.data() }) : null;
 }
 async function getTeamRealtime(code, callback) {
   return onSnapshot(doc(db, 'teams', teamCodeFromInput(code)), (snap) => {
-    callback(snap.exists() ? { teamCode: teamCodeFromInput(code), ...snap.data() } : null);
+    callback(snap.exists()
+      ? withDisplayTeamName({ teamCode: teamCodeFromInput(code), ...snap.data() })
+      : null);
   });
 }
 /* ===== MODE TEST (compte fantome ZZZZ-0000) =====
@@ -388,6 +463,18 @@ function isTestSession(session) {
   return session.startedByMatelot === TEST_MATELOT_CODE
       || session.isTest === true
       || session.startedByName === 'TEST';
+}
+
+/* REGLE DU JEU : le compte fantôme ne fait JAMAIS partie d'un équipage.
+   Ce prédicat le filtre à la LECTURE partout où une liste de matelots
+   est affichée ou exploitée (équipage connecté, relais possibles) :
+   une vieille fiche polluée — écrite avant les verrous d'écriture —
+   ne doit plus jamais faire apparaître TEST dans un équipage. */
+function isTestMember(m) {
+  if (!m) return false;
+  return m.codeMatelot === TEST_MATELOT_CODE
+      || m.memberKey === 'TEST'
+      || normalize(m.name || '') === 'TEST';
 }
 
 /* Cette session est-elle PERIMEE ?
@@ -521,11 +608,44 @@ async function getMissionConfig() {
 /* ---------- BLOCAGE PROGRESSIF (PAR MATELOT) ---------- */
 /* REGLE DU JEU : un echec ne bloque QUE le matelot qui a echoue, jamais
    tout l'equipage. Les autres peuvent reprendre le palier a tour de role.
-   Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e echec. */
+   Bareme personnel : 1 h, 2 h, 4 h, 8 h, 12 h, puis 24 h des le 6e echec.
+   REINITIALISATION QUOTIDIENNE : le barème se réinitialise tous les jours
+   (chaque nouvelle journée recommence à 1 h pour la première avarie). */
 const LOCK_HOURS = [1, 2, 4, 8, 12];
 function getLockHours(failCount) {
   const n = Math.max(1, Number(failCount) || 1);
   return n <= LOCK_HOURS.length ? LOCK_HOURS[n - 1] : 24;
+}
+function cleJour(d) {
+  var date = d ? (d instanceof Date ? d : new Date(d)) : new Date();
+  if (isNaN(date.getTime())) date = new Date();
+  try {
+    return date.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+  } catch (e) {
+    var y = date.getFullYear();
+    var m = String(date.getMonth() + 1).padStart(2, '0');
+    var day = String(date.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+}
+function estAujourdhui(dateStr) {
+  if (!dateStr) return false;
+  try {
+    return cleJour(dateStr) === cleJour();
+  } catch (e) {
+    return false;
+  }
+}
+function echecsDuJour(ancien) {
+  if (!ancien) return 0;
+  var today = cleJour();
+  if (ancien.lastFailDay) {
+    return ancien.lastFailDay === today ? Number(ancien.failCount || 0) : 0;
+  }
+  if (ancien.blockedAt) {
+    return estAujourdhui(ancien.blockedAt) ? Number(ancien.failCount || 0) : 0;
+  }
+  return 0;
 }
 function getLockedUntilISO(failCount) {
   const d = new Date();
@@ -538,7 +658,7 @@ function getLockedUntilISO(failCount) {
    automatiquement une equipe restee bloquee en base par l'ancienne
    version du jeu. */
 /* Fiche de blocage d'un matelot, rangee dans le document de l'equipe
-   sous matelotLocks[memberKey] = { failCount, lockedUntil, lastLockHours }. */
+   sous matelotLocks[memberKey] = { failCount, lockedUntil, lastLockHours, lastFailDay }. */
 function getMatelotLock(team, key) {
   if (!team || !key) return null;
   return (team.matelotLocks || {})[key] || null;
@@ -552,7 +672,15 @@ function formatDate(iso) { return iso ? new Date(iso).toLocaleString('fr-FR') : 
 /* ---------- AUDIO WEB API ---------- */
 /* Le bouton "sonar" de la page d'accueil est l'interrupteur general du son
    du jeu. Son etat est partage entre les pages via localStorage : si le
-   joueur a coupe le son, AUCUN bip du mini-jeu ne doit sortir ici non plus. */
+   joueur a coupe le son, AUCUN bip du mini-jeu ne doit sortir ici non plus.
+
+   SEULE EXCEPTION (demande explicite) : le SIGNAL MORSE. Il n'est pas un
+   bruitage — il EST l'epreuve : sans lui, le mot est indéchiffrable et le
+   palier impossible. Il passe donc par un contexte dedie, getMorseCtx(),
+   qui ignore l'interrupteur ; il reste joue a la demande (bouton
+   « Ecouter le signal », 3 ecoutes max), jamais en fond sonore.
+   Si le joueur coupe le sonar PENDANT une ecoute, l'extinction generale
+   (registre NautilusSon) suspend le contexte : le signal se tait net. */
 function isSoundEnabled() {
   try { return localStorage.getItem('nautilusSoundOn') !== '0'; }
   catch (e) { return true; }
@@ -565,8 +693,23 @@ function getAudioCtx() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     _audioCtx = new AC();
+    window.NautilusSon?.registerContexte?.(_audioCtx);
   }
   return _audioCtx;
+}
+
+/* Contexte DEDIE au signal morse : le seul son autorise meme sonar coupe
+   (voir l'explication au-dessus de isSoundEnabled). Catalogue quand meme
+   dans le registre partage pour l'extinction instantanee a la demande. */
+let _morseCtx = null;
+function getMorseCtx() {
+  if (!_morseCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { _morseCtx = new AC(); } catch (e) { return null; }
+    window.NautilusSon?.registerContexte?.(_morseCtx);
+  }
+  return _morseCtx;
 }
 
 /* Tonalite du signal (point ou trait) sur le contexte courant */
@@ -647,6 +790,65 @@ function markHintsExhausted(word) {
   if (idx >= 0) _usedWords.add(idx);
 }
 
+/* ---------- MOT FIXE PAR ÉQUIPAGE (Palier 1) ----------
+   REGLE : chaque équipage a SON mot à deviner, toujours le même d'une
+   tentative à l'autre, et différent de celui des autres équipages.
+   Le mot est assigné UNE SEULE FOIS (au premier lancement) puis conservé
+   dans le document de l'équipe sous forme d'empreinte (morseWordHash) —
+   jamais le mot en clair, même convention que la session. */
+function motEntry(w) {
+  const m = MORSE_WORDS.find(x => x.w === w);
+  return m || null;
+}
+async function getMotEquipage(team) {
+  /* Repli ultime : un mot local si tout échoue (jamais de blocage). */
+  const repli = () => MORSE_WORDS[Math.floor(Math.random() * MORSE_WORDS.length)];
+  if (!team || !team.teamCode) return repli();
+  try {
+    const snap = await getDoc(doc(db, 'teams', team.teamCode));
+    const data = snap.exists() ? snap.data() : {};
+    if (typeof data.morseWordHash === 'number') {
+      const w = wordFromHash(data.morseWordHash);
+      if (w) return motEntry(w);
+    }
+    /* Compatibilité : un éventuel mot stocké en clair par une ancienne
+       version est relu tel quel. */
+    if (data.morseWord && typeof data.morseWord === 'string') {
+      const e = motEntry(data.morseWord);
+      if (e) return e;
+    }
+    const w = await assignerMotEquipage(team.teamCode);
+    return motEntry(w) || repli();
+  } catch (e) {
+    return repli();
+  }
+}
+async function assignerMotEquipage(teamCode) {
+  /* Choisit un mot NON encore attribué à un autre équipage. */
+  const used = new Set();
+  try {
+    const allSnap = await getDocs(collection(db, 'teams'));
+    allSnap.forEach(d => {
+      if (d.id === teamCode) return;
+      const dd = d.data();
+      if (typeof dd.morseWordHash === 'number') used.add(dd.morseWordHash);
+      if (dd.morseWord) used.add(hashString(dd.morseWord));
+    });
+  } catch (e) { /* lecture impossible : on tire quand même */ }
+  let choix = null;
+  for (const m of MORSE_WORDS) {
+    if (!used.has(hashString(m.w))) { choix = m; break; }
+  }
+  if (!choix) choix = MORSE_WORDS[Math.floor(Math.random() * MORSE_WORDS.length)];
+  try {
+    await updateDoc(doc(db, 'teams', teamCode), {
+      morseWordHash: hashString(choix.w),
+      updatedAt: new Date().toISOString()
+    });
+  } catch (e) { /* écriture impossible : le mot vaut pour cette partie */ }
+  return choix.w;
+}
+
 /* ---------- UI HELPERS (chambre de pilotage live) ---------- */
 function showToast(message, type = 'info', duration = 4000) {
   let container = document.getElementById('nautilus-toast-container');
@@ -673,86 +875,52 @@ function showToast(message, type = 'info', duration = 4000) {
   }, duration);
 }
 
-/* ---------- LIVE BOARD (journal de bord temps réel) ---------- */
-function addLogEntry(text, kind = 'info', quand) {
-  const list = document.getElementById('morse-log-list');
-  if (!list) return;
-  const colors = {
-    info:    { dot: '#8ee7ff', border: 'rgba(142,231,255,.4)' },
-    success: { dot: '#5be09b', border: 'rgba(91,255,156,.5)' },
-    warning: { dot: '#ffd36c', border: 'rgba(245,176,39,.5)' },
-    danger:  { dot: '#ff7b72', border: 'rgba(255,75,62,.55)' }
-  };
-  const c = colors[kind] || colors.info;
-
-  /* CHRONOLOGIE GARANTIE.
-
-     BUG CORRIGE : les lignes apparaissaient dans le desordre — on pouvait
-     lire "X a rejoint l'equipage" APRES ses echecs. Chaque ligne etait
-     simplement posee en haut de la liste au moment ou la fonction etait
-     appelee. Or certains messages sont ecrits APRES une reponse du
-     reseau (saveTeam...) et d'autres immediatement : un message rapide
-     doublait donc un message lent, et l'ordre affiche ne correspondait
-     plus a l'ordre reel des evenements.
-
-     Deux corrections :
-     - chaque ligne porte desormais l'INSTANT REEL de l'evenement. Un
-       appel peut fournir cet instant s'il a ete retarde par le reseau ;
-     - l'insertion se fait A LA BONNE PLACE dans la liste, en comparant
-       les horodatages, au lieu d'ajouter aveuglement en tete. */
-  const t = (quand instanceof Date) ? quand : new Date();
-  /* JOUR ET HEURE, meme format court que le journal du poste de pilotage
-     ("06/08 00:09"). Une epreuve peut etre reprise le lendemain apres un
-     blocage : sans le jour, deux lignes eloignees de 24 h affichaient la
-     meme chose. */
-  const p2 = (n) => String(n).padStart(2, '0');
-  const heure = p2(t.getDate()) + '/' + p2(t.getMonth() + 1) + ' '
-              + p2(t.getHours()) + ':' + p2(t.getMinutes());
-
-  const li = document.createElement('li');
-  li.className = 'morse-log-entry';
-  li.dataset.t = String(t.getTime());
-  li.style.cssText = `display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-left:3px solid ${c.border};background:rgba(0,0,0,.22);border-radius:8px;`;
-
-  /* On echappe TOUT — un nom de matelot est saisi librement et ne doit
-     jamais pouvoir injecter du code — puis on retablit uniquement <b> et
-     </b>, les deux seules balises autorisees ici. */
-  const texteRendu = esc(text)
-    .replace(/&lt;b&gt;/g, '<b>')
-    .replace(/&lt;\/b&gt;/g, '</b>');
-
-  li.innerHTML = `
-    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.dot};box-shadow:0 0 8px ${c.dot};flex:0 0 10px;margin-top:5px;"></span>
-    <span style="flex:1;min-width:0;color:#dff6ff;line-height:1.4;">${texteRendu}</span>
-    <span style="flex:0 0 auto;color:rgba(142,231,255,.42);font-size:11px;font-family:Consolas,'Courier New',monospace;margin-top:3px;white-space:nowrap;">${heure}</span>
-  `;
-
-  /* Insertion triee : la liste va du plus RECENT (en haut) au plus ancien.
-     On descend jusqu'a trouver une ligne plus ancienne que la notre. */
-  const ms = t.getTime();
-  let place = null;
-  for (const ligne of list.children) {
-    if (Number(ligne.dataset.t || 0) <= ms) { place = ligne; break; }
-  }
-  if (place) list.insertBefore(li, place);
-  else list.appendChild(li);
-
-  /* Limite a 20 entrees : on retire les plus ANCIENNES (en bas). */
-  while (list.children.length > 20) list.removeChild(list.lastChild);
-}
-function clearLog() {
-  const list = document.getElementById('morse-log-list');
-  if (list) list.innerHTML = '';
-}
+/* ---------- LIVE BOARD (journal de bord temps reel) ----------
+   Le code vit desormais dans journal-bord.js, EXTRAIT MOT POUR MOT
+   de cette page et PARTAGE avec tous les paliers (meme suivi, memes
+   « Activites en direct » partout : portail QR du Palier 2, futurs
+   paliers...). On garde ici les memes noms de fonctions : toute la
+   page, y compris window.Nautilus, fonctionne a l'identique. */
+const addLogEntry = window.JournalDeBord.addLogEntry;
+const addActe     = window.JournalDeBord.addActe;
+const clearLog    = window.JournalDeBord.clearLog;
 
 /* ---------- HEARTBEAT (mise à jour lastSeen du membre) ---------- */
-async function heartbeat(teamCode) {
+async function heartbeat(teamCode, memberKey = null) {
   // Mode test : ne pas apparaitre dans le compteur "en ligne" des joueurs.
   if (isTestMode()) return;
   const team = await getTeam(teamCode);
   if (!team) return;
-  const online = { ...(team.onlinePlayers || {}), [getClientId()]: new Date().toISOString() };
-  await updateDoc(doc(db, 'teams', teamCode), { onlinePlayers: online, updatedAt: new Date().toISOString() });
+  const now = new Date().toISOString();
+  /* ÉCRITURE PAR CHEMIN (onlinePlayers.CLIENT / onlineMatelots.CLE) : fini
+     la lecture puis réécriture de tout l'objet. Deux matelots qui battent
+     au même instant n'écrasent plus l'entrée de l'autre, et une présence
+     périmée n'est plus recopiée indéfiniment.
+     Presence PAR MATELOT (et non par appareil) : plusieurs matelots se
+     succedent sur un meme telephone, clientId ne peut donc pas dire QUI
+     est en live. onlineMatelots[memberKey] = date du dernier signe de vie ;
+     renderCrew() n'affiche que les cles fraiches. */
+  const patch = {
+    ['onlinePlayers.' + getClientId()]: now,
+    updatedAt: now
+  };
+  if (memberKey) patch['onlineMatelots.' + memberKey] = now;
+  await updateDoc(doc(db, 'teams', teamCode), patch);
+}
+
+/* ---------- PRÉSENCE : retrait immédiat à la sortie du mini-jeu ----------
+   Écrit le retrait de la clé du matelot (onlineMatelots) au moment où la
+   page passe en arrière-plan ou se ferme. Avant, on se contentait
+   d'arrêter le battement : le matelot restait affiché « en plongée »
+   jusqu'à l'expiration de l'horodatage. Best effort : si l'écriture
+   n'aboutit pas (page déjà fermée), l'expiration prend le relais. */
+async function effacerPresence(teamCode, memberKey) {
+  if (isTestMode() || !memberKey || !teamCode) return;
+  try {
+    await updateDoc(doc(db, 'teams', teamCodeFromInput(teamCode)), {
+      ['onlineMatelots.' + memberKey]: deleteField()
+    });
+  } catch (e) { /* best effort */ }
 }
 
 /* ---------- EXPORT GLOBAL ---------- */
@@ -769,11 +937,13 @@ window.Nautilus = {
   getTeam, getTeamRealtime, saveTeam,
   sessionRef, getSession, getSessionBrute, watchSession, createSession, updateSession, endSession, clearSession,
   getLockHours, getLockedUntilISO, getMatelotLock, isMatelotLocked, formatDate,
+  cleJour, estAujourdhui, echecsDuJour,
   getMissionConfig,
-  isTestMode,
-  isSoundEnabled, getAudioCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
+  isTestMode, isTestMember,
+  isSoundEnabled, getAudioCtx, getMorseCtx, playMorseTone, wordToMorseSeq, playMorseSequence,
   pickWord, markHintsExhausted,
-  showToast, addLogEntry, clearLog, heartbeat
+  getMotEquipage, assignerMotEquipage,
+  showToast, addLogEntry, addActe, clearLog, heartbeat, effacerPresence
 };
 
 
@@ -785,9 +955,17 @@ window.Nautilus = {
   const N = window.Nautilus;
   const esc = N.esc;
 
+  /* Une URL nue (palier1.html) reste neutre : elle ne réutilise jamais la
+     dernière identité du navigateur. Seul un lien personnel contenant le
+     code d'équipe ET le Code Matelot peut reprendre automatiquement. */
+  const palierParams = new URLSearchParams(location.search);
+  const hasPersonalResumeLink = Boolean(
+    palierParams.get('code') && (palierParams.get('m') || palierParams.get('matelot'))
+  );
+
   /* === État global === */
   const state = {
-    teamCode: N.getCurrentTeamCode(),
+    teamCode: hasPersonalResumeLink ? N.getCurrentTeamCode() : null,
     me: null,                // { name, service, memberKey, clientId }
     team: null,              // team doc Firestore
     session: null,           // session doc Firestore
@@ -798,15 +976,23 @@ window.Nautilus = {
     unsubTeam: null,
     hintFlashTimeout: null
   };
+  /* Équipages actifs (toutes équipes) : rempli en temps réel par
+     l'écoute de la collection `teams`, pour le bloc « Équipage actif ». */
+  let _allTeams = [];
+  let _unsubAllTeams = null;
+  /* Rafraîchissement LOCAL de la présence : la fraîcheur se lit sur un
+     horodatage (onlineMatelots) qui devient « périmé » SANS qu'aucune
+     écriture Firestore ne se produise (le matelot parti n'écrit plus).
+     Sans ce minuteur, onSnapshot ne se déclencherait pas et le matelot
+     parti resterait affiché indéfiniment dans « Équipage actif ». */
+  let _crewRefreshTimer = null;
 
   /* === Helpers UI === */
 
-  function setStatus(text, kind = 'info') {
-    const el = $('teamStatus');
-    if (!el) return;
-    el.textContent = text;
-    el.className = 'status-banner ' + kind;
-  }
+  /* setStatus SUPPRIME avec le bandeau « Connexion au sonar en cours… » :
+     l'encart equipage n'accueille plus aucun texte d'etat, seulement la
+     liste des matelots connectes en live. Les rares messages encore
+     utiles (apercu admin, equipage introuvable) passent par un toast. */
 
   /* ===== RESERVE D'OXYGENE (bandeau du haut) =====
 
@@ -822,23 +1008,45 @@ window.Nautilus = {
      Tant que la mission n'est pas lancee, le bandeau reste masque : il
      n'aurait rien a montrer. */
   let _o2Config = null;
-  let finalAlarmAudio = null;
   let oxygenEndAlarmShown = null;
   let oxygenEndAlarmTimer = null;
 
+  /* ===== ALARME DE FIN D'OXYGENE : PREPARATION SILENCIEUSE =====
+     Cette alarme part d'un MINUTEUR (compte a rebours), jamais d'un
+     geste. L'ancien amorcage "play() muet puis pause()" au premier geste
+     laissait echapper un fragment audible de Submarine_alarm.mp3 a CHAQUE
+     chargement de la page sur mobile (iPhone) — meme parasite que celui
+     corrige pour les hublots, remede identique : NE RIEN JOUER DU TOUT
+     pour preparer un son. On telecharge et decode le fichier en silence
+     au premier geste ; la lecture passera par Web Audio. Le contexte
+     dedie est cree et debloque DANS ce premier geste : la lecture
+     declenchee plus tard par le minuteur restera autorisee. */
+  let _finAlarmCtx = null;            // contexte dedie a l'alarme de fin
+  let _finAlarmBuf = null;            // son decode, pret a jouer
+  let _finAlarmLoading = null;        // decodage en cours (anti-doublon)
+  let _finAlarmLiveSrc = null;        // source Web Audio en cours de jeu
+  let _finAlarmFallbackAudio = null;  // lecteur <audio> de repli en cours
+
+  function _finAlarmAudioCtx(){
+    if(_finAlarmCtx) return _finAlarmCtx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    try{ _finAlarmCtx = new AC(); }catch(e){ return null; }
+    /* Catalogue : couper le sonar pendant l'alarme la suspend a l'instant. */
+    window.NautilusSon?.registerContexte?.(_finAlarmCtx);
+    if(_finAlarmCtx.state === 'suspended') _finAlarmCtx.resume().catch(()=>{});
+    return _finAlarmCtx;
+  }
+
   function primeFinalAlarm(){
-    if(finalAlarmAudio) return;
-    finalAlarmAudio = new Audio('assets/Submarine_alarm.mp3');
-    finalAlarmAudio.preload = 'auto';
-    finalAlarmAudio.muted = true;
-    finalAlarmAudio.volume = 0;
-    const p = finalAlarmAudio.play();
-    if(p && p.then) p.then(() => {
-      finalAlarmAudio.pause();
-      finalAlarmAudio.currentTime = 0;
-      finalAlarmAudio.muted = false;
-      finalAlarmAudio.volume = .82;
-    }).catch(() => {});
+    if(_finAlarmBuf || _finAlarmLoading) return;
+    const ctx = _finAlarmAudioCtx();
+    if(!ctx) return;   // Web Audio indisponible : le repli <audio> suffira
+    _finAlarmLoading = fetch('assets/Submarine_alarm.mp3')
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(buf => ctx.decodeAudioData(buf))
+      .then(dec => { _finAlarmBuf = dec; })
+      .catch(() => { _finAlarmLoading = null; });
   }
   ['pointerdown','touchstart','click','keydown'].forEach(type => {
     document.addEventListener(type, primeFinalAlarm, {capture:true, passive:true});
@@ -860,19 +1068,52 @@ window.Nautilus = {
     document.querySelectorAll('audio').forEach(a => {
       try{ a.pause(); a.muted = true; a.currentTime = 0; }catch(e){}
     });
-    const audio = finalAlarmAudio || new Audio('assets/Submarine_alarm.mp3');
-    audio.loop = true;
-    audio.preload = 'auto';
-    audio.volume = 0.82;
-    audio.play().catch(() => {});
+    /* Lecture prioritaire en Web Audio (buffer decode en silence au
+       premier geste) : zero parasite a l'amorcage ET lecture autorisee
+       depuis le minuteur. Repli : le lecteur <audio> classique, pour les
+       ordinateurs ou si le decode n'a pas abouti.
+       RÈGLE ABSOLUE (demande explicite) : sonar coupé = SILENCE TOTAL,
+       même pour l'alarme de fin d'O₂ — l'écran rouge et le compte à
+       rebours restent affichés, mais AUCUN son ne part, par AUCUN des
+       deux chemins. */
+    let finJouee = false;
+    const finCtx = isSoundEnabled() ? _finAlarmAudioCtx() : null;
+    if(finCtx && _finAlarmBuf){
+      try{
+        const src = finCtx.createBufferSource();
+        src.buffer = _finAlarmBuf;
+        src.loop = true;
+        const g = finCtx.createGain();
+        g.gain.value = 0.82;
+        src.connect(g);
+        g.connect(finCtx.destination);
+        src.start();
+        _finAlarmLiveSrc = src;
+        finJouee = true;
+      }catch(e){ finJouee = false; }
+    }
+    if(!finJouee && isSoundEnabled()){
+      _finAlarmFallbackAudio = new Audio('assets/Submarine_alarm.mp3');
+      _finAlarmFallbackAudio.loop = true;
+      _finAlarmFallbackAudio.preload = 'auto';
+      _finAlarmFallbackAudio.volume = 0.82;
+      _finAlarmFallbackAudio.play().catch(() => {});
+    }
     oxygenEndAlarmTimer = setInterval(() => {
       remaining -= 1;
       if(remaining <= 0){
         clearInterval(oxygenEndAlarmTimer);
         overlay.classList.remove('show');
         overlay.setAttribute('aria-hidden','true');
-        audio.pause();
-        audio.currentTime = 0;
+        if(_finAlarmLiveSrc){
+          try{ _finAlarmLiveSrc.stop(); }catch(e){}
+          _finAlarmLiveSrc = null;
+        }
+        if(_finAlarmFallbackAudio){
+          _finAlarmFallbackAudio.pause();
+          _finAlarmFallbackAudio.currentTime = 0;
+          _finAlarmFallbackAudio = null;
+        }
         window.location.href = 'classement.html';
         return;
       }
@@ -916,29 +1157,47 @@ window.Nautilus = {
     }
   }
 
-  function oxygenColor(percent){
-    /* Une seule couleur cible est calculée à partir du pourcentage. Le
-       dégradé reste dans cette famille de couleur : il ne peut donc pas
-       afficher du bleu sous 50 %, ni du rouge au-dessus de 50 %. */
-    const stops = [
-      [0, [91, 0, 0]],
-      [20, [255, 75, 62]],
-      [50, [245, 176, 39]],
-      [80, [24, 200, 255]],
-      [100, [184, 244, 255]]
-    ];
-    const p = Math.max(0, Math.min(100, Number(percent) || 0));
-    let low = stops[0], high = stops[stops.length - 1];
-    for(let i = 0; i < stops.length - 1; i++){
-      if(p >= stops[i][0] && p <= stops[i + 1][0]){
-        low = stops[i]; high = stops[i + 1]; break;
+  /* Même échelle que sur l'accueil : 50 paliers du bleu très foncé
+     (0 %) au bleu franc (50 %), puis au blanc (100 %). */
+  const OXYGEN_COLOR_LEVEL_COUNT = 50;
+  const OXYGEN_COLOR_ANCHORS = [
+    [0,   [3, 18, 50]],
+    [50,  [43, 136, 222]],
+    [100, [255, 255, 255]]
+  ];
+
+  function buildOxygenGradient(){
+    const colorAt = percent => {
+      let low = OXYGEN_COLOR_ANCHORS[0];
+      let high = OXYGEN_COLOR_ANCHORS[OXYGEN_COLOR_ANCHORS.length - 1];
+      for(let i = 0; i < OXYGEN_COLOR_ANCHORS.length - 1; i++){
+        if(percent >= OXYGEN_COLOR_ANCHORS[i][0] && percent <= OXYGEN_COLOR_ANCHORS[i + 1][0]){
+          low = OXYGEN_COLOR_ANCHORS[i];
+          high = OXYGEN_COLOR_ANCHORS[i + 1];
+          break;
+        }
       }
-    }
-    const t = (p - low[0]) / Math.max(1, high[0] - low[0]);
-    const rgb = low[1].map((v, i) => Math.round(v + (high[1][i] - v) * t));
-    const dark = rgb.map(v => Math.round(v * .78));
-    const light = rgb.map(v => Math.round(v + (255 - v) * .25));
-    return `linear-gradient(90deg,rgb(${dark.join(',')}),rgb(${rgb.join(',')}),rgb(${light.join(',')}))`;
+      const ratio = (percent - low[0]) / Math.max(1, high[0] - low[0]);
+      return low[1].map((channel, index) => Math.round(channel + (high[1][index] - channel) * ratio));
+    };
+    const stops = Array.from({length:OXYGEN_COLOR_LEVEL_COUNT}, (_, index) => {
+      const rgb = colorAt((index / (OXYGEN_COLOR_LEVEL_COUNT - 1)) * 100);
+      const start = (index / OXYGEN_COLOR_LEVEL_COUNT * 100).toFixed(3);
+      const end = ((index + 1) / OXYGEN_COLOR_LEVEL_COUNT * 100).toFixed(3);
+      const color = `rgb(${rgb.join(',')})`;
+      return `${color} ${start}%,${color} ${end}%`;
+    });
+    return `linear-gradient(90deg,${stops.join(',')})`;
+  }
+
+  const OXYGEN_GRADIENT_50_LEVELS = buildOxygenGradient();
+
+  function applyOxygenGradient(fill, percent){
+    if(!fill) return;
+    const remaining = Math.max(.1, Math.min(100, Number(percent) || 0));
+    fill.style.background = OXYGEN_GRADIENT_50_LEVELS;
+    fill.style.backgroundSize = `${(10000 / remaining).toFixed(3)}% 100%`;
+    fill.style.backgroundPosition = 'left center';
   }
 
   function majReserveO2() {
@@ -955,6 +1214,7 @@ window.Nautilus = {
     const fin = new Date(depart).getTime() + duree;
     if(Date.now() >= fin) showOxygenEndAlarm(fin);
     let reste = Math.max(0, fin - Date.now());
+    const resteTotal = reste;   // conservé pour le choix de cadence / de format
     /* MEME CALCUL QUE LA PAGE D'ACCUEIL, au chiffre pres : arrondi au
        plus proche, mais jamais "100 %" si du temps a ete consomme, ni
        "0 %" s'il en reste. */
@@ -969,20 +1229,137 @@ window.Nautilus = {
 
     const j = Math.floor(reste / 86400000); reste -= j * 86400000;
     const h = Math.floor(reste / 3600000);  reste -= h * 3600000;
-    const m = Math.floor(reste / 60000);
+    const m = Math.floor(reste / 60000);    reste -= m * 60000;
+    const s = Math.floor(reste / 1000);
 
     bar.hidden = false;
-    $('o2Fill').style.width = pctPrecis.toFixed(3) + '%';
-    $('o2Fill').style.background = oxygenColor(pct);
-    $('o2Fill').style.backgroundSize = '100% 100%';
+    const fill = $('o2Fill');
+    fill.style.width = pctPrecis.toFixed(3) + '%';
+    applyOxygenGradient(fill, pctPrecis);
     $('o2Pct').textContent = pct + '%';
-    $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m`;
+    /* FORMAT DU TEMPS : sans secondes au-delà de la dernière minute
+       (« 7J 00h00m »), secondes comprises uniquement quand il reste moins
+       d'une minute (« 0J 00h00m59s ») — batterie préservée, lecture
+       identique à l'accueil sur la durée. */
+    const sousUneMinute = resteTotal < 60000;
+    $('o2Time').textContent = `${j}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${sousUneMinute ? String(s).padStart(2,'0') + 's' : ''}`;
     /* MEMES SEUILS QUE L'ACCUEIL : la jauge passait ici a l'orange a 40 %
        et au rouge a 15 %, contre 50 % et 20 % sur la page d'accueil. Un
        equipage a 45 % voyait donc du bleu sur un ecran et de l'orange sur
        l'autre, au meme instant. */
     bar.classList.toggle('warn', pct <= 50 && pct > 20);
     bar.classList.toggle('crit', pct <= 20);
+    /* Contour d'alerte : clignote en 5 s ; sous 5 %, chaque % restant
+       accélère le clignotement (1 % = 1 s, plancher 1 s). */
+    const tube = bar.querySelector('.o2-tube');
+    if (tube) {
+      tube.style.animationDuration = pct <= 20
+        ? (pct < 5 ? Math.max(1, pct) : 5) + 's'
+        : '';
+    }
+
+    /* CADENCE ADAPTATIVE (batterie) : 60 s par défaut, 1 s dans la
+       dernière minute pour faire défiler les secondes. */
+    planifierTickO2(resteTotal);
+  }
+
+  /* Programme le prochain rafraîchissement de la jauge selon le temps
+     restant : 60 s par défaut, 1 s dans la dernière minute. */
+  let _tickTimerO2 = null;
+  function planifierTickO2(resteTotal) {
+    if (_tickTimerO2) { clearTimeout(_tickTimerO2); _tickTimerO2 = null; }
+    const delai = (resteTotal > 0 && resteTotal < 60000) ? 1000 : 60000;
+    _tickTimerO2 = setTimeout(majReserveO2, delai);
+  }
+
+  /* ===== APERÇU ADMIN — TEST DES ÉCRANS SANS JOUER =====
+     Ouvert depuis le panneau admin (« Tester toutes les pages ») :
+        palier1.html?apercu=victoire|defaite|blocage&k=<clé>
+     Tout est factice et local : AUCUNE lecture ni écriture de partie,
+     l'écran servi est le même que celui des vrais joueurs.
+     La clé prouve la provenance du panneau admin ; elle dérive du code
+     d'accès. Verrou VOLONTAIREMENT simple (le code vit côté client de
+     toute façon) : elle écarte les joueurs curieux, rien de plus.
+     À GARDER EN PHASE avec apercuAdminCle() de index.html / admin-button.js. */
+  const APERCU_ADMIN_CODE = 'NEMO2026';
+
+  function apercuAdminCleAttendue() {
+    let h = 0;
+    const s = 'apercu-admin:' + APERCU_ADMIN_CODE;
+    for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+    return 'k' + Math.abs(h).toString(36);
+  }
+
+  /* L'URL demande-t-elle un aperçu admin autorisé ? (Vérifié de façon
+     SYNCHRONE au boot, avant l'identification.) */
+  function apercuAdminDemande() {
+    try {
+      const params = new URLSearchParams(location.search);
+      const mode = String(params.get('apercu') || '').toLowerCase();
+      if (!mode) return null;
+      if (mode === 'defaite' || mode === 'blocage' || String(params.get('k') || '') === apercuAdminCleAttendue()) return mode;
+      return null;
+    } catch (e) { return null; }
+  }
+
+  /* Dessine l'écran demandé avec des données inventions. Appelé de façon
+     DIFFÉRÉE (après l'évaluation complète du module) : les fonctions de
+     rendu et leurs constantes sont déclarées plus bas. */
+  function initApercuAdmin(mode) {
+    const maintenant = Date.now();
+    const plus1h = new Date(maintenant + 3600e3).toISOString();
+    const team = {
+      teamCode: 'NEMO', teamName: 'Nemo',
+      currentStep: 'start',
+      completedSteps: [],
+      status: 'active', failCount: 1,
+      matelotLocks: {
+        DEMO: { name: 'DÉMO', failCount: 1, lastLockHours: 1, lockedUntil: plus1h, reason: 'morse_too_many_errors', blockedAt: new Date(maintenant - 600e3).toISOString() }
+      },
+      members: [
+        { name: 'DÉMO', service: 'PE', memberKey: 'DEMO', registeredAt: new Date(maintenant - 7200e3).toISOString() },
+        { name: 'CAPITAINE', service: 'CODIR', memberKey: 'CAPITAINE', registeredAt: new Date(maintenant - 7300e3).toISOString() }
+      ]
+    };
+    const me = { name: 'DÉMO', service: 'PE', memberKey: 'DEMO', clientId: 'apercu-admin' };
+    const sessionBase = {
+      startedAt: new Date(maintenant - 155e3).toISOString(),
+      endedAt: new Date(maintenant).toISOString(),
+      listensLeft: 1, errors: 3, maxErrors: 3, attempts: 2,
+      startedByName: 'DÉMO', startedByMemberKey: 'DEMO',
+      hintsRevealed: [true, false, false], wordLength: 8, firstLetter: 'B'
+    };
+
+    state.teamCode = team.teamCode;
+    state.team = team;
+    state.me = me;
+
+    $('topTeam').textContent = 'Aperçu admin';
+    $('identityCard').style.display = 'none';
+    $('teamCard').style.display = (mode === 'victoire') ? 'none' : 'block';
+    $('logCard').style.display = (mode === 'victoire') ? 'none' : 'block';
+    $('gameCard').style.display = 'block';
+    renderCrew();
+    const body = $('gameBody');
+    const titres = {
+      victoire: 'victoire « Épreuve validée ! »',
+      defaite: 'retour en surface (défaite)',
+      blocage: 'blocage personnel du matelot'
+    };
+    N.showToast(`🧪 APERÇU ADMIN — ${titres[mode] || mode}. Aucune donnée réelle, aucune écriture.`, 'warning', 9000);
+
+    if (mode === 'victoire') {
+      const s = { ...sessionBase, state: 'won', endReason: 'solved', errors: 2, revealedWord: 'BALEINES' };
+      body.innerHTML = renderWonScreen(s, team);
+      jouerSonVictoire(s);
+      chargerRecordsVictoire();
+    } else if (mode === 'defaite') {
+      body.innerHTML = renderLostScreen({ ...sessionBase, state: 'lost', endReason: 'too_many_errors' }, team);
+    } else if (mode === 'blocage') {
+      body.innerHTML = renderMatelotLockScreen(team, me);
+    } else {
+      body.innerHTML = `<div class="notice">🧪 Aperçu « ${esc(mode)} » inconnu. Valeurs possibles : victoire, defaite, blocage.</div>`;
+    }
   }
 
   /* === Boot === */
@@ -995,62 +1372,183 @@ window.Nautilus = {
     if (_o2Config) majReserveO2();
 
     chargerConfigO2().then(() => {
-      majReserveO2();
-      setInterval(majReserveO2, 30000);
+      majReserveO2();   /* s'auto-programme (cadence adaptative) */
       /* La date de depart peut etre posee pendant la partie (un autre
          equipage lance la mission) : on la reverifie de temps en temps. */
       setInterval(() => chargerConfigO2().then(majReserveO2), 120000);
     });
 
-    /* 1) Vérifier équipe */
-    if (!state.teamCode) {
-      // Le message d'erreur vit dans ce bloc : il faut le rendre visible.
-      $('identityCard').style.display = 'block';
-      $('identifyMsg').innerHTML = `<div class="status-banner warning">⚠️ Aucun équipage détecté. <a href="index.html" style="color:var(--fnac);text-decoration:underline;">Retourne à l'accueil pour embarquer</a>.</div>`;
-      $('identifyBtn').disabled = true;
-    } else {
-      /* Affichage provisoire le temps que l'equipe se charge : on montre
-         des points de suspension plutot que le code technique (NEMO...),
-         que le joueur n'a pas besoin de voir. onTeamUpdate() y mettra
-         ensuite le vrai nom d'equipage. */
-      $('topTeam').textContent = '…';
-      $('identifyBtn').addEventListener('click', identify);
-      $('memberName').addEventListener('keydown', e => { if (e.key === 'Enter') identify(); });
-      /* Auto-remplir si on a déjà un nom en local */
-      const cached = localStorage.getItem('nautilusLastMember');
-      if (cached) {
-        try { const m = JSON.parse(cached); $('memberName').value = m.name || ''; $('memberService').value = m.service || 'PE'; } catch(e){}
+    setupDirectResumeForm();
+
+    /* ÉQUIPAGE ACTIF EN PLONGÉE (globale) : on écoute la collection
+       `teams` en temps réel pour afficher tous les matelots en plongée,
+       toutes équipes confondues. */
+    try {
+      _unsubAllTeams = onSnapshot(collection(N.db, 'teams'), (snap) => {
+        _allTeams = [];
+        snap.forEach((d) => _allTeams.push({ teamCode: d.id, ...d.data() }));
+        renderCrew();
+      }, () => { /* lecture indisponible : on garde l'état précédent */ });
+      /* Re-rendu périodique : filtre les horodatages périmés même sans
+         nouvelle écriture Firestore (un matelot parti cesse d'écrire, la
+         collection `teams` ne change pas, donc onSnapshot reste muet). */
+      if (!_crewRefreshTimer) {
+        _crewRefreshTimer = setInterval(() => renderCrew(), 30000);
       }
-      /* Le drapeau du mode test doit etre pose AVANT de brancher l'ecoute
-         temps reel : sinon la premiere reponse de Firestore ecraserait
-         l'equipage fictif avant meme qu'il soit cree. */
+    } catch (e) { console.warn('Équipage actif (global) indisponible :', e); }
+
+    /* Aperçu admin : on court-circuite TOUT le démarrage normal (équipe,
+       session, identification). L'appel est différé d'un tour de boucle :
+       les fonctions de rendu et leurs constantes sont déclarées plus bas
+       dans le module et ne seraient pas encore prêtes ici. */
+    const modeApercu = apercuAdminDemande();
+    if (modeApercu) {
+      setTimeout(() => {
+        try { initApercuAdmin(modeApercu); }
+        catch (e) { console.error('Aperçu admin:', e); }
+      }, 0);
+      return;
+    }
+
+    /* 1) Un lien personnel (?code=…&m=…) reprend automatiquement le
+       matelot. Une URL nue ouvre le formulaire de reprise par Code Matelot. */
+    if (!state.teamCode) {
+      $('identityCard').style.display = 'block';
+      $('topTeam').textContent = '—';
+    } else {
+      /* Affichage provisoire le temps que l'équipe se charge : on montre
+         des points de suspension plutôt que le code technique. */
+      $('topTeam').textContent = '…';
       state.isTest = (N.getCurrentMatelotCode() === 'ZZZZ-0000');
 
-      /* Charge l'équipe + branche les listeners live */
+      /* Charge l'équipe + branche les listeners live. */
       await attachTeamListener();
 
-      /* ===== IDENTIFICATION AUTOMATIQUE =====
-         Le matelot s'est deja identifie sur la page d'accueil, avec son
-         Code Matelot ou son lien personnel (QR). Lui redemander son nom et
-         son service ici n'a plus de sens : on retrouve sa fiche a partir
-         de son code et on entre directement dans le mini-jeu.
-         Le formulaire reste dans la page et sert de repli : il ne
-         s'affiche que si le code est absent ou introuvable (arrivee
-         directe sur cette page, code efface, base injoignable). */
+      /* Un Code Matelot présent dans un lien personnel ouvre directement
+         la partie. S'il est invalide, on bascule vers le même formulaire
+         de reprise que pour une URL nue. */
       const auto = await autoIdentifyFromCode();
       if (!auto) {
-        // Repli : pas de code exploitable, on demande l'identite.
         $('identityCard').style.display = 'block';
+        setDirectResumeMessage('Ce lien ne permet pas de retrouver un matelot. Entre ton Code Matelot personnel.', 'error');
       }
     }
   })();
 
   // Ancienne fonction validateAccessCode supprimée (plus de garde-fou d'URL).
 
+  const DIRECT_MATELOT_CODE_RE = /^[A-Z]{4}-[0-9]{4}$/;
+
+  function setDirectResumeMessage(message, kind='', asHtml=false) {
+    const box = $('identifyMsg');
+    if (!box) return;
+    /* asHtml reserve aux messages construits par NOUS (nom du matelot
+       deja echappe avec esc() a l'appel). Jamais d'entree brute. */
+    if (asHtml) box.innerHTML = message;
+    else box.textContent = message || '';
+    box.className = 'direct-resume-message' + (kind ? ` ${kind}` : '');
+  }
+
+  function formatDirectMatelotCode(raw) {
+    const up = String(raw || '').toUpperCase();
+    const found = up.match(/[A-Z]{4}\s*-?\s*[0-9]{4}/);
+    const source = (found && up.length > 9) ? found[0] : up;
+    let letters = '', digits = '';
+    for (const character of source) {
+      if (letters.length < 4) {
+        if (character >= 'A' && character <= 'Z') letters += character;
+        continue;
+      }
+      if (digits.length < 4 && character >= '0' && character <= '9') digits += character;
+    }
+    if (letters.length < 4) return letters;
+    if (!digits.length && !source.includes('-')) return letters;
+    return letters + '-' + digits;
+  }
+
+  function setupDirectResumeForm() {
+    const input = $('matelotCodeInput');
+    const button = $('resumeDirectBtn');
+    if (!input || !button || button.dataset.bound === '1') return;
+    button.dataset.bound = '1';
+    button.addEventListener('click', resumeDirectMission);
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') resumeDirectMission();
+    });
+    input.addEventListener('input', event => {
+      const next = formatDirectMatelotCode(event.target.value);
+      if (next !== event.target.value) event.target.value = next;
+    });
+  }
+
+  async function resumeDirectMission() {
+    const input = $('matelotCodeInput');
+    const button = $('resumeDirectBtn');
+    if (!input || !button) return;
+    const code = String(input.value || '').trim().toUpperCase();
+
+    if (!code) {
+      setDirectResumeMessage('Entre ton Code Matelot pour reprendre la mission.', 'error');
+      input.focus();
+      return;
+    }
+    if (!DIRECT_MATELOT_CODE_RE.test(code)) {
+      setDirectResumeMessage('Format attendu : 4 lettres, un tiret, puis 4 chiffres. Exemple : ABCD-1234.', 'error');
+      input.focus();
+      return;
+    }
+
+    button.disabled = true;
+    setDirectResumeMessage('Recherche de ta place à bord…', 'loading');
+    try {
+      let teamCode;
+      if (code === 'ZZZZ-0000') {
+        teamCode = N.TEAM_DEFS[0]?.code || 'NEMO';
+      } else {
+        const indexSnap = await getDoc(doc(N.db, 'matelots', code));
+        if (!indexSnap.exists()) {
+          setDirectResumeMessage('Code Matelot introuvable. Vérifie ta saisie ou demande de l’aide à l’organisation.', 'error');
+          input.focus();
+          return;
+        }
+        teamCode = indexSnap.data().teamCode;
+      }
+
+      const team = await N.getTeam(teamCode);
+      if (!team) {
+        setDirectResumeMessage('Cet équipage est introuvable. Retourne à l’accueil ou contacte l’organisation.', 'error');
+        return;
+      }
+
+      state.teamCode = team.teamCode;
+      state.team = team;
+      state.isTest = code === 'ZZZZ-0000';
+      /* Mode concepteur : l'équipage coquille (NEMO) n'est pas mémorisé —
+         le compte fantôme ne fait partie d'aucun équipage. */
+      if (!state.isTest) N.setCurrentTeamCode(team.teamCode);
+      localStorage.setItem('nautilusMatelotCode', code);
+      await attachTeamListener();
+
+      /* avecSalut : le matelot vient de taper son code — son nom
+         s'affiche en gros et en or avant la bascule sur le jeu. */
+      const identified = await autoIdentifyFromCode(true);
+      if (!identified) {
+        setDirectResumeMessage('Ce Code Matelot ne correspond pas à cet équipage. Vérifie ta saisie.', 'error');
+        return;
+      }
+      input.value = '';
+    } catch (error) {
+      console.error('resumeDirectMission:', error);
+      setDirectResumeMessage('La reprise est momentanément indisponible. Réessaie dans un instant.', 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   /* === Identification automatique par Code Matelot ===
      Retrouve la fiche du matelot et entre dans le jeu sans rien demander.
      Renvoie true si l'entree a reussi. */
-  async function autoIdentifyFromCode() {
+  async function autoIdentifyFromCode(avecSalut = false) {
     const code = N.getCurrentMatelotCode();
     if (!code) return false;                 // pas de code : on garde le formulaire
 
@@ -1089,7 +1587,10 @@ window.Nautilus = {
         }]
       };
       state.session = null;   // aucune epreuve en cours au depart
-      $('topTeam').textContent = 'Équipage de test';
+      /* Barre du haut : la MÊME bannière que sur les paliers ≥ 2
+         (palier-sas.js). Règle d'uniformité : mode concepteur = mode
+         test (ZZZZ-0000) — le testeur n'appartient à AUCUN équipage. */
+      $('topTeam').textContent = '🧪 Mode test — aucun équipage';
       N.showToast('Mode test : partie d\'essai, rien n\'est enregistré.', 'info');
       renderCrew();
       $('identityCard').style.display = 'none';
@@ -1130,10 +1631,26 @@ window.Nautilus = {
     localStorage.setItem('nautilusLastMember', JSON.stringify(state.me));
     N.showToast(`Bienvenue à bord, ${state.me.name}.`, 'success');
     renderCrew();
+    /* Reconnexion personnelle : si l'équipage a levé mon blocage en mon
+       absence, on me le dit tout de suite. */
+    annoncerBlocageLeve(state.team);
 
-    N.heartbeat(state.teamCode);
+    /* Presence en live : la cle MATELOT est transmise, pas seulement
+       l'appareil (onlineMatelots). Si le matelot change sur ce poste,
+       le prochain battement mettra a jour la bonne cle. */
+    N.heartbeat(state.teamCode, state.me && state.me.memberKey);
     if (!state._heartbeatInterval) {
-      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode), 30000);
+      state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 15000);
+    }
+
+    /* MISE EN EVIDENCE DU NOM pour un retour : quand le matelot vient de
+       taper son Code Matelot (avecSalut), son NOM s'affiche en gros et en
+       or dans la carte pendant 1,6 s avant la bascule sur le jeu — il
+       voit immediatement que la place retrouvee, c'est bien la sienne.
+       La reprise par lien personnel, elle, garde le seul toast. */
+    if (avecSalut) {
+      setDirectResumeMessage(`⚓ Bon retour à bord, <b class="dr-name">${esc(state.me.name)}</b> !`, 'retour', true);
+      await new Promise(r => setTimeout(r, 1600));
     }
 
     // Le formulaire n'a jamais besoin d'apparaitre : on le retire tout de suite.
@@ -1142,55 +1659,12 @@ window.Nautilus = {
     return true;
   }
 
-  /* === Identification joueur === */
-  async function identify() {
-    const name = $('memberName').value.trim();
-    const service = $('memberService').value;
-    if (!name) { N.showToast('Indique ton nom pour embarquer.', 'warning'); return; }
-    if (!state.team) { N.showToast('Connexion à l\'équipage en cours…', 'warning'); return; }
-    const key = N.memberKey(name);
-    /* Vérifier si on n'est pas déjà membre */
-    const existing = (state.team.members || []).find(m => m.memberKey === key);
-    if (existing) {
-      /* On remplace l'identité locale (ré-embarquement) */
-      state.me = { name: existing.name, service: existing.service, memberKey: key, clientId: N.getClientId() };
-    } else {
-      /* Ajout comme nouveau membre */
-      const member = { name: name.toUpperCase(), service, memberKey: key, registeredAt: new Date().toISOString() };
-      const members = [...(state.team.members || []), member];
-      /* Instant releve AVANT l'ecriture reseau : la ligne du journal doit
-         porter l'heure de l'arrivee du matelot, pas celle de la reponse
-         du serveur — sinon elle se retrouve apres des evenements
-         pourtant posterieurs. */
-      const instantArrivee = new Date();
-      try {
-        await N.saveTeam(state.team, { members });
-        state.me = { name: member.name, service, memberKey: key, clientId: N.getClientId() };
-        N.addLogEntry(`${member.name} a rejoint l'équipage.`, 'info', instantArrivee);
-      } catch (err) {
-        $('identifyMsg').innerHTML = `<div class="status-banner danger">❌ Erreur : ${esc(err.message)}</div>`;
-        return;
-      }
-    }
-    /* Stocker en local pour auto-remplissage */
-    localStorage.setItem('nautilusLastMember', JSON.stringify(state.me));
-    $('identifyMsg').innerHTML = `<div class="status-banner success">✅ Bienvenue à bord, <b>${esc(state.me.name)}</b> !</div>`;
-    N.showToast(`${state.me.name} a embarqué.`, 'success');
-    renderCrew();
-    /* Heartbeat */
-    N.heartbeat(state.teamCode);
-    if (!state._heartbeatInterval) state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode), 30000);
-    /* Cacher l'identification */
-    setTimeout(() => { $('identityCard').style.display = 'none'; }, 1000);
-    showGame();
-  }
-
   /* === Listeners live === */
   async function attachTeamListener() {
     if (state.unsubTeam) state.unsubTeam();
     state.unsubTeam = N.getTeamRealtime(state.teamCode, (team) => {
       if (!team) {
-        setStatus('Équipage introuvable.', 'danger');
+        N.showToast('Équipage introuvable.', 'danger', 8000);
         return;
       }
       /* MODE TEST : on ignore les mises a jour de la vraie equipe, sinon
@@ -1203,19 +1677,10 @@ window.Nautilus = {
   }
   function onTeamUpdate() {
     const t = state.team;
-    $('topTeam').textContent = t.teamName || t.teamCode;
-    /* Bandeau statut */
-    const monBlocage = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
-    const jeSuisBloque = state.me ? N.isMatelotLocked(t, state.me.memberKey) : false;
-    /* PLUS DE CAS "equipage bloque" : depuis que le blocage est personnel,
-       plus rien ne bloque une equipe entiere. */
-    if (jeSuisBloque) {
-      setStatus(`🔒 Tu es en surface jusqu'à ${N.formatDate(monBlocage.lockedUntil)} — ${monBlocage.failCount || 0} échec(s) personnel(s). L'équipage, lui, continue.`, 'danger');
-    } else if (t.status === 'finished') {
-      setStatus('🏆 Mission terminée. Carnet de bord scellé.', 'success');
-    } else {
-      setStatus(`Position : ${N.STEPS[t.currentStep]?.label || t.currentStep} · ${(t.members||[]).length} membre(s) à bord.`, 'info');
-    }
+    $('topTeam').textContent = displayTeamName(t);
+    /* PLUS DE BANDEAU DE STATUT dans l'encart equipage : le blocage d'un
+       matelot s'affiche sur son ecran de blocage, la fin de mission sur
+       l'accueil. Ici, on ne garde que la liste des matelots connectes. */
     renderCrew();
     showGame();
     /* BUG CORRIGE : showGame() ne redessine la zone de jeu que la premiere
@@ -1224,22 +1689,144 @@ window.Nautilus = {
        d'un blocage PERSONNEL — n'apparaissait donc jamais a l'ecran tant
        que la session ne bougeait pas. On redessine explicitement. */
     if (state.me) renderGameArea();
-  }
-  function renderCrew() {
-    const list = $('crewList');
-    if (!list || !state.team) return;
-    const members = state.team.members || [];
-    list.innerHTML = members.map(m => {
-      const isMe = state.me && m.memberKey === state.me.memberKey;
-      return `
-        <div class="crew-member ${isMe ? 'self' : ''}">
-          <div class="crew-name">${esc(m.name)} ${isMe ? '(toi)' : ''}</div>
-          <div class="crew-meta">${esc(m.service || '—')}</div>
-        </div>
-      `;
-    }).join('') || `<div style="color:#9bc4d4;font-size:13px;grid-column:1/-1;">Aucun matelot encore inscrit.</div>`;
+    annoncerBlocageLeve(t);
   }
 
+  /* ===== « TU ES DÉBLOQUÉ » À LA RECONNEXION D'UN MATELOT =====
+     Cas visé : le matelot avait échoué et était bloqué en surface ; entre-
+     temps, son équipage a validé une épreuve (advanceTeam a alors levé son
+     blocage et posé liftedByStep). À sa reconnexion personnelle, il DOIT
+     recevoir un message clair : il peut reprendre la mission sans délai.
+     Affiché une seule fois par levée de blocage et par appareil, puis
+     accusé en base (liftedAckAt) pour ne pas resservir le message
+     indéfiniment. */
+  let _blocageLeveVu = '';   // liftedAt déjà annoncé dans CETTE page
+  function annoncerBlocageLeve(t) {
+    if (!t || !state.me || state.isTest) return;
+    const l = N.getMatelotLock(t, state.me.memberKey);
+    if (!l || !l.liftedByStep) return;
+    /* Levée déjà reconnue ? */
+    const liftedMs = l.liftedAt ? new Date(l.liftedAt).getTime() : 0;
+    if (l.liftedAckAt && new Date(l.liftedAckAt).getTime() >= liftedMs) return;
+    const marque = String(l.liftedAt || l.liftedByStep);
+    if (_blocageLeveVu === marque) return;
+    /* Ceinture locale : si l'accusé en base s'est perdu (coupure réseau),
+       la mémoire de l'appareil empêche de re-montrer le message. */
+    const cle = 'nautilusBlocageLeveVu:' + t.teamCode + ':' + state.me.memberKey;
+    try { if (localStorage.getItem(cle) === marque) return; } catch (e) {}
+    _blocageLeveVu = marque;
+    try { localStorage.setItem(cle, marque); } catch (e) {}
+
+    const msg = `✅ ${state.me.name}, ton équipage a validé une épreuve en ton absence. `
+              + `Ton blocage est levé : tu peux reprendre la mission sans délai !`;
+    /* Toast seul (12 s) : le bandeau de statut a ete supprime avec
+       « Connexion au sonar en cours… ». */
+    N.showToast(msg, 'success', 12000);
+    N.addLogEntry(`🔓 <b>${state.me.name}</b> est débloqué : l'équipage a validé une épreuve en son absence.`, 'success');
+
+    /* Accusé en base (silencieux) : le message ne reviendra plus. */
+    const key = state.me.memberKey;
+    const locks = { ...((state.team || t).matelotLocks || {}) };
+    if (locks[key]) {
+      locks[key] = { ...locks[key], liftedAckAt: new Date().toISOString() };
+      N.saveTeam(state.team || t, { matelotLocks: locks })
+        .then((nt) => { if (nt && state.team) state.team = nt; })
+        .catch(() => { /* l'accusé repassera au prochain chargement */ });
+    }
+  }
+  /* Fraicheur acceptee d'un signe de vie : battement toutes les 15 s,
+     on tolère deux battements manques (2 x 15 s = 30 s) avant de
+     considerer le matelot deconnecte. 15 s (et non 5 s) réduit les
+     écritures Firestore de ~12/min à ~4/min par matelot actif
+     (économie de batterie / chauffe). */
+  const PRESENCE_FRAICHE_MS = 30 * 1000;
+
+  /* ÉQUIPAGE ACTIF EN PLONGÉE — plongée GLOBALE : tous les matelots en
+     plongée, toutes équipes confondues, groupés par équipage (liseré +
+     voyant lumineux à la couleur de l'équipage). */
+  function renderCrew() {
+    const list = $('crewList');
+    if (!list) return;
+    const maintenant = Date.now();
+    let html = '';
+    let total = 0;
+
+    /* MODE TEST : l'équipage fictif (un seul matelot) — aucun autre. */
+    if (state.isTest) {
+      const connectes = (state.team?.members || []).filter(m => !isTestMember(m));
+      html = connectes.map(m => `
+        <div class="crew-member self">
+          <div class="crew-name">${esc(m.name)} (toi)</div>
+          <div class="crew-meta">${esc(m.service || '—')}</div>
+        </div>`).join('');
+      list.innerHTML = html || `<div class="crew-empty">Aucun matelot en plongée pour le moment.</div>`;
+      return;
+    }
+
+    (_allTeams || []).forEach(t => {
+      if (!t) return;
+      const members = (t.members || []).filter(m => !isTestMember(m));
+      const vus = t.onlineMatelots || {};
+      const connectes = members.filter(m => {
+        const cle = m.memberKey || N.memberKey(m.name || '');
+        if (state.me && cle === state.me.memberKey) return true; // moi : connecté
+        const vu = vus[cle] ? new Date(vus[cle]).getTime() : 0;
+        return (maintenant - vu) < PRESENCE_FRAICHE_MS;
+      });
+      if (!connectes.length) return;
+      total += connectes.length;
+      const st = teamStyle(t.teamCode);
+      const nom = displayTeamName(t);
+      const cartes = connectes.map(m => {
+        const isMe = state.me && ((m.memberKey || N.memberKey(m.name || '')) === state.me.memberKey);
+        return `
+          <div class="crew-member ${isMe ? 'self' : ''}">
+            <div class="crew-name">${esc(m.name)} ${isMe ? '(toi)' : ''}</div>
+            <div class="crew-meta">${esc(m.service || '—')}</div>
+          </div>`;
+      }).join('');
+      html += `
+        <div class="crew-group" style="--team-tint:${st.tint};--team-glow:${st.glow}">
+          <div class="crew-group-head">
+            <span class="crew-group-dot" aria-hidden="true"></span>
+            <span class="crew-group-name">${esc(nom)}</span>
+            <span class="crew-group-count">${connectes.length} ${connectes.length > 1 ? 'matelots en plongée' : 'matelot en plongée'}</span>
+          </div>
+          <div class="crew-group-members">${cartes}</div>
+        </div>`;
+    });
+
+    const rendu = html || `<div class="crew-empty">Aucun matelot en plongée pour le moment.</div>`;
+    /* ÉCONOMIE DE BATTERIE : on ne touche au DOM QUE si le contenu a
+       réellement changé. Sinon chaque battement de présence reconstruisait
+       la liste, redémarrait l'animation du voyant et forçait un repaint —
+       source de chauffe inutile sur téléphone. */
+    if (list.innerHTML !== rendu) list.innerHTML = rendu;
+
+    /* Voyant rouge clignotant du bloc : allumé tant qu'au moins un matelot
+       est en plongée (en cours de jeu), éteint dès que la liste se vide. */
+    const lamp = $('diveLamp');
+    if (lamp) {
+      const actif = total > 0;
+      lamp.classList.toggle('on', actif);
+      lamp.setAttribute('title', actif
+        ? `${total} ${total > 1 ? 'matelots en plongée' : 'matelot en plongée'}`
+        : 'Aucun matelot en plongée');
+    }
+  }
+
+  /* === QUI EST L'AUTEUR DE LA SESSION ? — par la CLÉ MATELOT, jamais
+     par l'appareil ===
+     GROS BUG CORRIGÉ : clientId identifie le TÉLÉPHONE (localStorage de
+     l'appareil), pas le matelot. Quand plusieurs matelots se succèdent
+     sur le même appareil — test admin avec « l'équipe Nautilus »,
+     dépannage d'un camarade… — chacun était reconnu comme l'auteur de
+     la partie perdue (« Remontée forcée » sans moyen de rejouer) :
+     tout l'équipage avait l'air bloqué, alors que la règle ne bloque
+     QUE le fautif. Sur une partie en cours, c'était pire : le second
+     matelot apparaissait AUX COMMANDES. La clé matelot est la seule
+     identité fiable ; clientId ne sert que de repli pour une vieille
+     session sans startedByMemberKey. */
   /* === Affichage principal du jeu === */
   function showGame() {
     if (!state.team) return;
@@ -1265,6 +1852,10 @@ window.Nautilus = {
 
   function onSessionUpdate(session) {
     state.session = session;
+    /* Dès qu'on sort de l'état « won » (nouvelle partie, reset…), on
+       réarme le rendu de victoire pour que la prochaine victoire
+       s'affiche bien. */
+    if (!session || session.state !== 'won') state._wonRendu = null;
     /* RESTAURATION DU MOT apres un retour sur le jeu.
        Le mot ne vivait qu'en memoire vive : au moindre rechargement de la
        page, ou en revenant depuis l'accueil, il etait perdu. L'indice
@@ -1282,22 +1873,35 @@ window.Nautilus = {
     renderGameArea();
   }
 
-  /* Allume ou eteint le voyant rouge de l'encart "Equipage actif en
-     plongee". Il ne s'allume QUE si une epreuve est reellement en cours
-     (state 'playing') : ni une partie gagnee, ni une partie perdue, ni un
-     ecran d'attente ne doivent le faire clignoter. */
-  function majVoyantPlongee() {
-    const lamp = $('diveLamp');
-    if (!lamp) return;
-    const s = state.session;
-    const enCours = !!(s && s.state === 'playing');
-    lamp.classList.toggle('on', enCours);
-    lamp.setAttribute('title', enCours
-      ? `${s.startedByName || 'Un matelot'} est aux commandes`
-      : 'Aucun matelot aux commandes');
-  }
+  /* Le voyant rouge du bloc « Équipage actif en plongée » est désormais
+     piloté par renderCrew() : il clignote tant qu'au moins un matelot est
+     en plongée (en cours de jeu), et s'éteint quand la liste se vide. */
 
   /* === Rendu de la zone de jeu === */
+  /* === QUI EST L'AUTEUR DE LA SESSION ? — par la CLÉ MATELOT, jamais
+     par l'appareil ===
+     GROS BUG CORRIGÉ : clientId identifie le TÉLÉPHONE (localStorage de
+     l'appareil), pas le matelot. Quand plusieurs matelots se succèdent
+     sur le même appareil — test admin avec « l'équipe Nautilus »,
+     dépannage d'un camarade… — chacun était reconnu comme l'auteur de
+     la partie perdue (« Remontée forcée » sans moyen de rejouer) :
+     tout l'équipage avait l'air bloqué, alors que la règle ne bloque
+     QUE le fautif. Sur une partie en cours, c'était pire : le second
+     matelot apparaissait AUX COMMANDES. La clé matelot est la seule
+     identité fiable ; clientId ne sert que de repli pour une vieille
+     session sans startedByMemberKey. */
+  function estAuteurSession(s, me) {
+    if (!s || !me) return false;
+    if (s.startedByMemberKey) return s.startedByMemberKey === me.memberKey;
+    return s.startedBy === me.clientId;
+  }
+
+  /* Affiche / masque une carte (briefCard, teamCard, logCard, gameCard). */
+  function montrerCarte(id, visible) {
+    const el = $(id);
+    if (el) el.style.display = visible ? 'block' : 'none';
+  }
+
   function renderGameArea() {
     const body = $('gameBody');
     if (!body) return;
@@ -1305,11 +1909,37 @@ window.Nautilus = {
     const s = state.session;
     const me = state.me;
 
-    /* Le voyant suit CHAQUE redessin : c'est le point de passage commun a
-       tous les changements d'etat (debut de partie, victoire, defaite,
-       indice demande, reprise par un autre matelot). Le placer ici evite
-       d'avoir a y penser dans chacun de ces cas. */
-    majVoyantPlongee();
+    /* MISE EN PAGE « AU MOMENT DE JOUER » ET « PAGE VICTOIRE » : pendant
+       l'épreuve (état playing) ET sur l'écran de victoire (état won),
+       la page ne laisse QUE l'encart « 🧪 ÉPREUVE DU PALIER », en scène
+       unique (classe epreuve-focus) : l'« ⚓ ÉQUIPAGE ACTIF EN PLONGÉE »
+       et le « 📜 JOURNAL DE BORD (Activité en direct) » se rangent
+       (demande capitaine : retirés aussi de la page victoire). Ils
+       vivent sur la vue PRÉCÉDENTE — le briefing — et réapparaissent
+       sur les autres états hors mini-jeu (attente, défaite, blocage,
+       relecture). */
+    if (t) {
+      const enJeu = !!(s && s.state === 'playing');
+      const surVictoire = !!(s && s.state === 'won');
+      /* PAR DÉFAUT : la vue épreuve (carte du mini-jeu) est affichée et
+         le briefing est rangé. Les deux branches « briefing » (pas de
+         session, ou échec d'un autre matelot) repassent sur la vue
+         briefing un peu plus bas. */
+      montrerCarte('briefCard', false);
+      montrerCarte('gameCard', true);
+      montrerCarte('teamCard', !(enJeu || surVictoire));
+      /* Journal de bord : visible en haut du mini-jeu UNIQUEMENT pour les
+         matelots qui regardent l'épreuve de LEUR équipage (les spectateurs).
+         Le matelot aux commandes, lui, reste concentré sur son jeu. Sur les
+         autres états (attente, briefing, défaite d'un autre, blocage), le
+         journal reste affiché comme avant. La page de victoire le range. */
+      const estSpectateur = !!(enJeu && me && !estAuteurSession(s, me));
+      montrerCarte('logCard', estSpectateur || !(enJeu || surVictoire));
+      $('gameCard').classList.toggle('epreuve-focus', enJeu || surVictoire);
+    }
+
+    /* Le voyant rouge est mis à jour par renderCrew() à chaque
+       rafraîchissement de la présence (et via le minuteur local). */
 
     /* Chrono de la barre de titre. Hors partie, il RETOMBE sur le temps
        imparti (03:30) : sans cette remise a zero, il restait fige sur le
@@ -1329,8 +1959,12 @@ window.Nautilus = {
        EXCEPTION : juste après sa défaite, on lui laisse d'abord l'écran
        "trop d'erreurs" (qui indique déjà son heure de reprise), sinon il
        passerait directement au verrou sans comprendre ce qui s'est passé. */
-    const jeViensDePerdre = !!(s && s.state === 'lost' && me
-      && (s.startedByMemberKey === me.memberKey || s.startedBy === me.clientId));
+    /* Blocage PERSONNEL : seul le matelot qui a échoué est repoussé en
+       surface. Les autres continuent de jouer normalement.
+       EXCEPTION : juste après sa défaite, on lui laisse d'abord l'écran
+       "trop d'erreurs" (qui indique déjà son heure de reprise), sinon il
+       passerait directement au verrou sans comprendre ce qui s'est passé. */
+    const jeViensDePerdre = !!(s && s.state === 'lost' && estAuteurSession(s, me));
     if (me && !jeViensDePerdre && N.isMatelotLocked(t, me.memberKey)) {
       body.innerHTML = renderMatelotLockScreen(t, me);
       return;
@@ -1342,30 +1976,59 @@ window.Nautilus = {
 
     /* Pas de session active → écran d'accueil du palier */
     if (!s || s.state === 'idle' || s.state === 'ended') {
-      /* Palier deja franchi : on montre la suite du parcours.
+      /* GARDE-FOU « palier déjà franchi » : un matelot d'un équipage déjà
+         plus loin arrive encore ici (favori, historique, retour
+         navigateur, ancien onglet…). Sans cette intervention, il verrait
+         l'écran d'accueil du Palier 1 et pourrait REJOUER un palier déjà
+         validé (double validation, fausse annonce, progression cassée).
 
-         On verifie AUSSI que l'equipage a bien quitte le palier 1
-         (currentStep). Sans cela, une equipe dont la liste des paliers
-         valides contenait 'start' alors qu'elle etait toujours au
-         palier 1 restait coincee sur "Palier 1 termine, prochaine
-         etape : Palier 1" — un ecran sans issue, qui invitait a passer
-         a une etape ou l'on se trouvait deja.
-         Cet etat incoherent peut venir d'une remise a zero partielle ou
-         d'une intervention manuelle en base. */
+         L'ancien écran passif « 🧭 Transition vers le palier suivant »
+         est SUPPRIMÉ : on ENVOIE directement le matelot sur la page du
+         palier courant de son équipage — exactement comme le bouton
+         « REPRENDRE LA MISSION » de l'accueil. location.replace (et non
+         href) : cette page ne reste pas dans l'historique, le bouton
+         « retour » du navigateur ne peut pas y revenir en boucle.
+         nextStepPageUrl() pointe vers le portail du palier courant (le
+         nom du fichier EST le code du palier ; les pages des paliers
+         suivent toutes cette convention). */
       const dejaFranchi = (t.completedSteps || []).includes('start')
                        && t.currentStep !== 'start';
       if (dejaFranchi) {
-        body.innerHTML = renderNextStepPrompt(t);
+        /* Retour explicite depuis la zone scellée du palier suivant
+           (bouton « Voir l'indication de la zone de recherche »,
+           palier1.html?relecture=sas) : on affiche l'écran de relecture
+           de la direction du QR au lieu de reboucler vers le sas. */
+        const params = new URLSearchParams(location.search);
+        if (params.get('relecture') === 'sas') {
+          body.innerHTML = renderRelectureSasScreen();
+          return;
+        }
+        location.replace(nextStepPageUrl(t.currentStep));
         return;
       }
-      body.innerHTML = renderIdleScreen(t, me, null);
+      montrerCarte('briefCard', true);
+      montrerCarte('gameCard', false);
+      montrerCarte('teamCard', true);
+      montrerCarte('logCard', true);
+      $('briefHost').innerHTML = renderIdleScreen(t, me, null);
       bindIdleEvents();
       return;
     }
 
     /* Session en cours */
     if (s.state === 'won') {
+      /* GARDE-FOU « REBOOT » : la victoire était re-rendue plusieurs fois
+         de suite (arrivée de la session, mise à jour de l'équipe par
+         advanceTeam, puis appel direct) — chaque rendu effaçait et
+         recréait l'écran (radar, records), ce qui ressemblait à un
+         rechargement de page. On ne rend qu'UNE fois par victoire, tant
+         que la session de victoire n'a pas changé. */
+      const cle = s.endedAt || s.startedAt || 'won';
+      if (state._wonRendu === cle) return;
+      state._wonRendu = cle;
       body.innerHTML = renderWonScreen(s, t);
+      jouerSonVictoire(s);
+      chargerRecordsVictoire();
       return;
     }
 
@@ -1374,15 +2037,21 @@ window.Nautilus = {
          echoue voit l'ecran de defaite (il est de toute facon bloque et
          intercepte plus haut). Les autres matelots ne restent pas coinces
          devant : la barre est libre, ils peuvent reprendre le palier. */
-      const cestMoi = me && (s.startedByMemberKey === me.memberKey || s.startedBy === me.clientId);
+      const cestMoi = estAuteurSession(s, me);
       if (cestMoi) { body.innerHTML = renderLostScreen(s, t); return; }
-      body.innerHTML = renderIdleScreen(t, me, s);
+      montrerCarte('briefCard', true);
+      montrerCarte('gameCard', false);
+      montrerCarte('teamCard', true);
+      montrerCarte('logCard', true);
+      $('briefHost').innerHTML = renderIdleScreen(t, me, s);
       bindIdleEvents();
       return;
     }
 
-    /* Session "playing" */
-    if (s.startedBy === me.clientId || s.startedByMemberKey === me.memberKey) {
+    /* Session "playing" : l'AUTEUR est reconnu par sa clé matelot, jamais
+       par l'appareil (estAuteurSession) — sinon, sur un téléphone partagé,
+       un autre matelot se retrouvait aux commandes de la partie. */
+    if (estAuteurSession(s, me)) {
       /* Je suis le joueur */
       state.role = 'player';
       body.innerHTML = renderPlayerScreen(s, t, me);
@@ -1394,62 +2063,11 @@ window.Nautilus = {
     }
   }
 
-  function risquePersonnelHtml(t, me) {
-    if (!t || !me) return '';
-    const locks     = t.matelotLocks || {};
-    const maCle     = me.memberKey;
-    const mesEchecs = Number(locks[maCle]?.failCount || 0);
-    const rang      = mesEchecs + 1;
-    const prochaine = N.getLockHours(rang);
-    const suivante  = N.getLockHours(rang + 1);
-
-    /* Coequipiers LIBRES qui risqueraient moins que moi. */
-    const moins = (t.members || [])
-      .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
-      .filter(m => m.cle && m.cle !== maCle && !N.isMatelotLocked(t, m.cle))
-      .map(m => ({ ...m, echecs: Number(locks[m.cle]?.failCount || 0) }))
-      .filter(m => N.getLockHours(m.echecs + 1) < prochaine)
-      .sort((a, b) => a.echecs - b.echecs);
-
-    const lignes = [1,2,3,4,5,6].map(n => {
-      const h    = N.getLockHours(n);
-      const cls  = h >= 12 ? ' rouge' : (h >= 4 ? ' ambre' : '');
-      const act  = (Math.min(rang, 6) === n) ? ' actif' : '';
-      const lab  = n === 6 ? '6ᵉ échec et suivants' : (n === 1 ? '1ᵉʳ échec' : n + 'ᵉ échec');
-      return `<div class="bareme-l${cls}${act}"><span>${lab}</span><span class="bareme-h">${h} h</span></div>`;
-    }).join('');
-
-    let aide;
-    if (moins.length) {
-      const noms = moins.slice(0, 3).map(m => `<b>${esc(m.nom)}</b>`).join(', ');
-      aide = `🤝 <b>Pour continuer : passe la barre à ${noms}.</b> `
-           + (moins.length > 1 ? 'Ils risquent ' : 'Il risque ')
-           + `seulement <b>${N.getLockHours(moins[0].echecs + 1)} h</b>.`;
-    } else if (mesEchecs === 0) {
-      aide = `🤝 Ton compteur est vierge : tu es le mieux placé pour prendre le risque. `
-           + `Un matelot peut ainsi <b>se sacrifier</b> et encaisser les blocages pour protéger les autres.`;
-    } else {
-      aide = `🤝 Personne dans l'équipage ne risque moins que toi en ce moment : vas-y. `
-           + `Quand ton compteur sera lourd, laisse un camarade <b>se sacrifier</b> à ta place.`;
-    }
-
-    const niveau = prochaine >= 12 ? ' rouge' : (prochaine >= 4 ? ' ambre' : '');
-    return `
-      <div class="risque${niveau}">
-        <div class="risque-titre">⚠ Ce qu'un nouvel échec te coûterait</div>
-        <p class="risque-l">
-          ${mesEchecs === 0
-            ? `Ton compteur personnel est à <b>0 échec</b>.`
-            : `Tu as déjà <b>${mesEchecs} échec${mesEchecs > 1 ? 's' : ''}</b> à ton compteur personnel.`}
-          Si tu échoues ici, tu remontes en surface pour <b class="risque-h">${prochaine} h</b>${
-            prochaine >= 24 ? ' — le maximum.' : `, puis <b>${suivante} h</b> la fois suivante.`}
-          Ce compteur est <b>personnel</b> et ne se remet jamais à zéro.
-        </p>
-        <div class="bareme-liste">${lignes}</div>
-        <p class="risque-l aide">${aide}</p>
-      </div>
-    `;
-  }
+  /* L'ENCART « ⚠ Ce qu'un nouvel échec te coûterait » A ÉTÉ SUPPRIMÉ de
+     l'épreuve (fonction risquePersonnelHtml retirée) : l'écran de jeu va
+     à l'essentiel — le signal, la réponse, les indices. Les conséquences
+     d'un échec restent expliquées là où elles comptent : sur l'écran de
+     blocage (lignesBlocageHtml) et dans le briefing avant la partie. */
 
   /* === ÉCRAN : idle (pas de session en cours) === */
   function renderIdleScreen(t, me, echecPrecedent) {
@@ -1477,21 +2095,17 @@ window.Nautilus = {
     return `
       ${banniere}
       <div class="brief">
-        <div class="brief-signature">⚓ Briefing du capitaine</div>
-
         <p class="brief-intro">
-          Écoute le <b>sonar</b> et retranscris le mot.
+          Un signal émerge des abysses : le <b>Nautilus</b> se manifeste. Écoute la transmission et déchiffre le message pour guider ton équipage.
         </p>
 
         <ul class="brief-list">
           <li><span class="ico" aria-hidden="true">📋</span>
             <span><b>1 matelot</b> aux commandes à la fois.</span></li>
           <li><span class="ico" aria-hidden="true">⏱️</span>
-            <span><b>3 min 30</b> pour répondre.</span></li>
+            <span><b>3 min 30</b> pour analyser le signal et répondre.</span></li>
           <li class="warn"><span class="ico" aria-hidden="true">❌</span>
-            <span><b>3 erreurs</b> : le matelot remonte en surface.</span></li>
-          <li><span class="ico" aria-hidden="true">🤝</span>
-            <span>Un autre matelot peut reprendre.</span></li>
+            <span><b>3 erreurs</b> : remontée en surface — un équipier prend le relais.</span></li>
           <li class="warn"><span class="ico" aria-hidden="true">🆘</span>
             <span>Indice demandé : <b>1 h de blocage</b>.</span></li>
         </ul>
@@ -1500,8 +2114,35 @@ window.Nautilus = {
       </div>
     `;
   }
+  /* SCROLL AUTO « PRENDRE LES COMMANDES ».
+     Le bouton se lit en bas du briefing : au clic, la fenetre glisse
+     jusqu'au DEBUT de l'encart « 🧪 ÉPREUVE DU PALIER », plaque en haut
+     de l'ecran (sous la barre — scroll-margin-top dans palier1.css).
+     Trois regles :
+       1) au clic : le depart de la glissade ne depend pas du reseau ;
+       2) apres le redessin : la session remplace le briefing par
+          l'epreuve — on RE-cale le haut de la carte, au cas ou le
+          premier appel aurait ete coupe par le changement de contenu
+          (350 ms couvre le mode test, 900 ms le reseau reel) ;
+       3) repli instantane pour les navigateurs sans options objet.
+     NOTE TEST : sur un grand ecran de bureau ou la page ENTIERE tient
+     dans la fenetre, il n'y a rien a faire defiler : aucun mouvement
+     n'est visible, c'est normal. L'effet se constate sur telephone (ou
+     fenetre etroite) : l'epreuve arrive alors sous les yeux du matelot. */
+  function glisserVersEpreuve(){
+    const carte = $('gameCard');
+    if (!carte) return;
+    try { carte.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    catch (e) { try { carte.scrollIntoView(true); } catch (_) {} }
+  }
+
   function bindIdleEvents() {
-    $('takeLeadBtn')?.addEventListener('click', startNewSession);
+    $('takeLeadBtn')?.addEventListener('click', () => {
+      glisserVersEpreuve();
+      startNewSession();
+      setTimeout(glisserVersEpreuve, 350);
+      setTimeout(glisserVersEpreuve, 900);
+    });
   }
 
   async function startNewSession() {
@@ -1560,9 +2201,10 @@ window.Nautilus = {
        partie. Un matelot a paye 1 h de blocage pour les obtenir ; il
        serait injuste que la releve reparte de zero et doive repayer.
        On les reporte donc sur la nouvelle partie.
-       A noter : le mot change a chaque partie, mais les indices restent
-       justes — le nombre de lettres et la premiere lettre sont lus sur le
-       NOUVEAU mot au moment de l'affichage, jamais figes. */
+       A noter : le mot est désormais FIXE pour l'équipage (assigné une
+       seule fois), donc les indices restent exacts d'une tentative à
+       l'autre — le nombre de lettres et la première lettre sont relus sur
+       le mot au moment de l'affichage, jamais figés. */
     let indicesAcquis = [false, false, false];
     try {
       const precedente = state.session
@@ -1572,10 +2214,27 @@ window.Nautilus = {
       }
     } catch (e) { /* pas de partie precedente lisible : on repart a zero */ }
 
-    /* Choisir un mot et démarrer. Chaque mot a son indice géographique associé
-       (où se trouve le QR du palier 2 dans le magasin). */
-    const entry = N.pickWord();
+    /* MOT FIXE PAR ÉQUIPAGE : chaque équipage a SON mot à deviner, toujours
+       le même d'une tentative à l'autre, et différent de celui des autres
+       équipages. Il est assigné une seule fois (au premier lancement) puis
+       conservé dans le document de l'équipe (morseWordHash). En mode test
+       (aucune écriture), on garde un simple tirage local. */
+    const entry = state.isTest
+      ? (function() {
+          var saved = '';
+          try { saved = localStorage.getItem('nautilusP1TestWord:TEST') || localStorage.getItem('nautilusP1TestWord') || ''; } catch (_) {}
+          if (saved) {
+            try { var j = JSON.parse(saved); if (j && (j.w || j.word)) return motEntry(j.w || j.word) || motEntry('NAUTILE') || N.pickWord(); } catch (_) {}
+            var e = motEntry(saved.trim().toUpperCase());
+            if (e) return e;
+          }
+          return motEntry('NAUTILE') || N.pickWord();
+        })()
+      : await N.getMotEquipage(state.team);
     state.word = entry.w;
+    if (state.isTest) {
+      try { localStorage.setItem('nautilusP1TestWord:TEST', entry.w); } catch (_) {}
+    }
     state.typed = '';        // repart d'une reponse vide
 
     /* MODE TEST : rien n'est ecrit dans Firestore, donc l'ecoute temps reel
@@ -1600,7 +2259,7 @@ window.Nautilus = {
         startedWordHint: entry.h,
         lastEvent: 'session_started'
       };
-      N.addLogEntry(`⚓ <b>${state.me.name}</b> a pris les commandes. Épreuve en cours — personne d'autre ne peut jouer.`, 'warning');
+      N.addActe('prend les commandes', 'info', state.me.name);
       /* renderGameArea() et non onSessionUpdate() : cette derniere REMPLACE
          state.session par son argument, ce qui effacerait la session qu'on
          vient de fabriquer. */
@@ -1627,7 +2286,7 @@ window.Nautilus = {
       startedWordHint: entry.h,
       lastEvent: 'session_started'
     });
-    N.addLogEntry(`⚓ <b>${state.me.name}</b> a pris les commandes. Épreuve en cours — personne d'autre ne peut jouer.`, 'warning');
+    N.addActe('prend les commandes', 'info', state.me.name);
   }
 
   /* === ÉCRAN : joueur actif === */
@@ -1663,15 +2322,29 @@ window.Nautilus = {
 
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
-            <div class="morse-sweep"></div>
+            <!-- Lampe temoin EN PREMIER : le CSS (.on ~ .morse-scope)
+                 fait affoler les ondes pendant la lecture morse. -->
             <div class="morse-signal-light" id="morseVisual"></div>
+            <div class="morse-scope">
+              <div class="morse-scan"></div>
+              <div class="morse-wave w1"></div>
+              <div class="morse-wave w2"></div>
+            </div>
+            <div class="morse-glass"></div>
           </div>
           <div class="morse-controls">
             <button class="morse-listen-btn" id="morseListenBtn" ${listensLeft <= 0 ? 'disabled' : ''}>
               ${listensLeft > 0 ? '▶️ Écouter le signal' : '🔇 Plus d\'écoute'}
             </button>
             <div class="morse-counter">Écoutes restantes : <b id="morseCounter">${listensLeft}</b> / 3</div>
-            <div class="morse-counter">Erreurs : <b style="color:${errors >= maxErrors - 1 ? '#ff7b72' : '#8ee7ff'};">${errors}</b> / ${maxErrors}</div>
+            <div class="nautilus-voyants-rack" title="Erreurs : ${errors} / ${maxErrors} max">
+              <span class="nautilus-voyants-lbl">ERREURS</span>
+              <div class="nautilus-voyants">
+                <span class="nautilus-voyant ${errors >= 1 ? 'active' : ''}"></span>
+                <span class="nautilus-voyant ${errors >= 2 ? 'active' : ''}"></span>
+                <span class="nautilus-voyant ${errors >= 3 ? 'active' : ''}"></span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1690,24 +2363,28 @@ window.Nautilus = {
           <div id="morseFeedback"></div>
         </div>
 
-        ${risquePersonnelHtml(t, me)}
-
-        <div class="morse-hint-target">
-            <div class="morse-hint-target-info">
-              🆘 <b>Besoin d'aide ?</b> Tu peux demander un indice,
-              mais cela te coûte <b>1 h de blocage personnel</b> et tu
-              remontes en surface. Un coéquipier prendra ta place.
+        <div class="nautilus-hints-rack">
+          <div class="nautilus-hints-head">
+            <div class="nautilus-hints-title">🧭 INDICES DE L'ÉQUIPAGE</div>
+            <p class="nautilus-hints-note">
+              Demander un indice coûte <b>1 h de blocage personnel</b> (l'indice reste acquis à l'équipage).
+            </p>
+            <div class="nautilus-hints-action">
+              <button class="nautilus-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '✅ Tous les indices révélés' : '🆘 Demander un indice'}</button>
             </div>
-            <button class="morse-hint-btn" id="morseHintBtn" ${allRevealed ? 'disabled' : ''}>${allRevealed ? '✅ Tous les indices révélés' : '🆘 Demander un indice'}</button>
           </div>
-          <div class="morse-hints-grid">
+          <div class="nautilus-hints-grid">
             ${hintCards.map((h, i) => `
-              <div class="morse-hint-card ${s.hintsRevealed[i] ? 'morse-hint-revealed' : ''}">
-                <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed[i] ? '✓' : '🔒'}</div>
-                <div>${s.hintsRevealed[i] ? h.body : '— non révélé —'}</div>
+              <div class="nautilus-hint-card ${s.hintsRevealed[i] ? 'is-revealed' : 'is-locked'}">
+                <div class="nautilus-hint-badge">
+                  <span class="nautilus-hint-num">${h.label}</span>
+                  <span class="nautilus-hint-status">${s.hintsRevealed[i] ? '✨ Révélé' : '🔒 Scellé'}</span>
+                </div>
+                <div class="nautilus-hint-body">${s.hintsRevealed[i] ? h.body : '<i>Secret sous scellé</i>'}</div>
               </div>
             `).join('')}
           </div>
+        </div>
       </div>
     `;
   }
@@ -1808,14 +2485,13 @@ window.Nautilus = {
       return;
     }
     _isPlaying = true;
-    const ctx = N.getAudioCtx();
+    /* Le signal morse est la SEULE exception a la regle du silence : il
+       joue meme sonar coupe, car sans lui l'epreuve est insoluble (voir
+       getMorseCtx). Il ne part qu'ici, a la demande, sur cette ecoute. */
+    const ctx = N.getMorseCtx();
     if (!ctx) {
-      // Sonar eteint : on ne joue rien ET on ne consomme pas d'ecoute.
-      // On explique pourquoi, sinon le bouton semble casse.
       _isPlaying = false;
-      if (!N.isSoundEnabled()) {
-        N.showToast('Le sonar est coupé : réactive-le en haut de la page pour entendre le signal.', 'danger');
-      }
+      N.showToast('Signal indisponible : cet appareil a bloqué tout l’audio. Recharge la page.', 'danger');
       return;
     }
     if (ctx.state === 'suspended') await ctx.resume();
@@ -1836,15 +2512,40 @@ window.Nautilus = {
     } else {
       await N.updateSession(state.teamCode, { listensLeft: left, lastEvent: 'listen' });
     }
-    N.addLogEntry(`🔊 ${state.me.name} reçoit le signal (${left}/3 restantes).`, 'info');
+    N.addActe(`reçoit le signal (${left}/3)`, 'info', state.me.name);
     const visual = $('morseVisual');
-    const setVisual = (on) => { if (visual) visual.classList.toggle('on', on); };
+    const ecran = visual && visual.closest ? visual.closest('.morse-sonar-screen') : null;
+    const setVisual = (on) => {
+      if (visual) visual.classList.toggle('on', on);
+      if (!on && ecran) ecran.style.removeProperty('--amp');
+    };
     setVisual(true);
+    /* SYNCHRO PARFAITE AVEC LE SON : l'Analyseur lit l'amplitude REELLE
+       du morse frame par frame ; --amp fait prendre de la hauteur a
+       l'onde au rythme exact des ti et des ta (silence = onde aplatie). */
+    const analyseur = ctx.createAnalyser();
+    analyseur.fftSize = 128;
+    master.connect(analyseur);
+    const echantillons = new Uint8Array(analyseur.fftSize);
+    let rafOnde = 0;
+    const suivreAmplitude = () => {
+      analyseur.getByteTimeDomainData(echantillons);
+      let crete = 0;
+      for (let i = 0; i < echantillons.length; i++) {
+        const d = Math.abs(echantillons[i] - 128);
+        if (d > crete) crete = d;
+      }
+      if (ecran) ecran.style.setProperty('--amp', (0.25 + Math.min(1, crete / 64) * 1.95).toFixed(3));
+      rafOnde = requestAnimationFrame(suivreAmplitude);
+    };
+    rafOnde = requestAnimationFrame(suivreAmplitude);
     try {
       await N.playMorseSequence(ctx, master, state.word, {
         onLetter: () => { /* hook si besoin */ }
       });
     } catch (e) { console.error('Morse play error', e); }
+    cancelAnimationFrame(rafOnde);
+    try { master.disconnect(analyseur); } catch (e) { /* deja debranche */ }
     setVisual(false);
     _isPlaying = false;
   }
@@ -1875,52 +2576,49 @@ window.Nautilus = {
       return;
     }
     if (guess === target.toUpperCase()) {
-      await N.updateSession(state.teamCode, {
+      const finWin = {
         state: 'won',
         endReason: 'solved',
         lastEvent: 'solved',
         endedAt: new Date().toISOString(),   /* repere pour savoir quand cet ecran a fait son temps */
         revealedWord: target  /* stocké en clair sur la session pour l'écran de victoire uniquement */
-      });
-      N.addLogEntry(`🏆 ${state.me.name} a déchiffré le mot de passe ! L'épreuve du sonar est validée.`, 'success');
+      };
+      await N.updateSession(state.teamCode, finWin);
+      N.addActe('réussit l’épreuve', 'success', state.me.name);
       N.showToast('Mot de passe déchiffré !', 'success');
+      /* Durée de résolution (secondes) pour le record de temps. */
+      const dureeSec = (state.session && state.session.startedAt)
+        ? Math.max(0, Math.round((new Date(finWin.endedAt).getTime() - new Date(state.session.startedAt).getTime()) / 1000))
+        : 0;
       /* Avance le palier côté équipe */
-      await advanceTeam();
+      await advanceTeam(dureeSec);
+      /* Même raison que pour la défaite / le temps écoulé : en partie
+         d'essai (compte ZZZZ-0000), updateSession() n'écrit rien et aucune
+         écoute temps réel ne se déclenche — l'écran de victoire ne
+         s'affichait donc JAMAIS, seul le toast vert « Mot de passe
+         déchiffré ! » apparaissait. On applique la victoire EN MÉMOIRE et
+         on redessine, pour que l'écran « Épreuve validée ! » s'affiche
+         aussi en mode test (et, en partie réelle, sans attendre
+         l'aller-retour réseau). */
+      state.session = { ...(state.session || {}), ...finWin };
+      renderGameArea();
     } else {
       const newErrors = (state.session.errors || 0) + 1;
       const max = state.session.maxErrors || 3;
       if (newErrors >= max) {
-        /* ORDRE IMPORTANT : on bloque l'equipage AVANT de marquer la
-           session perdue.
-
-           BUG CORRIGE : c'etait l'inverse. Passer la session a 'lost'
-           declenche aussitot le dessin de l'ecran de defaite, qui
-           affiche "Reprise possible le <date>". Or cette date n'etait
-           ecrite qu'ensuite, par blockMatelot(). Entre les deux, l'ecran se
-           dessinait sans date et affichait un simple tiret. Elle
-           n'apparaissait qu'au rafraichissement suivant, une seconde
-           plus tard — souvent jamais sous les yeux du joueur.
-           En bloquant d'abord, la date existe deja quand l'ecran
-           s'affiche. */
-        await blockMatelot('morse_too_many_errors');
+        /* Déclenchement IMMÉDIAT synchrone de l'écran de défaite sans latence réseau */
         const finKO = { state: 'lost', errors: newErrors, endReason: 'too_many_errors',
                         lastEvent: 'lost', endedAt: new Date().toISOString() };
-        await N.updateSession(state.teamCode, finKO);
-        /* REDONDANCE SUPPRIMEE : blockMatelot() ecrit deja "X est repousse
-           en surface jusqu'a...". Annoncer en plus "X a epuise ses 3
-           chances" disait deux fois la meme chose, a une ligne d'ecart. */
-        /* On applique la fin de partie EN MEMOIRE et on redessine.
-
-           BUG CORRIGE : en partie d'essai, updateSession() n'ecrit rien
-           (c'est voulu, le compte fantome ne doit laisser aucune trace) et
-           aucune ecoute temps reel ne se declenche. L'ecran restait donc
-           bloque sur "PROTOCOLE EN COURS" apres la 3e erreur.
-           En partie reelle, cela fait simplement apparaitre l'ecran tout
-           de suite, sans attendre l'aller-retour reseau : le blocage etant
-           deja pose ci-dessus, la date de reprise s'affiche du premier
-           coup au lieu d'un tiret. */
         state.session = { ...(state.session || {}), ...finKO };
         renderGameArea();
+
+        (async () => {
+          try {
+            await blockMatelot('morse_too_many_errors');
+            await N.updateSession(state.teamCode, finKO);
+            renderGameArea();
+          } catch (_) {}
+        })();
         return;
       } else {
         const essai = { errors: newErrors, attempts: (state.session.attempts || 0) + 1,
@@ -1947,21 +2645,28 @@ window.Nautilus = {
   async function onTimeOut() {
     if (!state.session) return;
     if (state.session.state !== 'playing') return;
-    /* Meme ordre que pour les 3 erreurs : le blocage d'abord, sinon
-       l'ecran de defaite s'affiche avant que la date de reprise existe. */
-    await blockMatelot('morse_timeout');
+    /* Déclenchement IMMÉDIAT synchrone de l'écran de défaite sans latence réseau */
     const finTemps = { state: 'lost', endReason: 'timeout', lastEvent: 'timeout',
                        endedAt: new Date().toISOString() };
-    await N.updateSession(state.teamCode, finTemps);
-    N.addLogEntry(`⏳ Le temps est écoulé. L'épreuve a échoué.`, 'danger');
-    /* Meme raison que pour les 3 erreurs : sans cela, la partie d'essai
-       reste affichee comme "en cours" une fois le temps ecoule. */
     state.session = { ...(state.session || {}), ...finTemps };
     renderGameArea();
+
+    (async () => {
+      try {
+        await blockMatelot('morse_timeout');
+        await N.updateSession(state.teamCode, finTemps);
+        N.addActe('temps écoulé', 'danger');
+        renderGameArea();
+      } catch (_) {}
+    })();
   }
 
   async function blockMatelot(reason) {
     if (!state.team || !state.me) return;
+    /* SON DE DÉFAITE à l'éjection du mini-jeu (demande explicite) :
+       assets/Perdu.mp3 retentit — JAMAIS si le site est en sourdine
+       (palier-annonces.js applique la règle absolue du sonar). */
+    try { window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound && window.NautilusAnnonces.playDefeatSound(); } catch (e) {}
     /* NOUVELLE REGLE DU JEU : on ne bloque plus l'equipage entier, mais
        UNIQUEMENT le matelot qui vient d'echouer. Son compteur d'echecs lui
        est propre : son 1er echec coute 1 h, meme si ses camarades en ont
@@ -1969,9 +2674,13 @@ window.Nautilus = {
        reprendre chacun leur tour. */
     const key = state.me.memberKey;
     const ancien = N.getMatelotLock(state.team, key);
-    const nextFail = Number(ancien?.failCount || 0) + 1;
+    const echecsJour = N.echecsDuJour(ancien);
+    const nextFail = echecsJour + 1;
     const hours = N.getLockHours(nextFail);
-    const until = N.getLockedUntilISO(nextFail);
+    /* MODE CONCEPTEUR (partie d'essai) : jamais bridé par les erreurs —
+       le blocage est immédiatement expiré : l'écran de défaite et le
+       compteur s'affichent, mais le testeur rejoue sans attendre. */
+    const until = state.isTest ? new Date().toISOString() : N.getLockedUntilISO(nextFail);
 
     /* BUG CORRIGE : le resultat de saveTeam() etait jete.
        L'ecran de defaite affiche "Reprise possible le <lockedUntil>" en
@@ -1983,9 +2692,16 @@ window.Nautilus = {
        On garde desormais l'equipe renvoyee par saveTeam() : elle
        contient deja le blocage. */
     const locks = { ...(state.team.matelotLocks || {}) };
+    const today = N.cleJour();
     locks[key] = {
-      name: state.me.name, failCount: nextFail, lastLockHours: hours,
-      lockedUntil: until, reason: reason || '', blockedAt: new Date().toISOString()
+      name: state.me.name,
+      failCount: nextFail,
+      totalFailCount: Number((ancien && (ancien.totalFailCount || ancien.failCount)) || 0) + 1,
+      lastFailDay: today,
+      lastLockHours: hours,
+      lockedUntil: until,
+      reason: reason || '',
+      blockedAt: new Date().toISOString()
     };
     /* L'INSTANT est releve AVANT l'ecriture reseau. Sans cela, la ligne
        portait l'heure de la REPONSE du serveur : un message ecrit plus
@@ -1999,20 +2715,65 @@ window.Nautilus = {
       failCount: Number(state.team.failCount || 0) + 1,
       lastEvent: 'matelot_blocked'
     });
-    N.addLogEntry(`🔒 ${state.me.name} est repoussé en surface jusqu'à ${N.formatDate(until)} (${hours}h).`, 'danger', instant);
+    N.addActe(`remonte en surface (${hours} h)`, 'danger', state.me.name);
   }
 
-  async function advanceTeam() {
+  async function advanceTeam(dureeSec) {
     if (!state.team) return;
     const completed = Array.from(new Set([...(state.team.completedSteps || []), 'start']));
     const next = N.STEPS['start'].next;
     /* Palier reussi : l'equipage avance. On leve un eventuel blocage
-       d'equipage (pose par un admin), mais PAS les blocages personnels :
-       ils suivent chaque matelot d'un palier a l'autre. */
-    const update = { status: 'active', lockedUntil: null, completedSteps: completed, lastEvent: 'step_advanced' };
+       d'equipage (pose par un admin), ET — NOUVELLE REGLE DE REJOUABILITE —
+       tous les blocages PERSONNELS : quand un matelot reussit une epreuve,
+       tous les autres matelots de l'equipage reprennent la quete. Leur
+       compteur d'echecs (failCount) est conserve : seule la mise a l'ecart
+       s'efface. Le pase `liftedByStep` permettra, a la RECONNEXION d'un
+       matelot qui etait bloque, de lui afficher le message lui annoncant
+       qu'il peut reprendre la mission sans delai. */
+    const update = {
+      status: 'active', lockedUntil: null, completedSteps: completed,
+      lastEvent: 'step_advanced',
+      /* Repères d'annonce : lus par palier-annonces.js sur TOUTES les
+         pages, pour prévenir les autres équipages en ligne (message vert
+         à halo clignotant + Victoire.mp3) qu'un équipage a franchi un
+         palier. */
+      lastStepCompleted: 'start',
+      lastStepCompletedAt: new Date().toISOString(),
+      lastStepCompletedBy: state.me ? state.me.name : 'Un matelot',
+      lastStepCompletedLabel: N.STEPS['start'].label
+    };
     if (next) { update.currentStep = next; }
-    await N.saveTeam(state.team, update);
+    const maintenant = Date.now();
+    const locks = { ...(state.team.matelotLocks || {}) };
+    let leves = 0;
+    Object.keys(locks).forEach((k) => {
+      const l = locks[k];
+      if (l && l.lockedUntil && new Date(l.lockedUntil).getTime() > maintenant) {
+        locks[k] = { ...l, lockedUntil: null, liftedByStep: 'start', liftedAt: update.lastStepCompletedAt };
+        leves++;
+      }
+    });
+    if (leves > 0) { update.matelotLocks = locks; }
+    state.team = await N.saveTeam(state.team, update);
     N.markHintsExhausted(state.word);
+    /* Record de temps de résolution — hors mode test / aperçu (aucune
+       écriture réelle dans ces modes), silencieux en cas de panne réseau. */
+    if (!N.isTestMode() && typeof window.NautilusRecords !== 'undefined') {
+      window.NautilusRecords.enregistrer({
+        stepId: 'start',
+        seconds: dureeSec || 0,
+        matelot: state.me ? state.me.name : 'Un matelot',
+        equipage: displayTeamName(state.team)
+      }).then(() => chargerRecordsVictoire());
+      /* Relecture après écriture : l'écran de victoire lit les records
+         DÈS son rendu (chargerRecordsVictoire), donc AVANT que le record
+         ci-dessus soit consigné. On relit une fois l'écriture terminée
+         pour que le vainqueur voie son propre temps apparaître aussitôt,
+         sans recharger la page. */
+    }
+    if (leves > 0) {
+      N.addLogEntry(`🔓 Palier franchi : ${leves} matelot(s) bloqué(s) en surface reprennent la quête.`, 'success');
+    }
   }
 
   /* === INDICE : REVELE AUSSITOT, MAIS COUTE 1 H DE BLOCAGE ===
@@ -2065,7 +2826,7 @@ window.Nautilus = {
        partie reelle cela evite d'attendre l'aller-retour reseau. */
     state.session = { ...(state.session || {}), ...patch };
 
-    N.addLogEntry(`🆘 ${state.me.name} a demandé un indice. Il remonte en surface pour ${HINT_LOCK_HOURS} h.`, 'warning');
+    N.addActe('demande un indice', 'warning', state.me.name);
     showFloatingHint('🆘 Indice débloqué : ' + buildHintContent(idx), 10000);
 
     /* Blocage personnel, exactement le meme mecanisme que pour un echec :
@@ -2089,13 +2850,23 @@ window.Nautilus = {
      blockMatelot() : pas d'incrementation du compteur d'echecs, duree fixe. */
   async function blockMatelotForHint() {
     if (!state.team || !state.me) return;
+    /* Éjection pour indice : même règle — Perdu.mp3 sauf si le site est
+       en sourdine. */
+    try { window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound && window.NautilusAnnonces.playDefeatSound(); } catch (e) {}
     const key = state.me.memberKey;
-    const until = new Date(Date.now() + HINT_LOCK_HOURS * 3600 * 1000).toISOString();
+    /* MODE CONCEPTEUR (partie d'essai) : l'indice ne bride pas non plus
+       — blocage immédiatement expiré, le testeur continue sa tournée. */
+    const until = state.isTest ? new Date().toISOString()
+                               : new Date(Date.now() + HINT_LOCK_HOURS * 3600 * 1000).toISOString();
     const locks = { ...(state.team.matelotLocks || {}) };
     const ancien = locks[key] || {};
+    const echecsJour = N.echecsDuJour(ancien);
+    const today = N.cleJour();
     locks[key] = {
       name: state.me.name,
-      failCount: Number(ancien.failCount || 0),   // inchange : ce n'est pas un echec
+      failCount: echecsJour,   // inchangé pour un indice
+      totalFailCount: Number((ancien && (ancien.totalFailCount || ancien.failCount)) || 0),
+      lastFailDay: today,
       lastLockHours: HINT_LOCK_HOURS,
       lockedUntil: until,
       reason: 'indice_demande',
@@ -2135,12 +2906,26 @@ window.Nautilus = {
         <p class="morse-brief">Une épreuve est en cours. <b>${esc(playerName)}</b> doit recevoir le signal et le retranscrire. Patience — s'il échoue, il sera seul repoussé en surface et tu pourras prendre sa place.</p>
         <div class="morse-sonar-panel">
           <div class="morse-sonar-screen">
-            <div class="morse-sweep"></div>
+            <!-- Lampe temoin EN PREMIER : le CSS (.on ~ .morse-scope)
+                 fait affoler les ondes pendant la lecture morse. -->
             <div class="morse-signal-light" id="morseVisual"></div>
+            <div class="morse-scope">
+              <div class="morse-scan"></div>
+              <div class="morse-wave w1"></div>
+              <div class="morse-wave w2"></div>
+            </div>
+            <div class="morse-glass"></div>
           </div>
           <div class="morse-controls">
-            <div class="morse-counter">Écoutes restantes : <b>${s.listensLeft ?? 0}</b> / 3</div>
-            <div class="morse-counter">Erreurs : <b style="color:${(s.errors||0) >= (s.maxErrors||3) - 1 ? '#ff7b72' : '#8ee7ff'};">${s.errors || 0}</b> / ${s.maxErrors || 3}</div>
+            <div class="morse-counter">Écoutes : <b>${s.listensLeft ?? 0}</b> / 3</div>
+            <div class="nautilus-voyants-rack" title="Erreurs : ${s.errors || 0} / ${s.maxErrors || 3} max">
+              <span class="nautilus-voyants-lbl">ERREURS</span>
+              <div class="nautilus-voyants">
+                <span class="nautilus-voyant ${(s.errors||0) >= 1 ? 'active' : ''}"></span>
+                <span class="nautilus-voyant ${(s.errors||0) >= 2 ? 'active' : ''}"></span>
+                <span class="nautilus-voyant ${(s.errors||0) >= 3 ? 'active' : ''}"></span>
+              </div>
+            </div>
             <div class="morse-counter">Tentatives : ${s.attempts || 0}</div>
           </div>
         </div>
@@ -2150,30 +2935,29 @@ window.Nautilus = {
           </div>
         </div>
         
-          <div class="morse-hint-target">
-            <div class="morse-hint-target-info">
-              🧭 <b>Indices de l’équipage.</b> Les indices débloqués
-              s’affichent ici. Le matelot aux commandes peut en demander
-              un nouveau — cela lui coûte 1 h de blocage personnel.
-            </div>
+        <div class="nautilus-hints-rack">
+          <div class="nautilus-hints-head">
+            <div class="nautilus-hints-title">🧭 INDICES DE L’ÉQUIPAGE</div>
+            <p class="nautilus-hints-note">
+              Les indices débloqués s’affichent ici (acquis à tout l’équipage).
+            </p>
           </div>
-          <div class="morse-hints-grid">
+          <div class="nautilus-hints-grid">
             ${[
-              { label: '🧭 Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' : '— non révélé —' },
-              /* BUG BLOQUANT CORRIGE : il manquait le "s." devant
-                 wordLength. La variable n'existait pas, donc TOUT l'ecran
-                 du spectateur plantait ("wordLength is not defined") des
-                 qu'un indice etait revele : le coequipier se retrouvait
-                 devant une zone de jeu vide, sans aucun message. */
-              { label: '🧭 Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot de passe contient <b>${s.wordLength || '?'} caractères</b>.` : '— non révélé —' },
-              { label: '🧭 Indice nº3',  body: s.hintsRevealed?.[2] ? `La première lettre est <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '— non révélé —' }
+              { label: 'Indice nº1', body: s.hintsRevealed?.[0] ? 'Le signal suit la <b>recommandation UIT-R M.1677-1</b>' : '' },
+              { label: 'Indice nº2', body: s.hintsRevealed?.[1] ? `Le mot compte <b>${s.wordLength || '?'} lettres</b>.` : '' },
+              { label: 'Indice nº3', body: s.hintsRevealed?.[2] ? `Il commence par <b>${esc(state.word ? state.word[0] : (s.firstLetter || '?'))}</b>.` : '' }
             ].map((h, i) => `
-              <div class="morse-hint-card ${s.hintsRevealed?.[i] ? 'morse-hint-revealed' : ''}">
-                <div class="morse-hint-card-label">${h.label} ${s.hintsRevealed?.[i] ? '✓' : ''}</div>
-                <div>${h.body}</div>
+              <div class="nautilus-hint-card ${s.hintsRevealed?.[i] ? 'is-revealed' : 'is-locked'}">
+                <div class="nautilus-hint-badge">
+                  <span class="nautilus-hint-num">${h.label}</span>
+                  <span class="nautilus-hint-status">${s.hintsRevealed?.[i] ? '✨ Révélé' : '🔒 Scellé'}</span>
+                </div>
+                <div class="nautilus-hint-body">${s.hintsRevealed?.[i] ? h.body : '<i>Secret sous scellé</i>'}</div>
               </div>
             `).join('')}
           </div>
+        </div>
       </div>
     `;
     /* Bind timer + bouton indice */
@@ -2187,9 +2971,80 @@ window.Nautilus = {
        lui-meme, en echange de 1 h de blocage. */
   }
 
-  /* === ÉCRAN : victoire === */
+  /* ===== HELPERS « PALIER SUIVANT » ===== */
+
+  /* La mission du palier en une phrase courte — utilisée dans le message
+     « Bravo à … pour {mission} » de l'écran de victoire. */
+  const STEP_MISSIONS = {
+    start: 'le déchiffrage du signal morse'
+  };
+  function missionDuPalier(stepId) {
+    return STEP_MISSIONS[stepId] || 'cette épreuve';
+  }
+
+  /* Libellé du bouton d'accès au palier suivant :
+     « PASSER AU 2EME PALIER », « PASSER AU 3EME PALIER »… et, pour le
+     tout dernier, « PASSER AU PALIER FINAL ». */
+  function nextStepActionLabel(stepId) {
+    if (!stepId) return 'PASSER AU PALIER SUIVANT';
+    if (stepId === 'final') return 'PASSER AU PALIER FINAL';
+    const idx = Object.keys(N.STEPS).indexOf(stepId);   // 0 = Palier 1
+    if (idx > 0) return `PASSER AU ${idx + 1}EME PALIER`;
+    return 'PASSER AU PALIER SUIVANT';
+  }
+
+  /* Page du palier : le nom du fichier EST le code du palier, sans
+     séparateurs (« 1721310619.html » pour le palier 2). Sans ce code —
+     donc sans le QR Code de la zone — la page reste verrouillée et
+     personne ne peut progresser vers le palier suivant. */
+  function nextStepPageUrl(stepId) {
+    const code = N.getStepCode(stepId);
+    return code ? code.replace(/-/g, '') + '.html' : 'index.html';
+  }
+
+  /* Bloc « PROCHAINE IMMERSION » de l'écran de victoire — refonte v3
+     (demande capitaine : plus spectaculaire et immersif, dès la note
+     « 🔓 … »). L'ancien panneau PLIABLE « DIRECTION VERS LA ZONE DE
+     RECHERCHE » (longs paragraphes + bouton « CONTINUER » qui pliait/
+     dépliait — doublon du vrai CTA) laisse place à un bloc TOUJOURS
+     VISIBLE : radar sonar animé, cap sur le palier suivant, indication,
+     DEUX encarts (Rallier la zone + descriptif / Passer au palier +
+     bouton « Scanner le QR Code trouvé »), 1 ligne d'astuce.
+     Mêmes classes/markup que directionHtml() de victoire-palier.js —
+     À GARDER EN PHASE. */
+  function directionPanelHtml(nextStep, opts = {}) {
+    const nextNum = Object.keys(N.STEPS).indexOf(nextStep) + 1;
+    const url = nextStepPageUrl(nextStep);
+    const id = opts.id || 'wonDirectionPanel';
+    const indication = N.QR_LOCATION_HINT || '…… (en attente d’indication par l’admin)';
+    return `
+      <div class="won-nextzone" id="${esc(id)}">
+        <div class="won-radar" aria-hidden="true">
+          <span class="won-radar-ring"></span>
+          <span class="won-radar-ring won-radar-ring--2"></span>
+          <span class="won-radar-core">🧭</span>
+        </div>
+        <h3 class="won-nextzone-title">CAP SUR LE QR CODE</h3>
+        <div class="won-zone-steps">
+          <div class="won-zone-panel">
+            <div class="won-zone-head"><span class="won-zone-num">1</span><span class="won-zone-title">Rallier la Zone de recherche</span></div>
+            <p class="won-zone-desc">📍 « ${esc(indication)} »</p>
+          </div>
+          <div class="won-zone-panel">
+            <div class="won-zone-head"><span class="won-zone-num">2</span><span class="won-zone-title">Passer au prochain palier</span></div>
+            <a class="won-next-btn won-zone-btn" href="${esc(url)}?scan=1">📷 Scanner le QR Code trouvé</a>
+          </div>
+        </div>
+        <p class="won-nextzone-hint">📷 Envie de faire une pause ? Pensez à photographier le QR de la zone : c’est la clé d’entrée du Palier « ${nextNum} ».</p>
+      </div>
+    `;
+  }
+
+  /* === ÉCRAN : victoire ===
+     Phrase d'accueil volontairement FIGÉE (un « pop » animé se rejouait en
+     boucle à chaque rafraîchissement de l'écran — bug signalé) : plus
+     aucune animation sur « Épreuve validée ! ». */
   function renderWonScreen(s, t) {
-    const word = s.revealedWord || s.wordHash || '— —';
     const listens = Math.max(0, 3 - Number(s.listensLeft ?? 0));
     const errors = Number(s.errors || 0);
     const started = s.startedAt ? new Date(s.startedAt).getTime() : Date.now();
@@ -2197,164 +3052,310 @@ window.Nautilus = {
     const duration = Math.max(0, Math.round((finished - started) / 1000));
     const mins = Math.floor(duration / 60);
     const secs = String(duration % 60).padStart(2, '0');
+    const equipe = t ? displayTeamName(t) : 'l’équipage';
+    const mission = missionDuPalier('start');
+    const nextStep = N.STEPS['start'].next;
     return `
       <div class="won-screen celebration">
         <div class="won-badge" aria-hidden="true">🏆</div>
         <h2>Épreuve validée !</h2>
-        <p style="color:#dfffe8;font-size:16px;line-height:1.5;margin:8px 0;">
-          <b>${esc(t?.teamName || 'L’équipage')}</b> vient de franchir le sas du Palier 1.
-        </p>
-        <p style="color:#bcd9e6;font-size:14px;line-height:1.5;margin:6px 0;">
-          Bravo à <b>${esc(s.startedByName || 'l’équipage')}</b> pour le déchiffrage du signal.
-        </p>
+        <p class="won-line">Tout l’équipage <em>${esc(equipe)}</em> franchit le sas du <b><em>Palier 1</em></b>.</p>
+        <p class="won-line won-line--bravo">Bravo à <b><em>${esc(s.startedByName || 'l’équipage')}</em></b> pour le <b><em>Palier 1</em></b>.</p>
         <div class="won-stats" aria-label="Bilan de l’épreuve">
           <div class="won-stat"><strong>${mins}:${secs}</strong><span>Temps utilisé</span></div>
           <div class="won-stat"><strong>${listens}/3</strong><span>Écoutes utilisées</span></div>
           <div class="won-stat"><strong>${errors}</strong><span>Erreur${errors > 1 ? 's' : ''}</span></div>
         </div>
-        <div style="margin:20px 0 6px;color:#9bc4d4;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;">Mot de passe transmis</div>
-        <div class="reveal-code">${esc(word)}</div>
-        <div class="won-next">
-          <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Prochaine mission</div>
-          <div style="color:#fff;font-size:15px;line-height:1.5;font-weight:700;margin-bottom:12px;">${N.QR_LOCATION_HINT}</div>
-          <div style="border-top:1px dashed rgba(245,176,39,.4);padding-top:12px;color:#fff;font-size:14px;line-height:1.5;">
-            📷 Scanne le QR pour découvrir le numéro secret du <b>Palier 2</b>.
-          </div>
-        </div>
-        <p class="next-step-hint" style="margin-top:20px;">⏭️ Quand le numéro est en main, ouvre la page du Palier 2.</p>
-        <a href="1721310619.html" style="display:inline-block;margin-top:8px;background:var(--fnac);color:#111;border-radius:12px;padding:12px 24px;font-weight:900;text-decoration:none;">Ouvrir le Palier 2 →</a>
+        <div class="won-records" id="wonRecordsHost" aria-live="polite"></div>
+        <div class="won-unlock-note">🔓 Sas franchi : les blocages sont levés —
+          tout l’équipage replonge !</div>
+        ${directionPanelHtml(nextStep, { id: 'wonDirectionPanel' })}
       </div>
     `;
   }
 
-  /* === ÉCRAN : défaite === */
+  /* === RECORDS DE RÉSOLUTION (Palier 1) ===
+     Peuple le menu déroulant discret sous les résultats du matelot :
+     les temps des AUTRES matelots / équipages, du plus rapide au plus
+     lent (lecture Firestore via records-palier.js, asynchrone — on rend
+     d'abord l'écran, puis on injecte les records). */
+  function chargerRecordsVictoire() {
+    const host = $('wonRecordsHost');
+    if (!host || typeof window.NautilusRecords === 'undefined') return;
+    window.NautilusRecords.chargerEtRendre(host, {
+      stepId: 'start',
+      moi: state.me ? state.me.name : ''
+    });
+  }
+
+  /* === ÉCRAN : relecture de la zone de recherche (palier1.html?relecture=sas) ===
+     Atteint depuis le sas du palier suivant (bouton « Voir l'indication
+     de la zone de recherche » de la zone scellée). Un équipage qui a
+     validé le Palier 1 obtient d'office une redirection vers son palier
+     courant (protection anti-rejeu) : sans cet écran, impossible de
+     RELIRE l'indication de direction du QR sans repartir bredouille.
+     Mise en page COMPACTE, textes directs à l'essentiel : indication,
+     consigne courte, et le bouton qui ramène au sas. */
+  function renderRelectureSasScreen() {
+    const nextStep = N.STEPS['start'].next;
+    const nextLabel = N.STEPS[nextStep]?.label || 'palier suivant';
+    const url = nextStepPageUrl(nextStep);
+    return `
+      <div class="won-screen">
+        <div class="won-badge" aria-hidden="true">📍</div>
+        <h2>Zone de recherche — ${esc(nextLabel)}</h2>
+        <div class="won-direction">
+          <p class="won-direction-line"><span class="won-direction-label">Indication de direction :</span> ${esc(N.QR_LOCATION_HINT)}</p>
+          <p class="won-direction-line">Sur place, repérez le <b>QR Code</b> : il ouvre le sas.</p>
+        </div>
+        <p><a class="won-next-btn" href="${esc(url)}">⏭️ ALLER AU SAS DU ${esc(nextLabel.toUpperCase())}</a></p>
+        <a class="lock-home-link" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      </div>
+    `;
+  }
+
+  /* (Refonte victoire v3) plus AUCUN bouton « CONTINUER » plier/déplier
+     sur l'écran de victoire : le bloc « PROCHAINE IMMERSION » reste
+     TOUJOURS visible, le seul CTA est le bouton ⏭️ du palier suivant. */
+
+  /* Son de victoire, UNE FOIS par épreuve gagnée et par appareil
+     (même gabarit de règles que partout : geste + fenêtre visible +
+     sonar allumé — géré dans palier-annonces.js). */
+  let _victoireJoueePour = null;
+  function jouerSonVictoire(s) {
+    const marque = String(s.endedAt || s.startedAt || 'won');
+    if (_victoireJoueePour === marque) return;
+    _victoireJoueePour = marque;
+    const cle = 'nautilusVictoireJouee:' + (state.teamCode || '?');
+    try {
+      if (localStorage.getItem(cle) === marque) return;
+      localStorage.setItem(cle, marque);
+    } catch (e) { /* mémoire indisponible : le son pourra rejouer */ }
+    if (window.NautilusAnnonces && typeof window.NautilusAnnonces.playVictorySound === 'function') {
+      window.NautilusAnnonces.playVictorySound();
+    }
+  }
+
+  /* === ÉCRAN : retour en surface après une tentative ===
+     REFONTE « page d'erreurs » : TOUTE la largeur du bloc, trois lignes
+     pleines et courtes à la place des longs paragraphes et des deux
+     cartes côte à côte (illisibles sur téléphone). À l'essentiel :
+     pourquoi / combien de temps / qui reprend. */
   function renderLostScreen(s, t) {
+    const nom = (state.me && state.me.name) || 'Matelot';
     const monLock = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
     const reason = s.endReason || 'lost';
-    const reasonText = reason === 'timeout' ? "⏳ Le temps s'est écoulé." :
-                       /* "Trop d'erreurs de traduction" : le joueur ne
-                          traduit rien, il ecoute un signal et le
-                          retranscrit. Et le titre laissait croire que
-                          toute l'equipe etait sanctionnee. */
-                       reason === 'too_many_errors' ? "❌ 3 erreurs : tu remontes en surface." : '💀 Épreuve perdue.';
+    const attemptLabel = reason === 'timeout'
+      ? 'Temps imparti écoulé'
+      : reason === 'too_many_errors'
+        ? '3 erreurs sur cette tentative'
+        : 'Tentative interrompue';
+    /* Les lignes sont CONSTRUITES PAR LA MEME FONCTION que la page
+       « Blocage personnel » : formulation identique, jamais de double
+       maintenance (lignesBlocageHtml). */
+    const lignes = lignesBlocageHtml(t, monLock, 'echec');
     return `
-      <div class="lock-screen">
-        <h2>${reasonText}</h2>
-        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0 18px;">
-          Ton équipage continue. Un autre matelot peut reprendre.
-        </p>
-        ${monLock?.lockedUntil
-          ? `<p class="lock-rule">⏱️ Tu pourras réessayer le <b>${esc(N.formatDate(monLock.lockedUntil))}</b> (blocage de ${esc(String(monLock.lastLockHours || '?'))} h).</p>
-             ${prochainePeineHtml(t, monLock)}`
-          : `<p class="lock-rule">⏱️ Durée de ton blocage en cours de calcul…</p>`}
-        <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
-      </div>
+      <section class="lock-screen lock-screen--lost" aria-live="polite">
+        <div class="lock-heading">
+          <span class="lock-heading-icon" aria-hidden="true">↟</span>
+          <div>
+            <p class="lock-kicker">RETOUR EN SURFACE</p>
+            <h2><span class="lost-nom">${esc(nom)}</span>, tu remontes en surface</h2>
+          </div>
+        </div>
+        <p class="lock-flavor">Ta plongée s’arrête là mais La mission continue pour l’équipage</p>
+        <div class="lock-attempt"><span aria-hidden="true">◌</span>${esc(attemptLabel)}</div>
+        <div class="lock-lignes">${lignes}</div>
+        <a class="lock-home-link" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      </section>
     `;
   }
 
-  /* ===== ANNONCE DE LA PROCHAINE PEINE =====
-     Un matelot qui vient d'echouer doit savoir MAINTENANT ce que couterait
-     le prochain faux pas : c'est pendant son attente qu'il decidera s'il
-     repart lui-meme ou s'il passe la barre a un camarade plus leger.
-     Avant, cette information n'apparaissait nulle part : chacun decouvrait
-     sa peine apres coup, en la subissant. */
-  function prochainePeineHtml(t, l) {
-    const echecs = Number(l?.failCount || 0);
-    /* Un blocage pour indice n'augmente PAS le compteur d'echecs : la
+  /* ===== LIGNES DE BLOCAGE (partagées) =====
+     Le MEME trio de lignes courtes, pleine largeur, sert la page
+     d'erreurs (RETOUR EN SURFACE) et la page de blocage personnel
+     (BLOCAGE PERSONNEL) : meme information, meme formulation.
+     variante = 'echec' | 'indice' — pour l'indice, la carte
+     « Prochaine prise de commande possible » porte deja duree + date et
+     le lead annonce le relais : seule la ligne ✓ (indice conserve)
+     subsiste, sinon on repeterait tout deux fois.
+     Le CALCUL (peineEtRelais) reste commun aux deux pages. */
+  function lignesBlocageHtml(t, monLock, variante) {
+    const lockedUntil = monLock?.lockedUntil || new Date(Date.now() + 3600e3).toISOString();
+    const hours = Number(monLock?.lastLockHours || 1);
+    const { suivante, relais, relayHours } = peineEtRelais(t, monLock || { lockedUntil, lastLockHours: hours });
+    const noms = relais.slice(0, 3).map(m => esc(m.nom)).join(', ');
+    if (variante === 'indice') {
+      return `
+        <div class="lock-ligne">
+          <span class="lock-ligne-ico" aria-hidden="true">✓</span>
+          <span>L'indice reste disponible pour <b>tout l'équipage</b>.</span>
+        </div>`;
+    }
+    return `
+        <div class="lock-ligne lock-ligne--pause">
+          <span class="lock-ligne-ico" aria-hidden="true">⏱</span>
+          <span>Remontée En surface : <b>${esc(String(hours))} h</b> — retour <b>${esc(N.formatDate(lockedUntil))}</b>.</span>
+        </div>
+        <div class="lock-ligne lock-ligne--relais">
+          <span class="lock-ligne-ico" aria-hidden="true">⚓</span>
+          <span>${noms
+            ? `<b>${noms}</b> ${relais.length > 1 ? 'peuvent' : 'peut'} reprendre dès maintenant (risque ${esc(String(relayHours || 1))} h).`
+            : `<b>Un coéquipier</b> peut reprendre dès maintenant (risque 1 h).`}</span>
+        </div>
+        <div class="lock-ligne lock-ligne--next">
+          <span class="lock-ligne-ico" aria-hidden="true">🔁</span>
+          <span>Prochain échec : <b>${esc(String(suivante))} h</b> en surface (compteur personnel).</span>
+        </div>`;
+  }
+
+  /* Carte de reprise — utilisee par la page INDICE sur cahier des charges
+     (« modifie : PROCHAINE PRISE DE COMMANDE POSSIBLE… ») : la date de fin
+     de blocage en gros, la duree en dessous. */
+  function lockResumeCard(lock, label){
+    const hours = Number(lock?.lastLockHours || 1);
+    return `
+      <section class="lock-resume-card">
+        <span class="lock-resume-icon" aria-hidden="true">⏱</span>
+        <div>
+          <span class="lock-card-label">${esc(label)}</span>
+          <strong class="lock-resume-date">${esc(N.formatDate(lock.lockedUntil))}</strong>
+          <span class="lock-resume-duration">En surface · ${esc(String(hours))} h</span>
+        </div>
+      </section>
+    `;
+  }
+
+  function peineEtRelais(t, l) {
+    const echecs = N.echecsDuJour(l);
+    /* Un blocage pour indice n'augmente PAS le compteur d'échecs : la
        prochaine peine se calcule donc sur echecs + 1 dans les deux cas. */
     const suivante = N.getLockHours(echecs + 1);
-    const locks    = (t && t.matelotLocks) || {};
-    const moins    = ((t && t.members) || [])
+    const locks = (t && t.matelotLocks) || {};
+    const relais = ((t && t.members) || [])
+      .filter(m => !isTestMember(m))   // le compte test n'est jamais d'un équipage
       .map(m => ({ nom: m.name || '—', cle: m.memberKey || N.memberKey(m.name || '') }))
       .filter(m => m.cle && m.cle !== (state.me && state.me.memberKey) && !N.isMatelotLocked(t, m.cle))
-      .map(m => ({ ...m, e: Number(locks[m.cle]?.failCount || 0) }))
-      .filter(m => N.getLockHours(m.e + 1) < suivante)
-      .sort((a, b) => a.e - b.e);
-
-    const aide = moins.length
-      ? `🤝 <b>Pour continuer : passe la barre à ${moins.slice(0,3).map(m => `<b>${esc(m.nom)}</b>`).join(', ')}.</b> `
-        + (moins.length > 1 ? 'Ils risquent ' : 'Il risque ') + `seulement <b>${N.getLockHours(moins[0].e + 1)} h</b>.`
-      : `🤝 Pour continuer, laisse un autre matelot prendre la barre.`;
-
-    return `
-      <p class="lock-rule" style="margin-top:8px;">
-        ⚠️ Au <b>prochain échec</b>, ton blocage passera à <b style="color:#ff8f86;font-size:1.12em;">${suivante} h</b>.
-        Ton compteur est personnel et ne se remet <b>jamais</b> à zéro.
-      </p>
-      <p class="lock-rule" style="margin-top:8px;background:rgba(91,255,156,.07);border-left:3px solid rgba(91,255,156,.55);padding:10px 12px;border-radius:9px;color:#c8ece0;">
-        ${aide}
-      </p>
-    `;
+      .map(m => ({ ...m, echecs: N.echecsDuJour(locks[m.cle]) }))
+      .filter(m => N.getLockHours(m.echecs + 1) < suivante)
+      .sort((a, b) => a.echecs - b.echecs);
+    return { suivante, relais, relayHours: relais[0] ? N.getLockHours(relais[0].echecs + 1) : null };
   }
 
-  /* "1er echec", "2e echec"... : ecrire "1e" ferait faute. */
-  function ordinal(n) { return Number(n) === 1 ? '1ᵉʳ' : `${Number(n) || 1}ᵉ`; }
-
-  /* === ÉCRAN : blocage PERSONNEL (le matelot seul est en surface) === */
+  /* === ÉCRAN : blocage PERSONNEL (le matelot seul est en surface) ===
+     PAGE ALLEGEE : meme pattern concis que l'ecran « RETOUR EN SURFACE » —
+     une accroche d'UNE ligne, puis les trois lignes pleine largeur
+     (surface / relais / suite). Supprimes : le pavé d'introduction, la
+     carte « prochaine prise de commande » et les deux cartes cote a cote
+     (illisibles sur telephone).
+     VOCABULAIRE : plus JAMAIS le mot « pause » ici — on parle de
+     remontée en surface, comme partout ailleurs dans le jeu. */
   function renderMatelotLockScreen(t, me) {
     const l = N.getMatelotLock(t, me.memberKey) || {};
-    /* Deux raisons possibles de se retrouver en surface, et il ne faut pas
-       les confondre : un ECHEC (trop d'erreurs ou temps ecoule) ou une
-       DEMANDE D'INDICE. Le message annoncait "Ton echec" dans les deux
-       cas, ce qui etait faux et vexant pour qui avait simplement demande
-       un coup de main. */
+    /* Deux raisons possibles de se retrouver en surface : un échec ou une
+       demande d'indice. L'indice reste acquis à l'équipage et n'est jamais
+       présenté comme une faute. */
     const parIndice = l.reason === 'indice_demande';
-    const intro = parIndice
-      ? 'Tu as obtenu ton indice : il reste acquis à tout l’équipage. En échange, tu remontes en surface — un autre matelot peut reprendre le palier.'
-      : 'Ton échec ne bloque que toi. Le reste de l’équipage peut tenter le palier pendant ce temps — un matelot à la fois.';
-    const detail = parIndice
-      ? `⏳ Tu pourras reprendre les commandes à cette heure (indice demandé &rarr; ${esc(String(l.lastLockHours || 1))} h).`
-      : `⏳ Tu pourras reprendre les commandes à cette heure (${esc(ordinal(l.failCount || 1))} échec &rarr; ${esc(String(l.lastLockHours || '?'))} h).`;
+    /* PAGE INDICE — cahier des charges :
+       1. titre « nom », ton indice a été transmis. (le prenom revient) ;
+       2. accroche BLOCAGE : « Ta plongée s’arrête là. La mission
+          continue. » — INDICE : la ligne dictée « Pendant ta pause, un
+          autre matelot de ton équipage peut reprendre les commandes. » ;
+       3. carte « PROCHAINE PRISE DE COMMANDE POSSIBLE » (date + durée). */
+    const lead = parIndice
+      ? 'Pendant ta pause, un autre matelot de ton équipage peut reprendre les commandes.'
+      : 'Ta plongée s’arrête là. La mission continue.';
     return `
-      <div class="lock-screen">
-        <h2>${parIndice ? '🧭' : '🔒'} ${esc(me.name)}, tu es en surface</h2>
-        <p style="color:#bcd9e6;font-size:15px;line-height:1.5;margin:8px 0;">
-          ${intro}
-        </p>
-        <div class="countdown-big">${esc(N.formatDate(l.lockedUntil))}</div>
-        <p class="lock-rule">${detail}</p>
-        ${parIndice ? '' : prochainePeineHtml(t, l)}
-        <a href="index.html" style="display:inline-block;margin-top:18px;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">🏠 Retour à l'accueil</a>
-      </div>
+      <section class="lock-screen lock-screen--active" aria-live="polite">
+        <div class="lock-heading">
+          <span class="lock-heading-icon" aria-hidden="true">${parIndice ? '🧭' : '↟'}</span>
+          <div>
+            <p class="lock-kicker">${parIndice ? 'INDICE TRANSMIS' : 'BLOCAGE PERSONNEL'}</p>
+            <h2>${parIndice
+              ? `${esc(me.name)}, ton indice a été transmis.`
+              : `${esc(me.name)}, tu remontes en surface`}</h2>
+          </div>
+        </div>
+        <p class="lock-lead">${lead}</p>
+        ${parIndice && l.lockedUntil ? lockResumeCard(l, 'Prochaine prise de commande possible') : ''}
+        <div class="lock-lignes">${lignesBlocageHtml(t, l, parIndice ? 'indice' : 'echec')}</div>
+        <a class="lock-home-link" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
+      </section>
     `;
   }
 
 
-  /* === ÉCRAN : transition palier suivant === */
-  function renderNextStepPrompt(t) {
-    const nextStep = t.currentStep;
-    const nextLabel = N.STEPS[nextStep]?.label || '?';
-    const nextCode = N.getStepCode(nextStep);
-    return `
-      <div class="status-banner success">
-        ✅ <b>Palier 1 terminé.</b> L'équipage est prêt à passer au <b>${esc(nextLabel)}</b>.
-      </div>
-      <div class="stepbox" style="border-color:rgba(91,255,156,.45);background:rgba(91,255,156,.08);">
-        <h3 style="color:#5be09b;margin:0 0 10px;">🔎 Prochaine étape</h3>
-        <div style="color:#ffd36c;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;margin-bottom:6px;">📍 Indice de cachette</div>
-        <div style="background:rgba(245,176,39,.10);border:2px solid rgba(245,176,39,.55);border-radius:14px;padding:12px 16px;margin:0 0 14px;color:#fff;font-size:14px;line-height:1.5;font-weight:800;">
-          ${N.QR_LOCATION_HINT}
-        </div>
-        <div style="color:#dff6ff;line-height:1.5;margin:0 0 10px;font-size:15px;">
-          📷 <b>Scanne le QR pour découvrir le numéro secret.</b>
-        </div>
-        <div style="color:#9bc4d4;font-size:13px;line-height:1.5;margin:0 0 14px;">
-          Tu auras besoin de ce numéro pour accéder au <b>${esc(nextLabel)}</b>.
-        </div>
-        <a href="1721310619.html" style="display:inline-block;background:var(--fnac);color:#111;border-radius:12px;padding:11px 22px;font-weight:900;text-decoration:none;">⏭️ Ouvrir la page du ${esc(nextLabel)}</a>
-      </div>
-    `;
-  }
+  /* === ÉCRAN SUPPRIMÉ : « transition vers le palier suivant » ===
+     Il ne montrait plus que le panneau de direction — déjà présent sur
+     l'écran de victoire ET sur le portail du palier suivant. Un matelot
+     dont l'équipage a validé le Palier 1 est désormais RENVOYÉ
+     directement vers la page du palier courant (garde-fou dans le
+     rendu, voir « GARDE-FOU palier déjà franchi »). */
 
   /* === Bouton retour === */
   $('backBtn').addEventListener('click', () => {
-    location.href = 'index.html';
+    try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}
+    location.href = 'index.html?ecoutille=0';
   });
 
+  /* ===== ANNONCE « UN ÉQUIPAGE A FRANCHI UN PALIER » =====
+     Tous les équipages en ligne sont prévenus en direct, ici compris —
+     et au chargement de la page (« reprise d'un mini-jeu »), tout
+     palier franchi depuis la dernière visite de CET appareil est
+     annoncé une fois, dans un coin de la fenêtre (message vert à halo
+     clignotant, Victoire.mp3 si les règles audio le permettent).
+     skipOwn : MON équipage voit déjà son propre écran de victoire. */
+  function initAnnoncesPaliers() {
+    if (!(window.NautilusAnnonces && typeof window.NautilusAnnonces.handleTeamsSnapshot === 'function')) return;
+    try {
+      onSnapshot(collection(N.db, 'teams'), (snap) => {
+        const equipes = [];
+        snap.forEach((d) => equipes.push({ teamCode: d.id, ...d.data() }));
+        window.NautilusAnnonces.handleTeamsSnapshot(equipes, {
+          myTeamCode: state.teamCode || null,
+          myCompletedSteps: (state.team && state.team.completedSteps) || [],
+          skipOwn: true,
+          resolveName: (t) => {
+            const def = (N.TEAM_DEFS || []).find((x) => x.code === t.teamCode);
+            return (def && def.name) || t.teamName || t.teamCode;
+          },
+          withSound: true
+        });
+      }, (err) => { console.warn('Annonces paliers:', err); });
+    } catch (e) { console.warn('Annonces paliers indisponibles:', e); }
+  }
+  initAnnoncesPaliers();
+
   /* === Cleanup === */
+  /* PRÉSENCE : le battement de cœur ne tourne que page ACTIVE. Dès que
+     l'écran est verrouillé, que l'app passe en arrière-plan ou que la page
+     se ferme, on arrête d'écrire onlineMatelots : le matelot sort alors du
+     bloc « équipage actif en plongée » au bout de PRESENCE_FRAICHE_MS.
+     Avant, le minuteur continuait de tourner en arrière-plan et le matelot
+     restait indéfiniment « en plongée » après avoir quitté le mini-jeu. */
+  window.addEventListener('visibilitychange', () => {
+    if (!state.teamCode) return;
+    if (document.visibilityState === 'visible') {
+      N.heartbeat(state.teamCode, state.me && state.me.memberKey);
+      if (!state._heartbeatInterval) {
+        state._heartbeatInterval = setInterval(() => N.heartbeat(state.teamCode, state.me && state.me.memberKey), 15000);
+      }
+    } else {
+      if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }
+      /* Le matelot n'est plus devant le mini-jeu : on retire sa présence
+         tout de suite au lieu d'attendre l'expiration de l'horodatage. */
+      N.effacerPresence(state.teamCode, state.me && state.me.memberKey);
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    if (state._heartbeatInterval) { clearInterval(state._heartbeatInterval); state._heartbeatInterval = null; }
+    N.effacerPresence(state.teamCode, state.me && state.me.memberKey);
+  });
   window.addEventListener('beforeunload', () => {
     if (state.unsubSession) state.unsubSession();
     if (state.unsubTeam) state.unsubTeam();
+    if (_unsubAllTeams) _unsubAllTeams();
+    if (_crewRefreshTimer) { clearInterval(_crewRefreshTimer); _crewRefreshTimer = null; }
     if (state.timerHandle) clearInterval(state.timerHandle);
     if (state._heartbeatInterval) clearInterval(state._heartbeatInterval);
   });
@@ -2365,7 +3366,14 @@ window.Nautilus = {
 <!-- Bouton d'ambiance sonore, commun a toutes les pages du jeu.
      Une seule ligne a copier sur chaque nouvelle page : le script cree le
      lecteur, le bouton et ses styles, et retient le choix du joueur. -->
-<script src="sonar-button.js" defer></script>
-<script src="admin-button.js" type="module"></script>
+<script src="sonar-button.js?v=4" defer></script>
+<!-- Modules d'administration : magasins, réponses et codes QR. -->
+<script src="artefact-moteur.js?v=8"></script>
+<script src="artefact-service.js?v=8"></script>
+<script src="magasin-fnac.js?v=1"></script>
+<script src="fnac-lecteur.js?v=1"></script>
+<script src="photo-defi.js?v=2" defer></script>
+<script src="admin-artefact.js?v=33" defer></script>
+<script src="admin-button.js?v=34" type="module"></script>
 </body>
 </html>

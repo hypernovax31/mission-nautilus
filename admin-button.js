@@ -10,7 +10,7 @@
    Le panneau s'affiche donc sur la page où l'on se trouve, comme sur index.html.
 ============================================================================ */
 
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -22,25 +22,121 @@
     messagingSenderId: "444670686419",
     appId: "1:444670686419:web:00d186940a2fb8c8c29026"
   };
-  const app = initializeApp(firebaseConfig);
+  /* Les pages Palier et Classement initialisent déjà Firebase dans leur
+     module principal. Réutiliser l'application par défaut évite l'exception
+     "Firebase App named '[DEFAULT]' already exists", qui interrompait le
+     script AVANT l'injection et l'ouverture de la modale. */
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  /* La page Classement n'initialise pas elle-même l'authentification. Sans
+     cette session anonyme, le panneau est visible mais ses actions d'écriture
+     sont refusées par les règles Firestore sur les pages hors accueil. */
+  const authReady = signInAnonymously(auth)
+    .catch(error => console.warn('Firebase Auth anonyme indisponible:', error));
   const db = getFirestore(app);
 
+  window.NautilusAdminDb = {
+    db: db,
+    doc: doc,
+    getDoc: getDoc,
+    setDoc: setDoc,
+    updateDoc: updateDoc,
+    deleteDoc: deleteDoc,
+    deleteField: deleteField,
+    collection: collection,
+    getDocs: getDocs,
+    serverTimestamp: serverTimestamp,
+    getTeamDoc: (code) => getDoc(doc(db, 'teams', code))
+  };
+
+  function ensureAdminModules(){
+    function loadScript(src, id){
+      if(document.getElementById(id) || document.querySelector('script[src*="' + src.split('?')[0] + '"]')) return;
+      const s = document.createElement('script');
+      s.id = id;
+      s.src = src;
+      s.defer = true;
+      document.body.appendChild(s);
+    }
+    if(!window.NautilusArtefactMoteur) loadScript('artefact-moteur.js?v=8', 'scriptArtefactMoteur');
+    if(!window.NautilusArtefact) loadScript('artefact-service.js?v=8', 'scriptArtefactService');
+    if(!window.NautilusMagasin) loadScript('magasin-fnac.js?v=3', 'scriptMagasinFnac');
+    if(!window.FnacLecteur) loadScript('fnac-lecteur.js?v=1', 'scriptFnacLecteur');
+    if(!window.NautilusPhotoDefi) loadScript('photo-defi.js?v=4', 'scriptPhotoDefi');
+    if(!window.NautilusBataille) loadScript('palier4-bataille.js?v=3', 'scriptPalier4Bataille');
+    if(!window.NautilusQuiz) loadScript('quiz-palier6.js?v=3', 'scriptQuizPalier6');
+    if(!window.NautilusAdminArtefact) loadScript('admin-artefact.js?v=33', 'scriptAdminArtefact');
+  }
 
 
-  const ADMIN_PANEL_HTML = '<section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">\n    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;display:flex;align-items:center;gap:12px;justify-content:space-between">\n      <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>\n      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="background:rgba(255,75,62,.18);color:#ffb4ad;border:1px solid rgba(255,75,62,.42);border-radius:50%;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">\n        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>\n      </button>\n    </h2>\n    <div class="body">\n      <p class="small" style="color:#9b1111;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l\'équipe d\'organisation. Accès par code uniquement.</p>\n      <div class="hr"></div>\n      <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">\n        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d\'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d\'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>\n        <span id="adminUnlockMsg" class="small" style="width:100%"></span>\n      </div>\n      <div id="adminWorkspace" style="display:none">\n        <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">\n          <span class="small" style="color:#075c39;font-weight:900">✅ Session admin active</span>\n        </div>\n\n        <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:linear-gradient(135deg,rgba(11,52,78,.08),rgba(245,176,39,.08));">\n          <div style="font-weight:900;color:#163f58;margin-bottom:4px">🧪 MODE CONCEPTEUR</div>\n          <div class="small" style="margin-bottom:9px">Prévisualise les paliers sans modifier la progression réelle d’une équipe.</div>\n          <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧭 Afficher l’accès aux paliers</button>\n          <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>\n        </div>\n\n        <div class="admin-tabs" role="tablist">\n          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Membres</span><span class="lbl-mobile" aria-label="Membres">👥</span></button>\n          <button class="admin-tab" data-tab="teams" type="button" role="tab"><span class="lbl-desktop">🚢 Équipes</span><span class="lbl-mobile" aria-label="Équipes">🚢</span></button>\n          <button class="admin-tab" data-tab="locks" type="button" role="tab"><span class="lbl-desktop">🔒 Blocages</span><span class="lbl-mobile" aria-label="Blocages">🔒</span></button>\n          <button class="admin-tab" data-tab="oxygen" type="button" role="tab"><span class="lbl-desktop">⏱️ O₂</span><span class="lbl-mobile" aria-label="O₂">⏱️</span></button>\n          <button class="admin-tab" data-tab="danger" type="button" role="tab"><span class="lbl-desktop">⚠️ Danger</span><span class="lbl-mobile" aria-label="Danger">⚠️</span></button>\n        </div>\n\n        <!-- TAB: MEMBRES -->\n        <div class="admin-pane" data-pane="members">\n          <div class="row" style="margin-bottom:10px;align-items:center">\n            <span class="small" style="flex:1">Modifie le nom, le service ou l\'équipage d\'un matelot, ou supprime-le.</span>\n            <button class="secondary" id="adminReloadBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">↻ Recharger</button>\n          </div>\n          <div class="admin-add-member">\n            <div class="admin-add-title">➕ Ajouter un matelot</div>\n            <div class="admin-form-grid">\n              <label for="adminNewMemberName">Nom</label>\n              <input id="adminNewMemberName" type="text" maxlength="32" placeholder="Ex. JULES VERNE" autocomplete="off">\n              <label for="adminNewMemberSvc">Service</label>\n              <select id="adminNewMemberSvc"><option value="" selected disabled>Ex. PE</option></select>\n              <label for="adminNewMemberTeam">Équipage</label>\n              <select id="adminNewMemberTeam"><option value="" selected disabled>Choisir…</option></select>\n            </div>\n            <div class="admin-actions-row">\n              <button class="primary" id="adminAddMemberBtn" type="button">➕ Ajouter le matelot</button>\n            </div>\n            <div id="adminAddMemberMsg"></div>\n          </div>\n          <div id="adminMembersBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: BLOCAGES -->\n        <div class="admin-pane" data-pane="locks" style="display:none">\n          <p class="small" style="margin-bottom:10px">Pour chaque équipe : activer/désactiver le blocage, ou modifier la date/heure de reprise autorisée.</p>\n          <div id="adminLocksBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: O2 -->\n        <div class="admin-pane" data-pane="oxygen" style="display:none">\n          <p class="small" style="margin-bottom:10px">Le compte à rebours de la réserve O₂ (durée de la mission) peut être réinitialisé, ou décalé en modifiant la date/heure de départ.</p>\n          <div class="admin-o2-status">\n            <div class="admin-o2-row"><span>État actuel</span><strong id="adminO2Now">—</strong></div>\n            <div class="admin-o2-row"><span>Statut</span><span class="admin-o2-badge" id="adminO2State">—</span></div>\n            <div class="admin-o2-row"><span>Temps restant</span><strong id="adminO2Countdown">—</strong></div>\n          </div>\n          <div class="admin-form-grid admin-o2-form">\n            <label for="adminO2Date">Date de départ</label>\n            <input id="adminO2Date" type="datetime-local">\n            <label for="adminO2Days">Durée (jours)</label>\n            <input id="adminO2Days" type="number" min="0" step="1" value="7">\n            <label for="adminO2Hours">Durée (heures)</label>\n            <input id="adminO2Hours" type="number" min="0" max="23" step="1" value="0">\n          </div>\n          <div class="admin-actions-row">\n            <button class="primary" id="adminO2Apply" type="button">💾 Appliquer la modification</button>\n            <button class="secondary" id="adminO2Reset" type="button">♻️ Reset à maintenant (durée initiale)</button>\n            <button class="danger" id="adminO2Clear" type="button">🛑 Arrêter la mission</button>\n          </div>\n        </div>\n\n        <!-- TAB: EQUIPES -->\n        <div class="admin-pane" data-pane="teams" style="display:none">\n          <p class="small" style="margin-bottom:10px">Ajoute, renomme ou supprime une équipe. La suppression purge le doc Firestore correspondant et l\'ajoute à la liste des codes obsolètes (nettoyés à chaque init).</p>\n          <div id="adminTeamsBox" class="teamlist"></div>\n          <div class="hr"></div>\n          <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">\n            <div style="flex:1;min-width:220px"><label for="adminNewTeamName">Nom de la nouvelle équipe</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" maxlength="24" autocomplete="off"></div>\n            <button class="primary" id="adminAddTeamBtn" type="button" style="margin:0">➕ Ajouter</button>\n          </div>\n        </div>\n\n        <!-- TAB: DANGER -->\n        <div class="admin-pane" data-pane="danger" style="display:none">\n          <p style="margin:0 0 12px;font-weight:900;color:#9b1111">⚠️ Zone sensible — actions irréversibles</p>\n          <div style="display:flex;gap:10px;flex-wrap:wrap">\n            <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>\n            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:#ffe7e3;color:#8f1b14;border:1px solid #efb2ac">🔄 Reset progression (toutes équipes)</button>\n          </div>\n          <p class="small" style="margin-top:12px">Le reset des membres vide les équipages (et les compteurs « en ligne ») sans toucher à la progression.<br>Le reset de la progression remet les équipes à zéro (palier 1, 0 échec, sans blocage).<br>Le nettoyage retire « migratedFrom », un reste de l\'ancienne migration des identifiants d\'équipe : sans effet sur le jeu.</p>\n        </div>\n      </div>\n    </div>\n  </section>';
+
+  /* Filet de sécurité : le panneau reste une vraie modale même si la feuille
+     CSS externe arrive en retard, est absente du cache PWA ou est bloquée.
+     Les styles complets restent dans css/admin.css. */
+  const ADMIN_MODAL_FALLBACK_CSS = `
+    #adminPanel.nautilus-admin-modal{
+      position:fixed !important; inset:0 !important; z-index:12000 !important;
+      display:none !important; flex-direction:column; align-items:center;
+      justify-content:center; margin:0 !important; padding:clamp(10px,2vw,24px);
+      overflow:hidden; border:0; border-radius:0 !important;
+      background:rgba(2,8,18,.82); box-sizing:border-box;
+    }
+    #adminPanel.nautilus-admin-modal.open{display:flex !important}
+    #adminPanel.nautilus-admin-modal > h2{
+      width:100%; max-width:900px; margin:0; padding:13px 16px; padding-right:52px !important;
+      position:relative !important; display:flex; align-items:center; gap:10px;
+      color:#ffb4ad; background:linear-gradient(90deg,#3a0a08,#7a1812);
+      border:1px solid rgba(245,176,39,.5); border-bottom:0;
+      border-radius:16px 16px 0 0; box-sizing:border-box;
+    }
+    #adminCloseBtn{
+      position:absolute !important; top:50% !important; transform:translateY(-50%) !important; right:14px !important;
+      width:32px !important; height:32px !important; min-height:32px !important;
+      border-radius:50% !important; z-index:10 !important;
+    }
+    #adminPanel.nautilus-admin-modal > .body{
+      width:100%; max-width:900px; max-height:calc(100dvh - 150px);
+      overflow-y:auto; padding:14px 16px; box-sizing:border-box;
+      color:#eaf8ff; background:linear-gradient(180deg,#071a2b 0%,#03111f 100%);
+      border:1px solid rgba(245,176,39,.5); border-top:0;
+      border-radius:0 0 16px 16px;
+    }
+  `;
+
+  function ensureAdminModalFallbackStyles(){
+    if(document.getElementById('nautilusAdminModalFallbackCss')) return;
+    const style = document.createElement('style');
+    style.id = 'nautilusAdminModalFallbackCss';
+    style.textContent = ADMIN_MODAL_FALLBACK_CSS;
+    document.head.appendChild(style);
+  }
+
+  const ADMIN_PANEL_HTML = '<section class="card" id="adminPanel" role="dialog" aria-modal="true" aria-label="Panneau admin" style="display:none">\n    <h2 style="background:linear-gradient(90deg,#3a0a08,#7a1812);color:#ffb4ad;position:relative;display:flex;align-items:center;gap:12px;padding-right:52px">\n      <span>⚙️ PANNEAU ADMIN — ACCÈS RESTREINT</span>\n      <button id="adminCloseBtn" type="button" aria-label="Fermer le panneau" title="Fermer" style="position:absolute;top:50%;transform:translateY(-50%);right:14px;background:rgba(255,75,62,.22);color:#ffb4ad;border:1px solid rgba(255,75,62,.48);border-radius:50%;width:32px;height:32px;min-height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0;font-size:18px;line-height:1;font-weight:900;flex:0 0 auto;transition:.18s background,.18s color,.18s transform">\n        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>\n      </button>\n    </h2>\n    <div class="body">\n      <p class="small" style="color:#ff8579;font-weight:900;letter-spacing:.04em">🔒 Ce panneau est réservé à l\'équipe d\'organisation. Accès par code uniquement.</p>\n      <div class="hr"></div>\n      <div id="adminLocked" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">\n        <div style="flex:1;min-width:220px"><label for="adminCodeInput">Code d\'accès admin</label><input id="adminCodeInput" type="text" placeholder="••••••••" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" name="nautilus_admin_code_xyz" data-lpignore="true" data-1p-ignore="true" inputmode="text" aria-label="Code d\'accès admin" style="text-transform:none;letter-spacing:.15em;font-family:Consolas,monospace"></div>\n        <span id="adminUnlockMsg" class="small" style="width:100%"></span>\n      </div>\n      <div id="adminWorkspace" style="display:none">\n        <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">\n          <span class="small" style="color:#5be09b;font-weight:900">✅ Session admin active</span>\n        </div>\n\n        <div class="admin-designer-box" style="margin:0 0 12px;padding:12px;border:1px solid rgba(142,231,255,.35);border-radius:10px;background:rgba(8,30,48,.85);color:#eaf8ff">\n          <div style="font-weight:900;color:#8ee7ff;margin-bottom:4px">🧪 ACCÈS CONCEPTEUR</div>\n          <div class="small" style="margin-bottom:9px">Ouvre chaque page du jeu dans un onglet isolé : l’aperçu organisateur n’écrit <b>aucun blocage ni aucune progression réelle</b>. Pour tester tes QR Codes imprimés : ouvre la « page scellée » du palier et vise le code.</div>\n          <button class="secondary" id="adminDesignerBtn" type="button" style="margin:0">🧪 Tester toutes les pages</button>\n          <div id="adminDesignerBox" style="display:none;margin-top:10px"></div>\n        </div>\n\n        <div class="admin-tabs" role="tablist">\n          <button class="admin-tab active" data-tab="members" type="button" role="tab"><span class="lbl-desktop">👥 Inscriptions</span><span class="lbl-mobile" aria-label="Inscriptions">👥</span></button>\n          <button class="admin-tab" data-tab="teams" type="button" role="tab"><span class="lbl-desktop">🚢 Équipes</span><span class="lbl-mobile" aria-label="Équipes">🚢</span></button>\n          <button class="admin-tab" data-tab="locks" type="button" role="tab"><span class="lbl-desktop">🔒 Blocages</span><span class="lbl-mobile" aria-label="Blocages">🔒</span></button>\n          <button class="admin-tab" data-tab="oxygen" type="button" role="tab"><span class="lbl-desktop">⏱️ O₂</span><span class="lbl-mobile" aria-label="O₂">⏱️</span></button>\n          <button class="admin-tab" data-tab="danger" type="button" role="tab"><span class="lbl-desktop">⚠️ Danger</span><span class="lbl-mobile" aria-label="Danger">⚠️</span></button>\n        </div>\n\n        <!-- TAB: MEMBRES -->\n        <div class="admin-pane" data-pane="members">\n          <div class="row" style="margin-bottom:10px;align-items:center">\n            <span class="small" style="flex:1">Inscris un matelot, modifie son nom, son service ou son équipage, ou supprime-le.</span>\n            <button class="secondary" id="adminReloadBtn" type="button" style="margin:0;padding:6px 12px;font-size:12px">↻ Recharger</button>\n          </div>\n          <div class="admin-add-member">\n            <div class="admin-add-title">➕ Inscrire un matelot</div>\n            <div class="admin-form-grid">\n              <label for="adminNewMemberName">Nom</label>\n              <input id="adminNewMemberName" type="text" maxlength="32" placeholder="Ex. JULES VERNE" autocomplete="off">\n              <label for="adminNewMemberSvc">Service</label>\n              <select id="adminNewMemberSvc"><option value="" selected disabled>Ex. PE</option></select>\n              <label for="adminNewMemberTeam">Équipage</label>\n              <select id="adminNewMemberTeam"><option value="" selected disabled>Choisir…</option></select>\n            </div>\n            <div class="admin-actions-row">\n              <button class="primary" id="adminAddMemberBtn" type="button">➕ Inscrire le matelot</button>\n            </div>\n            <div id="adminAddMemberMsg"></div>\n          </div>\n          <div id="adminMembersBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: BLOCAGES -->\n        <div class="admin-pane" data-pane="locks" style="display:none">\n          <p class="small" style="margin-bottom:10px">Pour chaque équipe : activer/désactiver le blocage, ou modifier la date/heure de reprise autorisée.</p>\n          <div id="adminLocksBox" class="teamlist"></div>\n        </div>\n\n        <!-- TAB: O2 -->\n        <div class="admin-pane" data-pane="oxygen" style="display:none">\n          <p class="small" style="margin-bottom:10px">Le compte à rebours de la réserve O₂ (durée de la mission) peut être réinitialisé, ou décalé en modifiant la date/heure de départ.</p>\n          <div class="admin-o2-status">\n            <div class="admin-o2-row"><span>État actuel</span><strong id="adminO2Now">—</strong></div>\n            <div class="admin-o2-row"><span>Statut</span><span class="admin-o2-badge" id="adminO2State">—</span></div>\n            <div class="admin-o2-row"><span>Temps restant</span><strong id="adminO2Countdown">—</strong></div>\n          </div>\n          <div class="admin-form-grid admin-o2-form">\n            <label for="adminO2Days">Durée (jours)</label>\n            <input id="adminO2Days" type="number" min="0" step="1" value="7">\n            <label for="adminO2Hours">Durée (heures)</label>\n            <input id="adminO2Hours" type="number" min="0" max="23" step="1" value="0">\n          </div>\n          <div class="admin-actions-row">\n            <button class="primary" id="adminO2Apply" type="button">💾 Appliquer la modification</button>\n            <button class="secondary" id="adminO2Reset" type="button">♻️ Reset à maintenant (durée initiale)</button>\n            <button class="danger" id="adminO2Clear" type="button">🛑 Arrêter la mission</button>\n          </div>\n        </div>\n\n        <!-- TAB: EQUIPES -->\n        <div class="admin-pane" data-pane="teams" style="display:none">\n          <p class="small" style="margin-bottom:10px">Ajoute, renomme ou supprime une équipe. La suppression purge le doc Firestore correspondant et l\'ajoute à la liste des codes obsolètes (nettoyés à chaque init).</p>\n          <div id="adminTeamsBox" class="teamlist"></div>\n          <div class="hr"></div>\n          <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">\n            <div style="flex:1;min-width:220px"><label for="adminNewTeamName">Nom de la nouvelle équipe</label><input id="adminNewTeamName" placeholder="Ex. Moby Dick" maxlength="24" autocomplete="off"></div>\n            <button class="primary" id="adminAddTeamBtn" type="button" style="margin:0">➕ Ajouter</button>\n          </div>\n        </div>\n\n        <!-- TAB: DANGER -->\n        <div class="admin-pane" data-pane="danger" style="display:none">\n          <p style="margin:0 0 12px;font-weight:900;color:#ff8579">⚠️ Zone sensible — actions irréversibles</p>\n          <div style="display:flex;gap:10px;flex-wrap:wrap">\n            <button class="danger" id="resetAllMembersBtn" type="button" style="margin:0">🗑️ Reset des membres (toutes équipes)</button>\n            <button class="danger" id="resetAllProgressBtn" type="button" style="margin:0;background:rgba(255,75,62,.2);color:#ff8579;border:1px solid rgba(255,75,62,.5)">🔄 Reset progression (toutes équipes)</button>\n            <button class="secondary" id="cleanupTestSessionsBtn" type="button" style="margin:0">🧪 Purger les traces du compte test</button>\n            <button class="secondary" id="adminPurgePwaBtn" type="button" style="margin:0;background:rgba(255,211,108,.2);color:#ffd36c;border:1px solid rgba(255,211,108,.5)">🔄 Vider le cache PWA</button>\n          </div>\n          <p class="small" style="margin-top:12px"><b>Reset des membres</b> : vide la liste des matelots inscrits de tous les équipages sans toucher à la progression de la mission.<br><b>Reset progression</b> : remet toutes les équipes au Palier 1 avec scores et blocages réinitialisés.<br><b>Purger le compte test</b> : retire toute trace du compte de test ZZZZ-0000 (blocages, parties ou présence TEST).<br><b>Vider le cache PWA</b> : supprime les caches du Service Worker et force le rechargement immédiat de la toute dernière version des pages.</p>\n        </div>\n      </div>\n    </div>\n  </section>';
   function injectAdminPanel(){
-    if(document.getElementById('adminPanel')) return;
+    ensureAdminModalFallbackStyles();
     if(!document.getElementById('nautilusAdminCss')){
       const link = document.createElement('link');
       link.id = 'nautilusAdminCss';
       link.rel = 'stylesheet';
-      link.href = 'css/admin.css';
+      // Versionné pour ne jamais réutiliser l'ancienne feuille corrompue du
+      // cache PWA sur les pages palier et classement.
+      link.href = 'css/admin.css?v=13';
       document.head.appendChild(link);
     }
+    if(!document.getElementById('nautilusArtefactCss')){
+      const linkA = document.createElement('link');
+      linkA.id = 'nautilusArtefactCss';
+      linkA.rel = 'stylesheet';
+      linkA.href = 'css/artefact.css?v=4';
+      document.head.appendChild(linkA);
+    }
+    ensureAdminModules();
+    if(document.getElementById('adminPanel')) return;
     const wrap = document.createElement('div');
     wrap.innerHTML = ADMIN_PANEL_HTML;
-    document.body.appendChild(wrap.firstElementChild);
+    const panel = wrap.firstElementChild;
+    panel.classList.add('nautilus-admin-modal');
+    document.body.appendChild(panel);
   }
 
   /* Logique du panneau. Regroupée dans une fonction : exécutée seulement sur les
@@ -55,14 +151,14 @@
   ];
   const SERVICES = ["PE","PT","SAV","LOG","CAI","GAD","CODIR"];
   const STEPS = {
-    start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Le Nautilus est prêt à plonger. Votre équipage attend le signal de départ pour naviguer vers le Palier 1."},
-    livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Une trace d’encre, un auteur visionnaire, et peut-être le premier secret du capitaine Nemo."},
-    son:{label:"Palier 3",next:"zone51",time:300,errors:2,description:"Un signal brouillé remonte des profondeurs. Il faudra l’écouter autrement."},
-    zone51:{label:"Palier 4",next:"occasion",time:300,errors:2,description:"La Zone 51 cache quelque chose derrière ses coques. Les manettes ne seront peut-être pas les seules à vibrer."},
-    occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Une seconde vie peut cacher un premier indice. Ne faites pas confiance aux apparences."},
-    papeterie:{label:"Palier 6",next:"drone",time:240,errors:6,description:"Des couleurs, de l’encre et un code que le Nautilus ne révèle qu’aux plus attentifs."},
-    drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol."},
-    final:{label:"Palier final",next:null,time:0,errors:1,description:"Dernier sas. Si vous êtes ici, le Nautilus n’est plus très loin de refaire surface."}
+    start:{label:"Palier 1",next:"livres",time:0,errors:0,description:"Les sous-marins des équipages s'immergent depuis la surface. Votre équipage attend le feu vert pour plonger vers le Palier 1."},
+    livres:{label:"Palier 2",next:"son",time:180,errors:6,description:"Plongée dans la pénombre des grandes profondeurs : les récits anciens guident les sous-marins sur la trace du submersible disparu."},
+    son:{label:"Palier 3",next:"zone51",time:180,errors:1,description:"Chasse acoustique dans les abysses : identifiez et capturez au collimateur optique les 5 artefacts du secteur."},
+    zone51:{label:"Palier 4 — Traque Sonar : Les Monstres des Abysses",next:"occasion",time:300,errors:3,description:"Traque acoustique dans la fosse : le Nautilus est encerclé par 4 léviathans abyssaux. Localisez et neutralisez le Kraken, le Calmar, l'Anguille et la Manta."},
+    occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Approche du plancher sous-marin : estimez le prix exact de 10 articles pour déverrouiller les propulseurs d'exploration."},
+    papeterie:{label:"Palier 6 — Le Grand Quiz des Abysses",next:"drone",time:100,errors:3,description:"Épreuve de culture et de sciences sous-marines : 10 questions pointues sur Nemo, le Nautilus et les fonds océaniques (6s de réflexion après écriture)."},
+    drone:{label:"Palier 7 — Le Labyrinthe Circulaire",next:"final",time:180,errors:3,description:"Manœuvres gyroscopiques dans l'épave : guidez la bille 3D à travers les 7 coursives circulaires et leurs 18 impasses pour ranimer le Cœur du Nautilus."},
+    final:{label:"Palier final",next:null,time:0,errors:1,description:"Le Nautilus est sauvé ! Réamorcez ses ballasts et escortez le submersible dans sa remontée triomphale vers la surface."}
   };
 
 
@@ -87,14 +183,19 @@
   function invalidateTeamsCache(){ _ensureTeamsPromise = null; _ensureTeamsAt = 0; }
   let _ensureTeamsPromise = null;
   let _ensureTeamsAt = 0;
+  /* Mots anglais RÉELS de 4 lettres pour composer le Code Matelot :
+     un mot anglais de 4 lettres (sans O) + 4 chiffres aléatoires de 1 à 9
+     (pas de 0) — jamais « NEMO », jamais « 2026 ». */
+  const MATELOT_WORDS = [
+    'ABLE','ACID','ARMY','AWAY','BABY','BACK','BALL','BAND','BANK','BASE','BATH','BEAR','BEAT','BEER','BELL','BELT','BEND','BEST','BIRD','BITE','BLUE','BUSY','CAGE','CAKE','CALL','CALM','CAMP','CARD','CARE','CASE','CASH','CAST','CELL','CHAT','CHEF','CITY','CLUB','CREW','DATE','DAWN','DEAL','DEAR','DEBT','DESK','DIAL','DIET','DIRT','DISH','DRAW','DRUM','DUCK','DUST','DUTY','EACH','EARN','EASE','EAST','EASY','EDGE','ELSE','EVEN','EVER','EVIL','EXIT','FACE','FACT','FAIR','FALL','FARM','FAST','FEAR','FEED','FEEL','FILM','FIND','FINE','FIRE','FIRM','FISH','FIVE','FLAG','FLAT','FREE','FUEL','FULL','FUND','GAIN','GAME','GATE','GEAR','GIFT','GIRL','GIVE','GLAD','GRAB','GREY','HAIR','HALF','HALL','HAND','HANG','HARD','HEAD','HEAL','HEAR','HEAT','HELP','HERB','HIGH','HILL','HIRE','HUNT','HURT','IDEA','ITEM','JUMP','JUST','KEEN','KEEP','KICK','KIND','KING','KNEE','LAKE','LAND','LANE','LAST','LATE','LEAD','LEAF','LEFT','LEND','LESS','LIFE','LIFT','LIME','LIKE','LINE','LINK','LIST','LIVE','LUCK','MAIN','MAKE','MALE','MANY','MARK','MASS','MEAL','MEAN','MEAT','MEET','MENU','MILE','MILK','MIND','MINE','MISS','MUCH','NAME','NAVY','NEAR','NEED','NEWS','NEXT','NICE','NINE','PACE','PACK','PAGE','PAIN','PAIR','PARK','PART','PASS','PAST','PATH','PEAK','PEER','PICK','PINK','PIPE','PLAN','PLAY','PLUS','PULL','PURE','PUSH','RACE','RAIN','RANK','RARE','RATE','READ','REAL','REST','RICE','RICH','RIDE','RING','RISE','RISK','RULE','RUSH','SAFE','SAIL','SALE','SALT','SAME','SAND','SAVE','SEAT','SEED','SEEK','SELL','SEND','SEXY','SHIP','SIDE','SIGN','SILK','SING','SITE','SIZE','SKIN','SLIP','STAR','STAY','STEP','SPIN','SUCH','SURE','SWIM','TAKE','TALE','TALK','TALL','TANK','TAPE','TASK','TEAM','TELL','TEND','TERM','TEXT','THAN','THAT','THEM','THEN','THEY','THIN','THIS','TIME','TREE','TRIP','TRUE','TUNE','TURN','TYPE','UNIT','USED','USER','VAST','VERY','VIEW','WAIT','WAKE','WALK','WALL','WANT','WARM','WASH','WAVE','WEAK','WEAR','WEEK','WELL','WEST','WHAT','WHEN','WIDE','WIFE','WILD','WILL','WIND','WINE','WING','WIRE','WISE','WISH','WITH','YARD','YEAR'
+  ];
   function generateMatelotCode(){
-    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-    const digits = '23456789';
-    let s = '';
-    for(let i=0;i<4;i++) s += letters[Math.floor(Math.random()*letters.length)];
-    s += '-';
-    for(let i=0;i<4;i++) s += digits[Math.floor(Math.random()*digits.length)];
-    return s;
+    let word;
+    do { word = MATELOT_WORDS[Math.floor(Math.random()*MATELOT_WORDS.length)]; }
+    while (word === 'NEMO');
+    let digits = '';
+    for(let i=0;i<4;i++) digits += (Math.floor(Math.random()*9)+1);
+    return word + '-' + digits;
   }
   const MATELOT_CODE_RE = /^[A-Z]{4}-[0-9]{4}$/;
   const MISSION_DURATION_MS_DEFAULT = 7 * 24 * 60 * 60 * 1000;
@@ -115,6 +216,15 @@
   function getMissionDurationMs(){
     const v = missionConfig?.missionDurationMs;
     return (typeof v === 'number' && v > 0) ? v : MISSION_DURATION_MS_DEFAULT;
+  }
+  /* Format « XJ XXhXXmXXs » d'une durée (état « en attente du top départ »). */
+  function formatCountdown(ms){
+    let t = Math.max(0, Math.round(Number(ms || MISSION_DURATION_MS_DEFAULT)));
+    const d = Math.floor(t / 86400000); t -= d * 86400000;
+    const h = Math.floor(t / 3600000);  t -= h * 3600000;
+    const m = Math.floor(t / 60000);    t -= m * 60000;
+    const s = Math.floor(t / 1000);
+    return `${d}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(s).padStart(2,'0')}s`;
   }
   async function loadMissionConfig(){
     const snap = await getDoc(doc(db,'game','config'));
@@ -209,8 +319,13 @@
           matelotLocks: {},
           completedSteps: [],
           finishedAt: null,
+          batailleNavale: deleteField(),
           updatedAt: new Date().toISOString()
         });
+        try { localStorage.removeItem('nautilusP4Partie:' + t.code); } catch(e){}
+        if (window.NautilusBataille && window.NautilusBataille.reinitialiser) {
+          window.NautilusBataille.reinitialiser(t.code);
+        }
 
         /* La partie en cours du mini-jeu vit dans un AUTRE document.
            Elle n'etait pas remise a zero ici : apres un reset, l'equipage
@@ -234,26 +349,342 @@
       alert(`❌ Échec du reset : ${err.message || err}`);
     }
   }
+
+  function isTestMatelotMember(m){
+    return !!m && (m.codeMatelot === TEST_MATELOT_CODE || m.memberKey === 'TEST'
+      || (m.name && String(m.name).toUpperCase().trim() === 'TEST'));
+  }
+
+  async function cleanupTestSessions(){
+    if(!isAdminUnlocked()) return;
+    try{
+      await refreshAdminTeams();
+      if(!effectiveTeams.length){ alert('Aucune équipe dans la base.'); return; }
+
+      const trouvees = [];
+      for(const t of effectiveTeams){
+        const ref = doc(db,'teams',t.code,'morseSession','current');
+        const snap = await getDoc(ref);
+        if(!snap.exists()) continue;
+        const d = snap.data() || {};
+        const estTest = d.startedByMatelot === TEST_MATELOT_CODE
+                     || d.isTest === true
+                     || d.startedByName === 'TEST';
+        if(estTest) trouvees.push({ kind:'session', code: t.code, nom: t.name, ref, etat: d.state || '?' });
+      }
+
+      for(const t of effectiveTeams){
+        const tref = doc(db,'teams',t.code);
+        const tsnap = await getDoc(tref);
+        if(!tsnap.exists()) continue;
+        const d = tsnap.data() || {};
+        const patch = {};
+        const details = [];
+        const membres = d.members || [];
+        const membresRestants = membres.filter(m => !isTestMatelotMember(m));
+        if(membresRestants.length !== membres.length){
+          patch.members = membresRestants;
+          details.push(`${membres.length - membresRestants.length} membre(s) TEST`);
+        }
+        if(d.matelotLocks && Object.prototype.hasOwnProperty.call(d.matelotLocks,'TEST')){
+          const l2 = { ...d.matelotLocks };
+          delete l2.TEST;
+          patch.matelotLocks = l2;
+          details.push('1 blocage TEST');
+        }
+        if(d.onlineMatelots && Object.prototype.hasOwnProperty.call(d.onlineMatelots,'TEST')){
+          const o2 = { ...d.onlineMatelots };
+          delete o2.TEST;
+          patch.onlineMatelots = o2;
+          details.push('1 présence TEST');
+        }
+        if(details.length) trouvees.push({ kind:'fiche', code: t.code, nom: t.name, ref: tref, patch, detail: details.join(' + ') });
+      }
+
+      if(!trouvees.length){
+        alert('✅ Aucune trace du compte de test en base (parties, membres, blocages). Rien à purger.');
+        return;
+      }
+
+      const liste = trouvees.map(x => x.kind === 'session'
+        ? `• ${x.nom} : partie de test (${x.etat})`
+        : `• ${x.nom} : ${x.detail}`).join('\n');
+      if(!confirm(`${trouvees.length} trace(s) du compte de test (ZZZZ-0000) trouvée(s) :\n\n${liste}\n\n`
+        + `Les supprimer ? Le compte de test ne doit jamais faire partie d'un équipage.`)) return;
+
+      for(const x of trouvees){
+        if(x.kind === 'session'){
+          await setDoc(x.ref, { state:'idle', clearedAt:new Date().toISOString() });
+        }else{
+          await updateDoc(x.ref, { ...x.patch, updatedAt:new Date().toISOString() });
+        }
+      }
+      try {
+        localStorage.removeItem('nautilusP4Partie:TEST');
+        localStorage.removeItem('nautilusP4Partie:ZZZZ-0000');
+        if (window.NautilusBataille && window.NautilusBataille.reinitialiser) {
+          window.NautilusBataille.reinitialiser('TEST');
+        }
+      } catch (e) {}
+      await loadTeams();
+      endAdminSession(`✅ ${trouvees.length} trace(s) du compte de test purgée(s) · session fermée`);
+    }catch(err){
+      console.error('cleanupTestSessions:', err);
+      alert(`❌ Échec de la purge : ${err.message || err}`);
+    }
+  }
+
+  async function cleanupObsoleteFields(){
+    await refreshAdminTeams();
+    if(!effectiveTeams.length){ alert('Aucune équipe dans la base.'); return; }
+
+    const concerned = [];
+    for(const t of effectiveTeams){
+      const snap = await getDoc(doc(db,'teams',t.code));
+      if(snap.exists() && snap.data().migratedFrom !== undefined){
+        concerned.push(t.name);
+      }
+    }
+    if(!concerned.length){
+      alert('✅ Rien à nettoyer : aucune fiche ne contient de champ obsolète.');
+      return;
+    }
+
+    const ok = confirm(
+      `Nettoyer le champ obsolète « migratedFrom » sur ${concerned.length} équipe(s) ?\n\n` +
+      `(${concerned.join(', ')})\n\n` +
+      `Ce champ est un reste de l'ancienne migration des identifiants d'équipe.\n` +
+      `Il n'est plus utilisé nulle part : sa suppression n'a aucun effet sur le jeu.`
+    );
+    if(!ok) return;
+
+    try{
+      let done = 0;
+      for(const t of effectiveTeams){
+        const ref = doc(db,'teams',t.code);
+        const snap = await getDoc(ref);
+        if(!snap.exists() || snap.data().migratedFrom === undefined) continue;
+        await updateDoc(ref, {
+          migratedFrom: deleteField(),
+          updatedAt: new Date().toISOString()
+        });
+        done++;
+      }
+      endAdminSession(`✅ Champ obsolète retiré de ${done} équipe(s) · session fermée`);
+      await loadTeams();
+    }catch(err){
+      console.error('NAUTILUS cleanupObsoleteFields error:', err);
+      alert(`❌ Échec du nettoyage : ${err.message || err}`);
+    }
+  }
+  /* Clé « aperçu » : elle prouve que le lien vient du panneau admin.
+     Dérivée du code d'accès par une formule volontairement simple (le jeu
+     n'a pas d'enjeu de sécurité forte, mais le paramètre ?apercu seul ne
+     doit pas suffire à un joueur curieux).
+     À GARDER EN PHASE avec apercuAdminCleAttendue() de palier1.html. */
+  function apercuAdminCle(){
+    let h = 0;
+    const s = 'apercu-admin:' + ADMIN_CODE;
+    for(let i = 0; i < s.length; i++){ h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+    return 'k' + Math.abs(h).toString(36);
+  }
+
+  /* Calcul automatique de l'URL de page pour chacun des 8 paliers.
+     Convention mathématique : [16,1,12,9,5,18] + idx.
+     Palier 1 = palier1.html ; Paliers 2..8 = 1721310619.html, etc. */
+  function palierPageUrl(stepId){
+    const idx = Object.keys(STEPS).indexOf(stepId);
+    if(idx < 0) return null;
+    if(idx === 0) return 'palier1.html?code=NEMO&m=ZZZZ-0000';
+    return [16,1,12,9,5,18].map(n => String(n + idx)).join('') + '.html';
+  }
+
+  function getMeilleurPalierAtteintAdmin(){
+    if (typeof window.getMeilleurPalierAtteint === 'function') {
+      try {
+        const r = window.getMeilleurPalierAtteint();
+        if (typeof r === 'number' && r >= 1) return r;
+      } catch (e) {}
+    }
+    let teams = window._lastTeams || [];
+    if (!teams.length) {
+      try {
+        const local = JSON.parse(localStorage.getItem('nautilusTeamsCache') || '[]');
+        if (Array.isArray(local) && local.length) teams = local;
+      } catch (e) {}
+    }
+    let maxRank = 1;
+    const stepKeys = Object.keys(STEPS);
+    teams.forEach(t => {
+      if (!t) return;
+      if (t.status === 'finished' || (t.completedSteps && t.completedSteps.includes('final'))) {
+        maxRank = 8;
+        return;
+      }
+      const completed = t.completedSteps || [];
+      const currIdx = stepKeys.indexOf(t.currentStep);
+      let r = currIdx >= 0 ? (currIdx + 1) : 1;
+      if (completed.length > 0) {
+        const compRank = completed.length + 1;
+        if (compRank > r) r = compRank;
+      }
+      if (r > maxRank) maxRank = Math.min(8, r);
+    });
+    return maxRank;
+  }
+
+  function syncAdminTestPalierBadge(){
+    const rank = getMeilleurPalierAtteintAdmin();
+    const stepKeys = Object.keys(STEPS);
+    const key = stepKeys[Math.max(0, Math.min(stepKeys.length - 1, rank - 1))];
+    const label = STEPS[key]?.label || `Palier ${rank}`;
+    const b1 = $('adminActivePalierBadge');
+    if(b1) b1.textContent = label;
+    const b2 = $('adminQuickActivePalierBadge');
+    if(b2) b2.textContent = label;
+  }
+
+  /* « TESTER TOUTES LES PAGES » : chaque page du jeu (génération automatique
+     des 8 paliers) + aperçus d'écrans du Palier 1, ouverts dans un onglet isolé.
+     Chaque palier dispose de son bouton direct de test de notification. */
   function renderDesignerAccess(){
     if(!isAdminUnlocked()) { alert('Déverrouille d’abord le panneau admin.'); return; }
     const box = $('adminDesignerBox');
     const btn = $('adminDesignerBtn');
     if(!box) return;
-    const stepEntries = Object.entries(STEPS);
-    const cards = stepEntries.map(([id, step], index) => {
-      const available = id === 'start';
-      const href = available
-        ? `palier1.html?code=NEMO&m=ZZZZ-0000`
-        : '#';
-      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:${available ? 'rgba(91,224,155,.12)' : 'rgba(0,0,0,.04)'};border:1px solid ${available ? 'rgba(91,224,155,.45)' : '#dfe8ee'};">
-        <span><b>${index + 1}.</b> ${esc(step.label)} <span class="small">${available ? 'disponible' : 'en construction'}</span></span>
-        ${available ? `<a href="${href}" target="_blank" rel="noopener" style="background:var(--fnac);color:#111;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap">Prévisualiser</a>` : '<span class="small" style="white-space:nowrap">Bientôt</span>'}
+    const lien = (href, label) => {
+      const sep = href.indexOf('?') >= 0 ? '&' : '?';
+      const urlFrais = href + sep + '_v=' + Date.now();
+      return `<a href=\"${urlFrais}\" target=\"_blank\" rel=\"noopener\" style=\"background:var(--fnac);color:#111;border-radius:7px;padding:6px 9px;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap\">${label}</a>`;
+    };
+    const ligne = (titre, note, actionHtml, dispo) =>
+      `<div class=\"ds-row\" style=\"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-top:5px;border-radius:8px;background:${dispo ? 'rgba(91,224,155,.18)' : 'rgba(142,231,255,.08)'};border:1px solid ${dispo ? 'rgba(91,224,155,.5)' : 'rgba(142,231,255,.25)'};color:#f2f8fc;\">
+        <span class=\"ds-row-main\" style=\"flex:1 1 auto;min-width:0;overflow-wrap:anywhere\">${titre}${note ? ' <span class=\"small\">' + note + '</span>' : ''}</span><span class=\"ds-row-actions\" style=\"display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;flex:0 0 auto\">${actionHtml}</span>
       </div>`;
-    }).join('');
-    box.innerHTML = `<div class="small" style="font-weight:900;color:#163f58;margin-bottom:5px">Accès isolé — équipe de test NEMO</div>${cards}`;
+    const sectionHtml = (titre) =>
+      `<div class=\"small\" style=\"font-weight:900;color:#8ee7ff;margin:10px 0 0\">${titre}</div>`;
+    const k = apercuAdminCle();
+
+    const activeRank = getMeilleurPalierAtteintAdmin();
+    const stepKeys = Object.keys(STEPS);
+    const activeKey = stepKeys[Math.max(0, Math.min(stepKeys.length - 1, activeRank - 1))];
+    const activeLabel = STEPS[activeKey]?.label || `Palier ${activeRank}`;
+
+    const notesParPalier = {
+      start: 'épreuve morse — compte de test',
+      livres: 'mots croisés',
+      son: 'chasse aux artefacts',
+      zone51: 'traque sonar (monstres des abysses)',
+      occasion: 'le juste prix',
+      papeterie: 'le grand quiz des abysses',
+      drone: 'vue aérienne',
+      final: 'sas final de surface'
+    };
+
+    const optionsPaliersHtml = stepKeys.map(id =>
+      `<option value=\"${id}\">${STEPS[id].label}</option>`
+    ).join('');
+
+    const lignes = [
+      sectionHtml('🧭 TESTER TOUTES LES PAGES DU SITE'),
+      ligne('🏠 <b>Accueil</b>', 'page de lancement', lien('index.html', 'Ouvrir'), true),
+      ligne('🏁 <b>Classement</b>', 'podium de fin de mission', lien('classement.html', 'Ouvrir'), true),
+      sectionHtml('PALIERS — pages de jeu (génération automatique 1 à 8)')
+    ];
+
+    Object.entries(STEPS).forEach(([id, step], index) => {
+      const href = palierPageUrl(id);
+      const isStart = id === 'start';
+      let actions = '';
+      if (isStart) {
+        actions = lien(href, '🕹️ Jouer l’épreuve');
+      } else {
+        actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' '
+          + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve');
+      }
+      lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, notesParPalier[id] || '', actions, true));
+    });
+
+    lignes.push(sectionHtml('🏆 ÉCRANS & POPUPS DE FIN D’ÉPREUVE (Aperçus en direct)'));
+    [
+      ['victoire', '🏆 Épreuve validée (victoire)', 'succès & palier franchi'],
+      ['defaite', '↟ Retour en surface (défaite)', 'remontée forcée & relais équipe'],
+      ['blocage', '🔒 Blocage personnel d’un matelot', 'pénalité & temps d’attente']
+    ].forEach(([mode, titre, note]) => {
+      lignes.push(ligne(titre, note, lien(`palier1.html?apercu=${mode}&k=${k}`, 'Tester l’écran'), true));
+    });
+
+    box.innerHTML = lignes.join('');
+
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    if(btn) btn.textContent = box.style.display === 'none' ? '🧭 Afficher l’accès aux paliers' : '🔽 Masquer l’accès aux paliers';
+    if(btn) btn.textContent = box.style.display === 'none' ? '🧪 Tester toutes les pages' : '🔽 Masquer les tests de pages';
   }
+
+  let _adminCycleIndex = 0;
+  async function testerAnnonceVerte(explicitStepId, explicitPalierLabel){
+    let NA = window.NautilusAnnonces;
+    if(!NA || !NA.showPalierAnnouncement){
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'palier-annonces.js?v=5';
+          s.onload = res;
+          s.onerror = rej;
+          document.head.appendChild(s);
+        });
+        NA = window.NautilusAnnonces;
+      } catch(e) {}
+    }
+
+    const stepKeys = Object.keys(STEPS);
+    let targetStep = explicitStepId;
+    let targetLabel = explicitPalierLabel;
+
+    if(!targetStep){
+      const sel = $('adminSelectPalierTest');
+      const val = sel ? sel.value : 'auto';
+      if(val && val !== 'auto' && stepKeys.includes(val)){
+        targetStep = val;
+        targetLabel = STEPS[val]?.label || val;
+      } else {
+        const leaderRank = getMeilleurPalierAtteintAdmin();
+        const baseIdx = Math.max(0, Math.min(stepKeys.length - 1, leaderRank - 1));
+        const idx = (_adminCycleIndex === 0 ? baseIdx : (_adminCycleIndex % stepKeys.length));
+        _adminCycleIndex = (idx + 1) % stepKeys.length;
+        targetStep = stepKeys[idx];
+        targetLabel = STEPS[targetStep]?.label || `Palier ${idx + 1}`;
+      }
+    }
+
+    const b1 = $('adminActivePalierBadge');
+    if(b1) b1.textContent = targetLabel;
+    const b2 = $('adminQuickActivePalierBadge');
+    if(b2) b2.textContent = targetLabel;
+
+    let cheer = '⚡ Les circuits du submersible tressaillent au fond de la fosse : la machinerie s’éveille !';
+    if(NA && NA.misesEnGardeParEtape && NA.misesEnGardeParEtape[targetStep]){
+      cheer = NA.misesEnGardeParEtape[targetStep];
+    } else if(NA && typeof NA.encouragementPour === 'function'){
+      cheer = NA.encouragementPour(targetStep, 0);
+    }
+
+    if(NA && NA.showPalierAnnouncement){
+      NA.showPalierAnnouncement({
+        teamName: 'Équipage démo',
+        palierLabel: targetLabel,
+        encouragement: cheer
+      });
+      if(NA.playVictorySound) NA.playVictorySound(true);
+    } else {
+      try {
+        const a = new Audio('assets/Victoire.mp3');
+        a.volume = 0.85;
+        a.play().catch(() => {});
+      } catch(e) {}
+    }
+  }
+
+
   /* =====================================================================
      PANNEAU ADMIN — bouton engrenage en bas-gauche
      Code d'accès : NEMO2026
@@ -280,6 +711,7 @@
   let effectiveTeams = []; // rempli par refreshAdminTeams() depuis Firestore
 
   function openAdminPanel(){
+    ensureAdminModules();
     const panel = $('adminPanel');
     if(!panel) return;
     // Overlay fixe : on affiche la classe .open (CSS), plus besoin de
@@ -386,6 +818,7 @@
   function showAdminWorkspace(){
     $('adminLocked').style.display = 'none';
     $('adminWorkspace').style.display = '';
+    syncAdminTestPalierBadge();
     switchAdminTab('members');
     refreshAdminTeams();
     renderAdminMembers();
@@ -495,11 +928,16 @@
         ? preloaded.map(t => ({ teamCode: t.teamCode, data: t }))
         : (await getDocs(collection(db,'teams'))).docs.map(d => ({ teamCode: d.id, data: d.data() }));
       effectiveTeams = rows
-        .map(r => ({
-          code: r.teamCode,
-          name: (r.data.teamName || r.teamCode),
-          memberCount: (r.data.members || []).length
-        }))
+        .map(r => {
+          const defaultTeam = TEAM_DEFS.find(t => t.code === r.teamCode);
+          return {
+            code: r.teamCode,
+            // Le code ARONNAX reste la clé Firestore, mais l'interface doit
+            // présenter le nom propre « Aronnax » sur chaque palier.
+            name: defaultTeam?.name || r.data.teamName || r.teamCode,
+            memberCount: (r.data.members || []).length
+          };
+        })
         .sort((a, b) => {
           // Equipes par defaut d'abord, dans l'ordre de TEAM_DEFS, puis les autres
           const ia = TEAM_DEFS.findIndex(t => t.code === a.code);
@@ -538,7 +976,7 @@
       }
       const teamOptions = effectiveTeams.map(t => `<option value="${esc(t.code)}">${esc(t.name)}</option>`).join('');
       const serviceOptions = SERVICES.map(s => `<option value="${s}">${s}</option>`).join('');
-      box.innerHTML = `<div class="team" style="background:#fff">
+      box.innerHTML = `<div class="team">
         <h3>${allMembers.length} matelot(s) inscrit(s)</h3>
         <div class="hr"></div>
         ${allMembers.map((m, idx) => `
@@ -701,6 +1139,67 @@
         await updateDoc(toRef, { members: toMembers, updatedAt: new Date().toISOString() });
       }
 
+      /* ===== PRÉSENCE + BLOCAGE PERSONNEL : ils suivent le matelot =====
+         Ces deux états sont rangés par memberKey — clé dérivée du NOM.
+         Renommer un matelot change donc sa clé. Sans cette migration :
+           • son blocage personnel restait sous l'ancien nom (le matelot
+             paraissait libre, alors que l'ancienne clé traînait « en
+             surface » dans l'onglet Blocages) ;
+           • sa présence « en plongée » restait collée à l'ancien nom
+             dans le bloc ÉQUIPAGE ACTIF, et le matelot, lui, ne pouvait
+             plus être reconnu comme l'auteur de sa propre partie.
+         Déplacer un matelot laissait de même des traces dans l'équipe
+         source. On reporte donc blocage et présence sur la nouvelle clé,
+         et on nettoie l'ancienne — par chemin (jamais d'écrasement de
+         l'état d'un coéquipier écrit au même instant). */
+      const cleChangee = newKey !== oldMemberKey;
+      const deplace = fromTeamCode !== toTeamCode;
+      const lockSource = (fromTeam.matelotLocks || {})[oldMemberKey] || null;
+      const presenceSource = (fromTeam.onlineMatelots || {})[oldMemberKey] || null;
+
+      if (cleChangee || deplace) {
+        const srcNettoyage = {};
+        if (lockSource) srcNettoyage['matelotLocks.' + oldMemberKey] = deleteField();
+        if (presenceSource) srcNettoyage['onlineMatelots.' + oldMemberKey] = deleteField();
+
+        /* Le BLOCAGE suit le matelot (renommer ne doit ni le libérer ni
+           l'oublier sous l'ancien nom). La PRÉSENCE, elle, est seulement
+           retirée : si le matelot joue encore, son prochain battement la
+           recréera sous le bon nom — on n'affiche ainsi jamais un matelot
+           parti comme « encore en plongée » sous son nouveau nom. */
+        const dstReport = {};
+        if (lockSource) dstReport['matelotLocks.' + newKey] = { ...lockSource, name: updatedMember.name };
+
+        const dstRef = doc(db, 'teams', toTeamCode);
+        if (fromTeamCode === toTeamCode) {
+          const patch = { ...srcNettoyage, ...dstReport };
+          if (Object.keys(patch).length) await updateDoc(fromRef, patch);
+        } else {
+          if (Object.keys(srcNettoyage).length) await updateDoc(fromRef, srcNettoyage);
+          if (Object.keys(dstReport).length) await updateDoc(dstRef, dstReport);
+        }
+      }
+
+      /* Session en cours : si c'est CE matelot qui est aux commandes, on
+         reporte son identité sur la nouvelle clé. Sans cela, après un
+         renommage il redeviendrait simple spectateur de sa propre partie
+         (ou se verrait refuser la prise de commandes). */
+      if (fromTeamCode === toTeamCode && cleChangee) {
+        try {
+          const sessRef = doc(db, fromTeamCode, 'morseSession', 'current');
+          const sessSnap = await getDoc(sessRef);
+          if (sessSnap.exists()) {
+            const sess = sessSnap.data();
+            if (sess.startedByMemberKey === oldMemberKey) {
+              await updateDoc(sessRef, {
+                startedByMemberKey: newKey,
+                startedByName: updatedMember.name
+              });
+            }
+          }
+        } catch (e) { /* session absente ou indisponible : sans gravité */ }
+      }
+
       /* ===== SYNCHRONISATION DES 3 EMPLACEMENTS =====
      Un matelot existe a trois endroits, qui doivent TOUJOURS bouger
      ensemble (creation, modification, suppression) :
@@ -753,7 +1252,15 @@
       const team = { teamCode, ...snap.data() };
       const victim = (team.members || []).find(m => m.memberKey === targetMemberKey);
       const newMembers = (team.members || []).filter(m => m.memberKey !== targetMemberKey);
-      await updateDoc(ref, { members: newMembers, updatedAt: new Date().toISOString() });
+      const patch = { members: newMembers, updatedAt: new Date().toISOString() };
+      /* PRÉSENCE + BLOCAGE PERSONNEL : un matelot supprimé ne doit plus
+         rester « en plongée » (onlineMatelots) ni « en surface »
+         (matelotLocks) dans le bloc ÉQUIPAGE ACTIF ou l'onglet Blocages. */
+      if (targetMemberKey) {
+        patch['matelotLocks.' + targetMemberKey] = deleteField();
+        patch['onlineMatelots.' + targetMemberKey] = deleteField();
+      }
+      await updateDoc(ref, patch);
 
       /* Purge des deux autres emplacements du matelot. Sans cela son Code
          Matelot restait valide : il pouvait se reconnecter alors qu'il
@@ -790,8 +1297,8 @@
            equipage : il contredisait la regle et n'avait plus lieu
            d'etre. Cet onglet ne gere donc que les blocages PERSONNELS,
            avec le compteur d'echecs pour information. */
-        return `<div class="team" style="background:#fff" data-team="${esc(t.teamCode)}">
-          <h3>${esc(t.teamName)} <span class="small" style="color:var(--muted)">(${esc(t.teamCode)})</span></h3>
+        return `<div class="team" data-team="${esc(t.teamCode)}">
+          <h3>${esc(t.teamName)} <span class="small" style="color:#9bc4d4">(${esc(t.teamCode)})</span></h3>
           <div class="small" style="margin-bottom:10px">Échecs cumulés de l'équipage : <b>${Number(t.failCount||0)}</b></div>
           ${renderMatelotLocksHtml(t)}
         </div>`;
@@ -808,6 +1315,37 @@
     }
   }
 
+  function cleJour(d) {
+    var date = d ? (d instanceof Date ? d : new Date(d)) : new Date();
+    if (isNaN(date.getTime())) date = new Date();
+    try {
+      return date.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+    } catch (e) {
+      var y = date.getFullYear();
+      var m = String(date.getMonth() + 1).padStart(2, '0');
+      var day = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+  }
+  function estAujourdhui(dateStr) {
+    if (!dateStr) return false;
+    try {
+      return cleJour(dateStr) === cleJour();
+    } catch (e) {
+      return false;
+    }
+  }
+  function echecsDuJour(l) {
+    if (!l) return 0;
+    if (l.lastFailDay) {
+      return l.lastFailDay === cleJour() ? Number(l.failCount || 0) : 0;
+    }
+    if (l.blockedAt) {
+      return estAujourdhui(l.blockedAt) ? Number(l.failCount || 0) : 0;
+    }
+    return 0;
+  }
+
   /* Liste des matelots actuellement en surface (blocage personnel).
      Sans cet affichage, un blocage individuel serait invisible depuis
      l'admin : impossible de savoir qui est bloque, ni de le liberer. */
@@ -817,13 +1355,15 @@
     const actifs = Object.entries(locks)
       .filter(([,l]) => l && l.lockedUntil && new Date(l.lockedUntil).getTime() > now);
     if(!actifs.length){
-      return '<div class="small" style="margin-bottom:10px;color:#075c39">Aucun matelot bloqué individuellement.</div>';
+      return '<div class="small" style="margin-bottom:10px;color:#5be09b">Aucun matelot bloqué individuellement.</div>';
     }
-    const lignes = actifs.map(([key, l]) =>
-      `<li style="margin:4px 0">🔒 <b>${esc(l.name || key)}</b> — jusqu'au ${esc(formatDate(l.lockedUntil))}
-        (${esc(String(l.failCount || 1))} échec(s))
-        <button class="secondary lk-free-one" type="button" data-key="${esc(key)}" style="margin-left:8px;padding:3px 10px;font-size:12px">Libérer</button></li>`
-    ).join('');
+    const lignes = actifs.map(([key, l]) => {
+      const echecsAuj = echecsDuJour(l);
+      const dureeTxt = l.lastLockHours ? ` · ${l.lastLockHours} h` : '';
+      return `<li style="margin:4px 0">🔒 <b>${esc(l.name || key)}</b> — jusqu'au ${esc(formatDate(l.lockedUntil))}
+        (${esc(String(echecsAuj || l.failCount || 1))} échec(s) aujourd'hui${dureeTxt})
+        <button class="secondary lk-free-one" type="button" data-key="${esc(key)}" style="margin-left:8px;padding:3px 10px;font-size:12px">Libérer</button></li>`;
+    }).join('');
     return `<div class="small" style="margin-bottom:10px">
         <b>Matelots en surface (${actifs.length})</b>
         <ul style="margin:6px 0 8px 0;padding-left:18px">${lignes}</ul>
@@ -864,10 +1404,10 @@
       $('adminO2Now').textContent = 'Non démarrée';
       $('adminO2State').textContent = 'EN ATTENTE';
       $('adminO2State').className = 'admin-o2-badge';
-      $('adminO2Countdown').textContent = '7J 00h00m00s';
-      $('adminO2Date').value = '';
-      $('adminO2Days').value = 7;
-      $('adminO2Hours').value = 0;
+      $('adminO2Countdown').textContent = formatCountdown(getMissionDurationMs());
+      const durMs = getMissionDurationMs();
+      $('adminO2Days').value = Math.floor(durMs / 86400000);
+      $('adminO2Hours').value = Math.floor((durMs % 86400000) / 3600000);
       return;
     }
     const start = new Date(startedAt);
@@ -883,8 +1423,6 @@
     $('adminO2Countdown').textContent = `${d}J ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}m${String(sec).padStart(2,'0')}s`;
     $('adminO2State').textContent = percent <= 20 ? 'CRITIQUE' : (percent <= 50 ? 'EN BAISSE' : 'STABLE');
     $('adminO2State').className = 'admin-o2-badge' + (percent <= 20 ? ' critical' : (percent <= 50 ? ' warning' : ''));
-    const pad = n => String(n).padStart(2,'0');
-    $('adminO2Date').value = `${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}T${pad(start.getHours())}:${pad(start.getMinutes())}`;
     // Durée restante déduite
     const totalRemainingDays = (end - now) / 86400000;
     $('adminO2Days').value = Math.max(0, Math.floor(totalRemainingDays));
@@ -893,31 +1431,22 @@
   async function adminApplyOxygen(){
     if(!isAdminUnlocked()) return;
     try{
-      const dateVal = $('adminO2Date').value;
       const days = Math.max(0, Number($('adminO2Days').value || 0));
       const hours = Math.max(0, Math.min(23, Number($('adminO2Hours').value || 0)));
-      let startedAt;
-      if(dateVal){
-        const d = new Date(dateVal);
-        if(isNaN(d.getTime())){ alert('Date invalide.'); return; }
-        startedAt = d.toISOString();
-      }else{
-        startedAt = new Date().toISOString();
-      }
-      // MISSION_DURATION_MS est `const` — on ne peut pas la modifier globalement sans recompiler.
-      // On stocke donc une override `missionDurationMs` dans game/config.
+      // On stocke une override `missionDurationMs` dans game/config.
       const durationMs = ((days * 24) + hours) * 60 * 60 * 1000;
+      /* Appliquer une durée NE DÉMARRE PAS le compte à rebours : on laisse
+         missionStartedAt à null. Le « top départ » viendra du lancement du
+         mini-jeu du Palier 1, pas du panneau admin. */
       await setDoc(doc(db,'game','config'), {
-        missionStartedAt: startedAt,
+        missionStartedAt: null,
         missionDurationMs: durationMs,
-        missionStartedByTeam: currentTeam?.teamCode || missionConfig?.missionStartedByTeam || null,
-        missionStartedByTeamName: currentTeam?.teamName || missionConfig?.missionStartedByTeamName || null,
         updatedAt: new Date().toISOString()
       }, {merge:true});
-      missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: durationMs };
+      missionConfig = { ...(missionConfig||{}), missionStartedAt: null, missionDurationMs: durationMs };
       updateCountdown();
       renderAdminOxygen();
-      endAdminSession('✅ Réserve O₂ mise à jour · session fermée');
+      endAdminSession(`✅ Réserve O₂ armée à ${formatInitialDuration(durationMs)} — en attente du top départ · session fermée`);
     }catch(err){
       console.error('adminApplyOxygen:', err);
       alert(`❌ Échec : ${err.message || err}`);
@@ -925,20 +1454,20 @@
   }
   async function adminResetOxygenToNow(){
     if(!isAdminUnlocked()) return;
-    const startedAt = new Date().toISOString();
-    /* Le reset conserve la durée initiale actuellement configurée :
-       modifier la date de départ ne doit jamais remettre la mission à 7 jours
-       par défaut. */
-    const durationMs = getMissionDurationMs();
+    /* Rétablit la durée d'origine (7 jours) ET remet la mission en attente :
+       le compte à rebours ne démarre PAS ici — il partira au « top départ »,
+       quand le premier matelot lancera le mini-jeu du Palier 1
+       (startMissionOfficial). Aucun bouton du panneau ne doit l'armer. */
+    const durationMs = MISSION_DURATION_MS_DEFAULT;
     await setDoc(doc(db,'game','config'), {
-      missionStartedAt: startedAt,
+      missionStartedAt: null,
       missionDurationMs: durationMs,
       updatedAt: new Date().toISOString()
     }, {merge:true});
-    missionConfig = { ...(missionConfig||{}), missionStartedAt: startedAt, missionDurationMs: durationMs };
+    missionConfig = { ...(missionConfig||{}), missionStartedAt: null, missionDurationMs: durationMs };
     updateCountdown();
     renderAdminOxygen();
-    endAdminSession(`✅ O₂ reset à maintenant (${formatInitialDuration(durationMs)}) · session fermée`);
+    endAdminSession(`✅ Réserve O₂ réarmée à ${formatInitialDuration(durationMs)} — en attente du top départ · session fermée`);
   }
   async function adminClearOxygen(){
     if(!isAdminUnlocked()) return;
@@ -1069,8 +1598,8 @@
       }
       box.innerHTML = effectiveTeams.map(t => {
         const isCustom = !TEAM_DEFS.some(d => d.code === t.code);
-        return `<div class="team" style="background:#fff" data-team="${esc(t.code)}">
-          <h3>${esc(t.name)}${isCustom ? ' <span class="small" style="color:#075c39">[custom]</span>' : ''}</h3>
+        return `<div class="team" data-team="${esc(t.code)}">
+          <h3>${esc(t.name)}${isCustom ? ' <span class="small" style="color:#5be09b">[custom]</span>' : ''}</h3>
           <div class="hr"></div>
           <div class="team-edit-row">
             <input type="text" class="tt-name" value="${esc(t.name)}" maxlength="32" placeholder="Nom de l'équipe">
@@ -1080,8 +1609,8 @@
             </div>
           </div>
           ${Number(t.memberCount) > 0
-            ? `<div class="small" style="color:#9b1111;margin-top:6px;font-weight:800">⚠️ ${t.memberCount} matelot(s) à bord — les supprimer effacera aussi leurs Codes Matelot</div>`
-            : '<div class="small" style="color:var(--muted);margin-top:6px">Aucun matelot à bord</div>'}
+            ? `<div class="small" style="color:#ff8579;margin-top:6px;font-weight:800">⚠️ ${t.memberCount} matelot(s) à bord — les supprimer effacera aussi leurs Codes Matelot</div>`
+            : '<div class="small" style="color:#9bc4d4;margin-top:6px">Aucun matelot à bord</div>'}
         </div>`;
       }).join('');
       box.querySelectorAll('.team').forEach(teamEl => {
@@ -1219,12 +1748,36 @@
       alert(`❌ Échec suppression : ${err.message || err}`);
     }
   }
+  async function adminPurgePwa(e){
+    const btn = e && e.target ? e.target : $('adminPurgePwaBtn');
+    if(!confirm("⚠️ Forcer la dernière version en vidant le cache PWA de cet appareil ?\n\nLe cache local et le Service Worker seront purgés, puis la page rechargera avec la version la plus récente.")) return;
+    const oldText = btn ? btn.textContent : '';
+    if(btn) btn.textContent = 'Purge…';
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) await r.unregister();
+      }
+      location.href = location.pathname + '?_fresh=' + Date.now();
+    } catch(err) {
+      alert('Erreur lors de la purge : ' + (err.message || err));
+      if(btn) btn.textContent = oldText;
+    }
+  }
+
   $('adminAddTeamBtn')?.addEventListener('click', adminAddTeam);
   // Liaisons des commandes sensibles (côté index elles vivent dans le script
   // principal de la page ; ici on les câble pour les pages injectées).
+  $('adminQuickTestAnnonceBtn')?.addEventListener('click', testerAnnonceVerte);
   $('resetAllMembersBtn')?.addEventListener('click', resetAllMembers);
   $('adminDesignerBtn')?.addEventListener('click', renderDesignerAccess);
   $('resetAllProgressBtn')?.addEventListener('click', resetAllProgress);
+  $('cleanupTestSessionsBtn')?.addEventListener('click', cleanupTestSessions);
+  $('adminPurgePwaBtn')?.addEventListener('click', adminPurgePwa);
 
   return { open: openAdminPanel, close: closeAdminPanel };
 
@@ -1239,35 +1792,48 @@
       }
       return;
     }
-    if(document.getElementById('nautilusAdminShortcut')) return;
+    if(document.getElementById('adminFabBtn') || document.getElementById('nautilusAdminShortcut')) return;
     injectAdminPanel();
     const admin = mountAdminLogic();
-    const style = document.createElement('style');
-    style.textContent = `
-      #nautilusAdminShortcut{position:fixed;left:14px;bottom:14px;z-index:11000;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:rgba(142,231,255,.5);text-decoration:none;font-size:16px;opacity:.05;box-shadow:none;outline:none;-webkit-tap-highlight-color:transparent}
-      #nautilusAdminShortcut:hover,#nautilusAdminShortcut:focus{opacity:.05;color:rgba(142,231,255,.5);border:none;outline:none}
-    `;
-    document.head.appendChild(style);
-    const gear = document.createElement('button');
-    gear.id = 'nautilusAdminShortcut';
-    gear.type = 'button';
-    gear.title = 'Panneau admin';
-    gear.setAttribute('aria-label','Ouvrir le panneau admin');
-    gear.textContent = '⚙';
-    gear.style.cssText = 'cursor:pointer;padding:0;margin:0';
-    gear.addEventListener('click', () => {
+
+    const footer = document.createElement('footer');
+    footer.className = 'site-footer nautilus-admin-footer';
+    footer.style.cssText = 'position:fixed;left:14px;bottom:14px;z-index:11000;margin:0;padding:0;display:flex;align-items:center;';
+    footer.innerHTML = '<button id="adminFabBtn" type="button" aria-label="Maintenance" title="Maintenance"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>';
+    document.body.appendChild(footer);
+
+    const gear = document.getElementById('adminFabBtn');
+    if(gear){
+      gear.addEventListener('click', () => {
+        const p = document.getElementById('adminPanel');
+        if(!p) return;
+        if(p.classList.contains('open')) admin.close();
+        else admin.open();
+      });
+    }
+
+    // Alias pour compatibilité
+    const shortcut = document.createElement('span');
+    shortcut.id = 'nautilusAdminShortcut';
+    shortcut.style.display = 'none';
+    shortcut.addEventListener('click', () => {
       const p = document.getElementById('adminPanel');
       if(!p) return;
       if(p.classList.contains('open')) admin.close();
       else admin.open();
     });
-    document.body.appendChild(gear);
+    document.body.appendChild(shortcut);
+
     document.getElementById('adminPanel')?.addEventListener('click', e => {
       if(e.target === document.getElementById('adminPanel')) admin.close();
     });
     document.addEventListener('keydown', e => {
       if(e.key === 'Escape') admin.close();
     });
+
+    if(new URLSearchParams(location.search).get('admin') === '1'){
+      setTimeout(() => gear?.click(), 700);
+    }
   }
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
