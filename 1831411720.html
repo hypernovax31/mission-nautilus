@@ -11,7 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=60">
+  <link rel="stylesheet" href="css/palier1.css?v=61">
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=27">
@@ -174,7 +174,7 @@
 <!-- Moteur de l'épreuve CHASSE AUX ARTEFACTS EN MAGASIN FNAC (Palier 3). -->
 <script src="photo-defi.js?v=6"></script>
 <!-- Écran de VICTOIRE commun à TOUS les paliers. -->
-<script src="victoire-palier.js?v=16"></script>
+<script src="victoire-palier.js?v=18"></script>
 <script src="records-palier.js?v=2"></script>
 
 <!-- ================= RÉGLAGES ADMIN (Palier 3) =================
@@ -296,7 +296,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 
   var partieEnCours = false;
 
-  function afficherBlocage(jusqua, nom, motif) {
+  function afficherBlocage(jusqua, nom, motif, hours, equipe) {
     partieEnCours = false;
     afficherVueEpreuve();
     var host = $('puzzleHost');
@@ -306,6 +306,8 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
         motif: motif,
         nom: nom,
         jusqua: jusqua,
+        hours: hours,
+        equipe: equipe,
         details: motif === 'temps_ecoule' ? 'Temps écoulé (3 min)' : 'Chasse interrompue'
       });
     }
@@ -324,16 +326,27 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   function declencherBlocage(motif) {
     partieEnCours = false;
     jouerSonDefaite();
+
+    var maintenant = Date.now();
+    var jusquaDefaut = maintenant + BLOCAGE_MS;
+    var nomLocal = (function () {
+      try { return localStorage.getItem('nautilusMatelotName') || localStorage.getItem('nautilusMatelotNom') || ''; }
+      catch (_) { return ''; }
+    })() || (_ident && _ident.name) || 'Matelot';
+    var equipeLocale = (_ident && _ident.teamCode) || (function () {
+      try { return localStorage.getItem('nautilusCurrentTeam') || ''; } catch (_) { return ''; }
+    })() || 'Nemo';
+
+    // Affichage IMMÉDIAT synchrone de la page de défaite
+    afficherBlocage(jusquaDefaut, nomLocal, motif, 1, equipeLocale);
+
     if (apercuAdminAutorise()) {
-      var jusquaApercu = Date.now() + 3600000;
-      afficherBlocage(jusquaApercu, 'Matelot Concepteur', motif);
       journal('ℹ️ Aperçu organisateur : écran de défaite affiché (aucun blocage réel enregistré).', 'info');
       return;
     }
+
     monIdentite().then(function (ident) {
       if (ident && ident.isTest) {
-        var jusquaTest = Date.now() + 3600000;
-        afficherBlocage(jusquaTest, ident.name, motif);
         journal('🧪 Mode concepteur : écran de défaite affiché pour ' + ident.name + ' (aucun blocage en test).', 'info');
         return;
       }
@@ -346,21 +359,19 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
       if (ident) {
         window.NautilusBlocages.poserBlocage(ident, raison)
           .then(function (r) {
-            afficherBlocage(r.lockedUntil, ident.name, motif);
+            afficherBlocage(r.lockedUntil, ident.name, motif, r.hours, ident.teamCode);
             acte(texteActe + ' (' + r.hours + ' h)', 'danger', ident.name);
           })
           .catch(function () {
-            _blocageSession = Date.now() + BLOCAGE_MS;
-            afficherBlocage(_blocageSession, ident.name, motif);
+            _blocageSession = jusquaDefaut;
+            afficherBlocage(_blocageSession, ident.name, motif, 1, ident.teamCode);
             journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
           });
         return;
       }
-      var jusqua = Date.now() + BLOCAGE_MS;
-      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
-      afficherBlocage(jusqua, null, motif);
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusquaDefaut)); } catch (e) {}
       acte(texteActe + ' (1 h)', 'danger');
-    });
+    }).catch(function () {});
   }
 
   /* Inscription Firestore : mêmes champs que les paliers précédents. */
@@ -457,6 +468,13 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   /* Démarrage protégé : blocage personnel du matelot identifié, sinon
      repli local anonyme. Le moindre doute réseau laisse JOUER. */
   async function demarrer() {
+    if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+      var nomApercu = (function () {
+        try { return localStorage.getItem('nautilusMatelotName') || ''; } catch (_) { return ''; }
+      })() || 'Matelot';
+      afficherBlocage(Date.now() + 3600000, nomApercu, 'temps_ecoule', 1, 'Nemo');
+      return;
+    }
     var ident = null;
     if (!apercuAdminAutorise()) {
       ident = await monIdentite();
@@ -556,7 +574,12 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   }
 
   /* Démarrage : choix de la VUE (identique au Palier 2). */
-  if (apercuAdminAutorise()) {
+  if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+    var nomApercu = (function () {
+      try { return localStorage.getItem('nautilusMatelotName') || ''; } catch (_) { return ''; }
+    })() || 'Matelot';
+    afficherBlocage(Date.now() + 3600000, nomApercu, 'temps_ecoule', 1, 'Nemo');
+  } else if (apercuAdminAutorise()) {
     var banniereModeTest = function () {
       if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
     };

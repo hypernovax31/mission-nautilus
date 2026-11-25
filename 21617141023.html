@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=60">
+  <link rel="stylesheet" href="css/palier1.css?v=61">
   <link rel="stylesheet" href="css/palier2.css?v=27">
   <link rel="stylesheet" href="css/palier6.css?v=2">
   <script src="anti-zoom.js?v=2"></script>
@@ -157,7 +157,7 @@
 <script src="reserve-o2.js?v=9"></script>
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<script src="victoire-palier.js?v=16"></script>
+<script src="victoire-palier.js?v=18"></script>
 <script src="records-palier.js?v=2"></script>
 <script src="quiz-palier6.js?v=3"></script>
 
@@ -277,7 +277,7 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
     if (carte) carte.classList.toggle('epreuve-focus', !visible);
   }
 
-  function afficherBlocage(jusqua, nom, motif) {
+  function afficherBlocage(jusqua, nom, motif, hours, equipe) {
     partieEnCours = false;
     afficherVueEpreuve();
     var host = $('quizHost');
@@ -286,7 +286,9 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
         palier: 6,
         motif: motif,
         nom: nom,
-        jusqua: jusqua
+        jusqua: jusqua,
+        hours: hours,
+        equipe: equipe
       });
     }
   }
@@ -303,37 +305,45 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
     motif = motif || 'erreurs';
     jouerSonDefaite();
 
+    var maintenant = Date.now();
+    var jusquaDefaut = maintenant + BLOCAGE_MS;
+    var nomLocal = (function () {
+      try { return localStorage.getItem('nautilusMatelotName') || localStorage.getItem('nautilusMatelotNom') || ''; }
+      catch (_) { return ''; }
+    })() || (_ident && _ident.name) || 'Matelot';
+    var equipeLocale = (_ident && _ident.teamCode) || (function () {
+      try { return localStorage.getItem('nautilusCurrentTeam') || ''; } catch (_) { return ''; }
+    })() || 'Nemo';
+
+    // Affichage IMMÉDIAT synchrone de la page de défaite
+    afficherBlocage(jusquaDefaut, nomLocal, motif, 1, equipeLocale);
+
     if (apercuAdminAutorise()) {
-      var jusquaApercu = Date.now() + 3600000;
-      afficherBlocage(jusquaApercu, 'Matelot Concepteur', motif);
       journal('ℹ️ Aperçu organisateur : écran de défaite affiché (aucun blocage réel enregistré).', 'info');
       return;
     }
 
     monIdentite().then(function (ident) {
       if (ident && ident.isTest) {
-        var jusquaTest = Date.now() + 3600000;
-        afficherBlocage(jusquaTest, ident.name, motif);
         journal('🧪 Mode concepteur : écran de défaite affiché pour ' + ident.name + ' (aucun blocage en test).', 'info');
         return;
       }
       if (ident) {
         window.NautilusBlocages.poserBlocage(ident, motif)
           .then(function (r) {
-            afficherBlocage(r.lockedUntil, ident.name, motif);
+            afficherBlocage(r.lockedUntil, ident.name, motif, r.hours, ident.teamCode);
             acte('échec au Grand Quiz (' + motif + ') — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
           })
           .catch(function () {
-            _blocageSession = Date.now() + BLOCAGE_MS;
-            afficherBlocage(_blocageSession, ident.name, motif);
+            _blocageSession = jusquaDefaut;
+            afficherBlocage(_blocageSession, ident.name, motif, 1, ident.teamCode);
             journal('⚠️ Blocage personnel non inscrit (connexion ?) — il vaut pour cette session seulement.', 'warning');
           });
         return;
       }
       var jusqua = Date.now() + BLOCAGE_MS;
-      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
-      afficherBlocage(jusqua, null, motif);
-    });
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusquaDefaut)); } catch (e) {}
+    }).catch(function () {});
   }
 
   async function propagerVictoire(res) {
@@ -427,6 +437,13 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
   }
 
   async function demarrer() {
+    if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+      var nomApercu = (function () {
+        try { return localStorage.getItem('nautilusMatelotName') || ''; } catch (_) { return ''; }
+      })() || 'Matelot';
+      afficherBlocage(Date.now() + 3600000, nomApercu, 'erreurs', 1, 'Nemo');
+      return;
+    }
     var ident = null;
     if (!apercuAdminAutorise()) {
       ident = await monIdentite();
@@ -531,7 +548,12 @@ const ZONE_RECHERCHE_HINT = "Rayon Papeterie & Beaux-Arts";
   }
 
   /* Démarrage : choix de la VUE */
-  if (apercuAdminAutorise()) {
+  if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+    var nomApercu = (function () {
+      try { return localStorage.getItem('nautilusMatelotName') || ''; } catch (_) { return ''; }
+    })() || 'Matelot';
+    afficherBlocage(Date.now() + 3600000, nomApercu, 'erreurs', 1, 'Nemo');
+  } else if (apercuAdminAutorise()) {
     var banniereModeTest = function () {
       if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
     };

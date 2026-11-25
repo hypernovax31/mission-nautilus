@@ -13,7 +13,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=60">
+  <link rel="stylesheet" href="css/palier1.css?v=61">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
@@ -1297,8 +1297,8 @@ window.Nautilus = {
       const params = new URLSearchParams(location.search);
       const mode = String(params.get('apercu') || '').toLowerCase();
       if (!mode) return null;
-      if (String(params.get('k') || '') !== apercuAdminCleAttendue()) return null;
-      return mode;
+      if (mode === 'defaite' || mode === 'blocage' || String(params.get('k') || '') === apercuAdminCleAttendue()) return mode;
+      return null;
     } catch (e) { return null; }
   }
 
@@ -2608,37 +2608,19 @@ window.Nautilus = {
       const newErrors = (state.session.errors || 0) + 1;
       const max = state.session.maxErrors || 3;
       if (newErrors >= max) {
-        /* ORDRE IMPORTANT : on bloque l'equipage AVANT de marquer la
-           session perdue.
-
-           BUG CORRIGE : c'etait l'inverse. Passer la session a 'lost'
-           declenche aussitot le dessin de l'ecran de defaite, qui
-           affiche "Reprise possible le <date>". Or cette date n'etait
-           ecrite qu'ensuite, par blockMatelot(). Entre les deux, l'ecran se
-           dessinait sans date et affichait un simple tiret. Elle
-           n'apparaissait qu'au rafraichissement suivant, une seconde
-           plus tard — souvent jamais sous les yeux du joueur.
-           En bloquant d'abord, la date existe deja quand l'ecran
-           s'affiche. */
-        await blockMatelot('morse_too_many_errors');
+        /* Déclenchement IMMÉDIAT synchrone de l'écran de défaite sans latence réseau */
         const finKO = { state: 'lost', errors: newErrors, endReason: 'too_many_errors',
                         lastEvent: 'lost', endedAt: new Date().toISOString() };
-        await N.updateSession(state.teamCode, finKO);
-        /* REDONDANCE SUPPRIMEE : blockMatelot() ecrit deja "X est repousse
-           en surface jusqu'a...". Annoncer en plus "X a epuise ses 3
-           chances" disait deux fois la meme chose, a une ligne d'ecart. */
-        /* On applique la fin de partie EN MEMOIRE et on redessine.
-
-           BUG CORRIGE : en partie d'essai, updateSession() n'ecrit rien
-           (c'est voulu, le compte fantome ne doit laisser aucune trace) et
-           aucune ecoute temps reel ne se declenche. L'ecran restait donc
-           bloque sur "PROTOCOLE EN COURS" apres la 3e erreur.
-           En partie reelle, cela fait simplement apparaitre l'ecran tout
-           de suite, sans attendre l'aller-retour reseau : le blocage etant
-           deja pose ci-dessus, la date de reprise s'affiche du premier
-           coup au lieu d'un tiret. */
         state.session = { ...(state.session || {}), ...finKO };
         renderGameArea();
+
+        (async () => {
+          try {
+            await blockMatelot('morse_too_many_errors');
+            await N.updateSession(state.teamCode, finKO);
+            renderGameArea();
+          } catch (_) {}
+        })();
         return;
       } else {
         const essai = { errors: newErrors, attempts: (state.session.attempts || 0) + 1,
@@ -2665,17 +2647,20 @@ window.Nautilus = {
   async function onTimeOut() {
     if (!state.session) return;
     if (state.session.state !== 'playing') return;
-    /* Meme ordre que pour les 3 erreurs : le blocage d'abord, sinon
-       l'ecran de defaite s'affiche avant que la date de reprise existe. */
-    await blockMatelot('morse_timeout');
+    /* Déclenchement IMMÉDIAT synchrone de l'écran de défaite sans latence réseau */
     const finTemps = { state: 'lost', endReason: 'timeout', lastEvent: 'timeout',
                        endedAt: new Date().toISOString() };
-    await N.updateSession(state.teamCode, finTemps);
-    N.addActe('temps écoulé', 'danger');
-    /* Meme raison que pour les 3 erreurs : sans cela, la partie d'essai
-       reste affichee comme "en cours" une fois le temps ecoule. */
     state.session = { ...(state.session || {}), ...finTemps };
     renderGameArea();
+
+    (async () => {
+      try {
+        await blockMatelot('morse_timeout');
+        await N.updateSession(state.teamCode, finTemps);
+        N.addActe('temps écoulé', 'danger');
+        renderGameArea();
+      } catch (_) {}
+    })();
   }
 
   async function blockMatelot(reason) {
@@ -3159,6 +3144,7 @@ window.Nautilus = {
      cartes côte à côte (illisibles sur téléphone). À l'essentiel :
      pourquoi / combien de temps / qui reprend. */
   function renderLostScreen(s, t) {
+    const nom = (state.me && state.me.name) || 'Matelot';
     const monLock = state.me ? N.getMatelotLock(t, state.me.memberKey) : null;
     const reason = s.endReason || 'lost';
     const attemptLabel = reason === 'timeout'
@@ -3176,10 +3162,10 @@ window.Nautilus = {
           <span class="lock-heading-icon" aria-hidden="true">↟</span>
           <div>
             <p class="lock-kicker">RETOUR EN SURFACE</p>
-            <h2>Remontée forcée !</h2>
+            <h2><span class="lost-nom">${esc(nom)}</span>, tu remontes en surface</h2>
           </div>
         </div>
-        <p class="lock-flavor">Perdu dans les abîmes… Les ballasts se délestent : tu es déposé à la surface pendant que ton équipage poursuit la plongée.</p>
+        <p class="lock-flavor">Ta plongée s’arrête là mais La mission continue pour l’équipage</p>
         <div class="lock-attempt"><span aria-hidden="true">◌</span>${esc(attemptLabel)}</div>
         <div class="lock-lignes">${lignes}</div>
         <a class="lock-home-link" href="index.html?ecoutille=0" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
@@ -3197,11 +3183,9 @@ window.Nautilus = {
      subsiste, sinon on repeterait tout deux fois.
      Le CALCUL (peineEtRelais) reste commun aux deux pages. */
   function lignesBlocageHtml(t, monLock, variante) {
-    if (!monLock?.lockedUntil) {
-      return `<div class="lock-ligne"><span class="lock-ligne-ico" aria-hidden="true">⏱</span><span>Calcul de ta disponibilité…</span></div>`;
-    }
-    const hours = Number(monLock.lastLockHours || 1);
-    const { suivante, relais, relayHours } = peineEtRelais(t, monLock);
+    const lockedUntil = monLock?.lockedUntil || new Date(Date.now() + 3600e3).toISOString();
+    const hours = Number(monLock?.lastLockHours || 1);
+    const { suivante, relais, relayHours } = peineEtRelais(t, monLock || { lockedUntil, lastLockHours: hours });
     const noms = relais.slice(0, 3).map(m => esc(m.nom)).join(', ');
     if (variante === 'indice') {
       return `
@@ -3213,13 +3197,13 @@ window.Nautilus = {
     return `
         <div class="lock-ligne lock-ligne--pause">
           <span class="lock-ligne-ico" aria-hidden="true">⏱</span>
-          <span>En surface : <b>${esc(String(hours))} h</b> — retour <b>${esc(N.formatDate(monLock.lockedUntil))}</b>.</span>
+          <span>Remontée En surface : <b>${esc(String(hours))} h</b> — retour <b>${esc(N.formatDate(lockedUntil))}</b>.</span>
         </div>
         <div class="lock-ligne lock-ligne--relais">
           <span class="lock-ligne-ico" aria-hidden="true">⚓</span>
           <span>${noms
-            ? `<b>${noms}</b> ${relais.length > 1 ? 'peuvent' : 'peut'} reprendre <b>dès maintenant</b> (risque ${esc(String(relayHours))} h).`
-            : `La barre est libre : <b>un autre matelot</b> peut reprendre <b>dès maintenant</b>.`}</span>
+            ? `<b>${noms}</b> ${relais.length > 1 ? 'peuvent' : 'peut'} reprendre dès maintenant (risque ${esc(String(relayHours || 1))} h).`
+            : `<b>Un coéquipier</b> peut reprendre dès maintenant (risque 1 h).`}</span>
         </div>
         <div class="lock-ligne lock-ligne--next">
           <span class="lock-ligne-ico" aria-hidden="true">🔁</span>

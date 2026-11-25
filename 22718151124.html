@@ -219,7 +219,9 @@ const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
     location.href = 'index.html?ecoutille=0';
   });
 
-  if (apercuAdminAutorise()) {
+  if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+    location.replace('palier7-jeu.html' + (location.search || ''));
+  } else if (apercuAdminAutorise()) {
     var banniereModeTest = function () {
       if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
     };

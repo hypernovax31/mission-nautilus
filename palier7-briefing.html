@@ -88,6 +88,10 @@
     } catch (e) { return false; }
   }
 
+  if (/[?&]apercu=(?:defaite|blocage)\b/.test(location.search) || /[?&]test=defaite\b/.test(location.search)) {
+    location.replace('palier7-jeu.html' + (location.search || ''));
+  }
+
   $('backBtn')?.addEventListener('click', function () {
     location.href = 'index.html?ecoutille=0';
   });
