@@ -7,6 +7,7 @@ console.log('=== TEST SUITE PALIER 7 : LE LABYRINTHE CIRCULAIRE DU NAUTILUS (10x
 
 // 1. Vérification de l existence des fichiers clés
 const files = [
+  'palier7-briefing.html',
   'palier7-jeu.html',
   '22718151124.html',
   'labyrinthe.html',
@@ -165,12 +166,42 @@ if (code.includes('btnStartGyro') && code.includes('btnStartJoy') && code.includ
   process.exit(1);
 }
 
-// 8. Vérification du Service Worker
-const swContent = fs.readFileSync('sw.js', 'utf8');
-if (swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=11') && swContent.includes('./css/palier7.css?v=11')) {
-  console.log(`✓ [Cache PWA] Tous les assets v11 du Palier 7 sont précachés dans sw.js.`);
+// 8. Vérification de l'épuration de la page de retenue du chrono
+const palier7Html = fs.readFileSync('palier7-jeu.html', 'utf8');
+if (palier7Html.includes('id="epreuveStatut" class="status-banner info" hidden') &&
+    code.includes('id="labyHudStats" hidden') &&
+    code.includes('id="labyControlsBar" hidden') &&
+    code.includes('id="labyStatus" hidden') &&
+    !code.includes('PALIER 7 — <b>LABYRINTHE SCELLÉ') &&
+    code.includes('id="labyTimer"')) {
+  console.log(`✓ [Page de retenue épurée] Éléments non nécessaires retirés : bandeau statut, badge dupliqué, stats et contrôles inactifs masqués.`);
 } else {
-  console.error(`✗ [Cache PWA] Assets v11 manquants dans sw.js.`);
+  console.error(`✗ [Page de retenue] Épuration incomplète sur la page de retenue pour le chrono.`);
+  process.exit(1);
+}
+
+// 9. Vérification de la page de briefing du Palier 7
+const briefingHtml = fs.readFileSync('palier7-briefing.html', 'utf8');
+const sasHtml = fs.readFileSync('22718151124.html', 'utf8');
+if (briefingHtml.includes('window.NautilusBriefing.afficher') &&
+    briefingHtml.includes('10 anneaux') &&
+    briefingHtml.includes('1 minute') &&
+    briefingHtml.includes('palier7-jeu.html') &&
+    sasHtml.includes('window.NautilusBriefing.afficher') &&
+    sasHtml.includes('10 anneaux') &&
+    sasHtml.includes('1 minute')) {
+  console.log(`✓ [Page Briefing Palier 7] Page de briefing dédiée et sas Palier 7 validés avec consignes conformes (10 anneaux, 1 min chrono, gyro/joystick).`);
+} else {
+  console.error(`✗ [Briefing Palier 7] Configuration de la page briefing ou du sas non conforme.`);
+  process.exit(1);
+}
+
+// 10. Vérification du Service Worker
+const swContent = fs.readFileSync('sw.js', 'utf8');
+if (swContent.includes('./palier7-briefing.html') && swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=12') && swContent.includes('./css/palier7.css?v=12')) {
+  console.log(`✓ [Cache PWA] Tous les assets v12 et la page briefing du Palier 7 sont précachés dans sw.js.`);
+} else {
+  console.error(`✗ [Cache PWA] Assets v12 ou page briefing manquants dans sw.js.`);
   process.exit(1);
 }
 

@@ -210,14 +210,13 @@
       + '<div class="laby-container" id="labyContainer">'
       + '  <div class="laby-hud">'
       + '    <div class="laby-hud-top">'
-      + '      <div class="laby-badge">PALIER 7 — <b>LABYRINTHE SCELLÉ (10 ANNEAUX)</b></div>'
       + '      <div class="laby-timer laby-minuteur" id="labyTimer" title="Minuteur : 1 min avant remontée du matelot">'
       + '        <span class="laby-timer-ico">⏳</span>'
       + '        <span class="laby-timer-lbl">Minuteur :</span>'
       + '        <b id="labyTimerVal">01:00</b>'
       + '      </div>'
       + '    </div>'
-      + '    <div class="laby-hud-stats">'
+      + '    <div class="laby-hud-stats" id="labyHudStats" hidden>'
       + '      <div class="laby-stat-item laby-stat-depth">Profondeur : <b id="labyDepth">Anneau 10/10</b></div>'
       + '      <div class="laby-stat-item">Impacts : <b id="labyCollisions">0</b></div>'
       + '      <div class="laby-stat-item">Cœur : <b id="labyCoreDist">Lointain</b></div>'
@@ -228,24 +227,23 @@
       + '    <div class="laby-board" id="labyBoard">'
       + '      <canvas class="laby-canvas" id="labyCanvas" width="440" height="440"></canvas>'
       + '    </div>'
-      + '    <div class="laby-start-overlay laby-gyro-prompt" id="labyStartOverlay">'
+      + '    <div class="laby-start-overlay" id="labyStartOverlay">'
       + '      <div class="laby-start-card">'
-      + '        <div class="laby-start-badge">⏱️ CHRONO-MISSION · 1 MINUTE</div>'
-      + '        <div class="laby-start-title">Activez les commandes pour lancer le jeu</div>'
-      + '        <div class="laby-start-desc">Le minuteur d’<b>une minute</b> s’enclenche dès votre clic.<br>Atteignez le <b>Cœur central</b> avant la remontée en surface !</div>'
+      + '        <div class="laby-start-title">Lancer le Labyrinthe</div>'
+      + '        <div class="laby-start-sub">Activez le minuteur (1 min) pour démarrer :</div>'
       + '        <div class="laby-start-actions" id="labyStartActions">'
       + '          <button type="button" class="laby-btn-start laby-btn-start-gyro" id="btnStartGyro">'
       + '            <span class="laby-btn-start-ico">🧭</span>'
       + '            <span class="laby-btn-start-txt">'
-      + '              <b>ACTIVER LE GYROSCOPE ET DÉMARRER</b>'
-      + '              <small>Inclinez le mobile pour diriger la bille (recommandé)</small>'
+      + '              <b>GYROSCOPE</b>'
+      + '              <small>Inclinez votre smartphone</small>'
       + '            </span>'
       + '          </button>'
       + '          <button type="button" class="laby-btn-start laby-btn-start-joy" id="btnStartJoy">'
       + '            <span class="laby-btn-start-ico">🕹️</span>'
       + '            <span class="laby-btn-start-txt">'
-      + '              <b>DÉMARRER AU JOYSTICK</b>'
-      + '              <small>Joystick virtuel tactile & touches fléchées du clavier</small>'
+      + '              <b>JOYSTICK</b>'
+      + '              <small>Commandes tactiles ou clavier</small>'
       + '            </span>'
       + '          </button>'
       + '        </div>'
@@ -253,10 +251,14 @@
       + '    </div>'
       + '  </div>'
 
-      + '  <div class="laby-controls-bar">'
+      + '  <div class="laby-brief-holder" id="labyBriefHolder">'
+      + '    <a href="palier7-briefing.html" class="laby-brief-link" id="labyBriefLink">📖 Voir le briefing du capitaine</a>'
+      + '  </div>'
+
+      + '  <div class="laby-controls-bar" id="labyControlsBar" hidden>'
       + '    <div class="laby-sensor-chip" id="labySensorChip">'
       + '      <span class="laby-sensor-dot" id="labySensorDot"></span>'
-      + '      <span id="labySensorLabel">En attente d’activation…</span>'
+      + '      <span id="labySensorLabel">Commandes actives</span>'
       + '    </div>'
       + '    <div class="laby-actions">'
       + '      <button type="button" class="laby-btn" id="btnCalibGyro" title="Calibrer l’inclinaison neutre">🎯 Calibrer</button>'
@@ -272,7 +274,7 @@
       + '    </div>'
       + '  </div>'
 
-      + '  <div class="laby-status" id="labyStatus">Appuyez sur le bouton du gyroscope (ou du joystick) pour activer le minuteur et lancer le mini-jeu.</div>'
+      + '  <div class="laby-status" id="labyStatus" hidden></div>'
       + '</div>';
 
     var container = host.querySelector('#labyContainer');
@@ -293,6 +295,13 @@
     var joystickZone = host.querySelector('#labyJoystickZone');
     var joyBase = host.querySelector('#labyJoyBase');
     var joyStick = host.querySelector('#labyJoyStick');
+    var hudStatsEl = host.querySelector('#labyHudStats');
+    var briefHolderEl = host.querySelector('#labyBriefHolder');
+    var controlsBarEl = host.querySelector('#labyControlsBar');
+    var briefLinkEl = host.querySelector('#labyBriefLink');
+    if (briefLinkEl) {
+      briefLinkEl.setAttribute('href', 'palier7-briefing.html' + (location.search || ''));
+    }
 
     var ctx = canvas.getContext('2d');
 
@@ -461,6 +470,9 @@
       jeuDemarre = true;
 
       if (startOverlayEl) startOverlayEl.hidden = true;
+      if (briefHolderEl) briefHolderEl.hidden = true;
+      if (hudStatsEl) hudStatsEl.hidden = false;
+      if (controlsBarEl) controlsBarEl.hidden = false;
       tenterVerrouillagePortrait();
 
       if (mode === 'gyro') {
@@ -472,8 +484,9 @@
       lancerMinuteur();
       jouerSonDepart();
 
-      statusEl.textContent = '⚡ Minuteur de 1 min enclenché ! Rejoignez le Cœur avant la remontée en surface.';
-      statusEl.className = 'laby-status is-active';
+      if (typeof opts.onStart === 'function') {
+        try { opts.onStart({ mode: mode }); } catch (_) {}
+      }
     }
 
     btnStartGyro.addEventListener('click', function () {

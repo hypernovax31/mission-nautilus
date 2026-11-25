@@ -14,9 +14,27 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=60">
   <link rel="stylesheet" href="css/palier2.css?v=27">
-  <link rel="stylesheet" href="css/palier7.css?v=11">
+  <link rel="stylesheet" href="css/palier7.css?v=12">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+  <script>
+    (function(){
+      try {
+        var base = [16,1,12,9,5,18];
+        var code = base.map(function(x){ return String(x + 6); }).join('');
+        var forceFerme = /[?&]sas=ferme\b/.test(location.search) || /[?&]scan=1\b/.test(location.search);
+        var isUnlocked = localStorage.getItem('nautilusUnlock:palier:' + code) === 'ok';
+        var isApercu = /[?&]apercu=(?:admin|jeu)\b/.test(location.search) || sessionStorage.getItem('nautilusAdminApercu') === '1';
+        if (!forceFerme && (isUnlocked || isApercu)) {
+          document.documentElement.classList.add('sas-skip-flash');
+        }
+      } catch(_) {}
+    })();
+  </script>
+  <style>
+    html.sas-skip-flash #gateHero { display: none !important; }
+    html.sas-skip-flash #briefCard { display: block !important; }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
 </head>
 <body>
@@ -116,25 +134,6 @@
       <div id="briefHost"></div>
     </div>
   </section>
-
-  <!-- ÉPREUVE DU PALIER 7 -->
-  <section class="card gate-unlocked" id="gateUnlocked" hidden>
-    <h2 class="card-h2-split" id="sasUnlockedTitle">
-      <span>PALIER 7</span>
-    </h2>
-    <div class="body">
-      <div id="epreuveStatut" class="status-banner info">🚁 <b>Palier 7 :</b> Prenez de la hauteur. Certains secrets ne se voient jamais depuis le sol.</div>
-      <div id="droneHost" class="game-stage">
-        <div style="text-align:center;padding:24px 12px">
-          <p style="font-size:16px;color:#8ee7ff;font-weight:700">Le sas d'accès du Palier 7 est fonctionnel et vérifié.</p>
-          <p class="small" style="color:#cfe6f4">Les coordonnées du sas (Code QR <code>22718151124</code>) ont été validées avec succès.</p>
-        </div>
-      </div>
-      <div class="game-footer-actions">
-        <a class="puzzle-home" href="index.html?ecoutille=0" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">🏠 Retour à l'accueil</a>
-      </div>
-    </div>
-  </section>
 </main>
 
 <script src="son-partage.js?v=2"></script>
@@ -145,10 +144,7 @@
 <script src="matelot-blocages.js?v=3"></script>
 <script src="reserve-o2.js?v=9"></script>
 <script src="equipage-actif.js?v=10"></script>
-<script>window.EquipageActif.init();</script>
-<script src="labyrinthe-circulaire.js?v=11"></script>
-<script src="victoire-palier.js?v=17"></script>
-<script src="records-palier.js?v=2"></script>
+<script>if (window.EquipageActif) window.EquipageActif.init();</script>
 
 <script>
 const LIEU_DESCRIPTION = "Rayon Photo & Drone";
@@ -163,7 +159,7 @@ const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
 
   function apercuAdminAutorise() {
     try {
-      if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
+      if (!/[?&]apercu=(?:admin|jeu)(?:&|$)/.test(location.search)) return false;
       var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
       if (!k) return false;
       var h = 0, s = 'apercu-admin:NEMO2026';
@@ -184,61 +180,31 @@ const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
     montrerCarte('teamCard', true);
     montrerCarte('logCard', true);
     montrerCarte('briefCard', false);
-    montrerCarte('gateUnlocked', false);
   }
 
   function afficherVueBriefing() {
     montrerCarte('gateHero', false);
-    montrerCarte('teamCard', true);
-    montrerCarte('logCard', true);
-    montrerCarte('briefCard', true);
-    montrerCarte('gateUnlocked', false);
-    window.NautilusBriefing.afficher($('briefHost'), {
-      intro: "« Les anneaux de navigation de l’épave centrale du Nautilus sont verrouillés ». Un mécanisme gyroscopique scelle le réacteur abyssal. Dirigez la bille 3D à travers les coursives circulaires jusqu'au Cœur sans vous égarer dans les nombreuses impasses.",
-      consignes: [
-        { ico: '🌀', html: "<b>Labyrinthe circulaire</b> : 7 anneaux concentriques à franchir depuis la périphérie jusqu’au Cœur central." },
-        { ico: '⚠️', warn: true, html: "<b>Nombreuses impasses</b> : le dédale est truffé de culs-de-sac trompeurs. Repérez le chemin libre !" },
-        { ico: '🧭', html: "<b>Pilotage gyroscope</b> : inclinez votre smartphone pour faire rouler la bille sous l’effet de la gravité." },
-        { ico: '🕹️', html: "<b>Joystick de secours</b> : si aucun gyroscope n'est présent (ordinateur ou capteurs inactifs), le joystick tactile prend le relais." },
-        { ico: '⏱️', warn: true, html: "<b>3 minutes de réserve d'oxygène</b> pour atteindre le Cœur avant la fermeture définitive du sas." }
-      ],
-      cta: '⚓ PRENDRE LES COMMANDES',
-      onDepart: function () {
-        location.href = 'palier7-jeu.html' + (location.search || '');
-      }
-    });
-  }
-
-  function afficherVueEpreuve() {
-    montrerCarte('gateHero', false);
     montrerCarte('teamCard', false);
     montrerCarte('logCard', false);
-    montrerCarte('briefCard', false);
-    montrerCarte('gateUnlocked', true);
-
-    var host = $('droneHost');
-    if (host && window.NautilusLabyrinthe && !host.querySelector('.laby-container')) {
-      window.NautilusLabyrinthe.init(host, {
-        onVictoire: function (res) {
-          if (window.NautilusVictoire) {
-            window.NautilusVictoire.afficher(host, {
-              palier: 7,
-              mission: 'Le Labyrinthe Circulaire',
-              equipe: localStorage.getItem('nautilusCurrentTeam') || 'Nemo',
-              stats: [
-                { valeur: (res && res.temps) ? res.temps : ((res && res.duree) ? (Math.floor(res.duree / 60) + ':' + ('0' + (res.duree % 60)).slice(-2)) : '00:00'), label: 'Temps de navigation' },
-                { valeur: '100%', label: 'Cœur réanimé' },
-                { valeur: String(res.collisions || 0), label: 'Impacts parois' }
-              ],
-              indication: 'Zone finale de surface',
-              labelSuivant: 'Palier final',
-              urlSuivante: '23819161225.html'
-            });
-          }
-        }
-      });
-    }
+    montrerCarte('briefCard', true);
   }
+
+  /* Configuration du Briefing du Capitaine pour le Palier 7 */
+  window.NautilusBriefing.afficher($('briefHost'), {
+    intro: "« Matelots, l’épave centrale du Nautilus est sous nos yeux, mais sa machinerie principale est scellée ». Un mécanisme gyroscopique complexe protège le réacteur d'amarrage. Vous devez piloter la bille 3D à travers un labyrinthe circulaire de 10 anneaux concentriques jusqu'au Cœur avant l'expiration de votre réserve.",
+    consignes: [
+      { ico: '🌀', html: "<b>Labyrinthe circulaire à 10 anneaux</b> : naviguez depuis la coursive extérieure (Anneau 10) jusqu'au Cœur central (Anneau 1)." },
+      { ico: '🧭', html: "<b>Pilotage gyroscope prioritaire</b> : inclinez votre smartphone pour faire rouler la bille sous l'effet de la gravité (recommandé)." },
+      { ico: '🕹️', html: "<b>Joystick tactile de secours</b> : disponible sur ordinateur ou si vos capteurs de mouvement ne sont pas activés." },
+      { ico: '⚠️', warn: true, html: "<b>Nombreuses impasses</b> : le dédale est truffé de culs-de-sac trompeurs. Repérez les ouvertures pour progresser !" },
+      { ico: '⏱️', warn: true, html: "<b>Minuteur strict de 1 minute chrono</b> : appuyez sur le bouton gyroscopique (ou joystick) pour enclencher le décompte et lancer la bille." },
+      { ico: '🚨', warn: true, html: "<b>Temps écoulé = DÉFAITE !</b> À 5 secondes de la fin, les parois clignotent en rouge. À 00:00, le sas se verrouille et le matelot remonte en surface !" }
+    ],
+    cta: '⚓ PRENDRE LES COMMANDES',
+    onDepart: function () {
+      location.href = 'palier7-jeu.html' + (location.search || '');
+    }
+  });
 
   window.addEventListener('nautilus:sas-ouvert', function (ev) {
     var source = ev && ev.detail && ev.detail.source;
@@ -249,27 +215,47 @@ const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
     }
   });
 
-  window.addEventListener('DOMContentLoaded', function () {
-    $('backBtn')?.addEventListener('click', function () {
-      location.href = 'index.html?ecoutille=0';
-    });
-    if (apercuAdminAutorise()) {
-      afficherVueEpreuve();
-    } else {
-      afficherVueScellee();
-    }
+  /* Initialisation de la vue */
+  $('backBtn')?.addEventListener('click', function () {
+    location.href = 'index.html?ecoutille=0';
   });
+
+  if (apercuAdminAutorise()) {
+    var banniereModeTest = function () {
+      if ($('topTeam')) $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+    };
+    banniereModeTest();
+    setTimeout(banniereModeTest, 150);
+    afficherVueBriefing();
+  } else if (window.NautilusSas.sasForceFerme && window.NautilusSas.sasForceFerme()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.scanDemande && window.NautilusSas.scanDemande()) {
+    afficherVueScellee();
+  } else if (window.NautilusSas.estDeverrouille(7)) {
+    afficherVueBriefing();
+  } else {
+    afficherVueScellee();
+    if (window.NautilusSas.observerDeverrouillageEquipe) {
+      window.NautilusSas.observerDeverrouillageEquipe();
+    }
+  }
+
+  var _btn = $('sasIndicationBtn'), _panel = $('sasIndicationPanel');
+  var _txt = $('sasIndicationTexte');
+  if (_txt) _txt.textContent = ZONE_RECHERCHE_HINT;
+  if (_btn && _panel) {
+    _btn.addEventListener('click', function () {
+      var ouvert = !_panel.hidden;
+      _panel.hidden = ouvert;
+      _btn.textContent = ouvert ? '📍 Voir l’indication de la zone de recherche' : '📍 Masquer l’indication';
+      _btn.setAttribute('aria-expanded', ouvert ? 'false' : 'true');
+    });
+  }
 })();
 </script>
 
 <script src="sonar-button.js?v=4" defer></script>
 <script src="palier-annonces.js?v=5" defer></script>
-<script src="artefact-moteur.js?v=8"></script>
-<script src="artefact-service.js?v=8"></script>
-<script src="magasin-fnac.js?v=1"></script>
-<script src="fnac-lecteur.js?v=1"></script>
-<script src="photo-defi.js?v=6" defer></script>
-<script src="admin-artefact.js?v=33" defer></script>
 <script src="admin-button.js?v=34" type="module"></script>
 </body>
 </html>

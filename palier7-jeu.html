@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=60">
   <link rel="stylesheet" href="css/palier2.css?v=27">
-  <link rel="stylesheet" href="css/palier7.css?v=11">
+  <link rel="stylesheet" href="css/palier7.css?v=12">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
 </head>
@@ -61,7 +61,7 @@
       <span>PALIER 7 — LE LABYRINTHE CIRCULAIRE</span>
     </h2>
     <div class="body">
-      <div id="epreuveStatut" class="status-banner info">🌀 <b>Palier 7 en cours :</b> guidez la bille 3D à travers les coursives circulaires jusqu'au Cœur central du Nautilus. Attention aux nombreuses impasses !</div>
+      <div id="epreuveStatut" class="status-banner info" hidden></div>
       <div id="epreuveHost" class="game-stage"></div>
     </div>
   </section>
@@ -74,7 +74,7 @@
 <script src="reserve-o2.js?v=9"></script>
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<script src="labyrinthe-circulaire.js?v=11"></script>
+<script src="labyrinthe-circulaire.js?v=12"></script>
 <script src="victoire-palier.js?v=17"></script>
 <script src="records-palier.js?v=2"></script>
 <script src="sonar-button.js?v=4" defer></script>
@@ -138,7 +138,8 @@ const LIEU_DESCRIPTION = "Zone finale de surface";
   function statut(html, kind) {
     var el = $('epreuveStatut');
     if (!el) return;
-    el.innerHTML = html;
+    el.hidden = !html;
+    el.innerHTML = html || '';
     el.className = 'status-banner ' + (kind || 'info');
   }
 
@@ -308,16 +309,16 @@ const LIEU_DESCRIPTION = "Zone finale de surface";
   }
 
   function demarrer(ident) {
-    t0Partie = Date.now();
-    partieEnCours = true;
-    statut('🌀 <b>Navigation dans le Labyrinthe en cours :</b> pilotez la bille jusqu’au Cœur avant la fin du minuteur (1 min avant remontée en surface du matelot).', 'info');
-
     var isTest = enModeTest() || apercuAdminAutorise() || !!(ident && ident.isTest);
     var equipageCode = isTest ? 'TEST' : ((ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO');
 
     moteurJeu = window.NautilusLabyrinthe.init($('epreuveHost'), {
       equipe: equipageCode,
       isTest: isTest,
+      onStart: function () {
+        t0Partie = Date.now();
+        partieEnCours = true;
+      },
       onVictoire: function (res) {
         partieEnCours = false;
         onVictoire(res);

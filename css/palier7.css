@@ -26,19 +26,19 @@ main { max-width: 960px; margin: 0 auto; }
   background: linear-gradient(135deg, rgba(3, 20, 36, 0.95), rgba(2, 10, 20, 0.98));
   border: 1.5px solid rgba(245, 176, 39, 0.45);
   border-radius: 16px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .laby-hud-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 10px;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .laby-badge {
@@ -161,12 +161,16 @@ main { max-width: 960px; margin: 0 auto; }
 .laby-hud-stats {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-around;
   gap: 10px;
   font-size: 12px;
   color: #a4c7e2;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 8px;
+  width: 100%;
+}
+.laby-hud-stats[hidden] {
+  display: none !important;
 }
 .laby-stat-item b { color: #ffffff; }
 .laby-stat-depth b { color: #57d9a3; }
@@ -238,46 +242,29 @@ main { max-width: 960px; margin: 0 auto; }
 }
 
 .laby-start-card {
-  max-width: 380px;
+  max-width: 320px;
   width: 100%;
-  background: linear-gradient(180deg, #07192d 0%, #030d18 100%);
-  border: 1.5px solid rgba(142, 231, 255, 0.4);
+  background: linear-gradient(180deg, rgba(7, 25, 45, 0.95) 0%, rgba(3, 13, 24, 0.98) 100%);
+  border: 1.5px solid rgba(142, 231, 255, 0.45);
   border-radius: 16px;
-  padding: 22px 18px;
+  padding: 18px 16px;
   text-align: center;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.78), 0 0 25px rgba(14, 165, 233, 0.28);
-}
-
-.laby-start-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: #ffd36c;
-  background: rgba(255, 211, 108, 0.12);
-  border: 1px solid rgba(255, 211, 108, 0.35);
-  border-radius: 12px;
-  padding: 3px 10px;
-  margin-bottom: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.78), 0 0 22px rgba(14, 165, 233, 0.28);
 }
 
 .laby-start-title {
-  font-size: 16.5px;
-  font-weight: 1000;
+  font-size: 15.5px;
+  font-weight: 900;
   color: #ffffff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   letter-spacing: .02em;
 }
 
-.laby-start-desc {
-  font-size: 12.5px;
+.laby-start-sub {
+  font-size: 12px;
   color: #a4c7e2;
-  line-height: 1.45;
-  margin-bottom: 18px;
-}
-.laby-start-desc b {
-  color: #ffd36c;
+  margin-bottom: 14px;
+  line-height: 1.4;
 }
 
 .laby-start-actions {
@@ -404,6 +391,43 @@ main { max-width: 960px; margin: 0 auto; }
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+}
+.laby-controls-bar[hidden] {
+  display: none !important;
+}
+
+/* Lien discret vers le briefing du capitaine */
+.laby-brief-holder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 2px;
+}
+.laby-brief-holder[hidden] {
+  display: none !important;
+}
+.laby-brief-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #8ee7ff;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  opacity: 0.85;
+  transition: all .2s ease;
+  padding: 5px 12px;
+  border-radius: 10px;
+  background: rgba(14, 165, 233, 0.1);
+  border: 1px solid rgba(142, 231, 255, 0.25);
+}
+.laby-brief-link:hover {
+  opacity: 1;
+  color: #ffd36c;
+  border-color: rgba(245, 176, 39, 0.5);
+  background: rgba(245, 176, 39, 0.12);
+  text-decoration: underline;
 }
 
 .laby-sensor-chip {
@@ -546,6 +570,9 @@ main { max-width: 960px; margin: 0 auto; }
   border-radius: 12px;
   padding: 10px 14px;
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4);
+}
+.laby-status[hidden] {
+  display: none !important;
 }
 .laby-status.is-warning {
   color: #ffd36c;

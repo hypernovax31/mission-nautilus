@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#020812" />
+  <title>Mission Nautilus — Palier 7 : Briefing</title>
+  <meta name="description" content="Briefing du Capitaine Nemo pour le Palier 7 de la Mission Nautilus : Le Labyrinthe Circulaire." />
+  <meta name="screen-orientation" content="portrait">
+  <meta name="x5-orientation" content="portrait">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=60">
+  <link rel="stylesheet" href="css/palier2.css?v=27">
+  <link rel="stylesheet" href="css/palier7.css?v=12">
+  <script src="anti-zoom.js?v=2"></script>
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">← Accueil</button>
+    <div class="topbar-title" id="topPalierTitle">Palier 7</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE -->
+  <section class="card" id="teamCard" hidden>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- JOURNAL DE BORD -->
+  <section class="card" id="logCard" hidden>
+    <h2>JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
+        <ol class="morse-log-list" id="logList"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEFING DU CAPITAINE -->
+  <section class="card" id="briefCard">
+    <h2>BRIEFING DU CAPITAINE</h2>
+    <div class="body">
+      <div id="briefHost"></div>
+    </div>
+  </section>
+</main>
+
+<script src="son-partage.js?v=2"></script>
+<script src="journal-bord.js?v=6"></script>
+<script src="palier-briefing.js?v=4"></script>
+<script src="matelot-blocages.js?v=3"></script>
+<script src="reserve-o2.js?v=9"></script>
+<script src="equipage-actif.js?v=10"></script>
+<script>if (window.EquipageActif) window.EquipageActif.init();</script>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function apercuAdminAutorise() {
+    try {
+      if (!/[?&]apercu=(?:admin|jeu)(?:&|$)/.test(location.search)) return false;
+      var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
+      if (!k) return false;
+      var h = 0, s = 'apercu-admin:NEMO2026';
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return k === ('k' + Math.abs(h).toString(36));
+    } catch (e) { return false; }
+  }
+
+  $('backBtn')?.addEventListener('click', function () {
+    location.href = 'index.html?ecoutille=0';
+  });
+
+  if (apercuAdminAutorise() && $('topTeam')) {
+    $('topTeam').textContent = '🧪 Mode test — aucun équipage';
+  }
+
+  window.NautilusBriefing.afficher($('briefHost'), {
+    intro: "« Matelots, l’épave centrale du Nautilus est sous nos yeux, mais sa machinerie principale est scellée ». Un mécanisme gyroscopique complexe protège le réacteur d'amarrage. Vous devez piloter la bille 3D à travers un labyrinthe circulaire de 10 anneaux concentriques jusqu'au Cœur avant l'expiration de votre réserve.",
+    consignes: [
+      { ico: '🌀', html: "<b>Labyrinthe circulaire à 10 anneaux</b> : naviguez depuis la coursive extérieure (Anneau 10) jusqu'au Cœur central (Anneau 1)." },
+      { ico: '🧭', html: "<b>Pilotage gyroscope prioritaire</b> : inclinez votre smartphone pour faire rouler la bille sous l'effet de la gravité (recommandé)." },
+      { ico: '🕹️', html: "<b>Joystick tactile de secours</b> : disponible sur ordinateur ou si vos capteurs de mouvement ne sont pas activés." },
+      { ico: '⚠️', warn: true, html: "<b>Nombreuses impasses</b> : le dédale est truffé de culs-de-sac trompeurs. Repérez les ouvertures pour progresser !" },
+      { ico: '⏱️', warn: true, html: "<b>Minuteur strict de 1 minute chrono</b> : appuyez sur le bouton gyroscopique (ou joystick) pour enclencher le décompte et lancer la bille." },
+      { ico: '🚨', warn: true, html: "<b>Temps écoulé = DÉFAITE !</b> À 5 secondes de la fin, les parois clignotent en rouge. À 00:00, le sas se verrouille et le matelot remonte en surface !" }
+    ],
+    cta: '⚓ PRENDRE LES COMMANDES',
+    onDepart: function () {
+      location.href = 'palier7-jeu.html' + (location.search || '');
+    }
+  });
+})();
+</script>
+
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=5" defer></script>
+<script src="admin-button.js?v=34" type="module"></script>
+</body>
+</html>
