@@ -161,7 +161,7 @@
       + '  <div class="laby-hud">'
       + '    <div class="laby-hud-top">'
       + '      <div class="laby-badge">PALIER 7 — <b>LABYRINTHE SCELLÉ (10 ANNEAUX)</b></div>'
-      + '      <div class="laby-timer laby-minuteur" id="labyTimer" title="Minuteur (1 minute maximum)">⏳ 01:00</div>'
+      + '      <div class="laby-timer laby-minuteur" id="labyTimer" title="Minuteur : 1 min avant remontée du matelot">⏳ <span class="laby-timer-lbl">Minuteur :</span> <b id="labyTimerVal">01:00</b></div>'
       + '    </div>'
       + '    <div class="laby-hud-stats">'
       + '      <div class="laby-stat-item laby-stat-depth">Profondeur : <b id="labyDepth">Anneau 10/10</b></div>'
@@ -209,6 +209,7 @@
     var canvas = host.querySelector('#labyCanvas');
     var board = host.querySelector('#labyBoard');
     var timerEl = host.querySelector('#labyTimer');
+    var timerValEl = host.querySelector('#labyTimerVal');
     var depthEl = host.querySelector('#labyDepth');
     var collisionsEl = host.querySelector('#labyCollisions');
     var coreDistEl = host.querySelector('#labyCoreDist');
@@ -934,20 +935,25 @@
     }
     animFrameId = requestAnimationFrame(gameLoop);
 
-    /* ================= MINUTEUR DE 1 MINUTE MAXIMUM ================= */
+    /* ================= MINUTEUR DE 1 MINUTE AVANT REMONTÉE DU MATELOT ================= */
     timerInterval = setInterval(function () {
       if (estTermine) return;
       tempsRestant--;
       var mm = Math.floor(tempsRestant / 60);
       var ss = tempsRestant % 60;
-      timerEl.textContent = '⏳ ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+      var str = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+      if (timerValEl) {
+        timerValEl.textContent = str;
+      } else {
+        timerEl.textContent = '⏳ ' + str;
+      }
 
       if (tempsRestant <= 15) {
         timerEl.classList.add('is-urgent');
       }
 
       if (tempsRestant <= 0) {
-        declencherDefaite('temps');
+        declencherDefaite('temps_ecoule');
       }
     }, 1000);
 
@@ -985,11 +991,11 @@
       clearInterval(timerInterval);
       cancelAnimationFrame(animFrameId);
 
-      statusEl.textContent = '🚨 Minuteur écoulé ! Le sas d’amarrage se referme.';
+      statusEl.textContent = '🚨 Minuteur de 1 min écoulé ! Remontée en surface du matelot.';
       statusEl.className = 'laby-status is-danger';
 
       setTimeout(function () {
-        onDefaite(motif || 'temps');
+        onDefaite(motif || 'temps_ecoule');
       }, 800);
     }
 

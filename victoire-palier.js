@@ -178,8 +178,8 @@
     var causeTexte = o.details || '3 erreurs commises';
     if (motif === 'score_insuffisant') {
       causeTexte = 'Score insuffisant (< 80%)';
-    } else if (motif === 'temps_ecoule') {
-      causeTexte = 'Temps imparti écoulé';
+    } else if (motif === 'temps_ecoule' || motif === 'temps') {
+      causeTexte = 'Minuteur écoulé (1 min) — Remontée en surface';
     } else if (motif === 'abandon') {
       causeTexte = 'Abandon de la plongée';
     } else if (motif === 'sortie_jeu') {

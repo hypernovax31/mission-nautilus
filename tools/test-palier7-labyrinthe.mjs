@@ -167,10 +167,10 @@ if (code.includes('laby-gyro-prompt') && code.includes('DeviceOrientationEvent.r
 
 // 8. Vérification du Service Worker
 const swContent = fs.readFileSync('sw.js', 'utf8');
-if (swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=2') && swContent.includes('./css/palier7.css?v=2')) {
-  console.log(`✓ [Cache PWA] Tous les assets v2 du Palier 7 sont précachés dans sw.js.`);
+if (swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=10') && swContent.includes('./css/palier7.css?v=10')) {
+  console.log(`✓ [Cache PWA] Tous les assets v10 du Palier 7 sont précachés dans sw.js.`);
 } else {
-  console.error(`✗ [Cache PWA] Assets v2 manquants dans sw.js.`);
+  console.error(`✗ [Cache PWA] Assets v10 manquants dans sw.js.`);
   process.exit(1);
 }
 
