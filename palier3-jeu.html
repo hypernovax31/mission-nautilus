@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=56">
+  <link rel="stylesheet" href="css/palier1.css?v=58">
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <link rel="stylesheet" href="css/palier3.css?v=8">
   <link rel="stylesheet" href="css/artefact.css?v=3">
@@ -62,9 +62,6 @@
     <div class="body">
       <div id="epreuveStatut" class="status-banner info">📸 <b>Viseur optique activé.</b> 3 minutes chrono pour capturer vos 5 cibles en rayon Fnac !</div>
       <div id="puzzleHost" class="game-stage"></div>
-      <div class="game-footer-actions">
-        <a class="puzzle-home" href="1831411720.html" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">← Revenir au briefing</a>
-      </div>
     </div>
   </section>
 </main>
@@ -85,7 +82,7 @@
 <script src="magasin-fnac.js?v=1"></script>
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=5"></script>
-<script src="admin-button.js?v=33" type="module"></script>
+<script src="admin-button.js?v=34" type="module"></script>
 
 <script>
 const LIEU_DESCRIPTION = "Rayon Gaming, Pop Culture & Jouets";
@@ -158,23 +155,6 @@ const LIEU_DESCRIPTION = "Rayon Gaming, Pop Culture & Jouets";
         nom: nom,
         jusqua: jusqua,
         details: 'Temps écoulé (3 min) ou abandon'
-      });
-      monIdentite().then(function (ident) {
-        if (enModeTest() || apercuAdminAutorise() || (ident && ident.isTest)) {
-          var actionWrap = host.querySelector('.lost-action');
-          if (actionWrap && !host.querySelector('#btnRejouerTestP3')) {
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.id = 'btnRejouerTestP3';
-            btn.className = 'lost-home-btn';
-            btn.style.cssText = 'background:var(--fnac, #f5b027);color:#03111f;margin-top:10px;font-weight:900;cursor:pointer;border:none;';
-            btn.textContent = '🔄 Recommencer l’épreuve (mode test)';
-            btn.addEventListener('click', function () {
-              demarrer();
-            });
-            actionWrap.appendChild(btn);
-          }
-        }
       });
     }
   }
@@ -303,7 +283,7 @@ const LIEU_DESCRIPTION = "Rayon Gaming, Pop Culture & Jouets";
     afficherEcranVictoire();
   }
 
-  async function demarrer() {
+  async function preparerJeu() {
     var ident = null;
     if (!apercuAdminAutorise()) {
       ident = await monIdentite();
@@ -320,6 +300,31 @@ const LIEU_DESCRIPTION = "Rayon Gaming, Pop Culture & Jouets";
         if (jusqua > Date.now()) { afficherBlocage(jusqua, null, 'anonyme'); return; }
       }
     }
+
+    statut('📸 <b>Scanner optique prêt.</b> Vous devez déclencher le chronomètre pour démarrer l’épreuve.', 'info');
+    var host = $('puzzleHost');
+    if (!host) return;
+    host.innerHTML =
+      '<div class="launcher-card" style="text-align:center; padding: 24px 16px; background: rgba(3, 16, 28, 0.85); border: 1.5px solid rgba(142, 231, 255, 0.35); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">'
+      + '  <div style="font-size: 44px; margin-bottom: 12px;">⏱️</div>'
+      + '  <h3 style="font-size: 20px; font-weight: 900; color: #8ee7ff; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.05em;">Chronomètre 3 Minutes</h3>'
+      + '  <p style="font-size: 15px; line-height: 1.5; color: #d0e7f7; margin: 0 auto 20px auto; max-width: 480px;">'
+      + '    Assurez-vous d’être bien positionné dans le rayon Fnac. Dès que vous appuyez sur le bouton, le <b>compte à rebours de 3 minutes chrono</b> s’enclenche et le viseur optique s’active.'
+      + '  </p>'
+      + '  <button type="button" id="btnDemarrerChronoP3" class="btn btn-primary" style="font-size: 16px; font-weight: 900; padding: 14px 26px; border-radius: 14px; width: 100%; max-width: 380px; box-shadow: 0 4px 18px rgba(245, 176, 39, 0.4); cursor: pointer;">'
+      + '    ⏱️ DÉMARRER LE CHRONOMÈTRE'
+      + '  </button>'
+      + '</div>';
+
+    var btn = $('btnDemarrerChronoP3');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        demarrer(ident);
+      });
+    }
+  }
+
+  function demarrer(ident) {
     t0Partie = Date.now();
     partieEnCours = true;
     statut('📸 <b>Viseur optique activé.</b> 3 minutes chrono pour capturer vos 5 cibles en rayon Fnac !', 'info');
@@ -365,15 +370,6 @@ const LIEU_DESCRIPTION = "Rayon Gaming, Pop Culture & Jouets";
     });
   }
 
-  var btnSortie = $('btnSortieJeu');
-  if (btnSortie) {
-    btnSortie.addEventListener('click', function (e) {
-      if (partieEnCours) {
-        if (!intercepterSortie(e)) return;
-      }
-    });
-  }
-
   window.addEventListener('beforeunload', function () {
     if (partieEnCours && !apercuAdminAutorise()) {
       declencherBlocage('sortie_jeu');
@@ -388,8 +384,8 @@ const LIEU_DESCRIPTION = "Rayon Gaming, Pop Culture & Jouets";
     }
   }
 
-  // Démarrage automatique sur la page dédiée
-  demarrer();
+  // Initialisation : préparation de l'épreuve avec action obligatoire
+  preparerJeu();
 })();
 </script>
 </body>

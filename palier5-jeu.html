@@ -10,9 +10,9 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=56">
+  <link rel="stylesheet" href="css/palier1.css?v=58">
   <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier5.css?v=4">
+  <link rel="stylesheet" href="css/palier5.css?v=5">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
 </head>
@@ -61,9 +61,6 @@
     <div class="body">
       <div id="epreuveStatut" class="status-banner info">🎯 <b>Palier 5 en cours :</b> estimez le juste prix de 10 articles Fnac (8 réussites requises). 3 erreurs max par article.</div>
       <div id="epreuveHost" class="game-stage"></div>
-      <div class="game-footer-actions">
-        <a class="puzzle-home" href="2051613922.html" id="btnSortieJeu" onclick="try{sessionStorage.setItem('nautilusEcoutille','1');}catch(_){}">← Revenir au briefing</a>
-      </div>
     </div>
   </section>
 </main>
@@ -75,12 +72,12 @@
 <script src="reserve-o2.js?v=8"></script>
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<script src="juste-prix.js?v=3"></script>
+<script src="juste-prix.js?v=4"></script>
 <script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 <script src="sonar-button.js?v=4" defer></script>
 <script src="palier-annonces.js?v=5" defer></script>
-<script src="admin-button.js?v=33" type="module"></script>
+<script src="admin-button.js?v=34" type="module"></script>
 
 <script>
 const LIEU_DESCRIPTION = "Rayon Fnac Kids & Papeterie";
@@ -154,23 +151,6 @@ const LIEU_DESCRIPTION = "Rayon Fnac Kids & Papeterie";
         nom: nom,
         jusqua: jusqua,
         details: 'Moins de 8 articles trouvés sur 10'
-      });
-      monIdentite().then(function (ident) {
-        if (enModeTest() || apercuAdminAutorise() || (ident && ident.isTest)) {
-          var actionWrap = host.querySelector('.lost-action');
-          if (actionWrap && !host.querySelector('#btnRejouerTestP5')) {
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.id = 'btnRejouerTestP5';
-            btn.className = 'lost-home-btn';
-            btn.style.cssText = 'background:var(--fnac, #f5b027);color:#03111f;margin-top:10px;font-weight:900;cursor:pointer;border:none;';
-            btn.textContent = '🔄 Recommencer l’épreuve (mode test)';
-            btn.addEventListener('click', function () {
-              demarrer();
-            });
-            actionWrap.appendChild(btn);
-          }
-        }
       });
     }
   }
@@ -300,7 +280,7 @@ const LIEU_DESCRIPTION = "Rayon Fnac Kids & Papeterie";
     afficherEcranVictoire(res);
   }
 
-  async function demarrer() {
+  async function preparerJeu() {
     var ident = null;
     if (!apercuAdminAutorise()) {
       ident = await monIdentite();
@@ -317,6 +297,31 @@ const LIEU_DESCRIPTION = "Rayon Fnac Kids & Papeterie";
         if (jusqua > Date.now()) { afficherBlocage(jusqua, null, 'anonyme'); return; }
       }
     }
+
+    statut('🎯 <b>Épreuve prête.</b> Déclenchez le chronomètre pour commencer l’estimation des 10 articles.', 'info');
+    var host = $('epreuveHost');
+    if (!host) return;
+    host.innerHTML =
+      '<div class="launcher-card" style="text-align:center; padding: 24px 16px; background: rgba(3, 16, 28, 0.85); border: 1.5px solid rgba(142, 231, 255, 0.35); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">'
+      + '  <div style="font-size: 44px; margin-bottom: 12px;">⏱️</div>'
+      + '  <h3 style="font-size: 20px; font-weight: 900; color: #8ee7ff; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.05em;">Chronomètre 10s par Article</h3>'
+      + '  <p style="font-size: 15px; line-height: 1.5; color: #d0e7f7; margin: 0 auto 20px auto; max-width: 480px;">'
+      + '    Vous avez <b>10 secondes par article</b> pour estimer son prix réel Fnac en euros (8 réussites sur 10 requises, 3 erreurs max par article). Le chronomètre démarrera dès votre clic.'
+      + '  </p>'
+      + '  <button type="button" id="btnDemarrerChronoP5" class="btn btn-primary" style="font-size: 16px; font-weight: 900; padding: 14px 26px; border-radius: 14px; width: 100%; max-width: 380px; box-shadow: 0 4px 18px rgba(245, 176, 39, 0.4); cursor: pointer;">'
+      + '    ⏱️ DÉMARRER LE CHRONOMÈTRE'
+      + '  </button>'
+      + '</div>';
+
+    var btn = $('btnDemarrerChronoP5');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        demarrer(ident);
+      });
+    }
+  }
+
+  function demarrer(ident) {
     t0Partie = Date.now();
     partieEnCours = true;
     statut('🎯 <b>Évaluation en cours :</b> estimez le juste prix de chaque article avant la fin du chronomètre.', 'info');
@@ -364,15 +369,6 @@ const LIEU_DESCRIPTION = "Rayon Fnac Kids & Papeterie";
     });
   }
 
-  var btnSortie = $('btnSortieJeu');
-  if (btnSortie) {
-    btnSortie.addEventListener('click', function (e) {
-      if (partieEnCours) {
-        if (!intercepterSortie(e)) return;
-      }
-    });
-  }
-
   window.addEventListener('beforeunload', function () {
     if (partieEnCours && !apercuAdminAutorise()) {
       declencherBlocage('sortie_jeu');
@@ -387,8 +383,8 @@ const LIEU_DESCRIPTION = "Rayon Fnac Kids & Papeterie";
     }
   }
 
-  // Démarrage automatique sur la page dédiée
-  demarrer();
+  // Initialisation : préparation de l'épreuve avec action obligatoire
+  preparerJeu();
 })();
 </script>
 </body>

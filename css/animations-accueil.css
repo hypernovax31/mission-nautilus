@@ -67,7 +67,7 @@
   html.nautilus-motion-enabled .radar-blip .blip-echo{display:block!important}
   html.nautilus-motion-enabled .o2-bubble{
     animation-name:o2BubblePass!important;
-    animation-duration:6.8s!important;
+    animation-duration:22s!important;
     animation-timing-function:linear!important;
     animation-iteration-count:infinite!important;
     animation-play-state:running!important;
@@ -77,7 +77,7 @@
   html.nautilus-motion-enabled .o2-bubble.b7,
   html.nautilus-motion-enabled .o2-bubble.b10{
     animation-name:o2BubblePassAlt!important;
-    animation-duration:6.1s!important;
+    animation-duration:26s!important;
     animation-timing-function:linear!important;
     animation-iteration-count:infinite!important;
     animation-play-state:running!important;
@@ -87,7 +87,7 @@
   html.nautilus-motion-enabled .o2-bubble.b9,
   html.nautilus-motion-enabled .o2-bubble.b12{
     animation-name:o2BubblePassFloat!important;
-    animation-duration:7.8s!important;
+    animation-duration:22.5s!important;
     animation-timing-function:linear!important;
     animation-iteration-count:infinite!important;
     animation-play-state:running!important;
@@ -95,11 +95,13 @@
   html.nautilus-motion-enabled .oxygen-liquid::before,
   html.nautilus-motion-enabled .o2-fill::before{
     animation-name:bubblesMove!important;
+    animation-duration:28s!important;
     animation-play-state:running!important;
   }
   html.nautilus-motion-enabled .oxygen-liquid::after,
   html.nautilus-motion-enabled .o2-fill::after{
     animation-name:bubblesCross!important;
+    animation-duration:38s!important;
     animation-play-state:running!important;
   }
   html.nautilus-motion-enabled body.page-hidden #ecoutille .m-rayons,

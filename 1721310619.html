@@ -13,7 +13,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=56">
+  <link rel="stylesheet" href="css/palier1.css?v=58">
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
@@ -400,8 +400,8 @@
   }
   function afficherVueBriefing() {
     montrerCarte('gateHero', false);
-    montrerCarte('teamCard', false);
-    montrerCarte('logCard', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
     montrerCarte('briefCard', true);
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
@@ -768,6 +768,6 @@
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=2" defer></script>
 <script src="admin-artefact.js?v=33" defer></script>
-<script src="admin-button.js?v=31" type="module"></script>
+<script src="admin-button.js?v=34" type="module"></script>
 </body>
 </html>

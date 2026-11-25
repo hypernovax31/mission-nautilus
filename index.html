@@ -2583,13 +2583,13 @@
     }catch(e){}
   })();
   </script>
-  <link rel="stylesheet" href="css/index.css?v=87">
+  <link rel="stylesheet" href="css/index.css?v=88">
   <link rel="stylesheet" href="css/hublots.css?v=15">
   <!-- Styles du sélecteur de magasin et des onglets d'administration. -->
   <link rel="stylesheet" href="css/artefact.css?v=3">
   <link rel="stylesheet" href="css/admin.css?v=13">
   <!-- Commandes de secours, visibles uniquement si le mouvement est bloqué. -->
-  <link rel="stylesheet" href="css/animations-accueil.css?v=5">
+  <link rel="stylesheet" href="css/animations-accueil.css?v=6">
   <!-- Page de garde « ÉCOUTILLE » : son style est écrit DANS la page (voir
        le socle dans le <head>) — rien à charger, rien qui puisse manquer. -->
   <!-- Annonces « palier franchi » (message vert + Victoire.mp3),
@@ -6308,14 +6308,6 @@ function qrDataUri(text, opts){
       let actions = '';
       if (isStart) {
         actions = lien(href, '🕹️ Jouer l’épreuve');
-      } else if (id === 'son') {
-        actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée') + ' '
-          + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '📜 Briefing') + ' '
-          + lien('palier3-jeu.html?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Mini-jeu');
-      } else if (id === 'occasion') {
-        actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée') + ' '
-          + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '📜 Briefing') + ' '
-          + lien('palier5-jeu.html?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Mini-jeu');
       } else {
         actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' '
           + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve');
@@ -6323,13 +6315,13 @@ function qrDataUri(text, opts){
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, notesParPalier[id] || '', actions, true));
     });
 
-    lignes.push(sectionHtml('PALIER 1 — aperçus d’écrans (factice, aucune écriture)'));
+    lignes.push(sectionHtml('🏆 ÉCRANS & POPUPS DE FIN D’ÉPREUVE (Aperçus en direct)'));
     [
-      ['victoire', '🏆 Épreuve validée (victoire)'],
-      ['defaite', '↟ Retour en surface (défaite)'],
-      ['blocage', '🔒 Blocage personnel d’un matelot']
-    ].forEach(([mode, titre]) => {
-      lignes.push(ligne(titre, 'aperçu', lien(`palier1.html?apercu=${mode}&k=${k}`, 'Aperçu'), true));
+      ['victoire', '🏆 Épreuve validée (victoire)', 'succès & palier franchi'],
+      ['defaite', '↟ Retour en surface (défaite)', 'remontée forcée & relais équipe'],
+      ['blocage', '🔒 Blocage personnel d’un matelot', 'pénalité & temps d’attente']
+    ].forEach(([mode, titre, note]) => {
+      lignes.push(ligne(titre, note, lien(`palier1.html?apercu=${mode}&k=${k}`, 'Tester l’écran'), true));
     });
 
     box.innerHTML = lignes.join('');
@@ -11304,7 +11296,7 @@ window.PWAInstall = {
 <script src="palier4-bataille.js?v=3" defer></script>
 <script src="quiz-palier6.js?v=3" defer></script>
 <script src="admin-artefact.js?v=33" defer></script>
-<script src="admin-button.js?v=33" type="module"></script>
+<script src="admin-button.js?v=34" type="module"></script>
 </body>
 </html>
 

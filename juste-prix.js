@@ -318,14 +318,6 @@
       + '          </div>'
       + '          <button type="button" class="jp-btn-clear" id="jpBtnClear" title="Effacer la saisie">⌫</button>'
       + '        </div>'
-      + '        <div class="jp-chips-row" role="group" aria-label="Ajustements rapides du prix">'
-      + '          <button type="button" class="jp-chip" data-add="-50">-50 €</button>'
-      + '          <button type="button" class="jp-chip" data-add="-10">-10 €</button>'
-      + '          <button type="button" class="jp-chip" data-add="-1">-1 €</button>'
-      + '          <button type="button" class="jp-chip" data-add="1">+1 €</button>'
-      + '          <button type="button" class="jp-chip" data-add="10">+10 €</button>'
-      + '          <button type="button" class="jp-chip" data-add="50">+50 €</button>'
-      + '        </div>'
       + '        <button class="jp-submit-btn" id="jpBtnValider" type="submit">VALIDER LE PRIX ⚓</button>'
       + '      </div>'
       + '    </form>'
@@ -648,20 +640,6 @@
         }
       }
     }
-
-    // Gestion des clics boutons chips
-    host.querySelectorAll('.jp-chip').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        if (verrouTransition) return;
-        var add = parseFloat(btn.dataset.add || '0');
-        var cur = parseFloat(priceInput.value || '0');
-        if (isNaN(cur)) cur = 0;
-        var next = Math.max(0, Math.round(cur + add));
-        priceInput.value = String(next);
-        playTone('click');
-        priceInput.focus();
-      });
-    });
 
     if (btnClear) {
       btnClear.addEventListener('click', function () {

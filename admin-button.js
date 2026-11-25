@@ -598,14 +598,6 @@
       let actions = '';
       if (isStart) {
         actions = lien(href, '🕹️ Jouer l’épreuve');
-      } else if (id === 'son') {
-        actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée') + ' '
-          + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '📜 Briefing') + ' '
-          + lien('palier3-jeu.html?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Mini-jeu');
-      } else if (id === 'occasion') {
-        actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée') + ' '
-          + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '📜 Briefing') + ' '
-          + lien('palier5-jeu.html?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Mini-jeu');
       } else {
         actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' '
           + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve');
@@ -613,13 +605,13 @@
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, notesParPalier[id] || '', actions, true));
     });
 
-    lignes.push(sectionHtml('PALIER 1 — aperçus d’écrans (factice, aucune écriture)'));
+    lignes.push(sectionHtml('🏆 ÉCRANS & POPUPS DE FIN D’ÉPREUVE (Aperçus en direct)'));
     [
-      ['victoire', '🏆 Épreuve validée (victoire)'],
-      ['defaite', '↟ Retour en surface (défaite)'],
-      ['blocage', '🔒 Blocage personnel d’un matelot']
-    ].forEach(([mode, titre]) => {
-      lignes.push(ligne(titre, 'aperçu', lien(`palier1.html?apercu=${mode}&k=${k}`, 'Aperçu'), true));
+      ['victoire', '🏆 Épreuve validée (victoire)', 'succès & palier franchi'],
+      ['defaite', '↟ Retour en surface (défaite)', 'remontée forcée & relais équipe'],
+      ['blocage', '🔒 Blocage personnel d’un matelot', 'pénalité & temps d’attente']
+    ].forEach(([mode, titre, note]) => {
+      lignes.push(ligne(titre, note, lien(`palier1.html?apercu=${mode}&k=${k}`, 'Tester l’écran'), true));
     });
 
     box.innerHTML = lignes.join('');

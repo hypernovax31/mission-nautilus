@@ -44,6 +44,10 @@ main { max-width: 1720px; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #8ee7ff;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
 }
 
 .jp-hud-val {
@@ -209,20 +213,22 @@ main { max-width: 1720px; }
 
 /* Barre de statut d'essais & chronomètre 10s */
 .jp-status-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 10px;
+  align-items: stretch;
 }
 
 /* Voyants d'erreurs (3 voyants rouges s'allumant à chaque erreur) */
 .jp-voyants-box {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   background: rgba(0, 0, 0, 0.45);
   padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid rgba(142, 231, 255, 0.2);
+  white-space: nowrap !important;
 }
 
 .jp-voyants-label {
@@ -231,11 +237,15 @@ main { max-width: 1720px; }
   color: #b7d9e8;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
 }
 
 .jp-voyants {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .jp-voyant {
@@ -273,6 +283,8 @@ main { max-width: 1720px; }
 
 /* Chronomètre 10s par réponse */
 .jp-timer-box {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -292,6 +304,10 @@ main { max-width: 1720px; }
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #8ee7ff;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
 }
 
 .jp-timer-val {
@@ -406,45 +422,12 @@ main { max-width: 1720px; }
   outline: none;
 }
 
-/* Boutons de modification rapide (paliers tactiles ≥ 44px) */
-.jp-chips-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.jp-chip {
-  flex: 1 1 calc(20% - 6px);
-  min-height: 44px;
-  background: rgba(142, 231, 255, 0.08);
-  border: 1px solid rgba(142, 231, 255, 0.28);
-  border-radius: 10px;
-  color: #e2f4ff;
-  font-family: Consolas, "Courier New", monospace;
-  font-size: 14px;
-  font-weight: 900;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.jp-chip:hover,
-.jp-chip:focus-visible {
-  background: rgba(245, 176, 39, 0.2);
-  border-color: #f5b027;
-  color: #fff;
-  outline: none;
-  transform: translateY(-1px);
-}
-
-.jp-chip:active {
-  transform: translateY(1px);
-}
-
 /* Bouton principal de soumission */
 .jp-submit-btn {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
   min-height: 52px;
   background: linear-gradient(135deg, #f5b027, #d48b13);
   border: 2px solid #ffe2a0;
@@ -595,15 +578,6 @@ main { max-width: 1720px; }
     font-size: 16px;
   }
 
-  .jp-chips-row {
-    gap: 6px;
-  }
-
-  .jp-chip {
-    padding: 8px 6px;
-    font-size: 13px;
-  }
-
   .jp-submit-btn {
     min-height: 48px;
     font-size: 15px;
@@ -625,7 +599,7 @@ main { max-width: 1720px; }
 
 /* Réduction des mouvements système */
 @media (prefers-reduced-motion: reduce) {
-  .jp-feedback, .jp-voyant, .jp-submit-btn, .jp-chip, .jp-image, .jp-timer-bar {
+  .jp-feedback, .jp-voyant, .jp-submit-btn, .jp-image, .jp-timer-bar {
     animation: none !important;
     transition: none !important;
     transform: none !important;

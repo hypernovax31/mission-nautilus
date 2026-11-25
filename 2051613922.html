@@ -11,11 +11,11 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=56">
+  <link rel="stylesheet" href="css/palier1.css?v=58">
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier5.css?v=4">
+  <link rel="stylesheet" href="css/palier5.css?v=5">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <script>
@@ -175,7 +175,7 @@
 <script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 <!-- Moteur de l'épreuve LE JUSTE PRIX (Palier 5). -->
-<script src="juste-prix.js?v=3"></script>
+<script src="juste-prix.js?v=4"></script>
 
 <!-- Réglages du Palier 5 : indication de la zone de recherche. -->
 <script>
@@ -271,8 +271,8 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
   }
   function afficherVueBriefing() {
     montrerCarte('gateHero', false);
-    montrerCarte('teamCard', false);
-    montrerCarte('logCard', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
     montrerCarte('briefCard', true);
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
@@ -586,6 +586,6 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=5" defer></script>
 <script src="admin-artefact.js?v=33" defer></script>
-<script src="admin-button.js?v=31" type="module"></script>
+<script src="admin-button.js?v=34" type="module"></script>
 </body>
 </html>

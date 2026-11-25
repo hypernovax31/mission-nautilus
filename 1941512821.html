@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/palier1.css?v=56">
+  <link rel="stylesheet" href="css/palier1.css?v=58">
   <link rel="stylesheet" href="css/palier2.css?v=26">
   <link rel="stylesheet" href="css/palier4.css?v=4">
   <script src="anti-zoom.js?v=2"></script>
@@ -252,8 +252,8 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
   }
   function afficherVueBriefing() {
     montrerCarte('gateHero', false);
-    montrerCarte('teamCard', false);
-    montrerCarte('logCard', false);
+    montrerCarte('teamCard', true);
+    montrerCarte('logCard', true);
     montrerCarte('briefCard', true);
     montrerCarte('gateUnlocked', false);
     var c = $('gateUnlocked'); if (c) c.classList.remove('epreuve-focus');
@@ -285,27 +285,6 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
         nom: nom,
         jusqua: jusqua,
         details: '3 torpilles perdues dans l’eau'
-      });
-      // En mode test / concepteur : ajout direct d'une action pour recommencer
-      monIdentite().then(function (ident) {
-        if (enModeTest() || apercuAdminAutorise() || (ident && ident.isTest)) {
-          var actionWrap = host.querySelector('.lost-action');
-          if (actionWrap && !host.querySelector('#btnRejouerTest')) {
-            var btnRejouer = document.createElement('button');
-            btnRejouer.type = 'button';
-            btnRejouer.id = 'btnRejouerTest';
-            btnRejouer.className = 'lost-home-btn';
-            btnRejouer.style.cssText = 'background:var(--fnac, #f5b027);color:#03111f;margin-top:10px;font-weight:900;cursor:pointer;border:none;';
-            btnRejouer.textContent = '🔄 Recommencer l’épreuve (mode test)';
-            btnRejouer.addEventListener('click', function () {
-              if (window.NautilusBataille && window.NautilusBataille.reinitialiser) {
-                window.NautilusBataille.reinitialiser('TEST');
-              }
-              demarrer();
-            });
-            actionWrap.appendChild(btnRejouer);
-          }
-        }
       });
     }
   }
@@ -595,6 +574,6 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
 <script src="fnac-lecteur.js?v=1"></script>
 <script src="photo-defi.js?v=5" defer></script>
 <script src="admin-artefact.js?v=33" defer></script>
-<script src="admin-button.js?v=33" type="module"></script>
+<script src="admin-button.js?v=34" type="module"></script>
 </body>
 </html>
