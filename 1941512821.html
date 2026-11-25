@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=55">
   <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier4.css?v=3">
+  <link rel="stylesheet" href="css/palier4.css?v=4">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <script>
@@ -157,7 +157,7 @@
 <script src="reserve-o2.js?v=7"></script>
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<script src="palier4-bataille.js?v=2"></script>
+<script src="palier4-bataille.js?v=3"></script>
 <script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 
@@ -275,6 +275,7 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
 
   function afficherBlocage(jusqua, nom, motif) {
     partieEnCours = false;
+    lance = false;
     afficherVueEpreuve();
     var host = $('epreuveHost');
     if (host && window.NautilusDefaite) {
@@ -284,6 +285,27 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
         nom: nom,
         jusqua: jusqua,
         details: '3 torpilles perdues dans l’eau'
+      });
+      // En mode test / concepteur : ajout direct d'une action pour recommencer
+      monIdentite().then(function (ident) {
+        if (enModeTest() || apercuAdminAutorise() || (ident && ident.isTest)) {
+          var actionWrap = host.querySelector('.lost-action');
+          if (actionWrap && !host.querySelector('#btnRejouerTest')) {
+            var btnRejouer = document.createElement('button');
+            btnRejouer.type = 'button';
+            btnRejouer.id = 'btnRejouerTest';
+            btnRejouer.className = 'lost-home-btn';
+            btnRejouer.style.cssText = 'background:var(--fnac, #f5b027);color:#03111f;margin-top:10px;font-weight:900;cursor:pointer;border:none;';
+            btnRejouer.textContent = '🔄 Recommencer l’épreuve (mode test)';
+            btnRejouer.addEventListener('click', function () {
+              if (window.NautilusBataille && window.NautilusBataille.reinitialiser) {
+                window.NautilusBataille.reinitialiser('TEST');
+              }
+              demarrer();
+            });
+            actionWrap.appendChild(btnRejouer);
+          }
+        }
       });
     }
   }
@@ -444,18 +466,23 @@ const ZONE_RECHERCHE_HINT = "Rayon Gaming, Pop Culture & Jouets";
     partieEnCours = true;
     statut('🧭 <b>Traque des Abysses en cours :</b> touchez et neutralisez les 4 léviathans. 3 tirs dans l’eau = remontée en surface du matelot.', 'info');
 
-    var equipageCode = (ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO';
-    var matelotNom = (ident && !ident.isTest) ? ident.name : 'Matelot';
+    var isTest = enModeTest() || apercuAdminAutorise() || !!(ident && ident.isTest);
+    var equipageCode = isTest ? 'TEST' : ((ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO');
+    var matelotNom = isTest ? 'Matelot Concepteur' : ((ident && !ident.isTest) ? ident.name : 'Matelot');
 
     moteurBataille = window.NautilusBataille.init($('epreuveHost'), {
       equipe: equipageCode,
       matelot: matelotNom,
+      isTest: isTest,
+      reinitialiser: isTest,
       onVictoire: function (res) {
         partieEnCours = false;
+        lance = false;
         onVictoire(res);
       },
       onEchec: function (motif) {
         partieEnCours = false;
+        lance = false;
         declencherBlocage(motif || '3_erreurs');
       }
     });

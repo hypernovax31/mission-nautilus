@@ -15,7 +15,7 @@
   <!-- palier2.css apporte les styles partagés du sas scellé (gate-* / sas-*),
        communs à tous les paliers ≥ 2. -->
   <link rel="stylesheet" href="css/palier2.css?v=26">
-  <link rel="stylesheet" href="css/palier5.css?v=3">
+  <link rel="stylesheet" href="css/palier5.css?v=4">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <script>
@@ -530,10 +530,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
-      glisserEnHaut();
-      lancer();
-      setTimeout(glisserEnHaut, 350);
-      setTimeout(glisserEnHaut, 900);
+      location.href = 'palier5-jeu.html' + (location.search || '');
     }
   });
 

@@ -49,7 +49,7 @@
 
   /* Génération de la flotte pour un équipage donné */
   function getFlottePourEquipe(equipeCode) {
-    var rnd = aleaSeed('palier4_bataille_' + String(equipeCode || 'NEMO').toUpperCase());
+    var rnd = aleaSeed('palier4_bataille_v2_' + String(equipeCode || 'NEMO').toUpperCase());
     var grilleOccupee = {}; // coord -> idNavire
     var navires = [];
 
@@ -182,18 +182,22 @@
     } catch (e) {}
   }
 
+  var instanceCourante = null;
+
   /* Persistance de la progression d'équipe */
-  function chargerProgressionLocale(equipeCode) {
+  function chargerProgressionLocale(equipeCode, isTest) {
     try {
-      var raw = localStorage.getItem('nautilusP4Partie:' + equipeCode);
+      var cle = isTest ? 'nautilusP4Partie:TEST' : ('nautilusP4Partie:' + equipeCode);
+      var raw = localStorage.getItem(cle);
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return { tirs: [], touches: [], coules: [] };
   }
 
-  function sauverProgressionLocale(equipeCode, data) {
+  function sauverProgressionLocale(equipeCode, data, isTest) {
     try {
-      localStorage.setItem('nautilusP4Partie:' + equipeCode, JSON.stringify(data));
+      var cle = isTest ? 'nautilusP4Partie:TEST' : ('nautilusP4Partie:' + equipeCode);
+      localStorage.setItem(cle, JSON.stringify(data));
     } catch (e) {}
   }
 
@@ -201,10 +205,25 @@
   function init(host, options) {
     if (!host) return null;
     var opts = options || {};
-    var equipeCode = String(opts.equipe || 'NEMO').toUpperCase();
-    var matelotNom = opts.matelot || 'Matelot';
+    var isTest = !!(opts.isTest
+      || opts.equipe === 'TEST'
+      || (function () {
+        try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (_) { return false; }
+      })()
+      || (typeof location !== 'undefined' && /[?&]apercu=(?:admin|jeu)\b/i.test(location.search))
+      || (typeof location !== 'undefined' && /[?&]m=ZZZZ-0000\b/i.test(location.search)));
+
+    var equipeCode = isTest ? 'TEST' : String(opts.equipe || 'NEMO').toUpperCase();
+    var matelotNom = isTest ? 'Matelot Concepteur' : (opts.matelot || 'Matelot');
     var onVictoire = opts.onVictoire || function () {};
     var onEchec = opts.onEchec || function () {};
+
+    if (opts.reinitialiser && isTest) {
+      try {
+        localStorage.removeItem('nautilusP4Partie:TEST');
+        localStorage.removeItem('nautilusP4Partie:ZZZZ-0000');
+      } catch (_) {}
+    }
 
     var flotte = getFlottePourEquipe(equipeCode);
     var mapCasesNavire = {}; // coord -> navire
@@ -217,14 +236,14 @@
       });
     });
 
-    // Chargement de l'état partagé d'équipe
-    var etatPartage = chargerProgressionLocale(equipeCode);
+    // Chargement de l'état partagé d'équipe (ou session test isolée)
+    var etatPartage = chargerProgressionLocale(equipeCode, isTest);
     var tirsEnregistres = new Set(etatPartage.tirs || []);
     var echecsSessionCourante = 0;
     var verrouille = false;
 
-    // Synchronisation Firestore en temps réel si disponible
-    if (window.NautilusBlocages && window.NautilusBlocages.db) {
+    // Synchronisation Firestore en temps réel UNIQUEMENT pour les vraies équipes
+    if (!isTest && window.NautilusBlocages && window.NautilusBlocages.db) {
       window.NautilusBlocages.db().then(function (x) {
         var docRef = x.fs.doc(x.db, 'teams', equipeCode);
         x.fs.getDoc(docRef).then(function (snap) {
@@ -234,7 +253,7 @@
               data.batailleNavale.tirs.forEach(function (coord) {
                 tirsEnregistres.add(coord);
               });
-              sauverProgressionLocale(equipeCode, { tirs: Array.from(tirsEnregistres) });
+              sauverProgressionLocale(equipeCode, { tirs: Array.from(tirsEnregistres) }, false);
               rafraichirTouteLaGrille();
               verifierVictoireImmediate();
             }
@@ -243,13 +262,18 @@
       }).catch(function () {});
     }
 
+    // Bouton de réinitialisation visible en mode test
+    var reinitBoutonHtml = isTest
+      ? '<button type="button" class="bt-btn-reinit-test" id="btReinitTestBtn" title="Réinitialiser la grille de test">🔄 Réinitialiser le radar</button>'
+      : '';
+
     // Construction du DOM immersif
     host.innerHTML = ''
       + '<div class="bt-container">'
       + '  <!-- 1. HUD & Jauge torpilles -->'
       + '  <div class="bt-hud">'
       + '    <div class="bt-hud-top">'
-      + '      <div class="bt-step-badge">RADAR TACTIQUE <b>ABYSSAL</b></div>'
+      + '      <div class="bt-step-badge">RADAR TACTIQUE <b>ABYSSAL</b>' + (isTest ? ' <span class="bt-test-badge">MODE TEST</span>' : '') + '</div>'
       + '      <div class="nautilus-voyants-rack bt-voyants" id="btVoyantsBox" title="3 tirs manqués maximum par matelot">'
       + '        <span class="nautilus-voyant bt-voyant" id="btVoyant1"></span>'
       + '        <span class="nautilus-voyant bt-voyant" id="btVoyant2"></span>'
@@ -260,6 +284,7 @@
       + '    <div class="bt-relais-info">'
       + '      <span>⚓ Équipage : <b>' + equipeCode + '</b></span>'
       + '      <span id="btTouchesCompteur">Impacts : <b>0 / ' + totalCasesNavires + '</b></span>'
+      + '      ' + reinitBoutonHtml
       + '    </div>'
       + '  </div>'
 
@@ -363,8 +388,13 @@
     }
 
     function synchroniserVersFirestore() {
+      if (isTest) {
+        // En mode test : isolation locale uniquement
+        sauverProgressionLocale(equipeCode, { tirs: Array.from(tirsEnregistres) }, true);
+        return;
+      }
       var arr = Array.from(tirsEnregistres);
-      sauverProgressionLocale(equipeCode, { tirs: arr });
+      sauverProgressionLocale(equipeCode, { tirs: arr }, false);
 
       if (window.NautilusBlocages && window.NautilusBlocages.db) {
         window.NautilusBlocages.db().then(function (x) {
@@ -377,6 +407,46 @@
           }).catch(function () {});
         }).catch(function () {});
       }
+    }
+
+    function reinitialiserGrille() {
+      tirsEnregistres.clear();
+      echecsSessionCourante = 0;
+      verrouille = false;
+      try {
+        localStorage.removeItem(isTest ? 'nautilusP4Partie:TEST' : ('nautilusP4Partie:' + equipeCode));
+        if (isTest) {
+          localStorage.removeItem('nautilusP4Partie:ZZZZ-0000');
+        }
+      } catch (e) {}
+
+      // Réinitialiser les pips des monstres
+      var pips = host.querySelectorAll('.bt-ship-pip');
+      pips.forEach(function (pip) { pip.classList.remove('hit'); });
+
+      // Réinitialiser les cartes monstres
+      var cards = host.querySelectorAll('.bt-ship-card');
+      cards.forEach(function (card) { card.classList.remove('is-sunk'); });
+
+      // Réinitialiser les cellules radar
+      var cells = host.querySelectorAll('.bt-cell');
+      cells.forEach(function (cell) {
+        cell.disabled = false;
+        cell.classList.remove('is-hit', 'is-sunk', 'is-miss');
+        cell.innerHTML = '<span class="bt-cell-inner"></span>';
+      });
+
+      majVoyantsUI();
+      if (touchesCompteurEl) {
+        touchesCompteurEl.innerHTML = 'Impacts : <b>0 / ' + totalCasesNavires + '</b>';
+      }
+      if (logStatusEl) {
+        logStatusEl.className = 'bt-log-status';
+        logStatusEl.innerHTML = isTest
+          ? '🧪 <b>Radar réinitialisé (mode test).</b> Visez une coordonnée pour lancer une torpille acoustique.'
+          : 'Visez les coordonnées sur le radar pour lancer une torpille acoustique.';
+      }
+      sonBataille('ping');
     }
 
     function verifierVictoireImmediate() {
@@ -485,21 +555,53 @@
       });
     }
 
+    /* Écouteur de réinitialisation en mode test */
+    var reinitBtn = host.querySelector('#btReinitTestBtn');
+    if (reinitBtn) {
+      reinitBtn.addEventListener('click', function () {
+        reinitialiserGrille();
+      });
+    }
+
     // Affichage initial
     sonBataille('ping');
     rafraichirTouteLaGrille();
     majVoyantsUI();
 
-    return {
+    var instance = {
       abandonner: function () {
         verrouille = true;
+      },
+      reinitialiser: reinitialiserGrille,
+      getFlotte: function () {
+        return flotte;
+      },
+      getTirs: function () {
+        return Array.from(tirsEnregistres);
       }
     };
+    instanceCourante = instance;
+    return instance;
+  }
+
+  function reinitialiser(equipeCode) {
+    var eq = String(equipeCode || 'TEST').toUpperCase();
+    try {
+      localStorage.removeItem('nautilusP4Partie:' + eq);
+      if (eq === 'TEST' || eq === 'ZZZZ-0000') {
+        localStorage.removeItem('nautilusP4Partie:TEST');
+        localStorage.removeItem('nautilusP4Partie:ZZZZ-0000');
+      }
+    } catch (_) {}
+    if (instanceCourante && instanceCourante.reinitialiser) {
+      instanceCourante.reinitialiser();
+    }
   }
 
   // Export pour les tirages et le panneau admin
   window.NautilusBataille = {
     init: init,
+    reinitialiser: reinitialiser,
     getFlottePourEquipe: getFlottePourEquipe,
     DEFS_FLOTTE: DEFS_FLOTTE
   };

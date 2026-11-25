@@ -546,10 +546,7 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
-      glisserEnHaut();
-      lancer();
-      setTimeout(glisserEnHaut, 350);
-      setTimeout(glisserEnHaut, 900);
+      location.href = 'palier3-jeu.html' + (location.search || '');
     }
   });
 

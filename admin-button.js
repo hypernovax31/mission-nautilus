@@ -63,7 +63,7 @@
     if(!window.NautilusMagasin) loadScript('magasin-fnac.js?v=3', 'scriptMagasinFnac');
     if(!window.FnacLecteur) loadScript('fnac-lecteur.js?v=1', 'scriptFnacLecteur');
     if(!window.NautilusPhotoDefi) loadScript('photo-defi.js?v=4', 'scriptPhotoDefi');
-    if(!window.NautilusBataille) loadScript('palier4-bataille.js?v=2', 'scriptPalier4Bataille');
+    if(!window.NautilusBataille) loadScript('palier4-bataille.js?v=3', 'scriptPalier4Bataille');
     if(!window.NautilusQuiz) loadScript('quiz-palier6.js?v=3', 'scriptQuizPalier6');
     if(!window.NautilusAdminArtefact) loadScript('admin-artefact.js?v=33', 'scriptAdminArtefact');
   }
@@ -319,8 +319,13 @@
           matelotLocks: {},
           completedSteps: [],
           finishedAt: null,
+          batailleNavale: deleteField(),
           updatedAt: new Date().toISOString()
         });
+        try { localStorage.removeItem('nautilusP4Partie:' + t.code); } catch(e){}
+        if (window.NautilusBataille && window.NautilusBataille.reinitialiser) {
+          window.NautilusBataille.reinitialiser(t.code);
+        }
 
         /* La partie en cours du mini-jeu vit dans un AUTRE document.
            Elle n'etait pas remise a zero ici : apres un reset, l'equipage
@@ -414,6 +419,13 @@
           await updateDoc(x.ref, { ...x.patch, updatedAt:new Date().toISOString() });
         }
       }
+      try {
+        localStorage.removeItem('nautilusP4Partie:TEST');
+        localStorage.removeItem('nautilusP4Partie:ZZZZ-0000');
+        if (window.NautilusBataille && window.NautilusBataille.reinitialiser) {
+          window.NautilusBataille.reinitialiser('TEST');
+        }
+      } catch (e) {}
       await loadTeams();
       endAdminSession(`✅ ${trouvees.length} trace(s) du compte de test purgée(s) · session fermée`);
     }catch(err){
@@ -583,9 +595,21 @@
     Object.entries(STEPS).forEach(([id, step], index) => {
       const href = palierPageUrl(id);
       const isStart = id === 'start';
-      const actions = isStart
-        ? lien(href, '🕹️ Jouer l’épreuve')
-        : (lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' ' + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve'));
+      let actions = '';
+      if (isStart) {
+        actions = lien(href, '🕹️ Jouer l’épreuve');
+      } else if (id === 'son') {
+        actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée') + ' '
+          + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '📜 Briefing') + ' '
+          + lien('palier3-jeu.html?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Mini-jeu');
+      } else if (id === 'occasion') {
+        actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée') + ' '
+          + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '📜 Briefing') + ' '
+          + lien('palier5-jeu.html?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Mini-jeu');
+      } else {
+        actions = lien(href + '?sas=ferme&m=ZZZZ-0000', '🔒 Page scellée (tester le QR)') + ' '
+          + lien(href + '?apercu=jeu&k=' + k + '&m=ZZZZ-0000', '🕹️ Jouer l’épreuve');
+      }
       lignes.push(ligne(`<b>${index + 1}.</b> ${esc(step.label)}`, notesParPalier[id] || '', actions, true));
     });
 

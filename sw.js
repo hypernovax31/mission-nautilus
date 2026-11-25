@@ -1,14 +1,18 @@
 // Service worker minimal pour PWA Mission Nautilus
 // Pages : network-first ; code et styles : cache avec revalidation en fond.
-const CACHE_NAME = 'nautilus-v439';
+const CACHE_NAME = 'nautilus-v440';
 const PRECACHE = [
   './',
   './index.html',
   './palier1.html',
   './1721310619.html',
   './1831411720.html',
+  './palier3-jeu.html',
+  './collimateur.html',
   './1941512821.html',
   './2051613922.html',
+  './palier5-jeu.html',
+  './juste-prix.html',
   './21617141023.html',
   './22718151124.html',
   './23819161225.html',
@@ -21,8 +25,8 @@ const PRECACHE = [
   './css/palier1.css?v=55',
   './css/palier2.css?v=26',
   './css/palier3.css?v=8',
-  './css/palier4.css?v=3',
-  './css/palier5.css?v=3',
+  './css/palier4.css?v=4',
+  './css/palier5.css?v=4',
   './css/palier6.css?v=2',
   './css/admin.css?v=13',
   './anti-zoom.js?v=2',
@@ -40,7 +44,7 @@ const PRECACHE = [
   './puzzle-palier3.js?v=4',
   './photo-defi.js?v=5',
   './palier4-marqueurs.js?v=2',
-  './palier4-bataille.js?v=2',
+  './palier4-bataille.js?v=3',
   './juste-prix.js?v=3',
   './quiz-palier6.js?v=3',
   './produits.json',
