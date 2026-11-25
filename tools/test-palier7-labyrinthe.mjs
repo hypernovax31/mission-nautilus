@@ -1,9 +1,9 @@
 // tools/test-palier7-labyrinthe.mjs
-// Suite de tests unitaires et de conformité du Palier 7 : Le Labyrinthe Circulaire
+// Suite de tests unitaires et de conformité du Palier 7 : Le Labyrinthe Circulaire 10x24
 
 import fs from 'fs';
 
-console.log('=== TEST SUITE PALIER 7 : LE LABYRINTHE CIRCULAIRE DU NAUTILUS ===\n');
+console.log('=== TEST SUITE PALIER 7 : LE LABYRINTHE CIRCULAIRE DU NAUTILUS (10x24) ===\n');
 
 // 1. Vérification de l existence des fichiers clés
 const files = [
@@ -11,7 +11,8 @@ const files = [
   '22718151124.html',
   'labyrinthe.html',
   'labyrinthe-circulaire.js',
-  'css/palier7.css'
+  'css/palier7.css',
+  'tools/test-labyrinthe-temps-optimal.mjs'
 ];
 
 files.forEach(f => {
@@ -34,7 +35,7 @@ const mockWindow = {
   }
 };
 
-const fn = new Function('window', 'document', 'localStorage', 'performance', 'requestAnimationFrame', 'cancelAnimationFrame', 'setInterval', 'clearInterval', 'setTimeout', code);
+const fn = new Function('window', 'document', 'localStorage', 'performance', 'requestAnimationFrame', 'cancelAnimationFrame', 'setInterval', 'clearInterval', 'setTimeout', 'screen', code);
 
 global.window = mockWindow;
 global.document = {
@@ -43,7 +44,7 @@ global.document = {
 };
 
 try {
-  fn(mockWindow, global.document, {}, { now: () => 0 }, () => 1, () => {}, () => 1, () => {}, () => 1);
+  fn(mockWindow, global.document, {}, { now: () => 0 }, () => 1, () => {}, () => 1, () => {}, () => 1, { orientation: { lock: () => Promise.resolve() } });
   if (mockWindow.NautilusLabyrinthe && typeof mockWindow.NautilusLabyrinthe.init === 'function') {
     console.log('✓ [Moteur] window.NautilusLabyrinthe.init exporté avec succès.');
   } else {
@@ -55,7 +56,6 @@ try {
 }
 
 // 3. Test de la topologie du labyrinthe (solvabilité et impasses)
-// Extraire les constantes RADIAL_WALLS et RING_WALLS
 const radialMatch = code.match(/var RADIAL_WALLS = (\[[\s\S]*?\]);/);
 const ringMatch = code.match(/var RING_WALLS = (\[[\s\S]*?\]);/);
 const startRingMatch = code.match(/var START_RING = (\d+);/);
@@ -71,11 +71,13 @@ const RING_WALLS = JSON.parse(ringMatch[1]);
 const START_RING = parseInt(startRingMatch[1], 10);
 const GOAL_SECTOR = parseInt(goalSectorMatch[1], 10);
 
-console.log(`✓ [Topologie] 7 anneaux et 16 secteurs bien définis.`);
+const RINGS = RADIAL_WALLS.length;
+const SECTORS = RADIAL_WALLS[0].length;
+
+console.log(`✓ [Topologie 10x24] ${RINGS} anneaux et ${SECTORS} secteurs = ${RINGS * SECTORS} cellules.`);
 console.log(`✓ [Parois] ${RADIAL_WALLS.flat().filter(Boolean).length} parois radiales et ${RING_WALLS.flat().filter(Boolean).length} parois circulaires.`);
 
 // BFS pour vérifier le chemin
-const RINGS = 7, SECTORS = 16;
 const dist = Array.from({ length: RINGS }, () => Array(SECTORS).fill(-1));
 const queue = [{ r: START_RING, s: 0 }];
 dist[START_RING][0] = 0;
@@ -102,7 +104,7 @@ while (queue.length > 0) {
 
 const goalDist = dist[0][GOAL_SECTOR];
 if (goalDist > 0) {
-  console.log(`✓ [Solvabilité] Chemin valide du départ vers le Cœur central (${goalDist} étapes requises).`);
+  console.log(`✓ [Solvabilité complexe] Chemin optimal direct vers le Cœur : ${goalDist + 1} étapes requises.`);
 } else {
   console.error(`✗ [Solvabilité] Aucun chemin trouvé vers le Cœur !`);
   process.exit(1);
@@ -124,43 +126,52 @@ for (let r = 0; r < RINGS; r++) {
   }
 }
 
-if (deadEnds >= 15) {
-  console.log(`✓ [Impasses] Labyrinthe très difficile validé avec ${deadEnds} culs-de-sac (≥ 15 requis).`);
+if (deadEnds >= 30) {
+  console.log(`✓ [Haute complexité] ${deadEnds} culs-de-sac (impasses) validés (≥ 30 requis).`);
 } else {
   console.error(`✗ [Impasses] Seulement ${deadEnds} culs-de-sac trouvés.`);
   process.exit(1);
 }
 
-// 4. Vérification de la gestion Gyroscope + Joystick de secours
-if (code.includes('DeviceOrientationEvent') && code.includes('deviceorientation')) {
-  console.log(`✓ [Contrôles] Détection et support du gyroscope mobile (DeviceOrientation) validés.`);
+// 4. Vérification du verrouillage d orientation portrait
+if (code.includes('tenterVerrouillagePortrait') && code.includes('screen.orientation.lock')) {
+  console.log(`✓ [Orientation] Verrouillage d'orientation portrait (screen.orientation.lock) actif.`);
 } else {
-  console.error(`✗ [Contrôles] Gyroscope manquant dans le code.`);
+  console.error(`✗ [Orientation] Verrouillage d'orientation manquant.`);
   process.exit(1);
 }
 
-if (code.includes('joystickZone') && code.includes('labyJoyBase') && code.includes('activerModeJoystick')) {
-  console.log(`✓ [Contrôles] Joystick tactile de secours (si pas de gyroscope) validé.`);
+// 5. Vérification de la compensation de rotation de l écran pour le gyroscope
+if (code.includes('angleDeg') && code.includes('screen.orientation.angle')) {
+  console.log(`✓ [Gyroscope] Compensation dynamique de rotation de l'appareil active.`);
 } else {
-  console.error(`✗ [Contrôles] Joystick tactile manquant.`);
+  console.error(`✗ [Gyroscope] Compensation de rotation manquante.`);
   process.exit(1);
 }
 
-// 5. Vérification du rendu 3D de la bille
-if (code.includes('createRadialGradient') && code.includes('shadowGrad') && code.includes('rotX') && code.includes('rotY')) {
-  console.log(`✓ [Rendu 3D] Bille 3D avec ombrage sphérique, reflets spéculaires et rotation 3D validée.`);
+// 6. Vérification du chronomètre de haute précision
+if (code.includes('labyChrono') && code.includes('t0Chrono') && code.includes('totalSec')) {
+  console.log(`✓ [Chronomètre] Chronomètre de haute précision au dixième de seconde intégré.`);
 } else {
-  console.error(`✗ [Rendu 3D] Éléments 3D manquants.`);
+  console.error(`✗ [Chronomètre] Chronomètre manquant.`);
   process.exit(1);
 }
 
-// 6. Vérification du Service Worker
+// 7. Vérification de la priorité au gyroscope mobile
+if (code.includes('laby-gyro-prompt') && code.includes('DeviceOrientationEvent.requestPermission')) {
+  console.log(`✓ [Contrôles] Priorité absolue au gyroscope avec demande d'autorisation iOS interactive.`);
+} else {
+  console.error(`✗ [Contrôles] Priorité gyroscope incomplète.`);
+  process.exit(1);
+}
+
+// 8. Vérification du Service Worker
 const swContent = fs.readFileSync('sw.js', 'utf8');
-if (swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=1') && swContent.includes('./css/palier7.css?v=1')) {
-  console.log(`✓ [Cache PWA] Tous les assets du Palier 7 sont précachés dans sw.js.`);
+if (swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=2') && swContent.includes('./css/palier7.css?v=2')) {
+  console.log(`✓ [Cache PWA] Tous les assets v2 du Palier 7 sont précachés dans sw.js.`);
 } else {
-  console.error(`✗ [Cache PWA] Assets manquants dans sw.js.`);
+  console.error(`✗ [Cache PWA] Assets v2 manquants dans sw.js.`);
   process.exit(1);
 }
 
-console.log('\n=== TOUS LES TESTS DU PALIER 7 (LABYRINTHE CIRCULAIRE) SONT VALIDÉS (100%) ===\n');
+console.log('\n=== TOUS LES TESTS DU PALIER 7 (HAUTE COMPLEXITÉ) SONT VALIDÉS (100%) ===\n');

@@ -7,12 +7,14 @@
   <meta name="theme-color" content="#020812" />
   <title>Mission Nautilus — Palier 7 : Le Labyrinthe Circulaire</title>
   <meta name="description" content="Mini-jeu du Palier 7 de la Mission Nautilus : Le Labyrinthe Circulaire du Nautilus au gyroscope ou joystick." />
+  <meta name="screen-orientation" content="portrait">
+  <meta name="x5-orientation" content="portrait">
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=60">
   <link rel="stylesheet" href="css/palier2.css?v=27">
-  <link rel="stylesheet" href="css/palier7.css?v=1">
+  <link rel="stylesheet" href="css/palier7.css?v=2">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
 </head>
@@ -72,7 +74,7 @@
 <script src="reserve-o2.js?v=9"></script>
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
-<script src="labyrinthe-circulaire.js?v=1"></script>
+<script src="labyrinthe-circulaire.js?v=2"></script>
 <script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 <script src="sonar-button.js?v=4" defer></script>
@@ -255,7 +257,7 @@ const LIEU_DESCRIPTION = "Zone finale de surface";
       equipe: equipe,
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [
-        { valeur: mm + ':' + ss, label: 'Temps de navigation' },
+        { valeur: (res && res.chrono) ? res.chrono : (mm + ':' + ss), label: 'Chronomètre' },
         { valeur: '100%', label: 'Cœur réanimé' },
         { valeur: String(collisions), label: 'Impacts parois' }
       ],

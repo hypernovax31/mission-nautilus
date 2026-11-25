@@ -41,6 +41,12 @@ main { max-width: 960px; margin: 0 auto; }
   flex-wrap: wrap;
 }
 
+.laby-hud-timers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .laby-badge {
   font-size: 13px;
   font-weight: 1000;
@@ -58,10 +64,18 @@ main { max-width: 960px; margin: 0 auto; }
   border: 1px solid rgba(142, 231, 255, 0.3);
   border-radius: 20px;
   padding: 4px 12px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 1000;
   font-variant-numeric: tabular-nums;
   color: #ffd36c;
+}
+.laby-chrono {
+  color: #57d9a3;
+  border-color: rgba(87, 217, 163, 0.4);
+  background: rgba(2, 30, 20, 0.6);
+}
+.laby-o2 {
+  color: #8ee7ff;
 }
 .laby-timer.is-urgent {
   color: #ff5f56;
@@ -85,6 +99,38 @@ main { max-width: 960px; margin: 0 auto; }
 }
 .laby-stat-item b { color: #ffffff; }
 .laby-stat-depth b { color: #57d9a3; }
+
+/* Bannière d'autorisation Gyroscope mobile (iOS) */
+.laby-gyro-prompt {
+  width: 100%;
+}
+.laby-gyro-prompt[hidden] { display: none !important; }
+.laby-btn-gyro-auth {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #f5b027, #d48b13);
+  color: #04101d;
+  border: 2px solid #ffe2a0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 1000;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(245, 176, 39, 0.45);
+  animation: labyAuthGlow 1.8s infinite ease-in-out;
+}
+.laby-btn-gyro-auth span {
+  font-size: 11.5px;
+  font-weight: 700;
+  opacity: .9;
+}
+@keyframes labyAuthGlow {
+  0%, 100% { transform: scale(1); box-shadow: 0 6px 20px rgba(245, 176, 39, 0.4); }
+  50% { transform: scale(1.02); box-shadow: 0 8px 28px rgba(245, 176, 39, 0.7); }
+}
 
 /* ================= 2. PLATEAU DU LABYRINTHE 3D ================= */
 .laby-board-outer {
@@ -295,3 +341,17 @@ main { max-width: 960px; margin: 0 auto; }
   border-color: rgba(87, 217, 163, 0.7);
   background: rgba(4, 40, 26, 0.75);
 }
+
+/* ================= 6. VERROUILLAGE ET STABILITÉ D'ORIENTATION PORTRAIT ================= */
+@media screen and (orientation: landscape) and (max-device-width: 900px) {
+  .laby-container {
+    max-width: 100vw;
+    padding: 4px 8px;
+    gap: 8px;
+  }
+  .laby-board {
+    width: min(70vh, 70vw);
+    height: min(70vh, 70vw);
+  }
+}
+

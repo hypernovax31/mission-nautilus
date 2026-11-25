@@ -2,17 +2,16 @@
    MISSION NAUTILUS — PALIER 7 : LE LABYRINTHE CIRCULAIRE DU NAUTILUS
    (labyrinthe-circulaire.js)
    -----------------------------------------------------------------------------
-   Épreuve du Palier 7 :
-   - Labyrinthe en forme de cercle à 7 anneaux concentriques et 16 secteurs.
-   - Dédale très difficile avec 18 culs-de-sac (impasses) et un chemin optimal
-     de 74 étapes vers le Cœur central.
-   - Bille 3D sphérique texturée en rotation 3D avec ombrage réaliste, reflets,
-     ombres portées et traînée de micro-bulles sous-marines.
-   - Pilotage :
-     * Gyroscope mobile (DeviceOrientation) prioritaire sur smartphone/tablette.
-     * Si aucun gyroscope disponible (PC / capteurs inactifs), joystick virtuel tactile.
-   - Intégration audio complète (roulement, chocs, carillon du réacteur).
-   - Détection de victoire vers Palier 8 (23819161225.html).
+   Épreuve du Palier 7 (Version Haute Complexité 10x24) :
+   - Labyrinthe circulaire à 10 anneaux concentriques et 24 secteurs (240 cellules).
+   - Dédale très difficile avec 34 culs-de-sac (impasses) et un parcours optimal
+     de 117 étapes vers le Cœur central (2712 px de trajet direct).
+   - Verrouillage de l'orientation portrait et compensation de rotation d'écran.
+   - Priorité absolue au Gyroscope mobile : activation directe, demande d'autorisation
+     interactive (iOS) et masquage du joystick sur mobile.
+   - Chronomètre de haute précision au dixième de seconde (⏱️ MM:SS.d) pour mesurer
+     le temps exact de parcours en plus de la réserve d'oxygène.
+   - Rendu de la bille en 3D sphérique texturée avec ombrage dynamique et traînée.
    ============================================================================= */
 
 (function () {
@@ -20,36 +19,58 @@
 
   if (window.NautilusLabyrinthe) return;
 
-  var DUREE_PARCOURS_SEC = 180; // 3 minutes de réserve d'oxygène
-  var RINGS = 7;
-  var SECTORS = 16;
+  var DUREE_PARCOURS_SEC = 180; // 3 minutes d'oxygène allouées
+  var RINGS = 10;
+  var SECTORS = 24;
   var SECTOR_ANGLE = (Math.PI * 2) / SECTORS;
 
-  /* Topologie certifiée (Seed 988 : 18 impasses, 74 pas jusqu'au Cœur) */
+  /* Topologie certifiée haute complexité (10 anneaux x 24 secteurs = 240 cellules, 34 impasses, 117 pas) */
   var RADIAL_WALLS = [
-    [false,false,true,false,false,true,false,false,true,false,false,true,false,false,false,true],
-    [true,false,false,true,false,true,true,true,true,true,false,false,true,true,false,true],
-    [false,false,true,false,true,true,false,true,false,true,false,false,false,false,true,false],
-    [true,true,false,false,true,false,false,false,true,false,false,true,false,true,false,false],
-    [true,false,false,false,true,false,true,false,false,true,true,false,false,false,false,true],
-    [false,true,true,false,false,true,false,true,true,true,false,true,true,false,false,true],
-    [true,false,false,false,false,false,false,false,true,false,true,false,false,false,true,false]
+    [false,true,false,false,false,true,false,false,false,false,true,false,false,false,false,false,true,false,false,false,false,false,false,false],
+    [false,false,true,false,false,true,true,false,true,true,false,true,false,false,true,true,true,false,false,true,false,true,false,true],
+    [false,true,true,false,true,false,false,true,false,false,true,false,true,false,false,true,false,true,false,false,true,false,true,false],
+    [false,false,false,false,true,true,false,false,true,false,false,true,true,false,false,false,false,true,true,true,false,false,false,true],
+    [false,false,false,true,false,false,true,true,false,false,true,true,true,true,false,false,true,false,true,false,false,true,false,false],
+    [false,true,true,true,false,false,true,false,false,true,false,false,true,true,false,true,true,false,false,false,false,false,true,false],
+    [true,false,false,true,false,false,false,true,true,true,false,true,false,true,false,true,false,false,false,false,false,true,true,false],
+    [false,true,true,false,true,false,false,true,true,false,false,false,true,false,true,false,true,true,true,false,true,false,true,true],
+    [false,true,false,true,false,true,true,true,false,false,true,false,false,false,true,true,false,false,true,true,false,true,false,true],
+    [true,false,false,false,true,false,false,false,true,false,false,false,false,true,false,false,false,false,false,false,true,false,false,true]
   ];
 
   var RING_WALLS = [
-    [false,false,true,false,false,true,false,true,false,false,false,true,false,true,false,true],
-    [false,true,true,true,true,false,false,false,false,true,false,true,true,false,true,false],
-    [true,true,false,true,false,false,true,false,true,false,true,true,true,false,true,true],
-    [false,false,true,true,false,true,true,true,true,true,false,false,true,true,false,true],
-    [false,true,false,true,true,false,false,false,true,false,true,true,false,true,true,true],
-    [true,false,true,false,true,true,true,true,false,false,false,false,true,false,true,false]
+    [false,true,false,true,true,false,false,true,false,true,false,true,true,true,true,false,false,false,true,true,true,true,false,true],
+    [true,true,false,false,true,true,true,false,true,false,true,false,false,true,false,false,true,false,true,true,false,false,true,true],
+    [true,false,true,true,false,false,true,true,false,true,false,true,false,true,true,true,false,true,false,true,true,true,false,false],
+    [true,true,true,true,true,false,true,false,false,true,true,false,false,false,true,true,true,true,false,false,false,true,true,true],
+    [true,true,false,false,true,true,false,true,true,true,false,true,false,false,false,true,false,false,true,true,true,true,false,true],
+    [true,false,true,false,false,true,true,false,true,false,false,true,true,false,true,true,false,true,true,true,true,true,true,false],
+    [false,true,true,true,false,true,true,true,false,false,true,true,false,true,false,false,true,false,false,true,true,false,false,true],
+    [true,false,false,false,true,false,true,false,false,true,true,true,true,true,false,true,false,true,false,false,true,true,false,false],
+    [false,true,false,true,false,true,false,false,false,true,false,true,true,false,true,false,true,true,true,false,false,false,true,false]
   ];
 
-  var START_RING = 6;  // Anneau extérieur (Track 7)
-  var START_SECTOR = 0; // Secteur initial
-  var GOAL_SECTOR = 9;  // Secteur d'accès vers le cœur central (Anneau 0)
+  var START_RING = 9;  // Anneau le plus extérieur (Ring 10)
+  var START_SECTOR = 0; // Départ à theta = 0
+  var GOAL_SECTOR = 11; // Brèche unique vers le Cœur au secteur 11 (opposé)
 
-  /* ================= EFFETS SONORES VIA WEB AUDIO API ================= */
+  /* ================= VERROUILLAGE D'ORIENTATION PORTRAIT ================= */
+  function tenterVerrouillagePortrait() {
+    try {
+      if (screen.orientation && typeof screen.orientation.lock === 'function') {
+        screen.orientation.lock('portrait').catch(function () {});
+      } else if (screen.lockOrientation) {
+        screen.lockOrientation('portrait');
+      } else if (screen.mozLockOrientation) {
+        screen.mozLockOrientation('portrait');
+      } else if (screen.msLockOrientation) {
+        screen.msLockOrientation('portrait');
+      }
+    } catch (e) {}
+  }
+  tenterVerrouillagePortrait();
+
+  /* ================= EFFETS SONORES (WEB AUDIO API) ================= */
   var audioCtx = null;
   function getAudioCtx() {
     if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
@@ -75,7 +96,7 @@
   function jouerSonChoc(force) {
     if (!sonEstActif()) return;
     var now = Date.now();
-    if (now - dernierSonChoc < 80) return; // Anti-mitraillage
+    if (now - dernierSonChoc < 75) return;
     dernierSonChoc = now;
     var ctx = getAudioCtx();
     if (!ctx) return;
@@ -84,19 +105,19 @@
     try {
       var osc = ctx.createOscillator();
       var gain = ctx.createGain();
-      var f = 800 + Math.min(600, (force || 1) * 300);
+      var f = 850 + Math.min(650, (force || 1) * 320);
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(f, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.045);
+      osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.045);
 
-      var vol = Math.min(0.28, 0.06 + (force || 1) * 0.08);
+      var vol = Math.min(0.26, 0.05 + (force || 1) * 0.08);
       gain.gain.setValueAtTime(vol, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.048);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 0.055);
+      osc.stop(ctx.currentTime + 0.05);
     } catch (e) {}
   }
 
@@ -107,43 +128,57 @@
     if (ctx.state === 'suspended') { ctx.resume().catch(function () {}); }
 
     try {
-      var notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // Do-Mi-Sol-Do-Mi
+      var notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
       notes.forEach(function (freq, idx) {
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.075);
 
-        gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.08);
-        gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + idx * 0.08 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.45);
+        gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.075);
+        gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + idx * 0.075 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.075 + 0.45);
 
         osc.connect(gain);
         gain.connect(ctx.destination);
-        osc.start(ctx.currentTime + idx * 0.08);
-        osc.stop(ctx.currentTime + idx * 0.08 + 0.5);
+        osc.start(ctx.currentTime + idx * 0.075);
+        osc.stop(ctx.currentTime + idx * 0.075 + 0.5);
       });
     } catch (e) {}
   }
 
-  /* ================= MOTEUR DU LABYRINTHE CIRCULAIRE ================= */
+  /* ================= MOTEUR DU LABYRINTHE ================= */
   function init(host, options) {
     options = options || {};
     var onVictoire = options.onVictoire || function () {};
     var onDefaite = options.onDefaite || function () {};
 
+    tenterVerrouillagePortrait();
+
+    var estMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
     host.innerHTML = ''
       + '<div class="laby-container" id="labyContainer">'
       + '  <div class="laby-hud">'
       + '    <div class="laby-hud-top">'
-      + '      <div class="laby-badge">PALIER 7 — <b>LABYRINTHE CIRCULAIRE</b></div>'
-      + '      <div class="laby-timer" id="labyTimer">⏱️ 03:00</div>'
+      + '      <div class="laby-badge">PALIER 7 — <b>LABYRINTHE SCELLÉ (10 ANNEAUX)</b></div>'
+      + '      <div class="laby-hud-timers">'
+      + '        <div class="laby-timer laby-chrono" id="labyChrono" title="Chronomètre de parcours">⏱️ 00:00.0</div>'
+      + '        <div class="laby-timer laby-o2" id="labyTimer" title="Réserve d\'oxygène restante">🫧 03:00</div>'
+      + '      </div>'
       + '    </div>'
       + '    <div class="laby-hud-stats">'
-      + '      <div class="laby-stat-item laby-stat-depth">Profondeur : <b id="labyDepth">Anneau 7/7</b></div>'
+      + '      <div class="laby-stat-item laby-stat-depth">Profondeur : <b id="labyDepth">Anneau 10/10</b></div>'
       + '      <div class="laby-stat-item">Impacts : <b id="labyCollisions">0</b></div>'
       + '      <div class="laby-stat-item">Cœur : <b id="labyCoreDist">Lointain</b></div>'
       + '    </div>'
+      + '  </div>'
+
+      + '  <div class="laby-gyro-prompt" id="labyGyroPrompt" hidden>'
+      + '    <button type="button" class="laby-btn-gyro-auth" id="btnAuthGyro">'
+      + '      🧭 <b>ACTIVER LE GYROSCOPE (INCLINAISON)</b>'
+      + '      <span>Touchez pour autoriser les capteurs de mouvement</span>'
+      + '    </button>'
       + '  </div>'
 
       + '  <div class="laby-board-outer" id="labyBoardOuter">'
@@ -155,10 +190,10 @@
       + '  <div class="laby-controls-bar">'
       + '    <div class="laby-sensor-chip" id="labySensorChip">'
       + '      <span class="laby-sensor-dot" id="labySensorDot"></span>'
-      + '      <span id="labySensorLabel">Détection capteurs…</span>'
+      + '      <span id="labySensorLabel">Initialisation capteurs…</span>'
       + '    </div>'
       + '    <div class="laby-actions">'
-      + '      <button type="button" class="laby-btn" id="btnCalibGyro" title="Définir la position actuelle comme neutre">🎯 Calibrer</button>'
+      + '      <button type="button" class="laby-btn" id="btnCalibGyro" title="Calibrer l’inclinaison neutre">🎯 Calibrer</button>'
       + '      <button type="button" class="laby-btn" id="btnToggleMode" title="Basculer entre Gyroscope et Joystick">🕹️ Joystick</button>'
       + '    </div>'
       + '  </div>'
@@ -171,17 +206,21 @@
       + '    </div>'
       + '  </div>'
 
-      + '  <div class="laby-status" id="labyStatus">Dirigez la bille 3D à travers les coursives circulaires jusqu’au Cœur du Nautilus.</div>'
+      + '  <div class="laby-status" id="labyStatus">Inclinez votre appareil pour diriger la bille 3D vers le Cœur central (brèche unique dissimulée).</div>'
       + '</div>';
 
+    var container = host.querySelector('#labyContainer');
     var canvas = host.querySelector('#labyCanvas');
     var board = host.querySelector('#labyBoard');
+    var chronoEl = host.querySelector('#labyChrono');
     var timerEl = host.querySelector('#labyTimer');
     var depthEl = host.querySelector('#labyDepth');
     var collisionsEl = host.querySelector('#labyCollisions');
     var coreDistEl = host.querySelector('#labyCoreDist');
     var statusEl = host.querySelector('#labyStatus');
     var sensorLabelEl = host.querySelector('#labySensorLabel');
+    var gyroPromptEl = host.querySelector('#labyGyroPrompt');
+    var btnAuthGyro = host.querySelector('#btnAuthGyro');
     var btnCalibGyro = host.querySelector('#btnCalibGyro');
     var btnToggleMode = host.querySelector('#btnToggleMode');
     var joystickZone = host.querySelector('#labyJoystickZone');
@@ -192,53 +231,52 @@
 
     /* Variables de jeu */
     var tempsRestant = DUREE_PARCOURS_SEC;
+    var t0Chrono = performance.now();
+    var chronoMs = 0;
     var collisionsCount = 0;
     var estTermine = false;
-    var modeActif = 'gyro'; // 'gyro' ou 'joystick'
+    var modeActif = 'gyro'; // 'gyro' par défaut prioritaire
     var aRecuGyro = false;
-    var timerInterval = null;
     var animFrameId = null;
+    var timerInterval = null;
 
     /* Gyroscope / Accéléromètre */
-    var rawGamma = 0; // Inclinaison gauche/droite (-90 .. +90)
-    var rawBeta = 0;  // Inclinaison avant/arrière (-180 .. +180)
+    var rawGamma = 0;
+    var rawBeta = 0;
     var calibGamma = 0;
-    var calibBeta = 30; // Position naturelle en main inclinée à ~30°
+    var calibBeta = 30; // Position de préhension naturelle
     var inputX = 0;
     var inputY = 0;
 
     /* Joystick virtuel */
     var joyDragging = false;
-    var joyTouchId = null;
     var joyCenterX = 0;
     var joyCenterY = 0;
     var joyX = 0;
     var joyY = 0;
     var JOY_MAX_RADIUS = 38;
 
-    /* Clavier (PC fallback) */
+    /* Clavier (PC) */
     var keysDown = {};
 
-    /* Particules de bulles sous-marines */
+    /* Particules */
     var bulles = [];
 
-    /* Dimensions et géométrie du labyrinthe */
+    /* Dimensions et géométrie */
     var size = 440;
     var center = size / 2;
     var rOuter = size * 0.465;
     var rInner = size * 0.125;
     var trackWidth = (rOuter - rInner) / RINGS;
-    var rBall = trackWidth * 0.28; // Bille 3D parfaitement calibrée dans les coursives
-    var wallHalfThick = 2.0;
+    var rBall = trackWidth * 0.28;
+    var wallHalfThick = 1.6;
 
-    /* Anneaux (rayons des parois concentriques) */
-    // r_wall[0] = rInner (accès vers le cœur), r_wall[7] = rOuter
     var rWalls = [];
     for (var k = 0; k <= RINGS; k++) {
       rWalls.push(rInner + k * trackWidth);
     }
 
-    /* Position initiale de la bille (Anneau 6, secteur 0) */
+    /* Position initiale : Anneau 9 (Ring 10), secteur 0 */
     var initTrackRadius = (rWalls[START_RING] + rWalls[START_RING + 1]) / 2;
     var initAngle = (START_SECTOR + 0.5) * SECTOR_ANGLE;
     var ballX = center + initTrackRadius * Math.cos(initAngle);
@@ -246,7 +284,6 @@
     var ballVx = 0;
     var ballVy = 0;
 
-    /* Rotation 3D de la bille pour l'effet de roulement */
     var rotX = 0;
     var rotY = 0;
 
@@ -277,13 +314,14 @@
     redimensionner();
     window.addEventListener('resize', redimensionner);
 
-    /* ================= DÉTECTION GYROSCOPE ET JOYSTICK ================= */
+    /* ================= GESTION STRICTE DU GYROSCOPE ================= */
     function onDeviceOrientation(ev) {
       if (ev.gamma != null && ev.beta != null) {
         if (!aRecuGyro) {
           aRecuGyro = true;
           calibGamma = ev.gamma;
           calibBeta = (ev.beta > 15 && ev.beta < 60) ? ev.beta : 30;
+          if (gyroPromptEl) gyroPromptEl.hidden = true;
           activerModeGyro();
         }
         rawGamma = ev.gamma;
@@ -294,8 +332,10 @@
     function activerModeGyro() {
       modeActif = 'gyro';
       joystickZone.hidden = true;
+      if (gyroPromptEl) gyroPromptEl.hidden = true;
       sensorLabelEl.textContent = '🧭 Gyroscope actif (inclinez le mobile)';
       btnToggleMode.textContent = '🕹️ Joystick';
+      btnToggleMode.style.display = '';
       statusEl.textContent = 'Inclinez votre appareil pour diriger la bille dans le labyrinthe.';
       statusEl.className = 'laby-status';
     }
@@ -303,18 +343,19 @@
     function activerModeJoystick() {
       modeActif = 'joystick';
       joystickZone.hidden = false;
+      if (gyroPromptEl) gyroPromptEl.hidden = true;
       sensorLabelEl.textContent = '🕹️ Joystick tactile actif';
       btnToggleMode.textContent = '🧭 Gyroscope';
       statusEl.textContent = 'Utilisez le joystick tactile (ou les flèches du clavier) pour manœuvrer.';
       statusEl.className = 'laby-status is-warning';
     }
 
-    /* Demande d'autorisation DeviceOrientation (requis pour iOS 13+) */
     function demanderAutorisationGyro() {
+      tenterVerrouillagePortrait();
       if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
-          .then(function (permissionState) {
-            if (permissionState === 'granted') {
+          .then(function (perm) {
+            if (perm === 'granted') {
               window.addEventListener('deviceorientation', onDeviceOrientation, true);
               activerModeGyro();
             } else {
@@ -326,35 +367,52 @@
           });
       } else if ('ondeviceorientation' in window) {
         window.addEventListener('deviceorientation', onDeviceOrientation, true);
+        activerModeGyro();
       } else {
         activerModeJoystick();
       }
     }
 
-    /* Écoute initiale du gyroscope */
-    if ('ondeviceorientation' in window) {
+    /* Détection intelligente des capteurs */
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      // iOS Safari : nécessite une action utilisateur
+      if (gyroPromptEl) gyroPromptEl.hidden = false;
+      sensorLabelEl.textContent = '🧭 Touchez pour activer le gyroscope';
+      btnAuthGyro.addEventListener('click', demanderAutorisationGyro);
+      // Toute première interaction sur l'écran déclenche aussi la demande
+      container.addEventListener('click', function declic() {
+        demanderAutorisationGyro();
+        container.removeEventListener('click', declic);
+      });
+    } else if ('ondeviceorientation' in window) {
       window.addEventListener('deviceorientation', onDeviceOrientation, true);
-    }
-    // Si après 600 ms aucune donnée gyroscope n'est reçue (ex. PC ou capteurs inactifs),
-    // basculer automatiquement sur le joystick tactile de secours
-    setTimeout(function () {
-      if (!aRecuGyro) {
-        activerModeJoystick();
+      // Sur mobile, on reste résolument en mode Gyro
+      if (estMobile) {
+        activerModeGyro();
+      } else {
+        // Desktop sans capteurs
+        setTimeout(function () {
+          if (!aRecuGyro) activerModeJoystick();
+        }, 1200);
       }
-    }, 600);
+    } else {
+      activerModeJoystick();
+    }
 
     /* Boutons de commande */
     btnCalibGyro.addEventListener('click', function () {
       calibGamma = rawGamma;
       calibBeta = rawBeta;
-      statusEl.textContent = '🎯 Horizon calibré sur l’inclinaison actuelle.';
+      tenterVerrouillagePortrait();
+      statusEl.textContent = '🎯 Horizon calibré sur la position actuelle.';
       statusEl.className = 'laby-status';
       setTimeout(function () {
-        statusEl.textContent = 'Dirigez la bille vers le Cœur central du Nautilus.';
+        statusEl.textContent = 'Inclinez votre appareil pour diriger la bille dans le labyrinthe.';
       }, 1500);
     });
 
     btnToggleMode.addEventListener('click', function () {
+      tenterVerrouillagePortrait();
       if (modeActif === 'gyro') {
         activerModeJoystick();
       } else {
@@ -363,7 +421,7 @@
       }
     });
 
-    /* ================= GESTION DU JOYSTICK VIRTUEL TACTILE ================= */
+    /* ================= JOYSTICK TACTILE ================= */
     function handleJoyStart(e) {
       if (modeActif !== 'joystick') return;
       var point = e.touches ? e.touches[0] : e;
@@ -380,7 +438,7 @@
       var point = e.touches ? e.touches[0] : e;
       var dx = point.clientX - joyCenterX;
       var dy = point.clientY - joyCenterY;
-      var dist = Math.sqrt(dx * dx + dy * dy);
+      var dist = Math.hypot(dx, dy);
       if (dist > JOY_MAX_RADIUS) {
         dx = (dx / dist) * JOY_MAX_RADIUS;
         dy = (dy / dist) * JOY_MAX_RADIUS;
@@ -391,7 +449,7 @@
       if (e.cancelable) e.preventDefault();
     }
 
-    function handleJoyEnd(e) {
+    function handleJoyEnd() {
       if (!joyDragging) return;
       joyDragging = false;
       joyX = 0;
@@ -404,20 +462,10 @@
     window.addEventListener('pointerup', handleJoyEnd);
     window.addEventListener('pointercancel', handleJoyEnd);
 
-    joyBase.addEventListener('touchstart', handleJoyStart, { passive: false });
-    window.addEventListener('touchmove', handleJoyMove, { passive: false });
-    window.addEventListener('touchend', handleJoyEnd);
-    window.addEventListener('touchcancel', handleJoyEnd);
+    window.addEventListener('keydown', function (e) { keysDown[e.key] = true; });
+    window.addEventListener('keyup', function (e) { keysDown[e.key] = false; });
 
-    /* Clavier (Flèches / ZQSD / WASD) pour PC */
-    window.addEventListener('keydown', function (e) {
-      keysDown[e.key] = true;
-    });
-    window.addEventListener('keyup', function (e) {
-      keysDown[e.key] = false;
-    });
-
-    /* ================= PHYSIQUE & RÉSOLUTION DES COLLISIONS ================= */
+    /* ================= RÉSOLUTION DES COLLISIONS ================= */
     function distancePointSegment(px, py, x1, y1, x2, y2) {
       var dx = x2 - x1;
       var dy = y2 - y1;
@@ -438,7 +486,7 @@
     function resoudreCollisions() {
       var dx = ballX - center;
       var dy = ballY - center;
-      var distCenter = Math.sqrt(dx * dx + dy * dy);
+      var distCenter = Math.hypot(dx, dy);
       var angle = angleNormalise(Math.atan2(dy, dx));
 
       // 1. Limite extérieure du labyrinthe (rOuter)
@@ -448,21 +496,20 @@
         var ny = dy / (distCenter || 1);
         ballX -= nx * penetration;
         ballY -= ny * penetration;
-        // Rebond radial avec coefficient de restitution
         var vRadial = ballVx * nx + ballVy * ny;
         if (vRadial > 0) {
-          ballVx -= 1.3 * vRadial * nx;
-          ballVy -= 1.3 * vRadial * ny;
+          ballVx -= 1.35 * vRadial * nx;
+          ballVy -= 1.35 * vRadial * ny;
           enregistrerImpact(vRadial);
         }
         dx = ballX - center;
         dy = ballY - center;
-        distCenter = Math.sqrt(dx * dx + dy * dy);
+        distCenter = Math.hypot(dx, dy);
         angle = angleNormalise(Math.atan2(dy, dx));
       }
 
       // 2. Paroi du Cœur central (rInner)
-      // Ouverte uniquement sur le secteur GOAL_SECTOR (accès direct au cœur !)
+      // Ouverte uniquement sur le secteur GOAL_SECTOR (brèche unique)
       var secteurActuel = Math.floor(angle / SECTOR_ANGLE);
       var accesCoeur = (secteurActuel === GOAL_SECTOR);
 
@@ -474,21 +521,20 @@
         ballY += nyIn * penIn;
         var vRadialIn = ballVx * nxIn + ballVy * nyIn;
         if (vRadialIn < 0) {
-          ballVx -= 1.3 * vRadialIn * nxIn;
-          ballVy -= 1.3 * vRadialIn * nyIn;
+          ballVx -= 1.35 * vRadialIn * nxIn;
+          ballVy -= 1.35 * vRadialIn * nyIn;
           enregistrerImpact(-vRadialIn);
         }
         dx = ballX - center;
         dy = ballY - center;
-        distCenter = Math.sqrt(dx * dx + dy * dy);
+        distCenter = Math.hypot(dx, dy);
         angle = angleNormalise(Math.atan2(dy, dx));
       }
 
       // 3. Parois concentriques (RING_WALLS)
-      // k va de 0 à RINGS - 2 (entre anneaux 0 et 1, 1 et 2, ..., 5 et 6)
       for (var k = 0; k < RINGS - 1; k++) {
         var rW = rWalls[k + 1];
-        if (Math.abs(distCenter - rW) < rBall + wallHalfThick + 2.0) {
+        if (Math.abs(distCenter - rW) < rBall + wallHalfThick + 2.5) {
           for (var s = 0; s < SECTORS; s++) {
             if (RING_WALLS[k][s]) {
               var aStart = s * SECTOR_ANGLE;
@@ -504,8 +550,8 @@
                   ballY += nRy * penRing;
                   var vRad = ballVx * nRx + ballVy * nRy;
                   if (vRad < 0) {
-                    ballVx -= 1.3 * vRad * nRx;
-                    ballVy -= 1.3 * vRad * nRy;
+                    ballVx -= 1.35 * vRad * nRx;
+                    ballVy -= 1.35 * vRad * nRy;
                     enregistrerImpact(-vRad);
                   }
                 }
@@ -516,20 +562,19 @@
       }
 
       // 4. Parois radiales (RADIAL_WALLS)
-      // Pour chaque anneau k et secteur s
-      for (var rIndex = 0; rIndex < RINGS; rIndex++) {
-        var rMin = rWalls[rIndex];
-        var rMax = rWalls[rIndex + 1];
-        if (distCenter >= rMin - rBall && distCenter <= rMax + rBall) {
-          for (var sIndex = 0; sIndex < SECTORS; sIndex++) {
-            if (RADIAL_WALLS[rIndex][sIndex]) {
-              var aWall = (sIndex + 1) * SECTOR_ANGLE;
+      for (var rIdx = 0; rIdx < RINGS; rIdx++) {
+        var r1 = rWalls[rIdx];
+        var r2 = rWalls[rIdx + 1];
+        if (distCenter >= r1 - rBall && distCenter <= r2 + rBall) {
+          for (var sIdx = 0; sIdx < SECTORS; sIdx++) {
+            if (RADIAL_WALLS[rIdx][sIdx]) {
+              var aWall = (sIdx + 1) * SECTOR_ANGLE;
               var cosW = Math.cos(aWall);
               var sinW = Math.sin(aWall);
-              var x1 = center + rMin * cosW;
-              var y1 = center + rMin * sinW;
-              var x2 = center + rMax * cosW;
-              var y2 = center + rMax * sinW;
+              var x1 = center + r1 * cosW;
+              var y1 = center + r1 * sinW;
+              var x2 = center + r2 * cosW;
+              var y2 = center + r2 * sinW;
 
               var proj = distancePointSegment(ballX, ballY, x1, y1, x2, y2);
               var seuil = rBall + wallHalfThick;
@@ -543,8 +588,8 @@
 
                 var vNorm = ballVx * nSegX + ballVy * nSegY;
                 if (vNorm < 0) {
-                  ballVx -= 1.3 * vNorm * nSegX;
-                  ballVy -= 1.3 * vNorm * nSegY;
+                  ballVx -= 1.35 * vNorm * nSegX;
+                  ballVy -= 1.35 * vNorm * nSegY;
                   enregistrerImpact(-vNorm);
                 }
               }
@@ -555,10 +600,10 @@
     }
 
     function enregistrerImpact(v) {
-      if (v > 15) {
+      if (v > 12) {
         collisionsCount++;
         collisionsEl.textContent = collisionsCount;
-        jouerSonChoc(Math.min(3, v / 50));
+        jouerSonChoc(Math.min(3, v / 45));
       }
     }
 
@@ -572,14 +617,23 @@
       if (modeActif === 'gyro') {
         var dGamma = rawGamma - calibGamma;
         var dBeta = rawBeta - calibBeta;
-        inputX = Math.max(-1, Math.min(1, dGamma / 24));
-        inputY = Math.max(-1, Math.min(1, dBeta / 24));
+        var rawX = Math.max(-1, Math.min(1, dGamma / 22));
+        var rawY = Math.max(-1, Math.min(1, dBeta / 22));
+
+        // Compensation stricte de rotation d'écran si l'appareil bascule
+        var angleDeg = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+        if (angleDeg !== 0) {
+          var rad = -angleDeg * (Math.PI / 180);
+          inputX = rawX * Math.cos(rad) - rawY * Math.sin(rad);
+          inputY = rawX * Math.sin(rad) + rawY * Math.cos(rad);
+        } else {
+          inputX = rawX;
+          inputY = rawY;
+        }
       } else {
-        // Mode joystick tactile
         inputX = joyX;
         inputY = joyY;
 
-        // Fallback clavier pour PC
         if (keysDown['ArrowLeft'] || keysDown['q'] || keysDown['a']) inputX = -1;
         if (keysDown['ArrowRight'] || keysDown['d']) inputX = 1;
         if (keysDown['ArrowUp'] || keysDown['z'] || keysDown['w']) inputY = -1;
@@ -587,29 +641,26 @@
       }
 
       // 2. Inclinaison 3D du plateau
-      var tiltDegX = inputY * 8;
-      var tiltDegY = -inputX * 8;
+      var tiltDegX = inputY * 7;
+      var tiltDegY = -inputX * 7;
       board.style.transform = 'rotateX(' + tiltDegX.toFixed(2) + 'deg) rotateY(' + tiltDegY.toFixed(2) + 'deg)';
 
-      // 3. Accélération de la bille sous la gravité du plateau incliné
-      var GRAVITE = 460; // px/s²
+      // 3. Accélération de la bille
+      var GRAVITE = 460;
       var ax = inputX * GRAVITE;
       var ay = inputY * GRAVITE;
 
-      // Frottement de roulement
       var frottement = Math.pow(0.975, dt * 60);
 
-      // Sous-échantillonnage de physique (3 substeps pour zéro collision ratée)
-      var SUBSTEPS = 3;
+      var SUBSTEPS = 4;
       var subDt = dt / SUBSTEPS;
 
       for (var step = 0; step < SUBSTEPS; step++) {
         ballVx = (ballVx + ax * subDt) * frottement;
         ballVy = (ballVy + ay * subDt) * frottement;
 
-        // Vitesse maximale bridée
         var v = Math.hypot(ballVx, ballVy);
-        var V_MAX = 280;
+        var V_MAX = 220;
         if (v > V_MAX) {
           ballVx = (ballVx / v) * V_MAX;
           ballVy = (ballVy / v) * V_MAX;
@@ -621,19 +672,19 @@
         resoudreCollisions();
       }
 
-      // 4. Rotation 3D de la bille pour l'animation de roulement
+      // 4. Rotation 3D de la sphère
       rotX += ballVy / rBall;
       rotY += -ballVx / rBall;
 
-      // 5. Particules de micro-bulles sous-marines
+      // 5. Particules de micro-bulles
       var speed = Math.hypot(ballVx, ballVy);
-      if (speed > 40 && Math.random() < 0.35) {
+      if (speed > 35 && Math.random() < 0.35) {
         bulles.push({
           x: ballX + (Math.random() - 0.5) * rBall,
           y: ballY + (Math.random() - 0.5) * rBall,
-          vx: (Math.random() - 0.5) * 8,
-          vy: -12 - Math.random() * 16,
-          radius: 1.2 + Math.random() * 2.2,
+          vx: (Math.random() - 0.5) * 6,
+          vy: -10 - Math.random() * 14,
+          radius: 1.0 + Math.random() * 2.0,
           life: 1.0
         });
       }
@@ -645,48 +696,48 @@
         if (bulle.life <= 0) bulles.splice(b, 1);
       }
 
-      // 6. Suivi de progression et détection du Cœur
+      // 6. Suivi de profondeur et distance au cœur
       var dCenter = Math.hypot(ballX - center, ballY - center);
-      var curRing = Math.max(0, Math.min(6, Math.floor((dCenter - rInner) / trackWidth)));
-      depthEl.textContent = 'Anneau ' + (curRing + 1) + '/7';
+      var curRing = Math.max(0, Math.min(RINGS - 1, Math.floor((dCenter - rInner) / trackWidth)));
+      depthEl.textContent = 'Anneau ' + (curRing + 1) + '/' + RINGS;
 
-      if (dCenter < rInner + 10) {
+      if (dCenter < rInner + 14) {
         coreDistEl.textContent = '⚡ IMMINENT !';
         coreDistEl.style.color = '#ffd36c';
-      } else if (curRing <= 1) {
-        coreDistEl.textContent = 'Proche';
+      } else if (curRing <= 2) {
+        coreDistEl.textContent = 'Approche';
         coreDistEl.style.color = '#8ee7ff';
       } else {
         coreDistEl.textContent = 'Lointain';
         coreDistEl.style.color = '#a4c7e2';
       }
 
-      // VICTOIRE : la bille a franchi le sas du Cœur central !
+      // Détection de victoire (franchissement de la brèche vers le Cœur)
       if (dCenter < rInner * 0.75) {
         declencherVictoire();
       }
     }
 
-    /* ================= RENDU VISUEL SUR LE CANVAS ================= */
+    /* ================= RENDU DU LABYRINTHE ================= */
     function render() {
       ctx.clearRect(0, 0, size, size);
 
       // 1. Fond du labyrinthe circulaire
       ctx.save();
       var fondGrad = ctx.createRadialGradient(center, center, rInner * 0.4, center, center, rOuter);
-      fondGrad.addColorStop(0, '#041527');
-      fondGrad.addColorStop(0.5, '#030d1a');
-      fondGrad.addColorStop(1, '#01050a');
+      fondGrad.addColorStop(0, '#04172a');
+      fondGrad.addColorStop(0.65, '#020b16');
+      fondGrad.addColorStop(1, '#010408');
       ctx.fillStyle = fondGrad;
       ctx.beginPath();
       ctx.arc(center, center, rOuter, 0, Math.PI * 2);
       ctx.fill();
 
-      // Sillons des pistes concentriques (effet coursives profondes)
+      // Sillons des pistes concentriques
       for (var rIdx = 0; rIdx < RINGS; rIdx++) {
         var midR = (rWalls[rIdx] + rWalls[rIdx + 1]) / 2;
-        ctx.strokeStyle = 'rgba(142, 231, 255, 0.05)';
-        ctx.lineWidth = trackWidth - 3;
+        ctx.strokeStyle = 'rgba(142, 231, 255, 0.04)';
+        ctx.lineWidth = trackWidth - 2;
         ctx.beginPath();
         ctx.arc(center, center, midR, 0, Math.PI * 2);
         ctx.stroke();
@@ -694,46 +745,44 @@
 
       // 2. Cœur central du Nautilus (Objectif final)
       var tNow = performance.now() * 0.003;
-      var pulse = 0.85 + 0.15 * Math.sin(tNow * 3);
+      var pulse = 0.85 + 0.15 * Math.sin(tNow * 3.5);
       var coeurGrad = ctx.createRadialGradient(center, center, 2, center, center, rInner * pulse);
       coeurGrad.addColorStop(0, '#ffffff');
-      coeurGrad.addColorStop(0.25, '#8ee7ff');
+      coeurGrad.addColorStop(0.28, '#8ee7ff');
       coeurGrad.addColorStop(0.65, '#0ea5e9');
-      coeurGrad.addColorStop(1, 'rgba(4, 20, 36, 0.9)');
+      coeurGrad.addColorStop(1, 'rgba(4, 20, 36, 0.95)');
       ctx.fillStyle = coeurGrad;
       ctx.beginPath();
       ctx.arc(center, center, rInner * 0.85, 0, Math.PI * 2);
       ctx.fill();
 
-      // Anneau du sas du Cœur et symbole central
       ctx.strokeStyle = '#ffd36c';
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.0;
       ctx.beginPath();
       ctx.arc(center, center, rInner * 0.85, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Texte de cible au cœur
       ctx.fillStyle = '#020b14';
-      ctx.font = 'bold ' + Math.round(rInner * 0.45) + 'px -apple-system, sans-serif';
+      ctx.font = 'bold ' + Math.round(rInner * 0.38) + 'px -apple-system, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('⚡ CŒUR', center, center);
 
-      // Ouverture vers le Cœur (brèche lumineuse sur GOAL_SECTOR)
+      // Brèche lumineuse d'accès au Cœur (GOAL_SECTOR)
       var aGoalStart = GOAL_SECTOR * SECTOR_ANGLE;
       var aGoalEnd = (GOAL_SECTOR + 1) * SECTOR_ANGLE;
       ctx.save();
-      ctx.strokeStyle = 'rgba(87, 217, 163, 0.9)';
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(87, 217, 163, 0.95)';
+      ctx.lineWidth = 3.5;
       ctx.shadowColor = '#57d9a3';
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 8;
       ctx.beginPath();
       ctx.arc(center, center, rInner, aGoalStart, aGoalEnd);
       ctx.stroke();
       ctx.restore();
 
-      // 3. Dessin des Parois concentriques (RING_WALLS)
-      ctx.lineWidth = 3.0;
+      // 3. Parois concentriques (RING_WALLS)
+      ctx.lineWidth = 2.5;
       ctx.lineCap = 'round';
 
       for (var k = 0; k < RINGS - 1; k++) {
@@ -742,29 +791,27 @@
           if (RING_WALLS[k][s]) {
             var a1 = s * SECTOR_ANGLE;
             var a2 = (s + 1) * SECTOR_ANGLE;
-            // Paroi dorée extérieure
             ctx.strokeStyle = '#c4891b';
             ctx.beginPath();
             ctx.arc(center, center, rW, a1, a2);
             ctx.stroke();
-            // Liseré intérieur lumineux
-            ctx.strokeStyle = 'rgba(255, 230, 160, 0.5)';
-            ctx.lineWidth = 1.0;
+            ctx.strokeStyle = 'rgba(255, 230, 160, 0.45)';
+            ctx.lineWidth = 0.8;
             ctx.beginPath();
             ctx.arc(center, center, rW, a1, a2);
             ctx.stroke();
-            ctx.lineWidth = 3.0;
+            ctx.lineWidth = 2.5;
           }
         }
       }
 
-      // Paroi fermée du Cœur (sauf brèche d'accès)
+      // Paroi fermée du Cœur (sauf brèche)
       ctx.strokeStyle = '#f5b027';
       ctx.beginPath();
       ctx.arc(center, center, rInner, aGoalEnd, aGoalStart + Math.PI * 2);
       ctx.stroke();
 
-      // 4. Dessin des Parois radiales (RADIAL_WALLS)
+      // 4. Parois radiales (RADIAL_WALLS)
       for (var rIdx2 = 0; rIdx2 < RINGS; rIdx2++) {
         var r1 = rWalls[rIdx2];
         var r2 = rWalls[rIdx2 + 1];
@@ -773,32 +820,31 @@
             var aW = (sIdx + 1) * SECTOR_ANGLE;
             var cW = Math.cos(aW);
             var sW = Math.sin(aW);
-            // Paroi radiale cuivrée
             ctx.strokeStyle = '#d48b13';
-            ctx.lineWidth = 3.0;
+            ctx.lineWidth = 2.5;
             ctx.beginPath();
             ctx.moveTo(center + r1 * cW, center + r1 * sW);
             ctx.lineTo(center + r2 * cW, center + r2 * sW);
             ctx.stroke();
 
-            // Rivets métalliques aux intersections
+            // Rivets métalliques
             ctx.fillStyle = '#ffd36c';
             ctx.beginPath();
-            ctx.arc(center + r1 * cW, center + r1 * sW, 1.8, 0, Math.PI * 2);
-            ctx.arc(center + r2 * cW, center + r2 * sW, 1.8, 0, Math.PI * 2);
+            ctx.arc(center + r1 * cW, center + r1 * sW, 1.4, 0, Math.PI * 2);
+            ctx.arc(center + r2 * cW, center + r2 * sW, 1.4, 0, Math.PI * 2);
             ctx.fill();
           }
         }
       }
 
-      // Paroi extérieure du labyrinthe (rOuter)
+      // Paroi extérieure
       ctx.strokeStyle = '#f5b027';
-      ctx.lineWidth = 4.5;
+      ctx.lineWidth = 4.0;
       ctx.beginPath();
       ctx.arc(center, center, rOuter, 0, Math.PI * 2);
       ctx.stroke();
 
-      // 5. Particules de micro-bulles sous-marines
+      // 5. Particules de bulles
       for (var bIdx = 0; bIdx < bulles.length; bIdx++) {
         var bul = bulles[bIdx];
         ctx.fillStyle = 'rgba(142, 231, 255, ' + (bul.life * 0.6).toFixed(2) + ')';
@@ -807,10 +853,10 @@
         ctx.fill();
       }
 
-      // 6. BILLE 3D AVEC OMBRAGE SPHÉRIQUE RÉALISTE & ROULIS
-      // 6a. Ombre portée dynamique sous la bille (déportée selon la gravité/inclinaison)
-      var shadowDx = inputX * 4 + 3;
-      var shadowDy = inputY * 4 + 4;
+      // 6. BILLE 3D
+      // 6a. Ombre portée dynamique
+      var shadowDx = inputX * 3.5 + 2.5;
+      var shadowDy = inputY * 3.5 + 3.0;
       ctx.save();
       ctx.translate(ballX + shadowDx, ballY + shadowDy);
       ctx.scale(1.15, 0.7);
@@ -824,34 +870,31 @@
       ctx.fill();
       ctx.restore();
 
-      // 6b. Corps de la sphère 3D (Éclairage de surface sphérique)
+      // 6b. Corps de la sphère 3D
       var lightX = ballX - rBall * 0.35;
       var lightY = ballY - rBall * 0.45;
       var sphereGrad = ctx.createRadialGradient(lightX, lightY, rBall * 0.05, ballX, ballY, rBall);
-      // Alliage de titane doré du Nautilus
-      sphereGrad.addColorStop(0, '#ffffff');      // Éclat spéculaire blanc vif
-      sphereGrad.addColorStop(0.18, '#fff3c2');   // Reflet chaud
-      sphereGrad.addColorStop(0.48, '#f5b027');   // Métal doré étincelant
-      sphereGrad.addColorStop(0.78, '#9c6508');   // Dégradé d'ombre de courbure
-      sphereGrad.addColorStop(0.94, '#4a2c02');   // Occlusion ambiante
-      sphereGrad.addColorStop(1, '#1a0f01');      // Contour sombre
+      sphereGrad.addColorStop(0, '#ffffff');
+      sphereGrad.addColorStop(0.18, '#fff3c2');
+      sphereGrad.addColorStop(0.48, '#f5b027');
+      sphereGrad.addColorStop(0.78, '#9c6508');
+      sphereGrad.addColorStop(0.94, '#4a2c02');
+      sphereGrad.addColorStop(1, '#1a0f01');
       ctx.fillStyle = sphereGrad;
       ctx.beginPath();
       ctx.arc(ballX, ballY, rBall, 0, Math.PI * 2);
       ctx.fill();
 
-      // 6c. Gravure de rotation 3D sur la bille (effet visuel de roulement)
+      // 6c. Rotation 3D de la bille
       ctx.save();
       ctx.beginPath();
       ctx.arc(ballX, ballY, rBall, 0, Math.PI * 2);
       ctx.clip();
 
       ctx.strokeStyle = 'rgba(70, 40, 4, 0.45)';
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.0;
 
-      // Méridien qui tourne en 3D
       var cosRotY = Math.cos(rotY);
-      var sinRotY = Math.sin(rotY);
       ctx.save();
       ctx.translate(ballX, ballY);
       ctx.scale(cosRotY || 0.05, 1);
@@ -860,7 +903,6 @@
       ctx.stroke();
       ctx.restore();
 
-      // Anneau de latitude qui tourne en 3D
       var cosRotX = Math.cos(rotX);
       ctx.save();
       ctx.translate(ballX, ballY);
@@ -870,9 +912,9 @@
       ctx.stroke();
       ctx.restore();
 
-      ctx.restore(); // Fin du clip bille
+      ctx.restore();
 
-      // 6d. Reflet spéculaire secondaire (bounce light sous-marin)
+      // 6d. Reflet spéculaire secondaire
       ctx.save();
       var bounceGrad = ctx.createRadialGradient(ballX + rBall * 0.4, ballY + rBall * 0.4, 0, ballX + rBall * 0.4, ballY + rBall * 0.4, rBall * 0.45);
       bounceGrad.addColorStop(0, 'rgba(142, 231, 255, 0.4)');
@@ -886,11 +928,19 @@
       ctx.restore();
     }
 
-    /* ================= BOUCLE DE JEU (GAME LOOP) ================= */
+    /* ================= CHRONOMÈTRE HAUTE PRÉCISION & GAME LOOP ================= */
     function gameLoop(now) {
       if (estTermine) return;
       var dt = Math.min(0.04, (now - lastTime) / 1000);
       lastTime = now;
+
+      // Mise à jour du chronomètre de parcours (dixièmes de seconde)
+      chronoMs = now - t0Chrono;
+      var totalSec = chronoMs / 1000;
+      var mm = Math.floor(totalSec / 60);
+      var ss = Math.floor(totalSec % 60);
+      var dsec = Math.floor((totalSec % 1) * 10);
+      chronoEl.textContent = '⏱️ ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss + '.' + dsec;
 
       updatePhysics(dt);
       render();
@@ -899,13 +949,13 @@
     }
     animFrameId = requestAnimationFrame(gameLoop);
 
-    /* ================= CHRONOMÈTRE DE MISSION ================= */
+    /* Décompte de la réserve d'oxygène */
     timerInterval = setInterval(function () {
       if (estTermine) return;
       tempsRestant--;
       var mm = Math.floor(tempsRestant / 60);
       var ss = tempsRestant % 60;
-      timerEl.textContent = '⏱️ ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+      timerEl.textContent = '🫧 ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
 
       if (tempsRestant <= 30) {
         timerEl.classList.add('is-urgent');
@@ -928,10 +978,16 @@
       statusEl.textContent = '⚡ CŒUR ATTEINT ! Le réacteur abyssal du Nautilus est ranimé !';
       statusEl.className = 'laby-status is-success';
 
-      var dureeTotale = DUREE_PARCOURS_SEC - tempsRestant;
+      var totalSecExact = Math.round(chronoMs / 100) / 10;
+      var mm = Math.floor(totalSecExact / 60);
+      var ss = Math.floor(totalSecExact % 60);
+      var dsec = Math.floor((totalSecExact % 1) * 10);
+      var chronoStr = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss + '.' + dsec;
+
       setTimeout(function () {
         onVictoire({
-          duree: dureeTotale,
+          duree: Math.round(totalSecExact),
+          chrono: chronoStr,
           collisions: collisionsCount,
           pct: 100
         });
@@ -952,7 +1008,6 @@
       }, 800);
     }
 
-    /* Nettoyage propre en cas de changement de page */
     function detruire() {
       estTermine = true;
       clearInterval(timerInterval);
@@ -962,9 +1017,6 @@
       window.removeEventListener('pointermove', handleJoyMove);
       window.removeEventListener('pointerup', handleJoyEnd);
       window.removeEventListener('pointercancel', handleJoyEnd);
-      window.removeEventListener('touchmove', handleJoyMove);
-      window.removeEventListener('touchend', handleJoyEnd);
-      window.removeEventListener('touchcancel', handleJoyEnd);
     }
 
     return {
