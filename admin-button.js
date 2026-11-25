@@ -157,7 +157,7 @@
     zone51:{label:"Palier 4 — Traque Sonar : Les Monstres des Abysses",next:"occasion",time:300,errors:3,description:"Traque acoustique dans la fosse : le Nautilus est encerclé par 4 léviathans abyssaux. Localisez et neutralisez le Kraken, le Calmar, l'Anguille et la Manta."},
     occasion:{label:"Palier 5",next:"papeterie",time:240,errors:3,description:"Approche du plancher sous-marin : estimez le prix exact de 10 articles pour déverrouiller les propulseurs d'exploration."},
     papeterie:{label:"Palier 6 — Le Grand Quiz des Abysses",next:"drone",time:100,errors:3,description:"Épreuve de culture et de sciences sous-marines : 10 questions pointues sur Nemo, le Nautilus et les fonds océaniques (6s de réflexion après écriture)."},
-    drone:{label:"Palier 7",next:"final",time:300,errors:3,description:"Manœuvres d'amarrage : inspectez la carcasse du géant échoué et déverrouillez le sas de secours."},
+    drone:{label:"Palier 7 — Le Labyrinthe Circulaire",next:"final",time:180,errors:3,description:"Manœuvres gyroscopiques dans l'épave : guidez la bille 3D à travers les 7 coursives circulaires et leurs 18 impasses pour ranimer le Cœur du Nautilus."},
     final:{label:"Palier final",next:null,time:0,errors:1,description:"Le Nautilus est sauvé ! Réamorcez ses ballasts et escortez le submersible dans sa remontée triomphale vers la surface."}
   };
 

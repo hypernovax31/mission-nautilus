@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#020812" />
+  <title>Mission Nautilus — Palier 7 : Le Labyrinthe Circulaire</title>
+  <meta name="description" content="Mini-jeu du Palier 7 de la Mission Nautilus : Le Labyrinthe Circulaire du Nautilus au gyroscope ou joystick." />
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/palier1.css?v=60">
+  <link rel="stylesheet" href="css/palier2.css?v=27">
+  <link rel="stylesheet" href="css/palier7.css?v=1">
+  <script src="anti-zoom.js?v=2"></script>
+  <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="topbar-back" id="backBtn" type="button">🏠 Retour à l'accueil</button>
+    <div class="topbar-title" id="topPalierTitle">Palier 7 — Le Labyrinthe Circulaire</div>
+  </div>
+  <div class="topbar-info">
+    <span>Équipage : <b id="topTeam">—</b></span>
+  </div>
+</div>
+
+<main>
+  <!-- ÉQUIPAGE ACTIF EN PLONGÉE -->
+  <section class="card" id="teamCard" hidden>
+    <h2>ÉQUIPAGE ACTIF EN PLONGÉE <span class="dive-lamp" id="diveLamp" title="Aucun matelot en plongée"></span></h2>
+    <div class="body">
+      <div class="crew" id="crewList"></div>
+    </div>
+  </section>
+
+  <!-- JOURNAL DE BORD -->
+  <section class="card" id="logCard" hidden>
+    <h2>JOURNAL DE BORD</h2>
+    <div class="body">
+      <div class="morse-log">
+        <h3 class="journal-titre">
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+          <span class="journal-titre-label">Mouvements de l’équipage</span>
+          <span class="journal-live-badge"><span class="journal-live-dot" aria-hidden="true"></span>En direct</span>
+          <span class="journal-titre-rule" aria-hidden="true"></span>
+        </h3>
+        <ol class="morse-log-list" id="logList"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- MINI-JEU DÉDIÉ : LE LABYRINTHE CIRCULAIRE -->
+  <section class="card gate-unlocked epreuve-focus" id="gateUnlocked">
+    <h2 class="card-h2-split" id="sasUnlockedTitle">
+      <span>PALIER 7 — LE LABYRINTHE CIRCULAIRE</span>
+    </h2>
+    <div class="body">
+      <div id="epreuveStatut" class="status-banner info">🌀 <b>Palier 7 en cours :</b> guidez la bille 3D à travers les coursives circulaires jusqu'au Cœur central du Nautilus. Attention aux nombreuses impasses !</div>
+      <div id="epreuveHost" class="game-stage"></div>
+    </div>
+  </section>
+</main>
+
+<script src="son-partage.js?v=2"></script>
+<script src="journal-bord.js?v=6"></script>
+<script src="palier-sas.js?v=13"></script>
+<script src="matelot-blocages.js?v=3"></script>
+<script src="reserve-o2.js?v=9"></script>
+<script src="equipage-actif.js?v=10"></script>
+<script>window.EquipageActif.init();</script>
+<script src="labyrinthe-circulaire.js?v=1"></script>
+<script src="victoire-palier.js?v=16"></script>
+<script src="records-palier.js?v=2"></script>
+<script src="sonar-button.js?v=4" defer></script>
+<script src="palier-annonces.js?v=5" defer></script>
+<script src="admin-button.js?v=34" type="module"></script>
+
+<script>
+const LIEU_DESCRIPTION = "Zone finale de surface";
+
+(function () {
+  'use strict';
+
+  var CLE_BLOCAGE_ANONYME = 'nautilusEpreuve7BloqueJusqua';
+  var BLOCAGE_MS = 60 * 60 * 1000;
+  var _blocageSession = 0;
+
+  var t0Partie = null;
+  var partieEnCours = false;
+  var moteurJeu = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  function journal(t, k) { if (window.JournalDeBord) window.JournalDeBord.addLogEntry(t, k || 'info'); }
+  function acte(t, k, auteur) { if (window.JournalDeBord) window.JournalDeBord.addActe(t, k || 'info', auteur); }
+
+  function enModeTest() {
+    try { return (localStorage.getItem('nautilusMatelotCode') || '') === 'ZZZZ-0000'; } catch (e) { return false; }
+  }
+  function blocageAnonymeJusqua() {
+    try { return Number(localStorage.getItem(CLE_BLOCAGE_ANONYME) || 0); } catch (e) { return 0; }
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function heureLisible(v) {
+    var d = new Date(typeof v === 'number' ? v : String(v));
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  var _ident = null, _identLue = false;
+  function monIdentite() {
+    if (_identLue) return Promise.resolve(_ident);
+    _identLue = true;
+    return window.NautilusBlocages.identiteCourante()
+      .then(function (i) { _ident = i; return _ident; })
+      .catch(function () { _ident = null; return null; });
+  }
+
+  function apercuAdminAutorise() {
+    try {
+      if (!/[?&]apercu=jeu(?:&|$)/.test(location.search)) return false;
+      var k = (location.search.match(/[?&]k=([a-z0-9]+)/) || [])[1];
+      if (!k) return false;
+      var h = 0, s = 'apercu-admin:NEMO2026';
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return k === ('k' + Math.abs(h).toString(36));
+    } catch (e) { return false; }
+  }
+
+  function statut(html, kind) {
+    var el = $('epreuveStatut');
+    if (!el) return;
+    el.innerHTML = html;
+    el.className = 'status-banner ' + (kind || 'info');
+  }
+
+  function afficherBlocage(jusqua, nom, motif) {
+    partieEnCours = false;
+    var host = $('epreuveHost');
+    if (host && window.NautilusDefaite) {
+      window.NautilusDefaite.afficher(host, {
+        palier: 7,
+        motif: motif,
+        nom: nom,
+        jusqua: jusqua
+      });
+    }
+  }
+
+  function jouerSonDefaite() {
+    try {
+      if (window.NautilusAnnonces && window.NautilusAnnonces.playDefeatSound) {
+        window.NautilusAnnonces.playDefeatSound();
+      }
+    } catch (e) {}
+  }
+
+  function declencherBlocage(motif) {
+    motif = motif || 'temps';
+    jouerSonDefaite();
+    if (moteurJeu && moteurJeu.detruire) moteurJeu.detruire();
+
+    if (apercuAdminAutorise()) {
+      var jusquaApercu = Date.now() + 3600000;
+      afficherBlocage(jusquaApercu, 'Matelot Concepteur', motif);
+      journal('ℹ️ Aperçu organisateur : écran de défaite affiché (aucun blocage réel enregistré).', 'info');
+      return;
+    }
+
+    monIdentite().then(function (ident) {
+      if (ident && ident.isTest) {
+        var jusquaTest = Date.now() + 3600000;
+        afficherBlocage(jusquaTest, ident.name, motif);
+        journal('🧪 Mode concepteur : écran de défaite affiché pour ' + ident.name + ' (aucun blocage en test).', 'info');
+        return;
+      }
+      if (ident) {
+        window.NautilusBlocages.poserBlocage(ident, motif)
+          .then(function (r) {
+            afficherBlocage(r.lockedUntil, ident.name, motif);
+            acte('échec au Labyrinthe Circulaire (' + motif + ') — remonte en surface (' + r.hours + ' h)', 'danger', ident.name);
+          })
+          .catch(function () {
+            var jusqua = Date.now() + BLOCAGE_MS;
+            _blocageSession = jusqua;
+            afficherBlocage(_blocageSession, ident.name, motif);
+          });
+        return;
+      }
+      var jusqua = Date.now() + BLOCAGE_MS;
+      try { localStorage.setItem(CLE_BLOCAGE_ANONYME, String(jusqua)); } catch (e) {}
+      afficherBlocage(jusqua, null, motif);
+    });
+  }
+
+  async function propagerVictoire(res) {
+    var ident = await monIdentite();
+    var equipage = (ident && !ident.isTest && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || null;
+    try {
+      localStorage.setItem('nautilusUnlock:palier:23819161225', 'ok');
+      localStorage.setItem('nautilusStepDone:palier:22718151124', 'ok');
+    } catch (e) {}
+    if (!equipage || enModeTest() || apercuAdminAutorise()) {
+      journal("ℹ️ Mode test / aperçu : la victoire n'est pas inscrite au tableau de bord.", 'info');
+      return;
+    }
+    try {
+      var x = await window.NautilusBlocages.db();
+      await x.fs.updateDoc(x.fs.doc(x.db, 'teams', equipage), {
+        completedSteps: x.fs.arrayUnion('drone'),
+        currentStep: 'final',
+        lastEvent: 'step_advanced',
+        lastStepCompleted: 'drone',
+        lastStepCompletedAt: new Date().toISOString(),
+        lastStepCompletedLabel: 'Palier 7',
+        lastStepCompletedBy: (ident && !ident.isTest) ? ident.name : 'Un matelot'
+      });
+      if (typeof window.NautilusRecords !== 'undefined') {
+        var NOMS_EQUIPES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+        var dureeSec = (res && res.duree) ? res.duree : (t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0);
+        window.NautilusRecords.enregistrer({
+          stepId: 'drone',
+          seconds: dureeSec,
+          matelot: (ident && !ident.isTest) ? ident.name : 'Un matelot',
+          equipage: NOMS_EQUIPES[ident.teamCode] || ident.teamCode
+        }).then(chargerRecords);
+      }
+      var leves = await window.NautilusBlocages.leverBlocages(equipage, 'drone');
+      journal('📈 Victoire au Labyrinthe Circulaire inscrite au tableau de bord — direction le Palier 8 (Final) !'
+        + (leves > 0 ? ' ' + leves + ' matelot' + (leves > 1 ? 's' : '') + ' débloqué' + (leves > 1 ? 's' : '') + '.' : ''), 'success');
+    } catch (e) {
+      journal("⚠️ Victoire non inscrite (connexion ?). Préviens l'organisation.", 'warning');
+    }
+  }
+
+  async function afficherEcranVictoire(res) {
+    var host = $('epreuveHost');
+    if (!host || !window.NautilusVictoire) return;
+    var ident = await monIdentite();
+    var duree = (res && res.duree) ? res.duree : (t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0);
+    var mm = Math.floor(duree / 60), ss = ('0' + (duree % 60)).slice(-2);
+    var NOMS = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+    var equipe = (ident && !ident.isTest && ident.teamCode) ? (NOMS[ident.teamCode] || ident.teamCode) : null;
+    var collisions = (res && typeof res.collisions === 'number') ? res.collisions : 0;
+
+    window.NautilusVictoire.afficher(host, {
+      palier: 7,
+      mission: 'Le Labyrinthe Circulaire',
+      equipe: equipe,
+      bravo: (ident && !ident.isTest) ? ident.name : null,
+      stats: [
+        { valeur: mm + ':' + ss, label: 'Temps de navigation' },
+        { valeur: '100%', label: 'Cœur réanimé' },
+        { valeur: String(collisions), label: 'Impacts parois' }
+      ],
+      indication: LIEU_DESCRIPTION,
+      labelSuivant: 'Palier final',
+      urlSuivante: '23819161225.html'
+    });
+    chargerRecords();
+  }
+
+  function chargerRecords() {
+    if (typeof window.NautilusRecords === 'undefined') return;
+    monIdentite().then(function (ident) {
+      window.NautilusRecords.chargerEtRendre($('wonRecordsHost'), {
+        stepId: 'drone',
+        moi: (ident && !ident.isTest) ? ident.name : ''
+      });
+    });
+  }
+
+  function onVictoire(res) {
+    partieEnCours = false;
+    var duree = (res && res.duree) ? res.duree : (t0Partie ? Math.max(0, Math.round((Date.now() - t0Partie) / 1000)) : 0);
+    statut('🏆 <b>Palier 7 franchi !</b> La bille 3D a atteint le Cœur et relancé le réacteur abyssal.', 'success');
+    acte('valide le Palier 7 (Labyrinthe Circulaire)' + (duree ? ' en ' + duree + ' s' : ''), 'success');
+    propagerVictoire(res);
+    afficherEcranVictoire(res);
+  }
+
+  async function preparerJeu() {
+    var ident = null;
+    if (!apercuAdminAutorise()) {
+      ident = await monIdentite();
+      if (ident && !ident.isTest) {
+        var bloc = await window.NautilusBlocages.blocageActif(ident);
+        if (bloc) {
+          afficherBlocage(bloc.lockedUntil, ident.name, bloc.reason);
+          journal('🔒 <b>' + esc(ident.name) + '</b> est en surface jusqu’à ' + heureLisible(bloc.lockedUntil)
+            + ' : un coéquipier peut piloter avec son Code Matelot.', 'warning');
+          return;
+        }
+      } else if (!ident) {
+        var jusqua = blocageAnonymeJusqua();
+        if (jusqua > Date.now()) { afficherBlocage(jusqua, null, 'anonyme'); return; }
+      }
+    }
+    demarrer(ident);
+  }
+
+  function demarrer(ident) {
+    t0Partie = Date.now();
+    partieEnCours = true;
+    statut('🌀 <b>Navigation dans le Labyrinthe en cours :</b> pilotez la bille jusqu’au Cœur avant la fin du chronomètre.', 'info');
+
+    var isTest = enModeTest() || apercuAdminAutorise() || !!(ident && ident.isTest);
+    var equipageCode = isTest ? 'TEST' : ((ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO');
+
+    moteurJeu = window.NautilusLabyrinthe.init($('epreuveHost'), {
+      equipe: equipageCode,
+      isTest: isTest,
+      onVictoire: function (res) {
+        partieEnCours = false;
+        onVictoire(res);
+      },
+      onDefaite: function (motif) {
+        partieEnCours = false;
+        declencherBlocage(motif || 'temps');
+      }
+    });
+  }
+
+  function intercepterSortie(e) {
+    if (partieEnCours) {
+      var conf = confirm("⚠️ Quitter le mini-jeu en cours entraîne la remontée en surface (blocage matelot). Confirmez-vous l’abandon ?");
+      if (conf) {
+        declencherBlocage('sortie_jeu');
+      } else {
+        if (e) e.preventDefault();
+        return false;
+      }
+    }
+  }
+
+  var btnAccueilTop = $('backBtn');
+  if (btnAccueilTop) {
+    btnAccueilTop.addEventListener('click', function (e) {
+      if (partieEnCours) {
+        if (!intercepterSortie(e)) return;
+      }
+      location.href = 'index.html?ecoutille=0';
+    });
+  }
+
+  window.addEventListener('beforeunload', function () {
+    if (partieEnCours && !apercuAdminAutorise()) {
+      declencherBlocage('sortie_jeu');
+    }
+  });
+
+  // Contrôle d'accès au sas
+  if (!apercuAdminAutorise() && !enModeTest()) {
+    if (!window.NautilusSas.estDeverrouille(7)) {
+      location.href = '22718151124.html' + (location.search || '');
+      return;
+    }
+  }
+
+  // Démarrage
+  preparerJeu();
+})();
+</script>
+</body>
+</html>

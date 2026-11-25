@@ -12,6 +12,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=60">
   <link rel="stylesheet" href="css/palier2.css?v=27">
+  <link rel="stylesheet" href="css/palier7.css?v=1">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
@@ -143,6 +144,7 @@
 <script src="reserve-o2.js?v=9"></script>
 <script src="equipage-actif.js?v=10"></script>
 <script>window.EquipageActif.init();</script>
+<script src="labyrinthe-circulaire.js?v=1"></script>
 <script src="victoire-palier.js?v=16"></script>
 <script src="records-palier.js?v=2"></script>
 
@@ -190,14 +192,17 @@ const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
     montrerCarte('briefCard', true);
     montrerCarte('gateUnlocked', false);
     window.NautilusBriefing.afficher($('briefHost'), {
-      intro: "« L’immensité se révèle lorsque le regard quitte le pont ». Prenez de la hauteur pour déceler les tracés invisibles depuis le plancher marin.",
+      intro: "« Les anneaux de navigation de l’épave centrale du Nautilus sont verrouillés ». Un mécanisme gyroscopique scelle le réacteur abyssal. Dirigez la bille 3D à travers les coursives circulaires jusqu'au Cœur sans vous égarer dans les nombreuses impasses.",
       consignes: [
-        { ico: '📷', html: "<b>Repérage optique</b> : identifiez les alignements et les perspectives dominantes." },
-        { ico: '⏱️', html: "<b>Réserve d’oxygène</b> : l’air se raréfie à mesure que le submersible manœuvre." }
+        { ico: '🌀', html: "<b>Labyrinthe circulaire</b> : 7 anneaux concentriques à franchir depuis la périphérie jusqu’au Cœur central." },
+        { ico: '⚠️', warn: true, html: "<b>Nombreuses impasses</b> : le dédale est truffé de culs-de-sac trompeurs. Repérez le chemin libre !" },
+        { ico: '🧭', html: "<b>Pilotage gyroscope</b> : inclinez votre smartphone pour faire rouler la bille sous l’effet de la gravité." },
+        { ico: '🕹️', html: "<b>Joystick de secours</b> : si aucun gyroscope n'est présent (ordinateur ou capteurs inactifs), le joystick tactile prend le relais." },
+        { ico: '⏱️', warn: true, html: "<b>3 minutes de réserve d'oxygène</b> pour atteindre le Cœur avant la fermeture définitive du sas." }
       ],
       cta: '⚓ PRENDRE LES COMMANDES',
       onDepart: function () {
-        afficherVueEpreuve();
+        location.href = 'palier7-jeu.html' + (location.search || '');
       }
     });
   }
@@ -208,6 +213,29 @@ const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
     montrerCarte('logCard', false);
     montrerCarte('briefCard', false);
     montrerCarte('gateUnlocked', true);
+
+    var host = $('droneHost');
+    if (host && window.NautilusLabyrinthe && !host.querySelector('.laby-container')) {
+      window.NautilusLabyrinthe.init(host, {
+        onVictoire: function (res) {
+          if (window.NautilusVictoire) {
+            window.NautilusVictoire.afficher(host, {
+              palier: 7,
+              mission: 'Le Labyrinthe Circulaire',
+              equipe: localStorage.getItem('nautilusCurrentTeam') || 'Nemo',
+              stats: [
+                { valeur: (res.duree || 0) + ' s', label: 'Temps de navigation' },
+                { valeur: '100%', label: 'Cœur réanimé' },
+                { valeur: String(res.collisions || 0), label: 'Impacts parois' }
+              ],
+              indication: 'Zone finale de surface',
+              labelSuivant: 'Palier final',
+              urlSuivante: '23819161225.html'
+            });
+          }
+        }
+      });
+    }
   }
 
   window.addEventListener('nautilus:sas-ouvert', function (ev) {
