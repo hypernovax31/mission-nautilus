@@ -202,15 +202,8 @@
     /* EXCEPTION : la circulation continue des bulles de la jauge O2.
        La jauge d'oxygène et le flux horizontal de ses bulles ne doivent pas
        être bloqués par la classe .offscreen (notamment sur Brave, Safari,
-       ou lors de l'ouverture du sas/écoutille). Les bulles doivent circuler
-       de manière fluide et ininterrompue. Seul l'arrière-plan de l'onglet
+       ou lors de l'ouverture du sas/écoutille). Seul l'arrière-plan de l'onglet
        (body.page-hidden) suspend les bulles pour économiser la batterie. */
-    .o2-bubbles,
-    .o2-bubbles *,
-    .o2-bubble,
-    .offscreen .o2-bubbles,
-    .offscreen .o2-bubbles *,
-    .offscreen .o2-bubble,
     .offscreen .oxygen-liquid::before,
     .offscreen .oxygen-liquid::after,
     .offscreen .o2-fill::before,
@@ -3590,176 +3583,12 @@ body > header .hero-actions .hero-cta {
   }
 }
 
-/* Bulles dynamiques et bien visibles qui circulent dans la jauge O2 de l'accueil */
-/* Bulles d'oxygène réalistes dans le tube de jauge (défilement lent et fluide) */
-.o2-bubbles {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.o2-bubble {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  box-sizing: border-box;
-  /* Bulle de gaz réaliste : ménisque sphérique cristallin laissant transparaître le liquide bleuté,
-     contour réactif fin, reflet spéculaire zénithal et caustique inférieure */
-  background: radial-gradient(circle at 36% 30%,
-    rgba(255, 255, 255, 0.92) 0%,
-    rgba(255, 255, 255, 0.42) 14%,
-    rgba(215, 245, 255, 0.12) 34%,
-    rgba(20, 130, 205, 0.05) 62%,
-    rgba(160, 235, 255, 0.45) 86%,
-    rgba(255, 255, 255, 0.72) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  box-shadow:
-    inset 0 0 2px rgba(255, 255, 255, 0.8),
-    inset -1px -1px 2px rgba(10, 80, 140, 0.22),
-    0 0 3px rgba(142, 231, 255, 0.35);
-  will-change: transform, left, opacity;
-}
-
-/* Éclat spéculaire réaliste (reflet lumineux sur le dôme supérieur) */
-.o2-bubble::after {
-  content: "";
-  position: absolute;
-  top: 14%;
-  left: 20%;
-  width: 28%;
-  height: 28%;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 30%, rgba(255, 255, 255, 0.8) 70%, transparent 100%);
-  pointer-events: none;
-}
-
-/* Lueur caustique inférieure (réfraction de la lumière sous la bulle) */
-.o2-bubble::before {
-  content: "";
-  position: absolute;
-  bottom: 12%;
-  right: 18%;
-  width: 24%;
-  height: 20%;
-  border-radius: 50%;
-  background: rgba(220, 250, 255, 0.55);
-  filter: blur(0.3px);
-  pointer-events: none;
-}
-
-/* Tailles délicates et étalement des délais pour une circulation lente, continue et naturelle */
-.o2-bubble.b1  { top: 22%; width: 7.5px;  height: 7.5px;  animation: o2BubblePass 22s linear infinite;      animation-delay: 0s; }
-.o2-bubble.b2  { top: 52%; width: 5.0px;  height: 5.0px;  animation: o2BubblePassAlt 28s linear infinite;   animation-delay: -4.5s; }
-.o2-bubble.b3  { top: 28%; width: 9.5px;  height: 9.5px;  animation: o2BubblePassFloat 20s linear infinite; animation-delay: -9.2s; }
-.o2-bubble.b4  { top: 58%; width: 6.0px;  height: 6.0px;  animation: o2BubblePassAlt 25s linear infinite;   animation-delay: -14.0s; }
-.o2-bubble.b5  { top: 18%; width: 10.5px; height: 10.5px; animation: o2BubblePass 31s linear infinite;      animation-delay: -18.8s; }
-.o2-bubble.b6  { top: 44%; width: 4.5px;  height: 4.5px;  animation: o2BubblePassFloat 23s linear infinite; animation-delay: -7.5s; }
-.o2-bubble.b7  { top: 50%; width: 8.5px;  height: 8.5px;  animation: o2BubblePassAlt 27s linear infinite;   animation-delay: -16.2s; }
-.o2-bubble.b8  { top: 25%; width: 6.5px;  height: 6.5px;  animation: o2BubblePass 21s linear infinite;      animation-delay: -2.8s; }
-.o2-bubble.b9  { top: 42%; width: 10.0px; height: 10.0px; animation: o2BubblePassFloat 29s linear infinite; animation-delay: -11.6s; }
-.o2-bubble.b10 { top: 62%; width: 5.5px;  height: 5.5px;  animation: o2BubblePassAlt 24s linear infinite;   animation-delay: -17.5s; }
-.o2-bubble.b11 { top: 32%; width: 8.0px;  height: 8.0px;  animation: o2BubblePass 26s linear infinite;      animation-delay: -8.8s; }
-.o2-bubble.b12 { top: 38%; width: 6.0px;  height: 6.0px;  animation: o2BubblePassFloat 22.5s linear infinite; animation-delay: -20.5s; }
-
-@keyframes o2BubblePass {
-  0% {
-    left: -24px;
-    transform: translateY(0) scale(0.96, 1.02);
-    opacity: 0;
-  }
-  2% {
-    opacity: 0.88;
-  }
-  20% {
-    transform: translateY(-2px) scale(1.02, 0.98);
-  }
-  40% {
-    transform: translateY(1.5px) scale(0.98, 1.01);
-  }
-  60% {
-    transform: translateY(-1.5px) scale(1.01, 0.99);
-  }
-  80% {
-    transform: translateY(1px) scale(0.99, 1.01);
-  }
-  98% {
-    opacity: 0.88;
-  }
-  100% {
-    left: calc(100% + 24px);
-    transform: translateY(0) scale(0.96, 1.02);
-    opacity: 0;
-  }
-}
-
-@keyframes o2BubblePassAlt {
-  0% {
-    left: -24px;
-    transform: translateY(0) scale(1.01, 0.98);
-    opacity: 0;
-  }
-  2% {
-    opacity: 0.88;
-  }
-  25% {
-    transform: translateY(2px) scale(0.98, 1.02);
-  }
-  50% {
-    transform: translateY(-2px) scale(1.02, 0.98);
-  }
-  75% {
-    transform: translateY(1.5px) scale(0.99, 1.01);
-  }
-  98% {
-    opacity: 0.88;
-  }
-  100% {
-    left: calc(100% + 24px);
-    transform: translateY(0) scale(1.01, 0.98);
-    opacity: 0;
-  }
-}
-
-@keyframes o2BubblePassFloat {
-  0% {
-    left: -24px;
-    transform: translateY(1.5px) scale(0.95, 1.02);
-    opacity: 0;
-  }
-  2.5% {
-    opacity: 0.88;
-  }
-  30% {
-    transform: translateY(-2.5px) scale(1.02, 0.98);
-  }
-  55% {
-    transform: translateY(-1px) scale(0.99, 1.01);
-  }
-  75% {
-    transform: translateY(-2.5px) scale(1.02, 0.98);
-  }
-  98% {
-    opacity: 0.88;
-  }
-  100% {
-    left: calc(100% + 24px);
-    transform: translateY(0) scale(0.95, 1.02);
-    opacity: 0;
-  }
-}
-  }
-  100% {
-    left: calc(100% + 25px);
-    transform: translateY(-1px) scale(0.88);
-    opacity: 0;
-  }
-}
-
+/* Bulles de premier plan retirées de la jauge */
 .o2-bubbles,
-.o2-bubble,
+.o2-bubble {
+  display: none !important;
+}
+
 .oxygen-liquid::before,
 .oxygen-liquid::after,
 .o2-fill::before,
@@ -3767,16 +3596,11 @@ body > header .hero-actions .hero-cta {
   animation-play-state: running !important;
 }
 
-body.page-hidden .o2-bubble,
 body.page-hidden .oxygen-liquid::before,
 body.page-hidden .oxygen-liquid::after,
 body.page-hidden .o2-fill::before,
 body.page-hidden .o2-fill::after {
   animation-play-state: paused !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .o2-bubble { animation: none !important; }
 }
 
 /* Mise en garde d'alerte renforcée (paliers 6, 7, 8 et urgence) */

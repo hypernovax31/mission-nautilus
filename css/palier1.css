@@ -1130,90 +1130,23 @@
       100%{transform:translateX(220px) translateY(0)}
     }
 
-    /* Bulles d'oxygène réalistes dans le bandeau de jauge O2 (défilement lent et fluide) */
-    .o2-bubbles{
-      position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2;
-    }
-    .o2-bubble{
-      position:absolute;border-radius:50%;pointer-events:none;box-sizing:border-box;
-      /* Ménisque de bulle réaliste et translucide avec reflet spéculaire fin */
-      background:radial-gradient(circle at 36% 30%,
-        rgba(255,255,255,0.92) 0%,
-        rgba(255,255,255,0.42) 14%,
-        rgba(215,245,255,0.12) 34%,
-        rgba(20,130,205,0.05) 62%,
-        rgba(160,235,255,0.45) 86%,
-        rgba(255,255,255,0.72) 100%
-      );
-      border:1px solid rgba(255,255,255,0.62);
-      box-shadow:inset 0 0 2px rgba(255,255,255,0.8),inset -1px -1px 2px rgba(10,80,140,0.22),0 0 3px rgba(142,231,255,0.35);
-      will-change:transform,left,opacity;
-    }
-    .o2-bubble::after{
-      content:"";position:absolute;top:14%;left:20%;width:28%;height:28%;
-      border-radius:50%;background:radial-gradient(circle,#ffffff 30%,rgba(255,255,255,0.8) 70%,transparent 100%);pointer-events:none;
-    }
-    .o2-bubble::before{
-      content:"";position:absolute;bottom:12%;right:18%;width:24%;height:20%;
-      border-radius:50%;background:rgba(220,250,255,0.55);filter:blur(0.3px);pointer-events:none;
-    }
-    .o2-bubble.b1{top:18%;width:5.5px;height:5.5px;animation:o2BubblePass 22s linear infinite;animation-delay:0s}
-    .o2-bubble.b2{top:50%;width:4.0px;height:4.0px;animation:o2BubblePassAlt 28s linear infinite;animation-delay:-4.5s}
-    .o2-bubble.b3{top:24%;width:7.0px;height:7.0px;animation:o2BubblePassFloat 20s linear infinite;animation-delay:-9.2s}
-    .o2-bubble.b4{top:56%;width:4.5px;height:4.5px;animation:o2BubblePassAlt 25s linear infinite;animation-delay:-14.0s}
-    .o2-bubble.b5{top:16%;width:8.0px;height:8.0px;animation:o2BubblePass 31s linear infinite;animation-delay:-18.8s}
-    .o2-bubble.b6{top:42%;width:3.5px;height:3.5px;animation:o2BubblePassFloat 23s linear infinite;animation-delay:-7.5s}
-    .o2-bubble.b7{top:48%;width:6.5px;height:6.5px;animation:o2BubblePassAlt 27s linear infinite;animation-delay:-16.2s}
-    .o2-bubble.b8{top:22%;width:5.0px;height:5.0px;animation:o2BubblePass 21s linear infinite;animation-delay:-2.8s}
-    .o2-bubble.b9{top:40%;width:7.5px;height:7.5px;animation:o2BubblePassFloat 29s linear infinite;animation-delay:-11.6s}
-    .o2-bubble.b10{top:60%;width:4.0px;height:4.0px;animation:o2BubblePassAlt 24s linear infinite;animation-delay:-17.5s}
-    .o2-bubble.b11{top:30%;width:6.0px;height:6.0px;animation:o2BubblePass 26s linear infinite;animation-delay:-8.8s}
-    .o2-bubble.b12{top:36%;width:4.5px;height:4.5px;animation:o2BubblePassFloat 22.5s linear infinite;animation-delay:-20.5s}
-
-    @keyframes o2BubblePass{
-      0%{left:-20px;transform:translateY(0) scale(0.96,1.02);opacity:0}
-      2%{opacity:.88}
-      20%{transform:translateY(-1.5px) scale(1.02,0.98)}
-      40%{transform:translateY(1.2px) scale(0.98,1.01)}
-      60%{transform:translateY(-1.2px) scale(1.01,0.99)}
-      80%{transform:translateY(1px) scale(0.99,1.01)}
-      98%{opacity:.88}
-      100%{left:calc(100% + 20px);transform:translateY(0) scale(0.96,1.02);opacity:0}
-    }
-    @keyframes o2BubblePassAlt{
-      0%{left:-20px;transform:translateY(0) scale(1.01,0.98);opacity:0}
-      2%{opacity:.88}
-      25%{transform:translateY(1.5px) scale(0.98,1.02)}
-      50%{transform:translateY(-1.5px) scale(1.02,0.98)}
-      75%{transform:translateY(1.2px) scale(0.99,1.01)}
-      98%{opacity:.88}
-      100%{left:calc(100% + 20px);transform:translateY(0) scale(1.01,0.98);opacity:0}
-    }
-    @keyframes o2BubblePassFloat{
-      0%{left:-20px;transform:translateY(1.2px) scale(0.95,1.02);opacity:0}
-      2.5%{opacity:.88}
-      30%{transform:translateY(-2px) scale(1.02,0.98)}
-      55%{transform:translateY(-0.8px) scale(0.99,1.01)}
-      75%{transform:translateY(-2px) scale(1.02,0.98)}
-      98%{opacity:.88}
-      100%{left:calc(100% + 20px);transform:translateY(0) scale(0.95,1.02);opacity:0}
-    }
-
+    /* Bulles de premier plan retirées de la jauge */
     .o2-bubbles,
-    .o2-bubble,
+    .o2-bubble{
+      display:none !important;
+    }
+
     .o2-fill::before,
     .o2-fill::after,
-    .o2-bar.offscreen .o2-bubble,
     .o2-bar.offscreen .o2-fill::before,
     .o2-bar.offscreen .o2-fill::after{
       animation-play-state:running !important;
     }
-    body.page-hidden .o2-bubble,
     body.page-hidden .o2-fill::before,
     body.page-hidden .o2-fill::after{
       animation-play-state:paused !important;
     }
-    @media(prefers-reduced-motion:reduce){.o2-bubble,.o2-fill::before,.o2-fill::after{animation:none !important}}
+    @media(prefers-reduced-motion:reduce){.o2-fill::before,.o2-fill::after{animation:none !important}}
     /* Le pourcentage est ECRIT DANS la jauge, centre, avec un lisere noir
        pour rester lisible aussi bien sur le vert que sur le fond sombre. */
     .o2-pct{position:absolute;inset:0;display:flex;align-items:center;

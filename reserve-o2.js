@@ -347,22 +347,7 @@
       bar.innerHTML =
         '<div class="o2-label">Réserve O₂</div>' +
         '<div class="o2-tube">' +
-          '<div class="o2-fill" id="o2Fill">' +
-            '<div class="o2-bubbles" aria-hidden="true">' +
-              '<span class="o2-bubble b1"></span>' +
-              '<span class="o2-bubble b2"></span>' +
-              '<span class="o2-bubble b3"></span>' +
-              '<span class="o2-bubble b4"></span>' +
-              '<span class="o2-bubble b5"></span>' +
-              '<span class="o2-bubble b6"></span>' +
-              '<span class="o2-bubble b7"></span>' +
-              '<span class="o2-bubble b8"></span>' +
-              '<span class="o2-bubble b9"></span>' +
-              '<span class="o2-bubble b10"></span>' +
-              '<span class="o2-bubble b11"></span>' +
-              '<span class="o2-bubble b12"></span>' +
-            '</div>' +
-          '</div>' +
+          '<div class="o2-fill" id="o2Fill"></div>' +
           '<span class="o2-pct" id="o2Pct">—</span>' +
         '</div>' +
         '<div class="o2-time" id="o2Time">—</div>';
