@@ -166,42 +166,49 @@ if (code.includes('btnStartGyro') && code.includes('btnStartJoy') && code.includ
   process.exit(1);
 }
 
-// 8. Vérification de l'épuration de la page de retenue du chrono
+// 8. Vérification de l'épuration de la page de retenue du chrono et retrait du bouton retour briefing
 const palier7Html = fs.readFileSync('palier7-jeu.html', 'utf8');
 if (palier7Html.includes('id="epreuveStatut" class="status-banner info" hidden') &&
     code.includes('id="labyHudStats" hidden') &&
     code.includes('id="labyControlsBar" hidden') &&
     code.includes('id="labyStatus" hidden') &&
     !code.includes('PALIER 7 — <b>LABYRINTHE SCELLÉ') &&
+    !code.includes('labyBriefLink') &&
+    !code.includes('labyBriefHolder') &&
     code.includes('id="labyTimer"')) {
-  console.log(`✓ [Page de retenue épurée] Éléments non nécessaires retirés : bandeau statut, badge dupliqué, stats et contrôles inactifs masqués.`);
+  console.log(`✓ [Page de retenue épurée] Éléments non nécessaires retirés et bouton de retour au briefing effacé.`);
 } else {
   console.error(`✗ [Page de retenue] Épuration incomplète sur la page de retenue pour le chrono.`);
   process.exit(1);
 }
 
-// 9. Vérification de la page de briefing du Palier 7
+// 9. Vérification du briefing épuré (sans indice direct ni effets visuels) et règle des 100 impacts
 const briefingHtml = fs.readFileSync('palier7-briefing.html', 'utf8');
 const sasHtml = fs.readFileSync('22718151124.html', 'utf8');
-if (briefingHtml.includes('window.NautilusBriefing.afficher') &&
-    briefingHtml.includes('10 anneaux') &&
-    briefingHtml.includes('1 minute') &&
-    briefingHtml.includes('palier7-jeu.html') &&
-    sasHtml.includes('window.NautilusBriefing.afficher') &&
-    sasHtml.includes('10 anneaux') &&
-    sasHtml.includes('1 minute')) {
-  console.log(`✓ [Page Briefing Palier 7] Page de briefing dédiée et sas Palier 7 validés avec consignes conformes (10 anneaux, 1 min chrono, gyro/joystick).`);
+const sansIndicesEtEffets = !briefingHtml.includes('10 anneaux') &&
+                            !briefingHtml.includes('clignot') &&
+                            !sasHtml.includes('10 anneaux') &&
+                            !sasHtml.includes('clignot');
+const consignesConformes = briefingHtml.includes('100 fois') &&
+                           briefingHtml.includes('culs-de-sac trompeurs') &&
+                           briefingHtml.includes('coursive extérieure jusqu\'au Cœur central') &&
+                           briefingHtml.includes('Minuteur strict de 1 minute chrono') &&
+                           sasHtml.includes('100 fois');
+const regle100ImpactsCode = code.includes('collisionsCount > 100');
+
+if (sansIndicesEtEffets && consignesConformes && regle100ImpactsCode) {
+  console.log(`✓ [Briefing immersif & Règle 100 impacts] Aucun indice direct, aucun effet visuel écrit, règle des 100 impacts active.`);
 } else {
-  console.error(`✗ [Briefing Palier 7] Configuration de la page briefing ou du sas non conforme.`);
+  console.error(`✗ [Briefing Palier 7] Configuration du briefing ou règle des 100 impacts non conforme.`);
   process.exit(1);
 }
 
 // 10. Vérification du Service Worker
 const swContent = fs.readFileSync('sw.js', 'utf8');
-if (swContent.includes('./palier7-briefing.html') && swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=12') && swContent.includes('./css/palier7.css?v=12')) {
-  console.log(`✓ [Cache PWA] Tous les assets v12 et la page briefing du Palier 7 sont précachés dans sw.js.`);
+if (swContent.includes('./palier7-briefing.html') && swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=13') && swContent.includes('./css/palier7.css?v=13')) {
+  console.log(`✓ [Cache PWA] Tous les assets v13 et la page briefing du Palier 7 sont précachés dans sw.js.`);
 } else {
-  console.error(`✗ [Cache PWA] Assets v12 ou page briefing manquants dans sw.js.`);
+  console.error(`✗ [Cache PWA] Assets v13 ou page briefing manquants dans sw.js.`);
   process.exit(1);
 }
 

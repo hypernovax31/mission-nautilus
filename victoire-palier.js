@@ -180,6 +180,8 @@
       causeTexte = 'Score insuffisant (< 80%)';
     } else if (motif === 'temps_ecoule' || motif === 'temps') {
       causeTexte = 'Minuteur écoulé (1 min) — Remontée en surface';
+    } else if (motif === 'collisions') {
+      causeTexte = 'Plus de 100 impacts contre les parois — Cœur éteint';
     } else if (motif === 'abandon') {
       causeTexte = 'Abandon de la plongée';
     } else if (motif === 'sortie_jeu') {

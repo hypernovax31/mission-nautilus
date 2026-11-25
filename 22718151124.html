@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/palier1.css?v=60">
   <link rel="stylesheet" href="css/palier2.css?v=27">
-  <link rel="stylesheet" href="css/palier7.css?v=12">
+  <link rel="stylesheet" href="css/palier7.css?v=13">
   <script src="anti-zoom.js?v=2"></script>
   <script>try { sessionStorage.setItem('nautilusEcoutille', '1'); } catch (_) {}</script>
   <script>
@@ -191,14 +191,13 @@ const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
 
   /* Configuration du Briefing du Capitaine pour le Palier 7 */
   window.NautilusBriefing.afficher($('briefHost'), {
-    intro: "« Matelots, l’épave centrale du Nautilus est sous nos yeux, mais sa machinerie principale est scellée ». Un mécanisme gyroscopique complexe protège le réacteur d'amarrage. Vous devez piloter la bille 3D à travers un labyrinthe circulaire de 10 anneaux concentriques jusqu'au Cœur avant l'expiration de votre réserve.",
+    intro: "« Matelots, l’épave centrale du Nautilus est sous nos yeux, mais sa machinerie principale est scellée ». Vous devez piloter la bille à travers un labyrinthe circulaire 3D jusqu'au Cœur avant l'expiration de votre réserve.",
     consignes: [
-      { ico: '🌀', html: "<b>Labyrinthe circulaire à 10 anneaux</b> : naviguez depuis la coursive extérieure (Anneau 10) jusqu'au Cœur central (Anneau 1)." },
-      { ico: '🧭', html: "<b>Pilotage gyroscope prioritaire</b> : inclinez votre smartphone pour faire rouler la bille sous l'effet de la gravité (recommandé)." },
-      { ico: '🕹️', html: "<b>Joystick tactile de secours</b> : disponible sur ordinateur ou si vos capteurs de mouvement ne sont pas activés." },
-      { ico: '⚠️', warn: true, html: "<b>Nombreuses impasses</b> : le dédale est truffé de culs-de-sac trompeurs. Repérez les ouvertures pour progresser !" },
+      { ico: '🌀', html: "<b>Labyrinthe circulaire</b> : naviguez depuis la coursive extérieure jusqu'au Cœur central." },
+      { ico: '🧭', html: "<b>Pilotage gyroscope</b> : inclinez votre smartphone pour faire rouler la bille sous l'effet de la gravité." },
+      { ico: '⚠️', warn: true, html: "<b>De nombreuses impasses :</b> ne touche pas les parois plus de <b>100 fois,</b> sous peine que le cœur ne s’éteigne. Soyez attentifs aux <b>culs-de-sac trompeurs.</b>" },
       { ico: '⏱️', warn: true, html: "<b>Minuteur strict de 1 minute chrono</b> : appuyez sur le bouton gyroscopique (ou joystick) pour enclencher le décompte et lancer la bille." },
-      { ico: '🚨', warn: true, html: "<b>Temps écoulé = DÉFAITE !</b> À 5 secondes de la fin, les parois clignotent en rouge. À 00:00, le sas se verrouille et le matelot remonte en surface !" }
+      { ico: '🚨', warn: true, html: "<b>Attention si le compte à rebours est terminé, le</b> sas se verrouille et le matelot remonte en surface !" }
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {

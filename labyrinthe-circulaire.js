@@ -251,10 +251,6 @@
       + '    </div>'
       + '  </div>'
 
-      + '  <div class="laby-brief-holder" id="labyBriefHolder">'
-      + '    <a href="palier7-briefing.html" class="laby-brief-link" id="labyBriefLink">📖 Voir le briefing du capitaine</a>'
-      + '  </div>'
-
       + '  <div class="laby-controls-bar" id="labyControlsBar" hidden>'
       + '    <div class="laby-sensor-chip" id="labySensorChip">'
       + '      <span class="laby-sensor-dot" id="labySensorDot"></span>'
@@ -296,12 +292,7 @@
     var joyBase = host.querySelector('#labyJoyBase');
     var joyStick = host.querySelector('#labyJoyStick');
     var hudStatsEl = host.querySelector('#labyHudStats');
-    var briefHolderEl = host.querySelector('#labyBriefHolder');
     var controlsBarEl = host.querySelector('#labyControlsBar');
-    var briefLinkEl = host.querySelector('#labyBriefLink');
-    if (briefLinkEl) {
-      briefLinkEl.setAttribute('href', 'palier7-briefing.html' + (location.search || ''));
-    }
 
     var ctx = canvas.getContext('2d');
 
@@ -470,7 +461,6 @@
       jeuDemarre = true;
 
       if (startOverlayEl) startOverlayEl.hidden = true;
-      if (briefHolderEl) briefHolderEl.hidden = true;
       if (hudStatsEl) hudStatsEl.hidden = false;
       if (controlsBarEl) controlsBarEl.hidden = false;
       tenterVerrouillagePortrait();
@@ -706,6 +696,9 @@
         collisionsCount++;
         collisionsEl.textContent = collisionsCount;
         jouerSonChoc(Math.min(3, v / 45));
+        if (collisionsCount > 100) {
+          declencherDefaite('collisions');
+        }
       }
     }
 
@@ -1117,7 +1110,11 @@
       cancelAnimationFrame(animFrameId);
       if (edgeAlarmEl) edgeAlarmEl.classList.remove('is-active');
 
-      statusEl.textContent = '🚨 Minuteur de 1 min écoulé ! Remontée en surface du matelot.';
+      if (motif === 'collisions') {
+        statusEl.textContent = '🚨 Plus de 100 impacts contre les parois ! Le cœur s’est éteint.';
+      } else {
+        statusEl.textContent = '🚨 Minuteur de 1 min écoulé ! Remontée en surface du matelot.';
+      }
       statusEl.className = 'laby-status is-danger';
 
       setTimeout(function () {

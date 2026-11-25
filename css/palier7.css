@@ -396,40 +396,6 @@ main { max-width: 960px; margin: 0 auto; }
   display: none !important;
 }
 
-/* Lien discret vers le briefing du capitaine */
-.laby-brief-holder {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  margin-top: 2px;
-}
-.laby-brief-holder[hidden] {
-  display: none !important;
-}
-.laby-brief-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #8ee7ff;
-  font-size: 12.5px;
-  font-weight: 700;
-  text-decoration: none;
-  opacity: 0.85;
-  transition: all .2s ease;
-  padding: 5px 12px;
-  border-radius: 10px;
-  background: rgba(14, 165, 233, 0.1);
-  border: 1px solid rgba(142, 231, 255, 0.25);
-}
-.laby-brief-link:hover {
-  opacity: 1;
-  color: #ffd36c;
-  border-color: rgba(245, 176, 39, 0.5);
-  background: rgba(245, 176, 39, 0.12);
-  text-decoration: underline;
-}
-
 .laby-sensor-chip {
   display: flex;
   align-items: center;
