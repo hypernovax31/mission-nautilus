@@ -4,13 +4,12 @@
    -----------------------------------------------------------------------------
    Épreuve du Palier 7 (Version Haute Complexité 10x24) :
    - Labyrinthe circulaire à 10 anneaux concentriques et 24 secteurs (240 cellules).
-   - Dédale très difficile avec 34 culs-de-sac (impasses) et un parcours optimal
-     de 117 étapes vers le Cœur central (2712 px de trajet direct).
+   - Dédale très difficile avec 33 culs-de-sac (impasses) et un parcours optimal
+     de 53 étapes vers le Cœur central (1491 px de trajet direct).
    - Verrouillage de l'orientation portrait et compensation de rotation d'écran.
    - Priorité absolue au Gyroscope mobile : activation directe, demande d'autorisation
      interactive (iOS) et masquage du joystick sur mobile.
-   - Chronomètre de haute précision au dixième de seconde (⏱️ MM:SS.d) pour mesurer
-     le temps exact de parcours en plus de la réserve d'oxygène.
+   - Minuteur de 1 minute maximum (60s) — compte à rebours sans compteur qui monte.
    - Rendu de la bille en 3D sphérique texturée avec ombrage dynamique et traînée.
    ============================================================================= */
 
@@ -19,35 +18,35 @@
 
   if (window.NautilusLabyrinthe) return;
 
-  var DUREE_PARCOURS_SEC = 180; // 3 minutes d'oxygène allouées
+  var DUREE_PARCOURS_SEC = 60; // Minuteur de 1 minute maximum
   var RINGS = 10;
   var SECTORS = 24;
   var SECTOR_ANGLE = (Math.PI * 2) / SECTORS;
 
-  /* Topologie certifiée haute complexité (10 anneaux x 24 secteurs = 240 cellules, 34 impasses, 117 pas) */
+  /* Topologie certifiée haute complexité (10 anneaux x 24 secteurs = 240 cellules, 33 impasses, 53 pas) */
   var RADIAL_WALLS = [
-    [false,true,false,false,false,true,false,false,false,false,true,false,false,false,false,false,true,false,false,false,false,false,false,false],
-    [false,false,true,false,false,true,true,false,true,true,false,true,false,false,true,true,true,false,false,true,false,true,false,true],
-    [false,true,true,false,true,false,false,true,false,false,true,false,true,false,false,true,false,true,false,false,true,false,true,false],
-    [false,false,false,false,true,true,false,false,true,false,false,true,true,false,false,false,false,true,true,true,false,false,false,true],
-    [false,false,false,true,false,false,true,true,false,false,true,true,true,true,false,false,true,false,true,false,false,true,false,false],
-    [false,true,true,true,false,false,true,false,false,true,false,false,true,true,false,true,true,false,false,false,false,false,true,false],
-    [true,false,false,true,false,false,false,true,true,true,false,true,false,true,false,true,false,false,false,false,false,true,true,false],
-    [false,true,true,false,true,false,false,true,true,false,false,false,true,false,true,false,true,true,true,false,true,false,true,true],
-    [false,true,false,true,false,true,true,true,false,false,true,false,false,false,true,true,false,false,true,true,false,true,false,true],
-    [true,false,false,false,true,false,false,false,true,false,false,false,false,true,false,false,false,false,false,false,true,false,false,true]
+    [false,false,false,true,false,false,false,false,true,false,false,true,false,false,false,false,false,false,true,false,true,false,false,true],
+    [true,true,false,true,true,true,true,false,true,true,true,false,false,false,true,true,false,true,false,true,false,true,true,true],
+    [true,true,true,false,true,true,false,true,true,false,true,false,true,false,true,false,true,true,true,false,true,true,false,false],
+    [false,true,true,false,false,false,true,true,false,true,true,true,true,false,true,true,false,true,false,true,false,false,false,true],
+    [true,true,true,false,false,true,true,false,false,false,false,true,false,true,false,true,false,true,false,false,true,true,true,false],
+    [false,false,false,true,false,false,true,true,false,true,false,true,true,false,true,true,true,false,false,true,false,true,false,true],
+    [true,true,false,false,true,false,true,false,true,true,true,false,true,true,false,true,true,false,true,false,false,true,true,true],
+    [true,true,true,false,true,true,false,true,true,false,false,true,true,true,false,false,true,false,true,true,false,true,false,true],
+    [false,true,false,true,false,true,true,true,false,false,true,false,false,true,false,false,false,false,true,false,false,true,true,false],
+    [false,false,false,true,false,false,false,true,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false,true]
   ];
 
   var RING_WALLS = [
-    [false,true,false,true,true,false,false,true,false,true,false,true,true,true,true,false,false,false,true,true,true,true,false,true],
-    [true,true,false,false,true,true,true,false,true,false,true,false,false,true,false,false,true,false,true,true,false,false,true,true],
-    [true,false,true,true,false,false,true,true,false,true,false,true,false,true,true,true,false,true,false,true,true,true,false,false],
-    [true,true,true,true,true,false,true,false,false,true,true,false,false,false,true,true,true,true,false,false,false,true,true,true],
-    [true,true,false,false,true,true,false,true,true,true,false,true,false,false,false,true,false,false,true,true,true,true,false,true],
-    [true,false,true,false,false,true,true,false,true,false,false,true,true,false,true,true,false,true,true,true,true,true,true,false],
-    [false,true,true,true,false,true,true,true,false,false,true,true,false,true,false,false,true,false,false,true,true,false,false,true],
-    [true,false,false,false,true,false,true,false,false,true,true,true,true,true,false,true,false,true,false,false,true,true,false,false],
-    [false,true,false,true,false,true,false,false,false,true,false,true,true,false,true,false,true,true,true,false,false,false,true,false]
+    [false,false,true,true,false,true,false,true,false,false,true,false,true,true,true,false,true,true,false,false,true,false,false,false],
+    [false,false,false,false,false,false,false,true,false,false,false,true,true,true,false,false,false,false,false,true,false,true,false,true],
+    [true,false,false,true,true,false,true,false,false,true,false,false,false,false,true,false,true,false,true,false,true,false,true,true],
+    [false,false,false,true,true,false,false,false,true,true,false,false,false,true,false,true,false,true,false,true,true,false,false,true],
+    [true,true,false,false,true,true,true,false,true,true,true,true,false,true,true,false,false,false,true,true,false,false,true,false],
+    [false,true,true,true,false,true,false,true,false,false,false,false,false,false,false,false,false,true,false,true,true,false,false,false],
+    [false,false,false,true,true,false,true,false,true,false,true,true,false,false,true,true,false,false,true,false,true,true,false,true],
+    [false,false,false,true,false,false,false,false,false,true,true,false,true,false,true,true,true,true,false,false,true,false,true,false],
+    [true,true,true,false,false,true,true,false,false,false,true,true,true,true,false,true,true,true,true,true,true,false,false,true]
   ];
 
   var START_RING = 9;  // Anneau le plus extérieur (Ring 10)
@@ -162,10 +161,7 @@
       + '  <div class="laby-hud">'
       + '    <div class="laby-hud-top">'
       + '      <div class="laby-badge">PALIER 7 — <b>LABYRINTHE SCELLÉ (10 ANNEAUX)</b></div>'
-      + '      <div class="laby-hud-timers">'
-      + '        <div class="laby-timer laby-chrono" id="labyChrono" title="Chronomètre de parcours">⏱️ 00:00.0</div>'
-      + '        <div class="laby-timer laby-o2" id="labyTimer" title="Réserve d\'oxygène restante">🫧 03:00</div>'
-      + '      </div>'
+      + '      <div class="laby-timer laby-minuteur" id="labyTimer" title="Minuteur (1 minute maximum)">⏳ 01:00</div>'
       + '    </div>'
       + '    <div class="laby-hud-stats">'
       + '      <div class="laby-stat-item laby-stat-depth">Profondeur : <b id="labyDepth">Anneau 10/10</b></div>'
@@ -212,7 +208,6 @@
     var container = host.querySelector('#labyContainer');
     var canvas = host.querySelector('#labyCanvas');
     var board = host.querySelector('#labyBoard');
-    var chronoEl = host.querySelector('#labyChrono');
     var timerEl = host.querySelector('#labyTimer');
     var depthEl = host.querySelector('#labyDepth');
     var collisionsEl = host.querySelector('#labyCollisions');
@@ -231,8 +226,6 @@
 
     /* Variables de jeu */
     var tempsRestant = DUREE_PARCOURS_SEC;
-    var t0Chrono = performance.now();
-    var chronoMs = 0;
     var collisionsCount = 0;
     var estTermine = false;
     var modeActif = 'gyro'; // 'gyro' par défaut prioritaire
@@ -928,19 +921,11 @@
       ctx.restore();
     }
 
-    /* ================= CHRONOMÈTRE HAUTE PRÉCISION & GAME LOOP ================= */
+    /* ================= BOUCLE DE JEU (GAME LOOP) ================= */
     function gameLoop(now) {
       if (estTermine) return;
       var dt = Math.min(0.04, (now - lastTime) / 1000);
       lastTime = now;
-
-      // Mise à jour du chronomètre de parcours (dixièmes de seconde)
-      chronoMs = now - t0Chrono;
-      var totalSec = chronoMs / 1000;
-      var mm = Math.floor(totalSec / 60);
-      var ss = Math.floor(totalSec % 60);
-      var dsec = Math.floor((totalSec % 1) * 10);
-      chronoEl.textContent = '⏱️ ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss + '.' + dsec;
 
       updatePhysics(dt);
       render();
@@ -949,15 +934,15 @@
     }
     animFrameId = requestAnimationFrame(gameLoop);
 
-    /* Décompte de la réserve d'oxygène */
+    /* ================= MINUTEUR DE 1 MINUTE MAXIMUM ================= */
     timerInterval = setInterval(function () {
       if (estTermine) return;
       tempsRestant--;
       var mm = Math.floor(tempsRestant / 60);
       var ss = tempsRestant % 60;
-      timerEl.textContent = '🫧 ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+      timerEl.textContent = '⏳ ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
 
-      if (tempsRestant <= 30) {
+      if (tempsRestant <= 15) {
         timerEl.classList.add('is-urgent');
       }
 
@@ -978,16 +963,16 @@
       statusEl.textContent = '⚡ CŒUR ATTEINT ! Le réacteur abyssal du Nautilus est ranimé !';
       statusEl.className = 'laby-status is-success';
 
-      var totalSecExact = Math.round(chronoMs / 100) / 10;
-      var mm = Math.floor(totalSecExact / 60);
-      var ss = Math.floor(totalSecExact % 60);
-      var dsec = Math.floor((totalSecExact % 1) * 10);
-      var chronoStr = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss + '.' + dsec;
+      var dureeTotale = DUREE_PARCOURS_SEC - tempsRestant;
+      var mm = Math.floor(dureeTotale / 60);
+      var ss = dureeTotale % 60;
+      var tempsStr = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
 
       setTimeout(function () {
         onVictoire({
-          duree: Math.round(totalSecExact),
-          chrono: chronoStr,
+          duree: dureeTotale,
+          tempsRestant: tempsRestant,
+          temps: tempsStr,
           collisions: collisionsCount,
           pct: 100
         });
@@ -1000,7 +985,7 @@
       clearInterval(timerInterval);
       cancelAnimationFrame(animFrameId);
 
-      statusEl.textContent = '🚨 Réserve d’oxygène épuisée ! Le sas d’amarrage se referme.';
+      statusEl.textContent = '🚨 Minuteur écoulé ! Le sas d’amarrage se referme.';
       statusEl.className = 'laby-status is-danger';
 
       setTimeout(function () {

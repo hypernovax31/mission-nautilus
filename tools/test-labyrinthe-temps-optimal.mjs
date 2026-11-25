@@ -12,9 +12,10 @@ const radialMatch = code.match(/var RADIAL_WALLS = (\[[\s\S]*?\]);/);
 const ringMatch = code.match(/var RING_WALLS = (\[[\s\S]*?\]);/);
 const startRingMatch = code.match(/var START_RING = (\d+);/);
 const goalSectorMatch = code.match(/var GOAL_SECTOR = (\d+);/);
+const dureeMatch = code.match(/var DUREE_PARCOURS_SEC = (\d+);/);
 
-if (!radialMatch || !ringMatch || !startRingMatch || !goalSectorMatch) {
-  console.error('✗ Impossible d extraire la topologie');
+if (!radialMatch || !ringMatch || !startRingMatch || !goalSectorMatch || !dureeMatch) {
+  console.error('✗ Impossible d extraire la topologie ou la durée');
   process.exit(1);
 }
 
@@ -22,6 +23,7 @@ const RADIAL_WALLS = JSON.parse(radialMatch[1]);
 const RING_WALLS = JSON.parse(ringMatch[1]);
 const START_RING = parseInt(startRingMatch[1], 10);
 const GOAL_SECTOR = parseInt(goalSectorMatch[1], 10);
+const DUREE_PARCOURS_SEC = parseInt(dureeMatch[1], 10);
 
 const RINGS = RADIAL_WALLS.length;
 const SECTORS = RADIAL_WALLS[0].length;
@@ -185,6 +187,6 @@ console.log('\n--- RÉSULTATS DES TESTS DE TEMPS EN LIGNE DIRECTE ---');
 console.log(`• Temps physique théorique minimal (pilote parfait sans arrêt) : ${simTime.toFixed(2)} s (~${Math.floor(simTime / 60)} min ${Math.round(simTime % 60)} s).`);
 const tempsHumainDirect = simTime * 1.25;
 console.log(`• Temps estimé joueur expérimenté (connaissant le chemin direct) : ${tempsHumainDirect.toFixed(1)} s (~${Math.floor(tempsHumainDirect / 60)} min ${Math.round(tempsHumainDirect % 60)} s).`);
-const tempsHumainExplo = simTime * 1.75;
+const tempsHumainExplo = simTime * 1.6;
 console.log(`• Temps moyen joueur en découverte (exploration avec impasses)  : ${tempsHumainExplo.toFixed(1)} s (~${Math.floor(tempsHumainExplo / 60)} min ${Math.round(tempsHumainExplo % 60)} s).`);
-console.log(`• Réserve d'oxygène allouée : 180 s (3 minutes) — parfaitement proportionnée pour la difficulté !\n`);
+console.log(`• Minuteur alloué : ${DUREE_PARCOURS_SEC} s (1 minute maximum) — victoire palpitante et accessible avant le terme du minuteur !\n`);

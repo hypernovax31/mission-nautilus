@@ -149,11 +149,11 @@ if (code.includes('angleDeg') && code.includes('screen.orientation.angle')) {
   process.exit(1);
 }
 
-// 6. Vérification du chronomètre de haute précision
-if (code.includes('labyChrono') && code.includes('t0Chrono') && code.includes('totalSec')) {
-  console.log(`✓ [Chronomètre] Chronomètre de haute précision au dixième de seconde intégré.`);
+// 6. Vérification du minuteur de 1 minute maximum et suppression du compteur
+if (code.includes('DUREE_PARCOURS_SEC = 60') && code.includes('labyTimer') && !code.includes('labyChrono') && !code.includes('t0Chrono')) {
+  console.log(`✓ [Minuteur] Minuteur de 1 minute maximum (60s) actif, compteur incrémental supprimé avec succès.`);
 } else {
-  console.error(`✗ [Chronomètre] Chronomètre manquant.`);
+  console.error(`✗ [Minuteur] Configuration du minuteur ou suppression du compteur non conforme.`);
   process.exit(1);
 }
 

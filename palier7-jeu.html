@@ -257,7 +257,7 @@ const LIEU_DESCRIPTION = "Zone finale de surface";
       equipe: equipe,
       bravo: (ident && !ident.isTest) ? ident.name : null,
       stats: [
-        { valeur: (res && res.chrono) ? res.chrono : (mm + ':' + ss), label: 'Chronomètre' },
+        { valeur: (res && res.temps) ? res.temps : (mm + ':' + ss), label: 'Temps de navigation' },
         { valeur: '100%', label: 'Cœur réanimé' },
         { valeur: String(collisions), label: 'Impacts parois' }
       ],
@@ -310,7 +310,7 @@ const LIEU_DESCRIPTION = "Zone finale de surface";
   function demarrer(ident) {
     t0Partie = Date.now();
     partieEnCours = true;
-    statut('🌀 <b>Navigation dans le Labyrinthe en cours :</b> pilotez la bille jusqu’au Cœur avant la fin du chronomètre.', 'info');
+    statut('🌀 <b>Navigation dans le Labyrinthe en cours :</b> pilotez la bille jusqu’au Cœur avant la fin du minuteur (1 min max).', 'info');
 
     var isTest = enModeTest() || apercuAdminAutorise() || !!(ident && ident.isTest);
     var equipageCode = isTest ? 'TEST' : ((ident && ident.teamCode) || localStorage.getItem('nautilusCurrentTeam') || 'NEMO');

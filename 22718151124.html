@@ -226,7 +226,7 @@ const ZONE_RECHERCHE_HINT = "Rayon Photo & Drone";
               mission: 'Le Labyrinthe Circulaire',
               equipe: localStorage.getItem('nautilusCurrentTeam') || 'Nemo',
               stats: [
-                { valeur: (res && res.chrono) ? res.chrono : ((res.duree || 0) + ' s'), label: 'Chronomètre' },
+                { valeur: (res && res.temps) ? res.temps : ((res.duree || 0) + ' s'), label: 'Temps de navigation' },
                 { valeur: '100%', label: 'Cœur réanimé' },
                 { valeur: String(res.collisions || 0), label: 'Impacts parois' }
               ],
