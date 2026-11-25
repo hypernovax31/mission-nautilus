@@ -166,18 +166,21 @@ if (code.includes('btnStartGyro') && code.includes('btnStartJoy') && code.includ
   process.exit(1);
 }
 
-// 8. Vérification de l'intégration directe du jeu dans 22718151124.html et épuration de la vue scellée
+// 8. Vérification de la séparation entre page briefing/sas (22718151124.html) et page de jeu dédiée (palier7-jeu.html)
 const sasPalier7Html = fs.readFileSync('22718151124.html', 'utf8');
-const sasScelleeMasqueTeamEtLog = sasPalier7Html.includes("function afficherVueScellee() {\n    montrerCarte('gateHero', true);\n    montrerCarte('briefCard', false);\n    montrerCarte('gateUnlocked', false);\n    montrerCarte('teamCard', false);\n    montrerCarte('logCard', false);");
-const jeuIntegreDirectement = sasPalier7Html.includes('id="gateUnlocked"') &&
-                             sasPalier7Html.includes('id="epreuveHost"') &&
-                             sasPalier7Html.includes('window.NautilusLabyrinthe.init') &&
-                             sasPalier7Html.includes('labyrinthe-circulaire.js?v=14');
+const jeuPalier7Html = fs.readFileSync('palier7-jeu.html', 'utf8');
+const sasScelleeMasqueTeamEtLog = sasPalier7Html.includes("function afficherVueScellee() {\n    montrerCarte('gateHero', true);\n    montrerCarte('teamCard', false);\n    montrerCarte('logCard', false);\n    montrerCarte('briefCard', false);");
+const briefingRedirigeVersJeu = sasPalier7Html.includes("location.href = 'palier7-jeu.html' + (location.search || '');");
+const jeuDedieIndependant = jeuPalier7Html.includes('id="gateUnlocked"') &&
+                           jeuPalier7Html.includes('id="epreuveHost"') &&
+                           jeuPalier7Html.includes('window.NautilusLabyrinthe.init') &&
+                           jeuPalier7Html.includes('labyrinthe-circulaire.js?v=14') &&
+                           jeuPalier7Html.includes('23819161225.html');
 
-if (sasScelleeMasqueTeamEtLog && jeuIntegreDirectement) {
-  console.log(`✓ [Sas scellé & Jeu intégré] 22718151124.html masque teamCard et logCard en vue scellée, et intègre le jeu directement.`);
+if (sasScelleeMasqueTeamEtLog && briefingRedirigeVersJeu && jeuDedieIndependant) {
+  console.log(`✓ [Sas scellé & Jeu indépendant] 22718151124.html masque teamCard/logCard en vue scellée et mène au briefing, palier7-jeu.html héberge le jeu dédié.`);
 } else {
-  console.error(`✗ [Sas scellé & Jeu intégré] Configuration incomplète dans 22718151124.html.`);
+  console.error(`✗ [Sas scellé & Jeu indépendant] Configuration incomplète : sasScelleeMasqueTeamEtLog=${sasScelleeMasqueTeamEtLog}, briefingRedirigeVersJeu=${briefingRedirigeVersJeu}, jeuDedieIndependant=${jeuDedieIndependant}`);
   process.exit(1);
 }
 
