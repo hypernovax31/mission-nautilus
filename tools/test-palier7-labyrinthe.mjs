@@ -212,4 +212,38 @@ if (swContent.includes('./palier7-briefing.html') && swContent.includes('./palie
   process.exit(1);
 }
 
+// 11. Vérification de la page de défaite / remontée en surface (NautilusDefaite)
+const defaiteCode = fs.readFileSync('victoire-palier.js', 'utf8');
+let htmlDefaite = '';
+const mockHost = {
+  set innerHTML(v) { htmlDefaite = v; },
+  get innerHTML() { return htmlDefaite; },
+  parentNode: { querySelectorAll: () => [] }
+};
+const winDef = {};
+const fnDef = new Function('window', 'document', 'localStorage', defaiteCode);
+fnDef(winDef, { getElementById: () => null }, { getItem: () => 'Nemo' });
+
+winDef.NautilusDefaite.afficher(mockHost, {
+  palier: 7,
+  nom: 'Robin',
+  equipe: 'Nemo',
+  hours: 1,
+  jusqua: new Date(2026, 10, 26, 0, 50, 51)
+});
+
+const defaiteTexte = htmlDefaite.replace(/<[^>]+>/g, '');
+const defaiteOk = htmlDefaite.includes('Robin</span>, tu remontes en surface') &&
+                  htmlDefaite.includes('Ta plongée s’arrête là mais La mission continue pour l’équipage') &&
+                  htmlDefaite.includes('Remontée En surface : <b>1 h</b> — retour <b>26/11/2026 00:50:51.</b>') &&
+                  htmlDefaite.includes('<b>Nemo</b> peut reprendre dès maintenant (risque 1 h).') &&
+                  htmlDefaite.includes('Prochain échec : <b>2 h</b> en surface (compteur personnel).');
+
+if (defaiteOk) {
+  console.log(`✓ [Écran de défaite] Gabarit exact conforme : nom du matelot, sous-titre équipage, puces ⏱, ⚓ et 🔁 validés.`);
+} else {
+  console.error(`✗ [Écran de défaite] Gabarit de remontée en surface non conforme :\n`, htmlDefaite);
+  process.exit(1);
+}
+
 console.log('\n=== TOUS LES TESTS DU PALIER 7 (HAUTE COMPLEXITÉ) SONT VALIDÉS (100%) ===\n');

@@ -134,6 +134,21 @@
       + '</div>';
   }
 
+  function formatDateTime(v) {
+    if (!v) v = Date.now() + 3600000;
+    try {
+      var d = new Date(typeof v === 'number' ? v : String(v));
+      if (isNaN(d.getTime())) d = new Date(Date.now() + 3600000);
+      var day = ('0' + d.getDate()).slice(-2);
+      var month = ('0' + (d.getMonth() + 1)).slice(-2);
+      var year = d.getFullYear();
+      var hour = ('0' + d.getHours()).slice(-2);
+      var min = ('0' + d.getMinutes()).slice(-2);
+      var sec = ('0' + d.getSeconds()).slice(-2);
+      return day + '/' + month + '/' + year + ' ' + hour + ':' + min + ':' + sec;
+    } catch (_) { return ''; }
+  }
+
   function formatHeure(v) {
     if (!v) return '';
     try {
@@ -143,14 +158,13 @@
     } catch (_) { return String(v); }
   }
 
-  /* Écran de défaite unifié & minimaliste (NautilusDefaite) :
+  /* Écran de défaite unifié & immersif (NautilusDefaite) :
      - Élimine toute redondance (bandeaux supérieurs, boutons orphelins).
      - Remplacé par une carte épurée et directe avec une seule action retour. */
   function afficherDefaite(hote, opts) {
     if (!hote) return;
     var o = opts || {};
     var motif = o.motif || 'erreurs';
-    var heureStr = formatHeure(o.jusqua);
 
     // 1. Nettoyage radical des doublons visuels et bandeaux parasites
     try {
@@ -174,43 +188,74 @@
       if (gateHero) gateHero.style.display = 'none';
     } catch (_) {}
 
-    // 2. Cause concise
-    var causeTexte = o.details || '3 erreurs commises';
-    if (motif === 'score_insuffisant') {
-      causeTexte = 'Score insuffisant (< 80%)';
-    } else if (motif === 'temps_ecoule' || motif === 'temps') {
-      causeTexte = 'Minuteur écoulé (1 min) — Remontée en surface';
-    } else if (motif === 'collisions') {
-      causeTexte = 'Plus de 100 impacts contre les parois — Cœur éteint';
-    } else if (motif === 'abandon') {
-      causeTexte = 'Abandon de la plongée';
-    } else if (motif === 'sortie_jeu') {
-      causeTexte = 'Sortie de poste en plongée';
-    } else if (motif === '3_erreurs' || motif === 'erreurs') {
-      causeTexte = '3 erreurs commises';
+    // 2. Résolution du nom du matelot (xxxxx)
+    var nom = o.nom || o.matelot || o.name;
+    if (!nom || nom === 'TEST') {
+      try {
+        nom = localStorage.getItem('nautilusMatelotName') || localStorage.getItem('nautilusMatelotPrenom') || '';
+      } catch (_) {}
+    }
+    if (!nom || nom === 'TEST') nom = 'Matelot';
+
+    // 3. Résolution de l'équipage (xxxxxxx)
+    var rawEquipe = o.equipe;
+    if (!rawEquipe) {
+      try { rawEquipe = localStorage.getItem('nautilusCurrentTeam') || ''; } catch (_) {}
+    }
+    var NOMS_EQUIPES = { NEMO: 'Nemo', NAUTILUS: 'Nautilus', ARONNAX: 'Aronnax', NEDLAND: 'Ned Land' };
+    var nomEquipe = NOMS_EQUIPES[(rawEquipe || '').toUpperCase()] || rawEquipe || 'Un équipier';
+
+    // 4. Calcul de la durée de surface, date de retour et prochain échec
+    var diffMs = o.jusqua ? (new Date(o.jusqua).getTime() - Date.now()) : 3600000;
+    var hours = o.hours || Math.max(1, Math.round(diffMs / 3600000)) || 1;
+    var dateTimeStr = formatDateTime(o.jusqua || (Date.now() + hours * 3600000));
+
+    // Barème progressif du prochain échec : 1h -> 2h -> 4h -> 8h -> 12h -> 24h
+    var prochainEchecHeures = 2;
+    if (hours === 1) prochainEchecHeures = 2;
+    else if (hours === 2) prochainEchecHeures = 4;
+    else if (hours === 4) prochainEchecHeures = 8;
+    else if (hours === 8) prochainEchecHeures = 12;
+    else prochainEchecHeures = 24;
+
+    // 5. Cause concise
+    var causeTexte = o.details || '';
+    if (!causeTexte) {
+      if (motif === 'score_insuffisant') {
+        causeTexte = 'Score insuffisant (< 80%)';
+      } else if (motif === 'temps_ecoule' || motif === 'temps') {
+        causeTexte = 'Minuteur écoulé (1 min) — Remontée en surface';
+      } else if (motif === 'collisions') {
+        causeTexte = 'Plus de 100 impacts contre les parois — Cœur éteint';
+      } else if (motif === 'abandon') {
+        causeTexte = 'Abandon de la plongée';
+      } else if (motif === 'sortie_jeu') {
+        causeTexte = 'Sortie de poste en plongée';
+      } else if (motif === '3_erreurs' || motif === 'erreurs') {
+        causeTexte = '3 erreurs commises';
+      }
     }
 
-    var repriseLigne = heureStr
-      ? 'Reprise autorisée à <b>' + esc(heureStr) + '</b>'
-      : 'Reprise autorisée après la période de surface';
-
-    var relaisLigne = (o.relais !== false)
-      ? 'Relais d’équipe : un coéquipier peut replonger <b>dès maintenant</b>'
-      : 'Un coéquipier peut prendre le relais';
+    var causeHtml = causeTexte ? ('<div class="lost-cause">❌ ' + esc(causeTexte) + '</div>') : '';
 
     hote.innerHTML = ''
       + '<div class="lost-screen">'
       +   '<div class="lost-badge" aria-hidden="true">↟</div>'
-      +   '<h2>Remontée en surface</h2>'
-      +   '<div class="lost-cause">❌ ' + esc(causeTexte) + '</div>'
+      +   '<h2><span class="lost-nom">' + esc(nom) + '</span>, tu remontes en surface</h2>'
+      +   '<p class="lost-subtitle">Ta plongée s’arrête là mais La mission continue pour l’équipage</p>'
+      +   causeHtml
       +   '<div class="lost-info-grid">'
       +     '<div class="lost-info-row">'
-      +       '<span class="lost-info-ico">⏱️</span>'
-      +       '<span>' + repriseLigne + '</span>'
+      +       '<span class="lost-info-ico">⏱</span>'
+      +       '<span>Remontée En surface : <b>' + hours + ' h</b> — retour <b>' + esc(dateTimeStr) + '.</b></span>'
       +     '</div>'
       +     '<div class="lost-info-row">'
-      +       '<span class="lost-info-ico">🤝</span>'
-      +       '<span>' + relaisLigne + '</span>'
+      +       '<span class="lost-info-ico">⚓</span>'
+      +       '<span><b>' + esc(nomEquipe) + '</b> peut reprendre dès maintenant (risque 1 h).</span>'
+      +     '</div>'
+      +     '<div class="lost-info-row">'
+      +       '<span class="lost-info-ico">🔁</span>'
+      +       '<span>Prochain échec : <b>' + prochainEchecHeures + ' h</b> en surface (compteur personnel).</span>'
       +     '</div>'
       +   '</div>'
       +   '<div class="lost-action">'
