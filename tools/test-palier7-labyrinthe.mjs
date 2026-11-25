@@ -166,49 +166,42 @@ if (code.includes('btnStartGyro') && code.includes('btnStartJoy') && code.includ
   process.exit(1);
 }
 
-// 8. Vérification de l'épuration de la page de retenue du chrono et retrait du bouton retour briefing
-const palier7Html = fs.readFileSync('palier7-jeu.html', 'utf8');
-if (palier7Html.includes('id="epreuveStatut" class="status-banner info" hidden') &&
-    code.includes('id="labyHudStats" hidden') &&
-    code.includes('id="labyControlsBar" hidden') &&
-    code.includes('id="labyStatus" hidden') &&
-    !code.includes('PALIER 7 — <b>LABYRINTHE SCELLÉ') &&
-    !code.includes('labyBriefLink') &&
-    !code.includes('labyBriefHolder') &&
-    code.includes('id="labyTimer"')) {
-  console.log(`✓ [Page de retenue épurée] Éléments non nécessaires retirés et bouton de retour au briefing effacé.`);
+// 8. Vérification de l'intégration directe du jeu dans 22718151124.html et épuration de la vue scellée
+const sasPalier7Html = fs.readFileSync('22718151124.html', 'utf8');
+const sasScelleeMasqueTeamEtLog = sasPalier7Html.includes("function afficherVueScellee() {\n    montrerCarte('gateHero', true);\n    montrerCarte('briefCard', false);\n    montrerCarte('gateUnlocked', false);\n    montrerCarte('teamCard', false);\n    montrerCarte('logCard', false);");
+const jeuIntegreDirectement = sasPalier7Html.includes('id="gateUnlocked"') &&
+                             sasPalier7Html.includes('id="epreuveHost"') &&
+                             sasPalier7Html.includes('window.NautilusLabyrinthe.init') &&
+                             sasPalier7Html.includes('labyrinthe-circulaire.js?v=14');
+
+if (sasScelleeMasqueTeamEtLog && jeuIntegreDirectement) {
+  console.log(`✓ [Sas scellé & Jeu intégré] 22718151124.html masque teamCard et logCard en vue scellée, et intègre le jeu directement.`);
 } else {
-  console.error(`✗ [Page de retenue] Épuration incomplète sur la page de retenue pour le chrono.`);
+  console.error(`✗ [Sas scellé & Jeu intégré] Configuration incomplète dans 22718151124.html.`);
   process.exit(1);
 }
 
-// 9. Vérification du briefing épuré (sans indice direct ni effets visuels) et règle des 100 impacts
-const briefingHtml = fs.readFileSync('palier7-briefing.html', 'utf8');
-const sasHtml = fs.readFileSync('22718151124.html', 'utf8');
-const sansIndicesEtEffets = !briefingHtml.includes('10 anneaux') &&
-                            !briefingHtml.includes('clignot') &&
-                            !sasHtml.includes('10 anneaux') &&
-                            !sasHtml.includes('clignot');
-const consignesConformes = briefingHtml.includes('100 fois') &&
-                           briefingHtml.includes('culs-de-sac trompeurs') &&
-                           briefingHtml.includes('coursive extérieure jusqu\'au Cœur central') &&
-                           briefingHtml.includes('Minuteur strict de 1 minute chrono') &&
-                           sasHtml.includes('100 fois');
-const regle100ImpactsCode = code.includes('collisionsCount > 100');
+// 9. Vérification du briefing épuré, absence de la ligne "quitter remet compteurs à zéro", et nouvelle règle des 20 contacts
+const briefingTexte = sasPalier7Html;
+const sansLigneCompteursZero = !briefingTexte.includes('Quitter ce palier remet les compteurs à zéro') &&
+                               !fs.readFileSync('palier-briefing.js', 'utf8').includes('Quitter ce palier remet les compteurs à zéro');
+const regle20ContactsBriefing = briefingTexte.includes('20 contacts') && !briefingTexte.includes('180°');
+const regle20ContactsCode = code.includes('collisionsCount % 20 === 0') && code.includes('declencherRotationLabyrinthe');
+const calibrageGyroInitial = code.includes('calibEffectuee') && !code.includes('(ev.beta > 15 && ev.beta < 60) ? ev.beta : 30');
 
-if (sansIndicesEtEffets && consignesConformes && regle100ImpactsCode) {
-  console.log(`✓ [Briefing immersif & Règle 100 impacts] Aucun indice direct, aucun effet visuel écrit, règle des 100 impacts active.`);
+if (sansLigneCompteursZero && regle20ContactsBriefing && regle20ContactsCode && calibrageGyroInitial) {
+  console.log(`✓ [Règles & Gyroscope] Ligne "compteurs à zéro" supprimée, rotation tous les 20 impacts active & notifiée sans 180°, calibrage gyro initial validé.`);
 } else {
-  console.error(`✗ [Briefing Palier 7] Configuration du briefing ou règle des 100 impacts non conforme.`);
+  console.error(`✗ [Règles & Gyroscope] Règle des 20 contacts ou calibrage gyroscope non conforme.`);
   process.exit(1);
 }
 
 // 10. Vérification du Service Worker
 const swContent = fs.readFileSync('sw.js', 'utf8');
-if (swContent.includes('./palier7-briefing.html') && swContent.includes('./palier7-jeu.html') && swContent.includes('./labyrinthe.html') && swContent.includes('./labyrinthe-circulaire.js?v=13') && swContent.includes('./css/palier7.css?v=13')) {
-  console.log(`✓ [Cache PWA] Tous les assets v13 et la page briefing du Palier 7 sont précachés dans sw.js.`);
+if (swContent.includes('./22718151124.html') && swContent.includes('./labyrinthe-circulaire.js?v=14') && swContent.includes('./css/palier7.css?v=13')) {
+  console.log(`✓ [Cache PWA] Tous les assets v14 et la page 22718151124.html du Palier 7 sont précachés dans sw.js.`);
 } else {
-  console.error(`✗ [Cache PWA] Assets v13 ou page briefing manquants dans sw.js.`);
+  console.error(`✗ [Cache PWA] Assets v14 ou page manquants dans sw.js.`);
   process.exit(1);
 }
 

@@ -6,14 +6,10 @@ const pages = [
   { file: 'palier1.html', palier: 1, type: 'inline' },
   { file: '1721310619.html', palier: 2, type: 'victoire-palier' },
   { file: '1831411720.html', palier: 3, type: 'victoire-palier' },
-  { file: 'palier3-jeu.html', palier: 3, type: 'victoire-palier' },
   { file: '1941512821.html', palier: 4, type: 'victoire-palier' },
   { file: '2051613922.html', palier: 5, type: 'victoire-palier' },
-  { file: 'palier5-jeu.html', palier: 5, type: 'victoire-palier' },
   { file: '21617141023.html', palier: 6, type: 'victoire-palier' },
-  { file: '22718151124.html', palier: 7, type: 'sas' },
-  { file: 'palier7-briefing.html', palier: 7, type: 'briefing' },
-  { file: 'palier7-jeu.html', palier: 7, type: 'victoire-palier' }
+  { file: '22718151124.html', palier: 7, type: 'victoire-palier' }
 ];
 
 console.log('=== TEST DE CONFORMITÉ : ÉCRAN DE DÉFAITE SYNCHRONE SUR TOUS LES PALIERS ===\n');

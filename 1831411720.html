@@ -162,7 +162,7 @@
 <!-- SAS « ZONE SCELLÉE », code COMMUN à tous les paliers ≥ 2. -->
 <script src="palier-sas.js?v=13"></script>
 <!-- BRIEFING DU CAPITAINE, code COMMUN à tous les paliers ≥ 2. -->
-<script src="palier-briefing.js?v=4"></script>
+<script src="palier-briefing.js?v=5"></script>
 <script>window.NautilusSas.init(3);</script>
 <!-- Blocages PERSONNELS des matelots — code COMMUN à tous les paliers. -->
 <script src="matelot-blocages.js?v=3"></script>
@@ -564,7 +564,10 @@ const ZONE_RECHERCHE_HINT = "…… (en attente d’indication par l’admin)";
     ],
     cta: '⚓ PRENDRE LES COMMANDES',
     onDepart: function () {
-      location.href = 'palier3-jeu.html' + (location.search || '');
+      glisserEnHaut();
+      lancer();
+      setTimeout(glisserEnHaut, 350);
+      setTimeout(glisserEnHaut, 900);
     }
   });
 

@@ -306,13 +306,20 @@
     var animFrameId = null;
     var timerInterval = null;
 
-    /* Gyroscope / Accéléromètre */
+    /* Gyroscope / Accéléromètre calibré selon l'inclinaison initiale */
     var rawGamma = 0;
     var rawBeta = 0;
     var calibGamma = 0;
-    var calibBeta = 30; // Position de préhension naturelle
+    var calibBeta = 0;
+    var calibEffectuee = false;
     var inputX = 0;
     var inputY = 0;
+    var screenInputX = 0;
+    var screenInputY = 0;
+
+    /* Rotation du labyrinthe de 180° tous les 20 impacts */
+    var currentMazeRotation = 0;
+    var targetMazeRotation = 0;
 
     /* Joystick virtuel */
     var joyDragging = false;
@@ -385,10 +392,13 @@
       if (ev.gamma != null && ev.beta != null) {
         if (!aRecuGyro) {
           aRecuGyro = true;
-          calibGamma = ev.gamma;
-          calibBeta = (ev.beta > 15 && ev.beta < 60) ? ev.beta : 30;
-          if (startOverlayEl && jeuDemarre) startOverlayEl.hidden = true;
           activerModeGyro();
+        }
+        // Calibrage exact : le niveau 0 correspond à l'inclinaison de départ du mobile
+        if (!calibEffectuee && jeuDemarre) {
+          calibGamma = ev.gamma;
+          calibBeta = ev.beta;
+          calibEffectuee = true;
         }
         rawGamma = ev.gamma;
         rawBeta = ev.beta;
@@ -466,6 +476,13 @@
       tenterVerrouillagePortrait();
 
       if (mode === 'gyro') {
+        if (rawGamma !== 0 || rawBeta !== 0) {
+          calibGamma = rawGamma;
+          calibBeta = rawBeta;
+          calibEffectuee = true;
+        } else {
+          calibEffectuee = false;
+        }
         demanderAutorisationGyro();
       } else {
         activerModeJoystick();
@@ -691,11 +708,35 @@
       }
     }
 
+    function declencherRotationLabyrinthe() {
+      targetMazeRotation += Math.PI;
+      if (statusEl) {
+        statusEl.textContent = '🌀 Alerte secousses : le labyrinthe pivote !';
+        statusEl.className = 'laby-status is-warning';
+        statusEl.hidden = false;
+        setTimeout(function () {
+          if (!estTermine && statusEl) {
+            statusEl.textContent = 'Inclinez votre appareil pour diriger la bille dans le labyrinthe.';
+            statusEl.className = 'laby-status';
+          }
+        }, 1800);
+      }
+      try {
+        if (navigator.vibrate) navigator.vibrate([80, 50, 80]);
+      } catch (_) {}
+    }
+
     function enregistrerImpact(v) {
       if (v > 12) {
         collisionsCount++;
         collisionsEl.textContent = collisionsCount;
         jouerSonChoc(Math.min(3, v / 45));
+
+        // Règle du Palier 7 : tous les 20 contacts avec les parois, le labyrinthe tourne de 180°
+        if (collisionsCount % 20 === 0 && collisionsCount <= 100) {
+          declencherRotationLabyrinthe();
+        }
+
         if (collisionsCount > 100) {
           declencherDefaite('collisions');
         }
@@ -712,32 +753,52 @@
       if (modeActif === 'gyro') {
         var dGamma = rawGamma - calibGamma;
         var dBeta = rawBeta - calibBeta;
-        var rawX = Math.max(-1, Math.min(1, dGamma / 22));
-        var rawY = Math.max(-1, Math.min(1, dBeta / 22));
+
+        // Zone morte fine (1.2°) pour une tenue de cap stable
+        if (Math.abs(dGamma) < 1.2) dGamma = 0;
+        else dGamma = (dGamma > 0 ? dGamma - 1.2 : dGamma + 1.2);
+
+        if (Math.abs(dBeta) < 1.2) dBeta = 0;
+        else dBeta = (dBeta > 0 ? dBeta - 1.2 : dBeta + 1.2);
+
+        var rawX = Math.max(-1, Math.min(1, dGamma / 20));
+        var rawY = Math.max(-1, Math.min(1, dBeta / 20));
 
         // Compensation stricte de rotation d'écran si l'appareil bascule
         var angleDeg = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
         if (angleDeg !== 0) {
           var rad = -angleDeg * (Math.PI / 180);
-          inputX = rawX * Math.cos(rad) - rawY * Math.sin(rad);
-          inputY = rawX * Math.sin(rad) + rawY * Math.cos(rad);
+          screenInputX = rawX * Math.cos(rad) - rawY * Math.sin(rad);
+          screenInputY = rawX * Math.sin(rad) + rawY * Math.cos(rad);
         } else {
-          inputX = rawX;
-          inputY = rawY;
+          screenInputX = rawX;
+          screenInputY = rawY;
         }
-      } else {
-        inputX = joyX;
-        inputY = joyY;
 
-        if (keysDown['ArrowLeft'] || keysDown['q'] || keysDown['a']) inputX = -1;
-        if (keysDown['ArrowRight'] || keysDown['d']) inputX = 1;
-        if (keysDown['ArrowUp'] || keysDown['z'] || keysDown['w']) inputY = -1;
-        if (keysDown['ArrowDown'] || keysDown['s']) inputY = 1;
+        // Projection de la gravité dans le repère orienté du labyrinthe
+        var rotRad = -currentMazeRotation;
+        inputX = screenInputX * Math.cos(rotRad) - screenInputY * Math.sin(rotRad);
+        inputY = screenInputX * Math.sin(rotRad) + screenInputY * Math.cos(rotRad);
+      } else {
+        var jX = joyX;
+        var jY = joyY;
+
+        if (keysDown['ArrowLeft'] || keysDown['q'] || keysDown['a']) jX = -1;
+        if (keysDown['ArrowRight'] || keysDown['d']) jX = 1;
+        if (keysDown['ArrowUp'] || keysDown['z'] || keysDown['w']) jY = -1;
+        if (keysDown['ArrowDown'] || keysDown['s']) jY = 1;
+
+        screenInputX = jX;
+        screenInputY = jY;
+
+        var rotRadJoy = -currentMazeRotation;
+        inputX = screenInputX * Math.cos(rotRadJoy) - screenInputY * Math.sin(rotRadJoy);
+        inputY = screenInputX * Math.sin(rotRadJoy) + screenInputY * Math.cos(rotRadJoy);
       }
 
-      // 2. Inclinaison 3D du plateau
-      var tiltDegX = inputY * 7;
-      var tiltDegY = -inputX * 7;
+      // 2. Inclinaison 3D du plateau face au joueur
+      var tiltDegX = screenInputY * 7;
+      var tiltDegY = -screenInputX * 7;
       board.style.transform = 'rotateX(' + tiltDegX.toFixed(2) + 'deg) rotateY(' + tiltDegY.toFixed(2) + 'deg)';
 
       // 3. Accélération de la bille
@@ -816,6 +877,11 @@
     /* ================= RENDU DU LABYRINTHE ================= */
     function render() {
       ctx.clearRect(0, 0, size, size);
+
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate(currentMazeRotation);
+      ctx.translate(-center, -center);
 
       // 1. Fond du labyrinthe circulaire
       ctx.save();
@@ -1028,6 +1094,13 @@
       if (estTermine) return;
       var dt = Math.min(0.04, (now - lastTime) / 1000);
       lastTime = now;
+
+      // Rotation fluide du labyrinthe de 180° tous les 20 impacts
+      if (Math.abs(targetMazeRotation - currentMazeRotation) > 0.001) {
+        currentMazeRotation += (targetMazeRotation - currentMazeRotation) * 0.12;
+      } else {
+        currentMazeRotation = targetMazeRotation;
+      }
 
       if (jeuDemarre) {
         updatePhysics(dt);
