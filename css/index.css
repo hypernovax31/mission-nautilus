@@ -2457,7 +2457,7 @@ h1,h2,h3,h4,h5,h6,p,li,span,a,label,summary,b,em,i,strong{
   overflow-wrap:break-word;
   word-break:break-word;
 }
-img,video,svg,canvas,iframe{max-width:100%;height:auto;}
+img,video:not(.photo-video):not(#photoVideo),svg,canvas:not(.photo-canvas),iframe{max-width:100%;height:auto;}
 button,input,select,textarea{max-width:100%;box-sizing:border-box;}
 body{overflow-wrap:break-word;}
 
@@ -2718,7 +2718,7 @@ html, body{width:100%; max-width:100vw; overflow-x:hidden; -webkit-text-size-adj
 header, main, .site-footer, .card, .intro-card, #oxygenPanel, #equipagesEnMer, #gameCard, #bottomAlertMessage{max-width:100%; min-width:0; box-sizing:border-box;}
 main{width:100%; max-width:min(1260px, 100vw); margin-left:auto; margin-right:auto; padding-left:max(var(--gutter,14px), env(safe-area-inset-left)); padding-right:max(var(--gutter,14px), env(safe-area-inset-right)); box-sizing:border-box;}
 .hero-title, .hero-line, .card h2, .body, .intro-text, .oxygen-status, .countdown, .team, .cockpit, .rule-detail{overflow-wrap:break-word; word-break:break-word; max-width:100%;}
-img, video, svg, canvas, iframe{max-width:100%; height:auto; display:block;}
+img, video:not(.photo-video):not(#photoVideo), svg, canvas:not(.photo-canvas), iframe{max-width:100%; height:auto; display:block;}
 @media (max-width:360px){
   :root{--gutter:var(--space-sm); --gutter-inner:var(--space-sm);}
   body > header{padding:var(--space-sm) var(--gutter) !important;}

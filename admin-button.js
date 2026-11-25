@@ -127,7 +127,7 @@
       const linkA = document.createElement('link');
       linkA.id = 'nautilusArtefactCss';
       linkA.rel = 'stylesheet';
-      linkA.href = 'css/artefact.css?v=3';
+      linkA.href = 'css/artefact.css?v=4';
       document.head.appendChild(linkA);
     }
     ensureAdminModules();

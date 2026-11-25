@@ -119,12 +119,27 @@ main{ max-width:1720px; }
   background:#020810;
   box-shadow:0 10px 30px rgba(0,0,0,.7), inset 0 0 30px rgba(0,0,0,.8);
 }
-.photo-video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
+.photo-video,
+#photoVideo,
+.photo-viewfinder video{
+  position:absolute !important;
+  top:0 !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:100% !important;
+  min-height:100% !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  display:block !important;
   transform-origin:center center;
   transition:transform .2s ease;
+  z-index:1;
 }
 .photo-canvas{ display:none; }
 
@@ -132,6 +147,7 @@ main{ max-width:1720px; }
 .photo-reticle{
   position:absolute;
   inset:0;
+  z-index:10;
   pointer-events:none;
 }
 .reticle-corner{
@@ -216,6 +232,7 @@ main{ max-width:1720px; }
   opacity:0;
   pointer-events:none;
   transition:opacity .08s ease;
+  z-index:15;
 }
 .photo-flash-fx.is-active{ opacity:0.85; }
 

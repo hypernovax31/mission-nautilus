@@ -1242,7 +1242,7 @@
       + '  </div>'
 
       + '  <div class="photo-viewfinder" id="photoViewfinder">'
-      + '    <video id="photoVideo" class="photo-video" playsinline autoplay muted></video>'
+      + '    <video id="photoVideo" class="photo-video" playsinline webkit-playsinline autoplay muted style="position:absolute;top:0;left:0;right:0;bottom:0;inset:0;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center center!important;display:block!important;"></video>'
       + '    <canvas id="photoCanvas" class="photo-canvas" hidden></canvas>'
       + '    <div class="photo-cam-off-overlay" id="photoCamOffOverlay" hidden>'
       + '      <span class="photo-cam-off-icon">📷</span>'
@@ -1332,6 +1332,18 @@
         };
         videoStream = await navigator.mediaDevices.getUserMedia(constraints);
         videoEl.srcObject = videoStream;
+        videoEl.setAttribute('playsinline', '');
+        videoEl.setAttribute('webkit-playsinline', '');
+        videoEl.muted = true;
+        videoEl.style.position = 'absolute';
+        videoEl.style.top = '0';
+        videoEl.style.left = '0';
+        videoEl.style.right = '0';
+        videoEl.style.bottom = '0';
+        videoEl.style.width = '100%';
+        videoEl.style.height = '100%';
+        videoEl.style.objectFit = 'cover';
+        videoEl.style.objectPosition = 'center center';
         await videoEl.play();
         videoTrack = videoStream.getVideoTracks()[0];
         await identifierCapteurs();
