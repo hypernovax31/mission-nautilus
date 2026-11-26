@@ -499,6 +499,16 @@
     return [16,1,12,9,5,18].map(n => String(n + idx)).join('') + '.html';
   }
 
+  function isTestTeamAdmin(t) {
+    if (!t) return true;
+    if (t.isTest === true) return true;
+    const code = String(t.teamCode || t.code || t.id || '').trim().toUpperCase();
+    if (code === 'TEST' || code.includes('TEST') || code.includes('ESSAI')) return true;
+    const name = String(t.teamName || t.name || '').trim().toLowerCase();
+    if (name.includes('test') || name.includes('essai')) return true;
+    return false;
+  }
+
   function getMeilleurPalierAtteintAdmin(){
     if (typeof window.getMeilleurPalierAtteint === 'function') {
       try {
@@ -516,7 +526,7 @@
     let maxRank = 1;
     const stepKeys = Object.keys(STEPS);
     teams.forEach(t => {
-      if (!t) return;
+      if (!t || isTestTeamAdmin(t)) return;
       if (t.status === 'finished' || (t.completedSteps && t.completedSteps.includes('final'))) {
         maxRank = 8;
         return;
@@ -627,7 +637,7 @@
       try {
         await new Promise((res, rej) => {
           const s = document.createElement('script');
-          s.src = 'palier-annonces.js?v=5';
+          s.src = 'palier-annonces.js?v=6';
           s.onload = res;
           s.onerror = rej;
           document.head.appendChild(s);

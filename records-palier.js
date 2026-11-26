@@ -77,13 +77,17 @@
   async function enregistrer(opts) {
     opts = opts || {};
     if (!opts.stepId) return;
+    var equipage = norme(opts.equipage);
+    var matelot = norme(opts.matelot);
+    // Règle absolue : l'équipe test ou matelot test ne doit figurer dans aucun élément du site
+    if (opts.isTest || /test|essai/i.test(equipage) || /test|concepteur|zzzz-0000/i.test(matelot)) return;
     try {
       var x = await db();
       var ref = x.fs.doc(x.db, 'game', 'records');
       var entree = {
         s: Math.max(0, Math.round(Number(opts.seconds) || 0)),
-        m: norme(opts.matelot) || 'Un matelot',
-        e: norme(opts.equipage),
+        m: matelot || 'Un matelot',
+        e: equipage,
         at: new Date().toISOString()
       };
       var patch = {};
@@ -104,7 +108,14 @@
       if (snap.exists()) liste = (snap.data() || {})[opts.stepId] || [];
     } catch (e) { /* hors ligne : on affiche l'état vide, sans erreur */ }
     liste = liste
-      .filter(function (r) { return !!r; })
+      .filter(function (r) {
+        if (!r) return false;
+        var e = norme(r.e).toLowerCase();
+        var m = norme(r.m).toLowerCase();
+        if (e === 'test' || e.indexOf('test') !== -1 || e.indexOf('essai') !== -1) return false;
+        if (m === 'test' || m.indexOf('test') !== -1 || m.indexOf('concepteur') !== -1 || m === 'zzzz-0000') return false;
+        return true;
+      })
       .map(function (r) {
         return {
           s: r.s, m: r.m, e: r.e, at: r.at,

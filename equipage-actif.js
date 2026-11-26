@@ -89,6 +89,20 @@
     return !!m && (m.codeMatelot === CODE_TEST || m.memberKey === 'TEST'
       || normalize(m.name || '') === 'TEST');
   }
+
+  /* RÈGLE ABSOLUE : L'Équipe test ne doit figurer dans AUCUN élément du site,
+     excepté le panneau admin. */
+  function estEquipeTest(t) {
+    if (!t) return true;
+    if (t.isTest === true) return true;
+    var code = normalize(t.teamCode || t.code || '');
+    if (code === 'TEST' || code.indexOf('TEST') !== -1 || code.indexOf('ESSAI') !== -1) return true;
+    var nom = String(t.teamName || '').toLowerCase();
+    if (nom.indexOf('test') !== -1 || nom.indexOf('essai') !== -1) return true;
+    var members = t.members || [];
+    if (members.length > 0 && members.every(estMembreTest)) return true;
+    return false;
+  }
   function displayTeamName(code, teamName) {
     return TEAM_NAMES[code] || teamName || code || '—';
   }
@@ -141,7 +155,7 @@
     var total = 0;
 
     (teams || []).forEach(function (team) {
-      if (!team) return;
+      if (!team || estEquipeTest(team)) return;
       var members = (team.members || []).filter(function (m) { return !estMembreTest(m); });
       var vus = team.onlineMatelots || {};
       var connectes = members.filter(function (m) {

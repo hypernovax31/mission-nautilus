@@ -53,6 +53,17 @@
     catch (e) { /* mémoire pleine : l'annonce pourrait revenir, sans gravité */ }
   }
 
+  /* Règle absolue : l'équipe test ne doit figurer dans aucun élément du site */
+  function isTestTeam(t) {
+    if (!t) return true;
+    if (t.isTest === true) return true;
+    const code = String(t.teamCode || t.code || t.id || '').trim().toUpperCase();
+    if (code === 'TEST' || code.includes('TEST') || code.includes('ESSAI')) return true;
+    const name = String(t.teamName || t.name || '').trim().toLowerCase();
+    if (name.includes('test') || name.includes('essai')) return true;
+    return false;
+  }
+
   /* ---------- Sélection PURE des événements à annoncer ----------
      Fonction sans aucun effet de bord (tests la recouvrent) :
      sépare les équipages dont `lastStepCompletedAt` est plus récent
@@ -65,7 +76,7 @@
     const nextSeen = { ...(seen || {}) };
     let changed = false;
     (teams || []).forEach((t) => {
-      if (!t || !t.teamCode || !t.lastStepCompleted) return;
+      if (!t || !t.teamCode || !t.lastStepCompleted || isTestTeam(t)) return;
       const at = String(t.lastStepCompletedAt || '');
       if (!at) return;
       if (!(t.teamCode in nextSeen)) {

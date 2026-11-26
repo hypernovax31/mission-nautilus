@@ -2597,7 +2597,7 @@
        principal : les scripts différés s'exécutent dans l'ordre du
        document, et le module l'utilise dès son démarrage. -->
   <script src="son-partage.js?v=2" defer></script>
-  <script src="palier-annonces.js?v=5" defer></script>
+  <script src="palier-annonces.js?v=6" defer></script>
   <!-- La promo d'installation attend la FIN de la machine à écrire :
        ce drapeau est posé avant son chargement (deferred), et l'ordre
        de mission émet 'nautilus:fin-typewriter' à sa dernière lettre. -->
@@ -3455,6 +3455,21 @@
     return !!m && (m.codeMatelot === TEST_MATELOT_CODE || m.memberKey === 'TEST'
       || normalize(m.name || '') === 'TEST');
   }
+
+  /* RÈGLE ABSOLUE : L'Équipe test ne doit figurer dans AUCUN élément public du site
+     (sonar, radar, cartes d'équipage, annonces, compteurs, suggestions, records, classement),
+     excepté le panneau admin. */
+  function isTestTeam(team){
+    if(!team) return true;
+    if(team.isTest === true) return true;
+    const code = String(team.teamCode || team.code || team.id || '').trim().toUpperCase();
+    if(code === 'TEST' || code.includes('TEST') || code.includes('ESSAI')) return true;
+    const name = String(team.teamName || team.name || '').trim().toLowerCase();
+    if(name.includes('test') || name.includes('essai')) return true;
+    const members = team.members || [];
+    if(members.length > 0 && members.every(isTestMatelotMember)) return true;
+    return false;
+  }
   /* Identifiant d'equipe a partir d'un nom ou d'un identifiant.
      Le nom EST l'identifiant (a la casse et aux accents pres). */
   function teamCodeFromInput(value){
@@ -3745,7 +3760,10 @@
     try{
       onSnapshot(collection(db,'teams'), (snap) => {
         const equipes = [];
-        snap.forEach(d => equipes.push({ teamCode: d.id, ...d.data() }));
+        snap.forEach(d => {
+          const t = { teamCode: d.id, ...d.data() };
+          if(!isTestTeam(t)) equipes.push(t);
+        });
         window.NautilusAnnonces.handleTeamsSnapshot(equipes, {
           myTeamCode: currentTeam ? currentTeam.teamCode : null,
           myCompletedSteps: (currentTeam && currentTeam.completedSteps) || [],
@@ -4113,7 +4131,8 @@
   }
 
   function teamCardHtml(t){
-    const members=t.members||[];
+    if(isTestTeam(t)) return '';
+    const members=(t.members||[]).filter(m => !isTestMatelotMember(m));
     const online=onlineCount(t);
     const lockedBadge = isLocked(t) ? `<div class="small" style="color:var(--bad)">Bloquée jusqu’au ${formatDate(t.lockedUntil)}</div>` : '';
     const teamLogo = (t.teamName || '?').charAt(0).toUpperCase();
@@ -4144,7 +4163,7 @@
   function syncTeamsUI(teams){
     const box = $('teamsBox');
     if(!box) return;
-    const active = teams.filter(t => (t.members||[]).length > 0);
+    const active = (teams || []).filter(t => !isTestTeam(t) && (t.members||[]).filter(m => !isTestMatelotMember(m)).length > 0);
 
     // 1) Mise a jour de l'etat connu
     const newKnown = {};
@@ -4660,8 +4679,9 @@
         return String(a.teamName||'').localeCompare(String(b.teamName||''), 'fr');
       });
 
-      // Synchronise l'UI
-      syncTeamsUI(teams);
+      // Synchronise l'UI (l'équipe test est strictement exclue de tous les éléments publics)
+      const publicTeams = teams.filter(t => !isTestTeam(t));
+      syncTeamsUI(publicTeams);
 
     }catch(err){
       console.error('NAUTILUS loadTeams error:', err);
@@ -4674,7 +4694,9 @@
 
 
   function pickBalancedTeam(teams, service){
-    const scored=teams.map(team=>{
+    const publicTeams = (teams || []).filter(t => !isTestTeam(t));
+    const pool = publicTeams.length ? publicTeams : (teams || []);
+    const scored=pool.map(team=>{
       const members=(team.members||[]).filter(m=>!isTestMatelotMember(m));
       const total=members.length;
       const sameService=members.filter(m=>m.service===service).length;
@@ -5719,14 +5741,15 @@ function qrDataUri(text, opts){
       // 2) Choix de l'equipe (equilibrage par service + taille).
       // On repartit uniquement dans les equipes qui existent VRAIMENT :
       // `allTeams` vient de ensureTeams(), aucune lecture en plus.
-      if(!allTeams.length){
+      const candidateTeams = allTeams.filter(t => !isTestTeam(t));
+      if(!candidateTeams.length){
         $('registerBtn').disabled = false;
         $('registerBtn').textContent = _btnLabel;
         alert("Aucun équipage n'est disponible pour le moment. Recharge la page.");
         return;
       }
 
-      const chosen = pickBalancedTeam(allTeams, service);
+      const chosen = pickBalancedTeam(candidateTeams, service);
 
       // 3) Subcollection teams/{teamCode}/matelots/{codeMatelot}
       const matelotDoc = {
@@ -6322,7 +6345,7 @@ function qrDataUri(text, opts){
       try {
         await new Promise((res, rej) => {
           const s = document.createElement('script');
-          s.src = 'palier-annonces.js?v=5';
+          s.src = 'palier-annonces.js?v=6';
           s.onload = res;
           s.onerror = rej;
           document.head.appendChild(s);
@@ -11409,8 +11432,8 @@ window.PWAInstall = {
     var maxRank = 0;
 
     teams.forEach(function (t) {
-      if (!t) return;
-      var members = t.members || [];
+      if (!t || isTestTeam(t)) return;
+      var members = (t.members || []).filter(function(m){ return !isTestMatelotMember(m); });
       if (!members.length) return;
 
       // Si mission terminée pour cet équipage
