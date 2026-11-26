@@ -81,6 +81,8 @@ test('index.html : filtrage public strict et conservation admin', () => {
   assert(content.includes('refreshAdminTeams(teams);'), 'refreshAdminTeams() doit recevoir toutes les équipes pour le panneau admin');
 
   // getMeilleurPalierAtteint
+  assert(content.includes('window.isTestTeam = isTestTeam;'), 'window.isTestTeam doit être exposé globalement');
+  assert(content.includes('window.isTestMatelotMember = isTestMatelotMember;'), 'window.isTestMatelotMember doit être exposé globalement');
   const gmpaStart = content.indexOf('function getMeilleurPalierAtteint()');
   const gmpaEnd = content.indexOf('return maxRank;', gmpaStart);
   assert(gmpaStart !== -1 && gmpaEnd !== -1, 'getMeilleurPalierAtteint trouvé');

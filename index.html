@@ -3470,6 +3470,8 @@
     if(members.length > 0 && members.every(isTestMatelotMember)) return true;
     return false;
   }
+  window.isTestTeam = isTestTeam;
+  window.isTestMatelotMember = isTestMatelotMember;
   /* Identifiant d'equipe a partir d'un nom ou d'un identifiant.
      Le nom EST l'identifiant (a la casse et aux accents pres). */
   function teamCodeFromInput(value){
@@ -4217,7 +4219,11 @@
     });
     _lastTeams = active;
     window._lastTeams = active;
-    if (window.updateAbyssWarning) window.updateAbyssWarning();
+    try {
+      if (window.updateAbyssWarning) window.updateAbyssWarning();
+    } catch(e) {
+      console.warn('updateAbyssWarning:', e);
+    }
     renderSonarReadout();        // effectifs a jour, equipes retirees, etc.
     processRevealQueue();
   }
@@ -11418,6 +11424,24 @@ window.PWAInstall = {
       if (brut) return JSON.parse(brut);
     } catch(e){}
     return null;
+  }
+
+  function isTestMatelotMember(m){
+    if (typeof window.isTestMatelotMember === 'function') return window.isTestMatelotMember(m);
+    return !!m && (m.codeMatelot === 'ZZZZ-0000' || m.memberKey === 'TEST' || String(m.name || '').trim().toUpperCase() === 'TEST');
+  }
+
+  function isTestTeam(t){
+    if (typeof window.isTestTeam === 'function') return window.isTestTeam(t);
+    if (!t) return true;
+    if (t.isTest === true) return true;
+    var code = String(t.teamCode || t.code || t.id || '').trim().toUpperCase();
+    if (code === 'TEST' || code.indexOf('TEST') !== -1 || code.indexOf('ESSAI') !== -1) return true;
+    var name = String(t.teamName || t.name || '').trim().toLowerCase();
+    if (name.indexOf('test') !== -1 || name.indexOf('essai') !== -1) return true;
+    var members = t.members || [];
+    if (members.length > 0 && members.every(isTestMatelotMember)) return true;
+    return false;
   }
 
   function getMeilleurPalierAtteint(){
